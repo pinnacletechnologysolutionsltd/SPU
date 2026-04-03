@@ -39,6 +39,23 @@ The SPU-13 utilises a **Hardware Abstraction Layer (HAL)** for bit-exact parity 
 | GW5A-25 (Tang 25K) | 20736 | 54 | either ✅ | ✅ easy | Primary target; SDRAM bridge live |
 | GW2A-18 (Tang 20K) | 20736 | 48 | either ✅ | ✅ | DDR3 bridge TBD |
 
+### SPU-4 topology: nano sentinel vs. cluster co-processor
+
+The SPU-4 has two distinct deployment roles, each with its own arithmetic path:
+
+| Property | Nano / Standalone | Cluster Co-processor |
+| :--- | :--- | :--- |
+| Module | `spu_4_euclidean_alu.v` | `spu4_sentinel.v` |
+| Arithmetic | Bit-serial, 1 DSP, ~150 LUTs | Combinatorial, 11 DSPs, ~48-bit intermediates |
+| Fixed-point | Q8.8 (16-bit) | Q12 (16-bit) |
+| Overflow guard | **Phi-fold** — 18-bit accumulator; if sum overflows 16 bits, arithmetic `>>1` or `>>2` (Fibonacci descent). `henosis_pulse` output. | **Davis Law Henosis** — when `nQ > 2 × quadrance_seed` (true runaway, not drift), fold B/C/D axes via signed `>>>1`. `henosis_pulse` output. |
+| Drift monitor | n/a (single-shot circulant) | `janus_stable` (±4 LSB quadrance), separate from fold threshold |
+| Topology | Standalone sensory unit; no SPU-13 dependency | Rotation fidelity tester; feeds manifold to SPU-13 |
+| Target boards | iCE40 LP1K, iCE40 UP5K, GW1N-9K | Tang 25K, Tang 20K alongside SPU-13 |
+
+**Why two thresholds in the sentinel?**
+`janus_stable` (±4 LSB) is a *precision monitor* — it reports whether the rational rotation is bit-exact. Henosis (2× seed) is a *safety net* — it fires only if the manifold has genuinely grown out of range (e.g., coefficient overflow). The tight monitor should not trigger fold, as that would corrupt the rotation sequence.
+
 ### Portability rules
 
 - **`hardware/common/rtl/`** compiles with `DEVICE="SIM"` on any toolchain — no vendor files required.

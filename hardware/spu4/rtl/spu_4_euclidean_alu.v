@@ -1,9 +1,15 @@
-// spu_4_euclidean_alu.v
+// spu_4_euclidean_alu.v (v1.1 - Phi-Fold Laminar)
 // A 1-DSP TDM-folded Autonomous Euclidean 4D Processor for SPU-4 clusters.
 // Handles the local 4-axis Circulant Matrix:
 // B' = F*B + H*C + G*D
 // C' = G*B + F*C + H*D
 // D' = H*B + G*C + F*D
+//
+// Overflow handling: 18-bit internal accumulator with Phi-step fold.
+// When the three-product sum overflows 16-bit Q8.8 range, the result is
+// folded by arithmetic right-shift (÷2 or ÷4) rather than silently wrapping.
+// Cost: zero extra DSPs, ~6 LUTs per axis fold.  henosis_pulse is asserted
+// whenever any axis fold fires.
 
 module spu_4_euclidean_alu (
     input  wire        clk,
@@ -22,7 +28,8 @@ module spu_4_euclidean_alu (
     
     // Quadray Outputs (State Persists in Autonomous Mode)
     output reg  [15:0] A_out, B_out, C_out, D_out,
-    output reg         done
+    output reg         done,
+    output wire        henosis_pulse   // 1 = Phi-fold fired this cycle
 );
 
     // Resource-Folded Power Dispatch (Shift-only)
@@ -55,9 +62,25 @@ module spu_4_euclidean_alu (
     // Fixed Point Q8.8 Truncation
     wire [15:0] prod_trunc = mult_prod[23:8];
 
+    // ── Phi-Step Fold ──────────────────────────────────────────────────────
+    // 18-bit accumulator prevents silent wrap-around.  phi_fold() halves the
+    // result when the sum of three Q8.8 products exceeds 16-bit range.
+    function [15:0] phi_fold;
+        input [17:0] val;
+        begin
+            if      (val[17]) phi_fold = val[17:2];  // 2-bit overflow → >>2
+            else if (val[16]) phi_fold = val[16:1];  // 1-bit overflow → >>1
+            else              phi_fold = val[15:0];  // in range
+        end
+    endfunction
+
+    // Henosis wires — set from combinatorial sum BEFORE registering output
+    reg  henosis_B, henosis_C, henosis_D;
+    assign henosis_pulse = henosis_B | henosis_C | henosis_D;
+
     // State Machine
     reg [3:0] state;
-    reg [15:0] accum;
+    reg [17:0] accum;   // 18-bit: covers worst-case sum of 3 × 16-bit products
     
     // Internal Latch for scaled inputs
     reg [15:0] A_s, B_s, C_s, D_s;
@@ -67,7 +90,11 @@ module spu_4_euclidean_alu (
     localparam S_BMULT = 4'd1;  // Multiplier sequence
     localparam S_BADD  = 4'd2;  // Accumulate and move to next mult
 
-    reg [3:0] sub_state; 
+    reg [3:0] sub_state;
+
+    // Combinatorial preview of the final three-product sum (accum + last product).
+    // Valid in S_BADD sub-states 2, 5, 8 when the third product has just arrived.
+    wire [17:0] final_sum = accum + {2'b00, prod_trunc};
     
     always @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -78,6 +105,7 @@ module spu_4_euclidean_alu (
             accum <= 0;
             done <= 0;
             mult_start <= 0;
+            henosis_B <= 0; henosis_C <= 0; henosis_D <= 0;
         end else begin
             case (state)
                 S_IDLE: begin
@@ -106,47 +134,50 @@ module spu_4_euclidean_alu (
                 S_BADD: begin
                     case (sub_state)
                         0: begin // B1
-                            accum <= prod_trunc;
+                            accum <= {2'b00, prod_trunc};
                             mult_a <= C_s; mult_b <= H; mult_start <= 1;
                             sub_state <= 1; state <= S_BMULT;
                         end
                         1: begin // B2
-                            accum <= accum + prod_trunc;
+                            accum <= accum + {2'b00, prod_trunc};
                             mult_a <= D_s; mult_b <= G; mult_start <= 1;
                             sub_state <= 2; state <= S_BMULT;
                         end
-                        2: begin // B_final
-                            B_out <= accum + prod_trunc;
+                        2: begin // B_final — apply Phi-fold
+                            henosis_B <= (final_sum[17:16] != 2'b00);
+                            B_out <= phi_fold(final_sum);
                             mult_a <= B_s; mult_b <= G; mult_start <= 1;
                             sub_state <= 3; state <= S_BMULT;
                         end
                         3: begin // C1
-                            accum <= prod_trunc;
+                            accum <= {2'b00, prod_trunc};
                             mult_a <= C_s; mult_b <= F; mult_start <= 1;
                             sub_state <= 4; state <= S_BMULT;
                         end
                         4: begin // C2
-                            accum <= accum + prod_trunc;
+                            accum <= accum + {2'b00, prod_trunc};
                             mult_a <= D_s; mult_b <= H; mult_start <= 1;
                             sub_state <= 5; state <= S_BMULT;
                         end
-                        5: begin // C_final
-                            C_out <= accum + prod_trunc;
+                        5: begin // C_final — apply Phi-fold
+                            henosis_C <= (final_sum[17:16] != 2'b00);
+                            C_out <= phi_fold(final_sum);
                             mult_a <= B_s; mult_b <= H; mult_start <= 1;
                             sub_state <= 6; state <= S_BMULT;
                         end
                         6: begin // D1
-                            accum <= prod_trunc;
+                            accum <= {2'b00, prod_trunc};
                             mult_a <= C_s; mult_b <= G; mult_start <= 1;
                             sub_state <= 7; state <= S_BMULT;
                         end
                         7: begin // D2
-                            accum <= accum + prod_trunc;
+                            accum <= accum + {2'b00, prod_trunc};
                             mult_a <= D_s; mult_b <= F; mult_start <= 1;
                             sub_state <= 8; state <= S_BMULT;
                         end
-                        8: begin // D_final
-                            D_out <= accum + prod_trunc;
+                        8: begin // D_final — apply Phi-fold
+                            henosis_D <= (final_sum[17:16] != 2'b00);
+                            D_out <= phi_fold(final_sum);
                             done <= 1;
                             state <= S_IDLE;
                         end

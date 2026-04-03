@@ -24,7 +24,8 @@ module spu4_sentinel (
     output reg  [31:0] quadrance_seed,
     output wire        janus_stable,
     output reg  [9:0]  heartbeat_count,
-    output wire        test_pass
+    output wire        test_pass,
+    output wire        henosis_pulse   // 1 = Phi-fold fired this heartbeat
 );
 
     reg seeded;
@@ -77,6 +78,17 @@ module spu4_sentinel (
     assign janus_stable = !seeded || drift_ok;
     assign test_pass    = (heartbeat_count == 10'd1000) && janus_stable;
 
+    // ── Davis Law Henosis fold ────────────────────────────────────────────
+    // When the manifold quadrance grows beyond 2× the seed (true overflow, not
+    // precision drift), fold B/C/D back via arithmetic >>1 (Phi-step descent).
+    // Threshold is intentionally coarse — janus_stable (±4) is the fine monitor;
+    // Henosis only fires on genuine runaway growth.
+    wire henosis_needed = seeded && (nQ > (quadrance_seed << 1));
+    wire signed [15:0] B_lam = henosis_needed ? ($signed(nB) >>> 1) : nB;
+    wire signed [15:0] C_lam = henosis_needed ? ($signed(nC) >>> 1) : nC;
+    wire signed [15:0] D_lam = henosis_needed ? ($signed(nD) >>> 1) : nD;
+    assign henosis_pulse = henosis_needed;
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             A_out           <= 16'h0;
@@ -100,9 +112,9 @@ module spu4_sentinel (
                 seeded <= 1'b1;
             end else begin
                 A_out           <= nA;
-                B_out           <= nB;
-                C_out           <= nC;
-                D_out           <= nD;
+                B_out           <= B_lam;
+                C_out           <= C_lam;
+                D_out           <= D_lam;
                 quadrance       <= nQ;
                 heartbeat_count <= heartbeat_count + 1;
             end
