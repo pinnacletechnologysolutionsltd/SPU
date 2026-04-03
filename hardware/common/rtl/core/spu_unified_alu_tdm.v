@@ -15,9 +15,9 @@
 //   ROT_S2   : capture prod_bb = B*Rb; DSP ← A*Rb
 //   ROT_S3   : capture prod_ab = A*Rb; DSP ← B*Ra
 //   ROT_S4   : capture prod_ba = B*Ra
-//   ROT_FIN  : A'=prod_aa - 3*prod_bb; B'=prod_ab + prod_ba; Q12 shift; done
+//   ROT_FIN  : A'=prod_aa + 3*prod_bb; B'=prod_ab + prod_ba; Q12 shift; done
 //
-//   A' = A*Ra - 3*B*Rb  (P²-3Q²=1 norm preserved if rotor is Pell unit)
+//   A' = A*Ra + 3*B*Rb  (Q(√3): (a+b√3)(c+d√3) = ac+3bd + (ad+bc)√3)
 //   B' = A*Rb + B*Ra
 //   Q12 shift: input data Q12×Q12 → Q24; extract bits[27:12] → Q12
 //
