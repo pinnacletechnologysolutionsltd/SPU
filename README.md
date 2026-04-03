@@ -73,10 +73,19 @@ On failure, `davis_gate_dsp.v` triggers **Henosis** (soft recovery) instead of a
 This is mathematically equivalent to the regularity condition in the Navier-Stokes equations,
 expressed as an exact integer comparison.
 
-### Timing — Phi-Gated Fibonacci Pulse
+### Timing — Two Clock Domains
 
-Instructions dispatch at Fibonacci intervals (8, 13, 21 cycles) from `spu_sierpinski_clk.v`.
-System reference: **61.44 kHz** ("Piranha Pulse"). No rigid metronome — golden-ratio cadence.
+| Domain | Signal | Frequency | Role |
+|--------|--------|-----------|------|
+| **Fast (TDM)** | `clk_fast` | 24 MHz | All computation — ALU, SDRAM, sequencer |
+| **Sovereign** | `clk_piranha` | ~61.4 kHz | Frame boundary — Artery inhale, RP2350 sync |
+
+The 61.44 kHz Piranha Pulse is the **frame rate**, not the processor clock. The SPU-13
+processes all 13 axes in a 15-cycle burst (0.625 µs) at 24 MHz on every piranha tick.
+The `spu_sierpinski_clk` divides the fast clock into 34-cycle Fibonacci frames, firing
+dispatch triggers `phi_8`, `phi_13`, `phi_21` at golden-ratio positions within each frame.
+
+See [`knowledge/CLOCK_ARCHITECTURE.md`](knowledge/CLOCK_ARCHITECTURE.md) for full derivation.
 
 ---
 
