@@ -1,33 +1,32 @@
-// spu_cross_rotor.v (v1.2 - Sign fix: A' = A*Ra + 3*B*Rb)
+// spu_cross_rotor.v (v2.0 - 32-bit fields; supports Pell steps 0-7)
 // Objective: Perform Q(sqrt3) multiplication: (A + B*sqrt3) * (Ra + Rb*sqrt3)
 // Field: Rational Field Q(sqrt3).
-// Optimization: Uses parallel multipliers for low-latency Laminar execution.
-// Scaling: Q12 (1.0 = 16'h1000).
+// Scaling: Q12 (1.0 = 32'h00001000).
+// Width: 32-bit per field; 64-bit products; Q24->Q12 via bits[43:12].
 
 module spu_cross_rotor (
     input  wire        clk,
     input  wire        reset,
-    input  wire [31:0] q_axis,   // {A[15:0], B[15:0]} - RationalSurd
-    input  wire [31:0] r_rotor,  // {Ra[15:0], Rb[15:0]} - SQR Rotor
-    output wire [31:0] q_prime  // {A_new[15:0], B_new[15:0]}
+    input  wire [63:0] q_axis,   // {A[31:0], B[31:0]} - RationalSurd Q12
+    input  wire [63:0] r_rotor,  // {Ra[31:0], Rb[31:0]} - SQR Rotor Q12
+    output wire [63:0] q_prime   // {A_new[31:0], B_new[31:0]}
 );
 
-    wire signed [15:0] A  = $signed(q_axis[31:16]);
-    wire signed [15:0] B  = $signed(q_axis[15:0]);
-    wire signed [15:0] Ra = $signed(r_rotor[31:16]);
-    wire signed [15:0] Rb = $signed(r_rotor[15:0]);
+    wire signed [31:0] A  = $signed(q_axis[63:32]);
+    wire signed [31:0] B  = $signed(q_axis[31:0]);
+    wire signed [31:0] Ra = $signed(r_rotor[63:32]);
+    wire signed [31:0] Rb = $signed(r_rotor[31:0]);
 
-    // Intermediate Products (The "Laminar" Refraction)
-    reg signed [31:0] prod_aa, prod_bb, prod_ab, prod_ba;
+    // Stage 1: DSP Multiplication (registered)
+    reg signed [63:0] prod_aa, prod_bb, prod_ab, prod_ba;
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            prod_aa <= 32'h0;
-            prod_bb <= 32'h0;
-            prod_ab <= 32'h0;
-            prod_ba <= 32'h0;
+            prod_aa <= 64'h0;
+            prod_bb <= 64'h0;
+            prod_ab <= 64'h0;
+            prod_ba <= 64'h0;
         end else begin
-            // Stage 1: DSP Multiplication
             prod_aa <= A * Ra;
             prod_bb <= B * Rb;
             prod_ab <= A * Rb;
@@ -35,17 +34,13 @@ module spu_cross_rotor (
         end
     end
 
-    // Final Cross-Product Assembly (Combinatorial Stage 2)
-    // (A + B√3)(Ra + Rb√3) = (A·Ra + 3·B·Rb) + (A·Rb + B·Ra)·√3
-    // A_prime = A*Ra + 3*B*Rb
-    // B_prime = A*Rb + B*Ra
-    
-    // Scale back from Q12*Q12 = Q24 to Q12
-    wire signed [31:0] nA_full = prod_aa + ((prod_bb << 1) + prod_bb);
-    wire signed [31:0] nB_full = prod_ab + prod_ba;
+    // Stage 2: Cross-product assembly (combinatorial)
+    // (A + B*sqrt3)(Ra + Rb*sqrt3) = (A*Ra + 3*B*Rb) + (A*Rb + B*Ra)*sqrt3
+    wire signed [63:0] nA_full = prod_aa + ((prod_bb << 1) + prod_bb);
+    wire signed [63:0] nB_full = prod_ab + prod_ba;
 
-
-    assign q_prime[31:16] = nA_full[27:12]; // Q12 shift
-    assign q_prime[15:0]  = nB_full[27:12];
+    // Q12*Q12 = Q24; shift right 12 to restore Q12 (extract bits [43:12])
+    assign q_prime[63:32] = nA_full[43:12];
+    assign q_prime[31:0]  = nB_full[43:12];
 
 endmodule

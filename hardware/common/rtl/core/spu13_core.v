@@ -59,26 +59,25 @@ module spu13_core #(
     );
 
     // Scale raw Pell integers (from vault) to Q12 for the cross-rotor.
-    // Steps 0-2: P in {1,2,7}, Q in {0,1,4} — all fit in 4 bits, exact Q12 via <<12.
-    // Steps 3-7: P>7, overflow int16 when scaled — requires wider cross-rotor.
-    //            These steps are unreachable while rot_en=0 (current stub).
-    //            See knowledge/PELL_OCTAVE.md §"Hardware Impact" for the plan.
-    wire [15:0] rotor_p_q12 = current_rotor[31:16] << 12;
-    wire [15:0] rotor_q_q12 = current_rotor[15:0]  << 12;
-    wire [31:0] rotor_q12   = {rotor_p_q12, rotor_q_q12};
+    // Steps 0-7: P in {1,2,7,26,97,362,1351,5042} — all fit in 32-bit Q12
+    //            (max P*4096 = 5042*4096 = 20,652,032 < 2^25, safe in int32).
+    wire [31:0] rotor_p_q12 = {16'b0, current_rotor[31:16]} << 12;
+    wire [31:0] rotor_q_q12 = {16'b0, current_rotor[15:0]}  << 12;
+    wire [63:0] rotor_q12   = {rotor_p_q12, rotor_q_q12};
 
     // Stage 2: The SQR Cross-Product (Pulse 13)
-    wire [31:0] q_prime_ab;
+    // Manifold axis format: {A[31:0], B[31:0]} — full 64-bit axis is the surd.
+    wire [63:0] q_prime_ab;
     spu_cross_rotor u_rotor (
         .clk(clk),
         .reset(!rst_n),
-        .q_axis(current_axis_data[63:32]), // {A, B}
-        .r_rotor(rotor_q12),               // Q12-scaled Pell rotor
+        .q_axis(current_axis_data),  // {A[31:0], B[31:0]} full axis
+        .r_rotor(rotor_q12),         // Q12-scaled Pell rotor
         .q_prime(q_prime_ab)
     );
 
     // Stage 3: Stability Check & Commit (Pulse 21)
-    wire [63:0] rotated_axis = {q_prime_ab, current_axis_data[31:0]};
+    wire [63:0] rotated_axis = q_prime_ab;
     wire [31:0] quadrance;
     wire [15:0] gasket_sum;
     

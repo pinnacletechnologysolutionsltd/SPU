@@ -72,12 +72,12 @@ module rotor_compare_tb;
     reg [63:0] perm_a[0:3], perm_b[0:3], perm_c[0:3], perm_d[0:3];
 
     // =========================================================================
-    // TEST 2: spu_cross_rotor — Q(√3) SQR multiply
-    //   Format: q_axis = {A[15:0], B[15:0]}, Q12 (1.0 = 0x1000)
+    // TEST 2: spu_cross_rotor — Q(sqrt3) SQR multiply
+    //   Format: q_axis = {A[31:0], B[31:0]}, Q12 (1.0 = 32'h00001000)
     //   Identity rotor: Ra=0x1000 (1.0), Rb=0x0000
     // =========================================================================
-    reg [31:0] cross_axis, cross_rotor_in;
-    wire [31:0] cross_out;
+    reg [63:0] cross_axis, cross_rotor_in;
+    wire [63:0] cross_out;
     reg cross_reset = 1;
 
     spu_cross_rotor u_cross (
@@ -181,54 +181,62 @@ module rotor_compare_tb;
         @(posedge clk); #1;
         cross_reset = 0;
 
-        // Identity rotor: Ra=Q12(1.0)=0x1000, Rb=0
-        // Input: A=Q12(2.0)=0x2000, B=Q12(0.5)=0x0800
-        cross_axis     = {16'h2000, 16'h0800};   // 2 + 0.5√3
-        cross_rotor_in = {16'h1000, 16'h0000};   // identity: 1 + 0·√3
-        @(posedge clk); #1;                       // 1-cycle pipeline
-
-        // A_prime = A*Ra + 3*B*Rb = 0x2000*1 + 0 = 0x2000  → Q24→Q12 = A unchanged
-        // B_prime = A*Rb + B*Ra   = 0       + 0x0800*1    → B unchanged
-        if (cross_out[31:16] === 16'h2000) pass("cross-rotor: identity preserves A");
-        else                                fail("cross-rotor: identity preserves A",
-                                                  {48'd0, cross_out[31:16]}, 64'h2000);
-
-        if (cross_out[15:0]  === 16'h0800) pass("cross-rotor: identity preserves B");
-        else                                fail("cross-rotor: identity preserves B",
-                                                  {48'd0, cross_out[15:0]}, 64'h0800);
-
-        // Rotor 1+√3: Ra=0x1000, Rb=0x1000
-        // N(1+√3) = Ra²-3Rb² = 1-3 = -2  (not unit — use rotor (2+√3) for unit norm)
-        // Test Q(√3) arithmetic: (1+0√3)×(1+1√3) = (1×1+3×0×1)+(1×1+0×1)√3 = 1 + 1·√3
-        cross_axis     = {16'h1000, 16'h0000};   // 1 + 0·√3
-        cross_rotor_in = {16'h1000, 16'h1000};   // 1 + 1·√3
+        // Case 2a: Identity rotor (Rb=0): A=2.0, B=0.5
+        // Expected: A' = A unchanged = 0x2000, B' = B unchanged = 0x0800
+        cross_axis     = {32'h00002000, 32'h00000800};  // 2.0 + 0.5*sqrt3
+        cross_rotor_in = {32'h00001000, 32'h00000000};  // identity: 1 + 0*sqrt3
         @(posedge clk); #1;
 
-        // A_prime = A*Ra + 3*B*Rb = 1×1 + 3×0×1 = 1  (Q24: 0x1000*0x1000=0x1000000, >>12=0x1000)
-        // B_prime = A*Rb + B*Ra   = 1×1 + 0×1   = 1
-        if (cross_out[31:16] === 16'h1000) pass("cross-rotor: (1)×(1+√3) rational part = 1");
-        else                                fail("cross-rotor: (1)×(1+√3) rational part = 1",
-                                                  {48'd0, cross_out[31:16]}, 64'h1000);
+        if (cross_out[63:32] === 32'h00002000) pass("cross-rotor: identity preserves A");
+        else                                    fail("cross-rotor: identity preserves A",
+                                                      {32'd0, cross_out[63:32]}, 64'h2000);
 
-        if (cross_out[15:0]  === 16'h1000) pass("cross-rotor: (1)×(1+√3) surd part = 1");
-        else                                fail("cross-rotor: (1)×(1+√3) surd part = 1",
-                                                  {48'd0, cross_out[15:0]}, 64'h1000);
+        if (cross_out[31:0]  === 32'h00000800) pass("cross-rotor: identity preserves B");
+        else                                    fail("cross-rotor: identity preserves B",
+                                                      {32'd0, cross_out[31:0]}, 64'h0800);
 
-        // (2+1*sqrt3) * (2+1*sqrt3) — first test with BOTH B!=0 and Rb!=0.
-        // Expected: A' = 2*2 + 3*1*1 = 7  =>  Q12 = 0x7000
-        //           B' = 2*1 + 1*2   = 4  =>  Q12 = 0x4000
-        // (Pell orbit: (2+sqrt3)^2 = 7+4*sqrt3, step 0->2)
-        cross_axis     = {16'h2000, 16'h1000};   // 2 + 1·√3
-        cross_rotor_in = {16'h2000, 16'h1000};   // 2 + 1·√3
+        // Case 2b: (1+0*sqrt3) * (1+1*sqrt3) = 1 + 1*sqrt3  (B=0, Rb!=0)
+        // A' = 1*1 + 3*0*1 = 1 => 0x1000,  B' = 1*1 + 0*1 = 1 => 0x1000
+        cross_axis     = {32'h00001000, 32'h00000000};  // 1 + 0*sqrt3
+        cross_rotor_in = {32'h00001000, 32'h00001000};  // 1 + 1*sqrt3
         @(posedge clk); #1;
 
-        if (cross_out[31:16] === 16'h7000) pass("cross-rotor: (2+sqrt3)^2 rational=7");
-        else                                fail("cross-rotor: (2+sqrt3)^2 rational=7",
-                                                  {48'd0, cross_out[31:16]}, 64'h7000);
+        if (cross_out[63:32] === 32'h00001000) pass("cross-rotor: (1)*(1+sqrt3) A=1");
+        else                                    fail("cross-rotor: (1)*(1+sqrt3) A=1",
+                                                      {32'd0, cross_out[63:32]}, 64'h1000);
 
-        if (cross_out[15:0]  === 16'h4000) pass("cross-rotor: (2+sqrt3)^2 surd=4");
-        else                                fail("cross-rotor: (2+sqrt3)^2 surd=4",
-                                                  {48'd0, cross_out[15:0]}, 64'h4000);
+        if (cross_out[31:0]  === 32'h00001000) pass("cross-rotor: (1)*(1+sqrt3) B=1");
+        else                                    fail("cross-rotor: (1)*(1+sqrt3) B=1",
+                                                      {32'd0, cross_out[31:0]}, 64'h1000);
+
+        // Case 2c: (2+sqrt3)^2 = 7+4*sqrt3  (B!=0, Rb!=0 — Pell step 1->2)
+        // A' = 2*2 + 3*1*1 = 7 => 0x7000,  B' = 2*1 + 1*2 = 4 => 0x4000
+        cross_axis     = {32'h00002000, 32'h00001000};  // 2 + 1*sqrt3
+        cross_rotor_in = {32'h00002000, 32'h00001000};  // 2 + 1*sqrt3
+        @(posedge clk); #1;
+
+        if (cross_out[63:32] === 32'h00007000) pass("cross-rotor: (2+sqrt3)^2 A=7");
+        else                                    fail("cross-rotor: (2+sqrt3)^2 A=7",
+                                                      {32'd0, cross_out[63:32]}, 64'h7000);
+
+        if (cross_out[31:0]  === 32'h00004000) pass("cross-rotor: (2+sqrt3)^2 B=4");
+        else                                    fail("cross-rotor: (2+sqrt3)^2 B=4",
+                                                      {32'd0, cross_out[31:0]}, 64'h4000);
+
+        // Case 2d: (7+4*sqrt3)*(2+sqrt3) = 26+15*sqrt3  (Pell step 2->3)
+        // A' = 14+12=26 => Q12 0x1A000  -- overflows 16-bit; validates 32-bit widening
+        // B' = 7+8=15   => Q12 0x0F000
+        cross_axis     = {32'h00007000, 32'h00004000};  // 7 + 4*sqrt3
+        cross_rotor_in = {32'h00002000, 32'h00001000};  // 2 + 1*sqrt3
+        @(posedge clk); #1;
+
+        if (cross_out[63:32] === 32'h0001A000) pass("cross-rotor: Pell step2->3 A=26 (>16b)");
+        else                                    fail("cross-rotor: Pell step2->3 A=26 (>16b)",
+                                                      {32'd0, cross_out[63:32]}, 64'h1A000);
+
+        if (cross_out[31:0]  === 32'h0000F000) pass("cross-rotor: Pell step2->3 B=15");
+        else                                    fail("cross-rotor: Pell step2->3 B=15",
+                                                      {32'd0, cross_out[31:0]}, 64'hF000);
 
         // ----------------------------------------------------------------
         // TEST 3: Thomson circulant — bypass_p5 + identity
