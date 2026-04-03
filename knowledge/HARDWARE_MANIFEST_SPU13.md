@@ -29,6 +29,23 @@ The SPU-13 utilises a **Hardware Abstraction Layer (HAL)** for bit-exact parity 
 | **Tang 20K** | GW2A-18 | DDR3 128 MB (onboard) | DDR3 bridge planned (`spu_mem_bridge_ddr3.v`). |
 | **Golden Core** | ECP5-85F | External DDR3 | Scale-ready node for 13-core collective manifolds. |
 
+### Resource budget
+
+| Board | LUTs | DSPs | SPU-4 ALU path | SPU-13 Core | Notes |
+| :--- | ---: | ---: | :--- | :--- | :--- |
+| iCE40LP1K (wearable) | 1280 | 0 | `spu_4_euclidean_alu` (bit-serial, ~150 LUTs) ✅ | ❌ never fits | Use euclidean ALU only; no sentinel |
+| iCE40UP5K (iCeSugar) | 5280 | 8 | bit-serial ✅ | ~2500 LUTs ✅ | `spu4_sentinel` needs 11 inferred mults; 3 overflow DSPs to LUTs ⚠️ |
+| GW1N-9C (Tang 9K) | 8640 | 20 | bit-serial ✅ | ❌ won't fit | SPU-4 only; 16 DSPs used, 4 spare |
+| GW5A-25 (Tang 25K) | 20736 | 54 | either ✅ | ✅ easy | Primary target; SDRAM bridge live |
+| GW2A-18 (Tang 20K) | 20736 | 48 | either ✅ | ✅ | DDR3 bridge TBD |
+
+### Portability rules
+
+- **`hardware/common/rtl/`** compiles with `DEVICE="SIM"` on any toolchain — no vendor files required.
+- **`hardware/vendor/gowin/`** — Gowin DSP/BSRAM opt-ins; not in the critical path.
+- **iCE40 boards** must pass `.DEVICE("SIM")` to `spu13_core` so `davis_gate_dsp` uses inferred multiply (Yosys-compatible). The iCESugar top does this correctly.
+- **Wearable/LP1K designs** must use `spu_4_euclidean_alu` (bit-serial, 0 DSPs) not `spu4_sentinel` (11 inferred mults, DSP-hungry).
+
 ### Memory bridges
 
 | Module | Target | Status |

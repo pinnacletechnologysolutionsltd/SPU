@@ -107,7 +107,7 @@ module spu_icesugar_top (
     wire [3:0]  artery_axis_ptr;
     wire [63:0] artery_axis_data;
 
-    spu13_core u_core (
+    spu13_core #(.DEVICE("SIM")) u_core (  // iCE40: use inferred multiply path
         .clk(clk),
         .rst_n(boot_done), // Awake only after hydration
         .phi_8(phi_8),
