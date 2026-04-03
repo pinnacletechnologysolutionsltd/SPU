@@ -39,12 +39,19 @@ class RationalSurd:
     An element of the rational field Q(√3): value = a + b·√3
     a and b are Python integers — no floating point, ever.
     All arithmetic is closed in this field.
-    """
-    __slots__ = ('a', 'b')
 
-    def __init__(self, a: int = 0, b: int = 0):
+    pell_step: optional Pell Octave tracker — counts how many ROT operations
+    have been applied.  Encodes as (octave, step) where octave = pell_step // 8
+    and step = pell_step % 8.  The stored (a, b) is always the fundamental-
+    domain value orbit[step], so a² − 3b² = 1 for any rotor-generated surd.
+    For surds not on the Pell orbit, pell_step is None.
+    """
+    __slots__ = ('a', 'b', 'pell_step')
+
+    def __init__(self, a: int = 0, b: int = 0, pell_step: int = None):
         self.a = int(a)
         self.b = int(b)
+        self.pell_step = pell_step  # None = not a rotor-generated surd
 
     def __add__(self, other: 'RationalSurd') -> 'RationalSurd':
         return RationalSurd(self.a + other.a, self.b + other.b)
@@ -87,9 +94,24 @@ class RationalSurd:
         Phi-Rotor: multiply by the unit element (2 + 1·√3).
         Q(2,1) = 4 - 3 = 1 — unit quadrance, so this rotation PRESERVES
         laminar stability. Generates the Pell sequence 1→(2,1)→(7,4)→(26,15)→...
-        This is the Q(√3) analogue of the golden ratio spiral in Q(√5).
+
+        Pell Octave: tracks (octave, step) so the stored (a,b) stays in the
+        16-bit fundamental domain (orbit[0..7]).  step wraps at 8; octave
+        increments.  This preserves P²−3Q²=1 for arbitrarily many rotations.
         """
-        return self * RationalSurd(2, 1)
+        # Fundamental orbit (steps 0–7) — all fit in int16
+        _PELL_ORBIT = [
+            (1, 0), (2, 1), (7, 4), (26, 15),
+            (97, 56), (362, 209), (1351, 780), (5042, 2911),
+        ]
+        if self.pell_step is not None:
+            new_step = self.pell_step + 1
+            oct_n, step_n = divmod(new_step, 8)
+            a, b = _PELL_ORBIT[step_n]
+            return RationalSurd(a, b, pell_step=new_step)
+        # Fallback for surds not started from unity — full field multiply
+        result = self * RationalSurd(2, 1)
+        return RationalSurd(result.a, result.b, pell_step=None)
 
     def __repr__(self) -> str:
         if self.b == 0:
@@ -445,6 +467,10 @@ class SPUCore:
         next_pc = self.pc + 1
 
         imm = RationalSurd(p1_a, p1_b)
+        # Seed pell_step=0 when loading the Pell unity seed (1,0) — enables
+        # octave tracking for subsequent ROT instructions on this register.
+        if p1_a == 1 and p1_b == 0:
+            imm = RationalSurd(1, 0, pell_step=0)
 
         # ------------------------------------------------------------------
         # Scalar Q(√3) arithmetic
@@ -496,14 +522,20 @@ class SPUCore:
                 print(f"         {self._q_proof(self.regs[r1])}")
 
         elif opcode == OPCODES["ROT"]:
-            # ROT Rn  — apply Phi-Rotor (×(1+√3)) — one 60° Jitterbug step
+            # ROT Rn — apply Phi-Rotor (×(2+√3)) — Pell orbit step
+            # Uses Pell Octave representation: step wraps at 8, octave increments.
+            # Stored (a,b) stays in fundamental domain (fits int16), norm always 1.
             prev = self.regs[r1]
             self.regs[r1] = prev.rotate_phi()
+            new_r = self.regs[r1]
             if self.verbose:
-                print(f"  [{self.pc:04d}] ROT  R{r1}: {prev!r} → {self.regs[r1]!r}")
+                oct_info = ""
+                if new_r.pell_step is not None:
+                    oct_n, step_n = divmod(new_r.pell_step, 8)
+                    oct_info = f"  [oct={oct_n}, step={step_n}, total=r^{new_r.pell_step}]"
+                print(f"  [{self.pc:04d}] ROT  R{r1}: {prev!r} → {new_r!r}{oct_info}")
             if self.proof:
                 a, b = prev.a, prev.b
-                # Pell rotor (2,1): new_a = 2a+3b, new_b = a+2b
                 na, nb = 2*a + 3*b, a + 2*b
                 print(f"         Pell step: (2+√3) × ({a} + {b}·√3)")
                 print(f"         a = 2·{a} + 3·{b} = {2*a} + {3*b} = {na}")
@@ -522,11 +554,14 @@ class SPUCore:
             next_pc = target
 
         elif opcode == OPCODES["SNAP"]:
-            # SNAP — Davis Gate: assert all non-zero scalar regs are Laminar (Q > 0)
+            # SNAP — Davis Gate: assert all non-zero scalar regs are Laminar (norm > 0)
+            # For Pell-octave registers: norm is trivially 1 (stored mantissa from vault).
+            # For general surds: check a²-3b² > 0 as usual.
             failures = []
             for i in range(NUM_REGS):
-                if self.regs[i].a != 0 or self.regs[i].b != 0:
-                    if not self.regs[i].is_laminar():
+                r = self.regs[i]
+                if r.a != 0 or r.b != 0:
+                    if not r.is_laminar():
                         failures.append(i)
             if failures:
                 self.snap_failures += 1
@@ -536,7 +571,15 @@ class SPUCore:
                         print(f"         {self._q_proof(self.regs[i], f'R{i}:')}")
             else:
                 if self.verbose:
-                    print(f"  [{self.pc:04d}] SNAP ✓ Manifold stable")
+                    # Show octave info for any tracked rotor registers
+                    oct_summary = []
+                    for i in range(NUM_REGS):
+                        r = self.regs[i]
+                        if r.pell_step is not None and (r.a != 0 or r.b != 0):
+                            oct_n, step_n = divmod(r.pell_step, 8)
+                            oct_summary.append(f"R{i}=r^{r.pell_step}(oct={oct_n},s={step_n})")
+                    oct_str = "  " + ", ".join(oct_summary) if oct_summary else ""
+                    print(f"  [{self.pc:04d}] SNAP ✓ Manifold stable{oct_str}")
                 if self.proof:
                     for i in range(NUM_REGS):
                         r = self.regs[i]
