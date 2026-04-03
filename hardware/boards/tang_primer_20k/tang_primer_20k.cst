@@ -1,0 +1,90 @@
+// tang_primer_20k.cst — Physical Constraints for Tang Primer 20K
+// Device:  GW2A-LV18PG256C8/I7  (GW2A-18, PG256 BGA package)
+// Crystal: 27 MHz
+//
+// ⚠ VERIFY ALL PINS against the official Tang Primer 20K schematic before
+//   loading onto hardware:
+//   https://dl.sipeed.com/shareURL/TANG/Primer_20K
+//   Sipeed GitHub: https://github.com/sipeed/TangPrimer-20K-example
+//
+// IO standard: 3.3V LVCMOS for all user IO banks on GW2A-LV18PG256.
+// DDR3 signals: use dedicated DDR IO bank — managed by LiteDRAM PHY.
+//   Do NOT assign DDR3 pins in this CST; LiteDRAM generates its own
+//   placement constraints for the DDR IO primitives.
+//
+// CC0 1.0 Universal.
+
+// ─── System clock (27 MHz crystal) ──────────────────────────────────────
+IO_LOC  "sys_clk"        H11;
+IO_PORT "sys_clk"        IO_TYPE=LVCMOS33;
+
+// ─── User LEDs (active-low, 5 LEDs) ─────────────────────────────────────
+// ⚠ Verify LED pin numbers against schematic — assignments below are
+//   from community projects targeting Tang Primer 20K rev 1.1.
+IO_LOC  "led[0]"         L14;
+IO_LOC  "led[1]"         M14;
+IO_LOC  "led[2]"         N14;
+IO_LOC  "led[3]"         N15;
+IO_LOC  "led[4]"         M15;
+IO_PORT "led[0]"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led[1]"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led[2]"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led[3]"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led[4]"         IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── HDMI TX (LVDS differential pairs) ───────────────────────────────────
+// TMDS CLK and data channels.  The GW2A LVDS output buffer (OBUFDS) handles
+// the differential drive; these are the P-side pin locations.
+// ⚠ Verify with Sipeed schematic — HDMI connector is on the LVDS bank.
+IO_LOC  "hdmi_clk_p"    N16;
+IO_LOC  "hdmi_clk_n"    P16;
+IO_LOC  "hdmi_d_p[0]"   N13;
+IO_LOC  "hdmi_d_n[0]"   M13;
+IO_LOC  "hdmi_d_p[1]"   P13;
+IO_LOC  "hdmi_d_n[1]"   P14;
+IO_LOC  "hdmi_d_p[2]"   R15;
+IO_LOC  "hdmi_d_n[2]"   R16;
+IO_PORT "hdmi_clk_p"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "hdmi_clk_n"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "hdmi_d_p[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "hdmi_d_n[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "hdmi_d_p[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "hdmi_d_n[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "hdmi_d_p[2]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "hdmi_d_n[2]"   IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── RP2350 UART bridge (GPIO header) ────────────────────────────────────
+// RP2350 GP4 (UART1 TX) → FPGA RX;  RP2350 GP5 (UART1 RX) → FPGA TX
+// ⚠ Adjust to your physical wiring on the GPIO header.
+IO_LOC  "uart_rx"        A11;
+IO_LOC  "uart_tx"        A10;
+IO_PORT "uart_rx"        IO_TYPE=LVCMOS33;
+IO_PORT "uart_tx"        IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── Whisper serial (PWI 1-wire telemetry) ────────────────────────────────
+IO_LOC  "whisper_tx"     B10;
+IO_PORT "whisper_tx"     IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── DDR3 (MT41K128M16JT-125) — LiteDRAM managed ─────────────────────────
+// DDR3 PHY pins on GW2A-18 are in the dedicated DDR IO bank.
+// LiteDRAM generates its own placement/timing constraints for these signals
+// as part of the spu_mem_bridge_ddr3.v integration step.
+//
+// DO NOT place DDR3 signals here — LiteDRAM's generated .pdc/.sdc handles
+// all DDR3 IO constraints including DQS leveling and write/read training.
+//
+// The signals below are listed as documentation only — they match the
+// GW2A-18 PG256 dedicated DDR3 bank pins from the Gowin datasheet:
+//   ddr3_ck_p / ddr3_ck_n  : M2 / L2    (differential clock)
+//   ddr3_cke                : K5         (clock enable)
+//   ddr3_cs_n               : N5         (chip select)
+//   ddr3_ras_n              : P5         (row address strobe)
+//   ddr3_cas_n              : R5         (column address strobe)
+//   ddr3_we_n               : T5         (write enable)
+//   ddr3_odt                : R6         (on-die termination)
+//   ddr3_reset_n            : T6         (DRAM reset)
+//   ddr3_ba[2:0]            : P6, R4, T4
+//   ddr3_addr[13:0]         : K6..T3     (see Sipeed schematic)
+//   ddr3_dq[15:0]           : DDR IO bank pins
+//   ddr3_dqs_p/n[1:0]       : DDR strobe pairs
+//   ddr3_dm[1:0]            : DDR mask
