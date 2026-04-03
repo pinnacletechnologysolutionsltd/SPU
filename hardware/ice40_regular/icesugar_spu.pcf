@@ -1,0 +1,30 @@
+# iCESugar SPU-13 Master Constraint File
+# PMOD1 mapped to APS6404L QSPI PSRAM
+
+# Clock (12 MHz onboard)
+set_io clk 35
+
+# Onboard RGB LED
+set_io LED_R 39
+set_io LED_G 40
+set_io LED_B 41
+
+# PSRAM QSPI Interface (PMOD1)
+# Signal      PMOD  Pin
+set_io psram_ce_n    10
+set_io psram_clk     11
+set_io psram_dq[0]   12
+set_io psram_dq[1]   13
+set_io psram_dq[2]    9
+set_io psram_dq[3]    6
+
+# SPI Nerve Center Interface (RP2040) - PMOD Port P2
+# Mapped based on common iCESugar PMOD layouts
+set_io NERVE_SCK  34
+set_io NERVE_MOSI 37
+set_io NERVE_MISO 31
+set_io NERVE_CS_N 32
+
+# UART Telemetry (via Type-C / Debugger)
+set_io uart_tx 4
+set_io uart_rx 1

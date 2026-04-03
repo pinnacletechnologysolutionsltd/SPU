@@ -1,0 +1,64 @@
+# synth_gowin_9k.ys — Yosys synthesis script for Tang Nano 9K (GW1N-9C)
+# Open-source flow: yosys → nextpnr-gowin → gowin_pack
+#
+# Prerequisites:
+#   yosys    >= 0.38  (with synth_gowin support)
+#   nextpnr-gowin     (from nextpnr with GOWIN backend enabled)
+#   gowin_pack        (from apicula project)
+#
+# Usage:
+#   yosys synth_gowin_9k.ys
+#   nextpnr-gowin --device GW1N-LV9QN88PC6/I5 \
+#                 --json tang_nano_9k.json \
+#                 --cst  hardware/boards/tang_nano_9k/tang_nano_9k.cst \
+#                 --write tang_nano_9k_pnr.json
+#   gowin_pack tang_nano_9k_pnr.json -o tang_nano_9k.fs
+#   openFPGALoader -b tangnano9k tang_nano_9k.fs
+
+# ─── Source files ──────────────────────────────────────────────────────────
+
+# Architecture defines
+read_verilog -sv hardware/common/rtl/spu_arch_defines.vh
+
+# Primitives
+read_verilog hardware/common/rtl/prim/gowin_mult18.v
+read_verilog hardware/common/rtl/prim/spu_surd_mul_gowin.v
+read_verilog hardware/common/rtl/prim/spu_psram_ctrl.v
+read_verilog hardware/common/rtl/prim/gowin_bsram.v
+
+# Core
+read_verilog hardware/common/rtl/core/spu_alu_gowin.v
+read_verilog hardware/common/rtl/core/spu_register_file.v
+read_verilog hardware/common/rtl/core/spu_rotor_vault.v
+read_verilog hardware/common/rtl/core/spu13_sequencer.v
+
+# Memory — Bank 1 only (Bank 0 managed internally by spu4_core)
+read_verilog hardware/common/rtl/prim/spu_psram_ctrl.v
+read_verilog hardware/common/rtl/mem/spu_fractal_compressor.v
+
+# Top-level subsystems
+read_verilog hardware/common/rtl/top/spu_sierpinski_clk.v
+read_verilog hardware/common/rtl/top/spu_soft_start.v
+read_verilog hardware/common/rtl/top/spu_laminar_power.v
+
+# SPU-4 Sentinel (fits GW1N-9C — 16 of 20 DSPs used)
+read_verilog hardware/spu4/rtl/spu4_core.v
+
+# Protocol
+read_verilog hardware/common/rtl/proto/SPU_WHISPER_TX.v
+
+# Janus / Berry / Permute (SPU-13 submodules used by SPU-4 stability checks)
+read_verilog hardware/spu13/rtl/spu_janus_mirror.v
+
+# Board top
+read_verilog hardware/boards/tang_nano_9k/tang_nano_9k_top.v
+
+# ─── Synthesis ─────────────────────────────────────────────────────────────
+
+# DEVICE macro used by gowin_mult18 / spu_surd_mul_gowin to select GW1N path
+chparam -set DEVICE "GW1N"
+
+synth_gowin -top tang_nano_9k_top -json tang_nano_9k.json -device GW1N-9C
+
+# ─── Reporting ─────────────────────────────────────────────────────────────
+stat

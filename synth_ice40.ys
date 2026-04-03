@@ -1,0 +1,13 @@
+# Read the relocated Common, SPU-13, and SPU-4 primitives
+read_verilog hardware/common/rtl/*.v
+read_verilog hardware/spu13/rtl/*.v
+read_verilog hardware/spu4/rtl/*.v
+
+# Selectively include missing archive components safely
+read_verilog reference/synergeticrenderer/Laminar-Core/hardware/archive/spu_permute_13.v
+
+# Ensure correct hierarchy
+hierarchy -check -top spu_13_top
+
+# Run ICE40 Synthesis
+synth_ice40 -top spu_13_top -json spu13.json

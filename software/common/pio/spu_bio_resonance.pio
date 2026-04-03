@@ -1,0 +1,68 @@
+; spu_bio_resonance.pio (v1.1 - Sovereign Auxiliaries)
+; Objective: Deterministic 61.44 kHz Heartbeat & Whisper PWI.
+; Clock: Assume 150 MHz RP2350 Clock.
+
+.program piranha_pulse
+; 61.44 kHz = 16.276 us period.
+; At 150 MHz, period = 2440 cycles (1220 cycles per half).
+; Logic: 50% duty cycle heartbeat.
+
+.wrap_target
+    set pins, 1 [31]   ; Drive high
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [15]           ; ~1220 cycles total
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [15]           ; ~1220 cycles total
+.wrap
+
+
+.program whisper_tx
+; Rational PWI Transmission (1-wire)
+; Pulse Width = (104a + 181b) + 1024_bias
+; Logic: Pull 32-bit width from FIFO and pulse the pin for that duration.
+
+.wrap_target
+    pull block          ; Wait for chord width (N)
+    mov x, osr          ; Load width counter
+    set pins, 1         ; Start Pulse
+timer_loop:
+    jmp x-- timer_loop  ; Wait for N cycles
+    set pins, 0         ; End Pulse
+.wrap
+
+
+% c-sdk {
+static inline void piranha_pulse_program_init(PIO pio, uint sm, uint offset, uint pin) {
+    pio_sm_config c = piranha_pulse_program_get_default_config(offset);
+    sm_config_set_set_pins(&c, pin, 1);
+    pio_gpio_init(pio, pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+
+static inline void whisper_tx_program_init(PIO pio, uint sm, uint offset, uint pin) {
+    pio_sm_config c = whisper_tx_program_get_default_config(offset);
+    sm_config_set_set_pins(&c, pin, 1);
+    pio_gpio_init(pio, pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+    // Use a divider to match SPU clock (12 MHz)
+    sm_config_set_clkdiv(&c, 12.5f); // 150MHz / 12.5 = 12MHz
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

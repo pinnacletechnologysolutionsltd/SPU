@@ -1,0 +1,36 @@
+# iCEsugar v1.5 (iCE40UP5K-SG48) pin constraints
+# Reference: iCEsugar v1.5 schematic — https://github.com/wuxx/icesugar
+
+# Onboard 12 MHz oscillator
+set_io clk     35
+
+# Onboard RGB LED (driven via SB_RGBA_DRV — these are the LEDPWM pad names)
+# NOTE: in the PCF these are mapped as regular I/O; SB_RGBA_DRV claims them internally.
+set_io LED_R   41
+set_io LED_G   40
+set_io LED_B   39
+
+# UART via Type-C CH552 USB bridge
+set_io uart_tx 9
+set_io uart_rx 6
+
+# Onboard SPI Flash (W25Q128JVSQ — post-config access)
+# These are the dedicated SPI config pins; reuse is possible via SB_SPI IP.
+# Listed here for Level 2 smoke test reference.
+# set_io flash_cs_n  16
+# set_io flash_sck   15
+# set_io flash_io0   14   # MOSI
+# set_io flash_io1   17   # MISO
+# set_io flash_io2   12   # WP
+# set_io flash_io3   13   # HOLD
+
+# PMOD1 (J4) — 8 user pins (for PSRAM PMOD when fitted)
+# set_io pmod1[0]  10   # PSRAM CS#
+# set_io pmod1[1]   6   # PSRAM SIO0
+# set_io pmod1[2]   3   # PSRAM SIO1
+# set_io pmod1[3]  48   # PSRAM SCLK
+# set_io pmod1[4]   4   # PSRAM SIO2
+# set_io pmod1[5]   2   # PSRAM SIO3
+
+# User LED (plain GPIO, no SB_RGBA_DRV needed — fallback test)
+set_io user_led 26

@@ -1,0 +1,39 @@
+W25Q128JVSQ Flash Map — SPU-13 iCEsugar
+================================================
+  0x000000 – 0x03FFFF  FPGA bitstream        (256KB)
+  0x040000 – 0x07FFFF  Safe Soul fallback
+  0x080000 – 0x0FFFFF  Ghost OS / Lithic-L
+  0x100000 – 0x100067  Pell table            (104 bytes)
+  0x100100 – 0x100133  Golden Prime LUT      (52 bytes)
+  0x100200 – 0x1003FF  QROT velocity table   (reserved)
+  0x200000 – 0xFFFFFF  bloom.bin / world data (~14MB free)
+
+Pell steps (a, b) where value = a + b·√3:
+  r^00: a=1, b=0
+  r^01: a=2, b=1
+  r^02: a=7, b=4
+  r^03: a=26, b=15
+  r^04: a=97, b=56
+  r^05: a=362, b=209
+  r^06: a=1351, b=780
+  r^07: a=5042, b=2911
+  r^08: a=18817, b=10864
+  r^09: a=70226, b=40545
+  r^10: a=262087, b=151316
+  r^11: a=978122, b=564719
+  r^12: a=3650401, b=2107560
+
+Golden Primes (IVM addressing strides):
+  GP[00]: 46337
+  GP[01]: 46349
+  GP[02]: 46351
+  GP[03]: 46327
+  GP[04]: 46309
+  GP[05]: 46307
+  GP[06]: 46301
+  GP[07]: 46381
+  GP[08]: 46399
+  GP[09]: 46279
+  GP[10]: 46273
+  GP[11]: 46411
+  GP[12]: 46271

@@ -1,0 +1,73 @@
+# synth_gowin_25k.ys — Yosys synthesis for Tang Primer 25K (GW5A-LV25MG121)
+#
+# Open-source flow:  yosys  →  nextpnr-gowin  →  gowin_pack
+#
+# Usage (resource count only):
+#   yosys hardware/boards/tang_primer_25k/synth_gowin_25k.ys
+#
+# Full open-source PAR + bitstream:
+#   yosys  hardware/boards/tang_primer_25k/synth_gowin_25k.ys
+#   nextpnr-gowin --device GW5A-LV25MG121C1/I0 \
+#                 --json tang_primer_25k.json \
+#                 --cst  hardware/boards/tang_primer_25k/tang_primer_25k.cst \
+#                 --write tang_primer_25k_pnr.json
+#   gowin_pack tang_primer_25k_pnr.json -o tang_primer_25k.fs
+#   openFPGALoader -b tang_primer_25k tang_primer_25k.fs
+#
+# GOWIN EDA (free, requires registration) recommended on Linux/Windows for
+# timing closure on GW5A: https://www.gowinsemi.com/en/support/download_eda/
+# CC0 1.0 Universal.
+
+# ─── rPLL blackbox (GW5A primitive, inserted by P&R tool) ─────────────────
+# rPLL declared as blackbox stub in pll_gowin_stub.v
+read_verilog hardware/boards/tang_primer_25k/pll_gowin_stub.v
+
+# ─── Architecture defines ─────────────────────────────────────────────────
+read_verilog -sv -I hardware/common/rtl hardware/common/rtl/spu_arch_defines.vh
+
+# ─── Primitives ────────────────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/common/rtl/prim/gowin_mult18.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/prim/spu_multiplier_serial.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/prim/spu_psram_ctrl.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/prim/spu_smul_tdm.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/prim/surd_multiplier.v
+
+# ─── Core RTL ──────────────────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/common/rtl/spu_cross_rotor.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/davis_gate_dsp.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_sequencer.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_rotor_vault.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_unified_alu_tdm.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_core.v
+
+# ─── SPU-4 Sentinel ────────────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_decoder.v
+read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu_4_euclidean_alu.v
+read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_regfile.v
+read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_core.v
+read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_top.v
+
+# ─── SPU-13 sub-modules ────────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_berry_gate.v
+read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_janus_mirror.v
+read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_permute_13.v
+read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_13_top.v
+
+# ─── System infrastructure ─────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_sierpinski_clk.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/spu_soft_start.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_laminar_power.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_ARTERY_FIFO.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_WHISPER_TX.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_system.v
+
+# ─── Memory bridges ────────────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_qspi.v
+
+# ─── Board top ─────────────────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/boards/tang_primer_25k/spu_tang_top.v
+
+# ─── Synthesis ─────────────────────────────────────────────────────────────
+hierarchy -check -top spu_tang_top
+synth_gowin -family gw5a -top spu_tang_top -json tang_primer_25k.json
+stat

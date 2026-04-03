@@ -1,0 +1,88 @@
+// Tang Nano 9K — Physical Constraints (tang_nano_9k.cst)
+// Device: GW1N-9C  Package: QN88
+//
+// PSRAM PMOD wiring:
+//   APS6404L QSPI pinout: CE_n, CLK, DQ0, DQ1, DQ2, DQ3
+//   These pin numbers are EXAMPLES based on the Tang Nano 9K GPIO header.
+//   Verify against your actual PMOD placement using the board schematic:
+//   https://dl.sipeed.com/shareURL/TANG/Nano%209K
+//
+// IO banks:
+//   IOT (top): fast, preferred for PSRAM (supports 3.3V LVCMOS)
+//   IOR (right): also fast, used for PMOD1
+//   IOB (bottom): slower, used for LEDs / Whisper
+//
+// Adjust DRIVE strength and SLEW if signal integrity issues appear
+// on the QSPI lines at 24 MHz.
+
+// ─── Clock ───────────────────────────────────────────────────────────────
+IO_LOC "clk_27mhz"    52;
+IO_PORT "clk_27mhz"   IO_TYPE=LVCMOS33;
+
+// ─── LEDs (active-low, on-board) ─────────────────────────────────────────
+IO_LOC "led_n[0]"     10;
+IO_LOC "led_n[1]"     11;
+IO_LOC "led_n[2]"     13;
+IO_LOC "led_n[3]"     14;
+IO_LOC "led_n[4]"     15;
+IO_LOC "led_n[5]"     16;
+IO_PORT "led_n[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led_n[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led_n[2]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led_n[3]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led_n[4]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led_n[5]"    IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── Mode select & Whisper RX ────────────────────────────────────────────
+IO_LOC "mode_pin"     78;
+IO_PORT "mode_pin"    IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+IO_LOC "whisper_rx"   76;
+IO_PORT "whisper_rx"  IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// ─── Whisper TX ───────────────────────────────────────────────────────────
+// Route to a spare GPIO; connect to RP2350 UART RX for telemetry.
+IO_LOC "whisper_tx"   77;
+IO_PORT "whisper_tx"  IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── PSRAM Bank 0 — PMOD0 (IOT bank, top connector) ─────────────────────
+// Suggested wiring: standard 2×6 PMOD header on GPIO 25-32
+//   PMOD pin 1 = CE_n  → GPIO 31
+//   PMOD pin 2 = DQ0   → GPIO 30
+//   PMOD pin 3 = DQ1   → GPIO 29
+//   PMOD pin 4 = DQ2   → GPIO 28
+//   PMOD pin 7 = CLK   → GPIO 27   (pin 7 is top row, second half)
+//   PMOD pin 8 = DQ3   → GPIO 26
+IO_LOC "psram0_ce_n"  31;
+IO_LOC "psram0_clk"   27;
+IO_LOC "psram0_dq[0]" 30;
+IO_LOC "psram0_dq[1]" 29;
+IO_LOC "psram0_dq[2]" 28;
+IO_LOC "psram0_dq[3]" 26;
+IO_PORT "psram0_ce_n"  IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram0_clk"   IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram0_dq[0]" IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram0_dq[1]" IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram0_dq[2]" IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram0_dq[3]" IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+
+// ─── PSRAM Bank 1 — PMOD1 (IOR bank, side connector) ────────────────────
+// Suggested wiring: 2×6 PMOD header on GPIO 35-42
+//   PMOD pin 1 = CE_n  → GPIO 41
+//   PMOD pin 2 = DQ0   → GPIO 40
+//   PMOD pin 3 = DQ1   → GPIO 39
+//   PMOD pin 4 = DQ2   → GPIO 38
+//   PMOD pin 7 = CLK   → GPIO 37
+//   PMOD pin 8 = DQ3   → GPIO 36
+IO_LOC "psram1_ce_n"  41;
+IO_LOC "psram1_clk"   37;
+IO_LOC "psram1_dq[0]" 40;
+IO_LOC "psram1_dq[1]" 39;
+IO_LOC "psram1_dq[2]" 38;
+IO_LOC "psram1_dq[3]" 36;
+IO_PORT "psram1_ce_n"  IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram1_clk"   IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram1_dq[0]" IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram1_dq[1]" IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram1_dq[2]" IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
+IO_PORT "psram1_dq[3]" IO_TYPE=LVCMOS33 DRIVE=16 PULL_MODE=NONE;
