@@ -101,27 +101,36 @@ module spu_tang_top (
     );
 
     // ------------------------------------------------------------------ //
-    // 3. SDRAM bridge stub                                                //
-    //    TODO: replace with spu_mem_bridge_sdram.v once board is in hand  //
-    //    For now mem_ready=0 holds the core in IDLE (safe bring-up).      //
+    // 3. SDRAM bridge (W9825G6KH-6, 32 MB)                              //
     // ------------------------------------------------------------------ //
-    wire                          mem_ready     = 1'b0; // stall until bridge ready
+    wire                          mem_ready;
     wire                          mem_burst_rd;
     wire                          mem_burst_wr;
     wire [`MEM_ADDR_WIDTH-1:0]    mem_addr;
-    wire [`MANIFOLD_WIDTH-1:0]    mem_rd_manifold = `MANIFOLD_WIDTH'h0;
+    wire [`MANIFOLD_WIDTH-1:0]    mem_rd_manifold;
     wire [`MANIFOLD_WIDTH-1:0]    mem_wr_manifold;
-    wire                          mem_burst_done  = 1'b0;
+    wire                          mem_burst_done;
 
-    // Tie off SDRAM pins until the bridge is implemented
-    assign sdram_clk   = clk_fast;
-    assign sdram_cke   = 1'b0;
-    assign sdram_cs_n  = 1'b1;
-    assign sdram_ras_n = 1'b1;
-    assign sdram_cas_n = 1'b1;
-    assign sdram_we_n  = 1'b1;
-    assign sdram_ba    = 2'b0;
-    assign sdram_addr  = 13'b0;
+    spu_mem_bridge_sdram u_sdram (
+        .clk             (clk_fast),
+        .reset           (!rst_n),
+        .mem_ready       (mem_ready),
+        .mem_burst_rd    (mem_burst_rd),
+        .mem_burst_wr    (mem_burst_wr),
+        .mem_addr        (mem_addr),
+        .mem_rd_manifold (mem_rd_manifold),
+        .mem_wr_manifold (mem_wr_manifold),
+        .mem_burst_done  (mem_burst_done),
+        .sdram_clk       (sdram_clk),
+        .sdram_cke       (sdram_cke),
+        .sdram_cs_n      (sdram_cs_n),
+        .sdram_ras_n     (sdram_ras_n),
+        .sdram_cas_n     (sdram_cas_n),
+        .sdram_we_n      (sdram_we_n),
+        .sdram_ba        (sdram_ba),
+        .sdram_addr      (sdram_addr),
+        .sdram_dq        (sdram_dq)
+    );
 
     // ------------------------------------------------------------------ //
     // 4. SPU-13 Cortex (TDM, 1 DSP slice, fits on GW5A-25)              //
