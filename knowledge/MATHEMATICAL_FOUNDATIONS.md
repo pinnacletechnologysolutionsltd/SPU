@@ -97,6 +97,15 @@ Q(√3) is the *minimal field extension of the rationals* that contains the comp
 geometry of the IVM. It is not arbitrary. The SPU-13 operates in Q(√3) because
 the physics demands it.
 
+> **Provenance note:** The Q(√3) surd arithmetic — including the multiplication
+> formula above — was derived for the SPU-13 project from Wildberger's rational
+> trigonometry applied to the IVM lattice. It is not sourced from any external
+> hardware paper. Dr. Thomson's Spread-Quadray Rotor (SQR) paper covers rotor
+> *composition* at a higher level (Hamilton product); it does not specify field
+> arithmetic. The formula `(ac + 3bd) + (ad + bc)√3` is the SPU-13's own
+> mathematical foundation, verified in `MATHEMATICAL_FOUNDATIONS.md` and
+> implemented in `spu_surd_mul_gowin.v` and `spu_unified_alu_tdm.v`.
+
 ---
 
 ## 4. Wildberger's Proof: Division-Free Trigonometry (2005)

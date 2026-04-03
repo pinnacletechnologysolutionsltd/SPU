@@ -19,13 +19,23 @@ The SPU-13 replaces rigid "Cubic" metronomes with a recursive pulse governed by 
 
 ## 3. Hardware Tiers & Parity (`spu13_pins.vh`)
 
-The SPU-13 utilizes a **Hardware Abstraction Layer (HAL)** for bit-exact parity across different FPGA families.
+The SPU-13 utilises a **Hardware Abstraction Layer (HAL)** for bit-exact parity across different FPGA families.
 
-| Tier | FPGA Hardware | Capability |
+| Tier | FPGA Hardware | Memory | Capability |
+| :--- | :--- | :--- | :--- |
+| **Sentinel** | iCE40 LP1K | PSRAM (2×8 Mb) | 4-Axis 32-bit Quadray. |
+| **Cortex** | iCE40 UP5K | PSRAM (2×8 Mb) | 13-Axis Hub with 128KB Fractal Memory. |
+| **Tang 25K** | GW5A-25 | W9825G6KH-6 SDR-SDRAM (32 MB) | 832-bit Sovereign Bus; `spu_mem_bridge_sdram.v` live. |
+| **Tang 20K** | GW2A-18 | DDR3 128 MB (onboard) | DDR3 bridge planned (`spu_mem_bridge_ddr3.v`). |
+| **Golden Core** | ECP5-85F | External DDR3 | Scale-ready node for 13-core collective manifolds. |
+
+### Memory bridges
+
+| Module | Target | Status |
 | :--- | :--- | :--- |
-| **Sentinel** | iCE40 LP1K | 4-Axis 32-bit Quadray. |
-| **Cortex** | iCE40 UP5K | 13-Axis Hub with 128KB Fractal Memory. |
-| **Golden Core** | ECP5-85F | Scale-ready node for 13-core collective manifolds. |
+| `spu_mem_bridge_qspi.v` | PSRAM (iCE40) | ✅ Implemented |
+| `spu_mem_bridge_sdram.v` | W9825G6KH-6 (Tang 25K) | ✅ Implemented — JEDEC init, 52-word burst, auto-refresh |
+| `spu_mem_bridge_ddr3.v` | GW2A DDR3 (Tang 20K) | 🔲 Planned |
 
 ## 4. Telemetry: The Lattice Whisper (PWI)
 

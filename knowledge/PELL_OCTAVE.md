@@ -227,9 +227,35 @@ octave-tagged registers. The octave field itself is not checked by SNAP
 | `software/spu_vm.py` — ROT octave tracking | ✅ Implemented | `RationalSurd.pell_step` counter |
 | `software/programs/pell_octave_test.sas` | ✅ Written | 16 ROT steps, SNAP at each |
 | `knowledge/PELL_OCTAVE.md` (this doc) | ✅ | |
-| `reference/.../SynergeticsMath.hpp` normalize() | ✅ Fixed | Replaced >>2 with octave comment |
-| `hardware/common/rtl/core/spu_rotor_vault.v` | 🔲 Planned | Add octave register; widen addr |
-| `hardware/common/rtl/core/spu_unified_alu_tdm.v` | 🔲 Planned | ROT uses octave increment not multiply |
+| `reference/.../SynergeticsMath.hpp` normalize() | ✅ Fixed | Replaced `>>2` with octave comment |
+| `hardware/common/rtl/core/spu_rotor_vault.v` | ✅ Implemented | 8-entry vault; octave counter in `spu_unified_alu_tdm.v` |
+| `hardware/common/rtl/core/spu_unified_alu_tdm.v` | ✅ Implemented | OP_ROT: 6-cycle TDM FSM, rot_en/rot_axis pulse, octave increment |
+| `hardware/common/rtl/spu_cross_rotor.v` | ✅ Widened | 32-bit fields (was 16-bit); all 8 vault steps fit without overflow |
+
+### Cross-rotor widening note (v2.0)
+
+The vault entries all fit in 16-bit (max P=5042 at step 7), but the Q12
+fixed-point encoding of even step 3 (P=26 → 26×4096 = 106,496) overflowed
+the old 16-bit cross-rotor input. The module was widened to 32-bit fields and
+64-bit packed ports, enabling all 8 steps to be used without overflow.
+
+### Sign-bug record (commit aebc603, April 2026)
+
+A sign error was found in `spu_cross_rotor.v` v1.x:
+
+```verilog
+// WRONG (was)
+nA_full = prod_aa - 3*prod_bb;   // subtraction — incorrect
+
+// CORRECT (now)
+nA_full = prod_aa + 3*prod_bb;   // Q(√3): (a+b√3)(c+d√3) = (ac+3bd) + ...
+```
+
+The bug was invisible in all prior tests because every test vector used the
+identity rotor (Rb=0), making `3·B·Rb = 0` regardless of sign. The
+`MATHEMATICAL_FOUNDATIONS.md` spec always stated the correct PLUS formula.
+The error was a transcription mistake at RTL level, not a design-spec error.
+Regression test added: `(2+√3)² = 7+4√3` — the minimal case requiring Rb≠0.
 
 ---
 
