@@ -58,7 +58,7 @@ to custom silicon, with board-specific constraints, capabilities, and status.
 ---
 
 ### Tier 2 — Tang Primer 20K *(SPU-13 with Integrated DDR3)*
-**Device:** Gowin GW2A-18 (20K LUT, DSP blocks, 55nm)  
+**Device:** Gowin GW2A-LV18PG256C8/I7 (20K LUT, DSP blocks, 55nm)  
 **Board:** Sipeed Tang Primer 20K (~$20 USD)  
 **Core:** SPU-13 Cortex (`spu13_core.v`)
 
@@ -66,7 +66,7 @@ to custom silicon, with board-specific constraints, capabilities, and status.
 |----------|-------|
 | Core width | 832-bit Collective Manifold (13 × 64-bit Quadray lanes) |
 | Registers | 13-axis, 832-bit |
-| On-board RAM | 128MB DDR3 (Winbond W9825G6KH) |
+| On-board RAM | **128MB DDR3 built-in** (16-bit interface, onboard chip) |
 | Display | HDMI via PMOD |
 | DSP | MULT18X18 / ALU54D (replaces SB_MAC16) |
 | Toolchain | Gowin EDA (required for DSP primitive access) |
@@ -77,28 +77,35 @@ to custom silicon, with board-specific constraints, capabilities, and status.
 **Memory layout (128MB DDR3):**
 - `0x00000000–0x00FFFFFF` — Pell/prime lookup tables (16MB)
 - `0x01000000–0x03FFFFFF` — Synergetic Buffer / world geometry (48MB)
-- `0x04000000–0x07FFFFFF` — Fractal-compressed manifold archive (64MB)
+- `0x04000000–0x07FFFFFF` — Fractal-interleaved manifold archive (64MB)
+
+**Note:** 128MB DDR3 onboard is the primary appeal of this board over the 25K.
+No SDRAM add-on needed — ideal for early full-SPU-13 development.
 
 **Status:** 🔶 RTL ready. Awaiting board. DSP primitive rewrite (`gowin-dsp` todo) required for synthesis.
 
 ---
 
 ### Tier 3 — Tang Primer 25K *(Development Flagship)*
-**Device:** Gowin GW5A-25 (25K LUT, 22nm, newest architecture)  
-**Board:** Sipeed Tang Primer 25K (~$25 USD) + 64MB SDRAM PMOD  
+**Device:** Gowin GW5A-LV25MG121C1/I0 (25K LUT, 22nm, newest architecture)  
+**Board:** Sipeed Tang Primer 25K Dock (~$25 USD) + **W9825G6KH SDRAM module (sold separately, ~$5)**  
 **Core:** SPU-13 Cortex (`spu13_core.v`) — same RTL as Tier 2
 
 | Property | Value |
 |----------|-------|
 | Core width | 832-bit (same as Tier 2) |
-| External RAM | 64MB SDRAM via PMOD (`HAL_SDRAM_Winbond.v`) |
+| External RAM | **32MB SDRAM** via Dock 40-pin header (W9825G6KH, 3.3V SDRAM — not DDR3) |
 | PMODs | 3× available (SD card, display, expansion) |
 | Process | 22nm — lowest power of the ladder |
 | Toolchain | nextpnr-gowin (Apicula) + Gowin EDA |
 | Scott Casper contact | GW5A-25 confirmed "fully in production" |
 
-**Recommended use:** Primary development board. SDRAM PMOD provides equivalent
-memory to Tier 2. Three PMODs allow simultaneous SD card + display + SPU bus.
+**Important:** The SDRAM module is **not onboard** — it is a separate daughterboard that
+plugs into the Dock's 40-pin expansion header. Order the W9825G6KH SDRAM module alongside
+the Dock board. Without it, only on-chip BRAM (≈150KB) is available.
+
+**Recommended use:** Primary development board (22nm, lowest power). Three PMODs allow
+simultaneous SD card + display + SPU bus. Buy the SDRAM module at the same time.
 
 **Status:** 🔶 Top file written (`spu_tang_top.v`). SDRAM bridge (`sdram-bridge` todo) required.
 **Availability:** Edge Electronics, Future Electronics, Mouser (per Gowin rep Scott Casper).
