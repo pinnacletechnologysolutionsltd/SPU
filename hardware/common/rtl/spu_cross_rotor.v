@@ -1,4 +1,4 @@
-// spu_cross_rotor.v (v1.1 - Cross-Quaternary SQR Refraction)
+// spu_cross_rotor.v (v1.2 - Sign fix: A' = A*Ra + 3*B*Rb)
 // Objective: Perform Q(sqrt3) multiplication: (A + B*sqrt3) * (Ra + Rb*sqrt3)
 // Field: Rational Field Q(sqrt3).
 // Optimization: Uses parallel multipliers for low-latency Laminar execution.
@@ -36,12 +36,12 @@ module spu_cross_rotor (
     end
 
     // Final Cross-Product Assembly (Combinatorial Stage 2)
-    // A_prime = (A*Ra) - (3*B*Rb)
-    // B_prime = (A*Rb) + (B*Ra)
+    // (A + B√3)(Ra + Rb√3) = (A·Ra + 3·B·Rb) + (A·Rb + B·Ra)·√3
+    // A_prime = A*Ra + 3*B*Rb
+    // B_prime = A*Rb + B*Ra
     
     // Scale back from Q12*Q12 = Q24 to Q12
-    // 3*B*Rb = (B*Rb << 1) + (B*Rb)
-    wire signed [31:0] nA_full = prod_aa - ((prod_bb << 1) + prod_bb);
+    wire signed [31:0] nA_full = prod_aa + ((prod_bb << 1) + prod_bb);
     wire signed [31:0] nB_full = prod_ab + prod_ba;
 
 

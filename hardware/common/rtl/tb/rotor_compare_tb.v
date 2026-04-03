@@ -214,6 +214,22 @@ module rotor_compare_tb;
         else                                fail("cross-rotor: (1)×(1+√3) surd part = 1",
                                                   {48'd0, cross_out[15:0]}, 64'h1000);
 
+        // (2+1*sqrt3) * (2+1*sqrt3) — first test with BOTH B!=0 and Rb!=0.
+        // Expected: A' = 2*2 + 3*1*1 = 7  =>  Q12 = 0x7000
+        //           B' = 2*1 + 1*2   = 4  =>  Q12 = 0x4000
+        // (Pell orbit: (2+sqrt3)^2 = 7+4*sqrt3, step 0->2)
+        cross_axis     = {16'h2000, 16'h1000};   // 2 + 1·√3
+        cross_rotor_in = {16'h2000, 16'h1000};   // 2 + 1·√3
+        @(posedge clk); #1;
+
+        if (cross_out[31:16] === 16'h7000) pass("cross-rotor: (2+sqrt3)^2 rational=7");
+        else                                fail("cross-rotor: (2+sqrt3)^2 rational=7",
+                                                  {48'd0, cross_out[31:16]}, 64'h7000);
+
+        if (cross_out[15:0]  === 16'h4000) pass("cross-rotor: (2+sqrt3)^2 surd=4");
+        else                                fail("cross-rotor: (2+sqrt3)^2 surd=4",
+                                                  {48'd0, cross_out[15:0]}, 64'h4000);
+
         // ----------------------------------------------------------------
         // TEST 3: Thomson circulant — bypass_p5 + identity
         // ----------------------------------------------------------------
