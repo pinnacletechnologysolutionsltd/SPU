@@ -9,6 +9,7 @@ module spu_13_top (
     output piranha_pulse,
     input  alu_start,
     output alu_done,
+    input  [2:0] alu_opcode,  // 0=NOP(pass-through), 1=ROT, 2=ADD, 3=INF
 
     // SPI Flash Interface (The Soul)
     output flash_cs,
@@ -66,20 +67,51 @@ module spu_13_top (
     );
 
     // 2. The 13D Recursive Engine (The Body)
-    // The previous implementation used spu_unified_alu_tdm
+    // Vault v2.0 provides the Pell rotor; ALU applies OP_ROT via TDM multiply.
     wire [17:0] alu_result_18;
     wire [31:0] operand_A, operand_B; // Driven by testbench force
+
+    // Vault → ALU interface
+    wire        alu_rot_en;
+    wire [3:0]  alu_rot_axis;
+    wire [31:0] vault_rotor;
+    wire [7:0]  vault_octave;
+    wire [2:0]  vault_step;
+
+    // Q12-scale raw Pell integer for ALU (steps 0-2 exact; steps 3-7 need wider ALU)
+    wire [15:0] vault_p_q12 = vault_rotor[31:16] << 12;
+    wire [15:0] vault_q_q12 = vault_rotor[15:0]  << 12;
+
+    spu_rotor_vault u_vault (
+        .clk    (clk_12mhz),
+        .reset  (~rst_n),
+        .axis_id(alu_rot_axis),
+        .rot_en (alu_rot_en),
+        .rotor_out (vault_rotor),
+        .octave_out(vault_octave),
+        .step_out  (vault_step)
+    );
+
     spu_unified_alu_tdm alu_inst (
-        .clk(clk_12mhz), 
-        .rst_n(rst_n), 
-        .reset(~rst_n),
-        .start(alu_start),
-        .done(alu_done),
-        .sync_alert(sync_alert), 
-        .led_status(),
-        .A_in(operand_A),
-        .B_in(operand_B),
-        .result_18(alu_result_18)
+        .clk          (clk_12mhz),
+        .rst_n        (rst_n),
+        .reset        (~rst_n),
+        .start        (alu_start),
+        .opcode       (alu_opcode),
+        .done         (alu_done),
+        .sync_alert   (sync_alert),
+        .led_status   (),
+        .A_in         (operand_A),
+        .B_in         (operand_B),
+        .F_rat        ({16'b0, vault_p_q12}),
+        .F_surd       ({16'b0, vault_q_q12}),
+        .G_rat(32'h0), .G_surd(32'h0), .H_rat(32'h0), .H_surd(32'h0),
+        .rot_axis_in  (4'd0),
+        .rot_en       (alu_rot_en),
+        .rot_axis_out (alu_rot_axis),
+        .adaptive_tau_q(32'hFFFF_FFFF),
+        .C_in(32'h0), .D_in(32'h0),
+        .result_18    (alu_result_18)
     );
 
     wire [23:0] current_surd = {6'b0, alu_result_18};

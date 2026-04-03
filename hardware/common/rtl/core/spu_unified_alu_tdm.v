@@ -1,7 +1,28 @@
-// SPU Unified TDM-ALU (v1.0)
+// SPU Unified TDM-ALU (v2.0)
 // Objective: A resource-folded, stability-guarded, instruction-driven ALU.
 // Architecture: TDM-Folded (1-DSP) with integrated Davis Law Gaskets.
-// Functionality: Q(sqrt3) Arithmetic, Active Inference, and Metabolic Scaling.
+// Functionality: Q(sqrt3) Arithmetic, Pell Orbit ROT, Active Inference.
+//
+// Opcodes:
+//   OP_NOP = 3'b000  — pass A_in to A_out unchanged
+//   OP_ROT = 3'b001  — Q(sqrt3) rotation: (A+B√3) × (F_rat+F_surd√3)
+//   OP_ADD = 3'b010  — Q(sqrt3) add: A_out=A+C, B_out=B+D
+//   OP_INF = 3'b011  — Active Inference (predictive coding)
+//
+// ROT TDM schedule (6 clocks: IDLE → S1..S4 → FINISH):
+//   IDLE     : latch A,B,Ra,Rb; set DSP ← A*Ra; assert rot_en
+//   ROT_S1   : capture prod_aa = A*Ra; DSP ← B*Rb
+//   ROT_S2   : capture prod_bb = B*Rb; DSP ← A*Rb
+//   ROT_S3   : capture prod_ab = A*Rb; DSP ← B*Ra
+//   ROT_S4   : capture prod_ba = B*Ra
+//   ROT_FIN  : A'=prod_aa - 3*prod_bb; B'=prod_ab + prod_ba; Q12 shift; done
+//
+//   A' = A*Ra - 3*B*Rb  (P²-3Q²=1 norm preserved if rotor is Pell unit)
+//   B' = A*Rb + B*Ra
+//   Q12 shift: input data Q12×Q12 → Q24; extract bits[27:12] → Q12
+//
+// rot_en/rot_axis: one-cycle pulse in IDLE on OP_ROT start.
+//   External vault advances step counter on this pulse.
 
 module spu_unified_alu_tdm #(
     parameter BIT_WIDTH = 32,
@@ -13,10 +34,15 @@ module spu_unified_alu_tdm #(
     // Instruction Interface
     input  wire        start,
     input  wire [2:0]  opcode,
-    input  wire [31:0] A_in, B_in, C_in, D_in, // Operand 1
-    input  wire [31:0] F_rat, F_surd,         // Rotor coefficients
+    input  wire [31:0] A_in, B_in, C_in, D_in,
+    input  wire [31:0] F_rat, F_surd,    // Rotor {Ra,Rb} in Q12 (from vault)
     input  wire [31:0] G_rat, G_surd,
     input  wire [31:0] H_rat, H_surd,
+    
+    // Vault interface — pulse rot_en for one cycle when ROT starts
+    input  wire [3:0]  rot_axis_in,      // which axis to rotate (0-12)
+    output reg         rot_en,           // 1-cycle pulse → vault.rot_en
+    output reg  [3:0]  rot_axis_out,     // passthrough → vault.axis_id
     
     // Adaptive Metabolism
     input  wire [31:0] adaptive_tau_q,
@@ -36,10 +62,13 @@ module spu_unified_alu_tdm #(
     output wire        is_dissonant
 );
 
+    // Opcode constants
+    localparam OP_NOP = 3'b000;
+    localparam OP_ROT = 3'b001;
+    localparam OP_ADD = 3'b010;
+    localparam OP_INF = 3'b011;
+
     // --- 1. The Single Shared Multiplier (TDM Core) ---
-    // Explicit SB_MAC16 instantiation guarantees exactly 1 DSP slice.
-    // SB_MAC16 is a 16x16 -> 32-bit signed multiply-accumulate; inputs are
-    // the lower 16 bits of each RationalSurd operand (the P or Q component).
     reg  [15:0] mult_a, mult_b;
     wire [31:0] prod;
 
@@ -72,24 +101,22 @@ module spu_unified_alu_tdm #(
     // TDM State Machine
     reg [3:0] state;
     localparam IDLE       = 4'd0;
-    localparam ROT_FB_1   = 4'd1; // F_rat * B_in
-    localparam ROT_FB_2   = 4'd2; // F_surd * B_surd (Not implemented in SPU-4 simplicity)
-    localparam ROT_FB_3   = 4'd3; 
+    localparam ROT_S1     = 4'd1;   // prod = A*Ra; DSP ← B*Rb
+    localparam ROT_S2     = 4'd2;   // prod = B*Rb; DSP ← A*Rb
+    localparam ROT_S3     = 4'd3;   // prod = A*Rb; DSP ← B*Ra
+    localparam ROT_S4     = 4'd7;   // prod = B*Ra; all 4 products latched
+    localparam ROT_FINISH = 4'd8;   // compute A', B'; assert done
     localparam DAVIS_CHK  = 4'd4;
     localparam INF_CHK    = 4'd5;
     localparam FINISH     = 4'd6;
 
     // --- 2. The Davis Law Gasket (Stability Guard) ---
-    // Real-time Quadrance check to prevent cubic leakage.
-    // Q = (A^2 + B^2 + C^2 + D^2) / 2
     reg [31:0] q_accum;
     assign davis_violation = (q_accum > adaptive_tau_q);
 
-    // Suppresses minor "Cubic Noise" if error is within precision.
-    reg [127:0] prior_state; // Latched from previous cycle
+    reg [127:0] prior_state;
     
     // --- 3.1. LFSR Dither Generator ---
-    // Injects microscopic jitter to help physical hardware snap despite EMI/Vacuum Noise
     reg [15:0] lfsr;
     always @(posedge clk or posedge reset) begin
         if (reset) lfsr <= 16'hACE1;
@@ -97,54 +124,132 @@ module spu_unified_alu_tdm #(
     end
     wire [31:0] err_dither = {31'b0, lfsr[0]};
 
-    // Fix: The predictive coding error should be the difference between incoming Reality (A_in) and Expectation (prior_state), not A_out.
     wire [31:0] raw_err = (A_in > prior_state[31:0]) ? (A_in - prior_state[31:0]) : (prior_state[31:0] - A_in);
-    wire [31:0] err_sum = raw_err + err_dither;
-    assign is_dissonant = (err_sum > 32'h00001000); // 1.0 fixed-point precision
+    wire [31:0] err_sum  = raw_err + err_dither;
+    assign is_dissonant  = (err_sum > 32'h00001000);
 
     // --- 3.5. Divergence Watchdog ---
-    // Safety measure: If the system stays in a Laminar lock (ignoring reality) for too long, force-accept the new state.
     reg [4:0] watchdog_cnt;
+
+    // --- ROT intermediate product registers ---
+    reg signed [31:0] prod_aa, prod_bb, prod_ab, prod_ba;
+    reg signed [31:0] rot_nA_r, rot_nB_r;  // blocking intermediates for ROT_FINISH
+    reg [15:0] rot_A, rot_B, rot_Ra, rot_Rb;
 
     // --- 4. ALU Execution Logic ---
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            state <= IDLE;
+            state        <= IDLE;
+            rot_en       <= 1'b0;
+            rot_axis_out <= 4'b0;
             A_out <= 0; B_out <= 0; C_out <= 0; D_out <= 0;
-            q_accum <= 0;
-            done <= 0;
-            prior_state <= 0;
+            q_accum      <= 0;
+            done         <= 0;
+            prior_state  <= 0;
             watchdog_cnt <= 0;
+            prod_aa <= 0; prod_bb <= 0; prod_ab <= 0; prod_ba <= 0;
+            rot_A <= 0; rot_B <= 0; rot_Ra <= 0; rot_Rb <= 0;
+            mult_a <= 0; mult_b <= 0;
         end else begin
+            rot_en <= 1'b0; // default de-assert
+            done   <= 1'b0;
+
             case (state)
                 IDLE: begin
-                    done <= 0;
                     if (start) begin
-                        // Stage 1: Latched inputs and start Quadrance calculation
-                        mult_a <= A_in[15:0]; mult_b <= A_in[15:0];
-                        state <= DAVIS_CHK;
+                        case (opcode)
+                            OP_ROT: begin
+                                rot_A        <= A_in[15:0];
+                                rot_B        <= B_in[15:0];
+                                rot_Ra       <= F_rat[15:0];
+                                rot_Rb       <= F_surd[15:0];
+                                mult_a       <= A_in[15:0];
+                                mult_b       <= F_rat[15:0]; // DSP ← A*Ra
+                                rot_en       <= 1'b1;        // advance vault
+                                rot_axis_out <= rot_axis_in;
+                                state        <= ROT_S1;
+                            end
+                            OP_ADD: begin
+                                A_out <= A_in + C_in;
+                                B_out <= B_in + D_in;
+                                done  <= 1'b1;
+                                state <= IDLE;
+                            end
+                            OP_INF: begin
+                                mult_a <= A_in[15:0];
+                                mult_b <= A_in[15:0];
+                                state  <= DAVIS_CHK;
+                            end
+                            default: begin // OP_NOP
+                                A_out <= A_in;
+                                done  <= 1'b1;
+                            end
+                        endcase
                     end
                 end
 
+                // ── ROT path: TDM Q(√3) multiply ─────────────────────────
+                // DSP: prod_r is captured ONE cycle AFTER mult_a/b are set.
+                // Schedule:
+                //   IDLE      : mult ← A, Ra  (DSP starts A*Ra)
+                //   ROT_S1    : prod=garbage   mult ← B, Rb  (start B*Rb)
+                //   ROT_S2    : prod=A*Ra→aa   mult ← A, Rb  (start A*Rb)
+                //   ROT_S3    : prod=B*Rb→bb   mult ← B, Ra  (start B*Ra)
+                //   ROT_S4    : prod=A*Rb→ab   (no new mult; B*Ra already in flight)
+                //   ROT_FINISH: prod=B*Ra→ba   compute A',B'; done
+
+                ROT_S1: begin
+                    // prod = garbage (prev cycle); set up B*Rb
+                    mult_a <= rot_B;
+                    mult_b <= rot_Rb;
+                    state  <= ROT_S2;
+                end
+
+                ROT_S2: begin
+                    prod_aa <= $signed(prod); // A*Ra ✓
+                    mult_a  <= rot_A;
+                    mult_b  <= rot_Rb; // DSP ← A*Rb
+                    state   <= ROT_S3;
+                end
+
+                ROT_S3: begin
+                    prod_bb <= $signed(prod); // B*Rb ✓
+                    mult_a  <= rot_B;
+                    mult_b  <= rot_Ra; // DSP ← B*Ra
+                    state   <= ROT_S4;
+                end
+
+                ROT_S4: begin
+                    prod_ab <= $signed(prod); // A*Rb ✓
+                    // B*Ra already in flight from ROT_S3 mult setup
+                    state   <= ROT_FINISH;
+                end
+
+                ROT_FINISH: begin
+                    prod_ba <= $signed(prod); // B*Ra ✓
+                    // A' = A*Ra + 3*B*Rb  (Q(√3): (a+b√3)(c+d√3) = ac+3bd + (ad+bc)√3)
+                    // B' = A*Rb + B*Ra
+                    // Q12 shift: take [27:12] of Q24 product → Q12
+                    rot_nA_r = $signed(prod_aa) + ($signed(prod_bb) + ($signed(prod_bb) <<< 1));
+                    rot_nB_r = $signed(prod_ab) + $signed(prod);  // prod = B*Ra (not yet latched)
+                    A_out <= {16'b0, rot_nA_r[27:12]};
+                    B_out <= {16'b0, rot_nB_r[27:12]};
+                    done  <= 1'b1;
+                    state <= IDLE;
+                end
+
+                // ── INF/Davis path ────────────────────────────────────────
                 DAVIS_CHK: begin
-                    // Simplified Quadrance accumulation (A^2 + B^2 + C^2 + D^2)
-                    // In a full TDM version, this would take 4 cycles.
-                    // For the audit demo, we use the multiplier to check A^2.
-                    q_accum <= prod; 
-                    
-                    // Move to the next state (Inference/Logic)
-                    state <= INF_CHK;
+                    q_accum <= prod;
+                    state   <= INF_CHK;
                 end
 
                 INF_CHK: begin
-                    // Apply Active Inference logic
-                    // If dissonant (error > threshold), or if the watchdog times out, update reality. 
-                    // Otherwise, hold prior but increment the watchdog.
                     if (is_dissonant || watchdog_cnt > 5'd15) begin
-                        A_out <= A_in; // Update reality
-                        watchdog_cnt <= 0; // Reset watchdog
+                        A_out        <= A_in;
+                        watchdog_cnt <= 0;
                     end else begin
-                        A_out <= prior_state[31:0]; // Hold the prior (Stay Laminar)
+                        A_out        <= prior_state[31:0];
                         watchdog_cnt <= watchdog_cnt + 1'b1;
                     end
                     state <= FINISH;
@@ -152,14 +257,16 @@ module spu_unified_alu_tdm #(
 
                 FINISH: begin
                     prior_state <= {D_out, C_out, B_out, A_out};
-                    done <= 1;
+                    done  <= 1'b1;
                     state <= IDLE;
                 end
+
+                default: state <= IDLE;
             endcase
         end
     end
 
     assign led_status = davis_violation ^ is_dissonant ^ A_out[0];
-    assign result_18 = A_out[17:0];
+    assign result_18  = A_out[17:0];
 
 endmodule
