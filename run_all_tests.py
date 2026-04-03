@@ -31,6 +31,9 @@ def main():
         "hardware/spu4/rtl",
         "hardware/boards/icesugar",       # local board tops (must precede reference/)
         "hardware/boards/tang_nano_9k",
+        "hardware/boards/tang_primer_25k",
+        "hardware/vendor/gowin",          # Gowin DSP / BSRAM primitives
+        "hardware/vendor/ice40",          # iCE40 simulation stubs
         "reference/synergeticrenderer/Laminar-Core/hardware/archive",
         "reference/synergeticrenderer/Laminar-Core/hardware/rtl",
         "reference/synergeticrenderer/Laminar-Core/hardware/tests",
