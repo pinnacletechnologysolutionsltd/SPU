@@ -43,12 +43,29 @@ module spu13_core #(
     assign current_axis_data = manifold_reg[axis_ptr*64 +: 64];
 
     // 3. Stage 1: Rotor & Axis Fetch (Pulse 8)
+    // Vault v2.0: Pell Octave tracking — rot_en driven by sequencer pulse.
+    // In SPU-13 context, ROT fires once per axis per sovereign cycle.
     wire [31:0] current_rotor;
+    wire [7:0]  current_octave;
+    wire [2:0]  current_step;
     spu_rotor_vault u_vault (
         .clk(clk),
-        .addr(axis_ptr),
-        .rotor_out(current_rotor)
+        .reset(!rst_n),
+        .axis_id(axis_ptr[3:0]),
+        .rot_en(1'b0),          // sequencer drives rot_en; stub=0 for read-only
+        .rotor_out(current_rotor),
+        .octave_out(current_octave),
+        .step_out(current_step)
     );
+
+    // Scale raw Pell integers (from vault) to Q12 for the cross-rotor.
+    // Steps 0-2: P in {1,2,7}, Q in {0,1,4} — all fit in 4 bits, exact Q12 via <<12.
+    // Steps 3-7: P>7, overflow int16 when scaled — requires wider cross-rotor.
+    //            These steps are unreachable while rot_en=0 (current stub).
+    //            See knowledge/PELL_OCTAVE.md §"Hardware Impact" for the plan.
+    wire [15:0] rotor_p_q12 = current_rotor[31:16] << 12;
+    wire [15:0] rotor_q_q12 = current_rotor[15:0]  << 12;
+    wire [31:0] rotor_q12   = {rotor_p_q12, rotor_q_q12};
 
     // Stage 2: The SQR Cross-Product (Pulse 13)
     wire [31:0] q_prime_ab;
@@ -56,7 +73,7 @@ module spu13_core #(
         .clk(clk),
         .reset(!rst_n),
         .q_axis(current_axis_data[63:32]), // {A, B}
-        .r_rotor(current_rotor),
+        .r_rotor(rotor_q12),               // Q12-scaled Pell rotor
         .q_prime(q_prime_ab)
     );
 
