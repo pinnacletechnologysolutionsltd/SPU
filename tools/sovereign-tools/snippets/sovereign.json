@@ -1,0 +1,66 @@
+{
+  "//": "SPU-13 Sovereign Engine — VS Code snippets for Sovereign Assembly (.sas)",
+  "Load register (surd immediate)": {
+    "prefix": "ld",
+    "body": ["LD R${1:0}, ${2:1}, ${3:0}  ; R$1 = $2 + $3·√3"],
+    "description": "Load a surd immediate into a scalar register (a + b·√3)"
+  },
+  "Pell rotation step": {
+    "prefix": "rot",
+    "body": ["ROT R${1:0}  ; Pell step: ×(2+√3)"],
+    "description": "Multiply register by the Pell rotor (2+√3)"
+  },
+  "Davis Gate SNAP assert": {
+    "prefix": "snap",
+    "body": ["SNAP  ; Davis Gate: assert manifold laminar"],
+    "description": "Assert that the manifold is in a laminar (stable) state"
+  },
+  "Pell rotor loop": {
+    "prefix": "pell",
+    "body": [
+      "; Pell rotor — walk the orbit",
+      "    LD   R${1:0}, 1, 0    ; R$1 = 1 (Pell seed)",
+      "LOOP:",
+      "    ROT  R$1          ; multiply by (2+√3)",
+      "    LOG  R$1          ; print state",
+      "    JMP  LOOP"
+    ],
+    "description": "Full Pell rotor loop: seed, rotate, log, repeat"
+  },
+  "Load Quadray register": {
+    "prefix": "qload",
+    "body": ["QLOAD QR${1:0}, R${2:0}"],
+    "description": "Load scalar register value into a Quadray register"
+  },
+  "Quadray add": {
+    "prefix": "qadd",
+    "body": ["QADD QR${1:0}, QR${2:1}"],
+    "description": "Add two Quadray registers"
+  },
+  "Vector Equilibrium check": {
+    "prefix": "equil",
+    "body": ["EQUIL  ; Vector Equilibrium check — hex sum must = (0,0)"],
+    "description": "Assert Vector Equilibrium: all 12 Quadray vectors sum to zero"
+  },
+  "Janus flip": {
+    "prefix": "jinv",
+    "body": ["JINV R${1:0}  ; Janus flip: negate surd component"],
+    "description": "Janus inversion: flip the surd (√3) component sign"
+  },
+  "Davis Gate block": {
+    "prefix": "davis",
+    "body": [
+      "; Davis Gate — stability checkpoint",
+      "; C = τ/K: if ΣABCD ≠ 0 (Cubic Leak), Henosis (soft recovery) fires",
+      "SNAP  ; assert manifold laminar before critical section",
+      "${0}",
+      "SNAP  ; assert manifold laminar after critical section"
+    ],
+    "description": "Davis Gate block: bracket critical code with SNAP stability checks"
+  },
+  "Wildberger spread": {
+    "prefix": "spread",
+    "body": ["SPREAD R${1:0}, QR${2:0}, QR${3:1}  ; Wildberger spread"],
+    "description": "Compute the Wildberger Spread (sin²θ ratio) between two Quadray vectors"
+  }
+}

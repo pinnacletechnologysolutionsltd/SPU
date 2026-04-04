@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<!--
+  SPU-13 Sovereign Engine — KSyntaxHighlighting grammar
+  File: sovereign.xml
+  Language: Sovereign Assembly (.sas) / Laminar Lang (.lam)
+  Install: ~/.local/share/org.kde.syntax-highlighting/syntax/sovereign.xml
+-->
+<language
+  name="Sovereign Assembly"
+  section="Assembly"
+  extensions="*.sas;*.lam"
+  mimetype="text/x-sovereign-asm"
+  version="1"
+  kateversion="5.0"
+  author="SPU-13 Project"
+  license="CC0-1.0"
+  indenter="normal">
+
+  <highlighting>
+
+    <!-- ── Opcode lists ───────────────────────────────────────────────── -->
+
+    <list name="opcodes">
+      <item>LD</item>
+      <item>ADD</item>
+      <item>SUB</item>
+      <item>MUL</item>
+      <item>ROT</item>
+      <item>LOG</item>
+    </list>
+
+    <list name="flowops">
+      <item>JMP</item>
+      <item>SNAP</item>
+      <item>COND</item>
+      <item>CALL</item>
+      <item>RET</item>
+      <item>NOP</item>
+    </list>
+
+    <list name="quadrayops">
+      <item>QLOAD</item>
+      <item>QADD</item>
+      <item>QROT</item>
+      <item>QNORM</item>
+      <item>QLOG</item>
+      <item>SPREAD</item>
+      <item>HEX</item>
+      <item>EQUIL</item>
+      <item>IDNT</item>
+      <item>JINV</item>
+      <item>ANNE</item>
+    </list>
+
+    <!-- ── Contexts ───────────────────────────────────────────────────── -->
+
+    <contexts>
+      <context name="Normal" attribute="Normal Text" lineEndContext="#stay">
+
+        <!-- Comments: semicolon to end of line -->
+        <DetectChar char=";" attribute="Comment" context="Comment"/>
+
+        <!-- Label definitions: word followed by colon -->
+        <RegExpr String="^\s*\w+:" attribute="Label" context="#stay"/>
+
+        <!-- Quadray registers QR0–QR12 (before scalar to avoid partial match) -->
+        <RegExpr String="\bQR([0-9]|1[0-2])\b" attribute="QuadrayRegister" context="#stay"/>
+
+        <!-- Scalar registers R0–R25 -->
+        <RegExpr String="\bR([0-9]|1[0-9]|2[0-5])\b" attribute="Register" context="#stay"/>
+
+        <!-- Hexadecimal literals -->
+        <RegExpr String="0x[0-9A-Fa-f]+" attribute="Hex" context="#stay"/>
+
+        <!-- Decimal integers (including negative) -->
+        <RegExpr String="-?[0-9]+" attribute="Number" context="#stay"/>
+
+        <!-- Keywords: quadray/geometry ops first (longer prefixes win) -->
+        <keyword String="quadrayops" attribute="QuadrayKeyword" context="#stay"/>
+
+        <!-- Keywords: control-flow opcodes -->
+        <keyword String="flowops" attribute="FlowKeyword" context="#stay"/>
+
+        <!-- Keywords: scalar arithmetic opcodes -->
+        <keyword String="opcodes" attribute="Keyword" context="#stay"/>
+
+      </context>
+
+      <!-- Comment context: consume rest of line -->
+      <context name="Comment" attribute="Comment" lineEndContext="#pop">
+        <LineContinue attribute="Comment" context="#stay"/>
+      </context>
+    </contexts>
+
+    <!-- ── Item data (attribute → default style) ─────────────────────── -->
+
+    <itemDatas>
+      <itemData name="Normal Text"      defStyleNum="dsNormal"/>
+      <itemData name="Keyword"          defStyleNum="dsKeyword"/>
+      <itemData name="FlowKeyword"      defStyleNum="dsControlFlow"/>
+      <itemData name="QuadrayKeyword"   defStyleNum="dsFunction"/>
+      <itemData name="Register"         defStyleNum="dsVariable"/>
+      <itemData name="QuadrayRegister"  defStyleNum="dsDataType"/>
+      <itemData name="Hex"              defStyleNum="dsBaseN"/>
+      <itemData name="Number"           defStyleNum="dsDecVal"/>
+      <itemData name="Label"            defStyleNum="dsPreprocessor"/>
+      <itemData name="Comment"          defStyleNum="dsComment"/>
+    </itemDatas>
+
+  </highlighting>
+
+  <general>
+    <comments>
+      <comment name="singleLine" start=";"/>
+    </comments>
+    <keywords casesensitive="1"/>
+  </general>
+
+</language>
