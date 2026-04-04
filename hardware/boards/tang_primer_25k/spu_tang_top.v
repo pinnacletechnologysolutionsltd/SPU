@@ -7,7 +7,7 @@
 //   SPU-13 Cortex (TDM) + 4× SPU-4 Sentinel + SDRAM bridge fits comfortably.
 //
 // Memory:
-//   Onboard SDRAM  — spu_mem_bridge_sdram.v (TODO: implement post board-arrival)
+//   Onboard SDRAM  — spu_mem_bridge_sdram.v (W9825G6KH-6, 32 MB)
 //   PSRAM Bank 0   — APS6404L on PMOD-A (your 8 Mb module)
 //   PSRAM Bank 1   — APS6404L on PMOD-B (your second 8 Mb module)
 //

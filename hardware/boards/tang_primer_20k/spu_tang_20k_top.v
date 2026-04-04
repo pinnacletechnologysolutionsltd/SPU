@@ -1,4 +1,4 @@
-// spu_tang_20k_top.v — Tang Primer 20K board top (v1.0)
+// spu_tang_20k_top.v — Tang Primer 20K board top (v2.0)
 // Target:  GW2A-LV18PG256C8/I7 (Tang Primer 20K)
 // Crystal: 27 MHz  →  rPLL  →  24 MHz (clk_fast) + Piranha Pulse (61.44 kHz)
 //
@@ -8,9 +8,9 @@
 //   48 DSPs is a useful increase over the 25K's 28 — good for future ALU work.
 //
 // Memory:
-//   Onboard DDR3 (MT41K128M16JT-125, 128 MB) — spu_mem_bridge_ddr3.v (TBD)
-//   LiteDRAM GW2A target will generate the PHY + controller Verilog.
-//   Until then: DDR3 outputs held at safe idle; mem_ready = 0.
+//   Onboard DDR3 (MT41K128M16JT-125, 128 MB) — spu_mem_bridge_ddr3.v
+//   LiteDRAM GW2A target will replace spu_mem_bridge_ddr3 with a full PHY
+//   and trained DDR3 controller when timing-accurate operation is required.
 //
 // Video:
 //   HDMI TX via LVDS output buffer (OBUFDS) — HAL_Cartesian driver TBD.
@@ -22,7 +22,7 @@
 //   led[0] = PLL locked
 //   led[1] = Janus point (manifold stable)
 //   led[2] = bloom_complete pulse
-//   led[3] = DDR3 init done (stays 1 until bridge is wired)
+//   led[3] = DDR3 mem_ready
 //   led[4] = Whisper TX activity
 //
 // PLL: 27 MHz → 24 MHz
@@ -40,8 +40,6 @@ module spu_tang_20k_top (
     output wire [4:0]  led,              // active-low status LEDs
 
     // Onboard DDR3 (MT41K128M16JT-125, 128 MB)
-    // ⚠ These signals connect to the LiteDRAM-generated PHY wrapper.
-    //   Until spu_mem_bridge_ddr3.v is implemented they are held at safe idle.
     output wire        ddr3_ck_p,
     output wire        ddr3_ck_n,
     output wire        ddr3_cke,
@@ -103,11 +101,9 @@ module spu_tang_20k_top (
     wire      rst_n   = (rst_ctr == 4'h0);
 
     always @(posedge clk_fast) begin
-        if (!pll_lock)      rst_ctr <= 4'hF;
-        else if (!rst_n)    rst_ctr <= rst_ctr - 1;
+        if (!pll_lock)   rst_ctr <= 4'hF;
+        else if (!rst_n) rst_ctr <= rst_ctr - 1;
     end
-
-    wire sys_reset = !rst_n;
 
     // ------------------------------------------------------------------ //
     // 3. Fractal clock: Fibonacci pulse (61.44 kHz Piranha Pulse)         //
@@ -116,7 +112,7 @@ module spu_tang_20k_top (
 
     spu_sierpinski_clk u_fclk (
         .clk       (clk_fast),
-        .reset     (sys_reset),
+        .rst_n     (rst_n),
         .phi_8     (phi_8),
         .phi_13    (phi_13),
         .phi_21    (phi_21),
@@ -137,58 +133,86 @@ module spu_tang_20k_top (
     );
 
     // ------------------------------------------------------------------ //
-    // 5. DDR3 memory bridge stub                                          //
-    //    ⚠ TODO: replace with spu_mem_bridge_ddr3 (LiteDRAM GW2A target) //
-    //    Until then: DDR3 outputs held at safe idle state.               //
+    // 5. DDR3 memory bridge (MT41K128M16JT-125, 128 MB)                  //
+    //    Sovereign Manifold Bus wires                                      //
     // ------------------------------------------------------------------ //
-    wire mem_ready = 1'b0;   // core waits in IDLE until bridge ready
+    wire                          mem_ready;
+    wire                          mem_burst_rd;
+    wire                          mem_burst_wr;
+    wire [`MEM_ADDR_WIDTH-1:0]    mem_addr;
+    wire [`MANIFOLD_WIDTH-1:0]    mem_rd_manifold;
+    wire [`MANIFOLD_WIDTH-1:0]    mem_wr_manifold;
+    wire                          mem_burst_done;
 
-    // DDR3 safe idle: deselect, CKE low, reset asserted
-    assign ddr3_ck_p    = 1'b0;
-    assign ddr3_ck_n    = 1'b1;
-    assign ddr3_cke     = 1'b0;
-    assign ddr3_cs_n    = 1'b1;
-    assign ddr3_ras_n   = 1'b1;
-    assign ddr3_cas_n   = 1'b1;
-    assign ddr3_we_n    = 1'b1;
-    assign ddr3_odt     = 1'b0;
-    assign ddr3_reset_n = 1'b0;   // keep DRAM in reset
-    assign ddr3_ba      = 3'b0;
-    assign ddr3_addr    = 14'b0;
-    assign ddr3_dm      = 2'b0;
-    // ddr3_dq / ddr3_dqs_p / ddr3_dqs_n are inout — tristated by default
+    spu_mem_bridge_ddr3 u_ddr3 (
+        .clk             (clk_fast),
+        .reset           (!rst_n),
+        .mem_ready       (mem_ready),
+        .mem_burst_rd    (mem_burst_rd),
+        .mem_burst_wr    (mem_burst_wr),
+        .mem_addr        (mem_addr),
+        .mem_rd_manifold (mem_rd_manifold),
+        .mem_wr_manifold (mem_wr_manifold),
+        .mem_burst_done  (mem_burst_done),
+        .ddr3_ck_p       (ddr3_ck_p),
+        .ddr3_ck_n       (ddr3_ck_n),
+        .ddr3_cke        (ddr3_cke),
+        .ddr3_cs_n       (ddr3_cs_n),
+        .ddr3_ras_n      (ddr3_ras_n),
+        .ddr3_cas_n      (ddr3_cas_n),
+        .ddr3_we_n       (ddr3_we_n),
+        .ddr3_odt        (ddr3_odt),
+        .ddr3_reset_n    (ddr3_reset_n),
+        .ddr3_ba         (ddr3_ba),
+        .ddr3_addr       (ddr3_addr),
+        .ddr3_dq         (ddr3_dq),
+        .ddr3_dqs_p      (ddr3_dqs_p),
+        .ddr3_dqs_n      (ddr3_dqs_n),
+        .ddr3_dm         (ddr3_dm)
+    );
 
     // ------------------------------------------------------------------ //
     // 6. SPU-13 Cortex core                                               //
     // ------------------------------------------------------------------ //
-    wire [12:0] manifold_P, manifold_Q;
-    wire        janus_point;
-    wire [15:0] mem_rd_data = 16'h0;   // DDR3 read data (stub)
+    wire [`MANIFOLD_WIDTH-1:0] manifold_out;
+    wire                       is_janus_point;
 
     spu13_core #(
         .DEVICE("GW2A")
     ) u_spu13 (
-        .clk            (clk_fast),
-        .reset          (sys_reset),
-        .heartbeat      (heartbeat),
-        .bloom_intensity(bloom_intensity),
-        .mem_ready      (mem_ready),
-        .mem_rd_data    (mem_rd_data),
-        .manifold_P     (manifold_P),
-        .manifold_Q     (manifold_Q),
-        .janus_point    (janus_point)
+        .clk             (clk_fast),
+        .rst_n           (rst_n),
+        .phi_8           (phi_8),
+        .phi_13          (phi_13),
+        .phi_21          (phi_21),
+        .mem_ready       (mem_ready),
+        .mem_burst_rd    (mem_burst_rd),
+        .mem_burst_wr    (mem_burst_wr),
+        .mem_addr        (mem_addr),
+        .mem_rd_manifold (mem_rd_manifold),
+        .mem_wr_manifold (mem_wr_manifold),
+        .mem_burst_done  (mem_burst_done),
+        .current_axis_ptr(),
+        .current_axis_data(),
+        .manifold_out    (manifold_out),
+        .bloom_complete  (),
+        .is_janus_point  (is_janus_point)
     );
 
     // ------------------------------------------------------------------ //
     // 7. Whisper TX (PWI telemetry → RP2350)                              //
     // ------------------------------------------------------------------ //
-    SPU_WHISPER_TX u_whisper (
-        .clk        (clk_fast),
-        .reset      (sys_reset),
-        .heartbeat  (heartbeat),
-        .manifold_P (manifold_P[0]),
-        .manifold_Q (manifold_Q[0]),
-        .whisper_out(whisper_tx)
+    wire whisper_ready;
+
+    SPU_WHISPER_TX #(.K_FACTOR(8)) u_whisper (
+        .clk     (clk_fast),
+        .rst_n   (rst_n),
+        .trig_en (bloom_complete),
+        .is_sync (1'b0),
+        .surd_a  (manifold_out[15:0]),
+        .surd_b  (manifold_out[31:16]),
+        .pwi_out (whisper_tx),
+        .tx_ready(whisper_ready)
     );
 
     // ------------------------------------------------------------------ //
@@ -217,9 +241,9 @@ module spu_tang_20k_top (
     assign whisper_active = |whisper_stretch;
 
     assign led[0] = !pll_lock;
-    assign led[1] = !janus_point;
+    assign led[1] = !is_janus_point;
     assign led[2] = !bloom_complete;
-    assign led[3] = 1'b1;            // DDR3 init: always-off until bridge live
+    assign led[3] = !mem_ready;       // DDR3 init done
     assign led[4] = !whisper_active;
 
 endmodule
