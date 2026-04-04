@@ -66,6 +66,7 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_laminar_power.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_ARTERY_FIFO.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_WHISPER_TX.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_system.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_ddr3.v
 
 # ─── Board top ─────────────────────────────────────────────────────────────
 read_verilog -I hardware/common/rtl hardware/boards/tang_primer_20k/spu_tang_20k_top.v
