@@ -1,30 +1,31 @@
 // tang_primer_25k.cst — Physical Constraints for Tang Primer 25K
-// Device:  GW5A-LV25MG121C1/I0  (GW5A-25, MG121 BGA package)
-// Crystal: 50 MHz
+// Device:  GW5A-LV25MG121NES  (GW5A-25A, 121-ball BGA)
+// Crystal: 50 MHz at E2
 //
-// ⚠ VERIFY ALL PINS against the official Tang Primer 25K schematic before
-//   loading onto hardware:
-//   https://dl.sipeed.com/shareURL/TANG/Primer_25K
+// Pin sources (cross-referenced against three official Sipeed CSTs):
+//   nestang-25k/src/nestang.cst          (GW5A-LV25MG121NES)
+//   ZiyangYE/LicheeTang25k_SDRAM         (GW5A-LV25MG121NC2/I1, same pinout)
+//   sipeed/TangPrimer-25K-example pmod_led.cst
 //
-// IO voltage: all user IO on GW5A-LV25MG121 is 3.3V LVCMOS by default.
-// The SDRAM is 3.3V; PMOD headers are 3.3V.
+// sdram_cke is NOT exposed here — it is hardwired to VCC on the board.
+// (Absent from every official Sipeed CST; spu_mem_bridge_sdram drives it 1'b1.)
 //
-// PSRAM modules (your two APS6404L boards) connect via PMOD headers.
-// See PMOD A / PMOD B pin assignments below.
+// PMOD connectors are free for the official Sipeed 512Mb SDRAM expansion module.
+// Pins will be added to this CST when the expansion module pinout is confirmed.
 //
 // CC0 1.0 Universal.
 
 // ─── System clock (50 MHz crystal) ──────────────────────────────────────
-IO_LOC  "sys_clk"        T8;
-IO_PORT "sys_clk"        IO_TYPE=LVCMOS33;
+IO_LOC  "sys_clk"        E2;
+IO_PORT "sys_clk"        IO_TYPE=LVCMOS33 PULL_MODE=NONE;
 
-// ─── User LEDs (active-low) ──────────────────────────────────────────────
-IO_LOC  "led[0]"         G14;
-IO_LOC  "led[1]"         F15;
-IO_LOC  "led[2]"         F16;
-IO_LOC  "led[3]"         G15;
-IO_LOC  "led[4]"         G16;
-IO_LOC  "led[5]"         H14;
+// ─── User LEDs (active-low, 3 on-board + 3 on free GPIO) ────────────────
+IO_LOC  "led[0]"         L6;
+IO_LOC  "led[1]"         E8;
+IO_LOC  "led[2]"         D7;
+IO_LOC  "led[3]"         G10;
+IO_LOC  "led[4]"         G11;
+IO_LOC  "led[5]"         L11;
 IO_PORT "led[0]"         IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led[1]"         IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led[2]"         IO_TYPE=LVCMOS33 DRIVE=8;
@@ -32,45 +33,41 @@ IO_PORT "led[3]"         IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led[4]"         IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led[5]"         IO_TYPE=LVCMOS33 DRIVE=8;
 
-// ─── Onboard SDRAM (W9825G6KH-6, 32 MB, 166 MHz rated) ──────────────────
-// Run at 24 MHz for initial bring-up; can push to 133 MHz after SDRAM bridge
-// is tuned.  The SPU Sovereign Memory Bridge connects here.
-IO_LOC  "sdram_clk"      N9;
+// ─── Onboard SDRAM (W9825G6KH-6, 32 MB) ─────────────────────────────────
+// sdram_cke is hardwired to VCC on board — no pin assignment needed.
+IO_LOC  "sdram_clk"      E3;
 IO_PORT "sdram_clk"      IO_TYPE=LVCMOS33 DRIVE=16;
 
-IO_LOC  "sdram_cke"      A10;
-IO_PORT "sdram_cke"      IO_TYPE=LVCMOS33 DRIVE=8;
-
-IO_LOC  "sdram_cs_n"     A9;
+IO_LOC  "sdram_cs_n"     K9;
 IO_PORT "sdram_cs_n"     IO_TYPE=LVCMOS33 DRIVE=8;
 
-IO_LOC  "sdram_ras_n"    B9;
+IO_LOC  "sdram_ras_n"    L10;
 IO_PORT "sdram_ras_n"    IO_TYPE=LVCMOS33 DRIVE=8;
 
-IO_LOC  "sdram_cas_n"    A8;
+IO_LOC  "sdram_cas_n"    K10;
 IO_PORT "sdram_cas_n"    IO_TYPE=LVCMOS33 DRIVE=8;
 
-IO_LOC  "sdram_we_n"     A7;
+IO_LOC  "sdram_we_n"     J7;
 IO_PORT "sdram_we_n"     IO_TYPE=LVCMOS33 DRIVE=8;
 
-IO_LOC  "sdram_ba[0]"    B8;
-IO_LOC  "sdram_ba[1]"    B7;
+IO_LOC  "sdram_ba[0]"    L9;
+IO_LOC  "sdram_ba[1]"    K8;
 IO_PORT "sdram_ba[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_ba[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
 
-IO_LOC  "sdram_addr[0]"  A10;
-IO_LOC  "sdram_addr[1]"  B10;
-IO_LOC  "sdram_addr[2]"  C9;
-IO_LOC  "sdram_addr[3]"  C10;
-IO_LOC  "sdram_addr[4]"  D9;
-IO_LOC  "sdram_addr[5]"  D8;
-IO_LOC  "sdram_addr[6]"  D7;
-IO_LOC  "sdram_addr[7]"  E8;
-IO_LOC  "sdram_addr[8]"  E7;
-IO_LOC  "sdram_addr[9]"  F7;
-IO_LOC  "sdram_addr[10]" D10;
-IO_LOC  "sdram_addr[11]" F8;
-IO_LOC  "sdram_addr[12]" G8;
+IO_LOC  "sdram_addr[0]"  F6;
+IO_LOC  "sdram_addr[1]"  F7;
+IO_LOC  "sdram_addr[2]"  J10;
+IO_LOC  "sdram_addr[3]"  J11;
+IO_LOC  "sdram_addr[4]"  K7;
+IO_LOC  "sdram_addr[5]"  H2;
+IO_LOC  "sdram_addr[6]"  H1;
+IO_LOC  "sdram_addr[7]"  H4;
+IO_LOC  "sdram_addr[8]"  G4;
+IO_LOC  "sdram_addr[9]"  J2;
+IO_LOC  "sdram_addr[10]" J8;
+IO_LOC  "sdram_addr[11]" J1;
+IO_LOC  "sdram_addr[12]" D1;
 IO_PORT "sdram_addr[0]"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_addr[1]"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_addr[2]"  IO_TYPE=LVCMOS33 DRIVE=8;
@@ -85,22 +82,22 @@ IO_PORT "sdram_addr[10]" IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_addr[11]" IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_addr[12]" IO_TYPE=LVCMOS33 DRIVE=8;
 
-IO_LOC  "sdram_dq[0]"   B5;
-IO_LOC  "sdram_dq[1]"   A6;
-IO_LOC  "sdram_dq[2]"   B6;
-IO_LOC  "sdram_dq[3]"   A5;
-IO_LOC  "sdram_dq[4]"   A4;
-IO_LOC  "sdram_dq[5]"   B4;
-IO_LOC  "sdram_dq[6]"   A3;
-IO_LOC  "sdram_dq[7]"   B3;
-IO_LOC  "sdram_dq[8]"   J2;
-IO_LOC  "sdram_dq[9]"   J1;
-IO_LOC  "sdram_dq[10]"  K1;
-IO_LOC  "sdram_dq[11]"  K2;
-IO_LOC  "sdram_dq[12]"  L1;
-IO_LOC  "sdram_dq[13]"  M1;
-IO_LOC  "sdram_dq[14]"  N1;
-IO_LOC  "sdram_dq[15]"  O1;
+IO_LOC  "sdram_dq[0]"   K2;
+IO_LOC  "sdram_dq[1]"   K1;
+IO_LOC  "sdram_dq[2]"   L1;
+IO_LOC  "sdram_dq[3]"   L2;
+IO_LOC  "sdram_dq[4]"   K4;
+IO_LOC  "sdram_dq[5]"   J4;
+IO_LOC  "sdram_dq[6]"   G1;
+IO_LOC  "sdram_dq[7]"   G2;
+IO_LOC  "sdram_dq[8]"   E1;
+IO_LOC  "sdram_dq[9]"   A1;
+IO_LOC  "sdram_dq[10]"  F2;
+IO_LOC  "sdram_dq[11]"  F1;
+IO_LOC  "sdram_dq[12]"  B2;
+IO_LOC  "sdram_dq[13]"  C2;
+IO_LOC  "sdram_dq[14]"  L4;
+IO_LOC  "sdram_dq[15]"  L3;
 IO_PORT "sdram_dq[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[2]"   IO_TYPE=LVCMOS33 DRIVE=8;
@@ -118,44 +115,14 @@ IO_PORT "sdram_dq[13]"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[14]"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[15]"  IO_TYPE=LVCMOS33 DRIVE=8;
 
-// ─── PMOD A (8-pin) — PSRAM Module 0 (APS6404L QSPI) ─────────────────────
-// Wiring: PMOD-A pin 1=CE_n, 2=CLK, 3=DQ0, 4=DQ1, 7=DQ2, 8=DQ3
-// (PMOD pins 5,6 = GND/VCC)
-IO_LOC  "psram0_ce_n"   H11;   // PMOD-A pin 1
-IO_LOC  "psram0_clk"    G11;   // PMOD-A pin 2
-IO_LOC  "psram0_dq[0]"  F11;   // PMOD-A pin 3
-IO_LOC  "psram0_dq[1]"  F10;   // PMOD-A pin 4
-IO_LOC  "psram0_dq[2]"  E11;   // PMOD-A pin 7
-IO_LOC  "psram0_dq[3]"  E10;   // PMOD-A pin 8
-IO_PORT "psram0_ce_n"   IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "psram0_clk"    IO_TYPE=LVCMOS33 DRIVE=16 SLEW=FAST;
-IO_PORT "psram0_dq[0]"  IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "psram0_dq[1]"  IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "psram0_dq[2]"  IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "psram0_dq[3]"  IO_TYPE=LVCMOS33 DRIVE=8;
-
-// ─── PMOD B (8-pin) — PSRAM Module 1 (APS6404L QSPI) ─────────────────────
-IO_LOC  "psram1_ce_n"   D11;   // PMOD-B pin 1
-IO_LOC  "psram1_clk"    C11;   // PMOD-B pin 2
-IO_LOC  "psram1_dq[0]"  B11;   // PMOD-B pin 3
-IO_LOC  "psram1_dq[1]"  A11;   // PMOD-B pin 4
-IO_LOC  "psram1_dq[2]"  B12;   // PMOD-B pin 7
-IO_LOC  "psram1_dq[3]"  A12;   // PMOD-B pin 8
-IO_PORT "psram1_ce_n"   IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "psram1_clk"    IO_TYPE=LVCMOS33 DRIVE=16 SLEW=FAST;
-IO_PORT "psram1_dq[0]"  IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "psram1_dq[1]"  IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "psram1_dq[2]"  IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "psram1_dq[3]"  IO_TYPE=LVCMOS33 DRIVE=8;
-
-// ─── RP2350 UART bridge (via PMOD or GPIO header) ─────────────────────────
-// RP2350 GP4 (UART1 TX) → FPGA RX;  RP2350 GP5 (UART1 RX) → FPGA TX
-// Uses a spare PMOD or GPIO header — adjust to your physical wiring
-IO_LOC  "uart_rx"        L16;   // from RP2350 GP4
-IO_LOC  "uart_tx"        K16;   // to   RP2350 GP5
-IO_PORT "uart_rx"        IO_TYPE=LVCMOS33;
+// ─── RP2350 UART (921 600 baud) ───────────────────────────────────────────
+// RP2350 GP4 TX → FPGA uart_rx (B3);  RP2350 GP5 RX ← FPGA uart_tx (C3)
+IO_LOC  "uart_rx"        B3;
+IO_LOC  "uart_tx"        C3;
+IO_PORT "uart_rx"        IO_TYPE=LVCMOS33 PULL_MODE=UP;
 IO_PORT "uart_tx"        IO_TYPE=LVCMOS33 DRIVE=8;
 
-// ─── Whisper serial (PWI 1-wire telemetry) ────────────────────────────────
-IO_LOC  "whisper_tx"     L15;
+// ─── Whisper 1-wire telemetry (PWI) ───────────────────────────────────────
+// Free GPIO on expansion header — verify physical wire routing.
+IO_LOC  "whisper_tx"     L5;
 IO_PORT "whisper_tx"     IO_TYPE=LVCMOS33 DRIVE=8;

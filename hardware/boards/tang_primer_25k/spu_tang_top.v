@@ -1,25 +1,24 @@
-// spu_tang_top.v — Tang Primer 25K board top (v2.0)
-// Target:  GW5A-LV25MG121C1/I0 (Tang Primer 25K)
-// Crystal: 50 MHz  →  rPLL  →  24 MHz (clk_fast) + Piranha Pulse (61.44 kHz)
+// spu_tang_top.v — Tang Primer 25K board top (v2.1)
+// Target:  GW5A-LV25MG121NES (Tang Primer 25K)
+// Crystal: 50 MHz  →  PLLA  →  25 MHz (clk_fast) + Piranha Pulse (61.44 kHz)
 //
-// Resources available (GW5A-25):
+// Resources available (GW5A-25A):
 //   LUTs:  ~23 000     DSPs: 28     BSRAM: 28×18 Kb
 //   SPU-13 Cortex (TDM) + 4× SPU-4 Sentinel + SDRAM bridge fits comfortably.
 //
 // Memory:
 //   Onboard SDRAM  — spu_mem_bridge_sdram.v (W9825G6KH-6, 32 MB)
-//   PSRAM Bank 0   — APS6404L on PMOD-A (your 8 Mb module)
-//   PSRAM Bank 1   — APS6404L on PMOD-B (your second 8 Mb module)
+//   Expansion SDRAM (512 Mb Sipeed module) — to be wired when module arrives.
 //
-// RP2350 bridge: UART1 at 921 600 baud on PMOD/GPIO pins.
+// RP2350 bridge: UART1 at 921 600 baud on GPIO pins.
 //
 // LED status (active-low):
 //   led[0] = PLL locked
 //   led[1] = Janus point (manifold stable)
 //   led[2] = bloom_complete pulse
-//   led[3] = PSRAM Bank 0 init done
-//   led[4] = PSRAM Bank 1 init done
-//   led[5] = Whisper TX activity
+//   led[3] = SDRAM mem_ready
+//   led[4] = burst active (rd or wr in flight)
+//   led[5] = Whisper TX ready
 //
 // CC0 1.0 Universal.
 
@@ -39,16 +38,6 @@ module spu_tang_top (
     output wire [1:0]  sdram_ba,
     output wire [12:0] sdram_addr,
     inout  wire [15:0] sdram_dq,
-
-    // PSRAM Bank 0 — PMOD-A
-    output wire        psram0_ce_n,
-    output wire        psram0_clk,
-    inout  wire [3:0]  psram0_dq,
-
-    // PSRAM Bank 1 — PMOD-B
-    output wire        psram1_ce_n,
-    output wire        psram1_clk,
-    inout  wire [3:0]  psram1_dq,
 
     // RP2350 UART bridge
     input  wire        uart_rx,
@@ -203,55 +192,7 @@ module spu_tang_top (
     );
 
     // ------------------------------------------------------------------ //
-    // 5. PSRAM Bank 0 (your APS6404L module on PMOD-A)                   //
-    // ------------------------------------------------------------------ //
-    wire psram0_init_done;
-
-    spu_psram_ctrl u_psram0 (
-        .clk              (clk_fast),
-        .reset            (~rst_n),
-        .rd_en            (1'b0),
-        .wr_en            (1'b0),
-        .addr             (23'h0),
-        .wr_data          (16'h0),
-        .rd_data          (),
-        .ready            (),
-        .init_done        (psram0_init_done),
-        .burst_rd         (1'b0),
-        .burst_wr         (1'b0),
-        .manifold_wr_data (`MANIFOLD_WIDTH'h0),
-        .manifold_rd_data (),
-        .psram_ce_n       (psram0_ce_n),
-        .psram_clk        (psram0_clk),
-        .psram_dq         (psram0_dq)
-    );
-
-    // ------------------------------------------------------------------ //
-    // 6. PSRAM Bank 1 (your second APS6404L module on PMOD-B)            //
-    // ------------------------------------------------------------------ //
-    wire psram1_init_done;
-
-    spu_psram_ctrl u_psram1 (
-        .clk              (clk_fast),
-        .reset            (~rst_n),
-        .rd_en            (1'b0),
-        .wr_en            (1'b0),
-        .addr             (23'h0),
-        .wr_data          (16'h0),
-        .rd_data          (),
-        .ready            (),
-        .init_done        (psram1_init_done),
-        .burst_rd         (1'b0),
-        .burst_wr         (1'b0),
-        .manifold_wr_data (`MANIFOLD_WIDTH'h0),
-        .manifold_rd_data (),
-        .psram_ce_n       (psram1_ce_n),
-        .psram_clk        (psram1_clk),
-        .psram_dq         (psram1_dq)
-    );
-
-    // ------------------------------------------------------------------ //
-    // 7. Whisper TX (PWI 1-wire telemetry to RP2350/RP2040)              //
+    // 5. Whisper TX (PWI 1-wire telemetry to RP2350/RP2040)              //
     // ------------------------------------------------------------------ //
     wire whisper_ready;
 
@@ -270,14 +211,14 @@ module spu_tang_top (
     assign uart_tx = 1'b1; // idle high
 
     // ------------------------------------------------------------------ //
-    // 8. LED status (active-low)                                         //
+    // 6. LED status (active-low)                                         //
     // ------------------------------------------------------------------ //
-    assign led[0] = ~pll_lock;           // PLL locked
-    assign led[1] = ~is_janus_point;     // manifold stable
-    assign led[2] = ~bloom_done;         // bloom pulse (brief flash)
-    assign led[3] = ~psram0_init_done;   // PSRAM 0 ready
-    assign led[4] = ~psram1_init_done;   // PSRAM 1 ready
-    assign led[5] = ~whisper_ready;         // Whisper TX ready
+    assign led[0] = ~pll_lock;                        // PLL locked
+    assign led[1] = ~is_janus_point;                  // manifold stable
+    assign led[2] = ~bloom_done;                      // bloom pulse
+    assign led[3] = ~mem_ready;                       // SDRAM ready
+    assign led[4] = ~(mem_burst_rd | mem_burst_wr);   // burst active
+    assign led[5] = ~whisper_ready;                   // Whisper TX ready
 
 endmodule
 
