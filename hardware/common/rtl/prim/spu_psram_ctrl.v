@@ -168,7 +168,7 @@ module spu_psram_ctrl (
 
                 S_CMD: begin
                     if (bit_cnt == 0) begin
-                        dq_out  <= addr[23:20];
+                        dq_out  <= {1'b0, addr[22:20]}; // 23-bit addr; bit23 always 0
                         bit_cnt <= 10'd5; // 6 nibbles for 24-bit address
                         state   <= S_ADDR;
                     end else begin

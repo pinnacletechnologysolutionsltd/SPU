@@ -62,6 +62,7 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_WHISPER_TX.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_system.v
 
 # ─── Memory bridges ────────────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_sdram.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_qspi.v
 
 # ─── Board top ─────────────────────────────────────────────────────────────
