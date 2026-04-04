@@ -1,20 +1,71 @@
-// pll_gowin_stub.v — rPLL blackbox stub for Yosys synthesis
-// The actual rPLL primitive is instantiated by GOWIN EDA / nextpnr-gowin
-// during place-and-route. Yosys treats any empty module as a blackbox.
-// CC0 1.0 Universal.
+// pll_gowin_stub.v — PLLA blackbox stub for GW5A-25A + Yosys/nextpnr-himbaechel
+// GW5A-25A uses PLLA (multi-output) not rPLL. Port list matches the official
+// Gowin IP file (ZiyangYE/LicheeTang25k_SDRAM). CC0 1.0 Universal.
 (* blackbox *)
-module rPLL #(
-    parameter FCLKIN    = "50",
-    parameter IDIV_SEL  = 0,
-    parameter FBDIV_SEL = 0,
-    parameter ODIV_SEL  = 8,
-    parameter DEVICE    = "GW5A-25"
+module PLLA #(
+    parameter FCLKIN          = "50",
+    parameter IDIV_SEL        = 1,
+    parameter FBDIV_SEL       = 1,
+    parameter ODIV0_SEL       = 32,
+    parameter ODIV1_SEL       = 8,
+    parameter ODIV2_SEL       = 8,
+    parameter ODIV3_SEL       = 8,
+    parameter ODIV4_SEL       = 8,
+    parameter ODIV5_SEL       = 8,
+    parameter ODIV6_SEL       = 8,
+    parameter MDIV_SEL        = 16,
+    parameter MDIV_FRAC_SEL   = 0,
+    parameter CLKOUT0_EN      = "TRUE",
+    parameter CLKOUT1_EN      = "FALSE",
+    parameter CLKOUT2_EN      = "FALSE",
+    parameter CLKOUT3_EN      = "FALSE",
+    parameter CLKOUT4_EN      = "FALSE",
+    parameter CLKOUT5_EN      = "FALSE",
+    parameter CLKOUT6_EN      = "FALSE",
+    parameter CLKFB_SEL       = "INTERNAL",
+    parameter CLKOUT0_DT_DIR  = 1'b1,
+    parameter CLKOUT1_DT_DIR  = 1'b1,
+    parameter CLKOUT2_DT_DIR  = 1'b1,
+    parameter CLKOUT3_DT_DIR  = 1'b1,
+    parameter CLKOUT0_DT_STEP = 0,
+    parameter CLKOUT1_DT_STEP = 0,
+    parameter CLKOUT2_DT_STEP = 0,
+    parameter CLKOUT3_DT_STEP = 0,
+    parameter CLK0_IN_SEL     = 1'b0,
+    parameter CLK0_OUT_SEL    = 1'b0,
+    parameter CLK1_IN_SEL     = 1'b0,
+    parameter CLK1_OUT_SEL    = 1'b0,
+    parameter CLK2_IN_SEL     = 1'b0,
+    parameter CLK2_OUT_SEL    = 1'b0,
+    parameter CLK3_IN_SEL     = 1'b0,
+    parameter CLK3_OUT_SEL    = 1'b0
 )(
-    input  wire CLKIN,
-    output wire CLKOUT,
-    output wire LOCK,
-    input  wire RESET, RESET_P,
-    input  wire [5:0] FBDSEL, IDSEL, ODSEL,
-    input  wire [3:0] PSDA, DUTYDA, FDLY
+    input  wire        CLKIN,
+    input  wire        CLKFB,
+    input  wire        RESET,
+    input  wire        PLLPWD,
+    input  wire        RESET_I,
+    input  wire        RESET_O,
+    input  wire [2:0]  PSSEL,
+    input  wire        PSDIR,
+    input  wire        PSPULSE,
+    input  wire        SSCPOL,
+    input  wire        SSCON,
+    input  wire [6:0]  SSCMDSEL,
+    input  wire [2:0]  SSCMDSEL_FRAC,
+    input  wire        MDCLK,
+    input  wire        MDAINC,
+    input  wire [1:0]  MDOPC,
+    input  wire [7:0]  MDWDI,
+    output wire        LOCK,
+    output wire        CLKFBOUT,
+    output wire        CLKOUT0,
+    output wire        CLKOUT1,
+    output wire        CLKOUT2,
+    output wire        CLKOUT3,
+    output wire        CLKOUT4,
+    output wire        CLKOUT5,
+    output wire        CLKOUT6,
+    output wire [7:0]  MDRDO
 );
 endmodule

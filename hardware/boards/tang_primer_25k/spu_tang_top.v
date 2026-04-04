@@ -32,7 +32,6 @@ module spu_tang_top (
 
     // Onboard SDRAM (W9825G6KH-6, 32 MB)
     output wire        sdram_clk,
-    output wire        sdram_cke,
     output wire        sdram_cs_n,
     output wire        sdram_ras_n,
     output wire        sdram_cas_n,
@@ -69,19 +68,66 @@ module spu_tang_top (
     wire clk_fast;    // 24 MHz — SPU-13 TDM clock
     wire pll_lock;
 
-    rPLL #(
-        .FCLKIN     ("50"),
-        .IDIV_SEL   (1),     // input ÷ 2 = 25 MHz ref
-        .FBDIV_SEL  (23),    // × 24 → VCO = 600 MHz
-        .ODIV_SEL   (25),    // output ÷ 25 = 24 MHz
-        .DEVICE     ("GW5A-25")
+    // PLLA: 50 MHz → 25 MHz
+    // VCO = FCLKIN × MDIV_SEL / IDIV_SEL = 50 × 16 / 1 = 800 MHz (in-range: 800-1600 MHz)
+    // CLKOUT0 = VCO / ODIV0_SEL = 800 / 32 = 25 MHz
+    //
+    // All ODIV1..6, DT_DIR, DT_STEP params are set explicitly so Yosys
+    // encodes them as binary strings in the netlist JSON.  gowin_pack's built-in
+    // PLLA defaults are Python ints that break its own int(val,2) parser — this
+    // is a known gowin_pack bug workaround (oss-cad-suite apycula).
+    PLLA #(
+        .FCLKIN          ("50"),
+        .IDIV_SEL        (1),
+        .FBDIV_SEL       (1),
+        .MDIV_SEL        (16),
+        .MDIV_FRAC_SEL   (0),
+        .ODIV0_SEL       (32),
+        .ODIV1_SEL       (8),
+        .ODIV2_SEL       (8),
+        .ODIV3_SEL       (8),
+        .ODIV4_SEL       (8),
+        .ODIV5_SEL       (8),
+        .ODIV6_SEL       (8),
+        .CLKOUT0_EN      ("TRUE"),
+        .CLKOUT1_EN      ("FALSE"),
+        .CLKOUT2_EN      ("FALSE"),
+        .CLKOUT3_EN      ("FALSE"),
+        .CLKOUT4_EN      ("FALSE"),
+        .CLKOUT5_EN      ("FALSE"),
+        .CLKOUT6_EN      ("FALSE"),
+        .CLKOUT0_DT_DIR  (1'b1),
+        .CLKOUT1_DT_DIR  (1'b1),
+        .CLKOUT2_DT_DIR  (1'b1),
+        .CLKOUT3_DT_DIR  (1'b1),
+        .CLKOUT0_DT_STEP (4'b0),
+        .CLKOUT1_DT_STEP (4'b0),
+        .CLKOUT2_DT_STEP (4'b0),
+        .CLKOUT3_DT_STEP (4'b0),
+        .CLK0_IN_SEL     (1'b0),
+        .CLK0_OUT_SEL    (1'b0),
+        .CLK1_IN_SEL     (1'b0),
+        .CLK1_OUT_SEL    (1'b0),
+        .CLK2_IN_SEL     (1'b0),
+        .CLK2_OUT_SEL    (1'b0),
+        .CLK3_IN_SEL     (1'b0),
+        .CLK3_OUT_SEL    (1'b0)
     ) u_pll (
         .CLKIN   (sys_clk),
-        .CLKOUT  (clk_fast),
+        .CLKOUT0 (clk_fast),
         .LOCK    (pll_lock),
-        .RESET   (1'b0), .RESET_P(1'b0),
-        .FBDSEL  (6'b0), .IDSEL(6'b0), .ODSEL(6'b0),
-        .PSDA    (4'b0), .DUTYDA(4'b0), .FDLY(4'b0)
+        .RESET   (1'b0),
+        .PLLPWD  (1'b0),
+        .RESET_I (1'b0), .RESET_O(1'b0),
+        .PSSEL   (3'b0), .PSDIR(1'b0), .PSPULSE(1'b0),
+        .SSCPOL  (1'b0), .SSCON(1'b0),
+        .SSCMDSEL(7'b0), .SSCMDSEL_FRAC(3'b0),
+        .MDCLK   (1'b0), .MDAINC(1'b0),
+        .MDOPC   (2'b0), .MDWDI(8'b0),
+        .CLKFB   (1'b0),
+        .CLKOUT1 (), .CLKOUT2 (), .CLKOUT3 (),
+        .CLKOUT4 (), .CLKOUT5 (), .CLKOUT6 (),
+        .CLKFBOUT(), .MDRDO()
     );
 
     wire rst_n = pll_lock;
@@ -122,7 +168,6 @@ module spu_tang_top (
         .mem_wr_manifold (mem_wr_manifold),
         .mem_burst_done  (mem_burst_done),
         .sdram_clk       (sdram_clk),
-        .sdram_cke       (sdram_cke),
         .sdram_cs_n      (sdram_cs_n),
         .sdram_ras_n     (sdram_ras_n),
         .sdram_cas_n     (sdram_cas_n),

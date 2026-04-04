@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-DEVICE="GW5A-LV25MG121C1/I0"
+DEVICE="GW5A-LV25MG121NES"
 TOP="spu_tang_top"
 YS="hardware/boards/tang_primer_25k/synth_gowin_25k.ys"
 CST="hardware/boards/tang_primer_25k/tang_primer_25k.cst"
@@ -36,13 +36,14 @@ pnr() {
     nextpnr-himbaechel \
         --device "${DEVICE}" \
         --json  "${JSON}"    \
-        --cst   "${CST}"     \
+        -o cst="${CST}"      \
+        -o sspi_as_gpio      \
         --write "${PNR_JSON}"
 }
 
 pack() {
     echo "=== Pack: ${PNR_JSON} → ${FS} ==="
-    gowin_pack "${PNR_JSON}" -o "${FS}"
+    gowin_pack -d GW5A-25A --sspi_as_gpio "${PNR_JSON}" -o "${FS}"
 }
 
 flash() {
@@ -53,6 +54,7 @@ flash() {
 case "${STEP}" in
     synth)  synth ;;
     pnr)    pnr ;;
+    pack)   pack ;;
     flash)  flash ;;
     all)
         synth
