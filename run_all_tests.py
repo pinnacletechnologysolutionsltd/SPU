@@ -165,12 +165,28 @@ def main():
         else:
             py_fail = 1
             print(f"\n  spu_vm_test.py FAILED:\n{result.stdout[-500:]}")
-    print(f"\nPython Tests: {py_pass + py_fail}")
-    print(f"Passed:      {py_pass}")
-    print(f"Failed:      {py_fail}")
 
-    total_pass = passed + cpp_p + py_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail
+    # Cross-validation: spu_vm.py vs C++ reference
+    cv_pass = cv_fail = 0
+    cv_script = os.path.join(root_dir, "software", "cross_validate.py")
+    if os.path.exists(cv_script):
+        result_cv = subprocess.run(
+            [sys.executable, cv_script],
+            capture_output=True, text=True, timeout=60,
+            cwd=root_dir
+        )
+        if result_cv.returncode == 0:
+            cv_pass = 1
+        else:
+            cv_fail = 1
+            print(f"\n  cross_validate.py FAILED:\n{result_cv.stdout[-800:]}")
+
+    print(f"\nPython Tests: {py_pass + py_fail + cv_pass + cv_fail}")
+    print(f"Passed:      {py_pass + cv_pass}")
+    print(f"Failed:      {py_fail + cv_fail}")
+
+    total_pass = passed + cpp_p + py_pass + cv_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")
