@@ -7,9 +7,9 @@
 #
 # Full open-source PAR + bitstream:
 #   yosys  hardware/boards/tang_primer_25k/synth_gowin_25k.ys
-#   nextpnr-gowin --device GW5A-LV25MG121C1/I0 \
+#   nextpnr-himbaechel --device GW5A-LV25MG121NES \
 #                 --json tang_primer_25k.json \
-#                 --cst  hardware/boards/tang_primer_25k/tang_primer_25k.cst \
+#                 -o cst=hardware/boards/tang_primer_25k/tang_primer_25k.cst \
 #                 --write tang_primer_25k_pnr.json
 #   gowin_pack tang_primer_25k_pnr.json -o tang_primer_25k.fs
 #   openFPGALoader -b tang_primer_25k tang_primer_25k.fs
@@ -70,5 +70,5 @@ read_verilog -I hardware/common/rtl hardware/boards/tang_primer_25k/spu_tang_top
 
 # ─── Synthesis ─────────────────────────────────────────────────────────────
 hierarchy -check -top spu_tang_top
-synth_gowin -family gw5a -top spu_tang_top -json tang_primer_25k.json
+synth_gowin -family gw5a -top spu_tang_top -json build/tang_primer_25k.json
 stat

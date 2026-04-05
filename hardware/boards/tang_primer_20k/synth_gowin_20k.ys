@@ -73,5 +73,5 @@ read_verilog -I hardware/common/rtl hardware/boards/tang_primer_20k/spu_tang_20k
 
 # ─── Synthesis ─────────────────────────────────────────────────────────────
 hierarchy -check -top spu_tang_20k_top
-synth_gowin -family gw2a -top spu_tang_20k_top -json tang_primer_20k.json
+synth_gowin -family gw2a -top spu_tang_20k_top -json build/tang_primer_20k.json
 stat
