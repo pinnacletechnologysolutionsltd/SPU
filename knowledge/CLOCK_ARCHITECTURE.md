@@ -28,7 +28,7 @@ how fast the GPU is running.
 
 ### 2.1 The 24 MHz Core Clock
 
-The Tang Primer 25K's 50 MHz crystal is divided by the onboard rPLL:
+The Tang Primer 25K's 50 MHz crystal is divided by the onboard PLLA:
 
 ```
 50 MHz crystal
@@ -119,8 +119,8 @@ phi_21 fires at 21/34 of the frame = 61.8% through each 61.4 kHz period
 The phi pulses become intra-frame dispatch triggers, and the 34 input-clock
 cycles *within each piranha period* drive a 34-step sub-sequencer.
 
-**Option B — Use rPLL second output:**
-GOWIN GW5A rPLL supports dual outputs. A second output can be tuned
+**Option B — Use PLLA second output:**
+GOWIN GW5A PLLA supports dual outputs. A second output can be tuned
 independently:
 ```
 VCO = 600 MHz, ODIV_B = ? → target 61,440 Hz
@@ -213,7 +213,7 @@ crossing (MTBF >> system lifetime at these frequencies and this process node).
 
 ### 24 MHz = 24 × 10⁶
 
-- Derived from 50 MHz crystal via integer-ratio rPLL (600 MHz VCO ÷ 25).
+- Derived from 50 MHz crystal via integer-ratio PLLA (600 MHz VCO ÷ 25).
 - 24 is highly composite (divisors: 1,2,3,4,6,8,12,24) — convenient for
   further subdivision.
 - Gives 24,000,000 / 34 = 705,882 Hz frame rate. At 13 axes per burst:
@@ -235,7 +235,7 @@ crossing (MTBF >> system lifetime at these frequencies and this process node).
 ```
 50 MHz crystal
     │
-    ▼  rPLL (÷2, ×24, ÷25)
+    ▼  PLLA (÷2, ×24, ÷25)
 24 MHz clk_fast  ─────────────────────── All computation
     │                                    • 13-axis TDM ALU
     │                                    • Sequencer burst (15 cycles)

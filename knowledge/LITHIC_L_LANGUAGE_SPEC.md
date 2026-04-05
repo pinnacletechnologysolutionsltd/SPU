@@ -690,8 +690,13 @@ rightness at runtime.
 | Layer 2 | SAS assembler (spu13_asm.py) | ✅ Working |
 | Layer 2 | Python soft-CPU (spu_vm.py) | ✅ Working |
 | Layer 2 | SAS demo programs | ✅ poiseuille, kinematic, laminar_vs_cubic |
+| Layer 3 | `spu_surd.h` — Q(√3) RationalSurd arithmetic | ✅ Complete (30 tests) |
+| Layer 3 | `spu_quadray.h` — 4-axis IVM Quadray + Spread | ✅ Complete (40+ tests) |
+| Layer 3 | `spu_ivm.h` — Manifold13 + Nguyen weight oracle | ✅ Complete (35+ tests) |
+| Layer 3 | `spu_physics.h` — Davis gasket + Jitterbug morph | ✅ Complete (all physics tests) |
+| Layer 3 | `demos/davis_monitor` — live Davis Law terminal demo | ✅ First end-to-end demo |
+| Layer 3 | `spu_lithic_l.h` — Chord ISA + MUX primitives | 🔲 In progress |
 | Layer 3 | Laminar Lang parser (Python/Lark) | 🔲 Planned |
-| Layer 3 | C++ emulator (extract from SynergeticsMath.hpp) | 🔲 Planned |
 | Layer 3 | VS Code extension (.lam / .sas syntax) | 🔲 Planned |
 | Hardware | Tang Primer 25K bitstream | 🔲 Board on order |
 
