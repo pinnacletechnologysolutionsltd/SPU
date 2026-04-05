@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 from pathlib import Path
 
@@ -151,8 +152,25 @@ def main():
     print(f"Failed:      {cpp_f}")
     print(f"Compile Err: {cpp_e}")
 
-    total_pass = passed + cpp_p
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e
+    # Python VM test
+    py_pass = py_fail = 0
+    vm_test = os.path.join(root_dir, "software", "spu_vm_test.py")
+    if os.path.exists(vm_test):
+        result = subprocess.run(
+            [sys.executable, vm_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            py_pass = 1
+        else:
+            py_fail = 1
+            print(f"\n  spu_vm_test.py FAILED:\n{result.stdout[-500:]}")
+    print(f"\nPython Tests: {py_pass + py_fail}")
+    print(f"Passed:      {py_pass}")
+    print(f"Failed:      {py_fail}")
+
+    total_pass = passed + cpp_p + py_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")
