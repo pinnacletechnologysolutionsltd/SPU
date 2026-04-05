@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SPU-13 Sovereign Virtual Machine (spu_vm.py) — v1.2
+SPU-13 Sovereign Virtual Machine (spu_vm.py) — v1.3
 Pure Python interpreter for the Sovereign Assembly (SAS) ISA.
 
 Executes 64-bit control words in Q(√3) — the rational surd field.
@@ -18,6 +18,20 @@ v1.2 additions (Vector Equilibrium + Janus layer):
   - IDNT  : reset QR[n] to canonical unity [1,0,0,0]
   - JINV  : Janus bit — negate surd component of scalar R[n] (single XOR in hw)
   - ANNE  : anneal QR[n] one step toward Vector Equilibrium (halve each component)
+
+v1.3 additions (Davis Gasket + Fibonacci dispatch):
+  - DavisGasket class: tracks manifold tension τ, stiffness K, cubic leak state
+    gasket_tick()      — one Davis Gate cycle: check Σ QR[0..12] == 0
+    henosis_pulse()    — soft recovery: halve all QR components (≡ ANNE)
+    henosis_recover()  — loop until laminar or max_pulses
+  - FibDispatch class: Sierpinski 34-cycle frame tracker
+    tick()             — advance one cycle, return gate label (φ₈/φ₁₃/φ₂₁/'')
+    at_gate()          — True when frame_pos is a Fibonacci position
+  - SPUCore integration: gasket + fib wired into step() tail
+    • Gate announcement at every φ₈/φ₁₃/φ₂₁ cycle boundary
+    • Davis Gate check on every gate tick
+    • Henosis recovery on φ₁₃ / φ₂₁ if cubic leak detected
+    • Gasket + FibDispatch state printed in dump_registers()
 
 Usage:
     python3 spu_vm.py programs/jitterbug.sas
@@ -387,6 +401,155 @@ def assemble_source(source: str) -> list[int]:
 
 
 # ---------------------------------------------------------------------------
+# Davis Gasket — manifold tension tracker (mirrors spu_physics.h DavisGasket)
+# ---------------------------------------------------------------------------
+
+class DavisGasket:
+    """
+    Tracks manifold tension τ and stiffness K across execution.
+    Mirrors the C++ DavisGasket struct in spu_physics.h exactly.
+
+    tau   : RationalSurd — manifold tension; grows on cubic leak, halves on recovery
+    K     : RationalSurd — stiffness constant (default unity)
+    leak  : bool         — True if last gasket_tick() detected a cubic leak
+    tick_count    : int  — total gasket ticks executed
+    henosis_count : int  — total Henosis recovery pulses applied
+    """
+    def __init__(self, tau: RationalSurd = None, K: RationalSurd = None):
+        self.tau           = tau if tau is not None else RationalSurd(0, 0)
+        self.K             = K   if K   is not None else RationalSurd(1, 0)
+        self.leak          = False
+        self.tick_count    = 0
+        self.henosis_count = 0
+
+    def is_laminar(self) -> bool:
+        return not self.leak
+
+    def gasket_tick(self, qregs: list) -> bool:
+        """
+        One Davis Gate cycle.
+        Checks if Σ QR[0..12] == zero vector (cubic leak test).
+        On leak: τ += quadrance of vector sum.
+        On stable: τ >>= 1 (halve toward zero, ANNE mechanic).
+        Returns True if a cubic leak was detected this tick.
+        """
+        self.tick_count += 1
+        # Sum all 13 QR registers component-wise
+        sa = sb = sc = sd = RationalSurd(0, 0)
+        for qr in qregs[:13]:
+            sa = sa + qr.a
+            sb = sb + qr.b
+            sc = sc + qr.c
+            sd = sd + qr.d
+
+        # Cubic leak: vector sum ≠ zero
+        is_zero_sum = (sa == RationalSurd(0,0) and sb == RationalSurd(0,0)
+                       and sc == RationalSurd(0,0) and sd == RationalSurd(0,0))
+        self.leak = not is_zero_sum
+
+        if self.leak:
+            # τ accumulates: add quadrance of (sa+sb+sc+sd) combined
+            # Simplified: add p² of each axis sum component (no cross terms)
+            tau_add_p = sa.a*sa.a + sb.a*sb.a + sc.a*sc.a + sd.a*sd.a
+            self.tau  = RationalSurd(self.tau.a + tau_add_p, self.tau.b)
+        else:
+            # Stable: halve τ (exact integer >>1)
+            self.tau = RationalSurd(self.tau.a >> 1, self.tau.b >> 1)
+
+        return self.leak
+
+    def henosis_pulse(self, qregs: list) -> None:
+        """
+        Soft recovery: halve each component of every QR register toward zero.
+        Matches ANNE opcode semantics in spu_vm.py.
+        """
+        self.henosis_count += 1
+        for qr in qregs[:13]:
+            qr.a = RationalSurd(qr.a.a >> 1, qr.a.b >> 1)
+            qr.b = RationalSurd(qr.b.a >> 1, qr.b.b >> 1)
+            qr.c = RationalSurd(qr.c.a >> 1, qr.c.b >> 1)
+            qr.d = RationalSurd(qr.d.a >> 1, qr.d.b >> 1)
+
+    def henosis_recover(self, qregs: list, max_pulses: int = 8) -> int:
+        """
+        Apply Henosis pulses until the manifold is laminar or max_pulses exhausted.
+        Returns number of pulses applied.
+        """
+        for pulse in range(max_pulses):
+            if not self.gasket_tick(qregs):
+                return pulse  # already laminar
+            self.henosis_pulse(qregs)
+        return max_pulses
+
+    def ratio_str(self) -> str:
+        """Davis Ratio C = τ/K as a readable string (cross-multiply form)."""
+        return f"τ=({self.tau.a},{self.tau.b}√3)  K=({self.K.a},{self.K.b}√3)"
+
+    def __repr__(self) -> str:
+        state = "LAMINAR" if self.is_laminar() else "CUBIC-LEAK"
+        return (f"DavisGasket({state}  {self.ratio_str()}"
+                f"  ticks={self.tick_count}  henosis={self.henosis_count})")
+
+
+# ---------------------------------------------------------------------------
+# Fibonacci Dispatch — Sierpinski-frame gate tracker
+# ---------------------------------------------------------------------------
+
+class FibDispatch:
+    """
+    Tracks the Sierpinski 34-cycle frame and fires phi_8 / phi_13 / phi_21 gates.
+    Mirrors fibonacci_gate() in spu_physics.h.
+
+    cycle     : global cycle counter (increments every step() call)
+    frame_pos : position within the 34-cycle Sierpinski frame (0–33)
+
+    Gates fire when frame_pos hits the Fibonacci positions:
+      phi_8  at frame_pos == 8   (micro gate)
+      phi_13 at frame_pos == 13  (meso gate)
+      phi_21 at frame_pos == 21  (macro gate)
+    """
+    FRAME_LEN = 34
+    PHI_8     = 8
+    PHI_13    = 13
+    PHI_21    = 21
+
+    def __init__(self):
+        self.cycle     = 0
+        self.frame_pos = 0
+
+    def tick(self) -> str:
+        """
+        Advance one cycle. Returns gate label string or '' if no gate.
+        """
+        gate = ''
+        if self.frame_pos == self.PHI_21:
+            gate = 'φ₂₁'
+        elif self.frame_pos == self.PHI_13:
+            gate = 'φ₁₃'
+        elif self.frame_pos == self.PHI_8:
+            gate = 'φ₈ '
+        self.cycle     += 1
+        self.frame_pos  = (self.frame_pos + 1) % self.FRAME_LEN
+        return gate
+
+    def is_phi8(self)  -> bool: return self.frame_pos == self.PHI_8
+    def is_phi13(self) -> bool: return self.frame_pos == self.PHI_13
+    def is_phi21(self) -> bool: return self.frame_pos == self.PHI_21
+
+    def at_gate(self) -> bool:
+        return self.frame_pos in (self.PHI_8, self.PHI_13, self.PHI_21)
+
+    def gate_name(self) -> str:
+        if self.frame_pos == self.PHI_21: return 'φ₂₁(macro)'
+        if self.frame_pos == self.PHI_13: return 'φ₁₃(meso)'
+        if self.frame_pos == self.PHI_8:  return 'φ₈ (micro)'
+        return '—'
+
+    def __repr__(self) -> str:
+        return f"FibDispatch(cycle={self.cycle}  frame={self.frame_pos}/33  gate={self.gate_name()})"
+
+
+# ---------------------------------------------------------------------------
 # SPU Core — the interpreter
 # ---------------------------------------------------------------------------
 
@@ -415,6 +578,9 @@ class SPUCore:
         self.halted: bool = False
         self.snap_failures: int = 0
         self.log: list[str] = []
+        # v1.3 additions — Davis Gasket + Fibonacci dispatch
+        self.gasket   = DavisGasket()
+        self.fib      = FibDispatch()
 
     @staticmethod
     def _q_proof(r: 'RationalSurd', label: str = "") -> str:
@@ -430,6 +596,8 @@ class SPUCore:
         self.pc = 0
         self.halted = False
         self.step_count = 0
+        self.gasket = DavisGasket()
+        self.fib    = FibDispatch()
         if self.verbose:
             print(f"  SPU-VM: {len(words)} words loaded.")
 
@@ -798,6 +966,27 @@ class SPUCore:
         self.pc = next_pc
         self.step_count += 1
 
+        # ── Fibonacci dispatch tick ───────────────────────────────────────
+        gate = self.fib.tick()
+        if gate and self.verbose:
+            print(f"  [{self.pc:04d}] ··· {gate} gate  (cycle={self.fib.cycle}  τ={self.gasket.tau!r})")
+
+        # ── Davis Gasket periodic check ───────────────────────────────────
+        # Run at every phi gate; attempt Henosis recovery at phi_13/phi_21
+        if gate:
+            had_leak = self.gasket.gasket_tick(self.qregs)
+            if had_leak:
+                if self.verbose:
+                    print(f"  [{self.pc:04d}] ⚠  Davis Gate: CUBIC LEAK  {self.gasket!r}")
+                # Attempt Henosis recovery on meso/macro gates
+                if gate.startswith('φ₁₃') or gate.startswith('φ₂₁'):
+                    pulses = self.gasket.henosis_recover(self.qregs, max_pulses=3)
+                    if pulses and self.verbose:
+                        print(f"  [{self.pc:04d}] ✦  Henosis: {pulses} pulse(s) applied"
+                              f"  τ→{self.gasket.tau!r}")
+            elif self.verbose:
+                print(f"  [{self.pc:04d}] ✓  Davis Gate: laminar  {self.gasket!r}")
+
         if self.step_count >= self.max_steps:
             if self.verbose:
                 print(f"\n  SPU-VM: max_steps ({self.max_steps}) reached. Halting.")
@@ -833,6 +1022,8 @@ class SPUCore:
         print(f"\n  ── PC={self.pc}  steps={self.step_count}"
               f"  snap_failures={self.snap_failures}"
               f"  call_depth={len(self.call_stack)}")
+        print(f"  ── Davis Gasket: {self.gasket!r}")
+        print(f"  ── Fib Dispatch: {self.fib!r}")
         print()
 
 
