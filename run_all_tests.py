@@ -72,6 +72,7 @@ def main():
         "hardware/common/rtl/bio",
         "hardware/common/rtl/graphics",
         "hardware/common/rtl/io",
+        "hardware/common/rtl/audio",
         "hardware/spu13/rtl",
         "hardware/spu4/rtl",
         "hardware/boards/icesugar",       # local board tops (must precede reference/)
