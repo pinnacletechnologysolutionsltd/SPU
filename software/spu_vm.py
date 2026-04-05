@@ -712,7 +712,8 @@ class SPUCore:
     """
 
     def __init__(self, max_steps: int = 10_000, verbose: bool = True,
-                 proof: bool = False, sdf_trace: bool = False):
+                 proof: bool = False, sdf_trace: bool = False,
+                 gasket_trace: bool = False):
         self.regs: list[RationalSurd] = [RationalSurd(0, 0) for _ in range(NUM_REGS)]
         self.qregs: list[QuadrayVector] = [QuadrayVector() for _ in range(13)]
         self.call_stack: list[int] = []
@@ -723,6 +724,7 @@ class SPUCore:
         self.verbose: bool = verbose
         self.proof: bool = proof       # show step-by-step Q(√3) arithmetic derivations
         self.sdf_trace: bool = sdf_trace  # per-SNAP SDF nearest-axis + conflict trace
+        self.gasket_trace: bool = gasket_trace  # per-gate Davis Ratio table
         self.halted: bool = False
         self.snap_failures: int = 0
         self.log: list[str] = []
@@ -751,6 +753,22 @@ class SPUCore:
         self.sdf    = SdfState()
         if self.verbose:
             print(f"  SPU-VM: {len(words)} words loaded.")
+
+    # ── gasket-trace helper ───────────────────────────────────────────────
+    def _gasket_trace_line(self, gate: str) -> None:
+        """Print a compact Davis Ratio table row."""
+        # C = τ/K — show as cross-multiply comparison τ·1 vs K·? (K=1 default)
+        tau_p = self.gasket.tau.a
+        tau_q = self.gasket.tau.b
+        K_p   = self.gasket.K.a   if self.gasket.K.a != 0 else 1
+        state = "LEAK" if self.gasket.leak else "ok  "
+        # SDF nearest axis
+        sdf_info = f"near=QR{self.sdf.nearest_axis} Q={self.sdf.min_q}"
+        print(f"  GASKET  {gate:<6s}  cyc={self.fib.cycle:3d}"
+              f"  τ=({tau_p:+5d},{tau_q:+3d}√3)  K={K_p}"
+              f"  {state}"
+              f"  {sdf_info}"
+              f"  h={self.gasket.henosis_count}")
 
     def decode(self, word: int) -> tuple:
         opcode = (word >> 56) & 0xFF
@@ -1148,6 +1166,9 @@ class SPUCore:
             elif self.verbose:
                 print(f"  [{self.pc:04d}] ✓  Davis Gate: laminar  {self.gasket!r}")
 
+            if self.gasket_trace:
+                self._gasket_trace_line(gate)
+
         if self.step_count >= self.max_steps:
             if self.verbose:
                 print(f"\n  SPU-VM: max_steps ({self.max_steps}) reached. Halting.")
@@ -1205,6 +1226,8 @@ def main():
                         help='Show step-by-step Q(√3) arithmetic derivations (sceptic mode)')
     parser.add_argument('--sdf-trace', action='store_true',
                         help='Show SDF nearest-axis and snap-conflict state at every SNAP')
+    parser.add_argument('--gasket-trace', action='store_true',
+                        help='Show Davis Ratio table row at every Fibonacci gate boundary')
     args = parser.parse_args()
 
     source_file = args.bin or args.source
@@ -1216,11 +1239,12 @@ def main():
         print(f"Error: file not found: {source_file}")
         sys.exit(1)
 
-    verbose   = not args.quiet
-    proof     = args.proof
-    sdf_trace = args.sdf_trace
+    verbose      = not args.quiet
+    proof        = args.proof
+    sdf_trace    = args.sdf_trace
+    gasket_trace = args.gasket_trace
     core = SPUCore(max_steps=args.steps, verbose=verbose, proof=proof,
-                   sdf_trace=sdf_trace)
+                   sdf_trace=sdf_trace, gasket_trace=gasket_trace)
 
     if source_file.endswith('.bin') or args.bin:
         with open(source_file, 'rb') as f:
