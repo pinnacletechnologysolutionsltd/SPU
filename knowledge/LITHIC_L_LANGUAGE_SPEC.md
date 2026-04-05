@@ -150,6 +150,90 @@ s = 1/2    ↔  2·numer = denom    (45°)
 This is the foundation of Wildberger's Rational Trigonometry (2005): the geometric
 question is answered by an integer polynomial identity, not by evaluating arcsin(√(3/4)).
 
+### 2.5 Weighted Manifold Types (Sovereign Memory)
+
+The Lithic-L type system treats **Nguyen weight as a first-class citizen**. This is the
+key distinction from every Von Neumann language: you can tell the compiler (and the
+hardware) *which data matters more*, and it will place that data in faster memory
+automatically.
+
+#### Static vs Dynamic weighting — both, layered
+
+| Tier | Mechanism | When evaluated | Effect |
+|------|-----------|---------------|--------|
+| **Static** | Nguyen W(v) tree, `weight` attribute | Compile time / boot | BRAM18 placement oracle |
+| **Dynamic** | `pressure` field, runtime impact | Every gasket tick | Runtime BRAM promotion |
+
+They compose: `effective_weight = static_weight + pressure`. The Davis Gasket uses
+`effective_weight` to decide the BRAM tier each cycle.
+
+#### The `manifold` declaration (Laminar Lang syntax)
+
+```lam
+-- Define a 13D structural node with weight-awareness
+manifold SimplexNode {
+    weight 8;            -- static Nguyen weight (floor, compile-time)
+    vector13 position;   -- 13-axis Synergetic coordinate
+    u8 pressure;         -- runtime weight modifier (impact accumulator)
+}
+```
+
+The compiler pre-calculates `W(v) = self_quad + Σ W(children)` (Nguyen Eq 2.1)
+during the build phase and emits a **Weight-Map** that the SPU-13 inhales at boot.
+This tells the hardware which registers to assign to BRAM18 vs SDRAM vs PSRAM before
+the first instruction executes.
+
+#### `sum_weight` — a built-in operator
+
+```lam
+let total_w : Surd = sum_weight(root_node);   -- Nguyen Eq 2.1 recursive sum
+```
+
+`sum_weight` is not a library function — it is a **compiler intrinsic** that folds
+the weight tree at compile time when all weights are statically known. For dynamic
+trees (runtime-constructed), it emits a `QROT`+`QADD` loop bounded by manifold depth.
+
+#### Pressure-driven BRAM promotion ("Heave")
+
+```lam
+on_impact(wall, impact_quadrance) {
+    wall.pressure += impact_quadrance;   -- dynamic weight spike
+    -- Lithic-L compiler emits: wm_pressure_add() + bram_promote() check
+    -- Hardware: if tier promoted → DMA copy to faster memory this tick
+}
+```
+
+The `pressure` field decays at the phi_8 gate (every 8 cycles) by halving — the
+same ANNE mechanic as Henosis. A high-pressure node stays in BRAM18 as long as
+impacts keep arriving; it gracefully falls back to SDRAM/PSRAM when pressure drains.
+
+#### `jitterbug` keyword
+
+```lam
+jitterbug(my_manifold, TO_OCTAHEDRON);
+```
+
+Compiles to a single `QROT` sequence stepping the Pell Invariants to the named
+phase target. No trigonometry, no loop — one hardware command, executed at 60°
+native speed. Named phases: `TO_VE`, `TO_ICOSAHEDRON`, `TO_OCTAHEDRON`, `TO_RETURN`.
+
+#### Arlinghaus Central-Place Routing
+
+High-weight functions ("hub" nodes in the call graph) are assigned dedicated
+832-bit registers by the compiler. Low-weight functions ("spoke" nodes) share
+a register pool. This is the hardware equivalent of Arlinghaus's hex-hierarchy
+central place theory: gravity flows through the hubs, not the spokes.
+
+```lam
+-- Mark this function as a hub (will get dedicated register allocation)
+@hub weight 25
+fn physics_step(m: manifold) -> manifold { ... }
+```
+
+Implementation status: `spu_manifold_types.h` provides the C++ runtime layer:
+`WNode`, `sum_weight()`, `WeightedManifold`, `wm_tier()`, `wm_pressure_add()`,
+`bram_promote()`, `jitterbug_to()`, `wm_tick()`. Laminar Lang syntax is planned.
+
 ---
 
 ## 3. The Three-Layer Language Stack
@@ -694,8 +778,9 @@ rightness at runtime.
 | Layer 3 | `spu_quadray.h` — 4-axis IVM Quadray + Spread | ✅ Complete (40+ tests) |
 | Layer 3 | `spu_ivm.h` — Manifold13 + Nguyen weight oracle | ✅ Complete (35+ tests) |
 | Layer 3 | `spu_physics.h` — Davis gasket + Jitterbug morph | ✅ Complete (all physics tests) |
+| Layer 3 | `spu_lithic_l.h` — 64-bit Chord ISA + MUX primitives | ✅ Complete |
+| Layer 3 | `spu_manifold_types.h` — WeightedManifold + `sum_weight` | ✅ Complete |
 | Layer 3 | `demos/davis_monitor` — live Davis Law terminal demo | ✅ First end-to-end demo |
-| Layer 3 | `spu_lithic_l.h` — Chord ISA + MUX primitives | 🔲 In progress |
 | Layer 3 | Laminar Lang parser (Python/Lark) | 🔲 Planned |
 | Layer 3 | VS Code extension (.lam / .sas syntax) | 🔲 Planned |
 | Hardware | Tang Primer 25K bitstream | 🔲 Board on order |
