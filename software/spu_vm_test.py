@@ -13,7 +13,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
 
-from spu_vm import SPUCore, RationalSurd, QuadrayVector, OPCODES, DavisGasket, FibDispatch
+from spu_vm import SPUCore, RationalSurd, QuadrayVector, OPCODES, DavisGasket, FibDispatch, SdfState
 
 # ── Test harness ─────────────────────────────────────────────────────────────
 
@@ -528,6 +528,111 @@ ok(isinstance(c.fib,    FibDispatch),   "SPUCore: fib is FibDispatch")
 c.load([word("NOP")])
 ok(c.fib.cycle == 0,       "SPUCore.load: fib cycle reset")
 ok(c.gasket.tau.a == 0,    "SPUCore.load: gasket τ reset")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SdfState — Layer 7 Rational Distance Field
+# ─────────────────────────────────────────────────────────────────────────────
+
+section("SdfState — qr_quadrance")
+
+# Zero vector has Quadrance 0
+sdf = SdfState()
+zero = QuadrayVector()
+ok(SdfState.qr_quadrance(zero) == 0,
+   "SdfState.qr_quadrance: zero vector → Q=0")
+
+# IVM canonical axis QR_A = [1,0,0,0]
+# pairwise diffs: (1-0)²×3 = 3
+qr_a = QuadrayVector(RationalSurd(1), RationalSurd(0),
+                     RationalSurd(0), RationalSurd(0))
+ok(SdfState.qr_quadrance(qr_a) == 3,
+   "SdfState.qr_quadrance: [1,0,0,0] → Q=3")
+
+# [1,1,0,0]: diffs (0,1,1,1,-1,-1) squared = 0+1+1+1+1+1 = wait:
+# pairs: (1-1)²=0, (1-0)²=1, (1-0)²=1, (1-0)²=1, (1-0)²=1, (0-0)²=0 → 4
+qr_b = QuadrayVector(RationalSurd(1), RationalSurd(1),
+                     RationalSurd(0), RationalSurd(0))
+ok(SdfState.qr_quadrance(qr_b) == 4,
+   "SdfState.qr_quadrance: [1,1,0,0] → Q=4")
+
+section("SdfState — qr_dist_q")
+
+# Distance from qr_a to qr_a = 0
+ok(SdfState.qr_dist_q(qr_a, qr_a) == 0,
+   "SdfState.qr_dist_q: same vector → Q=0")
+
+# Distance from qr_a to qr_b:
+# diff = [0,-1,0,0], quadrance = (0-(-1))²+(0-0)²+... = pairwise: 3
+diff_ab = QuadrayVector(RationalSurd(0), RationalSurd(-1),
+                        RationalSurd(0), RationalSurd(0))
+ok(SdfState.qr_dist_q(qr_a, qr_b) == SdfState.qr_quadrance(diff_ab),
+   "SdfState.qr_dist_q: symmetric with qr_quadrance of diff")
+
+section("SdfState — nearest")
+
+# Build a simple 3-register set: [qr_a at idx 0, qr_b at idx 1, zero×11]
+regs = [qr_a, qr_b] + [QuadrayVector()] * 11
+# target = qr_a; nearest non-zero from regs[1:] should be qr_b (idx 0 of that slice = +1 in full)
+target = qr_a
+idx, min_q = SdfState.nearest(target, regs)
+ok(min_q == 0, f"SdfState.nearest: qr_a vs regs containing qr_a → min_q=0 (got {min_q})")
+ok(idx == 0,   f"SdfState.nearest: nearest is first reg (got {idx})")
+
+# target = qr_b; nearest in [qr_a, qr_b, zeros] = qr_b itself (Q=0)
+idx2, min_q2 = SdfState.nearest(qr_b, regs)
+ok(min_q2 == 0, f"SdfState.nearest: qr_b in regs → Q=0 (got {min_q2})")
+
+section("SdfState — snap_check")
+
+# All QR zero: grad = zero → dot = 0 → no conflict
+zero_regs = [QuadrayVector()] * 13
+g = SdfState.grad(QuadrayVector(), zero_regs)
+ok(not SdfState.snap_check(g, zero_regs),
+   "SdfState.snap_check: all-zero regs → no conflict")
+
+# Non-trivial: one non-zero register, target = zero
+# grad points from zero toward qr_a; vec_sum = qr_a
+# dot = (1×1 + 0×0 + 0×0 + 0×0)  (component-wise integer parts) = 1 ≠ 0
+mixed_regs = [qr_a] + [QuadrayVector()] * 12
+g2 = SdfState.grad(QuadrayVector(), mixed_regs)
+conflict = SdfState.snap_check(g2, mixed_regs)
+ok(conflict, "SdfState.snap_check: grad toward non-zero axis → conflict detected")
+
+section("SdfState — evaluate (SNAP boundary)")
+
+sdf2 = SdfState()
+# Evaluate on all-zero regs: no conflict, snap_count increments
+sdf2.evaluate([QuadrayVector()] * 13, sdf_trace=False)
+ok(sdf2.snap_count    == 1, "SdfState.evaluate: snap_count increments")
+ok(sdf2.conflict_count == 0, "SdfState.evaluate: no conflict on all-zero regs")
+
+# Now evaluate with a non-zero reg
+sdf3 = SdfState()
+regs3 = [qr_a, qr_b] + [QuadrayVector()] * 11
+sdf3.evaluate(regs3, sdf_trace=False)
+ok(sdf3.snap_count == 1, "SdfState.evaluate: snap_count=1 after one call")
+# nearest_axis should be > 0 (qr_a is index 0 = target, nearest non-self is qr_b)
+ok(sdf3.nearest_axis >= 0, f"SdfState.evaluate: nearest_axis set (got {sdf3.nearest_axis})")
+
+section("SPUCore SNAP integrates SdfState")
+
+# Run a SNAP with all-zero QRs: no conflict, sdf.snap_count = 1
+c = make_core()
+c.load([word("SNAP"), word("JMP", a=1)])  # JMP 1 → loop; max_steps halts
+c.run()
+ok(c.sdf.snap_count == 1,     "SPUCore SNAP: sdf.snap_count=1 after one SNAP")
+ok(c.sdf.conflict_count == 0, "SPUCore SNAP: no conflict on clean empty core")
+
+# load() resets SdfState
+c.load([word("NOP")])
+ok(c.sdf.snap_count == 0,     "SPUCore.load: sdf.snap_count reset to 0")
+
+# sdf_trace flag wires through without error (output goes to stdout; we just run it)
+c2 = SPUCore(verbose=False, sdf_trace=True)
+c2.load([word("SNAP"), word("JMP", a=1)])
+c2.run()
+ok(c2.sdf.snap_count == 1,    "SPUCore sdf_trace=True: SNAP still tracked")
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Result

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SPU-13 Sovereign Virtual Machine (spu_vm.py) — v1.3
+SPU-13 Sovereign Virtual Machine (spu_vm.py) — v1.4
 Pure Python interpreter for the Sovereign Assembly (SAS) ISA.
 
 Executes 64-bit control words in Q(√3) — the rational surd field.
@@ -32,6 +32,17 @@ v1.3 additions (Davis Gasket + Fibonacci dispatch):
     • Davis Gate check on every gate tick
     • Henosis recovery on φ₁₃ / φ₂₁ if cubic leak detected
     • Gasket + FibDispatch state printed in dump_registers()
+
+v1.4 additions (SDF Layer 7 — Rational Distance Field):
+  - SdfState class: mirrors spu_sdf.h Layer 7 in pure Python
+    nearest()          — nearest QR register by min Quadrance (sdf_nearest)
+    grad()             — gradient vector from QR0 to nearest register (sdf_grad)
+    snap_check()       — conflict if grad·vec_sum ≠ 0 (sdf_snap)
+    evaluate()         — run all of the above at every SNAP boundary
+  - SPUCore: sdf_trace flag; sdf.evaluate() in SNAP handler
+  - SNAP handler: SDF CONFLICT reported separately from scalar cubic leak
+  - dump_registers(): SdfState summary line added
+  - --sdf-trace CLI flag added to main()
 
 Usage:
     python3 spu_vm.py programs/jitterbug.sas
@@ -198,6 +209,12 @@ class QuadrayVector:
         return QuadrayVector(
             self.a + other.a, self.b + other.b,
             self.c + other.c, self.d + other.d
+        )
+
+    def __sub__(self, other: 'QuadrayVector') -> 'QuadrayVector':
+        return QuadrayVector(
+            self.a - other.a, self.b - other.b,
+            self.c - other.c, self.d - other.d
         )
 
     def normalize(self) -> 'QuadrayVector':
@@ -550,8 +567,137 @@ class FibDispatch:
 
 
 # ---------------------------------------------------------------------------
-# SPU Core — the interpreter
+# SDF State — rational distance field tracker (mirrors spu_sdf.h)
 # ---------------------------------------------------------------------------
+
+class SdfState:
+    """
+    Tracks the SDF-layer state across SNAP boundaries.
+    Mirrors the key functions of spu_sdf.h Layer 7 in pure Python.
+
+    nearest_axis  : index of the QR register closest to the current impact
+                    (= sdf_nearest applied to each active QR register pair)
+    min_q         : minimum Quadrance distance found at last SNAP
+    snap_conflict : True if grad · vec_sum ≠ 0 (sdf_snap equivalent)
+    snap_count    : total SNAP boundaries evaluated
+    conflict_count: total times a snap conflict was detected
+    """
+
+    def __init__(self):
+        self.nearest_axis   = 0
+        self.min_q          = 0
+        self.snap_conflict  = False
+        self.snap_count     = 0
+        self.conflict_count = 0
+
+    # ── sdf_q equivalent ─────────────────────────────────────────────────
+    @staticmethod
+    def qr_quadrance(qv: 'QuadrayVector') -> int:
+        """Quadrance of a QuadrayVector from the zero vector.
+        Uses pairwise-difference formula matching spu_quadray.h::quadrance().
+        Returns integer (rational part only — b=0 for all IVM-canonical axes).
+        """
+        comps = [qv.a.a, qv.b.a, qv.c.a, qv.d.a]
+        q = 0
+        for i in range(4):
+            for j in range(i + 1, 4):
+                diff = comps[i] - comps[j]
+                q += diff * diff
+        return q
+
+    @staticmethod
+    def qr_dist_q(qa: 'QuadrayVector', qb: 'QuadrayVector') -> int:
+        """sdf_q: Quadrance distance between two QuadrayVectors."""
+        diff = qa - qb
+        return SdfState.qr_quadrance(diff)
+
+    # ── sdf_nearest equivalent ────────────────────────────────────────────
+    @staticmethod
+    def nearest(target: 'QuadrayVector', qregs: list) -> tuple[int, int]:
+        """
+        Returns (nearest_idx, min_q) — the QR register index closest to
+        target and the Quadrance distance.  Skips zero registers.
+        """
+        best_idx = -1
+        best_q   = None
+        for i, qr in enumerate(qregs[:13]):
+            if qr.is_zero():
+                continue
+            q = SdfState.qr_dist_q(target, qr)
+            if best_q is None or q < best_q:
+                best_q   = q
+                best_idx = i
+        return (best_idx if best_idx >= 0 else 0,
+                best_q   if best_q  is not None else 0)
+
+    # ── sdf_grad equivalent ───────────────────────────────────────────────
+    @staticmethod
+    def grad(target: 'QuadrayVector', qregs: list) -> 'QuadrayVector':
+        """Gradient: vector from target toward nearest QR register."""
+        idx, _ = SdfState.nearest(target, qregs)
+        return qregs[idx] - target
+
+    # ── sdf_snap equivalent ───────────────────────────────────────────────
+    @staticmethod
+    def snap_check(grad: 'QuadrayVector', qregs: list) -> bool:
+        """
+        Returns True if grad · vec_sum ≠ 0 (Henosis needed).
+        vec_sum = Σ QR[0..12] (the Davis cubic leak vector).
+        dot = component-wise Σ grad_i · vec_sum_i (integer parts).
+        """
+        # Compute vec_sum
+        sa = sb = sc = sd = 0
+        for qr in qregs[:13]:
+            sa += qr.a.a;  sb += qr.b.a
+            sc += qr.c.a;  sd += qr.d.a
+        # dot product (integer parts only — b=0 for canonical axes)
+        dot = (grad.a.a * sa + grad.b.a * sb +
+               grad.c.a * sc + grad.d.a * sd)
+        return dot != 0
+
+    # ── Called at every SNAP boundary ─────────────────────────────────────
+    def evaluate(self, qregs: list, sdf_trace: bool = False,
+                 pc: int = 0) -> None:
+        """
+        Full SDF evaluation at a SNAP boundary:
+          1. Find nearest QR axis to QR0 (the canonical 'impact origin')
+          2. Compute gradient toward nearest axis
+          3. Check for snap conflict (grad · vec_sum ≠ 0)
+        """
+        self.snap_count += 1
+
+        if all(qr.is_zero() for qr in qregs[:13]):
+            self.nearest_axis  = 0
+            self.min_q         = 0
+            self.snap_conflict = False
+            if sdf_trace:
+                print(f"  [{pc:04d}] SDF  (all QR zero — no surface)")
+            return
+
+        # Use QR0 as the reference "impact point"
+        target = qregs[0]
+        self.nearest_axis, self.min_q = self.nearest(target, qregs[1:])
+        self.nearest_axis += 1  # offset back to full qregs index
+
+        gradient = self.grad(target, qregs)
+        self.snap_conflict = self.snap_check(gradient, qregs)
+
+        if self.snap_conflict:
+            self.conflict_count += 1
+
+        if sdf_trace:
+            state = "⚠ CONFLICT" if self.snap_conflict else "✓ coherent"
+            print(f"  [{pc:04d}] SDF  nearest=QR{self.nearest_axis}"
+                  f"  Q={self.min_q}  {state}"
+                  f"  (snap#{self.snap_count}  conflicts={self.conflict_count})")
+
+    def __repr__(self) -> str:
+        state = "CONFLICT" if self.snap_conflict else "coherent"
+        return (f"SdfState({state}  nearest=QR{self.nearest_axis}"
+                f"  Q={self.min_q}"
+                f"  snaps={self.snap_count}  conflicts={self.conflict_count})")
+
+
 
 NUM_REGS = 26  # R0–R25 (one per axis + spares)
 
@@ -565,7 +711,8 @@ class SPUCore:
       QR0–QR12: 13 QuadrayVector registers (one per SPU-13 manifold axis)
     """
 
-    def __init__(self, max_steps: int = 10_000, verbose: bool = True, proof: bool = False):
+    def __init__(self, max_steps: int = 10_000, verbose: bool = True,
+                 proof: bool = False, sdf_trace: bool = False):
         self.regs: list[RationalSurd] = [RationalSurd(0, 0) for _ in range(NUM_REGS)]
         self.qregs: list[QuadrayVector] = [QuadrayVector() for _ in range(13)]
         self.call_stack: list[int] = []
@@ -574,13 +721,16 @@ class SPUCore:
         self.step_count: int = 0
         self.max_steps: int = max_steps
         self.verbose: bool = verbose
-        self.proof: bool = proof   # show step-by-step Q(√3) arithmetic derivations
+        self.proof: bool = proof       # show step-by-step Q(√3) arithmetic derivations
+        self.sdf_trace: bool = sdf_trace  # per-SNAP SDF nearest-axis + conflict trace
         self.halted: bool = False
         self.snap_failures: int = 0
         self.log: list[str] = []
         # v1.3 additions — Davis Gasket + Fibonacci dispatch
         self.gasket   = DavisGasket()
         self.fib      = FibDispatch()
+        # v1.4 additions — SDF Layer 7 state
+        self.sdf      = SdfState()
 
     @staticmethod
     def _q_proof(r: 'RationalSurd', label: str = "") -> str:
@@ -598,6 +748,7 @@ class SPUCore:
         self.step_count = 0
         self.gasket = DavisGasket()
         self.fib    = FibDispatch()
+        self.sdf    = SdfState()
         if self.verbose:
             print(f"  SPU-VM: {len(words)} words loaded.")
 
@@ -753,6 +904,16 @@ class SPUCore:
                         r = self.regs[i]
                         if r.a != 0 or r.b != 0:
                             print(f"         {self._q_proof(r, f'R{i}:')}")
+
+            # Layer 7 SDF evaluation — runs regardless of scalar laminar result.
+            # Checks QR-manifold coherence (grad · vec_sum) and tracks nearest axis.
+            self.sdf.evaluate(self.qregs, sdf_trace=self.sdf_trace, pc=self.pc)
+            if self.sdf.snap_conflict and not failures:
+                # QR conflict not caught by scalar check — report separately
+                self.snap_failures += 1
+                print(f"  [{self.pc:04d}] SNAP ✗ SDF CONFLICT — QR manifold"
+                      f" grad·sum≠0  nearest=QR{self.sdf.nearest_axis}"
+                      f"  Q={self.sdf.min_q}")
 
         # ------------------------------------------------------------------
         # Control flow
@@ -1024,6 +1185,7 @@ class SPUCore:
               f"  call_depth={len(self.call_stack)}")
         print(f"  ── Davis Gasket: {self.gasket!r}")
         print(f"  ── Fib Dispatch: {self.fib!r}")
+        print(f"  ── SDF Layer 7:  {self.sdf!r}")
         print()
 
 
@@ -1041,6 +1203,8 @@ def main():
     parser.add_argument('--quiet', action='store_true', help='Suppress per-instruction trace')
     parser.add_argument('--proof', action='store_true',
                         help='Show step-by-step Q(√3) arithmetic derivations (sceptic mode)')
+    parser.add_argument('--sdf-trace', action='store_true',
+                        help='Show SDF nearest-axis and snap-conflict state at every SNAP')
     args = parser.parse_args()
 
     source_file = args.bin or args.source
@@ -1052,9 +1216,11 @@ def main():
         print(f"Error: file not found: {source_file}")
         sys.exit(1)
 
-    verbose = not args.quiet
-    proof   = args.proof
-    core = SPUCore(max_steps=args.steps, verbose=verbose, proof=proof)
+    verbose   = not args.quiet
+    proof     = args.proof
+    sdf_trace = args.sdf_trace
+    core = SPUCore(max_steps=args.steps, verbose=verbose, proof=proof,
+                   sdf_trace=sdf_trace)
 
     if source_file.endswith('.bin') or args.bin:
         with open(source_file, 'rb') as f:
