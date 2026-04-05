@@ -1,7 +1,18 @@
-// davis_gate_dsp.v (v2.0 — Multi-Target: GOWIN / SIM)
+// davis_gate_dsp.v (v2.1 — Multi-Target: GOWIN / SIM)
 // 4-axis Quadray Davis Law Gasket: quadrance check + IVM basis rotation.
 // Replaces iCE40 SB_MAC16 with gowin_mult18 (DEVICE-parameterised).
 // DEVICE="SIM" uses inferred multiply — fully simulatable with iverilog.
+//
+// v2.1: Added ivm_quadrance output — pairwise Quadray metric Σᵢ<ⱼ(cᵢ-cⱼ)²
+//   This matches spu_wildberger.h Layer 8 and C++ Quadray::quadrance().
+//   The original 'quadrance' output (A²+3B²+C²+D²) is preserved unchanged
+//   as the Q(√3) stiffness / Davis stability measure.
+//
+// Distinction:
+//   quadrance     = A²+3B²+C²+D²          (surd stiffness, positive definite)
+//   ivm_quadrance = Σᵢ<ⱼ(cᵢ-cⱼ)²         (IVM distance metric, matches C++)
+//   For (A,B,C,D)=(4,3,2,1): quadrance=48, ivm_quadrance=20
+//
 // CC0 1.0 Universal.
 
 module davis_gate_dsp #(
@@ -9,10 +20,11 @@ module davis_gate_dsp #(
 )(
     input  wire        clk,
     input  wire        rst_n,
-    input  wire [63:0] q_vector,    // 4×16-bit Quadray input  {A, B, C, D}
-    output wire [63:0] q_rotated,   // 60° IVM basis rotation  {B, C, D, A}
-    output wire [31:0] quadrance,   // Q(√3) stiffness: A²+3B²+C²+D²
-    output wire [15:0] gasket_sum   // Davis Zero-Sum check: A+B+C+D (→0)
+    input  wire [63:0] q_vector,     // 4×16-bit Quadray input  {A, B, C, D}
+    output wire [63:0] q_rotated,    // 60° IVM basis rotation  {B, C, D, A}
+    output wire [31:0] quadrance,    // Q(√3) stiffness: A²+3B²+C²+D²
+    output wire [31:0] ivm_quadrance,// IVM pairwise metric: Σᵢ<ⱼ(cᵢ-cⱼ)²
+    output wire [15:0] gasket_sum    // Davis Zero-Sum check: A+B+C+D (→0)
 );
 
     wire [15:0] A = q_vector[63:48];
@@ -56,9 +68,28 @@ module davis_gate_dsp #(
     wire [31:0] C2 = C2_36[31:0];
     wire [31:0] D2 = D2_36[31:0];
 
-    // Q(√3) quadrance invariant: A² + 3B² + C² + D²
+    // Q(√3) quadrance invariant: A² + 3B² + C² + D²  (surd stiffness)
     wire [31:0] B2_3 = B2 + (B2 << 1);
     assign quadrance = A2 + B2_3 + C2 + D2;
+
+    // IVM pairwise quadrance: Σᵢ<ⱼ (cᵢ-cⱼ)²  — 6 difference-square terms.
+    // Matches C++ Quadray::quadrance() exactly. Uses 6 additional DSP18s
+    // in synthesis; shares A2/B2/C2/D2 to halve the multiply count via:
+    //   (A-B)² = A²-2AB+B², (A-C)²=A²-2AC+C², ...
+    // Here computed combinationally from the already-squared terms + cross terms.
+    wire signed [31:0] AB = $signed(A) * $signed(B);
+    wire signed [31:0] AC = $signed(A) * $signed(C);
+    wire signed [31:0] AD = $signed(A) * $signed(D);
+    wire signed [31:0] BC = $signed(B) * $signed(C);
+    wire signed [31:0] BD = $signed(B) * $signed(D);
+    wire signed [31:0] CD = $signed(C) * $signed(D);
+
+    // (cᵢ-cⱼ)² = cᵢ²-2cᵢcⱼ+cⱼ²;  Σᵢ<ⱼ = 3(A²+B²+C²+D²) - 2(AB+AC+AD+BC+BD+CD)
+    wire [31:0] sum_sq       = A2 + B2 + C2 + D2;
+    wire signed [31:0] cross = AB + AC + AD + BC + BD + CD;
+    wire [31:0] three_sum_sq = sum_sq + sum_sq + sum_sq;
+    wire [31:0] two_cross    = $unsigned(cross + cross);
+    assign ivm_quadrance     = three_sum_sq - two_cross;
 
     // 3. 60° IVM basis rotation: A→B→C→D→A (pure wiring, zero latency)
     assign q_rotated[63:48] = B;

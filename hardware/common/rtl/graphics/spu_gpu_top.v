@@ -127,15 +127,22 @@ module spu_gpu_top #(
         .pixel_z(pixel_z)
     );
 
-    // --- 4. Fragment/Lighting Pipe (PBR) ---
-    wire [63:0] fragment_energy;
+    // --- 4. Fragment/Lighting Pipe (Spread-Weighted, v2.0) ---
+    // Rasterizer lambda outputs are repurposed as spread numerators w0/w1/w2.
+    // The lower 16 bits of each lambda (integer spread numerator) are used directly.
+    wire [127:0] fragment_energy_n;
+    wire [15:0]  fragment_w_total;
     spu_fragment_pipe u_fragment (
-        .clk(clk), .reset(reset),
+        .clk(clk), .rst_n(!reset),
         .pixel_inside(pixel_inside),
-        .lambda0(l0), .lambda1(l1), .lambda2(l2),
+        .w0_n(l0[15:0]), .w1_n(l1[15:0]), .w2_n(l2[15:0]),
         .v0_attr(rd_attr_0), .v1_attr(rd_attr_1), .v2_attr(rd_attr_2),
-        .pixel_energy(fragment_energy)
+        .pixel_energy_n(fragment_energy_n),
+        .pixel_w_total(fragment_w_total)
     );
+    // Expose upper 64 bits (axes 0+1) as the legacy fragment_energy wire
+    // downstream modules use for display output.
+    wire [63:0] fragment_energy = fragment_energy_n[127:64];
 
     // --- 5. VGA Render Signals & Framebuffer ---
     wire [15:0] vga_rd_x, vga_rd_y;
