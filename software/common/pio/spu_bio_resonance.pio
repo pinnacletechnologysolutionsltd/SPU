@@ -1,14 +1,16 @@
-; spu_bio_resonance.pio (v1.1 - Sovereign Auxiliaries)
+; spu_bio_resonance.pio (v2.0 - Sovereign Auxiliaries)
 ; Objective: Deterministic 61.44 kHz Heartbeat & Whisper PWI.
-; Clock: Assume 150 MHz RP2350 Clock.
+; Clock: Assume 150 MHz RP2350 system clock.
 
 .program piranha_pulse
 ; 61.44 kHz = 16.276 us period.
-; At 150 MHz, period = 2440 cycles (1220 cycles per half).
-; Logic: 50% duty cycle heartbeat.
+; Program = 608 cycles total (304 HIGH + 304 LOW).
+; clkdiv = 4.0 → PIO tick = 37.5 MHz.
+; Actual freq = 37.5e6 / 608 = 61,677 Hz (~0.4% above target — acceptable for heartbeat).
+; Each half: set [31] = 32 cycles, 8× nop[31] = 256 cycles, nop[15] = 16 cycles = 304.
 
 .wrap_target
-    set pins, 1 [31]   ; Drive high
+    set pins, 1 [31]   ; HIGH
     nop [31]
     nop [31]
     nop [31]
@@ -16,32 +18,31 @@
     nop [31]
     nop [31]
     nop [31]
-    nop [31]
-    nop [15]           ; ~1220 cycles total
-    nop [31]
-    nop [31]
+    nop [15]           ; 304 cycles HIGH total
+    set pins, 0 [31]   ; LOW
     nop [31]
     nop [31]
     nop [31]
     nop [31]
     nop [31]
     nop [31]
-    nop [15]           ; ~1220 cycles total
+    nop [31]
+    nop [15]           ; 304 cycles LOW total
 .wrap
 
 
 .program whisper_tx
 ; Rational PWI Transmission (1-wire)
-; Pulse Width = (104a + 181b) + 1024_bias
-; Logic: Pull 32-bit width from FIFO and pulse the pin for that duration.
+; Pulse Width = (104a + 181b) + 1024_bias where (a,b) is the RationalSurd.
+; Logic: Pull 32-bit width from TX FIFO and pulse the pin for that many PIO cycles.
 
 .wrap_target
-    pull block          ; Wait for chord width (N)
-    mov x, osr          ; Load width counter
-    set pins, 1         ; Start Pulse
-timer_loop:
-    jmp x-- timer_loop  ; Wait for N cycles
-    set pins, 0         ; End Pulse
+    pull block          ; Wait for pulse width N from TX FIFO
+    mov x, osr          ; Load counter
+    set pins, 1         ; Raise pulse
+pulse_loop:
+    jmp x-- pulse_loop  ; Countdown N cycles
+    set pins, 0         ; Drop pulse
 .wrap
 
 
@@ -51,6 +52,8 @@ static inline void piranha_pulse_program_init(PIO pio, uint sm, uint offset, uin
     sm_config_set_set_pins(&c, pin, 1);
     pio_gpio_init(pio, pin);
     pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+    // clkdiv=4 → 37.5 MHz PIO clock → 608-cycle program = 61.68 kHz ≈ 61.44 kHz
+    sm_config_set_clkdiv(&c, 4.0f);
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);
 }
@@ -60,8 +63,8 @@ static inline void whisper_tx_program_init(PIO pio, uint sm, uint offset, uint p
     sm_config_set_set_pins(&c, pin, 1);
     pio_gpio_init(pio, pin);
     pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
-    // Use a divider to match SPU clock (12 MHz)
-    sm_config_set_clkdiv(&c, 12.5f); // 150MHz / 12.5 = 12MHz
+    // clkdiv=12.5 → 12 MHz PIO tick, matching SPU Whisper baud reference
+    sm_config_set_clkdiv(&c, 12.5f);
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);
 }
