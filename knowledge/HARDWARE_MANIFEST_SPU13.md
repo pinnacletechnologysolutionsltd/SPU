@@ -29,15 +29,25 @@ The SPU-13 utilises a **Hardware Abstraction Layer (HAL)** for bit-exact parity 
 | **Tang 20K** | GW2A-18 | DDR3 128 MB (onboard) | DDR3 bridge planned (`spu_mem_bridge_ddr3.v`). |
 | **Golden Core** | ECP5-85F | External DDR3 | Scale-ready node for 13-core collective manifolds. |
 
-### Resource budget
+### Target ladder
 
-| Board | LUTs | DSPs | SPU-4 ALU path | SPU-13 Core | Notes |
-| :--- | ---: | ---: | :--- | :--- | :--- |
-| iCE40LP1K (wearable) | 1280 | 0 | `spu_4_euclidean_alu` (bit-serial, ~150 LUTs) ✅ | ❌ never fits | Use euclidean ALU only; no sentinel |
-| iCE40UP5K (iCeSugar) | 5280 | 8 | bit-serial ✅ | ~2500 LUTs ✅ | `spu4_sentinel` needs 11 inferred mults; 3 overflow DSPs to LUTs ⚠️ |
-| GW1N-9C (Tang 9K) | 8640 | 20 | bit-serial ✅ | ❌ won't fit | SPU-4 only; 16 DSPs used, 4 spare |
-| GW5A-25 (Tang 25K) | 20736 | 54 | either ✅ | ✅ easy | Primary target; SDRAM bridge live; post-route Fmax **140.83 MHz** at 12 MHz target |
-| GW2A-18 (Tang 20K) | 20736 | 48 | either ✅ | ✅ | DDR3 bridge TBD |
+| Tier | Board | Chip | LUT | DSP | Build script | Status | Notes |
+| :---: | :--- | :--- | ---: | ---: | :--- | :---: | :--- |
+| 1 Micro | Tang Nano 1K | GW1NZ-1 | 1,152 | 0 | `build_gw1n1.sh` | ✅ synth | Whisper Beacon — `spu_4_euclidean_alu` + BSRAM seed; **~206 LUT (18%)** |
+| 2 Small | iCESugar v1.5 | iCE40UP5K | 5,280 | 8 | `build_icesugar.sh` | ✅ bitstream | SPU-4 Sentinel (2-stage pipeline); **4,026 LUT, 48 MHz** |
+| 3 Mid-Small | Tang Nano 9K | GW1N-9C | 8,640 | 20 | `hardware/boards/tang_nano_9k/synth_gowin_9k.ys` | 🔧 partial | SPU-4 core; 16 of 20 DSPs used |
+| 4 Mid | Tang Primer 20K | GW2A-18 | 18,432 | 48 | `hardware/boards/tang_primer_20k/synth_gowin_20k.ys` | 🔧 partial | SPU-13 capable; DDR3 bridge TBD |
+| 5 Large | Tang Primer 25K | GW5A-25A | 20,736 | 54 | `build_25k.sh` | ✅ bitstream | SPU-13 full core; **post-route Fmax 140.83 MHz** |
+| 6 Mega | Gowin Mega | GW5AST-138C | ~138K | 340 | `hardware/boards/gowin_mega/synth_gowin_mega.ys` | 🏗 stub | 8× SPU-13 cluster planned; `spu_mega_top.v` placeholder |
+
+### Resource budget detail
+
+| Board | LUT (actual) | DSP used | Core path | Fmax | Memory |
+| :--- | ---: | ---: | :--- | ---: | :--- |
+| GW1NZ-1 | **~206** of 1,152 (18%) | 0 | `spu_4_euclidean_alu` bit-serial | — (PnR TBD) | 72KB BSRAM onboard |
+| iCE40UP5K | **4,026** of 5,280 (76%) | 8 SB_MAC16 | `spu4_sentinel` v1.3 (2-stage pipe) | **48 MHz** | QSPI PSRAM (PMOD) |
+| GW5A-25A | **~8,500** of 20,736 (41%) | 29 | `spu_13_top` full core | **140.83 MHz** | 32MB SDRAM |
+| GW5AST-138C | ~1 (stub) | 0 | Placeholder | — | — |
 
 ### SPU-4 topology: nano sentinel vs. cluster co-processor
 
@@ -51,7 +61,7 @@ The SPU-4 has two distinct deployment roles, each with its own arithmetic path:
 | Overflow guard | **Phi-fold** — 18-bit accumulator; if sum overflows 16 bits, arithmetic `>>1` or `>>2` (Fibonacci descent). `henosis_pulse` output. | **Davis Law Henosis** — when `nQ > 2 × quadrance_seed` (true runaway, not drift), fold B/C/D axes via signed `>>>1`. `henosis_pulse` output. |
 | Drift monitor | n/a (single-shot circulant) | `janus_stable` (±4 LSB quadrance), separate from fold threshold |
 | Topology | Standalone sensory unit; no SPU-13 dependency | Rotation fidelity tester; feeds manifold to SPU-13 |
-| Target boards | iCE40 LP1K, iCE40 UP5K, GW1N-9K | Tang 25K, Tang 20K alongside SPU-13 |
+| Target boards | GW1NZ-1 (Tang Nano 1K), iCE40UP5K (iCESugar), GW1N-9C (Tang 9K) | Tang 25K, Tang 20K alongside SPU-13 |
 
 **Why two thresholds in the sentinel?**
 `janus_stable` (±4 LSB) is a *precision monitor* — it reports whether the rational rotation is bit-exact. Henosis (2× seed) is a *safety net* — it fires only if the manifold has genuinely grown out of range (e.g., coefficient overflow). The tight monitor should not trigger fold, as that would corrupt the rotation sequence.

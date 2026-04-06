@@ -1,0 +1,16 @@
+# synth_gw1n1.ys — GW1N-1 / GW1NZ-1 synthesis (Tier 1 Micro — Whisper Beacon)
+# Core: spu_4_euclidean_alu + spu_multiplier_serial (0 DSPs, ~601 LUT total)
+# No PSRAM. Seeds from 8-word BSRAM block. Whisper TX output only.
+
+read_verilog -I hardware/common/rtl \
+    hardware/common/rtl/top/spu_sierpinski_clk.v \
+    hardware/common/rtl/prim/spu_multiplier_serial.v \
+    hardware/spu4/rtl/spu_4_euclidean_alu.v \
+    hardware/common/rtl/spu_artery_tx.v \
+    hardware/boards/gw1n1/spu_gw1n1_top.v
+
+hierarchy -check -top spu_gw1n1_top
+
+synth_gowin -top spu_gw1n1_top -json build/gw1n1.json -family gw1n -nodsp
+
+stat

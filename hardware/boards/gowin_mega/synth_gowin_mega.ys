@@ -1,0 +1,20 @@
+# synth_gowin_mega.ys — Gowin Mega GW5AST-138C synthesis (Tier 6 — Sovereign Cluster)
+# Status: STUB synthesis only. Full cluster implementation pending Tier 5 completion.
+#
+# GW5AST-138C resources:
+#   ~138K LUT6  (~207K LUT4 equiv)
+#   340 × ALU54D DSPs
+#   3.375 Mbit BSRAM
+#   Hard-core ARM Cortex-A7 (optional, not used here)
+#
+# Full target: 8× SPU-13 + 1× SPU-4 Sentinel + SovereignBus v1.0
+
+read_verilog -I hardware/common/rtl \
+    hardware/boards/gowin_mega/spu_mega_top.v
+
+hierarchy -check -top spu_mega_top
+
+# GW5A family uses 6-input LUTs and dedicated ALU54D DSPs
+synth_gowin -top spu_mega_top -json build/gowin_mega.json -family gw5a
+
+stat
