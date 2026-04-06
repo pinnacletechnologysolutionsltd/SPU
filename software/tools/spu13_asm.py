@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-spu13_asm.py — SPU-13 Sovereign Assembler v3.0
+spu13_asm.py — SPU-13 Sovereign Assembler v3.1
 ISA v1.2 — 23 opcodes, Q(√3) rational field
 
 Encoding: [Op:8][R1:8][R2:8][P1_A:16][P1_B:16][Unused:8] = 64-bit word
 
 Usage:
-    python3 spu13_asm.py source.sas              # → source.bin
+    python3 spu13_asm.py source.sas              # → source.bin (fold pass on)
     python3 spu13_asm.py source.sas output.bin   # explicit output
     python3 spu13_asm.py --hex source.sas        # print hex words
+    python3 spu13_asm.py --no-fold source.sas    # skip constant-folding pass
 
 Syntax:
     ; comment
@@ -197,13 +198,21 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
             (p1_b & 0xFFFF) <<  8)
 
 
-def assemble(source: str, filename: str = "<input>") -> list[int]:
-    """Two-pass assembler. Returns list of 64-bit words."""
+def _parse_ir(source: str, filename: str = "<input>") -> tuple[dict, list]:
+    """
+    Pass 1+2: collect labels and parse source into IR.
+
+    Returns:
+        labels  — dict[name: str → instruction_index: int]
+        ir      — list of (lineno, mnemonic, args, orig_idx)
+                  orig_idx is the instruction's position in the original IR;
+                  it is preserved by the fold pass so that label remapping
+                  remains correct even when instructions are transformed.
+    """
     lines  = source.splitlines()
     labels: dict[str, int] = {}
-    words:  list[int]      = []
+    ir:     list            = []
 
-    # --- Pass 1: collect labels ------------------------------------------
     addr = 0
     for lineno, raw in enumerate(lines, 1):
         clean = raw.split(';')[0].strip()
@@ -215,24 +224,263 @@ def assemble(source: str, filename: str = "<input>") -> list[int]:
         elif tok in OPCODES:
             addr += 1
 
-    # --- Pass 2: emit words ----------------------------------------------
     for lineno, raw in enumerate(lines, 1):
         clean = raw.split(';')[0].strip()
         if not clean:
             continue
-        parts = clean.replace(',', ' ').split()
+        parts    = clean.replace(',', ' ').split()
         mnemonic = parts[0].upper()
         if mnemonic.endswith(':'):
             continue
         if mnemonic not in OPCODES:
             raise AssemblyError(f"{filename}:{lineno}: unknown mnemonic '{mnemonic}'")
+        ir.append((lineno, mnemonic, parts[1:], len(ir)))
+
+    return labels, ir
+
+
+# ---------------------------------------------------------------------------
+# Constant-folding pass
+# ---------------------------------------------------------------------------
+
+def _fold_pass(ir: list, labelled_positions: set) -> tuple[list, dict]:
+    """
+    Symbolic constant-folding over scalar Q(√3) registers.
+
+    IR tuples are (lineno, mnemonic, args, orig_idx).  orig_idx is the
+    instruction's position in the original, un-folded IR and is preserved
+    (or inherited) through all transformations so that label remapping in
+    assemble() stays correct even when instructions are rewritten or removed.
+
+    Forward pass  — tracks known RationalSurd values per register.
+                    Clears known-state at every labelled position (loop
+                    headers and other jump targets) so that folding never
+                    crosses a back-edge.  Also clears at control-flow
+                    instructions.  Folds ADD / SUB / MUL / ROT / JINV on
+                    all-known operands into a single LD of the exact result;
+                    only when the result fits in int16.
+
+    Backward pass — dead-store elimination: removes LD Rd where Rd is
+                    unconditionally overwritten before any read.  Never
+                    eliminates instructions whose orig_idx is a labelled
+                    position (they may be jump targets).
+
+    Returns (optimised_ir, {'folded': N, 'elim': N}).
+    """
+    _sw = Path(__file__).resolve().parent.parent
+    if str(_sw) not in sys.path:
+        sys.path.insert(0, str(_sw))
+    from spu_vm import RationalSurd  # exact Q(√3) arithmetic
+
+    CLEAR_FLOW = {'JMP', 'CALL', 'RET', 'COND', 'HALT'}
+    stats      = {'folded': 0, 'elim': 0}
+
+    def reg(tok: str) -> tuple[str, int]:
+        t = tok.upper()
+        if t.startswith('QR'): return 'QR', int(t[2:])
+        if t.startswith('R'):  return 'R',  int(t[1:])
+        return 'IMM', int(tok, 0)
+
+    def s16(v: int) -> int:
+        v &= 0xFFFF
+        return v - 0x10000 if v >= 0x8000 else v
+
+    def fits(v: int) -> bool:
+        return -32768 <= v <= 32767
+
+    # ── Forward: constant propagation + folding ──────────────────────────
+    known:   dict[int, RationalSurd] = {}   # scalar reg → known surd value
+    folded:  list                    = []
+
+    for lineno, mn, args, oidx in ir:
+        # Clear known-state at every labelled position: the register file may
+        # hold any values from a previous iteration of a loop or a branch taken
+        # from elsewhere in the program.
+        if oidx in labelled_positions:
+            known.clear()
+
+        if mn in CLEAR_FLOW:
+            known.clear()
+            folded.append((lineno, mn, args, oidx))
+            continue
+
+        if mn == 'LD':
+            _, rd = reg(args[0])
+            a = s16(int(args[1], 0)) if len(args) > 1 else 0
+            b = s16(int(args[2], 0)) if len(args) > 2 else 0
+            known[rd] = RationalSurd(a, b)
+            folded.append((lineno, mn, args, oidx))
+
+        elif mn in ('ADD', 'SUB', 'MUL'):
+            _, rd = reg(args[0])
+            _, rs = reg(args[1])
+            if rd in known and rs in known:
+                vd, vs = known[rd], known[rs]
+                res = vd + vs if mn == 'ADD' else vd - vs if mn == 'SUB' else vd * vs
+                if fits(res.a) and fits(res.b):
+                    known[rd] = res
+                    folded.append((lineno, 'LD', [args[0], str(res.a), str(res.b)], oidx))
+                    stats['folded'] += 1
+                    continue
+            known.pop(rd, None)
+            folded.append((lineno, mn, args, oidx))
+
+        elif mn == 'ROT':
+            _, rd = reg(args[0])
+            if rd in known:
+                res = known[rd].rotate_phi()
+                if fits(res.a) and fits(res.b):
+                    known[rd] = res
+                    folded.append((lineno, 'LD', [args[0], str(res.a), str(res.b)], oidx))
+                    stats['folded'] += 1
+                    continue
+            known.pop(rd, None)
+            folded.append((lineno, mn, args, oidx))
+
+        elif mn == 'JINV':
+            _, rd = reg(args[0])
+            if rd in known:
+                v   = known[rd]
+                res = RationalSurd(v.a, -v.b)
+                if fits(res.a) and fits(res.b):
+                    known[rd] = res
+                    folded.append((lineno, 'LD', [args[0], str(res.a), str(res.b)], oidx))
+                    stats['folded'] += 1
+                    continue
+            folded.append((lineno, mn, args, oidx))
+
+        else:
+            # Conservatively invalidate any scalar destination we don't fold.
+            if args:
+                try:
+                    kind, rd = reg(args[0])
+                    if kind == 'R':
+                        known.pop(rd, None)
+                except (ValueError, IndexError):
+                    pass
+            folded.append((lineno, mn, args, oidx))
+
+    # ── Backward: dead-store elimination ─────────────────────────────────
+    # Scalar read/write sets per mnemonic (conservative for unknowns).
+    def rw(mn: str, args: list) -> tuple[set, set]:
+        reads, writes = set(), set()
+        if not args:
+            return reads, writes
         try:
-            word = _assemble_line([mnemonic] + parts[1:], labels)
+            k0, i0 = reg(args[0])
+        except (ValueError, IndexError):
+            return reads, writes
+        s0 = k0 == 'R'
+
+        if mn == 'LD':
+            if s0: writes.add(i0)
+        elif mn in ('ADD', 'SUB', 'MUL'):
+            if s0:
+                reads.add(i0)           # in-place: Rd is also read
+                writes.add(i0)
+            if len(args) > 1:
+                try:
+                    k1, i1 = reg(args[1])
+                    if k1 == 'R': reads.add(i1)
+                except (ValueError, IndexError):
+                    pass
+        elif mn == 'ROT':
+            if s0: reads.add(i0); writes.add(i0)
+        elif mn in ('LOG', 'COND', 'JINV'):
+            if s0: reads.add(i0)
+        elif mn == 'QLOAD' and len(args) > 1:
+            try:
+                _, rb = reg(args[1])
+                reads.update({rb, rb+1, rb+2, rb+3})
+            except (ValueError, IndexError):
+                pass
+        elif mn in ('SPREAD', 'HEX'):
+            if s0: writes.add(i0)
+        elif mn == 'SNAP':
+            reads.update(range(256))    # checks all regs
+        return reads, writes
+
+    # pending_ld[rd] = index into folded[] — candidate for dead-store removal.
+    # Cleared (assumed live) at control-flow boundaries.
+    # Labelled-position checks use orig_idx (folded[i][3]) so that the guard
+    # still works after the forward pass has shifted instruction indices.
+    pending_ld:   dict[int, int] = {}
+    pending_used: set[int]       = set()
+    dead:         set[int]       = set()
+
+    for i, (lineno, mn, args, oidx) in enumerate(folded):
+        if mn in CLEAR_FLOW:
+            # Conservatively mark all pending LDs as live before a branch.
+            pending_used.update(pending_ld.values())
+            pending_ld.clear()
+            continue
+
+        reads, writes = rw(mn, args)
+
+        for r in reads:
+            if r in pending_ld:
+                pending_used.add(pending_ld[r])
+
+        if mn == 'LD' and writes:
+            rd = next(iter(writes))
+            prev = pending_ld.get(rd)
+            if prev is not None and prev not in pending_used:
+                # Guard: never eliminate an instruction that is a jump target.
+                prev_oidx = folded[prev][3]
+                if prev_oidx not in labelled_positions:
+                    dead.add(prev)
+                    stats['elim'] += 1
+            pending_ld[rd] = i
+        else:
+            for r in writes:
+                pending_ld.pop(r, None)
+
+    # Any LD still pending at program end that was never read is dead.
+    for rd, i in pending_ld.items():
+        if i not in pending_used and folded[i][3] not in labelled_positions:
+            dead.add(i)
+            stats['elim'] += 1
+
+    optimised = [insn for i, insn in enumerate(folded) if i not in dead]
+    return optimised, stats
+
+
+# ---------------------------------------------------------------------------
+# Assembler (three-pass)
+# ---------------------------------------------------------------------------
+
+def assemble(source: str, filename: str = "<input>",
+             fold: bool = True) -> tuple[list[int], dict]:
+    """
+    Three-pass assembler.  Returns (list[64-bit words], fold_stats).
+    fold_stats is empty when fold=False.
+    """
+    labels, ir = _parse_ir(source, filename)
+
+    fold_stats: dict = {}
+    if fold:
+        labelled = set(labels.values())
+        ir, fold_stats = _fold_pass(ir, labelled)
+
+        # Recompute label → new PC after the fold pass may have removed or
+        # rewritten instructions.  Each IR tuple carries an orig_idx (set by
+        # _parse_ir and preserved by _fold_pass) that ties every surviving
+        # instruction back to its position in the original IR.  Build a map
+        # orig_idx → new_pc and remap the label dict through it.
+        orig_idx_to_new_pc = {insn[3]: new_pc for new_pc, insn in enumerate(ir)}
+        labels = {name: orig_idx_to_new_pc[old_pc]
+                  for name, old_pc in labels.items()
+                  if old_pc in orig_idx_to_new_pc}
+
+    words: list[int] = []
+    for lineno, mnemonic, args, *_ in ir:   # *_ tolerates both 3- and 4-tuples
+        try:
+            word = _assemble_line([mnemonic] + args, labels)
             words.append(word)
         except (IndexError, ValueError) as e:
             raise AssemblyError(f"{filename}:{lineno}: bad operands — {e}") from e
 
-    return words
+    return words, fold_stats
 
 
 # ---------------------------------------------------------------------------
@@ -240,8 +488,10 @@ def assemble(source: str, filename: str = "<input>") -> list[int]:
 # ---------------------------------------------------------------------------
 
 def main(argv: list[str]) -> int:
-    hex_mode = '--hex' in argv
-    args     = [a for a in argv if not a.startswith('--')]
+    hex_mode  = '--hex'     in argv
+    no_fold   = '--no-fold' in argv
+    flags     = {a for a in argv if a.startswith('--')}
+    args      = [a for a in argv if not a.startswith('--')]
 
     if not args:
         print(__doc__)
@@ -255,20 +505,29 @@ def main(argv: list[str]) -> int:
     source = src_path.read_text()
 
     try:
-        words = assemble(source, str(src_path))
+        words, fold_stats = assemble(source, str(src_path), fold=not no_fold)
     except AssemblyError as e:
         print(f"Assembly failed: {e}")
         return 1
 
+    fold_note = ""
+    if fold_stats:
+        fold_note = (f"  [fold: {fold_stats['folded']} folded, "
+                     f"{fold_stats['elim']} dead stores eliminated]")
+
     if hex_mode:
-        print(f"--- SPU-13 Assembler v3.0 | {src_path.name} | {len(words)} words ---")
+        print(f"--- SPU-13 Assembler v3.1 | {src_path.name} | {len(words)} words"
+              f"{fold_note} ---")
+        _sw = Path(__file__).resolve().parent.parent
+        if str(_sw) not in sys.path:
+            sys.path.insert(0, str(_sw))
+        from spu_vm import OPNAMES
         for i, w in enumerate(words):
             op  = (w >> 56) & 0xFF
             r1  = (w >> 48) & 0xFF
             r2  = (w >> 40) & 0xFF
             pa  = (w >> 24) & 0xFFFF
             pb  = (w >>  8) & 0xFFFF
-            from spu_vm import OPNAMES  # optional pretty-print
             name = OPNAMES.get(op, f"0x{op:02X}")
             print(f"  [{i:04d}]  {w:016X}  {name:<8}  r1={r1} r2={r2} "
                   f"a={_s16(pa)} b={_s16(pb)}")
@@ -279,7 +538,7 @@ def main(argv: list[str]) -> int:
         for w in words:
             f.write(struct.pack('>Q', w))
 
-    print(f"SPU-13 Assembler v3.0 | {len(words)} words → {out_path}")
+    print(f"SPU-13 Assembler v3.1 | {len(words)} words → {out_path}{fold_note}")
     return 0
 
 
