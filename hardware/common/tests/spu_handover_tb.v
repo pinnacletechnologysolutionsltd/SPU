@@ -12,7 +12,7 @@ module spu_handover_tb;
     wire led_r, led_g, led_b;
     wire psram_ce_n, psram_clk;
     wire [3:0] psram_dq;
-    wire uart_tx, uart_rx;
+    wire uart_tx;
     wire sovereign_heartbeat;
 
     // --- 1. DUT Instance ---
@@ -25,7 +25,6 @@ module spu_handover_tb;
         .psram_clk(psram_clk),
         .psram_dq(psram_dq),
         .uart_tx(uart_tx),
-        .uart_rx(uart_rx),
         .sovereign_heartbeat(sovereign_heartbeat)
     );
 

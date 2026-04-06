@@ -1,0 +1,29 @@
+# iCEsugar v1.5 (iCE40UP5K-SG48) pin constraints
+# Reference: https://github.com/wuxx/icesugar schematic v1.5
+
+# 12 MHz onboard oscillator
+set_io clk  35
+
+# Onboard RGB LED (active-low, driven via SB_RGBA_DRV in firmware;
+# mapped here as plain I/O for synthesis verification)
+set_io LED_R  41
+set_io LED_G  40
+set_io LED_B  39
+
+# UART via Type-C CH552 USB bridge
+# uart_rx shares pin 6 with psram_dq[0] (PMOD1) — omit when PSRAM PMOD is fitted
+set_io uart_tx  9
+
+# PSRAM QSPI — PMOD1 (J4)
+set_io psram_ce_n    10
+set_io psram_clk     48
+set_io psram_dq[0]    6   # SIO0 / MOSI
+set_io psram_dq[1]    3   # SIO1 / MISO
+set_io psram_dq[2]    4   # SIO2 / WP
+set_io psram_dq[3]    2   # SIO3 / HOLD
+
+# Artery nerve / Whisper TX — PMOD2 (J5) pin 2
+set_io NERVE_MOSI  27
+
+# Sovereign heartbeat output — PMOD2 (J5) pin 1
+set_io sovereign_heartbeat  25

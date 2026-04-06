@@ -1,0 +1,18 @@
+# synth_icesugar.ys — iCEsugar v1.5 (iCE40UP5K-SG48) synthesis
+# Target: spu_icesugar_top — Phi-Gated Boot + SPU-4 Sentinel + Artery TX
+# The SPU-13 full core exceeds UP5K capacity; SPU-4 Sentinel is the correct tier.
+
+read_verilog -I hardware/common/rtl \
+    hardware/common/rtl/top/spu_sierpinski_clk.v \
+    hardware/common/rtl/top/spu_ghost_boot.v \
+    hardware/common/rtl/prim/spu_psram_ctrl.v \
+    hardware/common/rtl/prim/gowin_mult18.v \
+    hardware/common/rtl/mem/spu_mem_bridge_qspi.v \
+    hardware/common/rtl/spu_artery_tx.v \
+    hardware/spu4/rtl/spu4_sentinel.v \
+    hardware/boards/icesugar/spu_icesugar_top.v
+
+hierarchy -check -top spu_icesugar_top
+
+# iCE40 UP5K synthesis — inferred multiplies map to SB_MAC16
+synth_ice40 -top spu_icesugar_top -json build/icesugar.json

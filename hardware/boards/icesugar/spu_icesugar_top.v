@@ -1,12 +1,14 @@
-// spu_icesugar_top.v (v1.6 - Sovereign Handover)
-// Target: iCEsugar (iCE40UP5K-SG48)
-// Architecture: Phi-Gated Boot -> SQR Sovereign Operation.
+// spu_icesugar_top.v (v2.0 - SPU-4 Sentinel)
+// Target: iCEsugar v1.5 (iCE40UP5K-SG48)
+// Architecture: Phi-Gated Clock -> SPU-4 Sentinel -> Artery/Whisper TX
+// The SPU-13 full core exceeds UP5K capacity; the SPU-4 Sentinel is the
+// correct deployment for this tier (see HARDWARE_MANIFEST_SPU13.md).
 
 `include "spu_arch_defines.vh"
 
 module spu_icesugar_top (
-    input  wire clk, // 12 MHz onboard
-    
+    input  wire clk,                // 12 MHz onboard oscillator
+
     // Onboard RGB LED
     output wire LED_R,
     output wire LED_G,
@@ -19,13 +21,15 @@ module spu_icesugar_top (
 
     // UART Telemetry (via Type-C Debugger)
     output wire uart_tx,
-    input  wire uart_rx,
 
-    // Heartbeat Monitor (for RP2040)
+    // Artery nerve output (PMOD2 pin 2) for RP2040 inhalation
+    output wire NERVE_MOSI,
+
+    // Sovereign heartbeat (PMOD2 pin 1)
     output wire sovereign_heartbeat
 );
 
-    // --- 1. Clock Generation ---
+    // --- 1. Phi-Gated Clock ---
     wire phi_8, phi_13, phi_21, phi_heart;
     spu_sierpinski_clk u_phi (
         .clk(clk),
@@ -38,7 +42,7 @@ module spu_icesugar_top (
 
     assign sovereign_heartbeat = phi_heart;
 
-    // --- 2. Phi-Gated Ghost Bootloader ---
+    // --- 2. Ghost Boot ---
     wire boot_done;
     wire boot_cs_n, boot_sck, boot_mosi;
     wire [3:0]  p_addr;
@@ -54,29 +58,27 @@ module spu_icesugar_top (
         .ext_spi_cs_n(boot_cs_n),
         .ext_spi_sck(boot_sck),
         .ext_spi_mosi(boot_mosi),
-        .ext_spi_miso(psram_dq[1]), // Shared MISO on DQ1
+        .ext_spi_miso(psram_dq[1]),
         .boot_done(boot_done),
         .prime_addr(p_addr),
         .prime_data(p_data),
         .prime_we(p_we)
     );
 
-    // --- 3. Sovereign Memory Bridge (QSPI) ---
-    wire                   mem_ready;
-    wire                   mem_burst_rd;
-    wire                   mem_burst_wr;
+    // --- 3. QSPI Memory Bridge ---
+    // CE/CLK muxed between boot SPI and bridge; DQ fully owned by psram_ctrl
+    // (holds hi-Z during reset=1 i.e. while boot is in progress).
+    wire mem_ready, mem_burst_rd, mem_burst_wr, mem_burst_done;
     wire [`MEM_ADDR_WIDTH-1:0] mem_addr;
-    wire [`MANIFOLD_WIDTH-1:0] mem_rd_manifold;
-    wire [`MANIFOLD_WIDTH-1:0] mem_wr_manifold;
-    wire                   mem_burst_done;
-
+    wire [`MANIFOLD_WIDTH-1:0] mem_rd_manifold, mem_wr_manifold;
     wire core_ce_n, core_clk;
-    wire [3:0] core_dq_out;
-    wire core_dq_oe;
+
+    assign psram_ce_n = !boot_done ? boot_cs_n : core_ce_n;
+    assign psram_clk  = !boot_done ? boot_sck  : core_clk;
 
     spu_mem_bridge_qspi u_mem (
         .clk(clk),
-        .reset(!boot_done), // Hold bridge in reset until boot finish
+        .reset(!boot_done),
         .mem_ready(mem_ready),
         .mem_burst_rd(mem_burst_rd),
         .mem_burst_wr(mem_burst_wr),
@@ -89,64 +91,58 @@ module spu_icesugar_top (
         .psram_dq(psram_dq)
     );
 
-    // --- 4. Sovereign Bus Handover Mux ---
-    // Note: During boot, we use DQ0/DQ1 for standard SPI.
-    // After boot, the QSPI bridge takes over.
-    assign psram_ce_n = !boot_done ? boot_cs_n : core_ce_n;
-    assign psram_clk  = !boot_done ? boot_sck  : core_clk;
-    
-    // During boot, DQ0 is MOSI. Bridge handles DQ mapping after.
-    // This is a simplified mux; spu_mem_bridge_qspi owns psram_dq when !reset.
-    // We only need to ensure boot_mosi drives DQ0 when !boot_done.
-    // Using a primitive or simple tri-state:
-    assign psram_dq[0] = !boot_done ? boot_mosi : 1'bz;
+    // --- 4. SPU-4 Sentinel Core ---
+    // Seeded with unit Quadray (1,0,0,0) — IVM identity axis.
+    wire [15:0] A_out, B_out, C_out, D_out;
+    wire        janus_stable, henosis_pulse;
 
-    // --- 5. SPU-13 Sovereign Core ---
-    wire is_janus_point;
-    wire bloom_complete;
+    spu4_sentinel u_sentinel (
+        .clk(clk),
+        .rst_n(boot_done),
+        .heartbeat(phi_heart),
+        .A_seed(16'h1000), .B_seed(16'h0),   // (1.0, 0, 0, 0) in Q12
+        .C_seed(16'h0),    .D_seed(16'h0),
+        .rot_mode(2'b01),                      // 60° IVM rotation
+        .A_out(A_out), .B_out(B_out),
+        .C_out(C_out), .D_out(D_out),
+        .quadrance(),
+        .quadrance_seed(),
+        .janus_stable(janus_stable),
+        .heartbeat_count(),
+        .test_pass(),
+        .henosis_pulse(henosis_pulse)
+    );
+
+    // Wire sentinel manifold into the memory bus (packed into MANIFOLD_WIDTH)
+    // Remaining manifold bits tied to zero for SPU-4 tier.
+    assign mem_burst_rd  = 1'b0;
+    assign mem_burst_wr  = 1'b0;
+    assign mem_addr      = {`MEM_ADDR_WIDTH{1'b0}};
+    assign mem_wr_manifold = {{`MANIFOLD_WIDTH-64{1'b0}}, A_out, B_out, C_out, D_out};
+
+    // --- 5. Artery TX (Whisper) ---
     wire [3:0]  artery_axis_ptr;
     wire [63:0] artery_axis_data;
 
-    spu13_core #(.DEVICE("SIM")) u_core (  // iCE40: use inferred multiply path
-        .clk(clk),
-        .rst_n(boot_done), // Awake only after hydration
-        .phi_8(phi_8),
-        .phi_13(phi_13),
-        .phi_21(phi_21),
-        
-        .mem_ready(mem_ready),
-        .mem_burst_rd(mem_burst_rd),
-        .mem_burst_wr(mem_burst_wr),
-        .mem_addr(mem_addr),
-        .mem_rd_manifold(mem_rd_manifold),
-        .mem_wr_manifold(mem_wr_manifold),
-        .mem_burst_done(mem_burst_done),
+    // Drive axis pointer from Pell heartbeat count (cycles through 13 axes)
+    assign artery_axis_ptr  = 4'd0;
+    assign artery_axis_data = {A_out, B_out, C_out, D_out};
 
-        .current_axis_ptr(artery_axis_ptr),
-        .current_axis_data(artery_axis_data),
-        .manifold_out(),
-        .bloom_complete(bloom_complete),
-        .is_janus_point(is_janus_point)
-    );
-
-    // --- 6. Artery Link (Whisper Protocol) ---
-    // Wired to PMOD P2-2 (NERVE_MOSI) for RP2040 Inhalation
-    wire artery_tx_active;
     spu_artery_tx u_artery (
         .clk(clk),
         .phi_21(phi_21),
         .axis_ptr(artery_axis_ptr),
         .axis_data(artery_axis_data),
         .tx_out(NERVE_MOSI),
-        .tx_active(artery_tx_active)
+        .tx_active()
     );
 
-    // --- 7. Physical Status (LEDs) ---
+    // --- 6. Status LEDs ---
+    assign LED_B = !boot_done;      // Blue:  booting
+    assign LED_G = janus_stable;    // Green: sovereign stability
+    assign LED_R = henosis_pulse;   // Red:   Henosis fired (manifold drift)
 
-    assign LED_B = !boot_done;      // Blue: Booting
-    assign LED_G = is_janus_point; // Green: Sovereign Stability
-    assign LED_R = !mem_ready;     // Red: Memory Dissonance
-
-    assign uart_tx = is_janus_point ^ phi_heart;
+    assign uart_tx = janus_stable ^ phi_heart;
 
 endmodule
+

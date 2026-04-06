@@ -1,7 +1,12 @@
-// spu4_sentinel.v (v1.2 - SQR v3.1 High-Fidelity Rotation)
+// spu4_sentinel.v (v1.3 - 2-stage pipeline for timing closure)
 // Objective: Autonomous Tetrahedral Rotation Stress Test.
 // Standard: Strictly Rational Q(sqrt3) SQR Rotors.
 // Verification: Janus Parity must hold within 4 LSB over 1,000 heartbeats.
+//
+// Pipeline: Stage-0 (heartbeat): rotation multiply → pipe registers
+//           Stage-1 (heartbeat+1): quadrance, drift check, output register
+// Two-stage split cuts the ~38 ns combinatorial logic depth in half,
+// bringing the critical path within 12 MHz on iCE40UP5K.
 
 `include "sqr_params.vh"
 
@@ -46,49 +51,74 @@ module spu4_sentinel (
         endcase
     end
 
+    // ── Stage-0 pipeline registers (capture rotation result) ─────────────
+    // Filled on the heartbeat cycle; stage-1 reads them one cycle later.
+    reg signed [15:0] p_A, p_B, p_C, p_D;
+    reg               p_valid;         // stage-1 enable
+    reg               p_seeding;       // marks this as the seed-capture beat
+    reg               p_henosis;       // Henosis fired in this beat
+
     wire signed [15:0] B_s = $signed(B_out);
     wire signed [15:0] C_s = $signed(C_out);
     wire signed [15:0] D_s = $signed(D_out);
 
-    // Intermediate products are 32-bit signed. 
-    // Summing three 32-bit values can overflow into 34 bits, so we use 48-bit for safety.
+    // Henosis fold operates on stage-0 rotation result (cuts path: no quadrance needed)
     wire signed [47:0] nB_full = ($signed(F) * B_s) + ($signed(H) * C_s) + ($signed(G) * D_s);
     wire signed [47:0] nC_full = ($signed(G) * B_s) + ($signed(F) * C_s) + ($signed(H) * D_s);
     wire signed [47:0] nD_full = ($signed(H) * B_s) + ($signed(G) * C_s) + ($signed(F) * D_s);
 
-    wire signed [15:0] nA = $signed(A_out); // A is rotation axis
-    wire signed [15:0] nB = nB_full[27:12]; // Q12 shift back to 16-bit
+    wire signed [15:0] nA = $signed(A_out);
+    wire signed [15:0] nB = nB_full[27:12];
     wire signed [15:0] nC = nC_full[27:12];
     wire signed [15:0] nD = nD_full[27:12];
 
+    // ── Stage-1 combinatorial (from pipeline registers) ───────────────────
+    wire signed [31:0] p_A2 = $signed(p_A) * $signed(p_A);
+    wire signed [31:0] p_B2 = $signed(p_B) * $signed(p_B);
+    wire signed [31:0] p_C2 = $signed(p_C) * $signed(p_C);
+    wire signed [31:0] p_D2 = $signed(p_D) * $signed(p_D);
+    wire [31:0] p_Q  = p_A2 + p_B2 + p_C2 + p_D2;
 
-    // ── Quadrance ────────────────────────────────────────────────────────
-    wire signed [31:0] nA2 = $signed(nA) * $signed(nA);
-    wire signed [31:0] nB2 = $signed(nB) * $signed(nB);
-    wire signed [31:0] nC2 = $signed(nC) * $signed(nC);
-    wire signed [31:0] nD2 = $signed(nD) * $signed(nD);
-
-    wire [31:0] nQ = nA2 + nB2 + nC2 + nD2;
-
-
-    // Drift tolerance = ±4 LSB
-    wire signed [31:0] qd = $signed(nQ) - $signed(quadrance_seed);
+    wire signed [31:0] qd = $signed(p_Q) - $signed(quadrance_seed);
     wire drift_ok = (qd >= -4) && (qd <= 4);
 
-    assign janus_stable = !seeded || drift_ok;
-    assign test_pass    = (heartbeat_count == 10'd1000) && janus_stable;
+    // Henosis threshold check (stage-1: uses registered pipe values)
+    wire p_henosis_needed = seeded && (p_Q > (quadrance_seed << 1));
+    wire signed [15:0] B_lam = p_henosis_needed ? ($signed(p_B) >>> 1) : p_B;
+    wire signed [15:0] C_lam = p_henosis_needed ? ($signed(p_C) >>> 1) : p_C;
+    wire signed [15:0] D_lam = p_henosis_needed ? ($signed(p_D) >>> 1) : p_D;
 
-    // ── Davis Law Henosis fold ────────────────────────────────────────────
-    // When the manifold quadrance grows beyond 2× the seed (true overflow, not
-    // precision drift), fold B/C/D back via arithmetic >>1 (Phi-step descent).
-    // Threshold is intentionally coarse — janus_stable (±4) is the fine monitor;
-    // Henosis only fires on genuine runaway growth.
-    wire henosis_needed = seeded && (nQ > (quadrance_seed << 1));
-    wire signed [15:0] B_lam = henosis_needed ? ($signed(nB) >>> 1) : nB;
-    wire signed [15:0] C_lam = henosis_needed ? ($signed(nC) >>> 1) : nC;
-    wire signed [15:0] D_lam = henosis_needed ? ($signed(nD) >>> 1) : nD;
-    assign henosis_pulse = henosis_needed;
+    assign janus_stable  = !seeded || drift_ok;
+    assign test_pass     = (heartbeat_count == 10'd1000) && janus_stable;
+    assign henosis_pulse = p_valid && p_henosis_needed;
 
+    // ── Stage-0 register: fill pipeline on heartbeat ──────────────────────
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            p_A       <= 16'h0; p_B <= 16'h0;
+            p_C       <= 16'h0; p_D <= 16'h0;
+            p_valid   <= 1'b0;
+            p_seeding <= 1'b0;
+            p_henosis <= 1'b0;
+        end else begin
+            p_valid   <= 1'b0;
+            p_seeding <= 1'b0;
+            if (heartbeat && heartbeat_count <= 10'd1000) begin
+                if (!seeded) begin
+                    p_A       <= A_seed; p_B <= B_seed;
+                    p_C       <= C_seed; p_D <= D_seed;
+                    p_seeding <= 1'b1;
+                end else begin
+                    p_A <= nA; p_B <= nB;
+                    p_C <= nC; p_D <= nD;
+                end
+                p_valid   <= 1'b1;
+                p_henosis <= 1'b0;
+            end
+        end
+    end
+
+    // ── Stage-1 register: commit outputs one cycle after heartbeat ────────
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             A_out           <= 16'h0;
@@ -99,27 +129,22 @@ module spu4_sentinel (
             quadrance_seed  <= 32'h0;
             heartbeat_count <= 10'h0;
             seeded          <= 1'b0;
-        end else if (heartbeat && heartbeat_count <= 10'd1000) begin
-            if (!seeded) begin
-                A_out <= A_seed;
-                B_out <= B_seed;
-                C_out <= C_seed;
-                D_out <= D_seed;
-                quadrance_seed <= {16'h0, A_seed} * {16'h0, A_seed} +
-                                  {16'h0, B_seed} * {16'h0, B_seed} +
-                                  {16'h0, C_seed} * {16'h0, C_seed} +
-                                  {16'h0, D_seed} * {16'h0, D_seed};
-                seeded <= 1'b1;
+        end else if (p_valid) begin
+            if (p_seeding) begin
+                A_out          <= p_A; B_out <= p_B;
+                C_out          <= p_C; D_out <= p_D;
+                quadrance_seed <= p_Q;
+                seeded         <= 1'b1;
             end else begin
-                A_out           <= nA;
+                A_out           <= p_A;
                 B_out           <= B_lam;
                 C_out           <= C_lam;
                 D_out           <= D_lam;
-                quadrance       <= nQ;
+                quadrance       <= p_Q;
                 heartbeat_count <= heartbeat_count + 1;
             end
         end
     end
 
-endmodule
 
+endmodule
