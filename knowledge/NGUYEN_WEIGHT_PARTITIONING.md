@@ -71,8 +71,8 @@ d(P', F) = ((s+1) × d(P,F)) / (s × d(P,F) + 1)
 ```
 
 **SPU-13 translation — `pell_zoom()`:**
-Replace the smooth fish-eye with *discrete Pell Octave steps*. As the user zooms
-into the Laminar-Doom map, the geometry snaps to the next IVM scale level:
+Replace the smooth fish-eye with *discrete Pell Octave steps*. As the renderer zooms
+into the geometry, it snaps to the next IVM scale level:
 ```
 scale_n = pell_orbit[n]   # (1,0), (2,1), (7,4), (26,15), (97,56)...
 ```

@@ -64,11 +64,10 @@ any floating-point drift accumulating between levels.
 transformations — the geometry of "how does an event at point P affect
 region R?"
 
-**SPU-13 parallel:** In the Laminar-Doom physics model, a pressure impact at
-a Quadray coordinate generates a Quadrance-bounded zone of effect. Since
-Quadrance is `Q(u,v) = (u−v)·(u−v)` computed entirely in Q(√3), the impact
-radius is an *exact rational boundary* — no square root, no float, no
-approximation.
+**SPU-13 parallel:** A pressure impact at a Quadray coordinate generates a
+Quadrance-bounded zone of effect. Since Quadrance is `Q(u,v) = (u−v)·(u−v)`
+computed entirely in Q(√3), the impact radius is an *exact rational boundary*
+— no square root, no float, no approximation.
 
 The Arlinghaus buffer zone is thus a Davis-Law-compliant pressure region:
 
