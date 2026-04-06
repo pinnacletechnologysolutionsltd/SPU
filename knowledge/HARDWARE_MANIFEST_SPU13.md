@@ -36,7 +36,7 @@ The SPU-13 utilises a **Hardware Abstraction Layer (HAL)** for bit-exact parity 
 | iCE40LP1K (wearable) | 1280 | 0 | `spu_4_euclidean_alu` (bit-serial, ~150 LUTs) ✅ | ❌ never fits | Use euclidean ALU only; no sentinel |
 | iCE40UP5K (iCeSugar) | 5280 | 8 | bit-serial ✅ | ~2500 LUTs ✅ | `spu4_sentinel` needs 11 inferred mults; 3 overflow DSPs to LUTs ⚠️ |
 | GW1N-9C (Tang 9K) | 8640 | 20 | bit-serial ✅ | ❌ won't fit | SPU-4 only; 16 DSPs used, 4 spare |
-| GW5A-25 (Tang 25K) | 20736 | 54 | either ✅ | ✅ easy | Primary target; SDRAM bridge live |
+| GW5A-25 (Tang 25K) | 20736 | 54 | either ✅ | ✅ easy | Primary target; SDRAM bridge live; post-route Fmax **140.83 MHz** at 12 MHz target |
 | GW2A-18 (Tang 20K) | 20736 | 48 | either ✅ | ✅ | DDR3 bridge TBD |
 
 ### SPU-4 topology: nano sentinel vs. cluster co-processor
@@ -55,6 +55,10 @@ The SPU-4 has two distinct deployment roles, each with its own arithmetic path:
 
 **Why two thresholds in the sentinel?**
 `janus_stable` (±4 LSB) is a *precision monitor* — it reports whether the rational rotation is bit-exact. Henosis (2× seed) is a *safety net* — it fires only if the manifold has genuinely grown out of range (e.g., coefficient overflow). The tight monitor should not trigger fold, as that would corrupt the rotation sequence.
+
+### Toolchain
+
+**Verified with oss-cad-suite 2026-04-06** (yosys 0.63+190, nextpnr 0.10-25-g25482d99, apycula with GW5A-25A.msgpack.xz).  YRabbit's GW5A additions (HCLK system, CLKDIV, IDES4/OSER4 deserializers) are all present.
 
 ### Portability rules
 

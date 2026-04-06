@@ -488,7 +488,7 @@ fn select_regime(reynolds: Surd, laminar_v: Surd, turbulent_v: Surd) -> Surd {
     ▼  Pass 3: Code generator
    .sas assembly text
     │
-    ▼  spu13_asm.py (two-pass label resolver)
+    ▼  spu13_asm.py (three-pass: label resolve + constant-fold + encode)
    64-bit binary instruction words
     │
     ▼  spu_forge.py build / generate_bram.py
@@ -629,7 +629,7 @@ Bits [ 7: 0]  (reserved)
 
 | Mnemonic | Opcode | Operation |
 |----------|--------|-----------|
-| `QLOAD QRn, a,b,c,d` | 0x13 | Load Quadray from immediates |
+| `QLOAD QRn, Rb` | 0x13 | Pack R[Rb..Rb+3] into QRn |
 | `QADD QRd, QRs` | 0x10 | `QRd ← QRd + QRs` |
 | `QROT QRn` | 0x11 | `(a,b,c,d) → (b,c,d,a)` — cyclic IVM rotation |
 | `QNORM QRd, QRs` | 0x12 | Quadrance of QRs into QRd |
@@ -648,7 +648,7 @@ Bits [ 7: 0]  (reserved)
 |----------|--------|-----------|
 | `EQUIL Rd` | 0x17 | Check VE state; write tension to Rd |
 | `IDNT Rd, Rs` | 0x18 | Identity monad: `Rd ← Rs` with provenance |
-| `JINV Rn` | 0x19 | Janus inversion: `Rn ← (−P, −Q)` |
+| `JINV Rn` | 0x19 | Janus inversion: `Rn ← (P, −Q)` — negate surd component only |
 | `ANNE Rd, Rs` | 0x1A | Anneal: smooth manifold tension |
 
 ### 6.3 Register File

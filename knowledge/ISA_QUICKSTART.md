@@ -7,6 +7,16 @@ Programs are assembled and simulated via:
 python3 software/spu_forge.py simulate software/programs/your_program.sas
 ```
 
+Direct assembler (v3.1 — three-pass: label resolve → constant-fold → encode):
+```bash
+python3 software/tools/spu13_asm.py --hex software/programs/your_program.sas
+python3 software/tools/spu13_asm.py --no-fold --hex ...   # disable constant-folding
+```
+The constant-folding pass pre-evaluates known-constant Q(√3) arithmetic at
+assemble time (ADD/SUB/MUL/ROT/JINV on literal-initialised registers) and
+eliminates dead stores.  Loop bodies are never folded — known state is cleared
+at every labelled position.
+
 ---
 
 ## Registers
@@ -76,6 +86,7 @@ norm Q is preserved exactly through all rotations.
 | `CALL` | 0x21 | `CALL LABEL` | Push return address, jump |
 | `RET` | 0x22 | `RET` | Pop and jump to return address |
 | `SNAP` | 0x07 | `SNAP` | Assert all non-zero scalar registers have `Q = 1`; exit 2 on failure |
+| `HALT` | 0x08 | `HALT` | Stop execution |
 | `NOP` | 0xFF | `NOP` | No operation |
 
 **COND semantics:** `Q(Rn) > 0` means the register is laminar (on the unit manifold).
@@ -92,7 +103,7 @@ Use `COND`+`JMP` when demonstrating or handling failure paths.
 
 | Mnemonic | Opcode | Syntax | Operation |
 |----------|--------|--------|-----------|
-| `QLOAD` | 0x13 | `QLOAD QRn, a, b, c, d` | Load Quadray from 4 immediates |
+| `QLOAD` | 0x13 | `QLOAD QRn, Rb` | Pack R[Rb]..R[Rb+3] into QRn (4 consecutive scalar registers → 1 Quadray) |
 | `QADD` | 0x10 | `QADD QRd, QRs` | `QRd ← QRd + QRs` (component-wise) |
 | `QROT` | 0x11 | `QROT QRn` | Apply IVM rotation: `(a,b,c,d)→(b,c,d,a)` — preserves 60° geometry |
 | `QNORM` | 0x12 | `QNORM QRd, QRs` | Quadrance (squared length) into `QRd` |
@@ -127,7 +138,7 @@ No arcsin, no π, no rounding.
 |----------|--------|--------|-----------|
 | `EQUIL` | 0x17 | `EQUIL Rd` | Check Vector Equilibrium state; write tension to `Rd` |
 | `IDNT` | 0x18 | `IDNT Rd, Rs` | Identity Monad: `Rd ← Rs` with provenance tag |
-| `JINV` | 0x19 | `JINV Rn` | Janus Inversion: `Rn ← (−P, −Q)` (flip both poles) |
+| `JINV` | 0x19 | `JINV Rn` | Janus Inversion: `Rn ← (P, −Q)` — negate surd (b) component only; single XOR in hardware |
 | `ANNE` | 0x1A | `ANNE Rd, Rs` | Anneal: smooth manifold tension between `Rd` and `Rs` |
 
 ---
@@ -212,8 +223,11 @@ DONE:
 
 ### IVM 60° spread check
 ```asm
-QLOAD QR0, 1, 0, 0, 0
-QLOAD QR1, 0, 1, 0, 0
+; Load two unit Quadray axes via scalar registers R0..R3
+LD R0, 1, 0 \ LD R1, 0, 0 \ LD R2, 0, 0 \ LD R3, 0, 0
+QLOAD QR0, R0           ; QR0 = (1,0,0,0)
+LD R0, 0, 0 \ LD R1, 1, 0
+QLOAD QR1, R0           ; QR1 = (0,1,0,0)
 SPREAD R4, QR0, QR1     ; R4=numer, R5=denom
 ; Check 4×R4 == 3×R5  →  spread = 3/4  →  60°
 ```
