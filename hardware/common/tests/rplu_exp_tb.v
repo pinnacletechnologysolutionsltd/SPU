@@ -28,6 +28,7 @@ module rplu_exp_tb;
 
     integer i;
     integer errors = 0;
+    integer diff;
 
     initial begin
         // test carbon
@@ -35,7 +36,6 @@ module rplu_exp_tb;
         for (i = 0; i < 16; i = i + 1) begin
             addr = i; r_q16 = $signed(r_rom[i]); start = 1; @(posedge clk); start = 0; repeat(4) @(posedge clk); // wait for pipeline done
             // compare v_q16 to expected within tolerance (looser for fixed-point rounding)
-            integer diff;
             diff = v_q16 - $signed(vnorm_exp[i]);
             if (diff < 0) diff = -diff;
             if (diff > 1024) begin
