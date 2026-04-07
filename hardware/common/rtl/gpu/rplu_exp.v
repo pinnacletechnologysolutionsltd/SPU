@@ -21,12 +21,19 @@ module rplu_exp (
         $readmemh("hardware/common/rtl/gpu/params_iron.hex", params_iron);
     end
 
-    // Padé [4/4] coeffs (Q16.16)
-    reg signed [31:0] pade_num [0:4];
-    reg signed [31:0] pade_den [0:4];
+    // Padé [4/4] coeffs (Q32 and improved Q16 available)
+    reg signed [63:0] pade_num_q32 [0:4];
+    reg signed [63:0] pade_den_q32 [0:4];
+    // keep Q16 mems for fallback compatibility
+    reg signed [31:0] pade_num_q16 [0:4];
+    reg signed [31:0] pade_den_q16 [0:4];
     initial begin
-        $readmemh("hardware/common/rtl/gpu/pade_num_4_4.mem", pade_num);
-        $readmemh("hardware/common/rtl/gpu/pade_den_4_4.mem", pade_den);
+        // read Q32 coeffs (preferred)
+        $readmemh("hardware/common/rtl/gpu/pade_num_4_4_q32.mem", pade_num_q32);
+        $readmemh("hardware/common/rtl/gpu/pade_den_4_4_q32.mem", pade_den_q32);
+        // also read Q16 for tools that expect them
+        $readmemh("hardware/common/rtl/gpu/pade_num_4_4.mem", pade_num_q16);
+        $readmemh("hardware/common/rtl/gpu/pade_den_4_4.mem", pade_den_q16);
     end
 
     reg signed [31:0] a_q16, re_q16;
@@ -35,14 +42,17 @@ module rplu_exp (
     // pipeline registers
     reg signed [31:0] r_reg;
     reg signed [31:0] delta_q16;
-    reg signed [63:0] x_q32;
+    reg signed [63:0] x_q32;          // Q32.32 (a_q16 * delta_q16 -> Q32)
+    reg signed [127:0] acc_num128;    // accumulator in Q32 represented in 128 bits
+    reg signed [127:0] acc_den128;
+    reg signed [127:0] mult128;
     reg [7:0] idx;
     reg signed [31:0] exp_q16;
     reg signed [31:0] t_q16;
     reg signed [63:0] t2_q32;
     reg signed [63:0] v_q32;
 
-    reg signed [47:0] x_q16_temp;
+    reg signed [63:0] x_q32_temp;
     reg signed [55:0] idx_temp;
 
     localparam integer XMAX_SCALED = 262144; // XMAX(4.0) * 2^16
@@ -70,28 +80,38 @@ module rplu_exp (
                 delta_q16 = re_q16 - r_q16;
                 // compute x = a * delta (Q32.32 in x_q32)
                 x_q32 = a_q16 * delta_q16; // signed 64-bit
-                // compute x_q16 from x_q32>>16
-                x_q16_temp = x_q32 >>> 16;
-                // Evaluate Padé [4/4] via Horner (coeffs Q16.16)
-                reg signed [63:0] acc_num;
-                reg signed [63:0] acc_den;
-                // numerator Horner: p4*x + p3 ... -> start from highest
-                acc_num = $signed(pade_num[4]);
-                acc_num = (($signed(acc_num) * x_q16_temp) >>> 16) + $signed(pade_num[3]);
-                acc_num = (($signed(acc_num) * x_q16_temp) >>> 16) + $signed(pade_num[2]);
-                acc_num = (($signed(acc_num) * x_q16_temp) >>> 16) + $signed(pade_num[1]);
-                acc_num = (($signed(acc_num) * x_q16_temp) >>> 16) + $signed(pade_num[0]);
+                // Use Q32 Padé evaluation: x_q32 is Q32 (a_q16 * delta_q16)
+                x_q32_temp = x_q32; // Q32
+                // numerator Horner (Q32 arithmetic), using 128-bit intermediates
+                acc_num128 = {{64{pade_num_q32[4][63]}}, pade_num_q32[4]}; // sign-extend 64->128
+                mult128 = acc_num128 * x_q32_temp; // Q32*Q32 => Q64 in mult128 (scaled by 2^64)
+                acc_num128 = (mult128 >>> 32) + {{64{pade_num_q32[3][63]}}, pade_num_q32[3]};
+                mult128 = acc_num128 * x_q32_temp;
+                acc_num128 = (mult128 >>> 32) + {{64{pade_num_q32[2][63]}}, pade_num_q32[2]};
+                mult128 = acc_num128 * x_q32_temp;
+                acc_num128 = (mult128 >>> 32) + {{64{pade_num_q32[1][63]}}, pade_num_q32[1]};
+                mult128 = acc_num128 * x_q32_temp;
+                acc_num128 = (mult128 >>> 32) + {{64{pade_num_q32[0][63]}}, pade_num_q32[0]};
                 // denominator Horner
-                acc_den = $signed(pade_den[4]);
-                acc_den = (($signed(acc_den) * x_q16_temp) >>> 16) + $signed(pade_den[3]);
-                acc_den = (($signed(acc_den) * x_q16_temp) >>> 16) + $signed(pade_den[2]);
-                acc_den = (($signed(acc_den) * x_q16_temp) >>> 16) + $signed(pade_den[1]);
-                acc_den = (($signed(acc_den) * x_q16_temp) >>> 16) + $signed(pade_den[0]);
-                // perform division (acc_num/acc_den) in Q16.16: (acc_num << 16) / acc_den
-                if (acc_den == 0) begin
+                acc_den128 = {{64{pade_den_q32[4][63]}}, pade_den_q32[4]};
+                mult128 = acc_den128 * x_q32_temp;
+                acc_den128 = (mult128 >>> 32) + {{64{pade_den_q32[3][63]}}, pade_den_q32[3]};
+                mult128 = acc_den128 * x_q32_temp;
+                acc_den128 = (mult128 >>> 32) + {{64{pade_den_q32[2][63]}}, pade_den_q32[2]};
+                mult128 = acc_den128 * x_q32_temp;
+                acc_den128 = (mult128 >>> 32) + {{64{pade_den_q32[1][63]}}, pade_den_q32[1]};
+                mult128 = acc_den128 * x_q32_temp;
+                acc_den128 = (mult128 >>> 32) + {{64{pade_den_q32[0][63]}}, pade_den_q32[0]};
+                // perform division: exp_q16 = (acc_num128 << 16) / acc_den128  -> result Q16.16
+                if (acc_den128 == 0) begin
                     exp_q16 = 32'sd0;
                 end else begin
-                    exp_q16 = ($signed(acc_num <<< 16) / $signed(acc_den));
+                    // compute  (acc_num128 * 2^16) / acc_den128
+                    reg signed [127:0] numer128;
+                    numer128 = acc_num128 <<< 16;
+                    reg signed [127:0] quot128;
+                    quot128 = numer128 / acc_den128; // Q16.16 in lower 64 bits
+                    exp_q16 = quot128[31:0];
                 end
                 // compute t = 1 - exp
                 t_q16 = 32'sd65536 - exp_q16;
