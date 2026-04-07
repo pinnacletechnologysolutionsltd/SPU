@@ -1,13 +1,15 @@
-// spu_tang_top.v — Tang Primer 25K board top (v3.1 — dual-config: base / extram)
+// spu_tang_top.v — Tang Primer 25K board top (v4.0 — dual SPU-13 + 8× SPU-4)
 // Target:  GW5A-LV25MG121NES (Tang Primer 25K)
 // Crystal: 50 MHz  →  PLLA  →  25 MHz (clk_fast) + Piranha Pulse (61.44 kHz)
 //
 // Resources available (GW5A-25A):
 //   LUTs: 20,736     DSPs: 54     BSRAM: 28×18 Kb
-//   SPU-13 Cortex (TDM) + 4× SPU-4 Sentinel + SDRAM bridge.
 //
-// Sentinel array: 4× spu4_top on clk_piranha, one per Quadray axis (A,B,C,D).
-// SPU-13 Cortex:  spu13_core on clk_fast (25 MHz TDM).
+// Sentinel array: 8× spu4_top on clk_piranha (4 per cortex, Quadray axes A-D).
+// SPU-13 Cortex 0: u_cortex_0 on clk_fast — primary sovereign.
+// SPU-13 Cortex 1: u_cortex_1 on clk_fast — secondary sovereign.
+// SDRAM arbiter:   spu_sdram_arbiter — priority (c0>c1), bank partition.
+//   c0 → banks 0-1 (lower 16 MB), c1 → banks 2-3 (upper 16 MB).
 //
 // Build configs:
 //   (default)      Base config: onboard W9825G6KH-6 32 MB SDRAM only.
@@ -24,10 +26,10 @@
 //
 // LED status (active-low):
 //   led[0] = PLL locked
-//   led[1] = Janus point (manifold stable)
-//   led[2] = bloom_complete pulse
-//   led[3] = SDRAM mem_ready
-//   led[4] = burst active (rd or wr in flight)
+//   led[1] = dual Janus (both cortices stable)
+//   led[2] = either cortex bloom pulse
+//   led[3] = any sentinel snap
+//   led[4] = SDRAM burst active
 //   led[5] = Whisper TX ready
 //
 // CC0 1.0 Universal.
@@ -158,26 +160,33 @@ module spu_tang_top (
     );
 
     // ------------------------------------------------------------------ //
-    // 3. SDRAM bridge (W9825G6KH-6, 32 MB)                              //
+    // 3. SDRAM bridge (W9825G6KH-6, 32 MB) + arbiter                    //
     // ------------------------------------------------------------------ //
-    wire                          mem_ready;
-    wire                          mem_burst_rd;
-    wire                          mem_burst_wr;
-    wire [`MEM_ADDR_WIDTH-1:0]    mem_addr;
-    wire [`MANIFOLD_WIDTH-1:0]    mem_rd_manifold;
-    wire [`MANIFOLD_WIDTH-1:0]    mem_wr_manifold;
-    wire                          mem_burst_done;
+    wire                       sdram_mem_ready, sdram_mem_burst_done;
+    wire                       sdram_mem_burst_rd, sdram_mem_burst_wr;
+    wire [`MEM_ADDR_WIDTH-1:0] sdram_mem_addr;
+    wire [`MANIFOLD_WIDTH-1:0] sdram_mem_rd_manifold, sdram_mem_wr_manifold;
+
+    wire                       c0_mem_ready, c0_mem_burst_done;
+    wire                       c0_mem_burst_rd, c0_mem_burst_wr;
+    wire [`MEM_ADDR_WIDTH-1:0] c0_mem_addr;
+    wire [`MANIFOLD_WIDTH-1:0] c0_mem_rd_manifold, c0_mem_wr_manifold;
+
+    wire                       c1_mem_ready, c1_mem_burst_done;
+    wire                       c1_mem_burst_rd, c1_mem_burst_wr;
+    wire [`MEM_ADDR_WIDTH-1:0] c1_mem_addr;
+    wire [`MANIFOLD_WIDTH-1:0] c1_mem_rd_manifold, c1_mem_wr_manifold;
 
     spu_mem_bridge_sdram #(.COL_BITS(9)) u_sdram (
         .clk             (clk_fast),
         .reset           (!rst_n),
-        .mem_ready       (mem_ready),
-        .mem_burst_rd    (mem_burst_rd),
-        .mem_burst_wr    (mem_burst_wr),
-        .mem_addr        (mem_addr),
-        .mem_rd_manifold (mem_rd_manifold),
-        .mem_wr_manifold (mem_wr_manifold),
-        .mem_burst_done  (mem_burst_done),
+        .mem_ready       (sdram_mem_ready),
+        .mem_burst_rd    (sdram_mem_burst_rd),
+        .mem_burst_wr    (sdram_mem_burst_wr),
+        .mem_addr        (sdram_mem_addr),
+        .mem_rd_manifold (sdram_mem_rd_manifold),
+        .mem_wr_manifold (sdram_mem_wr_manifold),
+        .mem_burst_done  (sdram_mem_burst_done),
         .sdram_clk       (sdram_clk),
         .sdram_cs_n      (sdram_cs_n),
         .sdram_ras_n     (sdram_ras_n),
@@ -186,6 +195,32 @@ module spu_tang_top (
         .sdram_ba        (sdram_ba),
         .sdram_addr      (sdram_addr),
         .sdram_dq        (sdram_dq)
+    );
+
+    spu_sdram_arbiter u_arb (
+        .clk                   (clk_fast),
+        .rst_n                 (rst_n),
+        .c0_mem_ready          (c0_mem_ready),
+        .c0_mem_burst_rd       (c0_mem_burst_rd),
+        .c0_mem_burst_wr       (c0_mem_burst_wr),
+        .c0_mem_addr           (c0_mem_addr),
+        .c0_mem_rd_manifold    (c0_mem_rd_manifold),
+        .c0_mem_wr_manifold    (c0_mem_wr_manifold),
+        .c0_mem_burst_done     (c0_mem_burst_done),
+        .c1_mem_ready          (c1_mem_ready),
+        .c1_mem_burst_rd       (c1_mem_burst_rd),
+        .c1_mem_burst_wr       (c1_mem_burst_wr),
+        .c1_mem_addr           (c1_mem_addr),
+        .c1_mem_rd_manifold    (c1_mem_rd_manifold),
+        .c1_mem_wr_manifold    (c1_mem_wr_manifold),
+        .c1_mem_burst_done     (c1_mem_burst_done),
+        .sdram_mem_ready       (sdram_mem_ready),
+        .sdram_mem_burst_rd    (sdram_mem_burst_rd),
+        .sdram_mem_burst_wr    (sdram_mem_burst_wr),
+        .sdram_mem_addr        (sdram_mem_addr),
+        .sdram_mem_rd_manifold (sdram_mem_rd_manifold),
+        .sdram_mem_wr_manifold (sdram_mem_wr_manifold),
+        .sdram_mem_burst_done  (sdram_mem_burst_done)
     );
 
 `ifdef EXT_SDRAM
@@ -219,46 +254,66 @@ module spu_tang_top (
 `endif
 
     // ------------------------------------------------------------------ //
-    // 4. SPU-13 Cortex (TDM, 1 DSP slice, fits on GW5A-25)              //
+    // 4. Dual SPU-13 Cortex                                              //
+    //    u_cortex_0: primary sovereign   — SDRAM banks 0-1               //
+    //    u_cortex_1: secondary sovereign — SDRAM banks 2-3               //
     // ------------------------------------------------------------------ //
-    wire [`MANIFOLD_WIDTH-1:0] manifold_out;
-    wire                       bloom_done;
-    wire                       is_janus_point;
+    wire [`MANIFOLD_WIDTH-1:0] manifold_0, manifold_1;
+    wire                       bloom_0, bloom_1;
+    wire                       janus_0, janus_1;
 
-    spu13_core #(.DEVICE("GW5A")) u_cortex (
+    spu13_core #(.DEVICE("GW5A")) u_cortex_0 (
         .clk             (clk_fast),
         .rst_n           (rst_n),
         .phi_8           (phi_8),
         .phi_13          (phi_13),
         .phi_21          (phi_21),
-        .mem_ready       (mem_ready),
-        .mem_burst_rd    (mem_burst_rd),
-        .mem_burst_wr    (mem_burst_wr),
-        .mem_addr        (mem_addr),
-        .mem_rd_manifold (mem_rd_manifold),
-        .mem_wr_manifold (mem_wr_manifold),
-        .mem_burst_done  (mem_burst_done),
-        .manifold_out    (manifold_out),
-        .bloom_complete  (bloom_done),
-        .is_janus_point  (is_janus_point)
+        .mem_ready       (c0_mem_ready),
+        .mem_burst_rd    (c0_mem_burst_rd),
+        .mem_burst_wr    (c0_mem_burst_wr),
+        .mem_addr        (c0_mem_addr),
+        .mem_rd_manifold (c0_mem_rd_manifold),
+        .mem_wr_manifold (c0_mem_wr_manifold),
+        .mem_burst_done  (c0_mem_burst_done),
+        .manifold_out    (manifold_0),
+        .bloom_complete  (bloom_0),
+        .is_janus_point  (janus_0)
+    );
+
+    spu13_core #(.DEVICE("GW5A")) u_cortex_1 (
+        .clk             (clk_fast),
+        .rst_n           (rst_n),
+        .phi_8           (phi_8),
+        .phi_13          (phi_13),
+        .phi_21          (phi_21),
+        .mem_ready       (c1_mem_ready),
+        .mem_burst_rd    (c1_mem_burst_rd),
+        .mem_burst_wr    (c1_mem_burst_wr),
+        .mem_addr        (c1_mem_addr),
+        .mem_rd_manifold (c1_mem_rd_manifold),
+        .mem_wr_manifold (c1_mem_wr_manifold),
+        .mem_burst_done  (c1_mem_burst_done),
+        .manifold_out    (manifold_1),
+        .bloom_complete  (bloom_1),
+        .is_janus_point  (janus_1)
     );
 
     // ------------------------------------------------------------------ //
-    // 5. 4× SPU-4 Sentinel Cores (Quadray satellite array)              //
-    //    Each sentinel runs on clk_piranha (61.44 kHz), one per         //
-    //    Quadray axis (A, B, C, D). All fed OP_SNAP continuously.       //
+    // 5. 8× SPU-4 Sentinel Cores (broadcast Quadray satellite array)    //
+    //    Sentinels 0-3: primary cluster (cortex_0 axis set A-D)          //
+    //    Sentinels 4-7: secondary cluster (cortex_1 axis set A-D)        //
     // ------------------------------------------------------------------ //
-    wire [3:0]  sentinel_snap;
-    wire [3:0]  sentinel_whisper;
-    wire [63:0] sentinel_r0 [0:3];
+    wire [7:0]  sentinel_snap;
+    wire [7:0]  sentinel_whisper;
+    wire [63:0] sentinel_r0 [0:7];
 
     genvar si;
     generate
-        for (si = 0; si < 4; si = si + 1) begin : gen_sentinels
+        for (si = 0; si < 8; si = si + 1) begin : gen_sentinels
             spu4_top u_sentinel (
                 .clk          (clk_piranha),
                 .rst_n        (rst_n),
-                .inst_data    (24'h800000),      // OP_SNAP: autonomous Quadray snap
+                .inst_data    (24'h800000),
                 .pc           (),
                 .snap_alert   (sentinel_snap[si]),
                 .whisper_tx   (sentinel_whisper[si]),
@@ -267,21 +322,21 @@ module spu_tang_top (
         end
     endgenerate
 
-    // Combine all sentinel snaps into artery-ready signal
     wire any_sentinel_snap = |sentinel_snap;
+    wire dual_janus        = janus_0 & janus_1;
 
     // ------------------------------------------------------------------ //
-    // 6. Whisper TX (PWI 1-wire telemetry to RP2350/RP2040)              //
+    // 6. Whisper TX (reports cortex_0 bloom; cortex_1 via future Artery) //
     // ------------------------------------------------------------------ //
     wire whisper_ready;
 
     SPU_WHISPER_TX #(.K_FACTOR(8)) u_whisper (
         .clk     (clk_fast),
         .rst_n   (rst_n),
-        .trig_en (bloom_done),
+        .trig_en (bloom_0),
         .is_sync (1'b0),
-        .surd_a  (manifold_out[15:0]),
-        .surd_b  (manifold_out[31:16]),
+        .surd_a  (manifold_0[15:0]),
+        .surd_b  (manifold_0[31:16]),
         .pwi_out (whisper_tx),
         .tx_ready(whisper_ready)
     );
@@ -292,12 +347,12 @@ module spu_tang_top (
     // ------------------------------------------------------------------ //
     // 7. LED status (active-low)                                         //
     // ------------------------------------------------------------------ //
-    assign led[0] = ~pll_lock;                        // PLL locked
-    assign led[1] = ~is_janus_point;                  // manifold stable
-    assign led[2] = ~bloom_done;                      // bloom pulse
-    assign led[3] = ~any_sentinel_snap;               // any sentinel snap
-    assign led[4] = ~(mem_burst_rd | mem_burst_wr);   // burst active
-    assign led[5] = ~whisper_ready;                   // Whisper TX ready
+    assign led[0] = ~pll_lock;                                    // PLL locked
+    assign led[1] = ~dual_janus;                                   // both cortices stable
+    assign led[2] = ~(bloom_0 | bloom_1);                         // either bloom pulse
+    assign led[3] = ~any_sentinel_snap;                            // any sentinel snap
+    assign led[4] = ~(sdram_mem_burst_rd | sdram_mem_burst_wr);   // SDRAM burst active
+    assign led[5] = ~whisper_ready;                                // Whisper TX ready
 
 endmodule
 

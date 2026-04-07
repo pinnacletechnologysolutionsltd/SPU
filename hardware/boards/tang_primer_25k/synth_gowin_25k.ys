@@ -63,6 +63,7 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_system.v
 
 # ─── Memory bridges ────────────────────────────────────────────────────────
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_sdram.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_sdram_arbiter.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_qspi.v
 
 # ─── GPU / HAL ─────────────────────────────────────────────────────────────
