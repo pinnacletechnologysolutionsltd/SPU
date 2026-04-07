@@ -1,4 +1,4 @@
-// spu_tang_top.v — Tang Primer 25K board top (v3.0 — dual-core: SPU-13 + 4× SPU-4)
+// spu_tang_top.v — Tang Primer 25K board top (v3.1 — dual-config: base / extram)
 // Target:  GW5A-LV25MG121NES (Tang Primer 25K)
 // Crystal: 50 MHz  →  PLLA  →  25 MHz (clk_fast) + Piranha Pulse (61.44 kHz)
 //
@@ -9,9 +9,16 @@
 // Sentinel array: 4× spu4_top on clk_piranha, one per Quadray axis (A,B,C,D).
 // SPU-13 Cortex:  spu13_core on clk_fast (25 MHz TDM).
 //
+// Build configs:
+//   (default)      Base config: onboard W9825G6KH-6 32 MB SDRAM only.
+//   EXT_SDRAM      Extram config: +40-pin 512 Mb (64 MB) expansion module.
+//                  Synthesise with -D EXT_SDRAM in synth_gowin_25k_extram.ys.
+//                  Ext SDRAM bridge is ready; 2nd SPU-13 core wired in next step.
+//
 // Memory:
-//   Onboard SDRAM  — spu_mem_bridge_sdram.v (W9825G6KH-6, 32 MB)
-//   Expansion SDRAM (512 Mb Sipeed module) — to be wired when module arrives.
+//   Onboard SDRAM  — spu_mem_bridge_sdram #(.COL_BITS(9))  — W9825G6KH-6, 32 MB
+//   Ext SDRAM      — spu_mem_bridge_sdram #(.COL_BITS(10)) — Sipeed 512Mb module
+//                    (EXT_SDRAM only)
 //
 // RP2350 bridge: UART1 at 921 600 baud on GPIO pins.
 //
@@ -41,6 +48,18 @@ module spu_tang_top (
     output wire [1:0]  sdram_ba,
     output wire [12:0] sdram_addr,
     inout  wire [15:0] sdram_dq,
+
+`ifdef EXT_SDRAM
+    // Expansion SDRAM (Sipeed 512 Mb 40-pin module, 64 MB, COL_BITS=10)
+    output wire        ext_sdram_clk,
+    output wire        ext_sdram_cs_n,
+    output wire        ext_sdram_ras_n,
+    output wire        ext_sdram_cas_n,
+    output wire        ext_sdram_we_n,
+    output wire [1:0]  ext_sdram_ba,
+    output wire [12:0] ext_sdram_addr,
+    inout  wire [15:0] ext_sdram_dq,
+`endif
 
     // RP2350 UART bridge
     input  wire        uart_rx,
@@ -149,7 +168,7 @@ module spu_tang_top (
     wire [`MANIFOLD_WIDTH-1:0]    mem_wr_manifold;
     wire                          mem_burst_done;
 
-    spu_mem_bridge_sdram u_sdram (
+    spu_mem_bridge_sdram #(.COL_BITS(9)) u_sdram (
         .clk             (clk_fast),
         .reset           (!rst_n),
         .mem_ready       (mem_ready),
@@ -168,6 +187,36 @@ module spu_tang_top (
         .sdram_addr      (sdram_addr),
         .sdram_dq        (sdram_dq)
     );
+
+`ifdef EXT_SDRAM
+    // ------------------------------------------------------------------ //
+    // 3b. Ext SDRAM bridge — Sipeed 512 Mb 40-pin module (64 MB)        //
+    //     COL_BITS=10 → address space [24:0].                            //
+    //     CPU-side tied idle here; 2nd SPU-13 will claim this interface. //
+    // ------------------------------------------------------------------ //
+    wire                          ext_mem_ready;
+    wire [`MANIFOLD_WIDTH-1:0]    ext_mem_rd_manifold;
+
+    spu_mem_bridge_sdram #(.COL_BITS(10)) u_ext_sdram (
+        .clk             (clk_fast),
+        .reset           (!rst_n),
+        .mem_ready       (ext_mem_ready),
+        .mem_burst_rd    (1'b0),
+        .mem_burst_wr    (1'b0),
+        .mem_addr        ({`MEM_ADDR_WIDTH{1'b0}}),
+        .mem_rd_manifold (ext_mem_rd_manifold),
+        .mem_wr_manifold ({`MANIFOLD_WIDTH{1'b0}}),
+        .mem_burst_done  (),
+        .sdram_clk       (ext_sdram_clk),
+        .sdram_cs_n      (ext_sdram_cs_n),
+        .sdram_ras_n     (ext_sdram_ras_n),
+        .sdram_cas_n     (ext_sdram_cas_n),
+        .sdram_we_n      (ext_sdram_we_n),
+        .sdram_ba        (ext_sdram_ba),
+        .sdram_addr      (ext_sdram_addr),
+        .sdram_dq        (ext_sdram_dq)
+    );
+`endif
 
     // ------------------------------------------------------------------ //
     // 4. SPU-13 Cortex (TDM, 1 DSP slice, fits on GW5A-25)              //
