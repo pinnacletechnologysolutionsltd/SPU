@@ -109,9 +109,7 @@ module rplu_exp (
                     exp_q16 = 32'sd0;
                 end else begin
                     // compute  (acc_num128 * 2^16) / acc_den128
-                    reg signed [127:0] numer128;
                     numer128 = acc_num128 <<< 16;
-                    reg signed [127:0] quot128;
                     quot128 = numer128 / acc_den128; // Q16.16 in lower 64 bits
                     exp_q16 = quot128[31:0];
                 end
