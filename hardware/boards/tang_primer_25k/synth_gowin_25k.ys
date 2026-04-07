@@ -65,6 +65,17 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_system.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_sdram.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_qspi.v
 
+# ─── GPU / HAL ─────────────────────────────────────────────────────────────
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_video_timing.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_edge_stepper.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_raster_unit.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_dual_raster.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_bresenham_raster.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_gpu_top.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/hal/HAL_VGA.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/hal/HAL_HDMI_TMDS.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/hal/HAL_HDMI.v
+
 # ─── Board top ─────────────────────────────────────────────────────────────
 read_verilog -I hardware/common/rtl hardware/boards/tang_primer_25k/spu_tang_top.v
 
