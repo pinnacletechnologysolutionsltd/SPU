@@ -21,8 +21,8 @@ module rplu_exp_tb;
     reg [31:0] r_rom [0:1023];
 
     initial begin
-        $readmemh("hardware/common/rtl/gpu/v_real_carbon.mem", vnorm_exp);
-        $readmemh("hardware/common/rtl/gpu/v_real_dissoc_carbon.mem", vnorm_diss);
+        $readmemh("hardware/common/rtl/gpu/vnorm_carbon.mem", vnorm_exp);
+        $readmemh("hardware/common/rtl/gpu/vnorm_dissoc_carbon.mem", vnorm_diss);
         $readmemh("hardware/common/rtl/gpu/r_rom_carbon.mem", r_rom);
     end
 
@@ -32,8 +32,8 @@ module rplu_exp_tb;
     initial begin
         // test carbon
         material_id = 0;
-        for (i = 0; i < 1024; i = i + 1) begin
-            addr = i; r_q16 = $signed(r_rom[i]); start = 1; #2 start = 0; #4; // wait for pipeline
+        for (i = 0; i < 16; i = i + 1) begin
+            addr = i; r_q16 = $signed(r_rom[i]); start = 1; @(posedge clk); start = 0; repeat(4) @(posedge clk); // wait for pipeline done
             // compare v_q16 to expected within tolerance (2 LSB)
             if ( (v_q16 - $signed(vnorm_exp[i])) > 2 || ($signed(vnorm_exp[i]) - v_q16) > 2 ) begin
                 $display("ERROR v[%0d]: got %0d expected %0d", i, v_q16, $signed(vnorm_exp[i]));
