@@ -46,6 +46,8 @@ module rplu_exp (
     reg signed [127:0] acc_num128;    // accumulator in Q32 represented in 128 bits
     reg signed [127:0] acc_den128;
     reg signed [127:0] mult128;
+    reg signed [127:0] numer128;
+    reg signed [127:0] quot128;
     reg [7:0] idx;
     reg signed [31:0] exp_q16;
     reg signed [31:0] t_q16;
