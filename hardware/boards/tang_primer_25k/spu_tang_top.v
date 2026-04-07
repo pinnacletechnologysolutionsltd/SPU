@@ -1,10 +1,13 @@
-// spu_tang_top.v — Tang Primer 25K board top (v2.1)
+// spu_tang_top.v — Tang Primer 25K board top (v3.0 — dual-core: SPU-13 + 4× SPU-4)
 // Target:  GW5A-LV25MG121NES (Tang Primer 25K)
 // Crystal: 50 MHz  →  PLLA  →  25 MHz (clk_fast) + Piranha Pulse (61.44 kHz)
 //
 // Resources available (GW5A-25A):
-//   LUTs:  ~23 000     DSPs: 28     BSRAM: 28×18 Kb
-//   SPU-13 Cortex (TDM) + 4× SPU-4 Sentinel + SDRAM bridge fits comfortably.
+//   LUTs: 20,736     DSPs: 54     BSRAM: 28×18 Kb
+//   SPU-13 Cortex (TDM) + 4× SPU-4 Sentinel + SDRAM bridge.
+//
+// Sentinel array: 4× spu4_top on clk_piranha, one per Quadray axis (A,B,C,D).
+// SPU-13 Cortex:  spu13_core on clk_fast (25 MHz TDM).
 //
 // Memory:
 //   Onboard SDRAM  — spu_mem_bridge_sdram.v (W9825G6KH-6, 32 MB)
@@ -192,7 +195,34 @@ module spu_tang_top (
     );
 
     // ------------------------------------------------------------------ //
-    // 5. Whisper TX (PWI 1-wire telemetry to RP2350/RP2040)              //
+    // 5. 4× SPU-4 Sentinel Cores (Quadray satellite array)              //
+    //    Each sentinel runs on clk_piranha (61.44 kHz), one per         //
+    //    Quadray axis (A, B, C, D). All fed OP_SNAP continuously.       //
+    // ------------------------------------------------------------------ //
+    wire [3:0]  sentinel_snap;
+    wire [3:0]  sentinel_whisper;
+    wire [63:0] sentinel_r0 [0:3];
+
+    genvar si;
+    generate
+        for (si = 0; si < 4; si = si + 1) begin : gen_sentinels
+            spu4_top u_sentinel (
+                .clk          (clk_piranha),
+                .rst_n        (rst_n),
+                .inst_data    (24'h800000),      // OP_SNAP: autonomous Quadray snap
+                .pc           (),
+                .snap_alert   (sentinel_snap[si]),
+                .whisper_tx   (sentinel_whisper[si]),
+                .debug_reg_r0 (sentinel_r0[si])
+            );
+        end
+    endgenerate
+
+    // Combine all sentinel snaps into artery-ready signal
+    wire any_sentinel_snap = |sentinel_snap;
+
+    // ------------------------------------------------------------------ //
+    // 6. Whisper TX (PWI 1-wire telemetry to RP2350/RP2040)              //
     // ------------------------------------------------------------------ //
     wire whisper_ready;
 
@@ -211,12 +241,12 @@ module spu_tang_top (
     assign uart_tx = 1'b1; // idle high
 
     // ------------------------------------------------------------------ //
-    // 6. LED status (active-low)                                         //
+    // 7. LED status (active-low)                                         //
     // ------------------------------------------------------------------ //
     assign led[0] = ~pll_lock;                        // PLL locked
     assign led[1] = ~is_janus_point;                  // manifold stable
     assign led[2] = ~bloom_done;                      // bloom pulse
-    assign led[3] = ~mem_ready;                       // SDRAM ready
+    assign led[3] = ~any_sentinel_snap;               // any sentinel snap
     assign led[4] = ~(mem_burst_rd | mem_burst_wr);   // burst active
     assign led[5] = ~whisper_ready;                   // Whisper TX ready
 
