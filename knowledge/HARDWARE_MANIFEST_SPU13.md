@@ -33,10 +33,10 @@ The SPU-13 utilises a **Hardware Abstraction Layer (HAL)** for bit-exact parity 
 
 | Tier | Board | Chip | LUT | DSP | Build script | Status | Notes |
 | :---: | :--- | :--- | ---: | ---: | :--- | :---: | :--- |
-| 1 Micro | Tang Nano 1K | GW1NZ-1 | 1,152 | 0 | `build_gw1n1.sh` | ✅ synth | Whisper Beacon — `spu_4_euclidean_alu` + BSRAM seed; **~206 LUT (18%)** |
+| 1 Micro | Tang Nano 1K | GW1NZ-1 | 1,152 | 0 | `build_gw1n1.sh` | ✅ bitstream | Whisper Beacon — `spu_4_euclidean_alu` + BSRAM seed; **~206 LUT (18%)** |
 | 2 Small | iCESugar v1.5 | iCE40UP5K | 5,280 | 8 | `build_icesugar.sh` | ✅ bitstream | SPU-4 Sentinel (2-stage pipeline); **4,026 LUT, 48 MHz** |
-| 3 Mid-Small | Tang Nano 9K | GW1N-9C | 8,640 | 20 | `hardware/boards/tang_nano_9k/synth_gowin_9k.ys` | 🔧 partial | SPU-4 core; 16 of 20 DSPs used |
-| 4 Mid | Tang Primer 20K | GW2A-18 | 18,432 | 48 | `hardware/boards/tang_primer_20k/synth_gowin_20k.ys` | 🔧 partial | SPU-13 capable; DDR3 bridge TBD |
+| 3 Mid-Small | Tang Nano 9K | GW1N-9C | 8,640 | 20 | `hardware/boards/tang_nano_9k/synth_gowin_9k.ys` | ✅ synth | SPU-4 core; **671 LUT + 1636 ALU (26.9%), 5/20 DSP** |
+| 4 Mid | Tang Primer 20K | GW2A-18 | 18,432 | 48 | `hardware/boards/tang_primer_20k/synth_gowin_20k.ys` | ✅ synth | SPU-13 capable; **28.7% LUT, 14/48 DSP**; DDR3 bridge TBD |
 | 5 Large | Tang Primer 25K | GW5A-25A | 20,736 | 54 | `build_25k.sh` | ✅ bitstream | SPU-13 full core; **post-route Fmax 140.83 MHz** |
 | 6 Mega | Gowin Mega | GW5AST-138C | ~138K | 340 | `hardware/boards/gowin_mega/synth_gowin_mega.ys` | 🏗 stub | 8× SPU-13 cluster planned; `spu_mega_top.v` placeholder |
 
@@ -44,7 +44,9 @@ The SPU-13 utilises a **Hardware Abstraction Layer (HAL)** for bit-exact parity 
 
 | Board | LUT (actual) | DSP used | Core path | Fmax | Memory |
 | :--- | ---: | ---: | :--- | ---: | :--- |
-| GW1NZ-1 | **~206** of 1,152 (18%) | 0 | `spu_4_euclidean_alu` bit-serial | — (PnR TBD) | 72KB BSRAM onboard |
+| GW1NZ-1 | **~206** of 1,152 (18%) | 0 | `spu_4_euclidean_alu` bit-serial | +31 ns slack at 27 MHz | 72KB BSRAM onboard |
+| GW1N-9C | **671 LUT + 1636 ALU** of 8,640 (26.9%) | 5/20 | `spu4_core` + sentinel | — (PnR TBD) | 8MB PSRAM onboard |
+| GW2A-18 | **~5,300** of 18,432 (28.7%) | 14/48 | `spu_13_top` full core | — (PnR TBD) | 128MB DDR3 onboard |
 | iCE40UP5K | **4,026** of 5,280 (76%) | 8 SB_MAC16 | `spu4_sentinel` v1.3 (2-stage pipe) | **48 MHz** | QSPI PSRAM (PMOD) |
 | GW5A-25A | **~8,500** of 20,736 (41%) | 29 | `spu_13_top` full core | **140.83 MHz** | 32MB SDRAM |
 | GW5AST-138C | ~1 (stub) | 0 | Placeholder | — | — |

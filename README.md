@@ -17,7 +17,7 @@ stability checks are integer comparisons. There is no epsilon, no rounding, no d
 ```bash
 python3 run_all_tests.py
 ```
-Compiles and runs all 59 Verilog testbenches via `iverilog`/`vvp`. All must print `PASS`.
+Compiles and runs all 95 Verilog testbenches + Python identity proofs via `iverilog`/`vvp`. All must print `PASS`.
 
 ### Simulate a program
 ```bash
@@ -26,16 +26,22 @@ python3 software/spu_forge.py simulate software/programs/kinematic_chain.sas
 python3 software/spu_forge.py simulate software/programs/laminar_vs_cubic.sas
 ```
 
-### Synthesise (open source, iCE40 target)
+### Synthesise (open source, all targets)
 ```bash
-yosys -m ghdl synth_ice40.ys   # produces spu13.json
-```
+# iCE40 (iCESugar)
+bash build_icesugar.sh
 
-### Synthesise (GOWIN Tang Primer 25K)
-```bash
-# On Windows with GOWIN EDA installed:
-gw_sh.exe hardware/boards/tang_primer_25k/build.tcl
-# Output: build/tang_primer_25k/spu13_25k.fs
+# GOWIN Tang Nano 1K — full pipeline: synth + PnR + bitstream
+bash build_gw1n1.sh
+
+# GOWIN Tang Primer 25K
+bash build_25k.sh
+
+# Tang Nano 9K (synthesis only)
+yosys hardware/boards/tang_nano_9k/synth_gowin_9k.ys
+
+# Tang Primer 20K (synthesis only)
+yosys hardware/boards/tang_primer_20k/synth_gowin_20k.ys
 ```
 
 ---
@@ -97,18 +103,25 @@ hardware/
   spu4/rtl/          SPU-4 Sentinel (Quadray satellite)
   spu13/rtl/         SPU-13 Cortex (13-axis manifold)
   boards/
-    tang_primer_25k/ GOWIN GW5A-25 target (TCL scripts, CST, flash map)
+    gw1n1/           Tang Nano 1K — full PnR bitstream (build_gw1n1.sh)
+    icesugar/        iCESugar v1.5 — full bitstream (build_icesugar.sh)
+    tang_nano_9k/    Tang Nano 9K — synthesis (synth_gowin_9k.ys)
+    tang_primer_20k/ Tang Primer 20K — synthesis (synth_gowin_20k.ys)
+    tang_primer_25k/ Tang Primer 25K — full bitstream (build_25k.sh)
+    gowin_mega/      Gowin Mega — 8× cluster stub
 
 software/
   spu_vm.py          Soft-CPU simulator (Python)
   spu_forge.py       Unified CLI: simulate / assemble / test / build
   programs/          .sas demonstration programs
-  flash/             Binary tables: Pell orbit, golden primes
+  lib/               Sovereign Geometry Library — exact Q(√3,√5,√15) arithmetic
+  flash/             Binary tables: Pell orbit, golden primes, spread LUT
   tools/             golden_primes.py, gen_pell_table.py
 
 knowledge/
   MATHEMATICAL_FOUNDATIONS.md   Fuller → Wildberger → Davis → SPU-13 lineage
   ISA_QUICKSTART.md             Instruction set reference
+  HARDWARE_MANIFEST_SPU13.md   Full target ladder and resource budgets
 
 reference/
   synergeticrenderer/           High-performance renderer + physics test suite
@@ -129,11 +142,16 @@ reference/
 
 ## Hardware Targets
 
-| Board | FPGA | Status |
-|-------|------|--------|
-| iCESugar / iCE40 | Lattice iCE40UP5K | Synthesises (Yosys open source) |
-| **Tang Primer 25K** | GOWIN GW5A-LV25MG121 | Board on order — TCL build scripts ready |
-| Tang Primer 20K | GOWIN GW2A-18C | CST/TCL can be adapted |
+| Tier | Board | FPGA | LUT | Status |
+|------|-------|------|-----|--------|
+| 1 Micro | Tang Nano 1K | GW1NZ-1 (1K) | 1,152 | ✅ Full bitstream (`build_gw1n1.sh`) |
+| 2 Small | iCESugar v1.5 | iCE40UP5K | 5,280 | ✅ Full bitstream (`build_icesugar.sh`) |
+| 3 Mid-Small | Tang Nano 9K | GW1N-9C | 8,640 | ✅ Synthesises — 26.9% LUT |
+| 4 Mid | Tang Primer 20K | GW2A-18 | 18,432 | ✅ Synthesises — 28.7% LUT |
+| 5 Large | **Tang Primer 25K** | GW5A-25A | 20,736 | ✅ Full bitstream — 140.83 MHz (`build_25k.sh`) |
+| 6 Mega | Gowin Mega | GW5AST-138C | ~138K | 🏗 Planned — 8× cluster |
+
+All synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
 
 ### Dual-MCU interface
 
