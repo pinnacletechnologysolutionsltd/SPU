@@ -123,7 +123,7 @@ module rplu_exp (
                 // dissoc if v >= De (normalized De=1<<16)
                 dissoc = (v_q16 >= 32'sd65536) ? 1'b1 : 1'b0;
                 // debug print
-                $display("DBG idx=%0d x_q16=%0d exp=%0d t=%0d t2=%0d v=%0d De=%0d", idx, x_q16_temp, exp_q16, t_q16, t2_q32, v_q16, De_q16);
+                $display("DBG idx=%0d x_q32=%0d exp=%0d t=%0d t2=%0d v=%0d De=%0d", idx, x_q32_temp, exp_q16, t_q16, t2_q32, v_q16, De_q16);
                 done = 1'b1;
             end
         end
