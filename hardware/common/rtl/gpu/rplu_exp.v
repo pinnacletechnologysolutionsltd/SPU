@@ -45,7 +45,7 @@ module rplu_exp (
     reg signed [63:0] x_q32;          // Q32.32 (a_q16 * delta_q16 -> Q32)
     reg signed [127:0] acc_num128;    // accumulator in Q32 represented in 128 bits
     reg signed [127:0] acc_den128;
-    reg signed [127:0] mult128;
+    reg signed [191:0] mult192;
     reg signed [127:0] numer128;
     reg signed [127:0] quot128;
     reg [7:0] idx;
@@ -86,24 +86,24 @@ module rplu_exp (
                 x_q32_temp = x_q32; // Q32
                 // numerator Horner (Q32 arithmetic), using 128-bit intermediates
                 acc_num128 = {{64{pade_num_q32[4][63]}}, pade_num_q32[4]}; // sign-extend 64->128
-                mult128 = acc_num128 * x_q32_temp; // Q32*Q32 => Q64 in mult128 (scaled by 2^64)
-                acc_num128 = (mult128 >>> 32) + {{64{pade_num_q32[3][63]}}, pade_num_q32[3]};
-                mult128 = acc_num128 * x_q32_temp;
-                acc_num128 = (mult128 >>> 32) + {{64{pade_num_q32[2][63]}}, pade_num_q32[2]};
-                mult128 = acc_num128 * x_q32_temp;
-                acc_num128 = (mult128 >>> 32) + {{64{pade_num_q32[1][63]}}, pade_num_q32[1]};
-                mult128 = acc_num128 * x_q32_temp;
-                acc_num128 = (mult128 >>> 32) + {{64{pade_num_q32[0][63]}}, pade_num_q32[0]};
+                mult192 = acc_num128 * x_q32_temp; // Q32*Q32 => Q64 in mult192 (scaled by 2^64)
+                acc_num128 = (mult192 >>> 32) + {{64{pade_num_q32[3][63]}}, pade_num_q32[3]};
+                mult192 = acc_num128 * x_q32_temp;
+                acc_num128 = (mult192 >>> 32) + {{64{pade_num_q32[2][63]}}, pade_num_q32[2]};
+                mult192 = acc_num128 * x_q32_temp;
+                acc_num128 = (mult192 >>> 32) + {{64{pade_num_q32[1][63]}}, pade_num_q32[1]};
+                mult192 = acc_num128 * x_q32_temp;
+                acc_num128 = (mult192 >>> 32) + {{64{pade_num_q32[0][63]}}, pade_num_q32[0]};
                 // denominator Horner
                 acc_den128 = {{64{pade_den_q32[4][63]}}, pade_den_q32[4]};
-                mult128 = acc_den128 * x_q32_temp;
-                acc_den128 = (mult128 >>> 32) + {{64{pade_den_q32[3][63]}}, pade_den_q32[3]};
-                mult128 = acc_den128 * x_q32_temp;
-                acc_den128 = (mult128 >>> 32) + {{64{pade_den_q32[2][63]}}, pade_den_q32[2]};
-                mult128 = acc_den128 * x_q32_temp;
-                acc_den128 = (mult128 >>> 32) + {{64{pade_den_q32[1][63]}}, pade_den_q32[1]};
-                mult128 = acc_den128 * x_q32_temp;
-                acc_den128 = (mult128 >>> 32) + {{64{pade_den_q32[0][63]}}, pade_den_q32[0]};
+                mult192 = acc_den128 * x_q32_temp;
+                acc_den128 = (mult192 >>> 32) + {{64{pade_den_q32[3][63]}}, pade_den_q32[3]};
+                mult192 = acc_den128 * x_q32_temp;
+                acc_den128 = (mult192 >>> 32) + {{64{pade_den_q32[2][63]}}, pade_den_q32[2]};
+                mult192 = acc_den128 * x_q32_temp;
+                acc_den128 = (mult192 >>> 32) + {{64{pade_den_q32[1][63]}}, pade_den_q32[1]};
+                mult192 = acc_den128 * x_q32_temp;
+                acc_den128 = (mult192 >>> 32) + {{64{pade_den_q32[0][63]}}, pade_den_q32[0]};
                 // perform division: exp_q16 = (acc_num128 << 16) / acc_den128  -> result Q16.16
                 if (acc_den128 == 0) begin
                     exp_q16 = 32'sd0;
