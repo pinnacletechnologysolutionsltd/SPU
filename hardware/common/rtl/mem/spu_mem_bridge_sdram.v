@@ -1,10 +1,14 @@
-// spu_mem_bridge_sdram.v (v1.0)
-// Sovereign Manifold Bus <-> W9825G6KH-6 SDR-SDRAM bridge
-// Target : Tang Primer 25K, 32 MB SDRAM @ 50 MHz (clk_fast)
+// spu_mem_bridge_sdram.v (v1.1)
+// Sovereign Manifold Bus <-> SDR-SDRAM bridge
+// Target : Tang Primer 25K onboard W9825G6KH-6 (256Mbit/32MB, COL_BITS=9)
+//          or 40-pin external 512Mbit/64MB module  (COL_BITS=10)
 // Burst  : 52 x 16-bit words = 832-bit manifold
-// Timing : tRCD=2cy, CAS=3, tRP=2cy, tRFC=7cy, tREFI=390cy (~7.8 us)
+// Timing : tRCD=2cy, CAS=3, tRP=2cy, tRFC=7cy, tREFI=390cy (~7.8 us @ 50MHz)
 // Reads  : pipelined — 52 READs issued back-to-back, drain 3-cy CAS
 //          Total burst latency: tRCD + BURST_LEN + CAS_LAT + tRP = ~60 cy
+//
+// COL_BITS=9  → addr {bank[1:0], row[12:0], col[8:0]}  = 24-bit → 32MB
+// COL_BITS=10 → addr {bank[1:0], row[12:0], col[9:0]}  = 25-bit → 64MB
 //
 // Note: DQM tied internally to 0 (always enable all byte lanes).
 //       DQ tristate: use IOBUF primitives for physical synthesis.
@@ -14,21 +18,22 @@
 `include "spu_arch_defines.vh"
 
 module spu_mem_bridge_sdram #(
-    parameter T_INIT = 10001  // 200 us at 50 MHz; override to small value in TB
+    parameter T_INIT   = 10001, // 200 us at 50 MHz; override to small value in TB
+    parameter COL_BITS = 9      // 9 = 32MB onboard, 10 = 64MB external 40-pin module
 )(
     input  wire         clk,
     input  wire         reset,
 
-    // Sovereign Manifold Bus
+    // Sovereign Manifold Bus — address is COL_BITS+15 bits wide
     output reg                            mem_ready,
     input  wire                           mem_burst_rd,
     input  wire                           mem_burst_wr,
-    input  wire [`MEM_ADDR_WIDTH-1:0]     mem_addr,       // {bank[1:0], row[12:0], col[8:0]}
+    input  wire [COL_BITS+14:0]           mem_addr,   // {bank[1:0], row[12:0], col[COL_BITS-1:0]}
     output reg  [`MANIFOLD_WIDTH-1:0]     mem_rd_manifold,
     input  wire [`MANIFOLD_WIDTH-1:0]     mem_wr_manifold,
     output reg                            mem_burst_done,
 
-    // Physical SDRAM pins (W9825G6KH-6)
+    // Physical SDRAM pins
     output wire         sdram_clk,
     output wire         sdram_cke,
     output reg          sdram_cs_n,
@@ -77,11 +82,11 @@ module spu_mem_bridge_sdram #(
     localparam MRS_VAL = 13'b000_0_00_011_0_000;  // = 13'h0030
 
     // -------------------------------------------------------------------------
-    // Address decomposition  {bank[1:0], row[12:0], col[8:0]} = 24 bits
+    // Address decomposition  {bank[1:0], row[12:0], col[COL_BITS-1:0]}
     // -------------------------------------------------------------------------
-    wire [1:0]  a_bank = mem_addr[23:22];
-    wire [12:0] a_row  = mem_addr[21:9];
-    wire [8:0]  a_col  = mem_addr[8:0];
+    wire [COL_BITS-1:0] a_col  = mem_addr[COL_BITS-1:0];
+    wire [12:0]         a_row  = mem_addr[COL_BITS+12:COL_BITS];
+    wire [1:0]          a_bank = mem_addr[COL_BITS+14:COL_BITS+13];
 
     // -------------------------------------------------------------------------
     // DQ tristate (replace with IOBUF primitives in FPGA synthesis flow)
@@ -238,7 +243,7 @@ module spu_mem_bridge_sdram #(
                     if (rd_ptr < BURST_LEN) begin
                         {sdram_ras_n, sdram_cas_n, sdram_we_n} <= CMD_READ;
                         sdram_ba   <= a_bank;
-                        sdram_addr <= {4'b0000, a_col + {3'b0, rd_ptr}};
+                        sdram_addr <= {{(13-COL_BITS){1'b0}}, a_col + {{(COL_BITS-6){1'b0}}, rd_ptr}};
                     end
 
                     // Capture: wr_ptr = rd_ptr - 4 (unsigned 6-bit wraps when < 4,
@@ -265,7 +270,7 @@ module spu_mem_bridge_sdram #(
                     if (rd_ptr < BURST_LEN) begin
                         {sdram_ras_n, sdram_cas_n, sdram_we_n} <= CMD_WRITE;
                         sdram_ba   <= a_bank;
-                        sdram_addr <= {4'b0000, a_col + {3'b0, rd_ptr}};
+                        sdram_addr <= {{(13-COL_BITS){1'b0}}, a_col + {{(COL_BITS-6){1'b0}}, rd_ptr}};
                         dq_out     <= mem_wr_manifold[rd_ptr * 16 +: 16];
                         dq_en      <= 1;
                         rd_ptr     <= rd_ptr + 1;
