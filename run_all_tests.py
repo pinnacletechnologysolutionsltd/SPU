@@ -134,8 +134,6 @@ def main():
                         continue
                     # Skip GPU/graphics RTL (may contain unsupported SV constructs for iverilog)
                     fp = str(f)
-                    if '/hardware/common/rtl/gpu/' in fp or '/hardware/common/rtl/graphics/' in fp:
-                        continue
                     src_files.append(str(f))
         # De-duplicate source files while avoiding multiple definitions of the same module
         src_unique = []
