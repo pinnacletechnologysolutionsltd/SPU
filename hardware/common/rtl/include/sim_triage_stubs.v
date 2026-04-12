@@ -46,10 +46,75 @@ module pade_eval_4_4 (
     output reg done,
     output reg busy
 );
+    // Coefficient memories (Q32 signed 64-bit)
+    reg signed [63:0] num [0:4];
+    reg signed [63:0] den [0:4];
+
     initial begin
+        // Load coefficient ROMs (expected in repo); if missing, simulator will report but tests provide files
+        $readmemh("hardware/common/rtl/gpu/pade_num_4_4_q32.mem", num);
+        $readmemh("hardware/common/rtl/gpu/pade_den_4_4_q32.mem", den);
         exp_q16 = 32'sd0;
         done = 1'b1;
         busy = 1'b0;
+    end
+
+    reg signed [127:0] accn;
+    reg signed [127:0] accd;
+    reg signed [191:0] tmp;
+    reg signed [255:0] numer;
+    reg signed [255:0] quot;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            exp_q16 <= 32'sd0;
+            done <= 1'b1;
+            busy <= 1'b0;
+            accn <= 128'sd0;
+            accd <= 128'sd0;
+            tmp <= 192'sd0;
+            numer <= 256'sd0;
+            quot <= 256'sd0;
+        end else begin
+            if (start && !busy) begin
+                busy <= 1'b1;
+                done <= 1'b0;
+
+                // Horner evaluation for numerator (Q32)
+                accn = num[4];
+                tmp = accn * x_q32;
+                accn = (tmp >>> 32) + num[3];
+                tmp = accn * x_q32;
+                accn = (tmp >>> 32) + num[2];
+                tmp = accn * x_q32;
+                accn = (tmp >>> 32) + num[1];
+                tmp = accn * x_q32;
+                accn = (tmp >>> 32) + num[0];
+
+                // Horner evaluation for denominator (Q32)
+                accd = den[4];
+                tmp = accd * x_q32;
+                accd = (tmp >>> 32) + den[3];
+                tmp = accd * x_q32;
+                accd = (tmp >>> 32) + den[2];
+                tmp = accd * x_q32;
+                accd = (tmp >>> 32) + den[1];
+                tmp = accd * x_q32;
+                accd = (tmp >>> 32) + den[0];
+
+                if (accd == 0) begin
+                    exp_q16 <= 32'sd0;
+                end else begin
+                    // Scale numerator to Q16 and divide
+                    numer = accn <<< 16;
+                    quot = numer / accd;
+                    exp_q16 <= quot[31:0];
+                end
+
+                done <= 1'b1;
+                busy <= 1'b0;
+            end
+        end
     end
 endmodule
 
