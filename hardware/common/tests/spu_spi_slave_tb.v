@@ -21,6 +21,9 @@ module spu_spi_slave_tb;
     reg [3:0]   satellite_snaps;
     reg         is_janus_point;
     reg [15:0]  dissonance;
+    // Testbench hooks for RPLU comparator (tie-off)
+    reg signed [2:0] tb_rplu_ratio_res = 3'sd0;
+    reg              tb_rplu_ratio_valid = 1'b0;
 
     spu_spi_slave dut (
         .clk(clk), .rst_n(rst_n),
@@ -30,6 +33,8 @@ module spu_spi_slave_tb;
         .satellite_snaps(satellite_snaps),
         .is_janus_point(is_janus_point),
         .dissonance(dissonance),
+        .scale_table(52'd0), .scale_overflow(13'd0),
+        .rplu_ratio_res(tb_rplu_ratio_res), .rplu_ratio_valid(tb_rplu_ratio_valid),
         .rplu_cfg_wr_en(rplu_cfg_wr_en),
         .rplu_cfg_sel(rplu_cfg_sel),
         .rplu_cfg_material(rplu_cfg_material),

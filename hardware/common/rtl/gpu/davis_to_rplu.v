@@ -16,7 +16,14 @@ module davis_to_rplu(
     input  wire [63:0] cfg_wr_data,
     output wire signed [31:0] v_q16,
     output wire dissoc,
-    output wire done
+    output wire done,
+    output wire [31:0] quadrance,
+    output wire [31:0] ivm_quadrance,
+    output wire [15:0] gasket_sum,
+    output wire signed [31:0] audio_p,
+    output wire signed [31:0] audio_q,
+    output wire signed [2:0] ratio_cmp_res,
+    output wire ratio_cmp_valid
 );
     wire [63:0] q_rotated;
     wire [31:0] quadrance;
@@ -37,7 +44,7 @@ module davis_to_rplu(
     assign r_q16 = { quadrance[31:16] };
 
     reg r_start;
-    rplu_exp u_rplu (.clk(clk), .rst_n(rst_n), .start(r_start), .addr(10'd0), .material_id(material_id), .r_q16(r_q16), .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data), .v_q16(v_q16), .dissoc(dissoc), .done(done), .ratio_cmp_res(/* unused */), .ratio_cmp_valid(/* unused */));
+    rplu_exp u_rplu (.clk(clk), .rst_n(rst_n), .start(r_start), .addr(10'd0), .material_id(material_id), .r_q16(r_q16), .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data), .v_q16(v_q16), .dissoc(dissoc), .done(done), .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid));
 
     // simple control: when top start pulses, trigger rplu once after one cycle
     reg started;

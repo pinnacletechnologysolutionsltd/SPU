@@ -150,14 +150,17 @@ module spu_system (
     wire [9:0]  dec_fast_cfg_addr;
     wire [63:0] dec_fast_cfg_data;
 
+    // Forward the merged RPLU config bus (external piranha, core-originated, or decoder)
+    // into the fast domain so rplu consumers in the fast clock (e.g., rplu_exp)
+    // observe the complete set of runtime writes.
     rplu_cfg_cdc u_cdc_p2f (
         .clk_src       (clk_piranha),
         .rst_n_src     (rst_n),
-        .wr_src        (dec_cfg_wr_en),
-        .sel_src       (dec_cfg_sel),
-        .material_src  (dec_cfg_material),
-        .addr_src      (dec_cfg_addr),
-        .data_src      (dec_cfg_data),
+        .wr_src        (rplu_cfg_wr_en),
+        .sel_src       (rplu_cfg_sel),
+        .material_src  (rplu_cfg_material),
+        .addr_src      (rplu_cfg_addr),
+        .data_src      (rplu_cfg_data),
         .clk_dst       (clk_fast),
         .rst_n_dst     (rst_n),
         .wr_dst        (dec_fast_cfg_wr_en),

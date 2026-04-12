@@ -312,6 +312,11 @@ module spu_tang_top (
     wire                       janus_0, janus_1;
     wire [(`MANIFOLD_AXES*4)-1:0] scale_table_0, scale_table_1;
     wire [(`MANIFOLD_AXES)-1:0]   scale_overflow_0, scale_overflow_1;
+    // RPLU comparator status from each cortex (fast domain)
+    wire signed [2:0]            c0_ratio_res;
+    wire                        c0_ratio_valid;
+    wire signed [2:0]            c1_ratio_res;
+    wire                        c1_ratio_valid;
 
     spu13_core #(.DEVICE("GW5A")) u_cortex_0 (
         .clk             (clk_fast),
@@ -333,7 +338,9 @@ module spu_tang_top (
         .scale_overflow_out (scale_overflow_0),
         .phinary_cfg     (16'h0001),
         .inst_valid      (1'b0),
-        .inst_word       (64'd0)
+        .inst_word       (64'd0),
+        .ratio_cmp_res   (c0_ratio_res),
+        .ratio_cmp_valid (c0_ratio_valid)
     );
 
     spu13_core #(.DEVICE("GW5A")) u_cortex_1 (
@@ -356,7 +363,9 @@ module spu_tang_top (
         .scale_overflow_out (scale_overflow_1),
         .phinary_cfg     (16'h0001),
         .inst_valid      (1'b0),
-        .inst_word       (64'd0)
+        .inst_word       (64'd0),
+        .ratio_cmp_res   (c1_ratio_res),
+        .ratio_cmp_valid (c1_ratio_valid)
     );
 
     // ------------------------------------------------------------------ //
@@ -548,6 +557,8 @@ module spu_tang_top (
         .scale_table     (scale_table_0),
         .scale_overflow  (scale_overflow_0),
         .dissonance      (16'h0),                 // placeholder
+        .rplu_ratio_res  (c0_ratio_res),
+        .rplu_ratio_valid(c0_ratio_valid),
         .rplu_cfg_wr_en  (rplu_cfg_wr_en),
         .rplu_cfg_sel    (rplu_cfg_sel),
         .rplu_cfg_material (rplu_cfg_material),

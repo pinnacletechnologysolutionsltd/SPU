@@ -39,6 +39,10 @@ module spu13_core #(
     input  wire                    inst_valid,
     input  wire [63:0]             inst_word,
 
+    // RPLU comparator outputs (fast domain)
+    output wire signed [2:0]       ratio_cmp_res,
+    output wire                    ratio_cmp_valid,
+
     output reg [`MANIFOLD_WIDTH-1:0] manifold_out,
     output wire                      bloom_complete,
     output wire [(`MANIFOLD_AXES*4)-1:0] scale_table_out,
@@ -157,6 +161,15 @@ module spu13_core #(
         .gasket_sum(gasket_sum),
         .audio_p(audio_p),
         .audio_q(audio_q)
+    );
+
+    // Instantiate davis_to_rplu to compute RPLU values & comparator (non-invasive duplicate of davis computation)
+    davis_to_rplu u_davis_rplu (
+        .clk(clk), .rst_n(rst_n), .start(1'b0), .q_vector(rotated_axis), .material_id(1'b0),
+        .cfg_wr_en(dec_fast_cfg_wr_en), .cfg_wr_sel(dec_fast_cfg_sel), .cfg_wr_material(dec_fast_cfg_material), .cfg_wr_addr(dec_fast_cfg_addr), .cfg_wr_data(dec_fast_cfg_data),
+        .v_q16(), .dissoc(), .done(),
+        .quadrance(), .ivm_quadrance(), .gasket_sum(), .audio_p(), .audio_q(),
+        .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid)
     );
 
     wire [31:0] quadrance_err;

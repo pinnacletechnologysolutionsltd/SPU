@@ -36,6 +36,10 @@ module spu_spi_slave (
     input  wire [51:0]  scale_table,
     input  wire [12:0]  scale_overflow,
 
+    // RPLU runtime comparator inputs (fast domain)
+    input  wire signed [2:0] rplu_ratio_res,
+    input  wire             rplu_ratio_valid,
+
     // RPLU runtime config outputs (pulsed on DATA chord)
     output reg         rplu_cfg_wr_en,
     output reg  [2:0]  rplu_cfg_sel,
@@ -78,6 +82,9 @@ module spu_spi_slave (
     reg        janus_lat;
     reg [51:0] scale_tab_lat;
     reg [12:0] scale_overflow_lat;
+    // Latched RPLU comparator results (sticky until reported)
+    reg signed [2:0] ratio_lat;
+    reg              ratio_valid_lat;
 
     integer ax;
     always @(posedge clk or negedge rst_n) begin
@@ -161,6 +168,12 @@ module spu_spi_slave (
             // default: clear the one-cycle strobe
             rplu_cfg_wr_en <= 1'b0;
 
+            // Sample incoming RPLU comparator pulses (sticky latch)
+            if (rplu_ratio_valid) begin
+                ratio_lat <= rplu_ratio_res;
+                ratio_valid_lat <= 1'b1;
+            end
+
             case (state)
 
                 S_IDLE: begin
@@ -238,13 +251,16 @@ module spu_spi_slave (
                             // 3-byte status
                             resp_buf[0] <= dissonance_lat[15:8];
                             resp_buf[1] <= dissonance_lat[7:0];
-                            resp_buf[2] <= {6'b0, janus_lat, snaps_lat[0]};
+                            // flags: [7:5]=ratio_lat (signed 3-bit), [4]=ratio_valid, [3:2]=reserved, [1]=janus, [0]=snap
+                            resp_buf[2] <= {ratio_lat[2:0], ratio_valid_lat, 2'b0, janus_lat, snaps_lat[0]};
                             resp_len    <= 6'd3;
                             // Pre-load first byte MSB onto MISO before first SCK fall
                             shift_out <= dissonance_lat[15:8];
                             byte_idx  <= 6'd0;
                             resp_bit  <= 3'd7;
                             spi_miso  <= dissonance_lat[15];
+                            // Clear sticky ratio valid after snapshotting it into resp_buf
+                            ratio_valid_lat <= 1'b0;
                             state     <= S_RESP;
 
                         end else if (cmd_byte == 8'hAD) begin
