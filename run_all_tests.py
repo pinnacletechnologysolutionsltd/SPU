@@ -110,12 +110,12 @@ def main():
         # Gather source files from a curated set of directories to avoid duplicates
         scan_dirs = [
             "hardware/common/rtl",
+            "hardware/common/rtl/include",
             "hardware/common/rtl/core",
             "hardware/common/rtl/mem",
             "hardware/common/rtl/prim",
             "hardware/common/rtl/gpu",
             "hardware/common/rtl/proto",
-            "hardware/common/rtl/include",
             "hardware/spu13/rtl",
             "hardware/spu4/rtl",
             "hardware/common/rtl/spu4/rtl",
