@@ -26,10 +26,6 @@ module davis_to_rplu(
     output wire ratio_cmp_valid
 );
     wire [63:0] q_rotated;
-    wire [31:0] quadrance;
-    wire [31:0] ivm_quadrance;
-    wire [15:0] gasket_sum;
-    wire signed [31:0] audio_p, audio_q;
 
     davis_gate_dsp #(.DEVICE("SIM")) u_davis (
         .clk(clk), .rst_n(rst_n), .q_vector(q_vector), .q_rotated(q_rotated),
