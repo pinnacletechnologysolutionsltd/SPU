@@ -162,6 +162,9 @@ module spu13_core #(
 
     reg [12:0] stability_bits;
 
+    // Toroidal emitter index (wraps naturally at 10 bits)
+    reg [9:0] torus_idx;
+
     // Sovereign Hydration & State Logic
     reg [2:0] hydration_state;
     localparam H_IDLE   = 3'd0;
@@ -181,6 +184,7 @@ module spu13_core #(
             scale_write_overflow <= 1'b0;
             artery_wr_en <= 1'b0;
             artery_wr_data <= 64'd0;
+            torus_idx <= 10'd0;
         end else begin
             // default: clear any one-cycle artery writes
             artery_wr_en <= 1'b0;
@@ -217,6 +221,14 @@ module spu13_core #(
                             mem_burst_wr <= 1;
                             mem_wr_manifold <= manifold_reg;
                             hydration_state <= H_EXHALE;
+
+                            // Emit a POLY_STEP Artery chord using toroidal index.
+                            // Header layout: [63:56]=0xA5, [55:48]=sel, [47]=material, [46:37]=addr
+                            artery_wr_en <= 1'b1;
+                            artery_wr_data <= {8'hA5, 8'd7, 1'b0, torus_idx[9:0], 37'd0};
+
+                            // advance torus index (wraps naturally at 10 bits)
+                            torus_idx <= torus_idx + 10'd1;
                         end
                     end else begin
                         scale_write_en <= 1'b0;
