@@ -338,6 +338,8 @@ OPCODES = {
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
     "EQUIL": 0x17, "IDNT":  0x18, "JINV":  0x19, "ANNE":  0x1A,
+    # Padé / RPLU ISA extensions
+    "POLY_STEP": 0x60, "RATIO_CMP": 0x61,
     # POLY_STEP: emit RPLU Artery chord for a single Horner step (simulation helper)
     "POLY_STEP": 0xE0,
     # No-op
@@ -1202,20 +1204,68 @@ class SPUCore:
                 print(f"  [{self.pc:04d}] PHADD R{r1} + R{r2} → packed=0x{out_packed:04X} => {self.regs[r1]!r} void={void_out} ovf={ovf}")
 
         elif opcode == OPCODES.get("POLY_STEP"):
-            # POLY_STEP idx — emit Artery chords for RPLU (simulation only)
-            idx = p1_a & 16'h03FF
-            material = r1 & 0x1
-            OPCODE_HDR = 8'hA5
-            sel = 7
-            header = ((OPCODE_HDR & 8'hFF) << 56) | ((sel & 8'hFF) << 48) | ((material & 1) << 47) | ((idx & 10'h3FF) << 37)
-            data = 64'd0
-            # Print chords in header then data format to stdout (matches tools/rplu_loader)
-            print(f"  [{self.pc:04d}] POLY_STEP idx={idx} material={material} -> chord_header=0x{header:016x} data=0x{data:016x}")
-            # record in log for test harnesses
-            try:
-                self.log.append((header, data))
-            except Exception:
-                pass
+            # POLY_STEP Rbase, Rx — evaluate Padé P(x) and Q(x) (4/4 Q32) in VM
+            # Encoding: r1 = destination base register (numer→R[r1], denom→R[r1+1])
+            #           r2 = source register holding x as signed integer in .a (Q32 fixed)
+            #           p1_a selects coefficient set (0 = default)
+            coef_sel = p1_a & 0xFFFF
+            # Load coefficient ROMs (cached per coef_sel)
+            if not hasattr(self, '_pade_cache'):
+                self._pade_cache = {}
+            if coef_sel not in self._pade_cache:
+                num_path = 'hardware/common/rtl/gpu/pade_num_4_4_q32.mem'
+                den_path = 'hardware/common/rtl/gpu/pade_den_4_4_q32.mem'
+                def read_mem_signed(path):
+                    vals = [0]*5
+                    try:
+                        with open(path, 'r') as f:
+                            lines = [l.strip() for l in f if l.strip()]
+                            for i, l in enumerate(lines[:5]):
+                                v = int(l, 16)
+                                if v & (1 << 63):
+                                    v = v - (1 << 64)
+                                vals[i] = v
+                    except Exception:
+                        # missing mems: fall back to zeros
+                        vals = [0,0,0,0,0]
+                    return vals
+                num_arr = read_mem_signed(num_path)
+                den_arr = read_mem_signed(den_path)
+                self._pade_cache[coef_sel] = (num_arr, den_arr)
+            else:
+                num_arr, den_arr = self._pade_cache[coef_sel]
+
+            # Extract x from source register (expect signed integer in .a field representing Q32)
+            x_reg = self.regs[r2]
+            x_q32 = int(x_reg.a)
+
+            # Helper: truncate to signed 'bits' (two's complement)
+            def to_signed(val, bits):
+                mask = (1 << bits) - 1
+                v = val & mask
+                if v & (1 << (bits - 1)):
+                    v = v - (1 << bits)
+                return v
+
+            # Horner evaluation matching hardware (acc widths/truncation)
+            def horner_q32(coeffs, x):
+                acc = coeffs[4]
+                acc = to_signed(acc, 128)
+                for i in (3,2,1,0):
+                    prod = acc * x
+                    shifted = prod >> 32
+                    acc = shifted + coeffs[i]
+                    acc = to_signed(acc, 128)
+                return acc
+
+            accn = horner_q32(num_arr, x_q32)
+            accd = horner_q32(den_arr, x_q32)
+
+            # Store results as RationalSurd(rational, 0) to match SPREAD/VM conventions
+            self.regs[r1] = RationalSurd(int(accn), 0)
+            self.regs[(r1 + 1) % NUM_REGS] = RationalSurd(int(accd), 0)
+            if self.verbose:
+                print(f"  [{self.pc:04d}] POLY_STEP R{r1}, Rx{r2} -> num={accn} den={accd}")
         else:
             print(f"  [{self.pc:04d}] ??? unknown opcode 0x{opcode:02X} — NOP")
 

@@ -60,4 +60,25 @@ static inline void spu_rplu_poly_step(int idx) {
     __asm__ volatile ("rplu_poly_step %0" : : "r"(idx));
 }
 
+
+/**
+ * @brief POLY_STEP intrinsic (assemble: POLY_STEP)
+ * POLY_STEP Rbase, Rx — evaluate Padé P(x)/Q(x) in hardware. Rbase receives P (numer)
+ * Rbase+1 receives Q (den). Rx supplies x as signed integer (Q32) in its .a field.
+ */
+static inline void spu_poly_step(int rbase, int rx) {
+    __asm__ volatile ("polystep %0, %1" : : "r"(rbase), "r"(rx));
+}
+
+/**
+ * @brief RATIO_CMP intrinsic (assemble: RATIO_CMP)
+ * RATIO_CMP Rbase, Rcompare — compare P/Q against compare ratio using cross-multiplication.
+ * Returns comparison result in integer register (asm-dependent).  (Stubbed)
+ */
+static inline int spu_ratio_cmp(int rbase, int rcompare) {
+    int out = 0;
+    __asm__ volatile ("ratio_cmp %0, %1, %2" : "=r"(out) : "r"(rbase), "r"(rcompare));
+    return out;
+}
+
 #endif // SPU4_INTRINSICS_H
