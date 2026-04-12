@@ -13,7 +13,8 @@ module spu_edge_stepper (
 
     reg signed [31:0] f;
     reg signed [31:0] f_row;
-    reg signed [15:0] a_r, b_r;
+    reg signed [15:0] a_r;
+    reg signed [15:0] b_r;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
