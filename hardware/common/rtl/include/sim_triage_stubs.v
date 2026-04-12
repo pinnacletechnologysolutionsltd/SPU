@@ -77,46 +77,7 @@ endmodule
 // pade_eval_4_4 stub removed — use hardware/common/rtl/gpu/pade_eval_4_4.v
 
 
-module davis_to_rplu(
-    input  wire clk,
-    input  wire rst_n,
-    input  wire start,
-    input  wire [63:0] q_vector,
-    input  wire material_id,
-    // runtime config inputs
-    input  wire cfg_wr_en,
-    input  wire [2:0] cfg_wr_sel,
-    input  wire cfg_wr_material,
-    input  wire [9:0] cfg_wr_addr,
-    input  wire [63:0] cfg_wr_data,
-    output reg signed [31:0] v_q16,
-    output reg dissoc,
-    output reg done
-);
-    // Minimal functional stub: map q_vector to v_q16 and assert done when started
-    initial begin
-        v_q16 = 32'sd0;
-        dissoc = 1'b0;
-        done = 1'b0;
-    end
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            v_q16 <= 32'sd0;
-            dissoc <= 1'b0;
-            done <= 1'b0;
-        end else begin
-            if (start) begin
-                // crude mapping: take middle 32 bits of q_vector as v_q16
-                v_q16 <= { q_vector[47:16] };
-                dissoc <= 1'b0;
-                done <= 1'b1;
-            end else begin
-                done <= 1'b0;
-            end
-        end
-    end
-endmodule
+// davis_to_rplu stub removed — use full implementation in hardware/common/rtl/gpu/davis_to_rplu.v
 
 // rational_sine_rom stub removed — use hardware/common/rtl/gpu/rational_sine_rom.v
 
