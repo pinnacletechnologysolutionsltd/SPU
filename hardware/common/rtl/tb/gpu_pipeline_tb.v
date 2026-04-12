@@ -21,6 +21,7 @@ module gpu_pipeline_tb;
     wire [63:0] v0_abcd, v1_abcd, v2_abcd, v0_attr, v1_attr, v2_attr;
     wire        spi_cs_n, spi_sck, spi_mosi, spi_dc;
     wire        display_ready;
+    wire        vga_hsync, vga_vsync;
 
     // Vertex Coordinate Definitions (as 16-bit values)
     wire [15:0] v0_x;
@@ -56,7 +57,9 @@ module gpu_pipeline_tb;
 
         // Display Interface
         .spi_cs_n(spi_cs_n), .spi_sck(spi_sck), .spi_mosi(spi_mosi), .spi_dc(spi_dc),
-        .display_ready(display_ready)
+        .vga_hsync(vga_hsync), .vga_vsync(vga_vsync),
+        .display_ready(display_ready),
+        .v_valid(1'b1)
     );
 
     // --- Monitoring ---
