@@ -119,6 +119,22 @@ void core1_entry(void) {
         // 1. Poll FPGA manifold + status
         spi_read_manifold(abcd32);
         spi_read_status(&dissonance, &flags);
+        // Decode RPLU comparator bits in flags:
+        // bits [7:5] = signed 3-bit ratio (-1/0/+1), bit [4] = valid (sticky, clear-on-read)
+        {
+            static int8_t last_ratio = 127;
+            bool ratio_valid = (flags >> 4) & 0x1;
+            if (ratio_valid) {
+                uint8_t ratio_raw = (flags >> 5) & 0x7;
+                int8_t ratio_signed = (ratio_raw & 0x4) ? (int8_t)(ratio_raw - 8) : (int8_t)ratio_raw;
+                if (last_ratio == 127 || last_ratio != ratio_signed) {
+                    printf("RPLU RATIO: %d\r\n", ratio_signed);
+                    last_ratio = ratio_signed;
+                }
+            } else {
+                last_ratio = 127;
+            }
+        }
         uint8_t scale_bytes[9];
         spi_read_scale_table(scale_bytes);
         assemble_frame(abcd32, dissonance, flags, frame_back);
