@@ -9,6 +9,7 @@
     input  wire [15:0] q_a, \
     input  wire [15:0] q_b, \
     input  wire [15:0] q_c, \
+    input  wire [15:0] q_d, \
     input  wire [15:0] q_energy, \
     input  wire [15:0] rational_scale, \
     output wire        display_ready
