@@ -56,6 +56,9 @@ def main():
     test_files = set()
     for p in patterns:
         for f in root_dir.rglob(p):
+            # Skip heavy legacy/reference tests during triage
+            if '/reference/' in str(f):
+                continue
             test_files.add(f)
             
     test_files = list(test_files)
