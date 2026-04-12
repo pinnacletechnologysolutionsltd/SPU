@@ -316,8 +316,17 @@ module rplu_exp #(
     output reg done,
     output reg laminar_irq
 );
-    // Minimal functional stub: compute a simple function of r_q16 and return immediately
+    // ROM fallback for triage: return precomputed vnorm and dissoc from mems
+    reg [31:0] vnorm_carbon [0:1023];
+    reg [0:0]  vnorm_dissoc_carbon [0:1023];
+    reg [31:0] vnorm_iron   [0:1023];
+    reg [0:0]  vnorm_dissoc_iron   [0:1023];
+
     initial begin
+        $readmemh("hardware/common/rtl/gpu/vnorm_carbon.mem", vnorm_carbon);
+        $readmemh("hardware/common/rtl/gpu/vnorm_dissoc_carbon.mem", vnorm_dissoc_carbon);
+        $readmemh("hardware/common/rtl/gpu/vnorm_iron.mem", vnorm_iron);
+        $readmemh("hardware/common/rtl/gpu/vnorm_dissoc_iron.mem", vnorm_dissoc_iron);
         v_q16 = 32'sd0;
         dissoc = 1'b0;
         done = 1'b0;
@@ -332,9 +341,13 @@ module rplu_exp #(
             laminar_irq <= 1'b0;
         end else begin
             if (start) begin
-                // simple mapping: propagate r_q16 as output and mark done
-                v_q16 <= r_q16;
-                dissoc <= 1'b0;
+                if (material_id == 1'b0) begin
+                    v_q16 <= $signed(vnorm_carbon[addr]);
+                    dissoc <= vnorm_dissoc_carbon[addr];
+                end else begin
+                    v_q16 <= $signed(vnorm_iron[addr]);
+                    dissoc <= vnorm_dissoc_iron[addr];
+                end
                 done <= 1'b1;
             end else begin
                 done <= 1'b0;
