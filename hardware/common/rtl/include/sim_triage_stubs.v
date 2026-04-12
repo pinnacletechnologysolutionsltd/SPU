@@ -175,9 +175,45 @@ module pade_eval_4_4 (
     end
 endmodule
 
-module davis_to_rplu (
-    input clk, input reset
+module davis_to_rplu(
+    input  wire clk,
+    input  wire rst_n,
+    input  wire start,
+    input  wire [63:0] q_vector,
+    input  wire material_id,
+    // runtime config inputs
+    input  wire cfg_wr_en,
+    input  wire [2:0] cfg_wr_sel,
+    input  wire cfg_wr_material,
+    input  wire [9:0] cfg_wr_addr,
+    input  wire [63:0] cfg_wr_data,
+    output reg signed [31:0] v_q16,
+    output reg dissoc,
+    output reg done
 );
+    // Minimal functional stub: map q_vector to v_q16 and assert done when started
+    initial begin
+        v_q16 = 32'sd0;
+        dissoc = 1'b0;
+        done = 1'b0;
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            v_q16 <= 32'sd0;
+            dissoc <= 1'b0;
+            done <= 1'b0;
+        end else begin
+            if (start) begin
+                // crude mapping: take middle 32 bits of q_vector as v_q16
+                v_q16 <= { q_vector[47:16] };
+                dissoc <= 1'b0;
+                done <= 1'b1;
+            end else begin
+                done <= 1'b0;
+            end
+        end
+    end
 endmodule
 
 module rational_sine_rom (
@@ -210,7 +246,52 @@ module simple_lau (
     end
 endmodule
 
-module rplu_exp (
-    input clk, input reset
+module rplu_exp #(
+    parameter ENABLE_PADE = 0,
+    parameter CFG_ENABLE = 1
+)(
+    input wire clk,
+    input wire rst_n,
+    input wire start,
+    input wire [9:0] addr,
+    input wire material_id,
+    input wire signed [31:0] r_q16,
+    input wire wake,
+    input wire [9:0] wake_addr,
+    // runtime config/write interface
+    input wire cfg_wr_en,
+    input wire [2:0] cfg_wr_sel,
+    input wire cfg_wr_material,
+    input wire [9:0] cfg_wr_addr,
+    input wire [63:0] cfg_wr_data,
+    output reg signed [31:0] v_q16,
+    output reg dissoc,
+    output reg done,
+    output reg laminar_irq
 );
+    // Minimal functional stub: compute a simple function of r_q16 and return immediately
+    initial begin
+        v_q16 = 32'sd0;
+        dissoc = 1'b0;
+        done = 1'b0;
+        laminar_irq = 1'b0;
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            v_q16 <= 32'sd0;
+            dissoc <= 1'b0;
+            done <= 1'b0;
+            laminar_irq <= 1'b0;
+        end else begin
+            if (start) begin
+                // simple mapping: propagate r_q16 as output and mark done
+                v_q16 <= r_q16;
+                dissoc <= 1'b0;
+                done <= 1'b1;
+            end else begin
+                done <= 1'b0;
+            end
+        end
+    end
 endmodule
