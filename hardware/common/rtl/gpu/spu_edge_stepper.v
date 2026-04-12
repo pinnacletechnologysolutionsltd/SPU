@@ -1,4 +1,4 @@
-module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, x_span, inside);
+module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, x_span, inside_out);
 
     input wire clk;
     input wire rst_n;
