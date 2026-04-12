@@ -2,14 +2,71 @@
 // NOTE: These are non-functional placeholders. Remove or replace with real RTL for production.
 
 module injection_gate (
-    input clk, input reset
+    input clk,
+    input rst_n,
+    input start,
+    input signed [15:0] pcm_in,
+    input material_id,
+    input [9:0] sector_addr,
+    output reg signed [31:0] r_q16_out,
+    output reg valid_out
 );
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            r_q16_out <= 32'sd0;
+            valid_out <= 1'b0;
+        end else begin
+            if (start) begin
+                // Simple functional stub: scale PCM to Q16 and assert valid
+                r_q16_out <= pcm_in << 16;
+                valid_out <= 1'b1;
+            end else begin
+                valid_out <= 1'b0;
+            end
+        end
+    end
 endmodule
 
 module spu_video_timing (
-    input clk, input reset, input [7:0] pix_in, output reg disp_ready
+    input clk,
+    input rst_n,
+    output reg [9:0] x,
+    output reg [9:0] y,
+    output reg hsync,
+    output reg vsync,
+    output reg active
 );
-    always @(*) disp_ready = 1'b0;
+    localparam integer H_TOTAL = 800;
+    localparam integer V_TOTAL = 525;
+
+    initial begin
+        x = 10'd0;
+        y = 10'd0;
+        hsync = 1'b1;
+        vsync = 1'b1;
+        active = 1'b0;
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            x = 10'd0;
+            y = 10'd0;
+            hsync = 1'b1;
+            vsync = 1'b1;
+            active = 1'b0;
+        end else begin
+            if (x == H_TOTAL - 1) begin
+                x = 10'd0;
+                if (y == V_TOTAL - 1) y = 10'd0; else y = y + 1;
+            end else begin
+                x = x + 1;
+            end
+            // Update active/hsync/vsync based on the new counters
+            active = (x < 10'd640);
+            hsync = (x >= 10'd656 && x < 10'd752) ? 1'b0 : 1'b1;
+            vsync = (y >= 10'd490 && y < 10'd492) ? 1'b0 : 1'b1;
+        end
+    end
 endmodule
 
 module spu_raster_unit (
