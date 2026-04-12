@@ -41,9 +41,17 @@ module spu_system (
     wire        inhale_empty;
     reg         inhale_rd_en;
 
+    // Allow internal CPU (SPU13 core) to write artery chords by multiplexing external ghost writes
+    wire cortex_artery_wr_en;
+    wire [63:0] cortex_artery_wr_data;
+    wire fuse_wr_en;
+    wire [63:0] fuse_wr_data;
+    assign fuse_wr_en = wr_en | cortex_artery_wr_en;
+    assign fuse_wr_data = cortex_artery_wr_en ? cortex_artery_wr_data : wr_data;
+
     SPU_ARTERY_FIFO u_artery (
         .wr_clk(clk_ghost), .wr_rst_n(rst_n),
-        .wr_en(wr_en), .wr_data(wr_data), .full(fifo_full),
+        .wr_en(fuse_wr_en), .wr_data(fuse_wr_data), .full(fifo_full),
         .rd_clk(clk_piranha), .rd_rst_n(rst_n),
         .rd_en(inhale_rd_en), .rd_data(inhale_chord), .empty(inhale_empty)
     );
@@ -174,6 +182,8 @@ module spu_system (
         .dec_fast_cfg_material(dec_fast_cfg_material),
         .dec_fast_cfg_addr(dec_fast_cfg_addr),
         .dec_fast_cfg_data(dec_fast_cfg_data),
+        .artery_wr_en(cortex_artery_wr_en),
+        .artery_wr_data(cortex_artery_wr_data),
         .manifold_out(manifold_out),
         .bloom_complete(bloom_done),
         .is_janus_point(is_janus_point)

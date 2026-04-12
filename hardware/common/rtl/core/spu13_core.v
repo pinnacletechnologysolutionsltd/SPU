@@ -28,6 +28,10 @@ module spu13_core #(
     `MANIFOLD_SIGS,
 
     // 13-Axis Manifold Snapshot (for Artery TX)
+    // Artery writer outputs (one-cycle pulse + 64-bit chord) — driven by core when it emits a chord
+    output reg                    artery_wr_en,
+    output reg [63:0]             artery_wr_data,
+
     output wire [3:0]   current_axis_ptr,
     output wire [63:0]  current_axis_data,
     output reg [`MANIFOLD_WIDTH-1:0] manifold_out,
@@ -175,7 +179,12 @@ module spu13_core #(
             scale_write_en <= 1'b0;
             scale_write_shift <= 4'd0;
             scale_write_overflow <= 1'b0;
+            artery_wr_en <= 1'b0;
+            artery_wr_data <= 64'd0;
         end else begin
+            // default: clear any one-cycle artery writes
+            artery_wr_en <= 1'b0;
+            artery_wr_data <= 64'd0;
             case (hydration_state)
                 H_IDLE: begin
                     if (phi_8 && mem_ready) begin
