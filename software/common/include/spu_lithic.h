@@ -79,6 +79,25 @@ inline bool manifold_is_stable() {
 #define SPU_AXIS_SHIFT(n) (n & 0x0F) // 4-bit Opcode for circulant rotation
 #define SPU_SNAP_ALL()     0x80      // Global high-sigma capture
 
+/* RPLU comparator status bits (SPI CMD 0xAC response byte)
+ * resp_buf[2] mapping:
+ *  - bits [7:5] = ratio (3-bit two's complement: -1, 0, +1)
+ *  - bit  [4]    = ratio_valid (sticky, clear-on-read)
+ */
+#define SPU_STATUS_RATIO_MASK    0xE0
+#define SPU_STATUS_RATIO_SHIFT   5
+#define SPU_STATUS_RATIO_VALID   0x10
+
+static inline int8_t spu_status_decode_ratio(uint8_t flags) {
+    int8_t r = (flags >> SPU_STATUS_RATIO_SHIFT) & 0x7;
+    if (r & 0x4) r |= 0xF8; /* sign-extend 3-bit value to 8-bit */
+    return r;
+}
+
+static inline bool spu_status_ratio_valid(uint8_t flags) {
+    return (flags & SPU_STATUS_RATIO_VALID) != 0;
+}
+
 /** 
  * Manifold: The 13-axis Sovereign State.
  */
