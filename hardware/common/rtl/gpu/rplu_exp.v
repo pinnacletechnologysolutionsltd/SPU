@@ -65,6 +65,10 @@ module rplu_exp #(
     reg signed [127:0] acc_num_reg;
     reg signed [127:0] acc_den_reg;
     reg signed [191:0] mult_reg;
+    reg signed [191:0] poly_mult_num;
+    reg signed [191:0] poly_mult_den;
+    reg signed [127:0] poly_accn_tmp;
+    reg signed [127:0] poly_accd_tmp;
     reg signed [127:0] numer_reg;
     reg signed [127:0] quot_reg;
     reg signed [31:0] exp_reg;
@@ -180,6 +184,19 @@ module rplu_exp #(
                 3'd6: begin // vnorm dissoc flag
                     if (cfg_wr_material == 1'b0) vnorm_dissoc_carbon[cfg_wr_addr] <= cfg_wr_data[0];
                     else vnorm_dissoc_iron[cfg_wr_addr] <= cfg_wr_data[0];
+                end
+                3'd7: begin // POLY_STEP: single Horner iteration for numerator and denominator
+                    // index in cfg_wr_addr[2:0] selects coefficient 0..4
+                    // use current x_reg as multiplier
+                    poly_mult_num = acc_num_reg * x_reg;                 // blocking temp
+                    poly_accn_tmp = poly_mult_num >>> 32;               // align Q32 product
+                    poly_accn_tmp = poly_accn_tmp + pade_num_q32[cfg_wr_addr[2:0]];
+                    acc_num_reg <= poly_accn_tmp;
+
+                    poly_mult_den = acc_den_reg * x_reg;                // blocking temp
+                    poly_accd_tmp = poly_mult_den >>> 32;               // align Q32 product
+                    poly_accd_tmp = poly_accd_tmp + pade_den_q32[cfg_wr_addr[2:0]];
+                    acc_den_reg <= poly_accd_tmp;
                 end
                 default: ;
             endcase

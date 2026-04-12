@@ -24,12 +24,20 @@ import argparse
 OPCODE = 0xA5
 
 parser = argparse.ArgumentParser(description='Generate RPLU Artery chords')
-parser.add_argument('--sel', type=int, required=True, help='cfg selector (0=params,1=pade_num_q32,2=pade_den_q32,3=pade_num_q16,4=pade_den_q16,5=vnorm,6=vnorm_dissoc)')
+parser.add_argument('--sel', type=int, required=False, help='cfg selector (0=params,1=pade_num_q32,2=pade_den_q32,3=pade_num_q16,4=pade_den_q16,5=vnorm,6=vnorm_dissoc,7=poly_step)')
+parser.add_argument('--poly-step', action='store_true', help='Emit POLY_STEP chord (sel=7).')
 parser.add_argument('--material', type=int, default=0, choices=[0,1], help='material id (0 carbon, 1 iron)')
 parser.add_argument('--addr', type=int, required=True, help='address/index for the write')
-parser.add_argument('--data', type=lambda x: int(x,0), required=True, help='64-bit data payload (hex or dec)')
+parser.add_argument('--data', type=lambda x: int(x,0), required=False, help='64-bit data payload (hex or dec)')
 args = parser.parse_args()
 
+if args.poly_step:
+    args.sel = 7
+    if args.data is None:
+        args.data = 0
+
+if args.sel is None:
+    raise SystemExit('sel must be provided (or use --poly-step)')
 if args.sel < 0 or args.sel > 7:
     raise SystemExit('sel must be 0..7')
 if args.addr < 0 or args.addr > 1023:

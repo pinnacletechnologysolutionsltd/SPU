@@ -52,4 +52,12 @@ static inline void spu_whisper(q4_vector v) {
     __asm__ volatile ("whisper %0" : : "r"(v));
 }
 
+/**
+ * @brief RPLU POLY_STEP intrinsic (emit a single Horner step command to RPLU)
+ * @param idx coefficient index (0..4)
+ */
+static inline void spu_rplu_poly_step(int idx) {
+    __asm__ volatile ("rplu_poly_step %0" : : "r"(idx));
+}
+
 #endif // SPU4_INTRINSICS_H
