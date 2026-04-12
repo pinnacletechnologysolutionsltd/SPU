@@ -107,23 +107,17 @@ def main():
         # Gather source files from a curated set of directories to avoid duplicates
         scan_dirs = [
             "hardware/common/rtl",
-            # GPU/graphics RTL are optional for SPU smoke tests and cause parse issues in some sims.
-            # Exclude heavyweight GPU sources from auto-scan for now.
-            # "hardware/common/rtl/gpu",
             "hardware/common/rtl/core",
             "hardware/common/rtl/mem",
             "hardware/common/rtl/prim",
             "hardware/common/rtl/proto",
-            "hardware/common/rtl/bio",
-            "hardware/common/rtl/io",
             "hardware/common/rtl/include",
             "hardware/spu13/rtl",
             "hardware/spu4/rtl",
             "hardware/common/rtl/spu4/rtl",
             "hardware/boards/tang_primer_25k",
-            "hardware/boards/tang_primer_20k",
+            "hardware/boards/tang25k",
             "hardware/common/tests",  # include behavioral test helpers (e.g., sim_sd_card)
-            "hardware/archive/legacy_rtl",
         ]
         src_files = []
         module_map = {}
