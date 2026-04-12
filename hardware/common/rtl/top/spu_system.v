@@ -243,6 +243,7 @@ module spu_system (
             spu4_top u_sentinel (
                 .clk(clk_piranha), .rst_n(rst_n),
                 .inst_data(24'h800000), // OP_SNAP
+                .pc(),
                 .snap_alert(satellite_snaps[i]),
                 .whisper_tx(sentinel_whispers[i]),
                 .debug_reg_r0(),
