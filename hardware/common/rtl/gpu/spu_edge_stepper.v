@@ -1,15 +1,15 @@
-module spu_edge_stepper(clk, rst_n, setup, coef_a, coef_b, coef_c, step_x, step_y, x_span, inside);
-
-    input clk;
-    input rst_n;
-    input setup;
-    input signed [15:0] coef_a;
-    input signed [15:0] coef_b;
-    input signed [31:0] coef_c;
-    input step_x;
-    input step_y;
-    input signed [15:0] x_span;
-    output inside;
+module spu_edge_stepper (
+    input wire        clk,
+    input wire        rst_n,
+    input wire        setup,
+    input signed [15:0] coef_a,
+    input signed [15:0] coef_b,
+    input signed [31:0] coef_c,
+    input wire        step_x,
+    input wire        step_y,
+    input signed [15:0] x_span,
+    output wire       inside
+);
 
     reg signed [31:0] f;
     reg signed [31:0] f_row;
