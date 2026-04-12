@@ -228,8 +228,58 @@ module laminar_detector (
 endmodule
 
 module rplu_skel (
-    input clk, input reset
+    input clk,
+    input rst_n,
+    input start,
+    input [9:0] addr,
+    input material_id,
+    input cfg_wr_en,
+    input [2:0] cfg_wr_sel,
+    input cfg_wr_material,
+    input [9:0] cfg_wr_addr,
+    input [63:0] cfg_wr_data,
+    output reg signed [31:0] p_out,
+    output reg signed [31:0] q_out,
+    output reg dissoc,
+    output reg done
 );
+    // ROM-backed functional stub: return expected p/q/dissoc from mem files
+    reg [63:0] rom_carbon [0:1023];
+    reg [63:0] rom_iron   [0:1023];
+    reg [0:0]  diss_carbon [0:1023];
+    reg [0:0]  diss_iron   [0:1023];
+
+    initial begin
+        $readmemh("hardware/common/rtl/gpu/rplu_rom_carbon.mem", rom_carbon);
+        $readmemh("hardware/common/rtl/gpu/rplu_rom_iron.mem", rom_iron);
+        $readmemh("hardware/common/rtl/gpu/rplu_dissoc_carbon.mem", diss_carbon);
+        $readmemh("hardware/common/rtl/gpu/rplu_dissoc_iron.mem", diss_iron);
+        p_out = 32'sd0; q_out = 32'sd0; dissoc = 1'b0; done = 1'b0;
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            p_out <= 32'sd0;
+            q_out <= 32'sd0;
+            dissoc <= 1'b0;
+            done <= 1'b0;
+        end else begin
+            if (start) begin
+                if (material_id == 1'b0) begin
+                    p_out <= $signed(rom_carbon[addr][63:32]);
+                    q_out <= $signed(rom_carbon[addr][31:0]);
+                    dissoc <= diss_carbon[addr];
+                end else begin
+                    p_out <= $signed(rom_iron[addr][63:32]);
+                    q_out <= $signed(rom_iron[addr][31:0]);
+                    dissoc <= diss_iron[addr];
+                end
+                done <= 1'b1;
+            end else begin
+                done <= 1'b0;
+            end
+        end
+    end
 endmodule
 
 module simple_lau (
