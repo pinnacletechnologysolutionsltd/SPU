@@ -24,7 +24,9 @@ module rplu_exp #(
     output reg done,
     output reg laminar_irq,
     // RATIO_CMP result: -1/0/+1 (signed)
-    output reg signed [2:0] ratio_cmp_res
+    output reg signed [2:0] ratio_cmp_res,
+    // One-cycle valid pulse when ratio_cmp_res updated
+    output reg ratio_cmp_valid
 );
 
     // params ROMs (small text files produced by generator)
@@ -207,6 +209,7 @@ module rplu_exp #(
                         if (cmp_left_tmp < cmp_right_tmp) ratio_cmp_res <= -3'sd1;
                         else if (cmp_left_tmp > cmp_right_tmp) ratio_cmp_res <=  3'sd1;
                         else ratio_cmp_res <= 3'sd0;
+                        ratio_cmp_valid <= 1'b1;
                     end else begin
                         // index in cfg_wr_addr[2:0] selects coefficient 0..4
                         // use current x_reg as multiplier
@@ -243,7 +246,8 @@ module rplu_exp #(
             valid0 <= 0; valid1 <= 0; valid2 <= 0; valid3 <= 0; valid4 <= 0;
             // handshake/pipeline control resets
             pade_start <= 1'b0; waiting_pade <= 1'b0; use_pade_flag <= 1'b0;
-            lam_wake <= 1'b0; lam_wake_addr <= 10'd0; waiting_wake <= 1'b0; 
+            lam_wake <= 1'b0; lam_wake_addr <= 10'd0; waiting_wake <= 1'b0;
+            ratio_cmp_valid <= 1'b0; 
         end else begin
             // debug: show cfg inputs at each tick
             // default laminar wake signals
@@ -251,6 +255,8 @@ module rplu_exp #(
             lam_wake_addr <= addr_reg;
             // default pade start
             pade_start <= 1'b0;
+            // default: clear one-cycle pulses (including ratio_cmp_valid)
+            ratio_cmp_valid <= 1'b0;
 
             // if already waiting for a wake to complete, keep asserting lam_wake until cleared
             if (waiting_wake) begin

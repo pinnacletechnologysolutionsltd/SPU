@@ -37,7 +37,7 @@ module davis_to_rplu(
     assign r_q16 = { quadrance[31:16] };
 
     reg r_start;
-    rplu_exp u_rplu (.clk(clk), .rst_n(rst_n), .start(r_start), .addr(10'd0), .material_id(material_id), .r_q16(r_q16), .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data), .v_q16(v_q16), .dissoc(dissoc), .done(done));
+    rplu_exp u_rplu (.clk(clk), .rst_n(rst_n), .start(r_start), .addr(10'd0), .material_id(material_id), .r_q16(r_q16), .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data), .v_q16(v_q16), .dissoc(dissoc), .done(done), .ratio_cmp_res(/* unused */), .ratio_cmp_valid(/* unused */));
 
     // simple control: when top start pulses, trigger rplu once after one cycle
     reg started;
