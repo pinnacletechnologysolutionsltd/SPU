@@ -61,17 +61,26 @@ module spu_raster_unit (
 
     wire inside0, inside1, inside2;
 
-    spu_edge_stepper u_e0 (.clk(clk), .rst_n(rst_n), .setup(setup),
-        .coef_a(a0), .coef_b(b0), .coef_c(c0),
-        .step_x(step_x), .step_y(step_y), .x_span(x_span), .inside(inside0));
+    spu_edge_stepper u_e0 (
+        clk, rst_n, setup,
+        a0, b0, c0,
+        step_x, step_y, x_span,
+        inside0
+    );
 
-    spu_edge_stepper u_e1 (.clk(clk), .rst_n(rst_n), .setup(setup),
-        .coef_a(a1), .coef_b(b1), .coef_c(c1),
-        .step_x(step_x), .step_y(step_y), .x_span(x_span), .inside(inside1));
+    spu_edge_stepper u_e1 (
+        clk, rst_n, setup,
+        a1, b1, c1,
+        step_x, step_y, x_span,
+        inside1
+    );
 
-    spu_edge_stepper u_e2 (.clk(clk), .rst_n(rst_n), .setup(setup),
-        .coef_a(a2), .coef_b(b2), .coef_c(c2),
-        .step_x(step_x), .step_y(step_y), .x_span(x_span), .inside(inside2));
+    spu_edge_stepper u_e2 (
+        clk, rst_n, setup,
+        a2, b2, c2,
+        step_x, step_y, x_span,
+        inside2
+    );
 
     assign covered = inside0 & inside1 & inside2;
     assign pixel_r = covered ? tri_r : 4'h0;
