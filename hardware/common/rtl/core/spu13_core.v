@@ -164,6 +164,7 @@ module spu13_core #(
 
     // Toroidal emitter index (wraps naturally at 10 bits)
     reg [9:0] torus_idx;
+    reg        torus_emit_enable;
 
     // Sovereign Hydration & State Logic
     reg [2:0] hydration_state;
@@ -189,6 +190,13 @@ module spu13_core #(
             // default: clear any one-cycle artery writes
             artery_wr_en <= 1'b0;
             artery_wr_data <= 64'd0;
+
+            // fast-domain config writes: torus control (sel==7)
+            if (dec_fast_cfg_wr_en && dec_fast_cfg_sel == 3'd7) begin
+                torus_idx <= dec_fast_cfg_data[9:0];
+                torus_emit_enable <= dec_fast_cfg_data[10];
+            end
+
             case (hydration_state)
                 H_IDLE: begin
                     if (phi_8 && mem_ready) begin
@@ -222,13 +230,14 @@ module spu13_core #(
                             mem_wr_manifold <= manifold_reg;
                             hydration_state <= H_EXHALE;
 
-                            // Emit a POLY_STEP Artery chord using toroidal index.
+                            // Emit a POLY_STEP Artery chord using toroidal index (if enabled).
                             // Header layout: [63:56]=0xA5, [55:48]=sel, [47]=material, [46:37]=addr
-                            artery_wr_en <= 1'b1;
-                            artery_wr_data <= {8'hA5, 8'd7, 1'b0, torus_idx[9:0], 37'd0};
-
-                            // advance torus index (wraps naturally at 10 bits)
-                            torus_idx <= torus_idx + 10'd1;
+                            if (torus_emit_enable) begin
+                                artery_wr_en <= 1'b1;
+                                artery_wr_data <= {8'hA5, 8'd7, 1'b0, torus_idx[9:0], 37'd0};
+                                // advance torus index (wraps naturally at 10 bits)
+                                torus_idx <= torus_idx + 10'd1;
+                            end
                         end
                     end else begin
                         scale_write_en <= 1'b0;
