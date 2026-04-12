@@ -183,13 +183,89 @@ def main():
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
         
         if compile_result.returncode != 0:
-            print(f"[{tb.name}] COMPILE ERROR:")
-            print(compile_result.stderr.strip())
-            compile_errors += 1
-            if out_vvp.exists():
-                out_vvp.unlink()
-            continue
-            
+            # If GPU sources are in the source set, attempt a Verilator simulation fallback
+            gpu_present = any('/hardware/common/rtl/gpu/' in s for s in src_unique)
+            if gpu_present:
+                print(f"[{tb.name}] iverilog failed; attempting Verilator simulation fallback...")
+                # Determine TB top module name
+                try:
+                    import re as _re
+                    with open(tb_str,'r') as _tf:
+                        tb_text = _tf.read()
+                    m = _re.search(r'^\s*module\s+([A-Za-z_][A-Za-z0-9_]*)', tb_text, _re.M)
+                    if not m:
+                        raise Exception('Top module not found')
+                    top_mod = m.group(1)
+                except Exception as e:
+                    print(f"[{tb.name}] Verilator fallback: cannot determine top module: {e}")
+                    print(f"[{tb.name}] COMPILE ERROR:")
+                    print(compile_result.stderr.strip())
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                build_dir = root_dir / "build" / "verilator" / tb.stem
+                build_dir.mkdir(parents=True, exist_ok=True)
+                sim_cpp = build_dir / "sim_main.cpp"
+                sim_cpp.write_text(f'''#include "verilated.h"\n#include "V{top_mod}.h"\n#include <iostream>\nint main(int argc, char **argv) {{\n    Verilated::commandArgs(argc, argv);\n    V{top_mod}* top = new V{top_mod}();\n    while (!Verilated::gotFinish()) {{\n        top->eval();\n    }}\n    delete top;\n    return 0;\n}}\n''')
+
+                verilator_cmd = ["verilator", "--cc", "--Mdir", str(build_dir), "--top-module", top_mod]
+                for d in inc_dirs:
+                    verilator_cmd.extend(["-I", d])
+                verilator_cmd.extend(src_unique)
+                verilator_cmd.extend(["--exe", str(sim_cpp)])
+
+                vcr = subprocess.run(verilator_cmd, capture_output=True, text=True)
+                if vcr.returncode != 0:
+                    print(f"[{tb.name}] Verilator PREPROCESS ERROR:\n{vcr.stderr}\n{vcr.stdout}")
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                make_cmd = ["make", "-C", str(build_dir), "-f", f"V{top_mod}.mk", f"V{top_mod}", "-j"]
+                mcr = subprocess.run(make_cmd, capture_output=True, text=True)
+                if mcr.returncode != 0:
+                    print(f"[{tb.name}] Verilator make error:\n{mcr.stderr}\n{mcr.stdout}")
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                exe = build_dir / f"V{top_mod}"
+                try:
+                    rr = subprocess.run([str(exe)], capture_output=True, text=True, timeout=5)
+                    output = rr.stdout + rr.stderr
+                    if "FAIL" in output or "FAIL:" in output:
+                        print(f"[{tb.name}] FAILED")
+                        print(output.strip())
+                        failed += 1
+                    elif "PASS" in output or "PASS:" in output:
+                        print(f"[{tb.name}] PASSED")
+                        passed += 1
+                    else:
+                        print(f"[{tb.name}] EXECUTED (No explicit PASS/FAIL)")
+                        if rr.returncode == 0:
+                            passed += 1
+                        else:
+                            failed += 1
+                except subprocess.TimeoutExpired:
+                    print(f"[{tb.name}] TIMEOUT (Verilator run)")
+                    timeouts += 1
+                    failed += 1
+
+                if out_vvp.exists():
+                    out_vvp.unlink()
+                continue
+            else:
+                print(f"[{tb.name}] COMPILE ERROR:")
+                print(compile_result.stderr.strip())
+                compile_errors += 1
+                if out_vvp.exists():
+                    out_vvp.unlink()
+                continue
+
         # Execute (with timeout safeguard)
         run_cmd = ["vvp", str(out_vvp)]
         try:
