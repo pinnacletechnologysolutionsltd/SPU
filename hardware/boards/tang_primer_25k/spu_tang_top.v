@@ -164,6 +164,14 @@ module spu_tang_top (
     );
 
     wire rst_n = pll_lock;
+    wire reset = ~rst_n;
+
+    // Internal RPLU runtime config signals (now internal, not top-level IO)
+    wire                rplu_cfg_wr_en;
+    wire [2:0]          rplu_cfg_sel;
+    wire                rplu_cfg_material;
+    wire [9:0]          rplu_cfg_addr;
+    wire [63:0]         rplu_cfg_data;
 
     // Internal RPLU runtime config signals (now internal, not top-level IO)
     wire                rplu_cfg_wr_en;

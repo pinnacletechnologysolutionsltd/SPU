@@ -13,6 +13,9 @@ module spu_tang25k_top (
     output wire smoke_ok
 );
 
+    // Reset alias (active-high) for legacy modules
+    wire reset = ~rst_n;
+
     // Fractal / Fibonacci timing source (kept in wrapper as requested)
     wire phi_8, phi_13, phi_21, heartbeat;
     spu_sierpinski_clk u_sclk (

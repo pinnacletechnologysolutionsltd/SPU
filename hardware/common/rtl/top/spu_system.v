@@ -33,6 +33,9 @@ module spu_system (
     output wire         is_janus_point
 );
 
+    // Reset alias (active-high) for legacy modules that expect active-high reset
+    wire reset = ~rst_n;
+
     // 1. Artery FIFO Bridge (Asynchronous Breath)
     wire [63:0] inhale_chord;
     wire        inhale_empty;
