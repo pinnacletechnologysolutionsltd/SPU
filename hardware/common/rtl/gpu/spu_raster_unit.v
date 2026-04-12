@@ -5,35 +5,59 @@
 // CC0 1.0 Universal.
 
 module spu_raster_unit (
-    input  wire        clk,
-    input  wire        rst_n,
+    clk,
+    rst_n,
+    setup,
+    a0, b0, c0,
+    a1, b1, c1,
+    a2, b2, c2,
+    step_x,
+    step_y,
+    x_span,
+    tri_r,
+    tri_g,
+    tri_b,
+    covered,
+    pixel_r,
+    pixel_g,
+    pixel_b
+);
+
+    // Port directions (Verilog-2001/2012 compatible non-ANSI style)
+    input  wire        clk;
+    input  wire        rst_n;
 
     // Triangle setup (combinational; must be stable during setup pulse)
-    input  wire        setup,
+    input  wire        setup;
 
     // Edge 0: A0*x + B0*y + C0 >= 0
-    input  wire signed [15:0] a0, input wire signed [15:0] b0, input wire signed [31:0] c0,
+    input  wire signed [15:0] a0;
+    input  wire signed [15:0] b0;
+    input  wire signed [31:0] c0;
     // Edge 1
-    input  wire signed [15:0] a1, input wire signed [15:0] b1, input wire signed [31:0] c1,
+    input  wire signed [15:0] a1;
+    input  wire signed [15:0] b1;
+    input  wire signed [31:0] c1;
     // Edge 2
-    input  wire signed [15:0] a2, input wire signed [15:0] b2, input wire signed [31:0] c2,
+    input  wire signed [15:0] a2;
+    input  wire signed [15:0] b2;
+    input  wire signed [31:0] c2;
 
     // Pixel clock advance
-    input  wire        step_x,
-    input  wire        step_y,
-    input  wire signed [15:0] x_span,
+    input  wire        step_x;
+    input  wire        step_y;
+    input  wire signed [15:0] x_span;
 
     // Flat colour for this triangle (R4G4B4)
-    input  wire [3:0]  tri_r,
-    input  wire [3:0]  tri_g,
-    input  wire [3:0]  tri_b,
+    input  wire [3:0]  tri_r;
+    input  wire [3:0]  tri_g;
+    input  wire [3:0]  tri_b;
 
     // Output
-    output wire        covered,
-    output wire [3:0]  pixel_r,
-    output wire [3:0]  pixel_g,
-    output wire [3:0]  pixel_b
-);
+    output wire        covered;
+    output wire [3:0]  pixel_r;
+    output wire [3:0]  pixel_g;
+    output wire [3:0]  pixel_b;
 
     wire inside0, inside1, inside2;
 
