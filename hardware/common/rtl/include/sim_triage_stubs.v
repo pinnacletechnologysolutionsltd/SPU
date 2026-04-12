@@ -219,9 +219,79 @@ module rational_sine_rom (
     always @(*) data = 32'd0;
 endmodule
 
-module laminar_detector (
-    input clk, input reset
+module laminar_detector #(
+    parameter integer EPSILON_Q16 = 16'h0010,
+    parameter integer SETTLING_TIME = 8
+)(
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire [9:0]  addr_in,
+    input  wire signed [31:0] r_q16,
+    input  wire signed [31:0] re_q16,
+    input  wire        wake,
+    input  wire [9:0]  wake_addr,
+    output reg         irq_out,
+    output reg         latched_out,
+    output reg         cleared_out
 );
+    // Per-address settling counters and latch flags
+    reg [15:0] settle_counter [0:1023];
+    reg latched_flag [0:1023];
+
+    integer i;
+    initial begin
+        for (i = 0; i < 1024; i = i + 1) begin
+            settle_counter[i] = 16'd0;
+            latched_flag[i] = 1'b0;
+        end
+        irq_out = 1'b0;
+        latched_out = 1'b0;
+        cleared_out = 1'b0;
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (i = 0; i < 1024; i = i + 1) begin
+                settle_counter[i] <= 16'd0;
+                latched_flag[i] <= 1'b0;
+            end
+            irq_out <= 1'b0;
+            latched_out <= 1'b0;
+            cleared_out <= 1'b0;
+        end else begin
+            cleared_out <= 1'b0;
+            irq_out <= 1'b0;
+            latched_out <= latched_flag[addr_in];
+
+            // Handle wake for a specific address
+            if (wake) begin
+                latched_flag[wake_addr] <= 1'b0;
+                cleared_out <= 1'b1;
+            end
+
+            // If already latched, assert irq
+            if (latched_flag[addr_in]) begin
+                irq_out <= 1'b1;
+                latched_out <= 1'b1;
+                // keep counter unchanged
+            end else begin
+                // check activity: if difference within epsilon, increment counter, else reset
+                reg signed [31:0] diff;
+                diff = r_q16 - re_q16;
+                if (diff < 0) diff = -diff;
+                if (diff <= EPSILON_Q16) begin
+                    if (settle_counter[addr_in] < 16'hFFFF) settle_counter[addr_in] <= settle_counter[addr_in] + 1;
+                end else begin
+                    settle_counter[addr_in] <= 16'd0;
+                end
+                if (settle_counter[addr_in] >= SETTLING_TIME) begin
+                    latched_flag[addr_in] <= 1'b1;
+                    latched_out <= 1'b1;
+                    irq_out <= 1'b1;
+                end
+            end
+        end
+    end
 endmodule
 
 module rplu_skel (
