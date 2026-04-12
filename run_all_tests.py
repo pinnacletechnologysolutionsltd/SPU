@@ -124,7 +124,6 @@ def main():
             "hardware/boards/tang_primer_20k",
             "hardware/common/tests",  # include behavioral test helpers (e.g., sim_sd_card)
             "hardware/archive/legacy_rtl",
-            "reference",
         ]
         src_files = []
         module_map = {}
