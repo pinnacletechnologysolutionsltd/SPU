@@ -1266,6 +1266,27 @@ class SPUCore:
             self.regs[(r1 + 1) % NUM_REGS] = RationalSurd(int(accd), 0)
             if self.verbose:
                 print(f"  [{self.pc:04d}] POLY_STEP R{r1}, Rx{r2} -> num={accn} den={accd}")
+
+        elif opcode == OPCODES.get("RATIO_CMP"):
+            # RATIO_CMP Rbase, Rcompare — compare P/Q at Rbase..Rbase+1 with P'/Q' at Rcompare..Rcompare+1
+            p1 = self.regs[r1]
+            q1 = self.regs[(r1 + 1) % NUM_REGS]
+            p2 = self.regs[r2]
+            q2 = self.regs[(r2 + 1) % NUM_REGS]
+            # Cross-multiply: compare p1*q2 ? p2*q1 in Q(√3)
+            left = p1 * q2
+            right = p2 * q1
+            if left == right:
+                cmp_res = 0
+            elif rs_lt(left, right):
+                cmp_res = -1
+            else:
+                cmp_res = 1
+            # Store integer comparison result into R[r1] as a RationalSurd (overwrite numerator)
+            self.regs[r1] = RationalSurd(cmp_res, 0)
+            if self.verbose:
+                cmp_str = '<' if cmp_res == -1 else ('=' if cmp_res == 0 else '>')
+                print(f"  [{self.pc:04d}] RATIO_CMP R{r1}, R{r2} -> p1/q1 {cmp_str} p2/q2 (res={cmp_res})")
         else:
             print(f"  [{self.pc:04d}] ??? unknown opcode 0x{opcode:02X} — NOP")
 
