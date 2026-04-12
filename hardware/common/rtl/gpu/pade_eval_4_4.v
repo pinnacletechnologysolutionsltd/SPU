@@ -47,6 +47,11 @@ module pade_eval_4_4 #(
     reg signed [127:0] tmp_numer;
     reg signed [127:0] tmp_quot;
 
+    // Local poly temporaries for single-cycle Horner when USE_LOCAL_POLY==1
+    reg signed [191:0] local_prod;
+    reg signed [127:0] local_accn;
+    reg signed [127:0] local_accd;
+
     // Optional local POLY_STEP outputs (combinational single-step Horner)
     wire signed [127:0] poly_num_out_3;
     wire signed [127:0] poly_num_out_2;
@@ -57,15 +62,16 @@ module pade_eval_4_4 #(
     wire signed [127:0] poly_den_out_1;
     wire signed [127:0] poly_den_out_0;
 
-    rplu_poly_step poly_num_3 ( .acc_in(acc_num), .x_q32(x_q32), .coef_q32(num_coef[3]), .acc_out(poly_num_out_3) );
-    rplu_poly_step poly_num_2 ( .acc_in(acc_num), .x_q32(x_q32), .coef_q32(num_coef[2]), .acc_out(poly_num_out_2) );
-    rplu_poly_step poly_num_1 ( .acc_in(acc_num), .x_q32(x_q32), .coef_q32(num_coef[1]), .acc_out(poly_num_out_1) );
-    rplu_poly_step poly_num_0 ( .acc_in(acc_num), .x_q32(x_q32), .coef_q32(num_coef[0]), .acc_out(poly_num_out_0) );
+    // Seed the combinational POLY_STEP chain from the highest-order coef (num_coef[4]/den_coef[4])
+    rplu_poly_step poly_num_3 ( .acc_in({{64{num_coef[4][63]}}, num_coef[4]}), .x_q32(x_q32), .coef_q32(num_coef[3]), .acc_out(poly_num_out_3) );
+    rplu_poly_step poly_num_2 ( .acc_in(poly_num_out_3), .x_q32(x_q32), .coef_q32(num_coef[2]), .acc_out(poly_num_out_2) );
+    rplu_poly_step poly_num_1 ( .acc_in(poly_num_out_2), .x_q32(x_q32), .coef_q32(num_coef[1]), .acc_out(poly_num_out_1) );
+    rplu_poly_step poly_num_0 ( .acc_in(poly_num_out_1), .x_q32(x_q32), .coef_q32(num_coef[0]), .acc_out(poly_num_out_0) );
 
-    rplu_poly_step poly_den_3 ( .acc_in(acc_den), .x_q32(x_q32), .coef_q32(den_coef[3]), .acc_out(poly_den_out_3) );
-    rplu_poly_step poly_den_2 ( .acc_in(acc_den), .x_q32(x_q32), .coef_q32(den_coef[2]), .acc_out(poly_den_out_2) );
-    rplu_poly_step poly_den_1 ( .acc_in(acc_den), .x_q32(x_q32), .coef_q32(den_coef[1]), .acc_out(poly_den_out_1) );
-    rplu_poly_step poly_den_0 ( .acc_in(acc_den), .x_q32(x_q32), .coef_q32(den_coef[0]), .acc_out(poly_den_out_0) );
+    rplu_poly_step poly_den_3 ( .acc_in({{64{den_coef[4][63]}}, den_coef[4]}), .x_q32(x_q32), .coef_q32(den_coef[3]), .acc_out(poly_den_out_3) );
+    rplu_poly_step poly_den_2 ( .acc_in(poly_den_out_3), .x_q32(x_q32), .coef_q32(den_coef[2]), .acc_out(poly_den_out_2) );
+    rplu_poly_step poly_den_1 ( .acc_in(poly_den_out_2), .x_q32(x_q32), .coef_q32(den_coef[1]), .acc_out(poly_den_out_1) );
+    rplu_poly_step poly_den_0 ( .acc_in(poly_den_out_1), .x_q32(x_q32), .coef_q32(den_coef[0]), .acc_out(poly_den_out_0) );
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -90,13 +96,17 @@ module pade_eval_4_4 #(
                     end else next_state <= IDLE;
                 end
                 NUM0: begin
-                    mult_tmp <= acc_num * x_q32;
                     if (USE_LOCAL_POLY) begin
-                        acc_num <= poly_num_out_3;
+                        // compute full Horner combinationally using POLY_STEP chain seeded above
+                        acc_num <= poly_num_out_0;
+                        acc_den <= poly_den_out_0;
+                        busy <= 1'b1;
+                        next_state <= DIV;
                     end else begin
+                        mult_tmp <= acc_num * x_q32;
                         acc_num <= (mult_tmp >> 32) + num_coef[3];
+                        next_state <= NUM1;
                     end
-                    next_state <= NUM1;
                 end
                 NUM1: begin
                     mult_tmp <= acc_num * x_q32;
