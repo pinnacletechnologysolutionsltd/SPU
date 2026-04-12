@@ -75,16 +75,13 @@ module rational_sine_provider #(
     parameter DEPTH = 4096,
     parameter HIGH_PRECISION = 0
 ) (
-    input clk,
-    input reset,
-    input [$clog2(DEPTH)-1:0] addr,
-    output reg signed [31:0] pout,
-    output reg signed [31:0] qout
+    input wire [$clog2(DEPTH)-1:0] addr,
+    output wire signed [31:0] pout,
+    output wire signed [31:0] qout
 );
-    always @(*) begin
-        pout = 32'sd0;
-        qout = 32'sd0;
-    end
+    // Minimal combinational stub used for triage: outputs zeros
+    assign pout = 32'sd0;
+    assign qout = 32'sd0;
 endmodule
 
 module pade_eval_4_4 (
@@ -213,10 +210,30 @@ module davis_to_rplu(
     end
 endmodule
 
-module rational_sine_rom (
-    input clk, input [15:0] addr, output reg [31:0] data
+module rational_sine_rom #(
+    parameter DEPTH = 4096
+) (
+    input  wire [$clog2(DEPTH)-1:0] addr,
+    output reg  [31:0] dout
 );
-    always @(*) data = 32'd0;
+    // Minimal combinational ROM fallback for triage
+    always @(*) begin
+        dout = 32'd0;
+    end
+endmodule
+
+module rational_sine_rom_q32 #(
+    parameter DEPTH = 4096
+) (
+    input  wire [$clog2(DEPTH)-1:0] addr,
+    output reg signed [31:0] dout_p,
+    output reg signed [31:0] dout_q
+);
+    // Minimal combinational Q32 ROM fallback for triage
+    always @(*) begin
+        dout_p = 32'sd0;
+        dout_q = 32'sd0;
+    end
 endmodule
 
 module laminar_detector #(
