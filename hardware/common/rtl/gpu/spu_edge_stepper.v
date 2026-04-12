@@ -7,7 +7,7 @@ module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, x_span, in
     input wire step_x;
     input wire step_y;
     input wire signed [15:0] x_span;
-    output wire inside;
+    output wire inside_out;
 
     // Unpack packed coefficients: {coef_a[15:0], coef_b[15:0], coef_c[31:0]}
     wire signed [15:0] coef_a = coef_pack[63:48];
@@ -38,6 +38,6 @@ module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, x_span, in
         end
     end
 
-    assign inside = 1'b1;
+    assign inside_out = 1'b1;
 
 endmodule
