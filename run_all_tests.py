@@ -163,6 +163,15 @@ def main():
         # Remove the testbench file from src list if it was discovered in scan_dirs
         tb_str = str(tb)
         src_unique = [s for s in src_unique if s != tb_str]
+        # Also remove any source files that the testbench `include`s inline to avoid duplicate module declarations.
+        try:
+            with open(tb_str,'r') as _tf:
+                tb_text = _tf.read()
+            included_files = re.findall(r'^\s*`include\s+"([^"]+)"', tb_text, re.M)
+            if included_files:
+                src_unique = [s for s in src_unique if os.path.basename(s) not in included_files]
+        except Exception:
+            pass
         cmd = iverilog_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
         
