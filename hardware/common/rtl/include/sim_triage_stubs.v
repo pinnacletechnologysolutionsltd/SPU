@@ -69,10 +69,7 @@ module spu_video_timing (
     end
 endmodule
 
-module spu_raster_unit (
-    input clk, input reset
-);
-endmodule
+
 
 module rational_sine_provider #(
     parameter DEPTH = 4096,
