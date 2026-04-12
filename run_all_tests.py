@@ -134,6 +134,11 @@ def main():
                         continue
                     # Skip GPU/graphics RTL (may contain unsupported SV constructs for iverilog)
                     fp = str(f)
+                    # For GPU/graphics sources, only include a tested subset to avoid SV-only files breaking iverilog
+                    if '/hardware/common/rtl/gpu/' in fp or '/hardware/common/rtl/graphics/' in fp:
+                        allowed_gpu = ['pade_eval_4_4.v', 'rplu_exp.v', 'rational_sine_provider.v', 'rational_sine_rom.v', 'rational_sine_rom_q32.v']
+                        if os.path.basename(fp) not in allowed_gpu:
+                            continue
                     src_files.append(str(f))
         # De-duplicate source files while avoiding multiple definitions of the same module
         src_unique = []
