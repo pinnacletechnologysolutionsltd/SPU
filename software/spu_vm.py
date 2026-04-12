@@ -338,6 +338,8 @@ OPCODES = {
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
     "EQUIL": 0x17, "IDNT":  0x18, "JINV":  0x19, "ANNE":  0x1A,
+    # POLY_STEP: emit RPLU Artery chord for a single Horner step (simulation helper)
+    "POLY_STEP": 0xE0,
     # No-op
     "NOP":   0xFF,
 }
@@ -1199,6 +1201,21 @@ class SPUCore:
             if self.verbose:
                 print(f"  [{self.pc:04d}] PHADD R{r1} + R{r2} → packed=0x{out_packed:04X} => {self.regs[r1]!r} void={void_out} ovf={ovf}")
 
+        elif opcode == OPCODES.get("POLY_STEP"):
+            # POLY_STEP idx — emit Artery chords for RPLU (simulation only)
+            idx = p1_a & 16'h03FF
+            material = r1 & 0x1
+            OPCODE_HDR = 8'hA5
+            sel = 7
+            header = ((OPCODE_HDR & 8'hFF) << 56) | ((sel & 8'hFF) << 48) | ((material & 1) << 47) | ((idx & 10'h3FF) << 37)
+            data = 64'd0
+            # Print chords in header then data format to stdout (matches tools/rplu_loader)
+            print(f"  [{self.pc:04d}] POLY_STEP idx={idx} material={material} -> chord_header=0x{header:016x} data=0x{data:016x}")
+            # record in log for test harnesses
+            try:
+                self.log.append((header, data))
+            except Exception:
+                pass
         else:
             print(f"  [{self.pc:04d}] ??? unknown opcode 0x{opcode:02X} — NOP")
 
