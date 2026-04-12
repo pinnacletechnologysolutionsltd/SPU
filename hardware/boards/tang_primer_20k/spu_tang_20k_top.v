@@ -197,7 +197,9 @@ module spu_tang_20k_top (
         .current_axis_data(),
         .manifold_out    (manifold_out),
         .bloom_complete  (),
-        .is_janus_point  (is_janus_point)
+        .is_janus_point  (is_janus_point),
+        .inst_valid      (1'b0),
+        .inst_word       (64'd0)
     );
 
     // ------------------------------------------------------------------ //

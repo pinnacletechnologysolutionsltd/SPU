@@ -34,6 +34,11 @@ module spu13_core #(
 
     output wire [3:0]   current_axis_ptr,
     output wire [63:0]  current_axis_data,
+
+    // Instruction input (optional). When unused, tie inst_valid=0 at instantiation.
+    input  wire                    inst_valid,
+    input  wire [63:0]             inst_word,
+
     output reg [`MANIFOLD_WIDTH-1:0] manifold_out,
     output wire                      bloom_complete,
     output wire [(`MANIFOLD_AXES*4)-1:0] scale_table_out,
@@ -195,6 +200,16 @@ module spu13_core #(
             if (dec_fast_cfg_wr_en && dec_fast_cfg_sel == 3'd7) begin
                 torus_idx <= dec_fast_cfg_data[9:0];
                 torus_emit_enable <= dec_fast_cfg_data[10];
+            end
+
+            // Instruction-level POLY_STEP handler (optional): emit a direct RPLU config write
+            // Encoding: Lithic-L [63:56]=0xE0 — POLY_STEP
+            // Use p1_a[9:0] (inst_word[33:24]) as the RPLU address index.
+            if (inst_valid) begin
+                if (inst_word[63:56] == 8'hE0) begin
+                    artery_wr_en <= 1'b1;
+                    artery_wr_data <= {8'hA5, 8'd7, 1'b0, inst_word[33:24], 37'd0};
+                end
             end
 
             case (hydration_state)

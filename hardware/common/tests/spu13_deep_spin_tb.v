@@ -78,7 +78,9 @@ module spu13_deep_spin_tb;
         .current_axis_data(artery_data),
         .manifold_out(),
         .bloom_complete(bloom_complete),
-        .is_janus_point(is_janus_point)
+        .is_janus_point(is_janus_point),
+        .inst_valid(1'b0),
+        .inst_word(64'd0)
     );
 
     // --- 4. Artery Monitor ---

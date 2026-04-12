@@ -331,7 +331,9 @@ module spu_tang_top (
         .is_janus_point  (janus_0),
         .scale_table_out (scale_table_0),
         .scale_overflow_out (scale_overflow_0),
-        .phinary_cfg     (16'h0001)
+        .phinary_cfg     (16'h0001),
+        .inst_valid      (1'b0),
+        .inst_word       (64'd0)
     );
 
     spu13_core #(.DEVICE("GW5A")) u_cortex_1 (
@@ -352,7 +354,9 @@ module spu_tang_top (
         .is_janus_point  (janus_1),
         .scale_table_out (scale_table_1),
         .scale_overflow_out (scale_overflow_1),
-        .phinary_cfg     (16'h0001)
+        .phinary_cfg     (16'h0001),
+        .inst_valid      (1'b0),
+        .inst_word       (64'd0)
     );
 
     // ------------------------------------------------------------------ //

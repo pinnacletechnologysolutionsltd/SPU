@@ -41,19 +41,40 @@ module spu_system (
     wire        inhale_empty;
     reg         inhale_rd_en;
 
-    // Allow internal CPU (SPU13 core) to write artery chords by multiplexing external ghost writes
+    // Allow internal CPU (SPU13 core) to issue RPLU runtime writes via CDC
     wire cortex_artery_wr_en;
     wire [63:0] cortex_artery_wr_data;
-    wire fuse_wr_en;
-    wire [63:0] fuse_wr_data;
-    assign fuse_wr_en = wr_en | cortex_artery_wr_en;
-    assign fuse_wr_data = cortex_artery_wr_en ? cortex_artery_wr_data : wr_data;
 
+    // Artery FIFO remains driven solely by the Ghost OS PIO (wr_en/wr_data)
     SPU_ARTERY_FIFO u_artery (
         .wr_clk(clk_ghost), .wr_rst_n(rst_n),
-        .wr_en(fuse_wr_en), .wr_data(fuse_wr_data), .full(fifo_full),
+        .wr_en(wr_en), .wr_data(wr_data), .full(fifo_full),
         .rd_clk(clk_piranha), .rd_rst_n(rst_n),
         .rd_en(inhale_rd_en), .rd_data(inhale_chord), .empty(inhale_empty)
+    );
+
+    // CDC: move SPU13 core-originated config writes (fast -> piranha)
+    wire        core_piranha_cfg_wr_en;
+    wire [2:0]  core_piranha_cfg_sel;
+    wire        core_piranha_cfg_material;
+    wire [9:0]  core_piranha_cfg_addr;
+    wire [63:0] core_piranha_cfg_data;
+
+    rplu_cfg_cdc u_cdc_core2p (
+        .clk_src       (clk_fast),
+        .rst_n_src     (rst_n),
+        .wr_src        (cortex_artery_wr_en),
+        .sel_src       (cortex_artery_wr_data[55:48]),
+        .material_src  (cortex_artery_wr_data[47]),
+        .addr_src      (cortex_artery_wr_data[46:37]),
+        .data_src      (cortex_artery_wr_data),
+        .clk_dst       (clk_piranha),
+        .rst_n_dst     (rst_n),
+        .wr_dst        (core_piranha_cfg_wr_en),
+        .sel_dst       (core_piranha_cfg_sel),
+        .material_dst  (core_piranha_cfg_material),
+        .addr_dst      (core_piranha_cfg_addr),
+        .data_dst      (core_piranha_cfg_data)
     );
 
     // Artery → RPLU decoder (optional runtime updates). Listens to inhaled chords
@@ -106,12 +127,17 @@ module spu_system (
         .data_dst      (ext_piranha_cfg_data)
     );
 
-    // Merge: external piranha-side writes take priority over decoder writes.
-    assign rplu_cfg_wr_en       = ext_piranha_cfg_wr_en | dec_cfg_wr_en;
-    assign rplu_cfg_sel         = ext_piranha_cfg_wr_en ? ext_piranha_cfg_sel : dec_cfg_sel;
-    assign rplu_cfg_material    = ext_piranha_cfg_wr_en ? ext_piranha_cfg_material : dec_cfg_material;
-    assign rplu_cfg_addr        = ext_piranha_cfg_wr_en ? ext_piranha_cfg_addr : dec_cfg_addr;
-    assign rplu_cfg_data        = ext_piranha_cfg_wr_en ? ext_piranha_cfg_data : dec_cfg_data;
+    // Merge: external piranha-side writes take top priority, followed by core-originated
+    // fast-domain writes (via CDC), then decoder-originated inhaled chords.
+    assign rplu_cfg_wr_en       = ext_piranha_cfg_wr_en | core_piranha_cfg_wr_en | dec_cfg_wr_en;
+    assign rplu_cfg_sel         = ext_piranha_cfg_wr_en ? ext_piranha_cfg_sel
+                                    : (core_piranha_cfg_wr_en ? core_piranha_cfg_sel : dec_cfg_sel);
+    assign rplu_cfg_material    = ext_piranha_cfg_wr_en ? ext_piranha_cfg_material
+                                    : (core_piranha_cfg_wr_en ? core_piranha_cfg_material : dec_cfg_material);
+    assign rplu_cfg_addr        = ext_piranha_cfg_wr_en ? ext_piranha_cfg_addr
+                                    : (core_piranha_cfg_wr_en ? core_piranha_cfg_addr : dec_cfg_addr);
+    assign rplu_cfg_data        = ext_piranha_cfg_wr_en ? ext_piranha_cfg_data
+                                    : (core_piranha_cfg_wr_en ? core_piranha_cfg_data : dec_cfg_data);
 
     // -----------------------------------------------------------------
     // CDC: forward decoder (piranha) writes to fast domain for fast-domain
@@ -186,7 +212,10 @@ module spu_system (
         .artery_wr_data(cortex_artery_wr_data),
         .manifold_out(manifold_out),
         .bloom_complete(bloom_done),
-        .is_janus_point(is_janus_point)
+        .is_janus_point(is_janus_point),
+        // Instruction interface (unused by default in top-level)
+        .inst_valid(1'b0),
+        .inst_word(64'd0)
     );
 
     // 5. Sentinel Satellites (4x SPU-4)
