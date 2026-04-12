@@ -22,7 +22,9 @@ module rplu_exp #(
     output reg signed [31:0] v_q16,
     output reg dissoc,
     output reg done,
-    output reg laminar_irq
+    output reg laminar_irq,
+    // RATIO_CMP result: -1/0/+1 (signed)
+    output reg signed [2:0] ratio_cmp_res
 );
 
     // params ROMs (small text files produced by generator)
@@ -75,6 +77,12 @@ module rplu_exp #(
     reg signed [31:0] t_reg;
     reg signed [63:0] t2_reg;
     reg signed [31:0] v_reg;
+
+    // Comparator temporaries for RATIO_CMP
+    reg signed [31:0] cmp_p2;
+    reg signed [31:0] cmp_q2;
+    reg signed [255:0] cmp_left_tmp;
+    reg signed [255:0] cmp_right_tmp;
 
     // Pade 4/4 instance signals
     reg pade_start;
@@ -186,17 +194,32 @@ module rplu_exp #(
                     else vnorm_dissoc_iron[cfg_wr_addr] <= cfg_wr_data[0];
                 end
                 3'd7: begin // POLY_STEP: single Horner iteration for numerator and denominator
-                    // index in cfg_wr_addr[2:0] selects coefficient 0..4
-                    // use current x_reg as multiplier
-                    poly_mult_num = acc_num_reg * x_reg;                 // blocking temp
-                    poly_accn_tmp = poly_mult_num >>> 32;               // align Q32 product
-                    poly_accn_tmp = poly_accn_tmp + pade_num_q32[cfg_wr_addr[2:0]];
-                    acc_num_reg <= poly_accn_tmp;
+                    if (cfg_wr_material) begin
+                        // RATIO_CMP command: cfg_wr_data = {p2[31:0], q2[31:0]}
+                        // Compare p1/q1 (acc_num_reg/acc_den_reg) against p2/q2
+                        // by cross-multiplication: left = acc_num_reg * q2; right = acc_den_reg * p2
+                        // sign-extend 32-bit operands to 128 bits for multiply
+                        // use 256-bit temporaries for full precision
+                        cmp_p2 = cfg_wr_data[63:32];
+                        cmp_q2 = cfg_wr_data[31:0];
+                        cmp_left_tmp  = $signed(acc_num_reg) * $signed({{96{cmp_q2[31]}}, cmp_q2});
+                        cmp_right_tmp = $signed(acc_den_reg)  * $signed({{96{cmp_p2[31]}}, cmp_p2});
+                        if (cmp_left_tmp < cmp_right_tmp) ratio_cmp_res <= -3'sd1;
+                        else if (cmp_left_tmp > cmp_right_tmp) ratio_cmp_res <=  3'sd1;
+                        else ratio_cmp_res <= 3'sd0;
+                    end else begin
+                        // index in cfg_wr_addr[2:0] selects coefficient 0..4
+                        // use current x_reg as multiplier
+                        poly_mult_num = acc_num_reg * x_reg;                 // blocking temp
+                        poly_accn_tmp = poly_mult_num >>> 32;               // align Q32 product
+                        poly_accn_tmp = poly_accn_tmp + pade_num_q32[cfg_wr_addr[2:0]];
+                        acc_num_reg <= poly_accn_tmp;
 
-                    poly_mult_den = acc_den_reg * x_reg;                // blocking temp
-                    poly_accd_tmp = poly_mult_den >>> 32;               // align Q32 product
-                    poly_accd_tmp = poly_accd_tmp + pade_den_q32[cfg_wr_addr[2:0]];
-                    acc_den_reg <= poly_accd_tmp;
+                        poly_mult_den = acc_den_reg * x_reg;                // blocking temp
+                        poly_accd_tmp = poly_mult_den >>> 32;               // align Q32 product
+                        poly_accd_tmp = poly_accd_tmp + pade_den_q32[cfg_wr_addr[2:0]];
+                        acc_den_reg <= poly_accd_tmp;
+                    end
                 end
                 default: ;
             endcase
@@ -222,6 +245,7 @@ module rplu_exp #(
             pade_start <= 1'b0; waiting_pade <= 1'b0; use_pade_flag <= 1'b0;
             lam_wake <= 1'b0; lam_wake_addr <= 10'd0; waiting_wake <= 1'b0; 
         end else begin
+            // debug: show cfg inputs at each tick
             // default laminar wake signals
             lam_wake <= 1'b0;
             lam_wake_addr <= addr_reg;
