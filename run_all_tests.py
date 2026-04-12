@@ -212,7 +212,7 @@ def main():
 
                 verilator_cmd = ["verilator", "--cc", "--Mdir", str(build_dir), "--top-module", top_mod]
                 for d in inc_dirs:
-                    verilator_cmd.extend(["-I", d])
+                    verilator_cmd.append("-I" + d)
                 verilator_cmd.extend(src_unique)
                 verilator_cmd.extend(["--exe", str(sim_cpp)])
 
