@@ -22,7 +22,8 @@ module spu_psram_ctrl (
 );
 
 assign ready = 1'b1;       // always ready in stub
-assign init_done = 1'b1;   // pretend init completed
+// init_done: low during reset, assert after reset release for triage
+assign init_done = ~reset;   // pretend init completed
 assign psram_ce_n = 1'b1;  // inactive
 assign psram_clk = clk;    // mirror clock for safety
 
