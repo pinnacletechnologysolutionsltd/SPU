@@ -25,9 +25,15 @@ module spu1_alu (
         .clk(clk), .reset(reset),
         .reg_curr(reg_curr),
         .neighbors(3072'b0),
+        .strike_in(128'b0),
         .opcode(opcode),
         .prime_phase(prime_phase),
         .sign_flip(sign_flip),
+        .dec_fast_cfg_wr_en(1'b0),
+        .dec_fast_cfg_sel(3'b0),
+        .dec_fast_cfg_material(1'b0),
+        .dec_fast_cfg_addr(10'b0),
+        .dec_fast_cfg_data(64'b0),
         .reg_out(permute_out),
         .fault_detected(fault_detected)
     );
