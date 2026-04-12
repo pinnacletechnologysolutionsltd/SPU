@@ -1,5 +1,7 @@
 // Multi-cycle [4/4] Padé evaluator (Q32 coefficients, Q32 x -> Q16 exp out)
-module pade_eval_4_4(
+module pade_eval_4_4 #(
+    parameter USE_LOCAL_POLY = 0
+)(
     input wire clk,
     input wire rst_n,
     input wire start,
@@ -45,6 +47,26 @@ module pade_eval_4_4(
     reg signed [127:0] tmp_numer;
     reg signed [127:0] tmp_quot;
 
+    // Optional local POLY_STEP outputs (combinational single-step Horner)
+    wire signed [127:0] poly_num_out_3;
+    wire signed [127:0] poly_num_out_2;
+    wire signed [127:0] poly_num_out_1;
+    wire signed [127:0] poly_num_out_0;
+    wire signed [127:0] poly_den_out_3;
+    wire signed [127:0] poly_den_out_2;
+    wire signed [127:0] poly_den_out_1;
+    wire signed [127:0] poly_den_out_0;
+
+    rplu_poly_step poly_num_3 ( .acc_in(acc_num), .x_q32(x_q32), .coef_q32(num_coef[3]), .acc_out(poly_num_out_3) );
+    rplu_poly_step poly_num_2 ( .acc_in(acc_num), .x_q32(x_q32), .coef_q32(num_coef[2]), .acc_out(poly_num_out_2) );
+    rplu_poly_step poly_num_1 ( .acc_in(acc_num), .x_q32(x_q32), .coef_q32(num_coef[1]), .acc_out(poly_num_out_1) );
+    rplu_poly_step poly_num_0 ( .acc_in(acc_num), .x_q32(x_q32), .coef_q32(num_coef[0]), .acc_out(poly_num_out_0) );
+
+    rplu_poly_step poly_den_3 ( .acc_in(acc_den), .x_q32(x_q32), .coef_q32(den_coef[3]), .acc_out(poly_den_out_3) );
+    rplu_poly_step poly_den_2 ( .acc_in(acc_den), .x_q32(x_q32), .coef_q32(den_coef[2]), .acc_out(poly_den_out_2) );
+    rplu_poly_step poly_den_1 ( .acc_in(acc_den), .x_q32(x_q32), .coef_q32(den_coef[1]), .acc_out(poly_den_out_1) );
+    rplu_poly_step poly_den_0 ( .acc_in(acc_den), .x_q32(x_q32), .coef_q32(den_coef[0]), .acc_out(poly_den_out_0) );
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= IDLE;
@@ -69,43 +91,75 @@ module pade_eval_4_4(
                 end
                 NUM0: begin
                     mult_tmp <= acc_num * x_q32;
-                    acc_num <= (mult_tmp >> 32) + num_coef[3];
+                    if (USE_LOCAL_POLY) begin
+                        acc_num <= poly_num_out_3;
+                    end else begin
+                        acc_num <= (mult_tmp >> 32) + num_coef[3];
+                    end
                     next_state <= NUM1;
                 end
                 NUM1: begin
                     mult_tmp <= acc_num * x_q32;
-                    acc_num <= (mult_tmp >> 32) + num_coef[2];
+                    if (USE_LOCAL_POLY) begin
+                        acc_num <= poly_num_out_2;
+                    end else begin
+                        acc_num <= (mult_tmp >> 32) + num_coef[2];
+                    end
                     next_state <= NUM2;
                 end
                 NUM2: begin
                     mult_tmp <= acc_num * x_q32;
-                    acc_num <= (mult_tmp >> 32) + num_coef[1];
+                    if (USE_LOCAL_POLY) begin
+                        acc_num <= poly_num_out_1;
+                    end else begin
+                        acc_num <= (mult_tmp >> 32) + num_coef[1];
+                    end
                     next_state <= NUM3;
                 end
                 NUM3: begin
                     mult_tmp <= acc_num * x_q32;
-                    acc_num <= (mult_tmp >> 32) + num_coef[0];
+                    if (USE_LOCAL_POLY) begin
+                        acc_num <= poly_num_out_0;
+                    end else begin
+                        acc_num <= (mult_tmp >> 32) + num_coef[0];
+                    end
                     // start denominator sequence
                     next_state <= DEN0;
                 end
                 DEN0: begin
                     mult_tmp <= acc_den * x_q32;
-                    acc_den <= (mult_tmp >> 32) + den_coef[3];
+                    if (USE_LOCAL_POLY) begin
+                        acc_den <= poly_den_out_3;
+                    end else begin
+                        acc_den <= (mult_tmp >> 32) + den_coef[3];
+                    end
                     next_state <= DEN1;
                 end
                 DEN1: begin
                     mult_tmp <= acc_den * x_q32;
-                    acc_den <= (mult_tmp >> 32) + den_coef[2];
+                    if (USE_LOCAL_POLY) begin
+                        acc_den <= poly_den_out_2;
+                    end else begin
+                        acc_den <= (mult_tmp >> 32) + den_coef[2];
+                    end
                     next_state <= DEN2;
                 end
                 DEN2: begin
                     mult_tmp <= acc_den * x_q32;
-                    acc_den <= (mult_tmp >> 32) + den_coef[1];
+                    if (USE_LOCAL_POLY) begin
+                        acc_den <= poly_den_out_1;
+                    end else begin
+                        acc_den <= (mult_tmp >> 32) + den_coef[1];
+                    end
                     next_state <= DEN3;
                 end
                 DEN3: begin
                     mult_tmp <= acc_den * x_q32;
-                    acc_den <= (mult_tmp >> 32) + den_coef[0];
+                    if (USE_LOCAL_POLY) begin
+                        acc_den <= poly_den_out_0;
+                    end else begin
+                        acc_den <= (mult_tmp >> 32) + den_coef[0];
+                    end
                     next_state <= DIV;
                 end
                 DIV: begin

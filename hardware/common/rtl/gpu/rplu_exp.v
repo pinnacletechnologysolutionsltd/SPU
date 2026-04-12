@@ -2,6 +2,7 @@
 // Inputs: r_q16, material select -> use params ROM for a_q16,re_q16, De normalized=1.0
 module rplu_exp #(
     parameter ENABLE_PADE = 0,
+    parameter USE_LOCAL_POLY = 0,
     parameter CFG_ENABLE = 1
 )(
     input wire clk,
@@ -93,6 +94,30 @@ module rplu_exp #(
         .done(pade_done),
         .busy(pade_busy)
     );
+
+    // Optional local POLY_STEP single-step units (combinational).
+    // These compute acc_next = (acc_in * x_q32) >>> 32 + coef_q32 and are
+    // instantiated but only used when USE_LOCAL_POLY is enabled to preserve
+    // existing behaviour by default.
+    wire signed [127:0] poly_num_out_3;
+    wire signed [127:0] poly_num_out_2;
+    wire signed [127:0] poly_num_out_1;
+    wire signed [127:0] poly_num_out_0;
+    wire signed [127:0] poly_den_out_3;
+    wire signed [127:0] poly_den_out_2;
+    wire signed [127:0] poly_den_out_1;
+    wire signed [127:0] poly_den_out_0;
+
+    rplu_poly_step poly_num_3 ( .acc_in(acc_num_reg), .x_q32(x_reg), .coef_q32(pade_num_q32[3]), .acc_out(poly_num_out_3) );
+    rplu_poly_step poly_num_2 ( .acc_in(acc_num_reg), .x_q32(x_reg), .coef_q32(pade_num_q32[2]), .acc_out(poly_num_out_2) );
+    rplu_poly_step poly_num_1 ( .acc_in(acc_num_reg), .x_q32(x_reg), .coef_q32(pade_num_q32[1]), .acc_out(poly_num_out_1) );
+    rplu_poly_step poly_num_0 ( .acc_in(acc_num_reg), .x_q32(x_reg), .coef_q32(pade_num_q32[0]), .acc_out(poly_num_out_0) );
+
+    rplu_poly_step poly_den_3 ( .acc_in(acc_den_reg), .x_q32(x_reg), .coef_q32(pade_den_q32[3]), .acc_out(poly_den_out_3) );
+    rplu_poly_step poly_den_2 ( .acc_in(acc_den_reg), .x_q32(x_reg), .coef_q32(pade_den_q32[2]), .acc_out(poly_den_out_2) );
+    rplu_poly_step poly_den_1 ( .acc_in(acc_den_reg), .x_q32(x_reg), .coef_q32(pade_den_q32[1]), .acc_out(poly_den_out_1) );
+    rplu_poly_step poly_den_0 ( .acc_in(acc_den_reg), .x_q32(x_reg), .coef_q32(pade_den_q32[0]), .acc_out(poly_den_out_0) );
+
 
     // addr capture and ROM fallback arrays
     reg [9:0] addr_reg;
