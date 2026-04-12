@@ -8,7 +8,13 @@ module spu_fluid_solver (
     input  wire [831:0] velocity_in,  // 13-lane ABCD velocity field
     input  wire [3071:0] neighbors,   // 12-neighbor relational bus
     output reg  [831:0] velocity_out,
-    output wire         laminar_lock  // Absolute Equilibrium (Henosis)
+    output wire         laminar_lock,  // Absolute Equilibrium (Henosis)
+    // runtime config inputs (RPLU)
+    input  wire         cfg_wr_en,
+    input  wire [2:0]   cfg_wr_sel,
+    input  wire         cfg_wr_material,
+    input  wire [9:0]   cfg_wr_addr,
+    input  wire [63:0]  cfg_wr_data
 );
 
     // 1. Tensegrity Balancer (Geometric Laplacian)
@@ -22,7 +28,12 @@ module spu_fluid_solver (
         .clk(clk), .reset(reset),
         .neighbors(neighbors),
         .scaled_residual(grad_out),
-        .at_equilibrium(equilibrium)
+        .at_equilibrium(equilibrium),
+        .cfg_wr_en(cfg_wr_en),
+        .cfg_wr_sel(cfg_wr_sel),
+        .cfg_wr_material(cfg_wr_material),
+        .cfg_wr_addr(cfg_wr_addr),
+        .cfg_wr_data(cfg_wr_data)
     );
 
     // 2. Orbital Laplacian (Hysteresis-Zero Operator)
