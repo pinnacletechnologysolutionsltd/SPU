@@ -15,7 +15,8 @@ module spu_bio_pulse #(
 
     // 12,000,000 / 61,440 = 195.3125
     reg [7:0] div_cnt;
-    wire tick_61k = (div_cnt == 8'd195);
+    wire tick_61k;
+    assign tick_61k = (div_cnt == 8'd195);
 
     always @(posedge clk or posedge reset) begin
         if (reset) div_cnt <= 0;

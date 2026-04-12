@@ -71,23 +71,23 @@ def main():
         "hardware/common/rtl/top",
         "hardware/common/rtl/bio",
         "hardware/common/rtl/graphics",
+        "hardware/common/rtl/include",
         "hardware/common/rtl/io",
         "hardware/common/rtl/audio",
-        "hardware/common/rtl/gpu",
         "hardware/common/rtl/hal",
         "hardware/spu13/rtl",
         "hardware/spu4/rtl",
+        "hardware/common/rtl/spu4/rtl",
         "hardware/boards/icesugar",       # local board tops (must precede reference/)
         "hardware/boards/tang_nano_9k",
         "hardware/boards/tang_primer_25k",
         "hardware/vendor/gowin",          # Gowin DSP / BSRAM primitives
         "hardware/vendor/ice40",          # iCE40 simulation stubs
-        "reference/synergeticrenderer/Laminar-Core/hardware/archive",
-        "reference/synergeticrenderer/Laminar-Core/hardware/rtl",
-        "reference/synergeticrenderer/Laminar-Core/hardware/tests",
+        "hardware/archive/legacy_rtl",
+        "hardware/archive/legacy_rtl/common/rtl",
     ]
     
-    iverilog_args = ["iverilog"]
+    iverilog_args = ["iverilog", "-g2012"]
     for d in inc_dirs:
         iverilog_args.extend(["-y", d, "-I", d])
     # Top-level include for spu_arch_defines.vh and sqr_params.vh
@@ -103,7 +103,74 @@ def main():
         out_vvp = root_dir / f"tmp_{tb.stem}.vvp"
         
         # Compile
-        cmd = iverilog_args + ["-o", str(out_vvp), str(tb)]
+        # Gather all source files from include directories so iverilog sees every module
+        # Gather source files from a curated set of directories to avoid duplicates
+        scan_dirs = [
+            "hardware/common/rtl",
+            # GPU/graphics RTL are optional for SPU smoke tests and cause parse issues in some sims.
+            # Exclude heavyweight GPU sources from auto-scan for now.
+            # "hardware/common/rtl/gpu",
+            "hardware/common/rtl/core",
+            "hardware/common/rtl/mem",
+            "hardware/common/rtl/prim",
+            "hardware/common/rtl/proto",
+            "hardware/common/rtl/bio",
+            "hardware/common/rtl/io",
+            "hardware/common/rtl/include",
+            "hardware/spu13/rtl",
+            "hardware/spu4/rtl",
+            "hardware/common/rtl/spu4/rtl",
+            "hardware/boards/tang_primer_25k",
+            "hardware/boards/tang_primer_20k",
+            "hardware/common/tests",  # include behavioral test helpers (e.g., sim_sd_card)
+            "hardware/archive/legacy_rtl",
+            "reference",
+        ]
+        src_files = []
+        module_map = {}
+        for d in scan_dirs:
+            absd = root_dir / d
+            if absd.exists():
+                for f in absd.rglob('*.v'):
+                    # Skip helper testbench files in the common tests directory
+                    if d == "hardware/common/tests" and f.name.endswith("_tb.v"):
+                        continue
+                    # Skip GPU/graphics RTL (may contain unsupported SV constructs for iverilog)
+                    fp = str(f)
+                    if '/hardware/common/rtl/gpu/' in fp or '/hardware/common/rtl/graphics/' in fp:
+                        continue
+                    src_files.append(str(f))
+        # De-duplicate source files while avoiding multiple definitions of the same module
+        src_unique = []
+        seen_files = set()
+        for s in src_files:
+            if s in seen_files:
+                continue
+            # read module names in this file
+            try:
+                with open(s,'r') as fh:
+                    text = fh.read()
+            except Exception:
+                text = ''
+            import re
+            modules_in_file = re.findall(r'^\s*module\s+([a-zA-Z_][a-zA-Z0-9_]*)', text, re.M)
+            conflict = False
+            for m in modules_in_file:
+                if m in module_map:
+                    conflict = True
+                    break
+            if not conflict:
+                src_unique.append(s)
+                seen_files.add(s)
+                for m in modules_in_file:
+                    module_map[m] = s
+            else:
+                # skip this file to avoid duplicate module definitions
+                pass
+        # Remove the testbench file from src list if it was discovered in scan_dirs
+        tb_str = str(tb)
+        src_unique = [s for s in src_unique if s != tb_str]
+        cmd = iverilog_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
         
         if compile_result.returncode != 0:

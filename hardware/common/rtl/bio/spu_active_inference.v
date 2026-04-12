@@ -24,10 +24,14 @@ module spu_active_inference (
 );
 
     // Internal calculation of Error: Sensory - Prior
-    wire signed [31:0] err_a = sensory_in[31:0]   - prior_state[31:0];
-    wire signed [31:0] err_b = sensory_in[63:32]  - prior_state[63:32];
-    wire signed [31:0] err_c = sensory_in[95:64]  - prior_state[95:64];
-    wire signed [31:0] err_d = sensory_in[127:96] - prior_state[127:96];
+    wire signed [31:0] err_a;
+    assign err_a = sensory_in[31:0]   - prior_state[31:0];
+    wire signed [31:0] err_b;
+    assign err_b = sensory_in[63:32]  - prior_state[63:32];
+    wire signed [31:0] err_c;
+    assign err_c = sensory_in[95:64]  - prior_state[95:64];
+    wire signed [31:0] err_d;
+    assign err_d = sensory_in[127:96] - prior_state[127:96];
 
     // Magnitude calculation (Sum of Absolute Errors)
     wire [31:0] total_error = (err_a[31] ? -err_a : err_a) + 

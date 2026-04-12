@@ -31,7 +31,8 @@ module spu_soul_metabolism #(
 );
 
     // --- 5. Emotional Processing ---
-    wire emotional_threshold = (tuck_count >= 1000) || (is_idle && cycle_count > 32'h00FFFFFF);
+    wire emotional_threshold;
+    assign emotional_threshold = (tuck_count >= 1000) || (is_idle && cycle_count > 32'h00FFFFFF);
     reg [127:0] sqr_bias_acc;
     
     // 13% Fibonacci Threshold (Approx 1 tuck per 8 cycles)

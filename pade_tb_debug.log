@@ -1,0 +1,336 @@
+Found 96 Verilog test files to execute.
+
+--- Running Test: spu4_sovereign_tb.v ---
+[spu4_sovereign_tb.v] PASSED
+
+--- Running Test: spu_i2c_audit_tb.v ---
+[spu_i2c_audit_tb.v] PASSED
+
+--- Running Test: spu_metabolic_tb.v ---
+[spu_metabolic_tb.v] PASSED
+
+--- Running Test: spu_bus_arbiter_tb.v ---
+[spu_bus_arbiter_tb.v] PASSED
+
+--- Running Test: spu_transducer_tb.v ---
+[spu_transducer_tb.v] PASSED
+
+--- Running Test: spu_transducer_tb.v ---
+[spu_transducer_tb.v] PASSED
+
+--- Running Test: spu_whisper_tb.v ---
+[spu_whisper_tb.v] PASSED
+
+--- Running Test: spu_i2c_audit_tb.v ---
+[spu_i2c_audit_tb.v] PASSED
+
+--- Running Test: spu_spi_slave_tb.v ---
+[spu_spi_slave_tb.v] PASSED
+
+--- Running Test: spu_sovereign_boot_tb.v ---
+[spu_sovereign_boot_tb.v] PASSED
+
+--- Running Test: spu_artery_serial_tb.v ---
+[spu_artery_serial_tb.v] PASSED
+
+--- Running Test: spu_identity_monad_tb.v ---
+[spu_identity_monad_tb.v] PASSED
+
+--- Running Test: sqr_determinism_tb.v ---
+[sqr_determinism_tb.v] PASSED
+
+--- Running Test: sqr_determinism_tb.v ---
+[sqr_determinism_tb.v] PASSED
+
+--- Running Test: spu_4_alu_fold_tb.v ---
+[spu_4_alu_fold_tb.v] PASSED
+
+--- Running Test: tb_spu_janus_mirror.v ---
+[tb_spu_janus_mirror.v] PASSED
+
+--- Running Test: davis_to_rplu_tb.v ---
+[davis_to_rplu_tb.v] EXECUTED (No explicit PASS/FAIL)
+
+--- Running Test: spu_mem_bridge_ddr3_tb.v ---
+[spu_mem_bridge_ddr3_tb.v] PASSED
+
+--- Running Test: spu_harmonic_handshake_tb.v ---
+[spu_harmonic_handshake_tb.v] EXECUTED (No explicit PASS/FAIL)
+
+--- Running Test: spu_mem_bridge_sdram_tb.v ---
+[spu_mem_bridge_sdram_tb.v] PASSED
+
+--- Running Test: spu_whisper_stress_tb.v ---
+[spu_whisper_stress_tb.v] PASSED
+
+--- Running Test: spu_purify_tb.v ---
+[spu_purify_tb.v] PASSED
+
+--- Running Test: spu_stress_tb.v ---
+[spu_stress_tb.v] PASSED
+
+--- Running Test: spu_pell_cache_tb.v ---
+[spu_pell_cache_tb.v] PASSED
+
+--- Running Test: spu4_psram_tb.v ---
+[spu4_psram_tb.v] PASSED
+
+--- Running Test: rational_sine_tb.v ---
+[rational_sine_tb.v] EXECUTED (No explicit PASS/FAIL)
+
+--- Running Test: spu_bresenham_tb.v ---
+[spu_bresenham_tb.v] PASSED
+
+--- Running Test: spu1_tb.v ---
+[spu1_tb.v] PASSED
+
+--- Running Test: spu_node_link_tb.v ---
+[spu_node_link_tb.v] PASSED
+
+--- Running Test: spu_bio_gateway_tb.v ---
+[spu_bio_gateway_tb.v] PASSED
+
+--- Running Test: spu_bowman_wake_tb.v ---
+[spu_bowman_wake_tb.v] PASSED
+
+--- Running Test: spu_harmonic_vis_tb.v ---
+[spu_harmonic_vis_tb.v] PASSED
+
+--- Running Test: spu13_deep_spin_tb.v ---
+[spu13_deep_spin_tb.v] PASSED
+
+--- Running Test: pade_eval_4_4_tb.v ---
+[pade_eval_4_4_tb.v] TIMEOUT (Testbench hung, likely no $finish)
+
+--- Running Test: spu_proprioception_tb.v ---
+[spu_proprioception_tb.v] PASSED
+
+--- Running Test: spu_bio_gateway_tb.v ---
+[spu_bio_gateway_tb.v] PASSED
+
+--- Running Test: spu_rational_trig_tb.v ---
+[spu_rational_trig_tb.v] PASSED
+
+--- Running Test: spu_spread_mul_tb.v ---
+[spu_spread_mul_tb.v] PASSED
+
+--- Running Test: spu_triple_spread_tb.v ---
+[spu_triple_spread_tb.v] PASSED
+
+--- Running Test: spu_video_timing_tb.v ---
+[spu_video_timing_tb.v] PASSED
+
+--- Running Test: spu_harmonic_vis_tb.v ---
+[spu_harmonic_vis_tb.v] PASSED
+
+--- Running Test: spu_harmonic_handshake_tb.v ---
+[spu_harmonic_handshake_tb.v] EXECUTED (No explicit PASS/FAIL)
+
+--- Running Test: spu_proprioception_tb.v ---
+[spu_proprioception_tb.v] PASSED
+
+--- Running Test: rational_sine_provider_tb.v ---
+[rational_sine_provider_tb.v] EXECUTED (No explicit PASS/FAIL)
+
+--- Running Test: spu_fragment_pipe_tb.v ---
+[spu_fragment_pipe_tb.v] PASSED
+
+--- Running Test: rplu_exp_tb.v ---
+[rplu_exp_tb.v] PASSED
+
+--- Running Test: spu_lattice_fluid_tb.v ---
+[spu_lattice_fluid_tb.v] PASSED
+
+--- Running Test: spu_current_audit_tb.v ---
+[spu_current_audit_tb.v] PASSED
+
+--- Running Test: injection_gate_tb.v ---
+[injection_gate_tb.v] PASSED
+
+--- Running Test: spu_handover_tb.v ---
+[spu_handover_tb.v] PASSED
+
+--- Running Test: spu_sensory_audit_tb.v ---
+[spu_sensory_audit_tb.v] PASSED
+
+--- Running Test: spu_manifest_tb.v ---
+[spu_manifest_tb.v] PASSED
+
+--- Running Test: spu13_manifold_tb.v ---
+[spu13_manifold_tb.v] PASSED
+
+--- Running Test: spu_artery_tb.v ---
+[spu_artery_tb.v] PASSED
+
+--- Running Test: spu_whisper_bridge_v2_tb.v ---
+[spu_whisper_bridge_v2_tb.v] PASSED
+
+--- Running Test: spu_governor_mux_tb.v ---
+[spu_governor_mux_tb.v] PASSED
+
+--- Running Test: spu_fractal_bypass_tb.v ---
+[spu_fractal_bypass_tb.v] PASSED
+
+--- Running Test: spu_input_sync_tb.v ---
+[spu_input_sync_tb.v] PASSED
+
+--- Running Test: spu_sdram_arbiter_tb.v ---
+[spu_sdram_arbiter_tb.v] PASSED
+
+--- Running Test: spu4_precession_tb.v ---
+[spu4_precession_tb.v] PASSED
+
+--- Running Test: spu_uart_bridge_tb.v ---
+[spu_uart_bridge_tb.v] PASSED
+
+--- Running Test: simple_lau_tb.v ---
+[simple_lau_tb.v] PASSED
+
+--- Running Test: spu_sensory_audit_tb.v ---
+[spu_sensory_audit_tb.v] PASSED
+
+--- Running Test: spu4_autonomy_tb.v ---
+[spu4_autonomy_tb.v] PASSED
+
+--- Running Test: spu_raster_tb.v ---
+[spu_raster_tb.v] PASSED
+
+--- Running Test: gpu_pipeline_tb.v ---
+[gpu_pipeline_tb.v] EXECUTED (No explicit PASS/FAIL)
+
+--- Running Test: spu_unified_alu_tdm_tb.v ---
+[spu_unified_alu_tdm_tb.v] PASSED
+
+--- Running Test: spu_rational_trig_tb.v ---
+[spu_rational_trig_tb.v] PASSED
+
+--- Running Test: spu1_tb.v ---
+[spu1_tb.v] PASSED
+
+--- Running Test: spu_permute_13_tb.v ---
+[spu_permute_13_tb.v] PASSED
+
+--- Running Test: tb_spu_flash_bridge.v ---
+[tb_spu_flash_bridge.v] PASSED
+
+--- Running Test: spu_identity_monad_tb.v ---
+[spu_identity_monad_tb.v] PASSED
+
+--- Running Test: gpu_pipeline_tb.v ---
+[gpu_pipeline_tb.v] EXECUTED (No explicit PASS/FAIL)
+
+--- Running Test: spu_whisper_tb.v ---
+[spu_whisper_tb.v] PASSED
+
+--- Running Test: spu_lattice_fluid_tb.v ---
+[spu_lattice_fluid_tb.v] PASSED
+
+--- Running Test: testbench_genesis.v ---
+[testbench_genesis.v] PASSED
+
+--- Running Test: spu_current_audit_tb.v ---
+[spu_current_audit_tb.v] PASSED
+
+--- Running Test: spu_permute_tb.v ---
+[spu_permute_tb.v] PASSED
+
+--- Running Test: spu_bowman_wake_tb.v ---
+[spu_bowman_wake_tb.v] PASSED
+
+--- Running Test: spu_smul_tb.v ---
+[spu_smul_tb.v] PASSED
+
+--- Running Test: spu_pdm_audio_tb.v ---
+[spu_pdm_audio_tb.v] PASSED
+
+--- Running Test: sqr_debug_tb.v ---
+[sqr_debug_tb.v] EXECUTED (No explicit PASS/FAIL)
+
+--- Running Test: spu_sensor_bank_tb.v ---
+[spu_sensor_bank_tb.v] PASSED
+
+--- Running Test: rplu_tb.v ---
+[rplu_tb.v] PASSED
+
+--- Running Test: spu_triple_quad_tb.v ---
+[spu_triple_quad_tb.v] PASSED
+
+--- Running Test: spu4_sentinel_tb.v ---
+[spu4_sentinel_tb.v] PASSED
+
+--- Running Test: spu_laminar_power_tb.v ---
+[spu_laminar_power_tb.v] PASSED
+
+--- Running Test: davis_gate_dsp_tb.v ---
+[davis_gate_dsp_tb.v] PASSED
+
+--- Running Test: rotor_compare_tb.v ---
+[rotor_compare_tb.v] PASSED
+
+--- Running Test: spu_cluster_tb.v ---
+[spu_cluster_tb.v] PASSED
+
+--- Running Test: spu_whisper_bridge_tb.v ---
+[spu_whisper_bridge_tb.v] PASSED
+
+--- Running Test: spu_ve_init_tb.v ---
+[spu_ve_init_tb.v] PASSED
+
+--- Running Test: spu_psram_dual_tb.v ---
+[spu_psram_dual_tb.v] PASSED
+
+--- Running Test: spu_rotor_vault_tb.v ---
+[spu_rotor_vault_tb.v] PASSED
+
+--- Running Test: spu_metabolic_tb.v ---
+[spu_metabolic_tb.v] PASSED
+
+--- Running Test: spu_fractal_bypass_tb.v ---
+[spu_fractal_bypass_tb.v] PASSED
+
+================== SUMMARY ==================
+Verilog Tests: 96
+Passed:      95
+Failed:      1
+Timeouts:    1
+Compile Err: 0
+
+--- Running C++ Test: spu_surd_test.cpp ---
+[spu_surd_test.cpp] PASSED
+
+--- Running C++ Test: spu_quadray_test.cpp ---
+[spu_quadray_test.cpp] PASSED
+
+--- Running C++ Test: spu_ivm_test.cpp ---
+[spu_ivm_test.cpp] PASSED
+
+--- Running C++ Test: spu_physics_test.cpp ---
+[spu_physics_test.cpp] PASSED
+
+--- Running C++ Test: spu_lithic_l_test.cpp ---
+[spu_lithic_l_test.cpp] PASSED
+
+--- Running C++ Test: spu_manifold_types_test.cpp ---
+[spu_manifold_types_test.cpp] PASSED
+
+--- Running C++ Test: spu_hex_hierarchy_test.cpp ---
+[spu_hex_hierarchy_test.cpp] PASSED
+
+--- Running C++ Test: spu_sdf_test.cpp ---
+[spu_sdf_test.cpp] PASSED
+
+--- Running C++ Test: spu_wildberger_test.cpp ---
+[spu_wildberger_test.cpp] PASSED
+
+C++ Tests:   9
+Passed:      9
+Failed:      0
+Compile Err: 0
+
+Python Tests: 2
+Passed:      2
+Failed:      0
+
+Total PASS:  106
+Total FAIL:  2
+=============================================

@@ -23,8 +23,10 @@ module spu_soft_start (
         ({16{fib_idx == 3'd6}} & 16'd144) |
         ({16{fib_idx == 3'd7}} & 16'd233);
 
-    wire is_max = (bloom_intensity == 8'hFF);
-    wire step_reached = (timer >= fib_threshold);
+    wire is_max;
+    assign is_max = (bloom_intensity == 8'hFF);
+    wire step_reached;
+    assign step_reached = (timer >= fib_threshold);
     
     // Next-state logic (Laminar Muxes)
     wire [15:0] next_timer = 

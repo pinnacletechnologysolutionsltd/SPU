@@ -185,6 +185,7 @@ module spu_tang_20k_top (
         .phi_8           (phi_8),
         .phi_13          (phi_13),
         .phi_21          (phi_21),
+        .phinary_cfg     (16'h0001),
         .mem_ready       (mem_ready),
         .mem_burst_rd    (mem_burst_rd),
         .mem_burst_wr    (mem_burst_wr),

@@ -23,10 +23,13 @@ module gpu_pipeline_tb;
     wire        display_ready;
 
     // Vertex Coordinate Definitions (as 16-bit values)
-    wire [15:0] v0_x = 10;
-    wire [15:0] v0_y = 10;
+    wire [15:0] v0_x;
+    assign v0_x = 10;
+    wire [15:0] v0_y;
+    assign v0_y = 10;
     wire [15:0] v1_x = RES_X - 10; // 6
-    wire [15:0] v1_y = 10;
+    wire [15:0] v1_y;
+    assign v1_y = 10;
     wire [15:0] v2_x = RES_X / 2;   // 8
     wire [15:0] v2_y = RES_Y - 10; // 6
 

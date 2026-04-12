@@ -44,6 +44,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "rplu_default_tables.h"
 
 // ── Pin assignments ────────────────────────────────────────────────────────
 #define SPI_MISO_PIN    16
@@ -72,6 +73,7 @@
 // ── SPI commands ──────────────────────────────────────────────────────────
 #define CMD_READ_MANIFOLD   0xA0   // → 32 bytes (4 axes)
 #define CMD_READ_STATUS     0xAC   // → 3 bytes (dissonance + flags)
+#define CMD_READ_SCALE      0xAD   // → 9 bytes (7B scale table + 2B overflow)
 #define CMD_WRITE_CHORD     0xB1   // ← 8 bytes (one Chord to execute)
 #define SPU4_AXES            4
 
@@ -107,15 +109,28 @@ void core1_entry(void) {
     uint16_t dissonance;
     uint8_t  flags;
 
-    // Chord receive state
+    // Chord receive state (from RP2040 UART and host USB stdio)
     uint8_t chord_buf[8];
     int     chord_pos = 0;
+    uint8_t usb_chord_buf[8];
+    int     usb_chord_pos = 0;
 
     while (true) {
         // 1. Poll FPGA manifold + status
         spi_read_manifold(abcd32);
         spi_read_status(&dissonance, &flags);
+        uint8_t scale_bytes[9];
+        spi_read_scale_table(scale_bytes);
         assemble_frame(abcd32, dissonance, flags, frame_back);
+        // Copy first 5 bytes of scale table into spare bytes in axis 12 for telemetry
+        {
+            int off = 12 * BYTES_PER_AXIS;
+            frame_back[off + 2] = scale_bytes[0];
+            frame_back[off + 3] = scale_bytes[1];
+            frame_back[off + 4] = scale_bytes[2];
+            frame_back[off + 6] = scale_bytes[3];
+            frame_back[off + 7] = scale_bytes[4];
+        }
 
         // 2. Signal Core 0: frame ready (value 1 = new frame)
         multicore_fifo_push_blocking(1u);
@@ -131,6 +146,18 @@ void core1_entry(void) {
             if (chord_pos == 8) {
                 spi_write_chord(chord_buf);
                 chord_pos = 0;
+            }
+        }
+
+        // 5. Drain USB stdio (host): receive raw 8-byte Chords from PC → FPGA
+        {
+            int usb_ch;
+            while ((usb_ch = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
+                usb_chord_buf[usb_chord_pos++] = (uint8_t)usb_ch;
+                if (usb_chord_pos == 8) {
+                    spi_write_chord(usb_chord_buf);
+                    usb_chord_pos = 0;
+                }
             }
         }
 
@@ -167,6 +194,9 @@ int main(void) {
     frame_front[1] = SOF_1;
 
     // Launch Core 1 poller
+    // Before starting the background poller, push default RPLU tables into the FPGA
+    // so runtime parameters are initialized (can be overwritten later via Artery).
+    rplu_boot_load();
     multicore_launch_core1(core1_entry);
 
     // Core 0: wait for FIFO signal → swap buffers → transmit
@@ -198,6 +228,16 @@ static void spi_read_status(uint16_t *dissonance, uint8_t *flags) {
     *flags      = resp[2];
 }
 
+// Read the per-axis scale table and overflow flags from FPGA.
+// out9 must point to at least 9 bytes.
+static void spi_read_scale_table(uint8_t *out9) {
+    uint8_t cmd = CMD_READ_SCALE;
+    gpio_put(SPI_CS_PIN, 0);
+    spi_write_blocking(SPI_PORT, &cmd, 1);
+    spi_read_blocking(SPI_PORT, 0x00, out9, 9);
+    gpio_put(SPI_CS_PIN, 1);
+}
+
 // Send one 8-byte Chord to the FPGA for execution.
 // FPGA latches it on the next Fibonacci tick (see spu13_sequencer.v).
 static void spi_write_chord(const uint8_t *chord8) {
@@ -206,6 +246,50 @@ static void spi_write_chord(const uint8_t *chord8) {
     spi_write_blocking(SPI_PORT, &cmd, 1);
     spi_write_blocking(SPI_PORT, chord8, 8);
     gpio_put(SPI_CS_PIN, 1);
+}
+
+// Send a 64-bit value as an 8-byte chord (big-endian MSB first)
+static void send_u64_as_chord(uint64_t v) {
+    uint8_t chord[8];
+    for (int i = 0; i < 8; i++) {
+        chord[i] = (v >> (56 - 8*i)) & 0xFF;
+    }
+    spi_write_chord(chord);
+}
+
+// Boot-time RPLU loader: push default params and Pade coeffs into FPGA.
+static void rplu_boot_load(void) {
+    // Params: a_q16, re_q16, De_q16 (addr 0..2)
+    for (int i = 0; i < 3; i++) {
+        uint64_t header = ((uint64_t)0xA5 << 56) | ((uint64_t)0 << 48) | ((uint64_t)0 << 47) | (((uint64_t)i & 0x3FF) << 37);
+        uint64_t data   = (uint64_t)RPLU_PARAMS_CARBON[i];
+        send_u64_as_chord(header);
+        send_u64_as_chord(data);
+        sleep_us(50);
+    }
+    for (int i = 0; i < 3; i++) {
+        uint64_t header = ((uint64_t)0xA5 << 56) | ((uint64_t)0 << 48) | ((uint64_t)1 << 47) | (((uint64_t)i & 0x3FF) << 37);
+        uint64_t data   = (uint64_t)RPLU_PARAMS_IRON[i];
+        send_u64_as_chord(header);
+        send_u64_as_chord(data);
+        sleep_us(50);
+    }
+    // Pade numerator (sel=1)
+    for (int i = 0; i < 5; i++) {
+        uint64_t header = ((uint64_t)0xA5 << 56) | ((uint64_t)1 << 48) | ((uint64_t)0 << 47) | (((uint64_t)i & 0x3FF) << 37);
+        uint64_t data   = PADE_NUM_Q32[i];
+        send_u64_as_chord(header);
+        send_u64_as_chord(data);
+        sleep_us(50);
+    }
+    // Pade denominator (sel=2)
+    for (int i = 0; i < 5; i++) {
+        uint64_t header = ((uint64_t)0xA5 << 56) | ((uint64_t)2 << 48) | ((uint64_t)0 << 47) | (((uint64_t)i & 0x3FF) << 37);
+        uint64_t data   = PADE_DEN_Q32[i];
+        send_u64_as_chord(header);
+        send_u64_as_chord(data);
+        sleep_us(50);
+    }
 }
 
 // ── Frame assembly ────────────────────────────────────────────────────────

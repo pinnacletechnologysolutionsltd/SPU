@@ -8,6 +8,13 @@ module spu_spi_slave_tb;
     reg        spi_cs_n, spi_sck, spi_mosi;
     wire       spi_miso;
 
+    // RPLU CFG outputs (observed only in advanced tests)
+    wire       rplu_cfg_wr_en;
+    wire [2:0] rplu_cfg_sel;
+    wire       rplu_cfg_material;
+    wire [9:0] rplu_cfg_addr;
+    wire [63:0] rplu_cfg_data;
+
     // Drive a known manifold: axis0 P=16'h1234 Q=16'h0056,
     //                         axis1 P=16'hABCD Q=16'h0078, rest 0
     reg [831:0] manifold_state;
@@ -22,7 +29,12 @@ module spu_spi_slave_tb;
         .manifold_state(manifold_state),
         .satellite_snaps(satellite_snaps),
         .is_janus_point(is_janus_point),
-        .dissonance(dissonance)
+        .dissonance(dissonance),
+        .rplu_cfg_wr_en(rplu_cfg_wr_en),
+        .rplu_cfg_sel(rplu_cfg_sel),
+        .rplu_cfg_material(rplu_cfg_material),
+        .rplu_cfg_addr(rplu_cfg_addr),
+        .rplu_cfg_data(rplu_cfg_data)
     );
 
     // 24 MHz system clock

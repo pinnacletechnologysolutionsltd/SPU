@@ -126,3 +126,51 @@ IO_PORT "uart_tx"        IO_TYPE=LVCMOS33 DRIVE=8;
 // Free GPIO on expansion header — verify physical wire routing.
 IO_LOC  "whisper_tx"     L5;
 IO_PORT "whisper_tx"     IO_TYPE=LVCMOS33 DRIVE=8;
+
+// PMOD connectors assignments:
+// Pmod2: SPI Flash (3.3V) — SPI Flash for persistent storage / bitstream
+//   spi_cs_n  -> C11
+//   spi_sck   -> C10
+//   spi_mosi  -> D11
+//   spi_miso  -> D10
+IO_LOC  "spi_cs_n" C11;
+IO_LOC  "spi_sck"  C10;
+IO_LOC  "spi_mosi" D11;
+IO_LOC  "spi_miso" D10;
+IO_PORT "spi_cs_n" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "spi_sck"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "spi_mosi" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "spi_miso" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// Pmod3: SD card (moved from Pmod1) — SD Pmod (SPI-mode) exposed on header pins
+//   sd_cs  -> E11
+//   sd_sck -> E10
+//   sd_mosi-> F11
+//   sd_miso-> F10
+IO_LOC  "sd_cs"   E11;
+IO_LOC  "sd_sck"  E10;
+IO_LOC  "sd_mosi" F11;
+IO_LOC  "sd_miso" F10;
+IO_PORT "sd_cs"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sd_sck"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sd_mosi" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sd_miso" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// PMOD JA: general purpose 8-bit header (pmod_ja_out[7:0]) — mapped to A2..A9
+IO_LOC  "pmod_ja_out[0]" A2;
+IO_LOC  "pmod_ja_out[1]" A3;
+IO_LOC  "pmod_ja_out[2]" A4;
+IO_LOC  "pmod_ja_out[3]" A5;
+IO_LOC  "pmod_ja_out[4]" A6;
+IO_LOC  "pmod_ja_out[5]" A7;
+IO_LOC  "pmod_ja_out[6]" A8;
+IO_LOC  "pmod_ja_out[7]" A9;
+IO_PORT "pmod_ja_out[0]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "pmod_ja_out[1]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "pmod_ja_out[2]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "pmod_ja_out[3]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "pmod_ja_out[4]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "pmod_ja_out[5]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "pmod_ja_out[6]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "pmod_ja_out[7]" IO_TYPE=LVCMOS33 DRIVE=8;
+

@@ -1,0 +1,8 @@
+{
+  "depth": 2,
+  "rows": 64,
+  "cols": 128,
+  "offset_row": 4,
+  "offset_col": 8,
+  "prefix": "u_spu26/node"
+}

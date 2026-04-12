@@ -70,10 +70,27 @@ module spu4_core (
     wire        alu_done;
     wire        alu_hush;
     
+    // Configuration register via programming interface: prog_addr_aux==0xF
+    wire prog_cfg_write;
+    assign prog_cfg_write = prog_en_aux & (prog_addr_aux == 4'hF);
+    wire prog_en_to_seq;
+    assign prog_en_to_seq = inhale_en | (prog_en_aux & ~prog_cfg_write);
+
+    reg [15:0] phinary_cfg;
+    always @(posedge clk or posedge reset) begin
+        if (reset) phinary_cfg <= 16'h0000;
+        else if (prog_cfg_write) phinary_cfg <= prog_data_aux;
+    end
+
+    wire phinary_enable;
+    assign phinary_enable = phinary_cfg[0];
+    wire phinary_chirality;
+    assign phinary_chirality = phinary_cfg[1];
+
     spu4_dream_sequencer u_sequencer (
         .clk(clk),
         .rst_n(!reset),
-        .prog_en(inhale_en | prog_en_aux),
+        .prog_en(prog_en_to_seq),
         .prog_addr(inhale_en ? inhale_addr : prog_addr_aux),
         .prog_data(inhale_en ? inhale_data : prog_data_aux),
         .inhale_done(inhale_done),
@@ -128,9 +145,12 @@ module spu4_core (
     // 5. Folded ALU (TDM)
     // (alu_A-D wires declared before u_bus above)
     
-    wire [15:0] F_eff = mode_autonomous ? 16'h0050 : F_rat;
-    wire [15:0] G_eff = mode_autonomous ? 16'h00B5 : G_rat; 
-    wire [15:0] H_eff = mode_autonomous ? 16'h0050 : H_rat;
+    wire [15:0] F_eff;
+    assign F_eff = mode_autonomous ? 16'h0050 : F_rat;
+    wire [15:0] G_eff;
+    assign G_eff = mode_autonomous ? 16'h00B5 : G_rat;
+    wire [15:0] H_eff;
+    assign H_eff = mode_autonomous ? 16'h0050 : H_rat;
 
     spu_4_euclidean_alu u_alu (
         .clk(clk),
@@ -148,5 +168,43 @@ module spu4_core (
     assign B_out = alu_B;
     assign C_out = alu_C;
     assign D_out = alu_D;
+
+    // Phinary chiral adder integration (enabled by default)
+    wire [15:0] phin_A;
+    assign phin_A = A_in;
+    wire [15:0] phin_B;
+    assign phin_B = B_in;
+    wire [15:0] phout_S;
+    wire phout_void;
+    wire phout_ovf;
+
+    chiral_phinary_adder_param #(
+        .WIDTH(16),
+        .INT_BITS(8),
+        .LAMINAR_THR(16'h0A00)
+    ) u_phinary_adder (
+        .clk(clk),
+        .rst(reset),
+        .surd_A(phin_A),
+        .surd_B(phin_B),
+        .chirality(phinary_chirality),
+        .surd_Sum(phout_S),
+        .void_state(phout_void),
+        .overflow(phout_ovf)
+    );
+
+    // RPLU BRAM wrapper instantiation (trimmed mem; mapped to bus_addr[5:0])
+    wire [5:0] rplu_addr;
+    assign rplu_addr = bus_addr[5:0];
+    wire [63:0] rplu_data;
+    (* keep = "true", keep_hierarchy = "true" *) rplu_bram_wrapper #(
+        .ADDR_WIDTH(6),
+        .DATA_WIDTH(64),
+        .MEM_FILE("hardware/common/rtl/gpu/rplu_trim.mem")
+    ) u_rplu_bram (
+        .clk(clk),
+        .addr(rplu_addr),
+        .data_out(rplu_data)
+    );
 
 endmodule

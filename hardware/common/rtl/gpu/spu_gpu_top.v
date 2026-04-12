@@ -47,7 +47,8 @@ module spu_gpu_top (
     // ── Video timing ─────────────────────────────────────────────────────
     wire [9:0] vx, vy;
     wire hsync, vsync, active;
-    wire step_x = active;
+    wire step_x;
+    assign step_x = active;
     wire step_y;  // one cycle after hsync falling (end of line)
 
     spu_video_timing u_timing (.clk(clk_pixel), .rst_n(rst_n),

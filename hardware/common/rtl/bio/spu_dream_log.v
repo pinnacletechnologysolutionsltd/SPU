@@ -37,9 +37,12 @@ module spu_dream_log (
     reg [15:0] write_ptr;
     
     // Mux for Write Port: Logging vs Evaporation
-    wire ram_we = log_req | evap_we;
-    wire [15:0] ram_addr = log_req ? write_ptr : (evap_we ? evap_addr : playback_addr);
-    wire [15:0] ram_din  = log_req ? fractal_data : evap_data_out;
+    wire ram_we;
+    assign ram_we = log_req | evap_we;
+    wire [15:0] ram_addr;
+    assign ram_addr = log_req ? write_ptr : (evap_we ? evap_addr : playback_addr);
+    wire [15:0] ram_din;
+    assign ram_din = log_req ? fractal_data : evap_data_out;
 
     spu_gram_controller u_spram (
         .clk(clk), .reset(reset),

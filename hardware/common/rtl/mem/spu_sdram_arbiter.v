@@ -75,8 +75,10 @@ module spu_sdram_arbiter (
     // Core 0 → bank bit 23 forced 0 (banks 0-1, lower 16 MB).           //
     // Core 1 → bank bit 23 forced 1 (banks 2-3, upper 16 MB).           //
     // ------------------------------------------------------------------ //
-    wire [`MEM_ADDR_WIDTH-1:0] c0_banked = {1'b0, c0_mem_addr[`MEM_ADDR_WIDTH-2:0]};
-    wire [`MEM_ADDR_WIDTH-1:0] c1_banked = {1'b1, c1_mem_addr[`MEM_ADDR_WIDTH-2:0]};
+    wire [`MEM_ADDR_WIDTH-1:0] c0_banked;
+    assign c0_banked = {1'b0, c0_mem_addr[`MEM_ADDR_WIDTH-2:0]};
+    wire [`MEM_ADDR_WIDTH-1:0] c1_banked;
+    assign c1_banked = {1'b1, c1_mem_addr[`MEM_ADDR_WIDTH-2:0]};
 
     // ------------------------------------------------------------------ //
     // Mux: forward granted core's signals to SDRAM controller.           //

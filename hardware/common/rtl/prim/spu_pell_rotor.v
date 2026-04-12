@@ -29,8 +29,10 @@ module spu_pell_rotor #(
     output reg  [WIDTH*2-1:0]   surd_out   // {Q_new, P_new} after one Pell step
 );
 
-    wire signed [WIDTH-1:0] P_in = $signed(surd_in[WIDTH-1:0]);
-    wire signed [WIDTH-1:0] Q_in = $signed(surd_in[WIDTH*2-1:WIDTH]);
+    wire signed [WIDTH-1:0] P_in;
+    assign P_in = $signed(surd_in[WIDTH-1:0]);
+    wire signed [WIDTH-1:0] Q_in;
+    assign Q_in = $signed(surd_in[WIDTH*2-1:WIDTH]);
 
     // new_P = 2P + 3Q  (shift-add — no multiply needed)
     // new_Q = P  + 2Q

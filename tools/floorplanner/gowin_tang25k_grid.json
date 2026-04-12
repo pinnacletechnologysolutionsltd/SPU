@@ -1,0 +1,8 @@
+{
+  "device": "GW2A-LV18",
+  "desc": "Tang 25k approximate grid; tune rows/cols/offset for real device",
+  "rows": 64,
+  "cols": 128,
+  "offset_row": 4,
+  "offset_col": 8
+}

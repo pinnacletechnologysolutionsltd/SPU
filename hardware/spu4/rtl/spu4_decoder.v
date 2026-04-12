@@ -21,11 +21,16 @@ module spu4_decoder (
     localparam OP_W60T = 8'hA0; // Whisper Transmit
 
     // Laminar Detection: Constant-Time Opcode Check
-    wire is_qldi = (inst_word[23:16] == OP_QLDI);
-    wire is_qadd = (inst_word[23:16] == OP_QADD);
-    wire is_qrot = (inst_word[23:16] == OP_QROT);
-    wire is_snap = (inst_word[23:16] == OP_SNAP);
-    wire is_w60t = (inst_word[23:16] == OP_W60T);
+    wire is_qldi;
+    assign is_qldi = (inst_word[23:16] == OP_QLDI);
+    wire is_qadd;
+    assign is_qadd = (inst_word[23:16] == OP_QADD);
+    wire is_qrot;
+    assign is_qrot = (inst_word[23:16] == OP_QROT);
+    wire is_snap;
+    assign is_snap = (inst_word[23:16] == OP_SNAP);
+    wire is_w60t;
+    assign is_w60t = (inst_word[23:16] == OP_W60T);
 
     // Initial Default assignments (Laminar Idle)
     assign reg_dest   = inst_word[15:8];

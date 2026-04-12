@@ -10,10 +10,18 @@ module spu_tensegrity_balancer #(
     input  wire         reset,
     input  wire [3071:0] neighbors, 
     output wire [255:0] scaled_residual,
-    output wire         at_equilibrium
+    output wire         at_equilibrium,
+    // runtime config inputs (RPLU)
+    input  wire         cfg_wr_en,
+    input  wire [2:0]   cfg_wr_sel,
+    input  wire         cfg_wr_material,
+    input  wire [9:0]   cfg_wr_addr,
+    input  wire [63:0]  cfg_wr_data
 );
 
     genvar i;
+    // per-lane threshold regs (signed 16-bit)
+    reg signed [15:0] threshold_reg [0:7];
     generate
         for (i = 0; i < 8; i = i + 1) begin : lane_logic
             // Localized RationalSurd Summation: (a + b*sqrt3)
@@ -42,12 +50,27 @@ module spu_tensegrity_balancer #(
             end
             
             // Boole-Wildberger Thresholding
-            wire valid = (sum_a > THRESHOLD) | (sum_a < -THRESHOLD);
+            wire signed [31:0] th;
+            assign th = {{16{threshold_reg[i][15]}}, threshold_reg[i]};
+            wire valid;
+            assign valid = (sum_a > th) | (sum_a < -th);
             
             assign scaled_residual[i*32 +: 16] = (valid ? sum_a[15:0] : 16'd0);
             assign scaled_residual[i*32 + 16 +: 16] = (valid ? sum_b[15:0] : 16'd0);
         end
     endgenerate
+
+    // threshold register writeback via cfg interface
+    integer t;
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            for (t = 0; t < 8; t = t + 1) threshold_reg[t] <= THRESHOLD;
+        end else begin
+            if (cfg_wr_en && (cfg_wr_sel == 3'd0)) begin
+                threshold_reg[cfg_wr_addr[2:0]] <= $signed(cfg_wr_data[15:0]);
+            end
+        end
+    end
 
     assign at_equilibrium = ~(|scaled_residual);
 

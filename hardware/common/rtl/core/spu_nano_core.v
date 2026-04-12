@@ -18,30 +18,47 @@ module spu_nano_core #(
 );
 
     // --- 1. Internal Units ---
-    wire signed [31:0] A_in = reg_curr[31:0];
-    wire signed [31:0] B_in = reg_curr[63:32];
-    wire signed [31:0] C_in = reg_curr[95:64];
-    wire signed [31:0] D_in = reg_curr[127:96];
+    wire signed [31:0] A_in;
+    assign A_in = reg_curr[31:0];
+    wire signed [31:0] B_in;
+    assign B_in = reg_curr[63:32];
+    wire signed [31:0] C_in;
+    assign C_in = reg_curr[95:64];
+    wire signed [31:0] D_in;
+    assign D_in = reg_curr[127:96];
 
     // Axis-Specific Displacement (The Stress Injector)
     // We add a fixed "Laminar Sip" (0x0100) to the targeted axis.
-    wire [31:0] inc_val = 32'h00000100;
-    wire [31:0] v_inc_A = A_in + inc_val;
-    wire [31:0] v_inc_B = B_in + inc_val;
-    wire [31:0] v_inc_C = C_in + inc_val;
-    wire [31:0] v_inc_D = D_in + inc_val;
+    wire [31:0] inc_val;
+    assign inc_val = 32'h00000100;
+    wire [31:0] v_inc_A;
+    assign v_inc_A = A_in + inc_val;
+    wire [31:0] v_inc_B;
+    assign v_inc_B = B_in + inc_val;
+    wire [31:0] v_inc_C;
+    assign v_inc_C = C_in + inc_val;
+    wire [31:0] v_inc_D;
+    assign v_inc_D = D_in + inc_val;
 
     // Unit A: Nano-Rotor
-    wire signed [31:0] rot_A = B_in;
-    wire signed [31:0] rot_B = C_in;
-    wire signed [31:0] rot_C = D_in;
-    wire signed [31:0] rot_D = A_in;
+    wire signed [31:0] rot_A;
+    assign rot_A = B_in;
+    wire signed [31:0] rot_B;
+    assign rot_B = C_in;
+    wire signed [31:0] rot_C;
+    assign rot_C = D_in;
+    wire signed [31:0] rot_D;
+    assign rot_D = A_in;
 
     // Unit C: Active Annealer (ANNE)
-    wire signed [31:0] anne_A = A_in - (A_in >>> 4);
-    wire signed [31:0] anne_B = B_in - (B_in >>> 4);
-    wire signed [31:0] anne_C = C_in - (C_in >>> 4);
-    wire signed [31:0] anne_D = D_in - (D_in >>> 4);
+    wire signed [31:0] anne_A;
+    assign anne_A = A_in - (A_in >>> 4);
+    wire signed [31:0] anne_B;
+    assign anne_B = B_in - (B_in >>> 4);
+    wire signed [31:0] anne_C;
+    assign anne_C = C_in - (C_in >>> 4);
+    wire signed [31:0] anne_D;
+    assign anne_D = D_in - (D_in >>> 4);
 
     // --- 2. Proposed State Selection ---
     reg signed [31:0] p_A, p_B, p_C, p_D;
@@ -61,16 +78,22 @@ module spu_nano_core #(
 
     // --- 3. The Pipelined Gasket ---
     wire over_curvature;
+    // Pack 4×16-bit elements into the 64-bit chord expected by spu_davis_gate
     spu_davis_gate #(
         .TAU_Q(DEFAULT_TAU_Q)
     ) u_gate (
-        .a(p_A[31:16]), .b(p_B[31:16]), .c(p_C[31:16]), .d(p_D[31:16]),
-        .over_curvature(over_curvature)
+        .clk(clk), .rst_n(reset),
+        .chord_in({p_A[31:16], p_B[31:16], p_C[31:16], p_D[31:16]}),
+        .over_curvature(over_curvature),
+        .quadrance_sum()
     );
 
-    wire signed [31:0] residual = p_A + p_B + p_C + p_D;
-    wire is_leaking = (residual != 32'd0);
-    wire signed [31:0] correction = residual >>> 2;
+    wire signed [31:0] residual;
+    assign residual = p_A + p_B + p_C + p_D;
+    wire is_leaking;
+    assign is_leaking = (residual != 32'd0);
+    wire signed [31:0] correction;
+    assign correction = residual >>> 2;
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin

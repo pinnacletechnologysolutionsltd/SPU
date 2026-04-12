@@ -35,8 +35,10 @@ module spu_vram_controller #(
     // Sim-only flat BRAM: store energy per pixel
     reg [15:0] fb_energy [0:RES_X*RES_Y-1];
 
-    wire [15:0] addr_w = wr_y * RES_X + wr_x;
-    wire [15:0] addr_r = rd_y * RES_X + rd_x;
+    wire [15:0] addr_w;
+    assign addr_w = wr_y * RES_X + wr_x;
+    wire [15:0] addr_r;
+    assign addr_r = rd_y * RES_X + rd_x;
 
     integer ii;
     initial for (ii = 0; ii < RES_X*RES_Y; ii = ii+1) fb_energy[ii] = 0;

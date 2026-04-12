@@ -28,7 +28,8 @@ module spu_eink_waveshare_driver #(
 
     // We use a slow SPI clock (~1MHz) derived from the Artery
     reg [3:0] clk_div;
-    wire sck_pulse = (clk_div == 4'd10);
+    wire sck_pulse;
+    assign sck_pulse = (clk_div == 4'd10);
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin

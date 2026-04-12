@@ -46,7 +46,8 @@ module SPU_WHISPER_RX #(
     wire [31:0] dev_raw = (counter >= k_width_ref)
                         ? (counter - k_width_ref)
                         : (k_width_ref - counter);
-    wire [31:0] variance_next = variance_acc + dev_raw - (variance_acc >> 4);
+    wire [31:0] variance_next;
+    assign variance_next = variance_acc + dev_raw - (variance_acc >> 4);
 
     localparam IDLE  = 2'b00;
     localparam COUNT = 2'b01;

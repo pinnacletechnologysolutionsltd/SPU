@@ -70,7 +70,8 @@ module spu_i2c_bridge #(
     reg [7:0]  r_wdata;
 
     // Half-bit clock tick
-    wire tick = (timer == HALF_PERIOD - 1);
+    wire tick;
+    assign tick = (timer == HALF_PERIOD - 1);
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin

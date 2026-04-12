@@ -21,11 +21,15 @@ module spu_triple_quad (
 );
 
     // Extend to 64-bit to avoid overflow
-    wire [63:0] q1 = {32'h0, Q1};
-    wire [63:0] q2 = {32'h0, Q2};
-    wire [63:0] q3 = {32'h0, Q3};
+    wire [63:0] q1;
+    assign q1 = {32'h0, Q1};
+    wire [63:0] q2;
+    assign q2 = {32'h0, Q2};
+    wire [63:0] q3;
+    assign q3 = {32'h0, Q3};
 
-    wire [63:0] sum       = q1 + q2 + q3;
+    wire [63:0] sum;
+    assign sum = q1 + q2 + q3;
     wire [63:0] lhs       = sum * sum;                            // (Q1+Q2+Q3)²
 
     wire [63:0] rhs_sum2  = (q1*q1 + q2*q2 + q3*q3) << 1;       // 2(Q1²+Q2²+Q3²)

@@ -17,10 +17,14 @@ module spu_rational_trig (
 
     // 1. Bit-Exact Quadrance calculation
     // Q = d^2. Pure integer multiplication.
-    wire signed [63:0] q_a = a * a;
-    wire signed [63:0] q_b = b * b;
-    wire signed [63:0] q_c = c * c;
-    wire signed [63:0] q_d = d * d;
+    wire signed [63:0] q_a;
+    assign q_a = a * a;
+    wire signed [63:0] q_b;
+    assign q_b = b * b;
+    wire signed [63:0] q_c;
+    assign q_c = c * c;
+    wire signed [63:0] q_d;
+    assign q_d = d * d;
 
     assign quadrance = q_a + q_b + q_c + q_d;
 

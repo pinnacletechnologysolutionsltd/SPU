@@ -21,8 +21,10 @@ module spu_hardware_inference (
 );
 
     // Compute absolute Surprise: |Sensor - Prior|
-    wire signed [31:0] diff = sensor_k - prior_k;
-    wire [31:0] surprise_mag = diff[31] ? -diff : diff;
+    wire signed [31:0] diff;
+    assign diff = sensor_k - prior_k;
+    wire [31:0] surprise_mag;
+    assign surprise_mag = diff[31] ? -diff : diff;
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin

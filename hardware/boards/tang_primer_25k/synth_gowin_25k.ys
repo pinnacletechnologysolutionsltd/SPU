@@ -21,6 +21,7 @@
 # ─── rPLL blackbox (GW5A primitive, inserted by P&R tool) ─────────────────
 # rPLL declared as blackbox stub in pll_gowin_stub.v
 read_verilog hardware/boards/tang_primer_25k/pll_gowin_stub.v
+read_verilog hardware/boards/tang_primer_25k/gowin_sp_stub.v
 
 # ─── Architecture defines ─────────────────────────────────────────────────
 read_verilog -sv -I hardware/common/rtl hardware/common/rtl/spu_arch_defines.vh
@@ -39,6 +40,25 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_sequencer.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_rotor_vault.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_unified_alu_tdm.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_core.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_scale_manager.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_lattice.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/laminar_node.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_add.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_mul.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_mul64.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_norm.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_rotor_core.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_scoreboard.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu1_alu.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_command_processor.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_core.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_execution_unit.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_folded_alu.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_identity_monad.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_light_core.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_nano_core.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_tensegrity_balancer.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/toroidal_regfile.v
 
 # ─── SPU-4 Sentinel ────────────────────────────────────────────────────────
 read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_decoder.v
@@ -59,6 +79,16 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/spu_soft_start.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_laminar_power.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_ARTERY_FIFO.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_WHISPER_TX.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/proto/spu_spi_slave.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/io/sd_card_master.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/io/sd_bram_loader_dp.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/io/uart_debug_tx.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/io/boot_ram_dp.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/io/sd_bram_loader.v
+# IO bridge and UART/surd transmitter used for MCU–FPGA telemetry and control
+read_verilog -I hardware/common/rtl hardware/common/rtl/include/auto_stubs.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/io/surd_uart_tx.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/io/spu_io_bridge.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_system.v
 
 # ─── Memory bridges ────────────────────────────────────────────────────────
@@ -66,8 +96,17 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_sdram
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_sdram_arbiter.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_qspi.v
 
+# Bio sensors
+read_verilog -I hardware/common/rtl hardware/common/rtl/bio/spu_metabolic_sense.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/bio/spu_viscosity_monitor.v
+
 # ─── GPU / HAL ─────────────────────────────────────────────────────────────
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_video_timing.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_provider.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_rom.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_rom_q32.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rplu_bram_wrapper.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu4_bram_ip.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_edge_stepper.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_raster_unit.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_dual_raster.v

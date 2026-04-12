@@ -55,6 +55,20 @@ import os
 import struct
 import argparse
 
+# Optional phinary helpers (pack/unpack/add)
+try:
+    import importlib.util as _il
+    _tools_dir = os.path.join(os.path.dirname(__file__), 'tools')
+    _ph_path = os.path.join(_tools_dir, 'phinary_vm_helpers.py')
+    if os.path.exists(_ph_path):
+        _spec = _il.spec_from_file_location('phinary_vm_helpers', _ph_path)
+        phinary_helpers = _il.module_from_spec(_spec)
+        _spec.loader.exec_module(phinary_helpers)  # type: ignore
+    else:
+        phinary_helpers = None
+except Exception:
+    phinary_helpers = None
+
 # ---------------------------------------------------------------------------
 # Q(√3) Arithmetic — the only math the SPU does
 # ---------------------------------------------------------------------------
@@ -313,7 +327,7 @@ class QuadrayVector:
 OPCODES = {
     # Scalar Q(√3) arithmetic
     "LD":    0x00, "ADD":   0x01, "SUB":   0x02,
-    "MUL":   0x03, "ROT":   0x04, "LOG":   0x05,
+    "MUL":   0x03, "PHADD": 0x30, "PHCFG": 0x31, "ROT":   0x04, "LOG":   0x05,
     # Control flow
     "JMP":   0x06, "SNAP":  0x07, "COND":  0x20,
     "CALL":  0x21, "RET":   0x22,
@@ -363,6 +377,12 @@ def assemble_line(line: str, line_no: int, labels: dict) -> int | None:
         if arg.startswith('R'):           # Scalar register: R0-R25
             idx = int(arg[1:]) & 0xFF
             return (idx, 0, 0) if is_first else (0, idx, 0)
+        if arg.startswith('PH'):          # Packed phinary immediate: PH0xNNNN
+            try:
+                val = int(arg[2:], 0)
+            except Exception:
+                val = _parse_int16(arg[2:])
+            return (0, 0, val & 0xFFFF)
         if arg in labels:                  # Label reference
             return (0, 0, labels[arg] & 0xFFFF)
         return (0, 0, _parse_int16(arg))  # Immediate
@@ -733,6 +753,9 @@ class SPUCore:
         self.fib      = FibDispatch()
         # v1.4 additions — SDF Layer 7 state
         self.sdf      = SdfState()
+        # phinary configuration (SPU-4 compatibility)
+        self.phinary_cfg = 0
+        self.phinary_void_state = False
 
     @staticmethod
     def _q_proof(r: 'RationalSurd', label: str = "") -> str:
@@ -1093,6 +1116,9 @@ class SPUCore:
                       f"  VE condition → {'PASS' if is_balanced else 'FAIL'}")
             if self.proof and active:
                 print(f"         Active QR axes: {active}")
+                total = QuadrayVector()
+                for i in active:
+                    total = total + self.qregs[i]
                 print(f"         Sum vector: {total!r}")
                 print(f"         VE condition: Σ QR[i] = 0 → {'PASS' if is_balanced else 'FAIL'}")
 
@@ -1138,6 +1164,40 @@ class SPUCore:
         elif opcode == OPCODES["NOP"]:
             if self.verbose:
                 print(f"  [{self.pc:04d}] NOP")
+
+        elif opcode == OPCODES.get("PHCFG"):
+            # Set phinary configuration register (16-bit)
+            cfg = p1_a & 0xFFFF
+            self.phinary_cfg = cfg
+            if self.verbose:
+                en = bool(cfg & 0x1)
+                chir = bool(cfg & 0x2)
+                thr = (cfg >> 2)
+                print(f"  [{self.pc:04d}] PHCFG ← 0x{cfg:04X}  enable={en} chirality={chir} thr={thr}")
+
+        elif opcode == OPCODES.get("PHADD"):
+            if phinary_helpers is None:
+                raise RuntimeError("PHADD requested but phinary_vm_helpers not available")
+            # default width/int_bits for packed phinary (can be adjusted)
+            _w = 16
+            _ib = 8
+            # determine laminar_thr and chirality from phinary_cfg
+            _chir = bool(self.phinary_cfg & 0x2)
+            _thr = (self.phinary_cfg >> 2) & 0xFFFF
+            # pack: surd <- b, integer <- a
+            _a_packed = phinary_helpers.pack_phinary(self.regs[r1].b & ((1 << (_w - _ib)) - 1), self.regs[r1].a & ((1 << _ib) - 1), width=_w, int_bits=_ib)
+            _b_packed = phinary_helpers.pack_phinary(self.regs[r2].b & ((1 << (_w - _ib)) - 1), self.regs[r2].a & ((1 << _ib) - 1), width=_w, int_bits=_ib)
+            out_packed, void_out, ovf = phinary_helpers.add_phinary(_a_packed, _b_packed, width=_w, int_bits=_ib, laminar_thr=_thr if _thr != 0 else None, chirality=_chir, void_state=self.phinary_void_state)
+            out_surd, out_int = phinary_helpers.unpack_phinary(out_packed, width=_w, int_bits=_ib)
+            # interpret fields as signed two's-complement
+            if out_int & (1 << (_ib - 1)):
+                out_int = out_int - (1 << _ib)
+            if out_surd & (1 << ((_w - _ib) - 1)):
+                out_surd = out_surd - (1 << (_w - _ib))
+            self.regs[r1] = RationalSurd(out_int, out_surd)
+            self.phinary_void_state = void_out
+            if self.verbose:
+                print(f"  [{self.pc:04d}] PHADD R{r1} + R{r2} → packed=0x{out_packed:04X} => {self.regs[r1]!r} void={void_out} ovf={ovf}")
 
         else:
             print(f"  [{self.pc:04d}] ??? unknown opcode 0x{opcode:02X} — NOP")

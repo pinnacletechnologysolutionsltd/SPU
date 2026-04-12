@@ -31,7 +31,8 @@ module spu_rasterizer (
                                ($signed(pixel_y) - $signed(v2_abcd[63:32])) * ($signed(v0_abcd[31:0]) - $signed(v2_abcd[31:0]));
 
     // 2. Total Triangle Area (The Manifold Sum)
-    wire signed [63:0] total_area = edge0 + edge1 + edge2;
+    wire signed [63:0] total_area;
+    assign total_area = edge0 + edge1 + edge2;
 
     // 3. Normalization Logic (The Rational Forge)
     wire [7:0] total_area_mantissa; 

@@ -43,18 +43,27 @@ module spu_psram_dual (
 );
 
     // Bank select: bit 23 of the fractal address (output of spu_laminar_ram)
-    wire bank_sel = mem_addr[23];
+    wire bank_sel;
+    assign bank_sel = mem_addr[23];
 
     // Route each request class to the selected bank only
-    wire rd0  = mem_rd_en    & ~bank_sel;
-    wire wr0  = mem_wr_en    & ~bank_sel;
-    wire brd0 = mem_burst_rd & ~bank_sel;
-    wire bwr0 = mem_burst_wr & ~bank_sel;
+    wire rd0;
+    assign rd0 = mem_rd_en    & ~bank_sel;
+    wire wr0;
+    assign wr0 = mem_wr_en    & ~bank_sel;
+    wire brd0;
+    assign brd0 = mem_burst_rd & ~bank_sel;
+    wire bwr0;
+    assign bwr0 = mem_burst_wr & ~bank_sel;
 
-    wire rd1  = mem_rd_en    &  bank_sel;
-    wire wr1  = mem_wr_en    &  bank_sel;
-    wire brd1 = mem_burst_rd &  bank_sel;
-    wire bwr1 = mem_burst_wr &  bank_sel;
+    wire rd1;
+    assign rd1 = mem_rd_en    &  bank_sel;
+    wire wr1;
+    assign wr1 = mem_wr_en    &  bank_sel;
+    wire brd1;
+    assign brd1 = mem_burst_rd &  bank_sel;
+    wire bwr1;
+    assign bwr1 = mem_burst_wr &  bank_sel;
 
     // Per-bank response wires
     wire         ready0, ready1;

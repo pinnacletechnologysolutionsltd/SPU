@@ -27,7 +27,8 @@ module HAL_HDMI (
 
     // ── TMDS encoding (one per channel) ──────────────────────────────────
     wire [9:0] tmds_r, tmds_g, tmds_b;
-    wire [1:0] sync_ctrl = {vsync, hsync};
+    wire [1:0] sync_ctrl;
+    assign sync_ctrl = {vsync, hsync};
 
     HAL_HDMI_TMDS u_enc_b (.clk(clk_pixel), .rst_n(rst_n),
         .data(b), .ctrl(sync_ctrl), .active(active), .tmds_out(tmds_b));

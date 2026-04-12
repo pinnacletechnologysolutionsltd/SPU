@@ -15,14 +15,19 @@ module surd_multiplier #(
 
     // 1. Parallel Cross-Products
     // We use four 32x32 multipliers to resolve the rotor expansion in one cycle.
-    wire signed [63:0] prod_a1a2 = a1 * a2;
-    wire signed [63:0] prod_b1b2 = b1 * b2;
-    wire signed [63:0] prod_a1b2 = a1 * b2;
-    wire signed [63:0] prod_b1a2 = b1 * a2;
+    wire signed [63:0] prod_a1a2;
+    assign prod_a1a2 = a1 * a2;
+    wire signed [63:0] prod_b1b2;
+    assign prod_b1b2 = b1 * b2;
+    wire signed [63:0] prod_a1b2;
+    assign prod_a1b2 = a1 * b2;
+    wire signed [63:0] prod_b1a2;
+    assign prod_b1a2 = b1 * a2;
 
     // 2. Surd Term Logic (3 * b1 * b2)
     // Shift-Adder: (x << 1) + x
-    wire signed [63:0] surd_term = (prod_b1b2 << 1) + prod_b1b2;
+    wire signed [63:0] surd_term;
+    assign surd_term = (prod_b1b2 << 1) + prod_b1b2;
 
     // 3. Clocked Output Dispatch (Laminar Flow)
     always @(posedge clk or posedge reset) begin

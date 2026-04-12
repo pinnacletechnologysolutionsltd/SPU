@@ -50,9 +50,12 @@ module spu13_rotor_core (
     surd_multiplier mFD (.clk(clk), .reset(!rst_n), .a1(D_in[31:0]), .b1(D_in[63:32]), .a2(F[31:0]), .b2(F[63:32]), .res_a(FD_out[31:0]), .res_b(FD_out[63:32]));
 
     // 2. Summation Logic (Combinational after 1-cycle multiply)
-    wire [63:0] B_sum = {FB_out[63:32] + HC_out[63:32] + GD_out[63:32], FB_out[31:0] + HC_out[31:0] + GD_out[31:0]};
-    wire [63:0] C_sum = {GB_out[63:32] + FC_out[63:32] + HD_out[63:32], GB_out[31:0] + FC_out[31:0] + HD_out[31:0]};
-    wire [63:0] D_sum = {HB_out[63:32] + GC_out[63:32] + FD_out[63:32], HB_out[31:0] + GC_out[31:0] + FD_out[31:0]};
+    wire [63:0] B_sum;
+    assign B_sum = {FB_out[63:32] + HC_out[63:32] + GD_out[63:32], FB_out[31:0] + HC_out[31:0] + GD_out[31:0]};
+    wire [63:0] C_sum;
+    assign C_sum = {GB_out[63:32] + FC_out[63:32] + HD_out[63:32], GB_out[31:0] + FC_out[31:0] + HD_out[31:0]};
+    wire [63:0] D_sum;
+    assign D_sum = {HB_out[63:32] + GC_out[63:32] + FD_out[63:32], HB_out[31:0] + GC_out[31:0] + FD_out[31:0]};
 
     // 3. Output Pipeline and Bypass Path
     always @(posedge clk or negedge rst_n) begin

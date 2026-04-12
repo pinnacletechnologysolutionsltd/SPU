@@ -40,10 +40,14 @@ module spu_bresenham_raster (
     reg  [9:0] x1_lat, y1_lat;
 
     // Combinational helpers for quadrance and initial error (Verilog-2001 compatible)
-    wire [9:0] ddx = (x1 >= x0) ? (x1 - x0) : (x0 - x1);
-    wire [9:0] ddy = (y1 >= y0) ? (y1 - y0) : (y0 - y1);
-    wire [9:0] dx_in = ddx, dy_in = ddy;
-    wire       steep_in = (dy_in > dx_in);
+    wire [9:0] ddx;
+    assign ddx = (x1 >= x0) ? (x1 - x0) : (x0 - x1);
+    wire [9:0] ddy;
+    assign ddy = (y1 >= y0) ? (y1 - y0) : (y0 - y1);
+    wire [9:0] dx_in;
+    assign dx_in = ddx, dy_in = ddy;
+    wire       steep_in;
+    assign steep_in = (dy_in > dx_in);
 
     // Combinational next-step values (for done detection without latency)
     wire [9:0] next_py_s = sy ? py - 10'd1 : py + 10'd1;  // steep path
@@ -52,8 +56,10 @@ module spu_bresenham_raster (
     wire signed [10:0] err1_f = err - $signed({1'b0, dy_abs}); // flat  err after major step
     wire       do_minor_s = (err1_s < 11'sd0);  // need X step in steep mode
     wire       do_minor_f = (err1_f < 11'sd0);  // need Y step in flat mode
-    wire [9:0] next_px_s = do_minor_s ? (sx ? px-10'd1 : px+10'd1) : px;
-    wire [9:0] next_py_f = do_minor_f ? (sy ? py-10'd1 : py+10'd1) : py;
+    wire [9:0] next_px_s;
+    assign next_px_s = do_minor_s ? (sx ? px-10'd1 : px+10'd1) : px;
+    wire [9:0] next_py_f;
+    assign next_py_f = do_minor_f ? (sy ? py-10'd1 : py+10'd1) : py;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

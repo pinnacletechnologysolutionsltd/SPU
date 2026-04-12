@@ -12,7 +12,8 @@ module spu_thermal_entropy (
 );
 
     // 64-bit Galois LFSR — taps at positions 64, 63, 61, 60 (maximal length)
-    wire feedback = entropy_out[63] ^ entropy_out[62] ^ entropy_out[60] ^ entropy_out[59];
+    wire feedback;
+    assign feedback = entropy_out[63] ^ entropy_out[62] ^ entropy_out[60] ^ entropy_out[59];
 
     always @(posedge clk or posedge reset) begin
         if (reset)

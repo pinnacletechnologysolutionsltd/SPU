@@ -15,7 +15,8 @@ module spu_4_satellite (
     
     // We compute the divergence from the local reality.
     // Fixed: The error needs to be unsigned or handled as magnitude in the field.
-    wire [15:0] err = (sensor_in > local_state) ? (sensor_in - local_state) : (local_state - sensor_in);
+    wire [15:0] err;
+    assign err = (sensor_in > local_state) ? (sensor_in - local_state) : (local_state - sensor_in);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

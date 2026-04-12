@@ -41,7 +41,7 @@ module spu1_alu (
     );
 
     // 4. Laminar Power Dispatcher (Hysteresis-Zero)
-    spu_laminar_power u_laminar (
+    spu_laminar_power #(.WIDTH(832)) u_laminar (
         .clk(clk), .reset(reset),
         .boot_phase(opcode), // Map opcode to boot-sequence during Phase Alignment
         .reg_in(anneal_out),

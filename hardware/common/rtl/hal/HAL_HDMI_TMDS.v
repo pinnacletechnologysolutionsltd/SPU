@@ -19,7 +19,8 @@ module HAL_HDMI_TMDS (
                      data[4]+data[5]+data[6]+data[7];
 
     // Phase 1: build q_m via XOR (q_m[8]=1) or XNOR (q_m[8]=0)
-    wire xnor_mode = (n1d > 4'd4) || (n1d == 4'd4 && !data[0]);
+    wire xnor_mode;
+    assign xnor_mode = (n1d > 4'd4) || (n1d == 4'd4 && !data[0]);
 
     wire [7:0] qm;
     assign qm[0] = data[0];
@@ -34,17 +35,24 @@ module HAL_HDMI_TMDS (
     wire [8:0] q_m = {~xnor_mode, qm}; // q_m[8]=1 → XOR mode
 
     // Count ones and zeros in q_m[7:0]
-    wire [3:0] n1q = qm[0]+qm[1]+qm[2]+qm[3]+qm[4]+qm[5]+qm[6]+qm[7];
-    wire [3:0] n0q = 4'd8 - n1q;
+    wire [3:0] n1q;
+    assign n1q = qm[0]+qm[1]+qm[2]+qm[3]+qm[4]+qm[5]+qm[6]+qm[7];
+    wire [3:0] n0q;
+    assign n0q = 4'd8 - n1q;
 
     // Running DC balance accumulator (signed 5-bit)
     reg signed [4:0] cnt;
 
-    wire equal     = (n1q == n0q);
-    wire cnt_zero  = (cnt == 5'sd0);
-    wire cnt_pos   = !cnt[4] && !cnt_zero;
-    wire cnt_neg   = cnt[4];
-    wire n1_gt_n0  = (n1q > n0q);
+    wire equal;
+    assign equal = (n1q == n0q);
+    wire cnt_zero;
+    assign cnt_zero = (cnt == 5'sd0);
+    wire cnt_pos;
+    assign cnt_pos = !cnt[4] && !cnt_zero;
+    wire cnt_neg;
+    assign cnt_neg = cnt[4];
+    wire n1_gt_n0;
+    assign n1_gt_n0 = (n1q > n0q);
 
     // DC balance deltas
     wire signed [4:0] d_pos = $signed({1'b0, n1q}) - $signed({1'b0, n0q}); // N1-N0

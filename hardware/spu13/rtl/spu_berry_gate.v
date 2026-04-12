@@ -9,7 +9,8 @@ module spu_berry_gate (
 );
     // Area/Wedge Product calculation (Geometric Phase)
     // In a rational field, this represents the "curvature" of the path.
-    wire [47:0] wedge_prod = s_vector * s_prev;
+    wire [47:0] wedge_prod;
+    assign wedge_prod = s_vector * s_prev;
     
     // 15-Sigma Snap Thresholding:
     // We only accumulate the bits that fall outside the "Cubic Noise" floor.

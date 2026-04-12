@@ -20,19 +20,28 @@ module spu_davis_gate #(
 );
 
     // 1. Unpack Chord into 4x 16-bit elements
-    wire signed [15:0] a = chord_in[63:48];
-    wire signed [15:0] b = chord_in[47:32];
-    wire signed [15:0] c = chord_in[31:16];
-    wire signed [15:0] d = chord_in[15:0];
+    wire signed [15:0] a;
+    assign a = chord_in[63:48];
+    wire signed [15:0] b;
+    assign b = chord_in[47:32];
+    wire signed [15:0] c;
+    assign c = chord_in[31:16];
+    wire signed [15:0] d;
+    assign d = chord_in[15:0];
 
     // 2. Algebraic Quadrance: Q = A^2 + B^2 + C^2 + D^2
     // These will be inferred as DSP slices on iCE40/ECP5.
-    wire [31:0] qa = a * a;
-    wire [31:0] qb = b * b;
-    wire [31:0] qc = c * c;
-    wire [31:0] qd = d * d;
+    wire [31:0] qa;
+    assign qa = a * a;
+    wire [31:0] qb;
+    assign qb = b * b;
+    wire [31:0] qc;
+    assign qc = c * c;
+    wire [31:0] qd;
+    assign qd = d * d;
 
-    wire [63:0] q_sum = (qa + qb) + (qc + qd);
+    wire [63:0] q_sum;
+    assign q_sum = (qa + qb) + (qc + qd);
 
     // 3. The Davis Limit Arbiter
     // Bitwise comparison for zero-branch "Laminar" failure detection.

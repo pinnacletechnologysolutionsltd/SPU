@@ -130,44 +130,97 @@ IO_LOC  "whisper_tx"     L5;
 IO_PORT "whisper_tx"     IO_TYPE=LVCMOS33 DRIVE=8;
 
 // ─── Expansion SDRAM (Sipeed 512Mb 40-pin module) ─────────────────────────
-// TODO: Confirm pinout from Sipeed schematic when module arrives.
-// The 40-pin connector on Tang Primer 25K maps to GW5A IO bank 3.
-// Reference: NestTang / LicheeTang25k_SDRAM projects for connector mapping.
-// Uncomment all entries below once pinout is confirmed.
+// NOTE: Original draft duplicated onboard SDRAM LOCs and caused IO bank collisions
+// during packing (ext_* and sdram_* mapped to same physical pins).  Until the
+// official Sipeed 40-pin expansion pinout is confirmed, ext_sdram LOCs are
+// left UNASSIGNED here to avoid hard conflicts.  Populate the mapping below
+// with the PMOD/expansion connector pins from the Sipeed schematic and re-run
+// nextpnr/gowin_pack.
 //
-// IO_LOC  "ext_sdram_clk"      TODO;   IO_PORT "ext_sdram_clk"      IO_TYPE=LVCMOS33 DRIVE=16;
-// IO_LOC  "ext_sdram_cs_n"     TODO;   IO_PORT "ext_sdram_cs_n"     IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_ras_n"    TODO;   IO_PORT "ext_sdram_ras_n"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_cas_n"    TODO;   IO_PORT "ext_sdram_cas_n"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_we_n"     TODO;   IO_PORT "ext_sdram_we_n"     IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_ba[0]"    TODO;   IO_PORT "ext_sdram_ba[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_ba[1]"    TODO;   IO_PORT "ext_sdram_ba[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[0]"  TODO;   IO_PORT "ext_sdram_addr[0]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[1]"  TODO;   IO_PORT "ext_sdram_addr[1]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[2]"  TODO;   IO_PORT "ext_sdram_addr[2]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[3]"  TODO;   IO_PORT "ext_sdram_addr[3]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[4]"  TODO;   IO_PORT "ext_sdram_addr[4]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[5]"  TODO;   IO_PORT "ext_sdram_addr[5]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[6]"  TODO;   IO_PORT "ext_sdram_addr[6]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[7]"  TODO;   IO_PORT "ext_sdram_addr[7]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[8]"  TODO;   IO_PORT "ext_sdram_addr[8]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[9]"  TODO;   IO_PORT "ext_sdram_addr[9]"  IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[10]" TODO;   IO_PORT "ext_sdram_addr[10]" IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[11]" TODO;   IO_PORT "ext_sdram_addr[11]" IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_addr[12]" TODO;   IO_PORT "ext_sdram_addr[12]" IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[0]"    TODO;   IO_PORT "ext_sdram_dq[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[1]"    TODO;   IO_PORT "ext_sdram_dq[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[2]"    TODO;   IO_PORT "ext_sdram_dq[2]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[3]"    TODO;   IO_PORT "ext_sdram_dq[3]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[4]"    TODO;   IO_PORT "ext_sdram_dq[4]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[5]"    TODO;   IO_PORT "ext_sdram_dq[5]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[6]"    TODO;   IO_PORT "ext_sdram_dq[6]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[7]"    TODO;   IO_PORT "ext_sdram_dq[7]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[8]"    TODO;   IO_PORT "ext_sdram_dq[8]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[9]"    TODO;   IO_PORT "ext_sdram_dq[9]"    IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[10]"   TODO;   IO_PORT "ext_sdram_dq[10]"   IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[11]"   TODO;   IO_PORT "ext_sdram_dq[11]"   IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[12]"   TODO;   IO_PORT "ext_sdram_dq[12]"   IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[13]"   TODO;   IO_PORT "ext_sdram_dq[13]"   IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[14]"   TODO;   IO_PORT "ext_sdram_dq[14]"   IO_TYPE=LVCMOS33 DRIVE=8;
-// IO_LOC  "ext_sdram_dq[15]"   TODO;   IO_PORT "ext_sdram_dq[15]"   IO_TYPE=LVCMOS33 DRIVE=8;
+// Example workflow to fill mappings:
+// 1) Confirm expansion connector pin numbers vs Sipeed schematic
+// 2) Map ext_sdram_* signals to those connector pins (IO_LOC entries)
+// 3) Keep IO_PORT directives (IO_TYPE/DRIVE) as shown in the commented block
+// 4) Run `scripts/check_cst_duplicates.py` (helper) to ensure no LOC collisions
+//
+// IO_LOC/IO_PORT entries for ext_sdram are intentionally commented out below.
+// Uncomment and update with correct pins when ready.
+/*
+IO_LOC  "ext_sdram_clk"      E3;
+IO_PORT "ext_sdram_clk"      IO_TYPE=LVCMOS33 DRIVE=16;
+IO_LOC  "ext_sdram_cs_n"     K9;
+IO_PORT "ext_sdram_cs_n"     IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_ras_n"    L10;
+IO_PORT "ext_sdram_ras_n"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_cas_n"    K10;
+IO_PORT "ext_sdram_cas_n"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_we_n"     J7;
+IO_PORT "ext_sdram_we_n"     IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_ba[0]"    L9;
+IO_PORT "ext_sdram_ba[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_ba[1]"    K8;
+IO_PORT "ext_sdram_ba[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[0]"  F6;
+IO_PORT "ext_sdram_addr[0]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[1]"  F7;
+IO_PORT "ext_sdram_addr[1]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[2]"  J10;
+IO_PORT "ext_sdram_addr[2]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[3]"  J11;
+IO_PORT "ext_sdram_addr[3]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[4]"  K7;
+IO_PORT "ext_sdram_addr[4]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[5]"  H2;
+IO_PORT "ext_sdram_addr[5]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[6]"  H1;
+IO_PORT "ext_sdram_addr[6]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[7]"  H4;
+IO_PORT "ext_sdram_addr[7]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[8]"  G4;
+IO_PORT "ext_sdram_addr[8]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[9]"  J2;
+IO_PORT "ext_sdram_addr[9]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[10]" J8;
+IO_PORT "ext_sdram_addr[10]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[11]" J1;
+IO_PORT "ext_sdram_addr[11]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_addr[12]" D1;
+IO_PORT "ext_sdram_addr[12]" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[0]"    K2;
+IO_PORT "ext_sdram_dq[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[1]"    K1;
+IO_PORT "ext_sdram_dq[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[2]"    L1;
+IO_PORT "ext_sdram_dq[2]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[3]"    L2;
+IO_PORT "ext_sdram_dq[3]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[4]"    K4;
+IO_PORT "ext_sdram_dq[4]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[5]"    J4;
+IO_PORT "ext_sdram_dq[5]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[6]"    G1;
+IO_PORT "ext_sdram_dq[6]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[7]"    G2;
+IO_PORT "ext_sdram_dq[7]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[8]"    E1;
+IO_PORT "ext_sdram_dq[8]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[9]"    A1;
+IO_PORT "ext_sdram_dq[9]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[10]"   F2;
+IO_PORT "ext_sdram_dq[10]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[11]"   F1;
+IO_PORT "ext_sdram_dq[11]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[12]"   B2;
+IO_PORT "ext_sdram_dq[12]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[13]"   C2;
+IO_PORT "ext_sdram_dq[13]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[14]"   L4;
+IO_PORT "ext_sdram_dq[14]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dq[15]"   L3;
+IO_PORT "ext_sdram_dq[15]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dqm[0]"   L8;
+IO_PORT "ext_sdram_dqm[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_LOC  "ext_sdram_dqm[1]"   L7;
+IO_PORT "ext_sdram_dqm[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
+*/
+

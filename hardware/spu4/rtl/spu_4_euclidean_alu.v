@@ -60,7 +60,8 @@ module spu_4_euclidean_alu (
     );
     
     // Fixed Point Q8.8 Truncation
-    wire [15:0] prod_trunc = mult_prod[23:8];
+    wire [15:0] prod_trunc;
+    assign prod_trunc = mult_prod[23:8];
 
     // ── Phi-Step Fold ──────────────────────────────────────────────────────
     // 18-bit accumulator prevents silent wrap-around.  phi_fold() halves the
@@ -94,7 +95,8 @@ module spu_4_euclidean_alu (
 
     // Combinatorial preview of the final three-product sum (accum + last product).
     // Valid in S_BADD sub-states 2, 5, 8 when the third product has just arrived.
-    wire [17:0] final_sum = accum + {2'b00, prod_trunc};
+    wire [17:0] final_sum;
+    assign final_sum = accum + {2'b00, prod_trunc};
     
     always @(posedge clk or posedge reset) begin
         if (reset) begin

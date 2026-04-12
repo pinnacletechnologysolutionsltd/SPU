@@ -68,8 +68,28 @@ module spu_tang_top (
     output wire        uart_tx,
 
     // Whisper 1-wire telemetry
-    output wire        whisper_tx
-);
+    output wire        whisper_tx,
+
+    // PMOD JA: 8-bit general purpose outputs (pmod_ja_out[7:0])
+    output wire [7:0]  pmod_ja_out
+
+    // External SPI loader (exposed on header pins)
+`ifdef INCLUDE_SPI
+    , input  wire        spi_cs_n
+    , input  wire        spi_sck
+    , input  wire        spi_mosi
+    , output wire        spi_miso
+`endif
+
+    // SD card Pmod (SPI-mode) exposed on header pins
+`ifdef INCLUDE_SD
+    , output wire        sd_cs
+    , output wire        sd_sck
+    , output wire        sd_mosi
+    , input  wire         sd_miso
+`endif
+
+    );
 
     // ------------------------------------------------------------------ //
     // 1. PLL: 50 MHz → 24 MHz                                            //
@@ -144,6 +164,13 @@ module spu_tang_top (
     );
 
     wire rst_n = pll_lock;
+
+    // Internal RPLU runtime config signals (now internal, not top-level IO)
+    wire                rplu_cfg_wr_en;
+    wire [2:0]          rplu_cfg_sel;
+    wire                rplu_cfg_material;
+    wire [9:0]          rplu_cfg_addr;
+    wire [63:0]         rplu_cfg_data;
 
     // ------------------------------------------------------------------ //
     // 2. Piranha Pulse (61.44 kHz) from Fibonacci clock divider          //
@@ -227,21 +254,26 @@ module spu_tang_top (
     // ------------------------------------------------------------------ //
     // 3b. Ext SDRAM bridge — Sipeed 512 Mb 40-pin module (64 MB)        //
     //     COL_BITS=10 → address space [24:0].                            //
-    //     CPU-side tied idle here; 2nd SPU-13 will claim this interface. //
+    //     Provide a texture DMA master that can drive the ext bridge.    //
     // ------------------------------------------------------------------ //
     wire                          ext_mem_ready;
+    wire                          ext_mem_burst_done;
+    wire                          ext_mem_burst_rd;
+    wire                          ext_mem_burst_wr;
+    wire [`MEM_ADDR_WIDTH-1:0]    ext_mem_addr;
     wire [`MANIFOLD_WIDTH-1:0]    ext_mem_rd_manifold;
+    wire [`MANIFOLD_WIDTH-1:0]    ext_mem_wr_manifold;
 
     spu_mem_bridge_sdram #(.COL_BITS(10)) u_ext_sdram (
         .clk             (clk_fast),
         .reset           (!rst_n),
         .mem_ready       (ext_mem_ready),
-        .mem_burst_rd    (1'b0),
-        .mem_burst_wr    (1'b0),
-        .mem_addr        ({`MEM_ADDR_WIDTH{1'b0}}),
+        .mem_burst_rd    (ext_mem_burst_rd),
+        .mem_burst_wr    (ext_mem_burst_wr),
+        .mem_addr        (ext_mem_addr),
         .mem_rd_manifold (ext_mem_rd_manifold),
-        .mem_wr_manifold ({`MANIFOLD_WIDTH{1'b0}}),
-        .mem_burst_done  (),
+        .mem_wr_manifold (ext_mem_wr_manifold),
+        .mem_burst_done  (ext_mem_burst_done),
         .sdram_clk       (ext_sdram_clk),
         .sdram_cs_n      (ext_sdram_cs_n),
         .sdram_ras_n     (ext_sdram_ras_n),
@@ -250,6 +282,22 @@ module spu_tang_top (
         .sdram_ba        (ext_sdram_ba),
         .sdram_addr      (ext_sdram_addr),
         .sdram_dq        (ext_sdram_dq)
+    );
+
+    // Simple texture DMA: issues periodic read bursts to exercise the
+    // external SDRAM interface and provides a starting point for a
+    // real texture-cache/DMA implementation.  The module lives in
+    // hardware/common/rtl/gpu/spu_texture_dma.v
+    spu_texture_dma u_texture_dma (
+        .clk            (clk_fast),
+        .reset          (!rst_n),
+        .mem_ready      (ext_mem_ready),
+        .mem_burst_rd   (ext_mem_burst_rd),
+        .mem_burst_wr   (ext_mem_burst_wr),
+        .mem_addr       (ext_mem_addr),
+        .mem_rd_manifold(ext_mem_rd_manifold),
+        .mem_wr_manifold(ext_mem_wr_manifold),
+        .mem_burst_done (ext_mem_burst_done)
     );
 `endif
 
@@ -261,6 +309,8 @@ module spu_tang_top (
     wire [`MANIFOLD_WIDTH-1:0] manifold_0, manifold_1;
     wire                       bloom_0, bloom_1;
     wire                       janus_0, janus_1;
+    wire [(`MANIFOLD_AXES*4)-1:0] scale_table_0, scale_table_1;
+    wire [(`MANIFOLD_AXES)-1:0]   scale_overflow_0, scale_overflow_1;
 
     spu13_core #(.DEVICE("GW5A")) u_cortex_0 (
         .clk             (clk_fast),
@@ -277,7 +327,10 @@ module spu_tang_top (
         .mem_burst_done  (c0_mem_burst_done),
         .manifold_out    (manifold_0),
         .bloom_complete  (bloom_0),
-        .is_janus_point  (janus_0)
+        .is_janus_point  (janus_0),
+        .scale_table_out (scale_table_0),
+        .scale_overflow_out (scale_overflow_0),
+        .phinary_cfg     (16'h0001)
     );
 
     spu13_core #(.DEVICE("GW5A")) u_cortex_1 (
@@ -295,7 +348,10 @@ module spu_tang_top (
         .mem_burst_done  (c1_mem_burst_done),
         .manifold_out    (manifold_1),
         .bloom_complete  (bloom_1),
-        .is_janus_point  (janus_1)
+        .is_janus_point  (janus_1),
+        .scale_table_out (scale_table_1),
+        .scale_overflow_out (scale_overflow_1),
+        .phinary_cfg     (16'h0001)
     );
 
     // ------------------------------------------------------------------ //
@@ -310,15 +366,54 @@ module spu_tang_top (
     genvar si;
     generate
         for (si = 0; si < 8; si = si + 1) begin : gen_sentinels
-            spu4_top u_sentinel (
-                .clk          (clk_piranha),
-                .rst_n        (rst_n),
-                .inst_data    (24'h800000),
-                .pc           (),
-                .snap_alert   (sentinel_snap[si]),
-                .whisper_tx   (sentinel_whisper[si]),
-                .debug_reg_r0 (sentinel_r0[si])
-            );
+            if (si == 0) begin
+`ifdef INCLUDE_SD
+                spu4_top #(.ENABLE_RPLU_BRAM(1)) u_sentinel (
+                    .clk          (clk_piranha),
+                    .rst_n        (rst_n & boot_done_synced),
+                    .inst_data    (boot_read_data0),
+                    .pc           (sentinel0_pc),
+                    .snap_alert   (sentinel_snap[si]),
+                    .whisper_tx   (sentinel_whisper[si]),
+                    .debug_reg_r0 (sentinel_r0[si]),
+                    .rplu_cfg_wr_en (rplu_cfg_wr_en),
+                    .rplu_cfg_sel   (rplu_cfg_sel),
+                    .rplu_cfg_material (rplu_cfg_material),
+                    .rplu_cfg_addr  (rplu_cfg_addr),
+                    .rplu_cfg_data  (rplu_cfg_data)
+                );
+`else
+                spu4_top #(.ENABLE_RPLU_BRAM(1)) u_sentinel (
+                    .clk          (clk_piranha),
+                    .rst_n        (rst_n),
+                    .inst_data    (24'h800000),
+                    .pc           (),
+                    .snap_alert   (sentinel_snap[si]),
+                    .whisper_tx   (sentinel_whisper[si]),
+                    .debug_reg_r0 (sentinel_r0[si]),
+                    .rplu_cfg_wr_en (rplu_cfg_wr_en),
+                    .rplu_cfg_sel   (rplu_cfg_sel),
+                    .rplu_cfg_material (rplu_cfg_material),
+                    .rplu_cfg_addr  (rplu_cfg_addr),
+                    .rplu_cfg_data  (rplu_cfg_data)
+                );
+`endif
+            end else begin
+                spu4_top #(.ENABLE_RPLU_BRAM(0)) u_sentinel (
+                    .clk          (clk_piranha),
+                    .rst_n        (rst_n),
+                    .inst_data    (24'h800000),
+                    .pc           (),
+                    .snap_alert   (sentinel_snap[si]),
+                    .whisper_tx   (sentinel_whisper[si]),
+                    .debug_reg_r0 (sentinel_r0[si]),
+                    .rplu_cfg_wr_en (1'b0),
+                    .rplu_cfg_sel   (3'b0),
+                    .rplu_cfg_material (1'b0),
+                    .rplu_cfg_addr  (10'd0),
+                    .rplu_cfg_data  (64'd0)
+                );
+            end
         end
     endgenerate
 
@@ -342,7 +437,127 @@ module spu_tang_top (
     );
 
     // UART stub (RP2350 bridge — full framing in future firmware revision)
-    assign uart_tx = 1'b1; // idle high
+`ifdef INCLUDE_SD
+    // FPGA SD bootloader: reads blocks from Pmod SD into boot RAM and exposes a write port
+    wire boot_done_fast;
+    wire boot_error_fast;
+    wire boot_wr_en;
+    wire [9:0] boot_wr_addr; // 10-bit addr -> 1024 words (24-bit)
+    wire [23:0] boot_wr_data;
+    wire [23:0] boot_head_word0;
+    wire [23:0] boot_head_word1;
+    wire [23:0] boot_read_data0;
+    wire [9:0]  sentinel0_pc;
+
+    sd_bram_loader_dp #(.BOOT_BYTES(16384), .BLOCK_SIZE(512), .BOOT_WORD_ADDR_WIDTH(10)) u_sd_bram_loader_dp (
+        .clk       (clk_fast),
+        .rst_n     (rst_n),
+        .auto_boot (1'b1),
+        .boot_done (boot_done_fast),
+        .boot_error(boot_error_fast),
+        .boot_wr_en(boot_wr_en),
+        .boot_wr_addr(boot_wr_addr),
+        .boot_wr_data(boot_wr_data),
+        .boot_head_word0(boot_head_word0),
+        .boot_head_word1(boot_head_word1),
+        .sd_cs     (sd_cs),
+        .sd_sck    (sd_sck),
+        .sd_mosi   (sd_mosi),
+        .sd_miso   (sd_miso)
+    );
+
+    // Boot RAM: write port on clk_fast, read port on clk_piranha.
+    boot_ram_dp #(.ADDR_WIDTH(10), .DATA_WIDTH(24)) u_boot_ram (
+        .clk_write (clk_fast),
+        .we        (boot_wr_en),
+        .addr_write(boot_wr_addr),
+        .write_data(boot_wr_data),
+        .clk_read  (clk_piranha),
+        .addr_read (sentinel0_pc),
+        .read_data (boot_read_data0)
+    );
+
+    // Synchronize boot_done (clk_fast -> clk_piranha)
+    reg boot_done_r1, boot_done_r2;
+    always @(posedge clk_piranha or negedge rst_n) begin
+        if (!rst_n) {boot_done_r2, boot_done_r1} <= 2'b00;
+        else        {boot_done_r2, boot_done_r1} <= {boot_done_r1, boot_done_fast};
+    end
+    wire boot_done_synced = boot_done_r2;
+`endif
+    // Metabolic sense + viscosity monitor
+    wire [15:0] microwatts;
+    wire [7:0]  laminar_flow_index;
+    wire        sip_active;
+
+    spu_metabolic_sense u_met_sense (
+        .clk      (clk_fast),
+        .reset    (!rst_n),
+        .adc_raw  (12'd0),
+        .microwatts(microwatts),
+        .sip_active(sip_active)
+    );
+
+    spu_viscosity_monitor u_visc_mon (
+        .clk            (clk_fast),
+        .reset          (!rst_n),
+        .abcd_vector    (manifold_0[127:0]),
+        .laminar_flow_index (laminar_flow_index)
+    );
+
+    // UART handled by MCU–FPGA IO bridge (serial telemetry/control)
+    spu_io_bridge u_io_bridge (
+        .clk_phys           (clk_fast),
+        .clk_resonant       (clk_piranha),
+        .reset              (!rst_n),
+        .spu_reg_in         (manifold_0),
+        .microwatts         (microwatts),
+        .laminar_flow_index (laminar_flow_index),
+        .sip_active         (sip_active),
+        .strike_ripple      (),
+        .fault_detected     (|sentinel_snap),
+        .coherence_lock     (dual_janus),
+        .led_status         (),
+        .pmod_ja_out        (pmod_ja_out),
+        .sw_control         (4'd0),
+        .serial_rx          (uart_rx),
+        .serial_tx          (uart_tx)
+    );
+
+
+`ifdef INCLUDE_SPI
+    // SPI loader slave: listens on header SPI pins and drives the rplu_cfg outputs.
+    // Uses clk_fast (24 MHz) for SPI sampling and snapshots primary manifold for
+    // status queries.  RPLU runtime writes produced here are routed elsewhere by
+    // the SoC (wired through top-level rplu_cfg_* ports).
+    spu_spi_slave u_spi_slave (
+        .clk             (clk_fast),
+        .rst_n           (rst_n),
+        .spi_cs_n        (spi_cs_n),
+        .spi_sck         (spi_sck),
+        .spi_mosi        (spi_mosi),
+        .spi_miso        (spi_miso),
+        .manifold_state  (manifold_0),            // primary cortex snapshot
+        .satellite_snaps (sentinel_snap[3:0]),
+        .is_janus_point  (janus_0),
+        .scale_table     (scale_table_0),
+        .scale_overflow  (scale_overflow_0),
+        .dissonance      (16'h0),                 // placeholder
+        .rplu_cfg_wr_en  (rplu_cfg_wr_en),
+        .rplu_cfg_sel    (rplu_cfg_sel),
+        .rplu_cfg_material (rplu_cfg_material),
+        .rplu_cfg_addr   (rplu_cfg_addr),
+        .rplu_cfg_data   (rplu_cfg_data)
+    );
+`else
+    // When SPI peripheral is not included, tie off RPLU config signals so they
+    // don't create unconstrained nets / implicit IOs in place-and-route.
+    assign rplu_cfg_wr_en   = 1'b0;
+    assign rplu_cfg_sel     = 3'd0;
+    assign rplu_cfg_material= 1'b0;
+    assign rplu_cfg_addr    = 10'd0;
+    assign rplu_cfg_data    = 64'd0;
+`endif
 
     // ------------------------------------------------------------------ //
     // 7. LED status (active-low)                                         //

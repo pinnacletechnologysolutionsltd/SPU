@@ -72,9 +72,12 @@ module spu_bresenham_killer (
     wire [15:0] c_abs_dd = ($signed(q_d_end) >= $signed(q_d_start)) ?
                            (q_d_end - q_d_start) : (q_d_start - q_d_end);
 
-    wire [15:0] max_ab   = (c_abs_da > c_abs_db) ? c_abs_da : c_abs_db;
-    wire [15:0] max_cd   = (c_abs_dc > c_abs_dd) ? c_abs_dc : c_abs_dd;
-    wire [15:0] c_max    = (max_ab   > max_cd)   ? max_ab   : max_cd;
+    wire [15:0] max_ab;
+    assign max_ab = (c_abs_da > c_abs_db) ? c_abs_da : c_abs_db;
+    wire [15:0] max_cd;
+    assign max_cd = (c_abs_dc > c_abs_dd) ? c_abs_dc : c_abs_dd;
+    wire [15:0] c_max;
+    assign c_max = (max_ab   > max_cd)   ? max_ab   : max_cd;
 
     // -----------------------------------------------------------------------
     // Main state machine

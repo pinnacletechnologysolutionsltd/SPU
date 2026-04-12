@@ -38,14 +38,21 @@ module spu_io_bridge #(
     );
 
     // 2. The Laminar Frame Assembler (Telemetry)
-    wire signed [31:0] a = spu_reg_in[31:0];
-    wire signed [31:0] b = spu_reg_in[63:32];
-    wire signed [31:0] c = spu_reg_in[95:64];
-    wire signed [31:0] d = spu_reg_in[127:96];
+    wire signed [31:0] a;
+    assign a = spu_reg_in[31:0];
+    wire signed [31:0] b;
+    assign b = spu_reg_in[63:32];
+    wire signed [31:0] c;
+    assign c = spu_reg_in[95:64];
+    wire signed [31:0] d;
+    assign d = spu_reg_in[127:96];
     
-    wire symmetry_ok = ((a + b + c + d) == 32'sd0);
-    wire [31:0] payload = spu_reg_in[31:0];
-    wire [6:0] status_flags = {4'b0, reservoir_full, sip_active, coherence_lock};
+    wire symmetry_ok;
+    assign symmetry_ok = ((a + b + c + d) == 32'sd0);
+    wire [31:0] payload;
+    assign payload = spu_reg_in[31:0];
+    wire [6:0] status_flags;
+    assign status_flags = {4'b0, reservoir_full, sip_active, coherence_lock};
 
     // 3. Telemetry Path (TX)
     surd_uart_tx #(

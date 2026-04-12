@@ -39,7 +39,8 @@ module spu_13_top (
         if (!rst_n) boot_sync <= 2'b00;
         else boot_sync <= {boot_sync[0], boot_complete};
     end
-    wire boot_synced = boot_sync[1];
+    wire boot_synced;
+    assign boot_synced = boot_sync[1];
 
     // 1. The Laminar Boot (SPI Controller)
     spu_laminar_boot boot_unit (
@@ -79,8 +80,10 @@ module spu_13_top (
     wire [2:0]  vault_step;
 
     // Q12-scale raw Pell integer for ALU (steps 0-2 exact; steps 3-7 need wider ALU)
-    wire [15:0] vault_p_q12 = vault_rotor[31:16] << 12;
-    wire [15:0] vault_q_q12 = vault_rotor[15:0]  << 12;
+    wire [15:0] vault_p_q12;
+    assign vault_p_q12 = vault_rotor[31:16] << 12;
+    wire [15:0] vault_q_q12;
+    assign vault_q_q12 = vault_rotor[15:0]  << 12;
 
     spu_rotor_vault u_vault (
         .clk    (clk_12mhz),
@@ -114,7 +117,8 @@ module spu_13_top (
         .result_18    (alu_result_18)
     );
 
-    wire [23:0] current_surd = {6'b0, alu_result_18};
+    wire [23:0] current_surd;
+    assign current_surd = {6'b0, alu_result_18};
 
     // 3. The Janus Mirror (The Shadow / Sanity Gate)
     wire [31:0] shadow_out;

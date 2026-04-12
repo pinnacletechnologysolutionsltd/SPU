@@ -55,8 +55,10 @@ module spu_lithic_overlay #(
     end
 
     // Rasterization: Check if curr_x/y is within target dot radius
-    wire [15:0] dx = (cur_x > target_x) ? (cur_x - target_x) : (target_x - cur_x);
-    wire [15:0] dy = (cur_y > target_y) ? (cur_y - target_y) : (target_y - cur_y);
+    wire [15:0] dx;
+    assign dx = (cur_x > target_x) ? (cur_x - target_x) : (target_x - cur_x);
+    wire [15:0] dy;
+    assign dy = (cur_y > target_y) ? (cur_y - target_y) : (target_y - cur_y);
     
     always @(*) begin
         if (dot_visible && (dx < 2) && (dy < 2)) begin
