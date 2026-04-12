@@ -21,7 +21,8 @@ module spu_psram_ctrl (
     inout  wire [3:0]   psram_dq
 );
 
-assign ready = 1'b1;       // always ready in stub
+// ready: deassert during bursts, low during reset
+assign ready = ~reset & ~(burst_rd | burst_wr);
 // init_done: low during reset, assert after reset release for triage
 assign init_done = ~reset;   // pretend init completed
 assign psram_ce_n = 1'b1;  // inactive
