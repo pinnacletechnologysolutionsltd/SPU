@@ -44,8 +44,9 @@ module spu_bresenham_raster (
     assign ddx = (x1 >= x0) ? (x1 - x0) : (x0 - x1);
     wire [9:0] ddy;
     assign ddy = (y1 >= y0) ? (y1 - y0) : (y0 - y1);
-    wire [9:0] dx_in;
-    assign dx_in = ddx, dy_in = ddy;
+    wire [9:0] dx_in, dy_in;
+    assign dx_in = ddx;
+    assign dy_in = ddy;
     wire       steep_in;
     assign steep_in = (dy_in > dx_in);
 
