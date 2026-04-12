@@ -2,14 +2,17 @@ module spu_edge_stepper (
     input wire        clk,
     input wire        rst_n,
     input wire        setup,
-    input signed [15:0] coef_a,
-    input signed [15:0] coef_b,
-    input signed [31:0] coef_c,
+    input wire  [63:0] coef_pack,
     input wire        step_x,
     input wire        step_y,
     input signed [15:0] x_span,
     output wire       inside
 );
+
+    // Unpack packed coefficients: {coef_a[15:0], coef_b[15:0], coef_c[31:0]}
+    wire signed [15:0] coef_a = coef_pack[63:48];
+    wire signed [15:0] coef_b = coef_pack[47:32];
+    wire signed [31:0] coef_c = coef_pack[31:0];
 
     reg signed [31:0] f;
     reg signed [31:0] f_row;

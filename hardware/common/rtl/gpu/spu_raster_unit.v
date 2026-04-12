@@ -63,21 +63,21 @@ module spu_raster_unit (
 
     spu_edge_stepper u_e0 (
         clk, rst_n, setup,
-        a0, b0, c0,
+        {a0, b0, c0},
         step_x, step_y, x_span,
         inside0
     );
 
     spu_edge_stepper u_e1 (
         clk, rst_n, setup,
-        a1, b1, c1,
+        {a1, b1, c1},
         step_x, step_y, x_span,
         inside1
     );
 
     spu_edge_stepper u_e2 (
         clk, rst_n, setup,
-        a2, b2, c2,
+        {a2, b2, c2},
         step_x, step_y, x_span,
         inside2
     );
