@@ -113,6 +113,7 @@ def main():
             "hardware/common/rtl/core",
             "hardware/common/rtl/mem",
             "hardware/common/rtl/prim",
+            "hardware/common/rtl/gpu",
             "hardware/common/rtl/proto",
             "hardware/common/rtl/include",
             "hardware/spu13/rtl",
