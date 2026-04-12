@@ -194,11 +194,24 @@ module spu_system (
     // 4. Sovereign Mother Unit (SPU-13 Cortex)
     wire [831:0] manifold_out;
     wire         bloom_done;
+    // Cortex debug/status outputs (triage ties)
+    wire [3:0]   current_axis_ptr;
+    wire [63:0]  current_axis_data;
+    wire signed [2:0] ratio_cmp_res;
+    wire               ratio_cmp_valid;
+    wire [51:0] scale_table_out;
+    wire [12:0] scale_overflow_out;
 
     spu13_core #(.DEVICE("SIM")) u_cortex (
         .clk(clk_fast),
         .rst_n(rst_n),
         .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),
+        .dec_fast_cfg_wr_en(dec_fast_cfg_wr_en),
+        .dec_fast_cfg_sel(dec_fast_cfg_sel),
+        .dec_fast_cfg_material(dec_fast_cfg_material),
+        .dec_fast_cfg_addr(dec_fast_cfg_addr),
+        .dec_fast_cfg_data(dec_fast_cfg_data),
+        .phinary_cfg(16'd0),
         .mem_ready(mem_ready),
         .mem_burst_rd(mem_burst_rd),
         .mem_burst_wr(mem_burst_wr),
@@ -206,15 +219,16 @@ module spu_system (
         .mem_rd_manifold(mem_rd_manifold),
         .mem_wr_manifold(mem_wr_manifold),
         .mem_burst_done(mem_burst_done),
-        .dec_fast_cfg_wr_en(dec_fast_cfg_wr_en),
-        .dec_fast_cfg_sel(dec_fast_cfg_sel),
-        .dec_fast_cfg_material(dec_fast_cfg_material),
-        .dec_fast_cfg_addr(dec_fast_cfg_addr),
-        .dec_fast_cfg_data(dec_fast_cfg_data),
         .artery_wr_en(cortex_artery_wr_en),
         .artery_wr_data(cortex_artery_wr_data),
+        .current_axis_ptr(current_axis_ptr),
+        .current_axis_data(current_axis_data),
         .manifold_out(manifold_out),
         .bloom_complete(bloom_done),
+        .ratio_cmp_res(ratio_cmp_res),
+        .ratio_cmp_valid(ratio_cmp_valid),
+        .scale_table_out(scale_table_out),
+        .scale_overflow_out(scale_overflow_out),
         .is_janus_point(is_janus_point),
         // Instruction interface (unused by default in top-level)
         .inst_valid(1'b0),
