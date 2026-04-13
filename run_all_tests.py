@@ -210,7 +210,7 @@ def main():
                 sim_cpp = build_dir / "sim_main.cpp"
                 sim_cpp.write_text(f'''#include "verilated.h"\n#include "V{top_mod}.h"\n#include <iostream>\nint main(int argc, char **argv) {{\n    Verilated::commandArgs(argc, argv);\n    V{top_mod}* top = new V{top_mod}();\n    while (!Verilated::gotFinish()) {{\n        top->eval();\n    }}\n    delete top;\n    return 0;\n}}\n''')
 
-                verilator_cmd = ["verilator", "--cc", "--Mdir", str(build_dir), "--top-module", top_mod]
+                verilator_cmd = ["verilator", "--cc", "--Mdir", str(build_dir), "--top-module", top_mod, "--no-timing"]
                 for d in inc_dirs:
                     verilator_cmd.append("-I" + d)
                 verilator_cmd.extend(src_unique + [tb_str])
