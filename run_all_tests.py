@@ -183,6 +183,12 @@ def main():
                 src_unique = [s for s in src_unique if os.path.basename(s) not in included_files]
         except Exception:
             pass
+
+        # If TB_FILTER is set, restrict the source set to minimal directories to avoid pulling board tops and unrelated cores
+        tb_filter = os.getenv('TB_FILTER')
+        if tb_filter:
+            allowed_dirs = [str(root_dir / p) for p in ("hardware/common/rtl", "hardware/common/rtl/gpu", "hardware/spu13/rtl", "hardware/common/tests", "hardware/common/rtl/include")]
+            src_unique = [s for s in src_unique if any(s.startswith(d) for d in allowed_dirs)]
         cmd = iverilog_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
         
