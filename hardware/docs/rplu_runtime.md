@@ -66,8 +66,8 @@ Batch file formats supported by the uploader:
 - Decide CDC strategy for any non-fast/piranha domains (FIFO vs toggle-handshake).
 - Add CRC/ACK and retry for bulk ROM uploads.
 
-If you want, I can (pick one):
-- Run a focused RTL audit and produce a prioritized action list, or
+Recommended next actions:
+- Run a focused RTL audit and produce a prioritized action list.
 - Add a simulation test that exercises minipro-flashed ROM contents in bootflow.
 
 

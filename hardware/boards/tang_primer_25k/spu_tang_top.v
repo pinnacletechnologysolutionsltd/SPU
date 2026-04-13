@@ -70,8 +70,8 @@ module spu_tang_top (
     // Whisper 1-wire telemetry
     output wire        whisper_tx,
 
-    // PMOD JA: 8-bit general purpose outputs (pmod_ja_out[7:0])
-    output wire [7:0]  pmod_ja_out
+    // PMOD JA: 8-bit general purpose outputs (pmod_ja_out[7:0]) — removed for PnR triage
+    // (top-level PMOD JA pins omitted to avoid package pin conflicts in triage builds)
 
     // External SPI loader (exposed on header pins)
 `ifdef INCLUDE_SPI
@@ -172,6 +172,9 @@ module spu_tang_top (
     wire                rplu_cfg_material;
     wire [9:0]          rplu_cfg_addr;
     wire [63:0]         rplu_cfg_data;
+
+    // PMOD JA: internal-only wire for IO bridge during triage (no external pin assignment)
+    wire [7:0]           pmod_ja_out;
 
     // ------------------------------------------------------------------ //
     // 2. Piranha Pulse (61.44 kHz) from Fibonacci clock divider          //
@@ -499,25 +502,10 @@ module spu_tang_top (
     end
     wire boot_done_synced = boot_done_r2;
 `endif
-    // Metabolic sense + viscosity monitor
-    wire [15:0] microwatts;
-    wire [7:0]  laminar_flow_index;
-    wire        sip_active;
-
-    spu_metabolic_sense u_met_sense (
-        .clk      (clk_fast),
-        .reset    (!rst_n),
-        .adc_raw  (12'd0),
-        .microwatts(microwatts),
-        .sip_active(sip_active)
-    );
-
-    spu_viscosity_monitor u_visc_mon (
-        .clk            (clk_fast),
-        .reset          (!rst_n),
-        .abcd_vector    (manifold_0[127:0]),
-        .laminar_flow_index (laminar_flow_index)
-    );
+    // Metabolic sense + viscosity monitor (archived — constants for now)
+    wire [15:0] microwatts       = 16'd0;
+    wire [7:0]  laminar_flow_index = 8'd0;
+    wire        sip_active       = 1'b0;
 
     // UART handled by MCU–FPGA IO bridge (serial telemetry/control)
     spu_io_bridge u_io_bridge (

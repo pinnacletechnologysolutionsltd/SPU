@@ -13,14 +13,74 @@ module spu_tang25k_top (
     output wire smoke_ok
 );
 
+    // PLLA: 50 MHz → 25 MHz
+    // VCO = FCLKIN × MDIV_SEL / IDIV_SEL = 50 × 16 / 1 = 800 MHz (in-range: 800-1600 MHz)
+    // CLKOUT0 = VCO / ODIV0_SEL = 800 / 32 = 25 MHz
+    wire clk_fast;
+    wire pll_lock;
+    
+    PLLA #(
+        .FCLKIN          ("50"),
+        .IDIV_SEL        (1),
+        .FBDIV_SEL       (1),
+        .MDIV_SEL        (16),
+        .MDIV_FRAC_SEL   (0),
+        .ODIV0_SEL       (32),
+        .ODIV1_SEL       (8),
+        .ODIV2_SEL       (8),
+        .ODIV3_SEL       (8),
+        .ODIV4_SEL       (8),
+        .ODIV5_SEL       (8),
+        .ODIV6_SEL       (8),
+        .CLKOUT0_EN      ("TRUE"),
+        .CLKOUT1_EN      ("FALSE"),
+        .CLKOUT2_EN      ("FALSE"),
+        .CLKOUT3_EN      ("FALSE"),
+        .CLKOUT4_EN      ("FALSE"),
+        .CLKOUT5_EN      ("FALSE"),
+        .CLKOUT6_EN      ("FALSE"),
+        .CLKOUT0_DT_DIR  (1'b1),
+        .CLKOUT1_DT_DIR  (1'b1),
+        .CLKOUT2_DT_DIR  (1'b1),
+        .CLKOUT3_DT_DIR  (1'b1),
+        .CLKOUT0_DT_STEP (4'b0),
+        .CLKOUT1_DT_STEP (4'b0),
+        .CLKOUT2_DT_STEP (4'b0),
+        .CLKOUT3_DT_STEP (4'b0),
+        .CLK0_IN_SEL     (1'b0),
+        .CLK0_OUT_SEL    (1'b0),
+        .CLK1_IN_SEL     (1'b0),
+        .CLK1_OUT_SEL    (1'b0),
+        .CLK2_IN_SEL     (1'b0),
+        .CLK2_OUT_SEL    (1'b0),
+        .CLK3_IN_SEL     (1'b0),
+        .CLK3_OUT_SEL    (1'b0)
+    ) u_pll (
+        .CLKIN   (clk_in),
+        .CLKOUT0 (clk_fast),
+        .LOCK    (pll_lock),
+        .RESET   (1'b0),
+        .PLLPWD  (1'b0),
+        .RESET_I (1'b0), .RESET_O(1'b0),
+        .PSSEL   (3'b0), .PSDIR(1'b0), .PSPULSE(1'b0),
+        .SSCPOL  (1'b0), .SSCON(1'b0),
+        .SSCMDSEL(7'b0), .SSCMDSEL_FRAC(3'b0),
+        .MDCLK   (1'b0), .MDAINC(1'b0),
+        .MDOPC   (2'b0), .MDWDI(8'b0),
+        .CLKFB   (1'b0),
+        .CLKOUT1 (), .CLKOUT2 (), .CLKOUT3 (),
+        .CLKOUT4 (), .CLKOUT5 (), .CLKOUT6 (),
+        .CLKFBOUT(), .MDRDO()
+    );
+
     // Reset alias (active-high) for legacy modules
-    wire reset = ~rst_n;
+    wire reset = ~rst_n | ~pll_lock;
 
     // Fractal / Fibonacci timing source (kept in wrapper as requested)
     wire phi_8, phi_13, phi_21, heartbeat;
     spu_sierpinski_clk u_sclk (
-        .clk(clk_in),
-        .rst_n(rst_n),
+        .clk(clk_fast),
+        .rst_n(rst_n & pll_lock),
         .phi_8(phi_8),
         .phi_13(phi_13),
         .phi_21(phi_21),
@@ -34,8 +94,8 @@ module spu_tang25k_top (
     wire [9:0]   pc;
 
     spu4_top #(.ENABLE_RPLU_BRAM(0)) u_spu4 (
-        .clk(clk_in),
-        .rst_n(rst_n),
+        .clk(clk_fast),
+        .rst_n(rst_n & pll_lock),
         .rplu_cfg_wr_en(1'b0),
         .rplu_cfg_sel(3'd0),
         .rplu_cfg_material(1'b0),
@@ -58,8 +118,8 @@ module spu_tang25k_top (
     wire signed [31:0] audio_p, audio_q;
 
     davis_gate_dsp #(.DEVICE("SIM")) u_davis (
-        .clk(clk_in),
-        .rst_n(rst_n),
+        .clk(clk_fast),
+        .rst_n(rst_n & pll_lock),
         .q_vector(64'd0),
         .q_rotated(q_rotated),
         .quadrance(quadrance),
@@ -72,8 +132,8 @@ module spu_tang25k_top (
     // Simple smoke driver: toggles LED and sends a single UART-like byte
     // on first power-up. This is used to confirm FPGA programming / power.
     board_smoke u_smoke (
-        .clk(clk_in),
-        .rst_n(rst_n),
+        .clk(clk_fast),
+        .rst_n(rst_n & pll_lock),
         .led(led_out),
         .uart_tx(uart_tx),
         .smoke_ok(smoke_ok)

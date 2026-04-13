@@ -20,7 +20,7 @@ The Sovereign Processing Unit (SPU) ecosystem is built on a "Mother-Satellite" r
 - **Key Op**: `QROT` (Rational Rotation) - maintains magnitude with zero drift.
 
 ### SPU-13 (Sovereign ISA)
-- **Format**: Variable-length VLIW (Very Long Instruction Word).
+- **Format**: 64-bit fixed-width instruction word.
 - **Philosophy**: Orchestrates the "Bloom" of the entire manifold cluster.
 - **Key Op**: `JPER` (Janus Permutation) - flips the manifold state across the IVM lattice.
 
@@ -37,7 +37,7 @@ Intrinsics are C/C++ wrappers around specialized SPU machine code instructions. 
 ```c
 static inline q4_vector spu_qrot(q4_vector v) {
     q4_vector result;
-    // Map to SPU-4 opcode 0x45 (QROT)
+    // Maps to SPU-4 opcode 0x11 (QROT)
     __asm__ ("qrot %0, %1" : "=r"(result) : "r"(v));
     return result;
 }
@@ -45,7 +45,7 @@ static inline q4_vector spu_qrot(q4_vector v) {
 
 ## 4. Does SPU-13 have intrinsics?
 
-**Yes.** The SPU-13 intrinsics are significantly more powerful. While SPU-4 intrinsics handle simple 4D math, SPU-13 intrinsics (defined in `spu13_intrinsics.h`) manage high-level topological operations:
+**Yes.** The SPU-13 intrinsics are significantly more powerful. While SPU-4 intrinsics handle simple 4D math, SPU-13 intrinsics manage high-level topological operations:
 - `spu13_bloom()`: Triggers the Fibonacci-stepped power-up sequence.
 - `spu13_mirror()`: Synchronizes the "Janus Mirror" state with the satellite cluster.
 - `spu13_snap_all()`: Asserts a global 15-Sigma Snap across all 13 axes.

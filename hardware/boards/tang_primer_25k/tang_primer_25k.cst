@@ -157,20 +157,22 @@ IO_PORT "sd_mosi" IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sd_miso" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
 // PMOD JA: general purpose 8-bit header (pmod_ja_out[7:0]) — mapped to A2..A9
-IO_LOC  "pmod_ja_out[0]" A2;
-IO_LOC  "pmod_ja_out[1]" A3;
-IO_LOC  "pmod_ja_out[2]" A4;
-IO_LOC  "pmod_ja_out[3]" A5;
-IO_LOC  "pmod_ja_out[4]" A6;
-IO_LOC  "pmod_ja_out[5]" A7;
-IO_LOC  "pmod_ja_out[6]" A8;
-IO_LOC  "pmod_ja_out[7]" A9;
-IO_PORT "pmod_ja_out[0]" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "pmod_ja_out[1]" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "pmod_ja_out[2]" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "pmod_ja_out[3]" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "pmod_ja_out[4]" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "pmod_ja_out[5]" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "pmod_ja_out[6]" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "pmod_ja_out[7]" IO_TYPE=LVCMOS33 DRIVE=8;
+// NOTE: PMOD JA pins omitted from constraints to avoid referencing package pins not present in GW5A-LV25MG121NES during PnR.
+// The original mappings are preserved below as comments for reference:
+// IO_LOC  "pmod_ja_out[0]" A2;
+// IO_LOC  "pmod_ja_out[1]" A3;
+// IO_LOC  "pmod_ja_out[2]" A4;
+// IO_LOC  "pmod_ja_out[3]" A5;
+// IO_LOC  "pmod_ja_out[4]" A6;
+// IO_LOC  "pmod_ja_out[5]" A7;
+// IO_LOC  "pmod_ja_out[6]" A8;
+// IO_LOC  "pmod_ja_out[7]" A9;
+// IO_PORT "pmod_ja_out[0]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[1]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[2]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[3]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[4]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[5]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[6]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[7]" IO_TYPE=LVCMOS33 DRIVE=8;
 

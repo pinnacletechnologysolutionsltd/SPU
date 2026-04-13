@@ -71,6 +71,7 @@ read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_top.v
 read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_berry_gate.v
 read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_janus_mirror.v
 read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_permute_13.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/davis_to_rplu.v
 read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_13_top.v
 
 # ─── System infrastructure ─────────────────────────────────────────────────
@@ -89,6 +90,8 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/io/sd_bram_loader.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/include/auto_stubs.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/io/surd_uart_tx.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/io/spu_io_bridge.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_async_fifo.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/core/rplu_cfg_cdc.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_system.v
 
 # ─── Memory bridges ────────────────────────────────────────────────────────
@@ -96,9 +99,7 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_sdram
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_sdram_arbiter.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_qspi.v
 
-# Bio sensors
-read_verilog -I hardware/common/rtl hardware/common/rtl/bio/spu_metabolic_sense.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/bio/spu_viscosity_monitor.v
+# Bio sensors (archived — stubs in auto_stubs.v if referenced)
 
 # ─── GPU / HAL ─────────────────────────────────────────────────────────────
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_video_timing.v
@@ -106,6 +107,10 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_provid
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_rom.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_rom_q32.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rplu_bram_wrapper.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rplu_exp.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rplu_poly_step.v
+read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/pade_eval_4_4.v
+# laminar_detector.v removed (archived)
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu4_bram_ip.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_edge_stepper.v
 read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_raster_unit.v

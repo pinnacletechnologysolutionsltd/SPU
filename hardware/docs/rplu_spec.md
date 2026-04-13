@@ -42,7 +42,8 @@ Interfaces
 
 Timing / latency targets
 ------------------------
-- Target combinational latency: 8–12 cycles from valid->done for single pipeline (can be TDM folded to share resources).
+- rplu_skel (ROM lookup): 2 cycles from start→done.
+- rplu_exp (Padé pipeline): 5 cycles minimum from valid→done, plus stall cycles if Padé evaluator or laminar wake is active.
 - Throughput: 1 result per cycle with pipeline filled OR 1 per N cycles if folded (parameter N).
 
 Resource estimate (rough, prototyping on Tang 25K)
@@ -77,7 +78,7 @@ Open questions
 Deliverables
 ------------
 - hardware/docs/rplu_spec.md (this file)
-- RTL skeleton for RPLU (rplu.v) with parameterizable precision
+- RTL modules: rplu_skel.v (ROM lookup), rplu_exp.v (Padé pipeline) with parameterizable precision
 - Testbench/runners using hardware/common/rtl/gpu/material_morse_vectors.csv
 - Synthesis report for Tang 25K
 

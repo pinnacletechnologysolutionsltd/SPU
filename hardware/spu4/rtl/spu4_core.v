@@ -193,18 +193,5 @@ module spu4_core (
         .overflow(phout_ovf)
     );
 
-    // RPLU BRAM wrapper instantiation (trimmed mem; mapped to bus_addr[5:0])
-    wire [5:0] rplu_addr;
-    assign rplu_addr = bus_addr[5:0];
-    wire [63:0] rplu_data;
-    (* keep = "true", keep_hierarchy = "true" *) rplu_bram_wrapper #(
-        .ADDR_WIDTH(6),
-        .DATA_WIDTH(64),
-        .MEM_FILE("hardware/common/rtl/gpu/rplu_trim.mem")
-    ) u_rplu_bram (
-        .clk(clk),
-        .addr(rplu_addr),
-        .data_out(rplu_data)
-    );
 
 endmodule

@@ -139,27 +139,6 @@ module rplu_exp #(
     reg vnorm_dissoc_carbon [0:1023];
     reg [31:0] vnorm_iron [0:1023];
     reg vnorm_dissoc_iron [0:1023];
-    wire ld_irq;
-    wire ld_latched;
-    wire ld_cleared;
-    // laminar handshake signals driven by this module when it needs to wake a sector
-    reg lam_wake;
-    reg [9:0] lam_wake_addr;
-    reg waiting_wake; // when true, hold this transaction until laminar cleared
-
-    // instantiate laminar detector (now with cleared_out)
-    laminar_detector lam_det (
-        .clk(clk),
-        .rst_n(rst_n),
-        .addr_in(addr_reg),
-        .r_q16(r_reg),
-        .re_q16(re_reg),
-        .wake(lam_wake),
-        .wake_addr(lam_wake_addr),
-        .irq_out(ld_irq),
-        .latched_out(ld_latched),
-        .cleared_out(ld_cleared)
-    );
     initial begin
         $readmemh("hardware/common/rtl/gpu/vnorm_carbon.mem", vnorm_carbon);
         $readmemh("hardware/common/rtl/gpu/vnorm_dissoc_carbon.mem", vnorm_dissoc_carbon);
@@ -245,39 +224,13 @@ module rplu_exp #(
             r_reg <= 0; delta_reg <= 0; x_reg <= 0; exp_reg <= 0; t_reg <= 0; t2_reg <= 0; v_reg <= 0;
             valid0 <= 0; valid1 <= 0; valid2 <= 0; valid3 <= 0; valid4 <= 0;
             // handshake/pipeline control resets
-            pade_start <= 1'b0; waiting_pade <= 1'b0; use_pade_flag <= 1'b0;
-            lam_wake <= 1'b0; lam_wake_addr <= 10'd0; waiting_wake <= 1'b0;
+            pade_start <= 1'b0; waiting_pade <= 1'b0;
             ratio_cmp_valid <= 1'b0; 
         end else begin
-            // debug: show cfg inputs at each tick
-            // default laminar wake signals
-            lam_wake <= 1'b0;
-            lam_wake_addr <= addr_reg;
             // default pade start
             pade_start <= 1'b0;
             // default: clear one-cycle pulses (including ratio_cmp_valid)
             ratio_cmp_valid <= 1'b0;
-
-            // if already waiting for a wake to complete, keep asserting lam_wake until cleared
-            if (waiting_wake) begin
-                if (ld_cleared) begin
-                    waiting_wake <= 1'b0; // cleared by detector
-                    lam_wake <= 1'b0;
-                end else begin
-                    waiting_wake <= 1'b1;
-                    lam_wake <= 1'b1;
-                end
-            end else begin
-                // if a transaction is in stage2 and laminar reports latched, request wake
-                if (valid2 && ld_latched) begin
-                    waiting_wake <= 1'b1;
-                    lam_wake <= 1'b1;
-                    lam_wake_addr <= addr_reg;
-                end else begin
-                    waiting_wake <= 1'b0;
-                    lam_wake <= 1'b0;
-                end
-            end
 
             // pade start/wait handshake: if waiting for pade to finish, keep waiting until done
             if (waiting_pade) begin
@@ -288,30 +241,29 @@ module rplu_exp #(
                 end
             end
 
-            // shift valids only if not waiting on wake or pade handshake
-            if (!waiting_wake && !waiting_pade) begin
+            // shift valids only if not waiting on pade handshake
+            if (!waiting_pade) begin
                 valid4 <= valid3;
                 valid3 <= valid2;
                 valid2 <= valid1;
                 valid1 <= valid0;
                 valid0 <= 1'b0;
             end else begin
-                // hold pipeline (do not advance valids) while waiting_wake or waiting_pade asserted
+                // hold pipeline while waiting_pade asserted
                 valid4 <= valid4;
                 valid3 <= valid3;
                 valid2 <= valid2;
                 valid1 <= valid1;
                 valid0 <= valid0;
             end
-            // debug: show pause reasons
-            if (waiting_wake || waiting_pade) begin
-                $display("RPLU_DBG_TB: waiting_wake=%b waiting_pade=%b at time=%0t addr_reg=%0d", waiting_wake, waiting_pade, $time, addr_reg);
+            `ifdef SIM
+            if (waiting_pade) begin
+                $display("RPLU_DBG_TB: waiting_pade=%b at time=%0t addr_reg=%0d", waiting_pade, $time, addr_reg);
             end
+            `endif
 
             done <= 1'b0;
-            // update laminar irq from detector
-            laminar_irq <= ld_irq;
-            // debug logs removed for CI
+            laminar_irq <= 1'b0;
 
             if (start) begin
                 // capture inputs and params into stage0
@@ -328,8 +280,9 @@ module rplu_exp #(
                 r_reg <= r_q16;
                 addr_reg <= addr;
                 valid0 <= 1'b1;
-                // start captured (simulation)
+                `ifdef SIM
                 $display("RPLU_DBG_TB: start captured addr=%0d r=%0d time=%0t", addr, r_q16, $time);
+                `endif
             end
 
             // stage1: compute delta
@@ -348,7 +301,6 @@ module rplu_exp #(
                 if ((pade_num_q32[0] == 64'sd0) && (pade_num_q32[1] == 64'sd0) && (pade_num_q32[2] == 64'sd0) && (pade_num_q32[3] == 64'sd0) && (pade_num_q32[4] == 64'sd0)) begin
                     acc_num_reg = 0;
                     acc_den_reg = {{64{1'b0}}, 64'd1}; // denominator == 1
-                    use_pade_flag <= 1'b0;
                 end else begin
                     // Convert x (Q32) to x_q16 for cheaper Horner evaluation
                     x_q16 = x_reg[47:16]; // promote Q32->Q16 by truncation
@@ -357,11 +309,8 @@ module rplu_exp #(
                         // Use Padé evaluator when coefficients present; start the external evaluator and stall until done
                         pade_start <= 1'b1;
                         waiting_pade <= 1'b1;
-                        use_pade_flag <= 1'b1;
-                    end else begin
-                        // Padé disabled during tests — fall back to ROM path
-                        use_pade_flag <= 1'b0;
                     end
+                    // When Padé disabled: fall through to stage4 ROM path
                 end
             end
 

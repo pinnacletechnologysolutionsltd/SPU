@@ -27,6 +27,12 @@ module spu_system (
     input  wire [9:0]  ext_rplu_cfg_addr_fast,
     input  wire [63:0] ext_rplu_cfg_data_fast,
 
+    // PMOD SPI Flash (Autonomous Bootloader)
+    output wire        pmod_sclk,
+    output wire        pmod_cs_n,
+    output wire        pmod_mosi,
+    input  wire        pmod_miso,
+
     // Manifold Telemetry
     output wire [831:0] manifold_state,
     output wire [3:0]   satellite_snaps,
@@ -110,14 +116,71 @@ module spu_system (
     wire [9:0]  ext_piranha_cfg_addr;
     wire [63:0] ext_piranha_cfg_data;
 
+    // -----------------------------------------------------------------
+    // Autonomous Hardware Bootrom & Config Mux
+    // -----------------------------------------------------------------
+    wire        hw_rd_trig;
+    wire [23:0] hw_rd_addr;
+    wire        hw_burst;
+    wire        hw_rd_stop;
+    wire [7:0]  hw_rd_data;
+    wire        hw_rd_done;
+
+    spu_flash_bridge u_flash (
+        .clk(clk_fast),
+        .rst_n(rst_n),
+        .rd_trig(hw_rd_trig),
+        .rd_addr(hw_rd_addr),
+        .burst(hw_burst),
+        .rd_stop(hw_rd_stop),
+        .rd_data(hw_rd_data),
+        .rd_done(hw_rd_done),
+        .flash_sclk(pmod_sclk),
+        .flash_cs_n(pmod_cs_n),
+        .flash_mosi(pmod_mosi),
+        .flash_miso(pmod_miso)
+    );
+
+    wire        hw_boot_done;
+    wire        hw_fifo_wr;
+    wire [77:0] hw_fifo_data;
+
+    spu_hw_bootrom #(.ROM_PAYLOADS(16)) u_bootrom (
+        .clk(clk_fast),
+        .rst_n(rst_n),
+        .rd_trig(hw_rd_trig),
+        .rd_addr(hw_rd_addr),
+        .burst(hw_burst),
+        .rd_stop(hw_rd_stop),
+        .rd_data(hw_rd_data),
+        .rd_done(hw_rd_done),
+        .fifo_wr(hw_fifo_wr),
+        .fifo_data(hw_fifo_data),
+        .fifo_full(1'b0), // The async fifo handles bursts fine behind the mux
+        .boot_done(hw_boot_done)
+    );
+
+    wire        mux_rplu_cfg_wr_en;
+    wire [77:0] mux_rplu_cfg_data;
+
+    spu_cfg_mux u_cfg_mux (
+        .boot_done(hw_boot_done),
+        .hw_fifo_wr(hw_fifo_wr),
+        .hw_fifo_data(hw_fifo_data),
+        .io_fifo_wr(ext_rplu_cfg_wr_en_fast),
+        .io_fifo_data({ext_rplu_cfg_sel_fast, ext_rplu_cfg_material_fast, ext_rplu_cfg_addr_fast, ext_rplu_cfg_data_fast}),
+        .out_fifo_wr(mux_rplu_cfg_wr_en),
+        .out_fifo_data(mux_rplu_cfg_data)
+    );
+
     rplu_cfg_cdc u_cdc_fast2p (
         .clk_src       (clk_fast),
         .rst_n_src     (rst_n),
-        .wr_src        (ext_rplu_cfg_wr_en_fast),
-        .sel_src       (ext_rplu_cfg_sel_fast),
-        .material_src  (ext_rplu_cfg_material_fast),
-        .addr_src      (ext_rplu_cfg_addr_fast),
-        .data_src      (ext_rplu_cfg_data_fast),
+        .wr_src        (mux_rplu_cfg_wr_en),
+        .sel_src       (mux_rplu_cfg_data[77:75]),
+        .material_src  (mux_rplu_cfg_data[74]),
+        .addr_src      (mux_rplu_cfg_data[73:64]),
+        .data_src      (mux_rplu_cfg_data[63:0]),
         .clk_dst       (clk_piranha),
         .rst_n_dst     (rst_n),
         .wr_dst        (ext_piranha_cfg_wr_en),
