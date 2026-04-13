@@ -97,6 +97,8 @@ module spu_13_top (
 
     // ALU output tie-offs (prevent missing-pin warnings in testbenches)
     wire [31:0] A_out, B_out, C_out, D_out;
+    wire davis_violation;
+    wire is_dissonant;
     
     spu_unified_alu_tdm alu_inst (
         .clk          (clk_12mhz),
@@ -120,6 +122,7 @@ module spu_13_top (
         .adaptive_tau_q(32'hFFFF_FFFF),
         .C_in(32'h0), .D_in(32'h0),
         .A_out        (A_out), .B_out        (B_out), .C_out        (C_out), .D_out        (D_out),
+        .davis_violation(davis_violation), .is_dissonant(is_dissonant),
         .result_18    (alu_result_18)
     );
 
