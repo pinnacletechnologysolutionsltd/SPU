@@ -21,8 +21,9 @@ module rplu_exp_tb;
     wire done;
     wire signed [2:0] ratio_cmp_res;
     wire ratio_cmp_valid;
+    wire laminar_irq;
 
-    rplu_exp uut(.clk(clk), .rst_n(rst_n), .start(start), .addr(addr), .material_id(material_id), .r_q16(r_q16), .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data), .v_q16(v_q16), .dissoc(dissoc), .done(done), .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid));
+    rplu_exp uut(.clk(clk), .rst_n(rst_n), .start(start), .addr(addr), .material_id(material_id), .r_q16(r_q16), .wake(1'b0), .wake_addr(10'd0), .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data), .v_q16(v_q16), .dissoc(dissoc), .done(done), .laminar_irq(laminar_irq), .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid));
 
     reg [31:0] vnorm_exp [0:1023];
     reg [0:0]    vnorm_diss [0:1023];
