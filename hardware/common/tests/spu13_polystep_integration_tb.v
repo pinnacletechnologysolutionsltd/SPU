@@ -39,8 +39,8 @@ module spu13_polystep_integration_tb;
         .mem_burst_rd(mem_burst_rd), .mem_burst_wr(mem_burst_wr),
         .mem_addr(mem_addr), .mem_rd_manifold(mem_rd_manifold), .mem_wr_manifold(mem_wr_manifold),
         .mem_burst_done(mem_burst_done),
-        .dec_fast_cfg_wr_en(dec_fast_cfg_wr_en), .dec_fast_cfg_sel(dec_fast_cfg_sel), .dec_fast_cfg_material(dec_fast_cfg_material), .dec_fast_cfg_addr(dec_fast_cfg_addr), .dec_fast_cfg_data(dec_fast_cfg_data),
-        .artery_wr_en(artery_wr_en), .artery_wr_data(artery_wr_data),
+        .dec_fast_cfg_wr_en(dec_fast_cfg_wr_en), .dec_fast_cfg_sel(dec_fast_cfg_sel), .dec_fast_cfg_material(dec_fast_cfg_material), .dec_fast_cfg_addr(dec_fast_cfg_addr), .dec_fast_cfg_data(dec_fast_cfg_data), .phinary_cfg(16'd0),
+        .artery_wr_en(artery_wr_en), .artery_wr_data(artery_wr_data), .ratio_cmp_res(), .ratio_cmp_valid(), .scale_table_out(), .scale_overflow_out(),
         .current_axis_ptr(), .current_axis_data(),
         .manifold_out(), .bloom_complete(), .is_janus_point(),
         .inst_valid(inst_valid), .inst_word(inst_word)
