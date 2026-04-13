@@ -104,6 +104,8 @@ module spu_13_top (
         .done         (alu_done),
         .sync_alert   (sync_alert),
         .led_status   (),
+        .operand_A    (operand_A),
+        .operand_B    (operand_B),
         .A_in         (operand_A),
         .B_in         (operand_B),
         .F_rat        ({16'b0, vault_p_q12}),
