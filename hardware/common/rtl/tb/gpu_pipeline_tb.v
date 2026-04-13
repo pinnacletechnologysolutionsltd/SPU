@@ -3,6 +3,7 @@
 
 `timescale 1ns/1ps
 
+/* verilator lint_off PINMISSING */
 `include "spu_hal_interface.vh"
 
 module gpu_pipeline_tb;
@@ -84,4 +85,5 @@ module gpu_pipeline_tb;
         $finish;
     end
 
+/* verilator lint_on PINMISSING */
 endmodule
