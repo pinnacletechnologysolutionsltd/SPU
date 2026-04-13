@@ -14,13 +14,17 @@ module spu_affine_raster (
 
     // Algebraic Area Calculation (Triple Quad Formula)
     // Area(ABC) = (Ax(By-Cy) + Bx(Cy-Ay) + Cx(Ay-By))
-    wire signed [31:0] area2 = (ax * (by - cy)) + (bx * (cy - ay)) + (cx * (ay - by));
+    wire signed [31:0] area2;
+    assign area2 = (ax * (by - cy)) + (bx * (cy - ay)) + (cx * (ay - by));
     
     // Barycentric Weight Calculation
     // w = Weight * Area
-    wire signed [31:0] w1 = (px * (by - cy)) + (bx * (cy - py)) + (cx * (py - by));
-    wire signed [31:0] w2 = (ax * (py - cy)) + (px * (cy - ay)) + (cx * (ay - py));
-    wire signed [31:0] w3 = area2 - w1 - w2;
+    wire signed [31:0] w1;
+    assign w1 = (px * (by - cy)) + (bx * (cy - py)) + (cx * (py - by));
+    wire signed [31:0] w2;
+    assign w2 = (ax * (py - cy)) + (px * (cy - ay)) + (cx * (ay - py));
+    wire signed [31:0] w3;
+    assign w3 = area2 - w1 - w2;
     
     // Inside if all weights have the same sign (Laminar logic)
     // If area2 > 0, weights must be positive. If area2 < 0, negative.

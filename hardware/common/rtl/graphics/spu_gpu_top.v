@@ -142,7 +142,8 @@ module spu_gpu_top #(
     );
     // Expose upper 64 bits (axes 0+1) as the legacy fragment_energy wire
     // downstream modules use for display output.
-    wire [63:0] fragment_energy = fragment_energy_n[127:64];
+    wire [63:0] fragment_energy;
+    assign fragment_energy = fragment_energy_n[127:64];
 
     // --- 5. VGA Render Signals & Framebuffer ---
     wire [15:0] vga_rd_x, vga_rd_y;
@@ -221,7 +222,8 @@ module spu_gpu_top #(
     wire [7:0]  cmd_overlay_energy;
     wire [23:0] cmd_overlay_rgb;
     wire [15:0] cp_cmd_data = 16'h0; // Placeholder for UI command word
-    wire        cp_cmd_valid = 1'b0;
+    wire        cp_cmd_valid;
+    assign cp_cmd_valid = 1'b0;
 
     spu_lithic_overlay #(
         .RES_X(RES_X), .RES_Y(RES_Y)
@@ -277,7 +279,8 @@ module spu_gpu_top #(
     
     // --- [NEW] 10. Phase-Angle Context Switcher ---
     wire [22:0] translated_psram_addr;
-    wire [22:0] logical_psram_addr = m_psram_rd_en ? m_psram_addr : pour_psram_addr;
+    wire [22:0] logical_psram_addr;
+    assign logical_psram_addr = m_psram_rd_en ? m_psram_addr : pour_psram_addr;
     
     spu_phase_switch u_phase_sw (
         .clk(clk), .reset(reset),

@@ -38,7 +38,8 @@ generate
     // ─────────────────────────────────────────────────────────────────────────
     if (DEVICE == "GW2A" && ACCUM == 1) begin : gen_alu54d
 
-        wire signed [53:0] c54   = {{18{C[35]}}, C};
+        wire signed [53:0] c54;
+        assign c54 = {{18{C[35]}}, C};
         wire signed [53:0] dout54;
 
         ALU54D #(

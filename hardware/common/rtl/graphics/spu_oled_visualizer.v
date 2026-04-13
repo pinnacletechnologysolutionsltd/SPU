@@ -14,8 +14,10 @@ module spu_oled_visualizer (
 );
 
     // Internal Page/Column Mapping
-    wire [2:0] page = pixel_idx[9:7];
-    wire [6:0] col  = pixel_idx[6:0];
+    wire [2:0] page;
+    assign page = pixel_idx[9:7];
+    wire [6:0] col;
+    assign col = pixel_idx[6:0];
 
     // Strip Chart History (64 columns)
     reg [5:0] power_history [0:63];
@@ -23,11 +25,14 @@ module spu_oled_visualizer (
     reg [15:0] update_timer;
 
     // Power Mapping: 0-63 uW -> 0-63 Pixels (Vertical)
-    wire [5:0] current_power = (microwatts > 16'd63) ? 6'd63 : microwatts[5:0];
+    wire [5:0] current_power;
+    assign current_power = (microwatts > 16'd63) ? 6'd63 : microwatts[5:0];
 
     // Combinational helpers for right hemisphere indexing
-    wire [5:0] h_idx = col[5:0] + write_ptr;
-    wire [5:0] p_val = power_history[h_idx];
+    wire [5:0] h_idx;
+    assign h_idx = col[5:0] + write_ptr;
+    wire [5:0] p_val;
+    assign p_val = power_history[h_idx];
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin

@@ -13,18 +13,24 @@ module spu_impressionist_rotor (
     // To maintain integer exactness, we use t_num/t_den
     // Let t = N/D. Then R = (D^2 - N^2) + 2ND*sqrt(3) / (D^2 + 3N^2)
     
-    wire signed [31:0] N2 = t_num * t_num;
-    wire signed [31:0] D2 = t_den * t_den;
-    wire signed [31:0] ND = t_num * t_den;
+    wire signed [31:0] N2;
+    assign N2 = t_num * t_num;
+    wire signed [31:0] D2;
+    assign D2 = t_den * t_den;
+    wire signed [31:0] ND;
+    assign ND = t_num * t_den;
     
     // Rational Polynomial expansion:
     // a_out = a*(D^2 - N^2) + b*(3 * 2ND)
     // b_out = a*(2ND) + b*(D^2 - N^2)
     // All scaled by (D^2 + 3N^2) which acts as the 'Normalization Field'
     
-    wire signed [31:0] norm = D2 + (N2 * 3);
-    wire signed [31:0] rot_a = (D2 - N2);
-    wire signed [31:0] rot_b = (ND << 1);
+    wire signed [31:0] norm;
+    assign norm = D2 + (N2 * 3);
+    wire signed [31:0] rot_a;
+    assign rot_a = (D2 - N2);
+    wire signed [31:0] rot_b;
+    assign rot_b = (ND << 1);
     
     // Final Rational Application (with normalization)
     assign a_out = ((a_in * rot_a) + (b_in * rot_b * 3)) / norm;

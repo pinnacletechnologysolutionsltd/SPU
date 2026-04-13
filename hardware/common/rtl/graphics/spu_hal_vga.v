@@ -70,14 +70,16 @@ module spu_hal_vga #(
     end
 
     // --- Active Display Region ---
-    wire active = (h_cnt < H_VISIBLE) && (v_cnt < V_VISIBLE);
+    wire active;
+    assign active = (h_cnt < H_VISIBLE) && (v_cnt < V_VISIBLE);
 
     // --- Resolution Scaling & Centering ---
     // The internal SPU memory is (RES_X x RES_Y), typically 240x240.
     // We pixel-double the 240x240 to 480x480 to fit the 480 vertical lines perfectly.
     // We center the 480 wide image horizontally inside the 640 wide screen.
     // X Offset = (640 - 480) / 2 = 80
-    wire inside_frame = (h_cnt >= 80) && (h_cnt < 80 + (RES_X * 2)) && (v_cnt < (RES_Y * 2));
+    wire inside_frame;
+    assign inside_frame = (h_cnt >= 80) && (h_cnt < 80 + (RES_X * 2)) && (v_cnt < (RES_Y * 2));
     
     assign rd_x = (h_cnt - 80) >> 1; // Divide by 2 for pixel doubling
     assign rd_y = v_cnt >> 1;        // Divide by 2 for pixel doubling

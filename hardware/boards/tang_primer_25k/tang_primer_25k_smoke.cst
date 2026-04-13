@@ -1,0 +1,24 @@
+// tang_primer_25k_smoke.cst
+// Minimal physical constraints for Tang Primer 25K smoke test
+// Target: GW5A-LV25MG121NES (Tang Primer 25K)
+
+// ─── System clock (50 MHz crystal) ──────────────────────────────────────
+IO_LOC  "clk_in"         E2;
+IO_PORT "clk_in"         IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+
+// ─── Reset Button (using onboard Key0) ──────────────────────────────────
+// Note: You must press Key0 to release rst_n after programming
+IO_LOC  "rst_n"          H11;
+IO_PORT "rst_n"          IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// ─── User LEDs (active-low, 3 on-board + 3 on free GPIO) ────────────────
+IO_LOC  "led_out"        L6;  // LED0
+IO_PORT "led_out"        IO_TYPE=LVCMOS33 DRIVE=8;
+
+IO_LOC  "smoke_ok"       E8;  // LED1
+IO_PORT "smoke_ok"       IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── RP2350 UART ────────────────────────────────────────────────────────
+// RP2350 GP5 RX ← FPGA uart_tx (C3)
+IO_LOC  "uart_tx"        C3;
+IO_PORT "uart_tx"        IO_TYPE=LVCMOS33 DRIVE=8;

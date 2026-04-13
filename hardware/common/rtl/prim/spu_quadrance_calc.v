@@ -7,10 +7,14 @@ module quadrance_calc (
     output wire [31:0] q_out 
 );
     // These 16x16 multipliers fit exactly into the UP5K DSP slices.
-    wire signed [31:0] sq_a = a * a;
-    wire signed [31:0] sq_b = b * b;
-    wire signed [31:0] sq_c = c * c;
-    wire signed [31:0] sq_d = d * d;
+    wire signed [31:0] sq_a;
+    assign sq_a = a * a;
+    wire signed [31:0] sq_b;
+    assign sq_b = b * b;
+    wire signed [31:0] sq_c;
+    assign sq_c = c * c;
+    wire signed [31:0] sq_d;
+    assign sq_d = d * d;
 
     assign q_out = (sq_a + sq_b + sq_c + sq_d) >> 1; 
 endmodule

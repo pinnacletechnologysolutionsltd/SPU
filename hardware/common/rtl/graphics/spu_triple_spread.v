@@ -24,12 +24,17 @@ module spu_triple_spread (
     output wire        valid
 );
 
-    wire [63:0] n1 = {48'h0, s1_n};
-    wire [63:0] n2 = {48'h0, s2_n};
-    wire [63:0] n3 = {48'h0, s3_n};
-    wire [63:0] dd = {48'h0, d};
+    wire [63:0] n1;
+    assign n1 = {48'h0, s1_n};
+    wire [63:0] n2;
+    assign n2 = {48'h0, s2_n};
+    wire [63:0] n3;
+    assign n3 = {48'h0, s3_n};
+    wire [63:0] dd;
+    assign dd = {48'h0, d};
 
-    wire [63:0] sum_n    = n1 + n2 + n3;
+    wire [63:0] sum_n;
+    assign sum_n = n1 + n2 + n3;
     wire [63:0] sum_n_sq = sum_n * sum_n;                      // (Σsi_n)²
     wire [63:0] sum_sq   = n1*n1 + n2*n2 + n3*n3;             // Σsi_n²
     wire [63:0] prod     = n1 * n2 * n3;                       // Πsi_n

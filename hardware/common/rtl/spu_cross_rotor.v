@@ -12,10 +12,14 @@ module spu_cross_rotor (
     output wire [63:0] q_prime   // {A_new[31:0], B_new[31:0]}
 );
 
-    wire signed [31:0] A  = $signed(q_axis[63:32]);
-    wire signed [31:0] B  = $signed(q_axis[31:0]);
-    wire signed [31:0] Ra = $signed(r_rotor[63:32]);
-    wire signed [31:0] Rb = $signed(r_rotor[31:0]);
+    wire signed [31:0] A;
+    assign A = $signed(q_axis[63:32]);
+    wire signed [31:0] B;
+    assign B = $signed(q_axis[31:0]);
+    wire signed [31:0] Ra;
+    assign Ra = $signed(r_rotor[63:32]);
+    wire signed [31:0] Rb;
+    assign Rb = $signed(r_rotor[31:0]);
 
     // Stage 1: DSP Multiplication (registered)
     reg signed [63:0] prod_aa, prod_bb, prod_ab, prod_ba;
@@ -36,8 +40,10 @@ module spu_cross_rotor (
 
     // Stage 2: Cross-product assembly (combinatorial)
     // (A + B*sqrt3)(Ra + Rb*sqrt3) = (A*Ra + 3*B*Rb) + (A*Rb + B*Ra)*sqrt3
-    wire signed [63:0] nA_full = prod_aa + ((prod_bb << 1) + prod_bb);
-    wire signed [63:0] nB_full = prod_ab + prod_ba;
+    wire signed [63:0] nA_full;
+    assign nA_full = prod_aa + ((prod_bb << 1) + prod_bb);
+    wire signed [63:0] nB_full;
+    assign nB_full = prod_ab + prod_ba;
 
     // Q12*Q12 = Q24; shift right 12 to restore Q12 (extract bits [43:12])
     assign q_prime[63:32] = nA_full[43:12];

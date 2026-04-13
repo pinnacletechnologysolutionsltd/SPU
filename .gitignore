@@ -8,6 +8,12 @@
 *.vvp
 tmp_*.vvp
 
+# Backup files
+*.bak
+
+# Root-level test logs
+*.log
+
 # ─── Build directory (all synthesis/PnR/pack outputs) ─────────────────────
 build/*.json
 build/*.fs
@@ -41,16 +47,9 @@ pico_sdk_import.cmake
 software/spu_inhale
 
 # Editor / OS
-.DS_Store
 *.swp
 *.swo
 *~
-
-# ─── Excluded directories ─────────────────────────────────────────────────
-# Third-party reference material — not part of our original source tree.
-# The project's own documentation in docs/ will capture the key concepts.
-reference/
-theory/
 
 # macOS metadata
 .DS_Store
@@ -62,12 +61,6 @@ theory/
 # Third-party reference material — project docs/ will cover the concepts.
 reference/
 theory/
-
-# macOS metadata
-.DS_Store
-._.DS_Store
-**/.DS_Store
-**/._.DS_Store
 
 # RP2040/RP2350 CMake build directories
 hardware/rp2040/build/

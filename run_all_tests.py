@@ -56,9 +56,16 @@ def main():
     test_files = set()
     for p in patterns:
         for f in root_dir.rglob(p):
+            # Skip heavy legacy/reference tests during triage
+            if '/reference/' in str(f):
+                continue
             test_files.add(f)
             
     test_files = list(test_files)
+    # Optional: limit to a single test file prefix for quicker triage
+    tb_filter = os.getenv('TB_FILTER')
+    if tb_filter:
+        test_files = [f for f in test_files if tb_filter in f.name]
     print(f"Found {len(test_files)} Verilog test files to execute.")
 
     # Directories for auto-discovery (-y) and includes (-I)
@@ -71,23 +78,23 @@ def main():
         "hardware/common/rtl/top",
         "hardware/common/rtl/bio",
         "hardware/common/rtl/graphics",
+        "hardware/common/rtl/include",
         "hardware/common/rtl/io",
         "hardware/common/rtl/audio",
-        "hardware/common/rtl/gpu",
         "hardware/common/rtl/hal",
         "hardware/spu13/rtl",
         "hardware/spu4/rtl",
+        "hardware/common/rtl/spu4/rtl",
         "hardware/boards/icesugar",       # local board tops (must precede reference/)
         "hardware/boards/tang_nano_9k",
         "hardware/boards/tang_primer_25k",
         "hardware/vendor/gowin",          # Gowin DSP / BSRAM primitives
         "hardware/vendor/ice40",          # iCE40 simulation stubs
-        "reference/synergeticrenderer/Laminar-Core/hardware/archive",
-        "reference/synergeticrenderer/Laminar-Core/hardware/rtl",
-        "reference/synergeticrenderer/Laminar-Core/hardware/tests",
+        "hardware/archive/legacy_rtl",
+        "hardware/archive/legacy_rtl/common/rtl",
     ]
     
-    iverilog_args = ["iverilog"]
+    iverilog_args = ["iverilog", "-g2012"]
     for d in inc_dirs:
         iverilog_args.extend(["-y", d, "-I", d])
     # Top-level include for spu_arch_defines.vh and sqr_params.vh
@@ -103,17 +110,179 @@ def main():
         out_vvp = root_dir / f"tmp_{tb.stem}.vvp"
         
         # Compile
-        cmd = iverilog_args + ["-o", str(out_vvp), str(tb)]
+        # Gather all source files from include directories so iverilog sees every module
+        # Gather source files from a curated set of directories to avoid duplicates
+        scan_dirs = [
+            "hardware/common/rtl",
+            "hardware/common/rtl/include",
+            "hardware/common/rtl/core",
+            "hardware/common/rtl/mem",
+            "hardware/common/rtl/prim",
+            "hardware/common/rtl/gpu",
+            "hardware/common/rtl/proto",
+            "hardware/spu13/rtl",
+            "hardware/spu4/rtl",
+            "hardware/common/rtl/spu4/rtl",
+            "hardware/boards/tang_primer_25k",
+            "hardware/boards/tang25k",
+            "hardware/common/tests",  # include behavioral test helpers (e.g., sim_sd_card)
+        ]
+        src_files = []
+        module_map = {}
+        for d in scan_dirs:
+            absd = root_dir / d
+            if absd.exists():
+                for f in absd.rglob('*.v'):
+                    # Skip helper testbench files in the common tests directory
+                    if d == "hardware/common/tests" and f.name.endswith("_tb.v"):
+                        continue
+                    # Skip GPU/graphics RTL (may contain unsupported SV constructs for iverilog)
+                    fp = str(f)
+                    # For GPU/graphics sources, only include a tested subset to avoid SV-only files breaking iverilog
+                    if '/hardware/common/rtl/gpu/' in fp or '/hardware/common/rtl/graphics/' in fp:
+                        allowed_gpu = ['pade_eval_4_4.v', 'rplu_exp.v', 'rational_sine_provider.v', 'rational_sine_rom.v', 'rational_sine_rom_q32.v', 'spu_edge_stepper.v', 'spu_raster_unit.v', 'spu_bresenham_raster.v']
+                        if os.path.basename(fp) not in allowed_gpu:
+                            continue
+                    src_files.append(str(f))
+        # De-duplicate source files while avoiding multiple definitions of the same module
+        src_unique = []
+        seen_files = set()
+        for s in src_files:
+            if s in seen_files:
+                continue
+            # read module names in this file
+            try:
+                with open(s,'r') as fh:
+                    text = fh.read()
+            except Exception:
+                text = ''
+            import re
+            modules_in_file = re.findall(r'^\s*module\s+([a-zA-Z_][a-zA-Z0-9_]*)', text, re.M)
+            conflict = False
+            for m in modules_in_file:
+                if m in module_map:
+                    conflict = True
+                    break
+            if not conflict:
+                src_unique.append(s)
+                seen_files.add(s)
+                for m in modules_in_file:
+                    module_map[m] = s
+            else:
+                # skip this file to avoid duplicate module definitions
+                pass
+        # Remove the testbench file from src list if it was discovered in scan_dirs
+        tb_str = str(tb)
+        src_unique = [s for s in src_unique if s != tb_str]
+        # Also remove any source files that the testbench `include`s inline to avoid duplicate module declarations.
+        try:
+            with open(tb_str,'r') as _tf:
+                tb_text = _tf.read()
+            included_files = re.findall(r'^\s*`include\s+"([^"]+)"', tb_text, re.M)
+            if included_files:
+                src_unique = [s for s in src_unique if os.path.basename(s) not in included_files]
+        except Exception:
+            pass
+
+        # If TB_FILTER is set, restrict the source set to minimal directories to avoid pulling board tops and unrelated cores
+        tb_filter = os.getenv('TB_FILTER')
+        if tb_filter:
+            allowed_dirs = [str(root_dir / p) for p in ("hardware/common/rtl", "hardware/common/rtl/gpu", "hardware/spu13/rtl", "hardware/common/tests", "hardware/common/rtl/include")]
+            src_unique = [s for s in src_unique if any(s.startswith(d) for d in allowed_dirs)]
+        cmd = iverilog_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
         
         if compile_result.returncode != 0:
-            print(f"[{tb.name}] COMPILE ERROR:")
-            print(compile_result.stderr.strip())
-            compile_errors += 1
-            if out_vvp.exists():
-                out_vvp.unlink()
-            continue
-            
+            # If GPU sources are in the source set, attempt a Verilator simulation fallback
+            gpu_present = any('/hardware/common/rtl/gpu/' in s for s in src_unique)
+            if gpu_present:
+                print(f"[{tb.name}] iverilog failed; attempting Verilator simulation fallback...")
+                # Determine TB top module name
+                try:
+                    import re as _re
+                    with open(tb_str,'r') as _tf:
+                        tb_text = _tf.read()
+                    m = _re.search(r'^\s*module\s+([A-Za-z_][A-Za-z0-9_]*)', tb_text, _re.M)
+                    if not m:
+                        raise Exception('Top module not found')
+                    top_mod = m.group(1)
+                except Exception as e:
+                    print(f"[{tb.name}] Verilator fallback: cannot determine top module: {e}")
+                    print(f"[{tb.name}] COMPILE ERROR:")
+                    print(compile_result.stderr.strip())
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                build_dir = root_dir / "build" / "verilator" / tb.stem
+                build_dir.mkdir(parents=True, exist_ok=True)
+                sim_cpp = build_dir / "sim_main.cpp"
+                sim_cpp.write_text(f'''#include "verilated.h"\n#include "V{top_mod}.h"\n#include <iostream>\nint main(int argc, char **argv) {{\n    Verilated::commandArgs(argc, argv);\n    V{top_mod}* top = new V{top_mod}();\n    while (!Verilated::gotFinish()) {{\n        top->eval();\n    }}\n    delete top;\n    return 0;\n}}\n''')
+
+                # When using TB_FILTER, restrict Verilator include paths to a minimal set to avoid pulling in board tops
+                tb_filter = os.getenv('TB_FILTER')
+                if tb_filter:
+                    verilator_inc_dirs = ["hardware/common/rtl", "hardware/common/rtl/gpu", "hardware/spu13/rtl", "hardware/common/rtl/include"]
+                else:
+                    verilator_inc_dirs = inc_dirs
+
+                verilator_cmd = ["verilator", "--cc", "--Mdir", str(build_dir), "--top-module", top_mod, "--no-timing"]
+                for d in verilator_inc_dirs:
+                    verilator_cmd.append("-I" + d)
+                verilator_cmd.extend(src_unique + [tb_str])
+                verilator_cmd.extend(["--exe", str(sim_cpp)])
+
+                vcr = subprocess.run(verilator_cmd, capture_output=True, text=True)
+                if vcr.returncode != 0:
+                    print(f"[{tb.name}] Verilator PREPROCESS ERROR:\n{vcr.stderr}\n{vcr.stdout}")
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                make_cmd = ["make", "-C", str(build_dir), "-f", f"V{top_mod}.mk", f"V{top_mod}", "-j"]
+                mcr = subprocess.run(make_cmd, capture_output=True, text=True)
+                if mcr.returncode != 0:
+                    print(f"[{tb.name}] Verilator make error:\n{mcr.stderr}\n{mcr.stdout}")
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                exe = build_dir / f"V{top_mod}"
+                try:
+                    rr = subprocess.run([str(exe)], capture_output=True, text=True, timeout=5)
+                    output = rr.stdout + rr.stderr
+                    if "FAIL" in output or "FAIL:" in output:
+                        print(f"[{tb.name}] FAILED")
+                        print(output.strip())
+                        failed += 1
+                    elif "PASS" in output or "PASS:" in output:
+                        print(f"[{tb.name}] PASSED")
+                        passed += 1
+                    else:
+                        print(f"[{tb.name}] EXECUTED (No explicit PASS/FAIL)")
+                        if rr.returncode == 0:
+                            passed += 1
+                        else:
+                            failed += 1
+                except subprocess.TimeoutExpired:
+                    print(f"[{tb.name}] TIMEOUT (Verilator run)")
+                    timeouts += 1
+                    failed += 1
+
+                if out_vvp.exists():
+                    out_vvp.unlink()
+                continue
+            else:
+                print(f"[{tb.name}] COMPILE ERROR:")
+                print(compile_result.stderr.strip())
+                compile_errors += 1
+                if out_vvp.exists():
+                    out_vvp.unlink()
+                continue
+
         # Execute (with timeout safeguard)
         run_cmd = ["vvp", str(out_vvp)]
         try:

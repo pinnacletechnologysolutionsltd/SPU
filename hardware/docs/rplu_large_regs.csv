@@ -1,0 +1,16 @@
+"hardware/common/rtl/spu_whisper_bridge.v",135,5189,0,831,0,0,0
+"hardware/common/rtl/core/spu_core.v",165,6338,0,831,0,0,0
+"hardware/common/rtl/proto/spu_pmod_loader.v",57,1773,0,831,0,0,0
+"hardware/common/rtl/prim/spu_psram_ctrl.v",258,10196,0,831,1,0,0
+"hardware/common/rtl/prim/spu_rotary_gate.v",42,1649,0,831,0,0,0
+"hardware/common/rtl/top/spu_system.v",302,13185,0,831,0,0,0
+"hardware/common/rtl/top/spu_pell_cache.v",44,1658,0,831,0,0,0
+"hardware/common/rtl/bio/spu_fluid_solver.v",55,1903,0,831,0,0,0
+"hardware/common/rtl/bio/spu_proprioception.v",56,1981,0,831,0,0,0
+"hardware/common/rtl/gpu/laminar_detector.v",125,5164,0,1023,0,0,0
+"hardware/common/tests/spu_psram_dual_tb.v",163,5839,0,831,0,1,0
+"hardware/common/tests/spu_mem_bridge_sdram_tb.v",238,10478,0,831,1,0,0
+"hardware/common/tests/spu_spi_slave_tb.v",164,5378,0,831,0,0,0
+"hardware/common/tests/spu_pell_cache_tb.v",89,2872,0,831,0,0,0
+"hardware/common/tests/spu_whisper_bridge_v2_tb.v",189,6577,0,831,0,0,0
+"hardware/common/tests/spu_mem_bridge_ddr3_tb.v",279,11529,0,831,0,0,0

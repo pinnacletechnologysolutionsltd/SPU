@@ -58,35 +58,56 @@ module spu4_sentinel (
     reg               p_seeding;       // marks this as the seed-capture beat
     reg               p_henosis;       // Henosis fired in this beat
 
-    wire signed [15:0] B_s = $signed(B_out);
-    wire signed [15:0] C_s = $signed(C_out);
-    wire signed [15:0] D_s = $signed(D_out);
+    wire signed [15:0] B_s;
+    assign B_s = $signed(B_out);
+    wire signed [15:0] C_s;
+    assign C_s = $signed(C_out);
+    wire signed [15:0] D_s;
+    assign D_s = $signed(D_out);
 
     // Henosis fold operates on stage-0 rotation result (cuts path: no quadrance needed)
-    wire signed [47:0] nB_full = ($signed(F) * B_s) + ($signed(H) * C_s) + ($signed(G) * D_s);
-    wire signed [47:0] nC_full = ($signed(G) * B_s) + ($signed(F) * C_s) + ($signed(H) * D_s);
-    wire signed [47:0] nD_full = ($signed(H) * B_s) + ($signed(G) * C_s) + ($signed(F) * D_s);
+    wire signed [47:0] nB_full;
+    assign nB_full = ($signed(F) * B_s) + ($signed(H) * C_s) + ($signed(G) * D_s);
+    wire signed [47:0] nC_full;
+    assign nC_full = ($signed(G) * B_s) + ($signed(F) * C_s) + ($signed(H) * D_s);
+    wire signed [47:0] nD_full;
+    assign nD_full = ($signed(H) * B_s) + ($signed(G) * C_s) + ($signed(F) * D_s);
 
-    wire signed [15:0] nA = $signed(A_out);
-    wire signed [15:0] nB = nB_full[27:12];
-    wire signed [15:0] nC = nC_full[27:12];
-    wire signed [15:0] nD = nD_full[27:12];
+    wire signed [15:0] nA;
+    assign nA = $signed(A_out);
+    wire signed [15:0] nB;
+    assign nB = nB_full[27:12];
+    wire signed [15:0] nC;
+    assign nC = nC_full[27:12];
+    wire signed [15:0] nD;
+    assign nD = nD_full[27:12];
 
     // ── Stage-1 combinatorial (from pipeline registers) ───────────────────
-    wire signed [31:0] p_A2 = $signed(p_A) * $signed(p_A);
-    wire signed [31:0] p_B2 = $signed(p_B) * $signed(p_B);
-    wire signed [31:0] p_C2 = $signed(p_C) * $signed(p_C);
-    wire signed [31:0] p_D2 = $signed(p_D) * $signed(p_D);
-    wire [31:0] p_Q  = p_A2 + p_B2 + p_C2 + p_D2;
+    wire signed [31:0] p_A2;
+    assign p_A2 = $signed(p_A) * $signed(p_A);
+    wire signed [31:0] p_B2;
+    assign p_B2 = $signed(p_B) * $signed(p_B);
+    wire signed [31:0] p_C2;
+    assign p_C2 = $signed(p_C) * $signed(p_C);
+    wire signed [31:0] p_D2;
+    assign p_D2 = $signed(p_D) * $signed(p_D);
+    wire [31:0] p_Q;
+    assign p_Q = p_A2 + p_B2 + p_C2 + p_D2;
 
-    wire signed [31:0] qd = $signed(p_Q) - $signed(quadrance_seed);
-    wire drift_ok = (qd >= -4) && (qd <= 4);
+    wire signed [31:0] qd;
+    assign qd = $signed(p_Q) - $signed(quadrance_seed);
+    wire drift_ok;
+    assign drift_ok = (qd >= -4) && (qd <= 4);
 
     // Henosis threshold check (stage-1: uses registered pipe values)
-    wire p_henosis_needed = seeded && (p_Q > (quadrance_seed << 1));
-    wire signed [15:0] B_lam = p_henosis_needed ? ($signed(p_B) >>> 1) : p_B;
-    wire signed [15:0] C_lam = p_henosis_needed ? ($signed(p_C) >>> 1) : p_C;
-    wire signed [15:0] D_lam = p_henosis_needed ? ($signed(p_D) >>> 1) : p_D;
+    wire p_henosis_needed;
+    assign p_henosis_needed = seeded && (p_Q > (quadrance_seed << 1));
+    wire signed [15:0] B_lam;
+    assign B_lam = p_henosis_needed ? ($signed(p_B) >>> 1) : p_B;
+    wire signed [15:0] C_lam;
+    assign C_lam = p_henosis_needed ? ($signed(p_C) >>> 1) : p_C;
+    wire signed [15:0] D_lam;
+    assign D_lam = p_henosis_needed ? ($signed(p_D) >>> 1) : p_D;
 
     assign janus_stable  = !seeded || drift_ok;
     assign test_pass     = (heartbeat_count == 10'd1000) && janus_stable;

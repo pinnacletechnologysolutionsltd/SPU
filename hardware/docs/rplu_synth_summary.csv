@@ -1,0 +1,11 @@
+module,target,cells,wire_bits,memories,errors
+davis_gate_dsp,gw1n,0,0,0,0
+laminar_detector,gw1n,0,0,0,0
+pade_eval_4_4,gw1n,0,0,0,0
+rplu_exp,gw1n,0,0,0,0
+rplu_skel,gw1n,0,0,0,0
+davis_gate_dsp,ice40,0,0,0,1
+laminar_detector,ice40,0,0,0,1
+pade_eval_4_4,ice40,0,0,0,1
+rplu_exp,ice40,0,0,0,1
+rplu_skel,ice40,0,0,0,1

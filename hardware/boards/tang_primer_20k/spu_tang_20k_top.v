@@ -185,6 +185,7 @@ module spu_tang_20k_top (
         .phi_8           (phi_8),
         .phi_13          (phi_13),
         .phi_21          (phi_21),
+        .phinary_cfg     (16'h0001),
         .mem_ready       (mem_ready),
         .mem_burst_rd    (mem_burst_rd),
         .mem_burst_wr    (mem_burst_wr),
@@ -196,7 +197,9 @@ module spu_tang_20k_top (
         .current_axis_data(),
         .manifold_out    (manifold_out),
         .bloom_complete  (),
-        .is_janus_point  (is_janus_point)
+        .is_janus_point  (is_janus_point),
+        .inst_valid      (1'b0),
+        .inst_word       (64'd0)
     );
 
     // ------------------------------------------------------------------ //

@@ -15,14 +15,38 @@ module spu13_core #(
     input  wire         phi_13,         // Compute Pulse
     input  wire         phi_21,         // Commit Pulse
 
+    // RPLU fast-domain cfg inputs
+    input  wire         dec_fast_cfg_wr_en,
+    input  wire [2:0]   dec_fast_cfg_sel,
+    input  wire         dec_fast_cfg_material,
+    input  wire [9:0]   dec_fast_cfg_addr,
+    input  wire [63:0]  dec_fast_cfg_data,
+    // Phinary config (bits: [0]=enable, [1]=chirality)
+    input  wire [15:0]  phinary_cfg,
+
     // Sovereign Memory Interface
     `MANIFOLD_SIGS,
 
     // 13-Axis Manifold Snapshot (for Artery TX)
+    // Artery writer outputs (one-cycle pulse + 64-bit chord) — driven by core when it emits a chord
+    output reg                    artery_wr_en,
+    output reg [63:0]             artery_wr_data,
+
     output wire [3:0]   current_axis_ptr,
     output wire [63:0]  current_axis_data,
+
+    // Instruction input (optional). When unused, tie inst_valid=0 at instantiation.
+    input  wire                    inst_valid,
+    input  wire [63:0]             inst_word,
+
+    // RPLU comparator outputs (fast domain)
+    output wire signed [2:0]       ratio_cmp_res,
+    output wire                    ratio_cmp_valid,
+
     output reg [`MANIFOLD_WIDTH-1:0] manifold_out,
     output wire                      bloom_complete,
+    output wire [(`MANIFOLD_AXES*4)-1:0] scale_table_out,
+    output wire [`MANIFOLD_AXES-1:0]      scale_overflow_out,
     output reg                       is_janus_point
 );
 
@@ -41,6 +65,12 @@ module spu13_core #(
 
     assign current_axis_ptr = axis_ptr;
     assign current_axis_data = manifold_reg[axis_ptr*64 +: 64];
+
+    // Phinary control exported from top-level config
+    wire phinary_enable;
+    assign phinary_enable = phinary_cfg[0];
+    wire phinary_chirality;
+    assign phinary_chirality = phinary_cfg[1];
 
     // 3. Stage 1: Rotor & Axis Fetch (Pulse 8)
     // Vault v2.0: Pell Octave tracking — rot_en driven by sequencer pulse.
@@ -61,9 +91,45 @@ module spu13_core #(
     // Scale raw Pell integers (from vault) to Q12 for the cross-rotor.
     // Steps 0-7: P in {1,2,7,26,97,362,1351,5042} — all fit in 32-bit Q12
     //            (max P*4096 = 5042*4096 = 20,652,032 < 2^25, safe in int32).
-    wire [31:0] rotor_p_q12 = {16'b0, current_rotor[31:16]} << 12;
-    wire [31:0] rotor_q_q12 = {16'b0, current_rotor[15:0]}  << 12;
-    wire [63:0] rotor_q12   = {rotor_p_q12, rotor_q_q12};
+    wire [31:0] rotor_p_q12;
+    assign rotor_p_q12 = {16'b0, current_rotor[31:16]} << 12;
+    wire [31:0] rotor_q_q12;
+    assign rotor_q_q12 = {16'b0, current_rotor[15:0]}  << 12;
+    wire [63:0] rotor_q12;
+    assign rotor_q12 = {rotor_p_q12, rotor_q_q12};
+
+    // SPU-13 laminar lattice instantiation (13 laminar_node primitives)
+    wire [`MANIFOLD_WIDTH-1:0] lattice_manifold;
+    wire [(`MANIFOLD_AXES*4)-1:0] lattice_shifts;
+    wire [`MANIFOLD_AXES-1:0]      lattice_overflows;
+
+    spu13_lattice #(.WIDTH(64), .NODES(13)) u_spu13 (
+        .clk(clk),
+        .rst_n(rst_n),
+        .enable(phinary_enable),
+        .manifold_in(manifold_reg),
+        .manifold_out(lattice_manifold),
+        .scale_shifts(lattice_shifts),
+        .scale_overflows(lattice_overflows)
+    );
+
+    // Scale manager: stores per-axis normalization shifts and overflow flags
+    wire [(`MANIFOLD_AXES*4)-1:0] scale_table;
+    wire [`MANIFOLD_AXES-1:0]      overflow_table;
+    reg scale_write_en;
+    reg [3:0] scale_write_shift;
+    reg       scale_write_overflow;
+
+    rational_surd5_scale_manager #(.NODES(`MANIFOLD_AXES)) u_scale (
+        .clk(clk),
+        .rst_n(rst_n),
+        .write_en(scale_write_en),
+        .write_idx(axis_ptr),
+        .write_shift(scale_write_shift),
+        .write_overflow(scale_write_overflow),
+        .scale_table(scale_table),
+        .overflow_table(overflow_table)
+    );
 
     // Stage 2: The SQR Cross-Product (Pulse 13)
     // Manifold axis format: {A[31:0], B[31:0]} — full 64-bit axis is the surd.
@@ -77,9 +143,13 @@ module spu13_core #(
     );
 
     // Stage 3: Stability Check & Commit (Pulse 21)
-    wire [63:0] rotated_axis = q_prime_ab;
+    wire [63:0] rotated_axis;
+    assign rotated_axis = q_prime_ab;
     wire [31:0] quadrance;
+    wire [31:0] ivm_quadrance;
     wire [15:0] gasket_sum;
+    wire signed [31:0] audio_p;
+    wire signed [31:0] audio_q;
     
     davis_gate_dsp #(.DEVICE(DEVICE)) u_gate (
         .clk(clk),
@@ -87,14 +157,32 @@ module spu13_core #(
         .q_vector(rotated_axis),
         .q_rotated(),
         .quadrance(quadrance),
-        .gasket_sum(gasket_sum)
+        .ivm_quadrance(ivm_quadrance),
+        .gasket_sum(gasket_sum),
+        .audio_p(audio_p),
+        .audio_q(audio_q)
     );
 
-    wire [31:0] quadrance_err = (quadrance > 32'h0100_0000) ? (quadrance - 32'h0100_0000) : (32'h0100_0000 - quadrance);
-    wire axis_stable = (quadrance_err <= 32'h0000_1000);
+    // Instantiate davis_to_rplu to compute RPLU values & comparator (non-invasive duplicate of davis computation)
+    davis_to_rplu u_davis_rplu (
+        .clk(clk), .rst_n(rst_n), .start(1'b0), .q_vector(rotated_axis), .material_id(1'b0),
+        .cfg_wr_en(dec_fast_cfg_wr_en), .cfg_wr_sel(dec_fast_cfg_sel), .cfg_wr_material(dec_fast_cfg_material), .cfg_wr_addr(dec_fast_cfg_addr), .cfg_wr_data(dec_fast_cfg_data),
+        .v_q16(), .dissoc(), .done(),
+        .quadrance(), .ivm_quadrance(), .gasket_sum(), .audio_p(), .audio_q(),
+        .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid)
+    );
+
+    wire [31:0] quadrance_err;
+    assign quadrance_err = (quadrance > 32'h0100_0000) ? (quadrance - 32'h0100_0000) : (32'h0100_0000 - quadrance);
+    wire axis_stable;
+    assign axis_stable = (quadrance_err <= 32'h0000_1000);
 
 
     reg [12:0] stability_bits;
+
+    // Toroidal emitter index (wraps naturally at 10 bits)
+    reg [9:0] torus_idx;
+    reg        torus_emit_enable;
 
     // Sovereign Hydration & State Logic
     reg [2:0] hydration_state;
@@ -110,7 +198,33 @@ module spu13_core #(
             manifold_out <= 0;
             stability_bits <= 13'h1FFF;
             is_janus_point <= 1'b1;
+            scale_write_en <= 1'b0;
+            scale_write_shift <= 4'd0;
+            scale_write_overflow <= 1'b0;
+            artery_wr_en <= 1'b0;
+            artery_wr_data <= 64'd0;
+            torus_idx <= 10'd0;
         end else begin
+            // default: clear any one-cycle artery writes
+            artery_wr_en <= 1'b0;
+            artery_wr_data <= 64'd0;
+
+            // fast-domain config writes: torus control (sel==7)
+            if (dec_fast_cfg_wr_en && dec_fast_cfg_sel == 3'd7) begin
+                torus_idx <= dec_fast_cfg_data[9:0];
+                torus_emit_enable <= dec_fast_cfg_data[10];
+            end
+
+            // Instruction-level POLY_STEP handler (optional): emit a direct RPLU config write
+            // Encoding: Lithic-L [63:56]=0xE0 — POLY_STEP
+            // Use p1_a[9:0] (inst_word[33:24]) as the RPLU address index.
+            if (inst_valid) begin
+                if (inst_word[63:56] == 8'hE0) begin
+                    artery_wr_en <= 1'b1;
+                    artery_wr_data <= {8'hA5, 8'd7, 1'b0, inst_word[33:24], 37'd0};
+                end
+            end
+
             case (hydration_state)
                 H_IDLE: begin
                     if (phi_8 && mem_ready) begin
@@ -130,6 +244,11 @@ module spu13_core #(
                     if (phi_21) begin
                         manifold_reg[axis_ptr*64 +: 64] <= rotated_axis;
                         stability_bits[axis_ptr] <= axis_stable;
+
+                        // Capture scale shift for this axis into global scale manager
+                        scale_write_en <= 1'b1;
+                        scale_write_shift <= lattice_shifts[axis_ptr*4 +: 4];
+                        scale_write_overflow <= lattice_overflows[axis_ptr];
                         
                         // If we just finished axis 12, move to Exhale
                         if (axis_ptr == 4'd12) begin
@@ -138,7 +257,18 @@ module spu13_core #(
                             mem_burst_wr <= 1;
                             mem_wr_manifold <= manifold_reg;
                             hydration_state <= H_EXHALE;
+
+                            // Emit a POLY_STEP Artery chord using toroidal index (if enabled).
+                            // Header layout: [63:56]=0xA5, [55:48]=sel, [47]=material, [46:37]=addr
+                            if (torus_emit_enable) begin
+                                artery_wr_en <= 1'b1;
+                                artery_wr_data <= {8'hA5, 8'd7, 1'b0, torus_idx[9:0], 37'd0};
+                                // advance torus index (wraps naturally at 10 bits)
+                                torus_idx <= torus_idx + 10'd1;
+                            end
                         end
+                    end else begin
+                        scale_write_en <= 1'b0;
                     end
                 end
                 H_EXHALE: begin

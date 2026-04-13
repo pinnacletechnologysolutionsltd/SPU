@@ -29,8 +29,10 @@ module SPU_WHISPER_TX #(
 
     // Apply Bias to map signed range into strictly positive domain.
     // If is_sync is HIGH, we send a known reference frame (a=1, b=0 biased).
-    wire [15:0] a_val = is_sync ? (16'd1 + BIAS) : (surd_a + BIAS);
-    wire [15:0] b_val = is_sync ? (16'd0 + BIAS) : (surd_b + BIAS);
+    wire [15:0] a_val;
+    assign a_val = is_sync ? (16'd1 + BIAS) : (surd_a + BIAS);
+    wire [15:0] b_val;
+    assign b_val = is_sync ? (16'd0 + BIAS) : (surd_b + BIAS);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

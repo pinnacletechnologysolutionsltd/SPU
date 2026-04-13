@@ -70,20 +70,27 @@ module spu_hal_cartesian #(
     // 1. Quadray → centered Q8 screen coordinates
     // -------------------------------------------------------------------------
     // Projection: x = b - c,  y = a - (b+c)/2  (IVM → Cartesian isometric)
-    wire signed [16:0] raw_x = $signed({1'b0, q_b}) - $signed({1'b0, q_c});
+    wire signed [16:0] raw_x;
+    assign raw_x = $signed({1'b0, q_b}) - $signed({1'b0, q_c});
     wire signed [16:0] raw_y = $signed({1'b0, q_a}) -
                                (($signed({1'b0, q_b}) + $signed({1'b0, q_c})) >>> 1);
 
-    wire [47:0] scaled_x  = raw_x * rational_scale;
-    wire [47:0] scaled_y  = raw_y * rational_scale;
+    wire [47:0] scaled_x;
+    assign scaled_x = raw_x * rational_scale;
+    wire [47:0] scaled_y;
+    assign scaled_y = raw_y * rational_scale;
 
     // Pixel coordinates (screen origin at top-left)
-    wire [15:0] target_x  = scaled_x[31:16] + (RES_X >> 1);
-    wire [15:0] target_y  = scaled_y[31:16] + (RES_Y >> 1);
+    wire [15:0] target_x;
+    assign target_x = scaled_x[31:16] + (RES_X >> 1);
+    wire [15:0] target_y;
+    assign target_y = scaled_y[31:16] + (RES_Y >> 1);
 
     // Centre the UV for the LaminarMassage — signed offset from screen centre
-    wire signed [15:0] uv_x = $signed(target_x) - (RES_X >> 1);
-    wire signed [15:0] uv_y = $signed(target_y) - (RES_Y >> 1);
+    wire signed [15:0] uv_x;
+    assign uv_x = $signed(target_x) - (RES_X >> 1);
+    wire signed [15:0] uv_y;
+    assign uv_y = $signed(target_y) - (RES_Y >> 1);
 
     // -------------------------------------------------------------------------
     // 2. LaminarMassage — three 60°-axis dot products
@@ -92,16 +99,23 @@ module spu_hal_cartesian #(
     // dot products are Q8×Q8 = Q16; take [15:8] to restore Q8 magnitude.
     // -------------------------------------------------------------------------
     wire signed [31:0] dot1 = (uv_x * 16'sd256  + uv_y * 16'sd0  );  // |uv_x| * 256
-    wire signed [31:0] dot2 = (uv_x * 16'sd128  + uv_y * 16'sd222);
-    wire signed [31:0] dot3 = (uv_x * (-16'sd128) + uv_y * 16'sd222);
+    wire signed [31:0] dot2;
+    assign dot2 = (uv_x * 16'sd128  + uv_y * 16'sd222);
+    wire signed [31:0] dot3;
+    assign dot3 = (uv_x * (-16'sd128) + uv_y * 16'sd222);
 
     // Absolute values, scaled back to Q8
-    wire [15:0] d1 = (dot1[31] ? ~dot1[23:8] + 1 : dot1[23:8]);
-    wire [15:0] d2 = (dot2[31] ? ~dot2[23:8] + 1 : dot2[23:8]);
-    wire [15:0] d3 = (dot3[31] ? ~dot3[23:8] + 1 : dot3[23:8]);
+    wire [15:0] d1;
+    assign d1 = (dot1[31] ? ~dot1[23:8] + 1 : dot1[23:8]);
+    wire [15:0] d2;
+    assign d2 = (dot2[31] ? ~dot2[23:8] + 1 : dot2[23:8]);
+    wire [15:0] d3;
+    assign d3 = (dot3[31] ? ~dot3[23:8] + 1 : dot3[23:8]);
 
-    wire [15:0] min_d2  = (d2 < d3) ? d2 : d3;
-    wire [15:0] min_d   = (d1 < min_d2) ? d1 : min_d2;
+    wire [15:0] min_d2;
+    assign min_d2 = (d2 < d3) ? d2 : d3;
+    wire [15:0] min_d;
+    assign min_d = (d1 < min_d2) ? d1 : min_d2;
 
     // Piranha Pulse thickness breathing: ±4 Q8 units at ~960 Hz
     reg [5:0] breath_cnt;
@@ -112,13 +126,15 @@ module spu_hal_cartesian #(
     wire [7:0] threshold_live = THRESHOLD + breath_cnt[5:3]; // 3-bit modulation
 
     // Quadratic smoothstep: intensity = 255 * (T - min_d)^2 / T^2  (clamp to 0)
-    wire signed [15:0] remain = $signed({1'b0, threshold_live}) - $signed({1'b0, min_d[7:0]});
+    wire signed [15:0] remain;
+    assign remain = $signed({1'b0, threshold_live}) - $signed({1'b0, min_d[7:0]});
     wire        [7:0]  base_i = (remain > 0) ?
                                   ((remain * remain * 8'd255) >> 14) :
                                   8'd0;
 
     // Blend with q_energy so manifold tension darkens the line
-    wire [7:0] intensity = base_i;
+    wire [7:0] intensity;
+    assign intensity = base_i;
 
     // -------------------------------------------------------------------------
     // 3. Sub-pixel RGB prime weighting  (DQFA.metal lines 67-69)
@@ -130,16 +146,20 @@ module spu_hal_cartesian #(
                          (intensity << 4) + (intensity << 1) + intensity;
     wire [15:0] chan_g = (intensity << 5) + (intensity << 4) +
                          (intensity << 3) + (intensity << 1) + intensity;
-    wire [15:0] chan_b = (intensity << 4) + intensity;
+    wire [15:0] chan_b;
+    assign chan_b = (intensity << 4) + intensity;
 
     wire [7:0] r8 = chan_r[15:8];   // >> 8
-    wire [7:0] g8 = chan_g[15:8];
-    wire [7:0] b8 = chan_b[15:8];
+    wire [7:0] g8;
+    assign g8 = chan_g[15:8];
+    wire [7:0] b8;
+    assign b8 = chan_b[15:8];
 
     // -------------------------------------------------------------------------
     // 4. RGB565 packing
     // -------------------------------------------------------------------------
-    wire [15:0] rgb565 = {r8[7:3], g8[7:2], b8[7:3]};
+    wire [15:0] rgb565;
+    assign rgb565 = {r8[7:3], g8[7:2], b8[7:3]};
 
     // -------------------------------------------------------------------------
     // 5. ST7789 SPI state machine

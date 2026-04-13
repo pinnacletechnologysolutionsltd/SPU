@@ -17,7 +17,8 @@ module spu_artery_tx (
     reg [3:0]  axis_count;
     
     // Trigger transmission at the end of the 13th axis commit
-    wire start_frame = (axis_ptr == 4'd12 && phi_21);
+    wire start_frame;
+    assign start_frame = (axis_ptr == 4'd12 && phi_21);
 
     always @(posedge clk) begin
         if (start_frame) begin

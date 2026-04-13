@@ -41,8 +41,10 @@ module spu_janus_mirror #(
     output reg                     snap_shadow    // K < 0  — inverted / shadow polarity
 );
 
-    wire signed [WIDTH-1:0] P_in = $signed(surd_in[WIDTH-1:0]);
-    wire signed [WIDTH-1:0] Q_in = $signed(surd_in[WIDTH*2-1:WIDTH]);
+    wire signed [WIDTH-1:0] P_in;
+    assign P_in = $signed(surd_in[WIDTH-1:0]);
+    wire signed [WIDTH-1:0] Q_in;
+    assign Q_in = $signed(surd_in[WIDTH*2-1:WIDTH]);
 
     // ── Stage 1: multiply ─────────────────────────────────────────────────
     reg signed [WIDTH*2-1:0] P_sq;    // P²
@@ -65,7 +67,8 @@ module spu_janus_mirror #(
     end
 
     // ── Stage 2: subtract + classify ──────────────────────────────────────
-    wire signed [WIDTH*2-1:0] K_wire = P_sq - Q_sq3;
+    wire signed [WIDTH*2-1:0] K_wire;
+    assign K_wire = P_sq - Q_sq3;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

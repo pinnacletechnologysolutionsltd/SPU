@@ -122,10 +122,13 @@ module spu_unified_alu_tdm #(
         if (reset) lfsr <= 16'hACE1;
         else lfsr <= {lfsr[14:0], lfsr[15] ^ lfsr[13] ^ lfsr[12] ^ lfsr[10]};
     end
-    wire [31:0] err_dither = {31'b0, lfsr[0]};
+    wire [31:0] err_dither;
+    assign err_dither = {31'b0, lfsr[0]};
 
-    wire [31:0] raw_err = (A_in > prior_state[31:0]) ? (A_in - prior_state[31:0]) : (prior_state[31:0] - A_in);
-    wire [31:0] err_sum  = raw_err + err_dither;
+    wire [31:0] raw_err;
+    assign raw_err = (A_in > prior_state[31:0]) ? (A_in - prior_state[31:0]) : (prior_state[31:0] - A_in);
+    wire [31:0] err_sum;
+    assign err_sum = raw_err + err_dither;
     assign is_dissonant  = (err_sum > 32'h00001000);
 
     // --- 3.5. Divergence Watchdog ---

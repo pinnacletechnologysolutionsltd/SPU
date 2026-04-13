@@ -12,14 +12,19 @@ module spu_smul #(
 );
 
     // 1. Cross-Product Intermediates (64-bit to prevent overflow)
-    wire signed [63:0] aa = a1 * a2;
-    wire signed [63:0] bb = b1 * b2;
-    wire signed [63:0] ab = a1 * b2;
-    wire signed [63:0] ba = b1 * a2;
+    wire signed [63:0] aa;
+    assign aa = a1 * a2;
+    wire signed [63:0] bb;
+    assign bb = b1 * b2;
+    wire signed [63:0] ab;
+    assign ab = a1 * b2;
+    wire signed [63:0] ba;
+    assign ba = b1 * a2;
 
     // 2. Surd Term (3*bb)
     // Fast shift-adder implementation: (bb << 1) + bb
-    wire signed [63:0] surd_term = (bb << 1) + bb;
+    wire signed [63:0] surd_term;
+    assign surd_term = (bb << 1) + bb;
 
     // 3. Final Summation and Normalization (16-bit shift for fixed-point)
     assign res_a = (aa + surd_term) >>> 16;

@@ -1,0 +1,8 @@
+INC_DIRS: hardware/common/rtl/include, hardware/common/rtl/triage_inc, hardware/common/rtl/core, hardware/common/rtl/prim, hardware/common/rtl/gpu
+SCAN_DIRS: hardware/common/rtl, hardware/common/rtl/core, hardware/common/rtl/include, hardware/common/rtl/mem, hardware/common/rtl/top, hardware/common/rtl/prim, hardware/common/rtl/gpu, hardware/common/rtl/bio, hardware/common/rtl/proto, hardware/spu4/rtl, hardware/spu13/rtl
+
+hardware/common/tests/davis_gate_dsp_tb.v
+hardware/common/tests/spu_psram_dual_tb.v
+hardware/common/tests/spu_laminar_power_tb.v
+hardware/common/tests/spu_unified_alu_tdm_tb.v
+hardware/common/tests/spu_4_alu_fold_tb.v

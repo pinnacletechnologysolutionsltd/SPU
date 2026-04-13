@@ -3,9 +3,18 @@
 // Integrates Decoder, RegFile, and ALU into a 24-bit ISA datapath.
 // Hardened for "Laminar Purity" (Zero-Branch & Strictly Bitwise).
 
-module spu4_top (
+module spu4_top #(
+    parameter ENABLE_RPLU_BRAM = 1
+) (
     input clk,
     input rst_n,
+    
+    // runtime config inputs (piranha domain)
+    input         rplu_cfg_wr_en,
+    input [2:0]   rplu_cfg_sel,
+    input         rplu_cfg_material,
+    input [9:0]   rplu_cfg_addr,
+    input [63:0]  rplu_cfg_data,
     
     // Program Memory Interface
     input [23:0] inst_data,
@@ -78,16 +87,23 @@ module spu4_top (
     // 0: FETCH, 1: EXEC, 2: WAIT_ALU, 3: WRITEBACK
     reg [1:0] state; 
     
-    wire is_fetch     = (state == 2'd0);
-    wire is_exec      = (state == 2'd1);
-    wire is_wait_alu  = (state == 2'd2);
-    wire is_writeback = (state == 2'd3);
+    wire is_fetch;
+    assign is_fetch = (state == 2'd0);
+    wire is_exec;
+    assign is_exec = (state == 2'd1);
+    wire is_wait_alu;
+    assign is_wait_alu = (state == 2'd2);
+    wire is_writeback;
+    assign is_writeback = (state == 2'd3);
 
-    wire is_qrot_op   = (alu_op == 4'h3);
+    wire is_qrot_op;
+    assign is_qrot_op = (alu_op == 4'h3);
 
     // Calculate Next State
-    wire [1:0] ns_exec_choice = ({2{is_qrot_op}} & 2'd2) | ({2{!is_qrot_op}} & 2'd3);
-    wire [1:0] ns_wait_choice = ({2{rot_done}}   & 2'd3) | ({2{!rot_done}}   & 2'd2);
+    wire [1:0] ns_exec_choice;
+    assign ns_exec_choice = ({2{is_qrot_op}} & 2'd2) | ({2{!is_qrot_op}} & 2'd3);
+    wire [1:0] ns_wait_choice;
+    assign ns_wait_choice = ({2{rot_done}}   & 2'd3) | ({2{!rot_done}}   & 2'd2);
     
     wire [1:0] next_state = 
         ({2{is_fetch}}      & 2'd1) |
@@ -96,11 +112,15 @@ module spu4_top (
         ({2{is_writeback}}  & 2'd0);
 
     // Register Write Enable & Data Input selection
-    wire state_we = (is_exec && !is_qrot_op) || (is_wait_alu && rot_done);
+    wire state_we;
+    assign state_we = (is_exec && !is_qrot_op) || (is_wait_alu && rot_done);
     
-    wire [63:0] qldi_val = { {8'h0, imm}, 48'h0 };
-    wire [63:0] qadd_val = reg_dout_a + reg_dout_b;
-    wire [63:0] qrot_val = {rot_a, rot_b, rot_c, rot_d};
+    wire [63:0] qldi_val;
+    assign qldi_val = { {8'h0, imm}, 48'h0 };
+    wire [63:0] qadd_val;
+    assign qadd_val = reg_dout_a + reg_dout_b;
+    wire [63:0] qrot_val;
+    assign qrot_val = {rot_a, rot_b, rot_c, rot_d};
 
     wire [63:0] inst_din = 
         ({64{alu_op == 4'h1}} & qldi_val) |
@@ -126,6 +146,29 @@ module spu4_top (
 
     assign snap_alert = snap_en;
     assign whisper_tx = whisper_en;
-    assign debug_reg_r0 = u_regfile.rf[0];
+    // RPLU BRAM: optional instantiation controlled by ENABLE_RPLU_BRAM
+    wire [5:0] rplu_addr;
+    assign rplu_addr = rplu_cfg_addr[5:0];
+    wire [63:0] rplu_data;
+
+    generate
+        if (ENABLE_RPLU_BRAM) begin : gen_rplu_bram
+            spu4_bram_ip #(
+                .ADDR_WIDTH(6),
+                .DATA_WIDTH(64),
+                .MEM_FILE("hardware/common/rtl/gpu/rplu_trim.mem")
+            ) u_rplu_bram (
+                .clk(clk),
+                .addr(rplu_addr),
+                .data_out(rplu_data)
+            );
+        end else begin
+            // Tie off when disabled to avoid generating I/O cells
+            assign rplu_data = 64'd0;
+        end
+    endgenerate
+
+    // Export R0 for telemetry; XOR with rplu_data so rplu_bram is used by synthesis
+    assign debug_reg_r0 = u_regfile.rf[0] ^ rplu_data;
 
 endmodule

@@ -55,6 +55,20 @@ import os
 import struct
 import argparse
 
+# Optional phinary helpers (pack/unpack/add)
+try:
+    import importlib.util as _il
+    _tools_dir = os.path.join(os.path.dirname(__file__), 'tools')
+    _ph_path = os.path.join(_tools_dir, 'phinary_vm_helpers.py')
+    if os.path.exists(_ph_path):
+        _spec = _il.spec_from_file_location('phinary_vm_helpers', _ph_path)
+        phinary_helpers = _il.module_from_spec(_spec)
+        _spec.loader.exec_module(phinary_helpers)  # type: ignore
+    else:
+        phinary_helpers = None
+except Exception:
+    phinary_helpers = None
+
 # ---------------------------------------------------------------------------
 # Q(√3) Arithmetic — the only math the SPU does
 # ---------------------------------------------------------------------------
@@ -313,7 +327,7 @@ class QuadrayVector:
 OPCODES = {
     # Scalar Q(√3) arithmetic
     "LD":    0x00, "ADD":   0x01, "SUB":   0x02,
-    "MUL":   0x03, "ROT":   0x04, "LOG":   0x05,
+    "MUL":   0x03, "PHADD": 0x30, "PHCFG": 0x31, "ROT":   0x04, "LOG":   0x05,
     # Control flow
     "JMP":   0x06, "SNAP":  0x07, "COND":  0x20,
     "CALL":  0x21, "RET":   0x22,
@@ -324,6 +338,10 @@ OPCODES = {
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
     "EQUIL": 0x17, "IDNT":  0x18, "JINV":  0x19, "ANNE":  0x1A,
+    # Padé / RPLU ISA extensions
+    "POLY_STEP": 0x60, "RATIO_CMP": 0x61,
+    # POLY_STEP: emit RPLU Artery chord for a single Horner step (simulation helper)
+    "POLY_STEP": 0xE0,
     # No-op
     "NOP":   0xFF,
 }
@@ -363,6 +381,12 @@ def assemble_line(line: str, line_no: int, labels: dict) -> int | None:
         if arg.startswith('R'):           # Scalar register: R0-R25
             idx = int(arg[1:]) & 0xFF
             return (idx, 0, 0) if is_first else (0, idx, 0)
+        if arg.startswith('PH'):          # Packed phinary immediate: PH0xNNNN
+            try:
+                val = int(arg[2:], 0)
+            except Exception:
+                val = _parse_int16(arg[2:])
+            return (0, 0, val & 0xFFFF)
         if arg in labels:                  # Label reference
             return (0, 0, labels[arg] & 0xFFFF)
         return (0, 0, _parse_int16(arg))  # Immediate
@@ -733,6 +757,9 @@ class SPUCore:
         self.fib      = FibDispatch()
         # v1.4 additions — SDF Layer 7 state
         self.sdf      = SdfState()
+        # phinary configuration (SPU-4 compatibility)
+        self.phinary_cfg = 0
+        self.phinary_void_state = False
 
     @staticmethod
     def _q_proof(r: 'RationalSurd', label: str = "") -> str:
@@ -1093,6 +1120,9 @@ class SPUCore:
                       f"  VE condition → {'PASS' if is_balanced else 'FAIL'}")
             if self.proof and active:
                 print(f"         Active QR axes: {active}")
+                total = QuadrayVector()
+                for i in active:
+                    total = total + self.qregs[i]
                 print(f"         Sum vector: {total!r}")
                 print(f"         VE condition: Σ QR[i] = 0 → {'PASS' if is_balanced else 'FAIL'}")
 
@@ -1139,6 +1169,124 @@ class SPUCore:
             if self.verbose:
                 print(f"  [{self.pc:04d}] NOP")
 
+        elif opcode == OPCODES.get("PHCFG"):
+            # Set phinary configuration register (16-bit)
+            cfg = p1_a & 0xFFFF
+            self.phinary_cfg = cfg
+            if self.verbose:
+                en = bool(cfg & 0x1)
+                chir = bool(cfg & 0x2)
+                thr = (cfg >> 2)
+                print(f"  [{self.pc:04d}] PHCFG ← 0x{cfg:04X}  enable={en} chirality={chir} thr={thr}")
+
+        elif opcode == OPCODES.get("PHADD"):
+            if phinary_helpers is None:
+                raise RuntimeError("PHADD requested but phinary_vm_helpers not available")
+            # default width/int_bits for packed phinary (can be adjusted)
+            _w = 16
+            _ib = 8
+            # determine laminar_thr and chirality from phinary_cfg
+            _chir = bool(self.phinary_cfg & 0x2)
+            _thr = (self.phinary_cfg >> 2) & 0xFFFF
+            # pack: surd <- b, integer <- a
+            _a_packed = phinary_helpers.pack_phinary(self.regs[r1].b & ((1 << (_w - _ib)) - 1), self.regs[r1].a & ((1 << _ib) - 1), width=_w, int_bits=_ib)
+            _b_packed = phinary_helpers.pack_phinary(self.regs[r2].b & ((1 << (_w - _ib)) - 1), self.regs[r2].a & ((1 << _ib) - 1), width=_w, int_bits=_ib)
+            out_packed, void_out, ovf = phinary_helpers.add_phinary(_a_packed, _b_packed, width=_w, int_bits=_ib, laminar_thr=_thr if _thr != 0 else None, chirality=_chir, void_state=self.phinary_void_state)
+            out_surd, out_int = phinary_helpers.unpack_phinary(out_packed, width=_w, int_bits=_ib)
+            # interpret fields as signed two's-complement
+            if out_int & (1 << (_ib - 1)):
+                out_int = out_int - (1 << _ib)
+            if out_surd & (1 << ((_w - _ib) - 1)):
+                out_surd = out_surd - (1 << (_w - _ib))
+            self.regs[r1] = RationalSurd(out_int, out_surd)
+            self.phinary_void_state = void_out
+            if self.verbose:
+                print(f"  [{self.pc:04d}] PHADD R{r1} + R{r2} → packed=0x{out_packed:04X} => {self.regs[r1]!r} void={void_out} ovf={ovf}")
+
+        elif opcode == OPCODES.get("POLY_STEP"):
+            # POLY_STEP Rbase, Rx — evaluate Padé P(x) and Q(x) (4/4 Q32) in VM
+            # Encoding: r1 = destination base register (numer→R[r1], denom→R[r1+1])
+            #           r2 = source register holding x as signed integer in .a (Q32 fixed)
+            #           p1_a selects coefficient set (0 = default)
+            coef_sel = p1_a & 0xFFFF
+            # Load coefficient ROMs (cached per coef_sel)
+            if not hasattr(self, '_pade_cache'):
+                self._pade_cache = {}
+            if coef_sel not in self._pade_cache:
+                num_path = 'hardware/common/rtl/gpu/pade_num_4_4_q32.mem'
+                den_path = 'hardware/common/rtl/gpu/pade_den_4_4_q32.mem'
+                def read_mem_signed(path):
+                    vals = [0]*5
+                    try:
+                        with open(path, 'r') as f:
+                            lines = [l.strip() for l in f if l.strip()]
+                            for i, l in enumerate(lines[:5]):
+                                v = int(l, 16)
+                                if v & (1 << 63):
+                                    v = v - (1 << 64)
+                                vals[i] = v
+                    except Exception:
+                        # missing mems: fall back to zeros
+                        vals = [0,0,0,0,0]
+                    return vals
+                num_arr = read_mem_signed(num_path)
+                den_arr = read_mem_signed(den_path)
+                self._pade_cache[coef_sel] = (num_arr, den_arr)
+            else:
+                num_arr, den_arr = self._pade_cache[coef_sel]
+
+            # Extract x from source register (expect signed integer in .a field representing Q32)
+            x_reg = self.regs[r2]
+            x_q32 = int(x_reg.a)
+
+            # Helper: truncate to signed 'bits' (two's complement)
+            def to_signed(val, bits):
+                mask = (1 << bits) - 1
+                v = val & mask
+                if v & (1 << (bits - 1)):
+                    v = v - (1 << bits)
+                return v
+
+            # Horner evaluation matching hardware (acc widths/truncation)
+            def horner_q32(coeffs, x):
+                acc = coeffs[4]
+                acc = to_signed(acc, 128)
+                for i in (3,2,1,0):
+                    prod = acc * x
+                    shifted = prod >> 32
+                    acc = shifted + coeffs[i]
+                    acc = to_signed(acc, 128)
+                return acc
+
+            accn = horner_q32(num_arr, x_q32)
+            accd = horner_q32(den_arr, x_q32)
+
+            # Store results as RationalSurd(rational, 0) to match SPREAD/VM conventions
+            self.regs[r1] = RationalSurd(int(accn), 0)
+            self.regs[(r1 + 1) % NUM_REGS] = RationalSurd(int(accd), 0)
+            if self.verbose:
+                print(f"  [{self.pc:04d}] POLY_STEP R{r1}, Rx{r2} -> num={accn} den={accd}")
+
+        elif opcode == OPCODES.get("RATIO_CMP"):
+            # RATIO_CMP Rbase, Rcompare — compare P/Q at Rbase..Rbase+1 with P'/Q' at Rcompare..Rcompare+1
+            p1 = self.regs[r1]
+            q1 = self.regs[(r1 + 1) % NUM_REGS]
+            p2 = self.regs[r2]
+            q2 = self.regs[(r2 + 1) % NUM_REGS]
+            # Cross-multiply: compare p1*q2 ? p2*q1 in Q(√3)
+            left = p1 * q2
+            right = p2 * q1
+            if left == right:
+                cmp_res = 0
+            elif rs_lt(left, right):
+                cmp_res = -1
+            else:
+                cmp_res = 1
+            # Store integer comparison result into R[r1] as a RationalSurd (overwrite numerator)
+            self.regs[r1] = RationalSurd(cmp_res, 0)
+            if self.verbose:
+                cmp_str = '<' if cmp_res == -1 else ('=' if cmp_res == 0 else '>')
+                print(f"  [{self.pc:04d}] RATIO_CMP R{r1}, R{r2} -> p1/q1 {cmp_str} p2/q2 (res={cmp_res})")
         else:
             print(f"  [{self.pc:04d}] ??? unknown opcode 0x{opcode:02X} — NOP")
 

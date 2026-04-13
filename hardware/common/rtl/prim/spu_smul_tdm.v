@@ -27,7 +27,8 @@ module spu_smul_tdm #(
 
     // The Single Shared Multiplier
     reg  signed [BIT_WIDTH-1:0] mult_a, mult_b;
-    wire signed [63:0] prod = mult_a * mult_b;
+    wire signed [63:0] prod;
+    assign prod = mult_a * mult_b;
     
     // Accumulators for Q(sqrt3) logic:
     // res_a = (a1*a2 + 3*b1*b2)

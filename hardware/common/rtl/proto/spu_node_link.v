@@ -44,8 +44,10 @@ module spu_node_link #(
     reg [1:0] fail_cnt;   // saturates at SYNC_FAIL_THRESH (max 3, fits 2 bits)
 
     // ── Davis XOR integrity tag ──────────────────────────────────────────
-    wire [7:0] anchor_hi  = prime_anchor_in[23:16];
-    wire [7:0] anchor_lo  = prime_anchor_in[15:8];
+    wire [7:0] anchor_hi;
+    assign anchor_hi = prime_anchor_in[23:16];
+    wire [7:0] anchor_lo;
+    assign anchor_lo = prime_anchor_in[15:8];
     wire [7:0] davis_tag  = anchor_hi ^ anchor_lo;  // full-frame XOR = 0
 
     always @(posedge clk or negedge rst_n) begin

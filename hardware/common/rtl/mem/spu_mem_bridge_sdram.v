@@ -84,9 +84,12 @@ module spu_mem_bridge_sdram #(
     // -------------------------------------------------------------------------
     // Address decomposition  {bank[1:0], row[12:0], col[COL_BITS-1:0]}
     // -------------------------------------------------------------------------
-    wire [COL_BITS-1:0] a_col  = mem_addr[COL_BITS-1:0];
-    wire [12:0]         a_row  = mem_addr[COL_BITS+12:COL_BITS];
-    wire [1:0]          a_bank = mem_addr[COL_BITS+14:COL_BITS+13];
+    wire [COL_BITS-1:0] a_col;
+    assign a_col = mem_addr[COL_BITS-1:0];
+    wire [12:0]         a_row;
+    assign a_row = mem_addr[COL_BITS+12:COL_BITS];
+    wire [1:0]          a_bank;
+    assign a_bank = mem_addr[COL_BITS+14:COL_BITS+13];
 
     // -------------------------------------------------------------------------
     // DQ tristate (replace with IOBUF primitives in FPGA synthesis flow)

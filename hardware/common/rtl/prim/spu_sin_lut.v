@@ -28,8 +28,10 @@ module spu_sin_lut (
         lut[60] = 2197; lut[61] = 2209; lut[62] = 2220; lut[63] = 2230;
     end
 
-    wire [5:0] index = phase[5:0];
-    wire [1:0] quadrant = phase[7:6];
+    wire [5:0] index;
+    assign index = phase[5:0];
+    wire [1:0] quadrant;
+    assign quadrant = phase[7:6];
 
     always @(*) begin
         case (quadrant)

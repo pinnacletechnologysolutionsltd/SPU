@@ -89,28 +89,40 @@ module HAL_Native_Hex #(
     // -----------------------------------------------------------------------
 
     // Dot products (signed 32-bit intermediate, Q8*Q8 = Q16 → shift down by Q8)
-    wire signed [31:0] dot0 = (q_x * 16'sd256 + q_y * 16'sd0);
-    wire signed [31:0] dot1 = (q_x * 16'sd128 + q_y * 16'sd222);
-    wire signed [31:0] dot2 = (q_x * (-16'sd128) + q_y * 16'sd222);
+    wire signed [31:0] dot0;
+    assign dot0 = (q_x * 16'sd256 + q_y * 16'sd0);
+    wire signed [31:0] dot1;
+    assign dot1 = (q_x * 16'sd128 + q_y * 16'sd222);
+    wire signed [31:0] dot2;
+    assign dot2 = (q_x * (-16'sd128) + q_y * 16'sd222);
 
     // Absolute values (distance to each 60° plane)
-    wire [31:0] d0 = dot0[31] ? -dot0 : dot0;
-    wire [31:0] d1 = dot1[31] ? -dot1 : dot1;
-    wire [31:0] d2 = dot2[31] ? -dot2 : dot2;
+    wire [31:0] d0;
+    assign d0 = dot0[31] ? -dot0 : dot0;
+    wire [31:0] d1;
+    assign d1 = dot1[31] ? -dot1 : dot1;
+    wire [31:0] d2;
+    assign d2 = dot2[31] ? -dot2 : dot2;
 
     // Shift back from Q16 to Q8
-    wire [23:0] ad0 = d0[31:8];
-    wire [23:0] ad1 = d1[31:8];
-    wire [23:0] ad2 = d2[31:8];
+    wire [23:0] ad0;
+    assign ad0 = d0[31:8];
+    wire [23:0] ad1;
+    assign ad1 = d1[31:8];
+    wire [23:0] ad2;
+    assign ad2 = d2[31:8];
 
     // Nearest-axis distance (min of three)
-    wire [23:0] min01  = (ad0 < ad1) ? ad0 : ad1;
-    wire [23:0] min_d  = (min01 < ad2) ? min01 : ad2;
+    wire [23:0] min01;
+    assign min01 = (ad0 < ad1) ? ad0 : ad1;
+    wire [23:0] min_d;
+    assign min_d = (min01 < ad2) ? min01 : ad2;
 
     // Line hit: distance below threshold → full intensity, else dim falloff
     // Smoothstep-equivalent: intensity = 255 * clamp(1 - (d/thickness)^2, 0, 1)
     // Implemented as: if d < thickness → interpolate, else 0
-    wire        on_line = (min_d < {16'd0, thickness});
+    wire        on_line;
+    assign on_line = (min_d < {16'd0, thickness});
     wire [7:0]  smooth_energy;
     assign smooth_energy = on_line ?
         (8'd255 - ((min_d[7:0] * min_d[7:0]) >> 8)) :  // quadratic falloff

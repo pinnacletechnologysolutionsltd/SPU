@@ -10,11 +10,20 @@ module rplu_exp_tb;
     reg [9:0] addr;
     reg material_id;
     reg signed [31:0] r_q16;
+    // runtime config interface (no-op by default)
+    reg cfg_wr_en = 1'b0;
+    reg [2:0] cfg_wr_sel = 3'd0;
+    reg cfg_wr_material = 1'b0;
+    reg [9:0] cfg_wr_addr = 10'd0;
+    reg [63:0] cfg_wr_data = 64'd0;
     wire signed [31:0] v_q16;
     wire dissoc;
     wire done;
+    wire signed [2:0] ratio_cmp_res;
+    wire ratio_cmp_valid;
+    wire laminar_irq;
 
-    rplu_exp uut(.clk(clk), .rst_n(rst_n), .start(start), .addr(addr), .material_id(material_id), .r_q16(r_q16), .v_q16(v_q16), .dissoc(dissoc), .done(done));
+    rplu_exp uut(.clk(clk), .rst_n(rst_n), .start(start), .addr(addr), .material_id(material_id), .r_q16(r_q16), .wake(1'b0), .wake_addr(10'd0), .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data), .v_q16(v_q16), .dissoc(dissoc), .done(done), .laminar_irq(laminar_irq), .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid));
 
     reg [31:0] vnorm_exp [0:1023];
     reg [0:0]    vnorm_diss [0:1023];
@@ -31,10 +40,14 @@ module rplu_exp_tb;
     integer diff;
 
     initial begin
+        // wait for reset
+        @(posedge rst_n);
         // test carbon
         material_id = 0;
         for (i = 0; i < 16; i = i + 1) begin
-            addr = i; r_q16 = $signed(r_rom[i]); start = 1; @(posedge clk); start = 0; repeat(4) @(posedge clk); // wait for pipeline done
+            addr = i; r_q16 = $signed(r_rom[i]); start = 1; @(posedge clk); start = 0; // wait for pipeline
+            $display("TB: fired start for i=%0d at time=%0t", i, $time);
+            wait (done) @(posedge clk);
             // compare v_q16 to expected within tolerance (looser for fixed-point rounding)
             diff = v_q16 - $signed(vnorm_exp[i]);
             if (diff < 0) diff = -diff;

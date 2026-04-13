@@ -68,7 +68,8 @@ module spu_bus_arbiter #(
         end
     end
 
-    wire [2:0] rr_id = (priority_ptr + rr_winner) & NODE_MASK;
+    wire [2:0] rr_id;
+    assign rr_id = (priority_ptr + rr_winner) & NODE_MASK;
 
     // ── Strike pre-emption ───────────────────────────────────────────────
     reg [2:0] strike_winner;

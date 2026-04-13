@@ -84,12 +84,18 @@ def _u16(s: str) -> int:
 
 
 def _parse_reg(tok: str) -> tuple[str, int]:
-    """Return ('QR'|'R'|'IMM', index/value)."""
+    """Return ('QR'|'R'|'IMM', index/value).
+
+    Supports packed-phinary immediates with the PH0x... syntax.
+    """
     t = tok.upper()
     if t.startswith('QR'):
         return 'QR', int(t[2:]) & 0xFF
     if t.startswith('R'):
         return 'R', int(t[1:]) & 0xFF
+    if t.startswith('PH'):
+        # PH0xNNNN -> immediate packed phinary word (placed into P1_A)
+        return 'IMM', int(t[2:], 0)
     return 'IMM', int(tok, 0)
 
 
@@ -124,8 +130,16 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
     elif mnemonic == "LD":
         # LD Rd, a, b  →  r1=reg, p1_a=a (surd real), p1_b=b (surd coeff)
         _, r1   = _parse_reg(args[0])
-        p1_a    = _u16(args[1]) if len(args) > 1 else 0
-        p1_b    = _u16(args[2]) if len(args) > 2 else 0
+        if len(args) > 1:
+            kind, v = resolve(args[1])
+            p1_a = v & 0xFFFF
+        else:
+            p1_a = 0
+        if len(args) > 2:
+            kind, v = resolve(args[2])
+            p1_b = v & 0xFFFF
+        else:
+            p1_b = 0
 
     elif mnemonic in ("ADD", "SUB", "MUL"):
         # Op Rd, Rs1, Rs2

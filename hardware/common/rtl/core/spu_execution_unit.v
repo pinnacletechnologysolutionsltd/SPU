@@ -15,10 +15,10 @@ module spu_execution_unit (
     input  wire        dec_trigger_exec,
     
     // Manifold Bus Interface
-    output wire [7:0]  bus_addr,
-    output wire [31:0] bus_data,
-    output wire        bus_wen,
-    output wire        bus_ren,
+    output reg [7:0]  bus_addr,
+    output reg [31:0] bus_data,
+    output reg        bus_wen,
+    output reg        bus_ren,
     input  wire        bus_ready,
 
     // Scoreboard Feedback
@@ -50,6 +50,7 @@ module spu_execution_unit (
     localparam S_WRITEBACK  = 3'b011;
     localparam S_WAIT       = 3'b100;
     reg [2:0] state;
+    reg trigger_exec;
 
     // Manifold Bus Instance
     // This instance will handle the actual read/write to the register bank.
@@ -80,6 +81,11 @@ module spu_execution_unit (
             
             res_a <= 0; res_b <= 0;
             res_ready <= 0;
+
+            // Clear bus/control outputs
+            bus_addr <= 0; bus_data <= 0;
+            bus_wen <= 0; bus_ren <= 0;
+            trigger_exec <= 0;
         end else begin
             // State machine for instruction execution
             case (state)

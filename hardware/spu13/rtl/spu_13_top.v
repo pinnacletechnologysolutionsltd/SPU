@@ -39,7 +39,8 @@ module spu_13_top (
         if (!rst_n) boot_sync <= 2'b00;
         else boot_sync <= {boot_sync[0], boot_complete};
     end
-    wire boot_synced = boot_sync[1];
+    wire boot_synced;
+    assign boot_synced = boot_sync[1];
 
     // 1. The Laminar Boot (SPI Controller)
     spu_laminar_boot boot_unit (
@@ -79,8 +80,10 @@ module spu_13_top (
     wire [2:0]  vault_step;
 
     // Q12-scale raw Pell integer for ALU (steps 0-2 exact; steps 3-7 need wider ALU)
-    wire [15:0] vault_p_q12 = vault_rotor[31:16] << 12;
-    wire [15:0] vault_q_q12 = vault_rotor[15:0]  << 12;
+    wire [15:0] vault_p_q12;
+    assign vault_p_q12 = vault_rotor[31:16] << 12;
+    wire [15:0] vault_q_q12;
+    assign vault_q_q12 = vault_rotor[15:0]  << 12;
 
     spu_rotor_vault u_vault (
         .clk    (clk_12mhz),
@@ -92,6 +95,11 @@ module spu_13_top (
         .step_out  (vault_step)
     );
 
+    // ALU output tie-offs (prevent missing-pin warnings in testbenches)
+    wire [31:0] A_out, B_out, C_out, D_out;
+    wire davis_violation;
+    wire is_dissonant;
+    
     spu_unified_alu_tdm alu_inst (
         .clk          (clk_12mhz),
         .rst_n        (rst_n),
@@ -101,6 +109,8 @@ module spu_13_top (
         .done         (alu_done),
         .sync_alert   (sync_alert),
         .led_status   (),
+        .operand_A    (operand_A),
+        .operand_B    (operand_B),
         .A_in         (operand_A),
         .B_in         (operand_B),
         .F_rat        ({16'b0, vault_p_q12}),
@@ -111,10 +121,13 @@ module spu_13_top (
         .rot_axis_out (alu_rot_axis),
         .adaptive_tau_q(32'hFFFF_FFFF),
         .C_in(32'h0), .D_in(32'h0),
+        .A_out        (A_out), .B_out        (B_out), .C_out        (C_out), .D_out        (D_out),
+        .davis_violation(davis_violation), .is_dissonant(is_dissonant),
         .result_18    (alu_result_18)
     );
 
-    wire [23:0] current_surd = {6'b0, alu_result_18};
+    wire [23:0] current_surd;
+    assign current_surd = {6'b0, alu_result_18};
 
     // 3. The Janus Mirror (The Shadow / Sanity Gate)
     wire [31:0] shadow_out;

@@ -3,6 +3,7 @@
 
 `timescale 1ns/1ps
 
+/* verilator lint_off PINMISSING */
 `include "spu_hal_interface.vh"
 
 module gpu_pipeline_tb;
@@ -21,12 +22,17 @@ module gpu_pipeline_tb;
     wire [63:0] v0_abcd, v1_abcd, v2_abcd, v0_attr, v1_attr, v2_attr;
     wire        spi_cs_n, spi_sck, spi_mosi, spi_dc;
     wire        display_ready;
+    wire        vga_hsync, vga_vsync;
+    wire [3:0]  vga_r, vga_g, vga_b;
 
     // Vertex Coordinate Definitions (as 16-bit values)
-    wire [15:0] v0_x = 10;
-    wire [15:0] v0_y = 10;
+    wire [15:0] v0_x;
+    assign v0_x = 10;
+    wire [15:0] v0_y;
+    assign v0_y = 10;
     wire [15:0] v1_x = RES_X - 10; // 6
-    wire [15:0] v1_y = 10;
+    wire [15:0] v1_y;
+    assign v1_y = 10;
     wire [15:0] v2_x = RES_X / 2;   // 8
     wire [15:0] v2_y = RES_Y - 10; // 6
 
@@ -53,7 +59,10 @@ module gpu_pipeline_tb;
 
         // Display Interface
         .spi_cs_n(spi_cs_n), .spi_sck(spi_sck), .spi_mosi(spi_mosi), .spi_dc(spi_dc),
-        .display_ready(display_ready)
+        .vga_hsync(vga_hsync), .vga_vsync(vga_vsync),
+        .vga_r(vga_r), .vga_g(vga_g), .vga_b(vga_b),
+        .display_ready(display_ready),
+        .v_valid(1'b1)
     );
 
     // --- Monitoring ---
@@ -76,4 +85,5 @@ module gpu_pipeline_tb;
         $finish;
     end
 
+/* verilator lint_on PINMISSING */
 endmodule

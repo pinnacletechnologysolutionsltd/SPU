@@ -25,9 +25,15 @@ module spu1_alu (
         .clk(clk), .reset(reset),
         .reg_curr(reg_curr),
         .neighbors(3072'b0),
+        .strike_in(128'b0),
         .opcode(opcode),
         .prime_phase(prime_phase),
         .sign_flip(sign_flip),
+        .dec_fast_cfg_wr_en(1'b0),
+        .dec_fast_cfg_sel(3'b0),
+        .dec_fast_cfg_material(1'b0),
+        .dec_fast_cfg_addr(10'b0),
+        .dec_fast_cfg_data(64'b0),
         .reg_out(permute_out),
         .fault_detected(fault_detected)
     );
@@ -41,8 +47,9 @@ module spu1_alu (
     );
 
     // 4. Laminar Power Dispatcher (Hysteresis-Zero)
-    spu_laminar_power u_laminar (
-        .clk(clk), .reset(reset),
+    spu_laminar_power #(.WIDTH(832)) u_laminar (
+        .clk(clk), .rst_n(~reset), .reset(reset),
+        .bloom_intensity(8'hFF), .channel_stress(8'h00),
         .boot_phase(opcode), // Map opcode to boot-sequence during Phase Alignment
         .reg_in(anneal_out),
         .reg_out(laminar_out),

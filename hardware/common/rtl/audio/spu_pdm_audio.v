@@ -37,9 +37,12 @@ module spu_pdm_audio #(
 );
 
     // Q(√3) → signed 16-bit: P + Q (clamped)
-    wire signed [15:0] P = $signed(sample_in[31:16]);
-    wire signed [15:0] Q = $signed(sample_in[15:0]);
-    wire signed [16:0] samp_wide = {P[15], P} + {Q[15], Q};
+    wire signed [15:0] P;
+    assign P = $signed(sample_in[31:16]);
+    wire signed [15:0] Q;
+    assign Q = $signed(sample_in[15:0]);
+    wire signed [16:0] samp_wide;
+    assign samp_wide = {P[15], P} + {Q[15], Q};
     wire signed [15:0] samp_clamped =
         (samp_wide[16] != samp_wide[15]) ?
             (samp_wide[16] ? 16'sh8000 : 16'sh7FFF) :

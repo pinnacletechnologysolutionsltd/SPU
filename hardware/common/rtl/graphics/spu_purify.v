@@ -38,12 +38,17 @@ module spu_purify (
         end
     endfunction
 
-    wire [5:0] shift_n  = ctz64(numer);
-    wire [5:0] shift_d  = ctz64(denom);
-    wire [5:0] gcd_sh   = (shift_n < shift_d) ? shift_n : shift_d;
+    wire [5:0] shift_n;
+    assign shift_n = ctz64(numer);
+    wire [5:0] shift_d;
+    assign shift_d = ctz64(denom);
+    wire [5:0] gcd_sh;
+    assign gcd_sh = (shift_n < shift_d) ? shift_n : shift_d;
 
-    wire [63:0] numer_r = numer >> gcd_sh;
-    wire [63:0] denom_r = denom >> gcd_sh;
+    wire [63:0] numer_r;
+    assign numer_r = numer >> gcd_sh;
+    wire [63:0] denom_r;
+    assign denom_r = denom >> gcd_sh;
 
     // ── Stage 2: scale numer_r to [0, max_out] ───────────────────────────
     // pixel_val = floor(numer_r * max_out / denom_r)
@@ -61,12 +66,14 @@ module spu_purify (
         end
     endfunction
 
-    wire [5:0]  denom_msb   = msb64(denom_r);
+    wire [5:0]  denom_msb;
+    assign denom_msb = msb64(denom_r);
 
     // Extract the fractional bits BELOW the MSB of denom_r, pad to 8-bit.
     // This gives the LUT address: addr = floor((denom_r/2^msb - 1) * 256).
     // Example: denom_r=17=10001b, msb=4 → frac=1 → addr = 1<<(8-4) = 16 → 1/1.0625
-    wire [63:0] denom_frac  = denom_r & ((64'h1 << denom_msb) - 64'h1);
+    wire [63:0] denom_frac;
+    assign denom_frac = denom_r & ((64'h1 << denom_msb) - 64'h1);
     wire [7:0]  denom_mant  = (denom_msb >= 6'd8)
                               ? denom_frac >> (denom_msb - 6'd8)
                               : denom_frac << (6'd8 - denom_msb);
@@ -76,14 +83,19 @@ module spu_purify (
 
     // scaled = (numer_r * max_out * recip) >> (23 + denom_msb)
     // Use explicit 128-bit padding to prevent intermediate truncation.
-    wire [127:0] numer_128  = {64'b0, numer_r};
-    wire [127:0] maxout_128 = {118'b0, max_out};
-    wire [127:0] recip_128  = {104'b0, recip};
-    wire [127:0] scaled     = numer_128 * maxout_128 * recip_128;
+    wire [127:0] numer_128;
+    assign numer_128 = {64'b0, numer_r};
+    wire [127:0] maxout_128;
+    assign maxout_128 = {118'b0, max_out};
+    wire [127:0] recip_128;
+    assign recip_128 = {104'b0, recip};
+    wire [127:0] scaled;
+    assign scaled = numer_128 * maxout_128 * recip_128;
 
     wire [5:0] total_shift = 6'd23 + denom_msb;  // reciprocal is 1.23 format
 
-    wire [63:0] pixel_raw = scaled >> total_shift;
+    wire [63:0] pixel_raw;
+    assign pixel_raw = scaled >> total_shift;
 
     // ── Registered output ─────────────────────────────────────────────────
     always @(posedge clk or posedge reset) begin

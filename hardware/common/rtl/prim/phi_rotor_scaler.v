@@ -24,8 +24,10 @@ module phi_rotor_scaler (
     output reg  [63:0] out_vec   // result in same Fibonacci basis
 );
 
-    wire signed [31:0] fib_a = $signed(in_vec[63:32]);
-    wire signed [31:0] fib_b = $signed(in_vec[31:0]);
+    wire signed [31:0] fib_a;
+    assign fib_a = $signed(in_vec[63:32]);
+    wire signed [31:0] fib_b;
+    assign fib_b = $signed(in_vec[31:0]);
 
     always @(*) begin
         if (scale_up) begin

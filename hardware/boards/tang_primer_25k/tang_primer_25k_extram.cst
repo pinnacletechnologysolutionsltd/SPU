@@ -130,11 +130,22 @@ IO_LOC  "whisper_tx"     L5;
 IO_PORT "whisper_tx"     IO_TYPE=LVCMOS33 DRIVE=8;
 
 // ─── Expansion SDRAM (Sipeed 512Mb 40-pin module) ─────────────────────────
-// TODO: Confirm pinout from Sipeed schematic when module arrives.
-// The 40-pin connector on Tang Primer 25K maps to GW5A IO bank 3.
-// Reference: NestTang / LicheeTang25k_SDRAM projects for connector mapping.
-// Uncomment all entries below once pinout is confirmed.
+// NOTE: Original draft duplicated onboard SDRAM LOCs and caused IO bank collisions
+// during packing (ext_* and sdram_* mapped to same physical pins).  Until the
+// official Sipeed 40-pin expansion pinout is confirmed, ext_sdram LOCs are
+// left UNASSIGNED here to avoid hard conflicts.  Populate the mapping below
+// with the PMOD/expansion connector pins from the Sipeed schematic and re-run
+// nextpnr/gowin_pack.
 //
+// Example workflow to fill mappings:
+// 1) Confirm expansion connector pin numbers vs Sipeed schematic
+// 2) Map ext_sdram_* signals to those connector pins (IO_LOC entries)
+// 3) Keep IO_PORT directives (IO_TYPE/DRIVE) as shown in the commented block
+// 4) Run `scripts/check_cst_duplicates.py` (helper) to ensure no LOC collisions
+//
+// IO_LOC/IO_PORT entries for ext_sdram are intentionally commented out below.
+// Uncomment and update with correct pins when ready.
+/*
 IO_LOC  "ext_sdram_clk"      E3;
 IO_PORT "ext_sdram_clk"      IO_TYPE=LVCMOS33 DRIVE=16;
 IO_LOC  "ext_sdram_cs_n"     K9;
@@ -211,3 +222,5 @@ IO_LOC  "ext_sdram_dqm[0]"   L8;
 IO_PORT "ext_sdram_dqm[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_LOC  "ext_sdram_dqm[1]"   L7;
 IO_PORT "ext_sdram_dqm[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
+*/
+

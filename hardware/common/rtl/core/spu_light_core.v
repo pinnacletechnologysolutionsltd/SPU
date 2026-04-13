@@ -15,10 +15,14 @@ module spu_light_core (
 );
 
     // --- 1. Internal Units ---
-    wire [63:0] A_in = reg_curr[63:0];
-    wire [63:0] B_in = reg_curr[127:64];
-    wire [63:0] C_in = reg_curr[191:128];
-    wire [63:0] D_in = reg_curr[255:192];
+    wire [63:0] A_in;
+    assign A_in = reg_curr[63:0];
+    wire [63:0] B_in;
+    assign B_in = reg_curr[127:64];
+    wire [63:0] C_in;
+    assign C_in = reg_curr[191:128];
+    wire [63:0] D_in;
+    assign D_in = reg_curr[255:192];
 
     // Unit A: Thomson Rotor (RROT)
     wire [63:0] rotor_A, rotor_B, rotor_C, rotor_D;

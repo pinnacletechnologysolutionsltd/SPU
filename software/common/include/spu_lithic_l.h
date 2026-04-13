@@ -52,6 +52,11 @@
 #define L_OP_IDNT   0x18u  // IDNT QRn        — reset QRn to canonical unity (1,0,0,0)
 #define L_OP_JINV   0x19u  // JINV Rn         — negate surd component (Janus bit)
 #define L_OP_ANNE   0x1Au  // ANNE QRn        — anneal toward VE (halve components)
+
+// Padé / RPLU ISA extensions
+#define L_OP_POLY_STEP 0xE0u // POLY_STEP Rbase, Rx — Horner single-step to RPLU
+#define L_OP_RATIO_CMP 0xE1u // RATIO_CMP Rbase, Rcmp — cross-multiply compare
+
 // No-op
 #define L_OP_NOP    0xFFu  // NOP
 

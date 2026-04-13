@@ -13,22 +13,224 @@ module spu_system (
     input  wire [63:0] wr_data,
     output wire        fifo_full,
 
+    // RPLU config broadcast (piranha domain) — pulsed on DATA chord
+    output wire        rplu_cfg_wr_en,
+    output wire [2:0]  rplu_cfg_sel,
+    output wire        rplu_cfg_material,
+    output wire [9:0]  rplu_cfg_addr,
+    output wire [63:0] rplu_cfg_data,
+
+    // External RPLU CFG inputs (fast domain) — optional: connect board SPI loader here
+    input  wire        ext_rplu_cfg_wr_en_fast,
+    input  wire [2:0]  ext_rplu_cfg_sel_fast,
+    input  wire        ext_rplu_cfg_material_fast,
+    input  wire [9:0]  ext_rplu_cfg_addr_fast,
+    input  wire [63:0] ext_rplu_cfg_data_fast,
+
+    // PMOD SPI Flash (Autonomous Bootloader)
+    output wire        pmod_sclk,
+    output wire        pmod_cs_n,
+    output wire        pmod_mosi,
+    input  wire        pmod_miso,
+
     // Manifold Telemetry
     output wire [831:0] manifold_state,
     output wire [3:0]   satellite_snaps,
     output wire         is_janus_point
 );
 
+    // Reset alias (active-high) for legacy modules that expect active-high reset
+    wire reset = ~rst_n;
+
     // 1. Artery FIFO Bridge (Asynchronous Breath)
     wire [63:0] inhale_chord;
     wire        inhale_empty;
     reg         inhale_rd_en;
 
+    // Allow internal CPU (SPU13 core) to issue RPLU runtime writes via CDC
+    wire cortex_artery_wr_en;
+    wire [63:0] cortex_artery_wr_data;
+
+    // Artery FIFO remains driven solely by the Ghost OS PIO (wr_en/wr_data)
     SPU_ARTERY_FIFO u_artery (
         .wr_clk(clk_ghost), .wr_rst_n(rst_n),
         .wr_en(wr_en), .wr_data(wr_data), .full(fifo_full),
         .rd_clk(clk_piranha), .rd_rst_n(rst_n),
         .rd_en(inhale_rd_en), .rd_data(inhale_chord), .empty(inhale_empty)
+    );
+
+    // CDC: move SPU13 core-originated config writes (fast -> piranha)
+    wire        core_piranha_cfg_wr_en;
+    wire [2:0]  core_piranha_cfg_sel;
+    wire        core_piranha_cfg_material;
+    wire [9:0]  core_piranha_cfg_addr;
+    wire [63:0] core_piranha_cfg_data;
+
+    rplu_cfg_cdc u_cdc_core2p (
+        .clk_src       (clk_fast),
+        .rst_n_src     (rst_n),
+        .wr_src        (cortex_artery_wr_en),
+        .sel_src       (cortex_artery_wr_data[55:48]),
+        .material_src  (cortex_artery_wr_data[47]),
+        .addr_src      (cortex_artery_wr_data[46:37]),
+        .data_src      (cortex_artery_wr_data),
+        .clk_dst       (clk_piranha),
+        .rst_n_dst     (rst_n),
+        .wr_dst        (core_piranha_cfg_wr_en),
+        .sel_dst       (core_piranha_cfg_sel),
+        .material_dst  (core_piranha_cfg_material),
+        .addr_dst      (core_piranha_cfg_addr),
+        .data_dst      (core_piranha_cfg_data)
+    );
+
+    // Artery → RPLU decoder (optional runtime updates). Listens to inhaled chords
+    // and produces a single-cycle write pulse with parameters on DATA chord.
+    // Decoder outputs are captured to internal wires (dec_*). External fast-domain
+    // SPI loader inputs (ext_*) are moved into piranha domain via CDC (see below),
+    // then merged and exported as rplu_cfg_*.
+    wire        dec_cfg_wr_en;
+    wire [2:0]  dec_cfg_sel;
+    wire        dec_cfg_material;
+    wire [9:0]  dec_cfg_addr;
+    wire [63:0] dec_cfg_data;
+
+    rplu_artery_decoder u_rplu_dec (
+        .clk(clk_piranha),
+        .rst_n(rst_n),
+        .inhale_valid(inhale_rd_en),
+        .inhale_chord(inhale_chord),
+        .cfg_wr_en(dec_cfg_wr_en),
+        .cfg_wr_sel(dec_cfg_sel),
+        .cfg_wr_material(dec_cfg_material),
+        .cfg_wr_addr(dec_cfg_addr),
+        .cfg_wr_data(dec_cfg_data)
+    );
+
+    // -----------------------------------------------------------------
+    // CDC: move external fast-domain RPLU writes (e.g., SPI loader) into
+    // the piranha domain so runtime updates can be applied safely.
+    // -----------------------------------------------------------------
+    wire        ext_piranha_cfg_wr_en;
+    wire [2:0]  ext_piranha_cfg_sel;
+    wire        ext_piranha_cfg_material;
+    wire [9:0]  ext_piranha_cfg_addr;
+    wire [63:0] ext_piranha_cfg_data;
+
+    // -----------------------------------------------------------------
+    // Autonomous Hardware Bootrom & Config Mux
+    // -----------------------------------------------------------------
+    wire        hw_rd_trig;
+    wire [23:0] hw_rd_addr;
+    wire        hw_burst;
+    wire        hw_rd_stop;
+    wire [7:0]  hw_rd_data;
+    wire        hw_rd_done;
+
+    spu_flash_bridge u_flash (
+        .clk(clk_fast),
+        .rst_n(rst_n),
+        .rd_trig(hw_rd_trig),
+        .rd_addr(hw_rd_addr),
+        .burst(hw_burst),
+        .rd_stop(hw_rd_stop),
+        .rd_data(hw_rd_data),
+        .rd_done(hw_rd_done),
+        .flash_sclk(pmod_sclk),
+        .flash_cs_n(pmod_cs_n),
+        .flash_mosi(pmod_mosi),
+        .flash_miso(pmod_miso)
+    );
+
+    wire        hw_boot_done;
+    wire        hw_fifo_wr;
+    wire [77:0] hw_fifo_data;
+
+    spu_hw_bootrom #(.ROM_PAYLOADS(16)) u_bootrom (
+        .clk(clk_fast),
+        .rst_n(rst_n),
+        .rd_trig(hw_rd_trig),
+        .rd_addr(hw_rd_addr),
+        .burst(hw_burst),
+        .rd_stop(hw_rd_stop),
+        .rd_data(hw_rd_data),
+        .rd_done(hw_rd_done),
+        .fifo_wr(hw_fifo_wr),
+        .fifo_data(hw_fifo_data),
+        .fifo_full(1'b0), // The async fifo handles bursts fine behind the mux
+        .boot_done(hw_boot_done)
+    );
+
+    wire        mux_rplu_cfg_wr_en;
+    wire [77:0] mux_rplu_cfg_data;
+
+    spu_cfg_mux u_cfg_mux (
+        .boot_done(hw_boot_done),
+        .hw_fifo_wr(hw_fifo_wr),
+        .hw_fifo_data(hw_fifo_data),
+        .io_fifo_wr(ext_rplu_cfg_wr_en_fast),
+        .io_fifo_data({ext_rplu_cfg_sel_fast, ext_rplu_cfg_material_fast, ext_rplu_cfg_addr_fast, ext_rplu_cfg_data_fast}),
+        .out_fifo_wr(mux_rplu_cfg_wr_en),
+        .out_fifo_data(mux_rplu_cfg_data)
+    );
+
+    rplu_cfg_cdc u_cdc_fast2p (
+        .clk_src       (clk_fast),
+        .rst_n_src     (rst_n),
+        .wr_src        (mux_rplu_cfg_wr_en),
+        .sel_src       (mux_rplu_cfg_data[77:75]),
+        .material_src  (mux_rplu_cfg_data[74]),
+        .addr_src      (mux_rplu_cfg_data[73:64]),
+        .data_src      (mux_rplu_cfg_data[63:0]),
+        .clk_dst       (clk_piranha),
+        .rst_n_dst     (rst_n),
+        .wr_dst        (ext_piranha_cfg_wr_en),
+        .sel_dst       (ext_piranha_cfg_sel),
+        .material_dst  (ext_piranha_cfg_material),
+        .addr_dst      (ext_piranha_cfg_addr),
+        .data_dst      (ext_piranha_cfg_data)
+    );
+
+    // Merge: external piranha-side writes take top priority, followed by core-originated
+    // fast-domain writes (via CDC), then decoder-originated inhaled chords.
+    assign rplu_cfg_wr_en       = ext_piranha_cfg_wr_en | core_piranha_cfg_wr_en | dec_cfg_wr_en;
+    assign rplu_cfg_sel         = ext_piranha_cfg_wr_en ? ext_piranha_cfg_sel
+                                    : (core_piranha_cfg_wr_en ? core_piranha_cfg_sel : dec_cfg_sel);
+    assign rplu_cfg_material    = ext_piranha_cfg_wr_en ? ext_piranha_cfg_material
+                                    : (core_piranha_cfg_wr_en ? core_piranha_cfg_material : dec_cfg_material);
+    assign rplu_cfg_addr        = ext_piranha_cfg_wr_en ? ext_piranha_cfg_addr
+                                    : (core_piranha_cfg_wr_en ? core_piranha_cfg_addr : dec_cfg_addr);
+    assign rplu_cfg_data        = ext_piranha_cfg_wr_en ? ext_piranha_cfg_data
+                                    : (core_piranha_cfg_wr_en ? core_piranha_cfg_data : dec_cfg_data);
+
+    // -----------------------------------------------------------------
+    // CDC: forward decoder (piranha) writes to fast domain for fast-domain
+    // RPLU consumers. This provides a safe path for piranha-originated
+    // writes to be visible in the fast clock domain.
+    // -----------------------------------------------------------------
+    wire        dec_fast_cfg_wr_en;
+    wire [2:0]  dec_fast_cfg_sel;
+    wire        dec_fast_cfg_material;
+    wire [9:0]  dec_fast_cfg_addr;
+    wire [63:0] dec_fast_cfg_data;
+
+    // Forward the merged RPLU config bus (external piranha, core-originated, or decoder)
+    // into the fast domain so rplu consumers in the fast clock (e.g., rplu_exp)
+    // observe the complete set of runtime writes.
+    rplu_cfg_cdc u_cdc_p2f (
+        .clk_src       (clk_piranha),
+        .rst_n_src     (rst_n),
+        .wr_src        (rplu_cfg_wr_en),
+        .sel_src       (rplu_cfg_sel),
+        .material_src  (rplu_cfg_material),
+        .addr_src      (rplu_cfg_addr),
+        .data_src      (rplu_cfg_data),
+        .clk_dst       (clk_fast),
+        .rst_n_dst     (rst_n),
+        .wr_dst        (dec_fast_cfg_wr_en),
+        .sel_dst       (dec_fast_cfg_sel),
+        .material_dst  (dec_fast_cfg_material),
+        .addr_dst      (dec_fast_cfg_addr),
+        .data_dst      (dec_fast_cfg_data)
     );
 
     // 2. Phi-Gated Pulse Generation (from 24 MHz TDM clock)
@@ -42,8 +244,10 @@ module spu_system (
     // 3. Internal Manifold Memory Model (832-bit, fast domain)
     //    int_mem is driven solely by the always block in section 6 below.
     reg  [831:0] int_mem;
-    wire         mem_ready      = 1'b1;
-    wire [831:0] mem_rd_manifold = int_mem;
+    wire         mem_ready;
+    assign mem_ready = 1'b1;
+    wire [831:0] mem_rd_manifold;
+    assign mem_rd_manifold = int_mem;
     wire         mem_burst_rd;
     wire         mem_burst_wr;
     wire [23:0]  mem_addr;
@@ -53,11 +257,24 @@ module spu_system (
     // 4. Sovereign Mother Unit (SPU-13 Cortex)
     wire [831:0] manifold_out;
     wire         bloom_done;
+    // Cortex debug/status outputs (triage ties)
+    wire [3:0]   current_axis_ptr;
+    wire [63:0]  current_axis_data;
+    wire signed [2:0] ratio_cmp_res;
+    wire               ratio_cmp_valid;
+    wire [51:0] scale_table_out;
+    wire [12:0] scale_overflow_out;
 
     spu13_core #(.DEVICE("SIM")) u_cortex (
         .clk(clk_fast),
         .rst_n(rst_n),
         .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),
+        .dec_fast_cfg_wr_en(dec_fast_cfg_wr_en),
+        .dec_fast_cfg_sel(dec_fast_cfg_sel),
+        .dec_fast_cfg_material(dec_fast_cfg_material),
+        .dec_fast_cfg_addr(dec_fast_cfg_addr),
+        .dec_fast_cfg_data(dec_fast_cfg_data),
+        .phinary_cfg(16'd0),
         .mem_ready(mem_ready),
         .mem_burst_rd(mem_burst_rd),
         .mem_burst_wr(mem_burst_wr),
@@ -65,9 +282,20 @@ module spu_system (
         .mem_rd_manifold(mem_rd_manifold),
         .mem_wr_manifold(mem_wr_manifold),
         .mem_burst_done(mem_burst_done),
+        .artery_wr_en(cortex_artery_wr_en),
+        .artery_wr_data(cortex_artery_wr_data),
+        .current_axis_ptr(current_axis_ptr),
+        .current_axis_data(current_axis_data),
         .manifold_out(manifold_out),
         .bloom_complete(bloom_done),
-        .is_janus_point(is_janus_point)
+        .ratio_cmp_res(ratio_cmp_res),
+        .ratio_cmp_valid(ratio_cmp_valid),
+        .scale_table_out(scale_table_out),
+        .scale_overflow_out(scale_overflow_out),
+        .is_janus_point(is_janus_point),
+        // Instruction interface (unused by default in top-level)
+        .inst_valid(1'b0),
+        .inst_word(64'd0)
     );
 
     // 5. Sentinel Satellites (4x SPU-4)
@@ -78,9 +306,15 @@ module spu_system (
             spu4_top u_sentinel (
                 .clk(clk_piranha), .rst_n(rst_n),
                 .inst_data(24'h800000), // OP_SNAP
+                .pc(),
                 .snap_alert(satellite_snaps[i]),
                 .whisper_tx(sentinel_whispers[i]),
-                .debug_reg_r0()
+                .debug_reg_r0(),
+                .rplu_cfg_wr_en(rplu_cfg_wr_en),
+                .rplu_cfg_sel(rplu_cfg_sel),
+                .rplu_cfg_material(rplu_cfg_material),
+                .rplu_cfg_addr(rplu_cfg_addr),
+                .rplu_cfg_data(rplu_cfg_data)
             );
         end
     endgenerate
@@ -131,7 +365,8 @@ module spu_system (
         if (!rst_n) {inhale_primed_r2, inhale_primed_r1} <= 2'b00;
         else        {inhale_primed_r2, inhale_primed_r1} <= {inhale_primed_r1, inhale_primed};
     end
-    wire inhale_primed_fast = inhale_primed_r2;
+    wire inhale_primed_fast;
+    assign inhale_primed_fast = inhale_primed_r2;
 
     // int_mem: fast domain, single writer.
     // Sequencing:

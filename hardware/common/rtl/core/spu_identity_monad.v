@@ -12,12 +12,17 @@ module spu_identity_monad (
 );
 
     // 1. IVM Parity Sensor
-    wire signed [31:0] a = lattice_state[31:0];
-    wire signed [31:0] b = lattice_state[63:32];
-    wire signed [31:0] c = lattice_state[95:64];
-    wire signed [31:0] d = lattice_state[127:96];
+    wire signed [31:0] a;
+    assign a = lattice_state[31:0];
+    wire signed [31:0] b;
+    assign b = lattice_state[63:32];
+    wire signed [31:0] c;
+    assign c = lattice_state[95:64];
+    wire signed [31:0] d;
+    assign d = lattice_state[127:96];
     
-    wire signed [31:0] parity_sum = a + b + c + d;
+    wire signed [31:0] parity_sum;
+    assign parity_sum = a + b + c + d;
 
     always @(*) begin
         if (parity_sum != 32'sd0 && current_quadrance != 64'h0) begin
