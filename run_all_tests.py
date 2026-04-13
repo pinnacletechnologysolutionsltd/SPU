@@ -62,6 +62,10 @@ def main():
             test_files.add(f)
             
     test_files = list(test_files)
+    # Optional: limit to a single test file prefix for quicker triage
+    tb_filter = os.getenv('TB_FILTER')
+    if tb_filter:
+        test_files = [f for f in test_files if tb_filter in f.name]
     print(f"Found {len(test_files)} Verilog test files to execute.")
 
     # Directories for auto-discovery (-y) and includes (-I)
