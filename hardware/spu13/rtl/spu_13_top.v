@@ -95,6 +95,9 @@ module spu_13_top (
         .step_out  (vault_step)
     );
 
+    // ALU output tie-offs (prevent missing-pin warnings in testbenches)
+    wire [31:0] A_out, B_out, C_out, D_out;
+    
     spu_unified_alu_tdm alu_inst (
         .clk          (clk_12mhz),
         .rst_n        (rst_n),
@@ -116,6 +119,7 @@ module spu_13_top (
         .rot_axis_out (alu_rot_axis),
         .adaptive_tau_q(32'hFFFF_FFFF),
         .C_in(32'h0), .D_in(32'h0),
+        .A_out        (A_out), .B_out        (B_out), .C_out        (C_out), .D_out        (D_out),
         .result_18    (alu_result_18)
     );
 
