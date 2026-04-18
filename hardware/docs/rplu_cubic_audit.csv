@@ -2,7 +2,7 @@ file,lines,size,readmem_count,max_reg_index,has_real,has_float,fp_string_count
 "hardware/spu13/rtl/spu_janus_mirror.v",89,3473,0,0,0,0,0
 "hardware/spu13/rtl/spu_berry_gate.v",25,960,0,23,0,0,0
 "hardware/spu13/rtl/spu_permute_13.v",21,765,0,0,0,0,0
-"hardware/spu13/rtl/spu_13_top.v",154,4694,0,23,0,0,0
+"hardware/spu13/rtl/spu13_top.v",154,4694,0,23,0,0,0
 "hardware/spu13/tb/testbench_genesis.v",75,2465,0,15,0,0,0
 "hardware/spu13/tests/spu13_manifold_tb.v",72,2205,0,63,0,0,0
 "hardware/spu13/tests/spu_artery_tb.v",91,3390,0,63,0,0,0
@@ -225,8 +225,8 @@ file,lines,size,readmem_count,max_reg_index,has_real,has_float,fp_string_count
 "hardware/common/tests/pade_eval_4_4_tb.v",121,3957,2,63,0,0,0
 "hardware/common/tests/laminar_detector_tb.v",88,3451,0,9,0,0,0
 "hardware/spu4/rtl/spu4_core.v",152,4906,0,0,0,0,0
-"hardware/spu4/rtl/spu_4_satellite.v",36,1381,0,15,0,0,0
-"hardware/spu4/rtl/spu_4_euclidean_alu.v",189,7954,0,17,0,0,0
+"hardware/spu4/rtl/spu4_satellite.v",36,1381,0,15,0,0,0
+"hardware/spu4/rtl/spu4_euclidean_alu.v",189,7954,0,17,0,0,0
 "hardware/spu4/rtl/spu4_decoder.v",46,1868,0,0,0,0,0
 "hardware/spu4/rtl/spu4_regfile.v",51,2330,0,63,0,0,0
 "hardware/spu4/rtl/spu4_top.v",138,3998,0,63,0,0,0

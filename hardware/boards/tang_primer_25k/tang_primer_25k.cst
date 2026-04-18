@@ -115,8 +115,7 @@ IO_PORT "sdram_dq[13]"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[14]"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[15]"  IO_TYPE=LVCMOS33 DRIVE=8;
 
-// ─── RP2350 UART (921 600 baud) ───────────────────────────────────────────
-// RP2350 GP4 TX → FPGA uart_rx (B3);  RP2350 GP5 RX ← FPGA uart_tx (C3)
+// ─── RP2350 / BL616 USB-C Bridge UART (921 600 baud) ────────────────────────
 IO_LOC  "uart_rx"        B3;
 IO_LOC  "uart_tx"        C3;
 IO_PORT "uart_rx"        IO_TYPE=LVCMOS33 PULL_MODE=UP;
@@ -127,20 +126,15 @@ IO_PORT "uart_tx"        IO_TYPE=LVCMOS33 DRIVE=8;
 IO_LOC  "whisper_tx"     L5;
 IO_PORT "whisper_tx"     IO_TYPE=LVCMOS33 DRIVE=8;
 
-// PMOD connectors assignments:
-// Pmod2: SPI Flash (3.3V) — SPI Flash for persistent storage / bitstream
-//   spi_cs_n  -> C11
-//   spi_sck   -> C10
-//   spi_mosi  -> D11
-//   spi_miso  -> D10
-IO_LOC  "spi_cs_n" C11;
-IO_LOC  "spi_sck"  C10;
-IO_LOC  "spi_mosi" D11;
-IO_LOC  "spi_miso" D10;
-IO_PORT "spi_cs_n" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "spi_sck"  IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "spi_mosi" IO_TYPE=LVCMOS33 DRIVE=8;
-IO_PORT "spi_miso" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+// ─── I2S Audio Interface (Free GPIO) ──────────────────────────────────────
+// i2s_lrclk, i2s_bclk, i2s_dout disabled to avoid PnR pin errors.
+// IO_LOC  "i2s_lrclk"      A6;
+// IO_LOC  "i2s_bclk"       A7;
+// IO_LOC  "i2s_dout"       A8;
+// IO_PORT "i2s_lrclk"      IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "i2s_bclk"       IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "i2s_dout"       IO_TYPE=LVCMOS33 DRIVE=8;
+
 
 // Pmod3: SD card (moved from Pmod1) — SD Pmod (SPI-mode) exposed on header pins
 //   sd_cs  -> E11

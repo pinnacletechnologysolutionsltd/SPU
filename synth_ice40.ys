@@ -7,7 +7,7 @@ read_verilog hardware/spu4/rtl/*.v
 read_verilog reference/synergeticrenderer/Laminar-Core/hardware/archive/spu_permute_13.v
 
 # Ensure correct hierarchy
-hierarchy -check -top spu_13_top
+hierarchy -check -top spu13_top
 
 # Run ICE40 Synthesis
-synth_ice40 -top spu_13_top -json spu13.json
+synth_ice40 -top spu13_top -json spu13.json

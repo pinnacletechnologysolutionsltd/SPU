@@ -48,7 +48,7 @@ read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_core.v
 
 # ─── SPU-4 Sentinel ────────────────────────────────────────────────────────
 read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_decoder.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu_4_euclidean_alu.v
+read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_euclidean_alu.v
 read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_regfile.v
 read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_core.v
 read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_top.v
@@ -57,7 +57,7 @@ read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_top.v
 read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_berry_gate.v
 read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_janus_mirror.v
 read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_permute_13.v
-read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_13_top.v
+read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu13_top.v
 
 # ─── System infrastructure ─────────────────────────────────────────────────
 read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_sierpinski_clk.v

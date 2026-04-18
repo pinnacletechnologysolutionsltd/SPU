@@ -2,7 +2,7 @@
 // Target: GW1N-1 / GW1NZ-1 (Tang Nano 1K — 1,152 LUT4, 0 DSP, 72KB BSRAM)
 //
 // Tier 1 Micro deployment. No PSRAM — seeds from 256-word BSRAM.
-// Core: spu_4_euclidean_alu (bit-serial multiply, 0 DSPs, ~499 LUT).
+// Core: spu4_euclidean_alu (bit-serial multiply, 0 DSPs, ~499 LUT).
 // Output: Artery Whisper TX on GPIO as a pure resonance beacon.
 //
 // Total budget: ~601 LUT — 52% of GW1N-1.
@@ -54,7 +54,7 @@ module spu_gw1n1_top (
     reg         alu_start;
     reg         seeded;
 
-    spu_4_euclidean_alu u_alu (
+    spu4_euclidean_alu u_alu (
         .clk(clk),
         .reset(1'b0),
         .start(alu_start),

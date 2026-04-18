@@ -1,0 +1,63 @@
+// spu_gowin_dock.cst — Tang Primer 20K Dock Constraint File
+// Target Device: GW2A-LV18PG256C8/I7
+
+// --- Clock (27 MHz Oscillator) ---
+IO_LOC  "clk_27" H11;
+IO_PORT "clk_27" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// --- Heartbeat LEDs (Active Low) ---
+IO_LOC  "led_heartbeat" L16;
+IO_PORT "led_heartbeat" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+IO_LOC  "led[1]" L14;
+IO_PORT "led[1]" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+IO_LOC  "led[2]" N14;
+IO_PORT "led[2]" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+IO_LOC  "led[3]" N16;
+IO_PORT "led[3]" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// --- UART (Artery Telemetry) ---
+IO_LOC  "uart_tx" M14;
+IO_PORT "uart_tx" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+IO_LOC  "uart_rx" L13;
+IO_PORT "uart_rx" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// --- HDMI / DVI-D (Differential Pairs) ---
+// Note: TMDS_33 is a specific Gowin IO type for HDMI.
+IO_LOC "tmds_clk_p" H14, H16;
+IO_PORT "tmds_clk_p" IO_TYPE=TMDS_33 PULL_MODE=NONE;
+
+IO_LOC "tmds_d_p[0]" J15, K16;
+IO_PORT "tmds_d_p[0]" IO_TYPE=TMDS_33 PULL_MODE=NONE;
+
+IO_LOC "tmds_d_p[1]" G16, H15;
+IO_PORT "tmds_d_p[1]" IO_TYPE=TMDS_33 PULL_MODE=NONE;
+
+IO_LOC "tmds_d_p[2]" G15, F15;
+IO_PORT "tmds_d_p[2]" IO_TYPE=TMDS_33 PULL_MODE=NONE;
+
+// --- Ethernet (RTL8201F - MII Mode usually on Dock) ---
+// Some boards use RGMII, but the Dock standard pins are:
+IO_LOC "eth_tx_clk" E14;
+IO_LOC "eth_tx_en"  D16;
+IO_LOC "eth_txd[0]" E16;
+IO_LOC "eth_txd[1]" F16;
+IO_LOC "eth_txd[2]" F14;
+IO_LOC "eth_txd[3]" F15; // Often shared with HDMI or other, careful here! 
+// Actually F15 is HDMI D2- on some revisions. Check schematic J7.
+// We'll prioritize HDMI for now. Ethernet will use the PMOD headers if needed.
+
+// --- JTAG / SD Card (Same "off-the-shelf" strategy) ---
+// Using JTAG pins or the TF card slot if available on the core board.
+// TF Card Pins on Tang Primer 20K:
+IO_LOC "sd_clk"  M15;
+IO_LOC "sd_mosi" N15;
+IO_LOC "sd_miso" P15;
+IO_LOC "sd_cs"   D14;
+IO_PORT "sd_clk"  IO_TYPE=LVCMOS33;
+IO_PORT "sd_mosi" IO_TYPE=LVCMOS33;
+IO_PORT "sd_miso" IO_TYPE=LVCMOS33;
+IO_PORT "sd_cs"   IO_TYPE=LVCMOS33;

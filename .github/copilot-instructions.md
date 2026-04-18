@@ -53,7 +53,7 @@ The project is a **dual-core rational-field processor** implemented in Verilog/R
 | Core | File | Axes | Width | Role |
 |------|------|------|-------|------|
 | **SPU-4 Sentinel** | `hardware/spu4/rtl/spu4_core.v` | 4 (Quadray) | 32-bit | Euclidean satellite, sensory input |
-| **SPU-13 Cortex** | `hardware/spu13/rtl/spu_13_top.v` | 13 | 832-bit | Sovereign manifold engine |
+| **SPU-13 Cortex** | `hardware/spu13/rtl/spu13_top.v` | 13 | 832-bit | Sovereign manifold engine |
 
 Both live under `hardware/common/rtl/top/spu_system.v`, the system orchestrator.
 

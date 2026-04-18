@@ -1,0 +1,70 @@
+# synth_gowin.ys — Gowin GW2A-LV18 Sovereign Cluster Synthesis
+# Target: Tang Primer 20K (Dock) — 1x SPU-13 Mother
+
+# ─── Source Architecture ───────────────────────────────────────────────────
+read_verilog -sv -I hardware/rtl/arch -DARCH_GOWIN hardware/rtl/arch/spu_arch_defines.vh
+
+# ─── Core Modules ──────────────────────────────────────────────────────────
+read_verilog -I hardware/rtl/arch \
+    hardware/rtl/core/spu13/spu13_core.v \
+    hardware/rtl/core/spu13/spu13_lattice.v \
+    hardware/rtl/core/spu13/laminar_node.v \
+    hardware/rtl/core/shared/spu_rotor_vault.v \
+    hardware/rtl/core/shared/spu_cross_rotor.v \
+    hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/core/shared/spu_hw_bootrom.v \
+    hardware/rtl/core/shared/spu_cfg_mux.v \
+    hardware/rtl/core/shared/spu_proprioception.v \
+    hardware/rtl/core/spu4/spu4_top.v \
+    hardware/rtl/core/spu4/spu4_core.v \
+    hardware/rtl/core/spu4/spu4_decoder.v \
+    hardware/rtl/core/spu4/spu4_regfile.v \
+    hardware/rtl/core/spu4/spu4_euclidean_alu.v \
+    hardware/rtl/core/spu4/spu4_boot_master.v \
+    hardware/rtl/core/spu4/spu4_dream_sequencer.v \
+    hardware/rtl/core/spu4/spu4_sovereign_bus.v \
+    hardware/rtl/core/spu4/chiral_phinary_adder_param.v \
+    hardware/rtl/gpu/davis_to_rplu.v \
+    hardware/rtl/gpu/rplu_exp.v \
+    hardware/rtl/gpu/pade_eval_4_4.v \
+    hardware/rtl/gpu/rplu_poly_step.v \
+    hardware/rtl/gpu/spu4_bram_ip.v \
+    hardware/rtl/math/rational_surd5_scale_manager.v \
+    hardware/rtl/math/rational_surd5_norm.v \
+    hardware/rtl/math/rational_surd5_add.v \
+    hardware/rtl/math/rational_surd5_mul.v \
+    hardware/rtl/math/rational_surd5_mul64.v
+
+# ─── Common & Utils ────────────────────────────────────────────────────────
+read_verilog -I hardware/rtl/arch \
+    hardware/rtl/common/sync/spu_soft_start.v \
+    hardware/rtl/common/prim/spu_multiplier_serial.v \
+    hardware/rtl/common/prim/spu_gowin_prim.v \
+    hardware/rtl/common/prim/spu_psram_ctrl.v \
+    hardware/rtl/peripherals/memory/spu_ddr3_bridge_gowin.v
+
+# ─── Peripherals ───────────────────────────────────────────────────────────
+read_verilog -I hardware/rtl/arch \
+    hardware/rtl/peripherals/artery/spu_artery_fifo.v \
+    hardware/rtl/peripherals/artery/rplu_artery_decoder.v \
+    hardware/rtl/common/sync/spu_async_fifo.v \
+    hardware/rtl/common/sync/rplu_cfg_cdc.v \
+    hardware/rtl/peripherals/storage/spu_flash_bridge.v \
+    hardware/rtl/peripherals/storage/sd_card_master.v \
+    hardware/rtl/peripherals/storage/spu_sd_inhaler.v \
+    hardware/rtl/peripherals/io/spu_i2s_out.v \
+    hardware/rtl/peripherals/io/spu_spi_slave.v \
+    hardware/rtl/peripherals/video/spu_dvi_out.v
+
+# ─── Top Level ─────────────────────────────────────────────────────────────
+read_verilog -I hardware/rtl/arch \
+    hardware/rtl/top/spu_sierpinski_clk.v \
+    hardware/rtl/top/spu_system.v \
+    hardware/rtl/top/spu_gowin_top.v
+
+# ─── Synthesis ─────────────────────────────────────────────────────────────
+# synth_gowin handles hierarchy and loads its own cell libraries.
+synth_gowin -top spu_gowin_top -family gw2a -json build/gowin_20k/gowin_20k.json
+
+# Resource usage report
+stat -top spu_gowin_top

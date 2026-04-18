@@ -767,7 +767,7 @@ rightness at runtime.
 
 | Layer | Component | Status |
 |-------|-----------|--------|
-| Layer 0 | SPU-13 RTL (spu_13_top.v, spu_unified_alu_tdm.v) | ✅ 59/59 tests pass |
+| Layer 0 | SPU-13 RTL (spu13_top.v, spu_unified_alu_tdm.v) | ✅ 59/59 tests pass |
 | Layer 0 | SPU-4 Sentinel (spu4_core.v) | ✅ Complete |
 | Layer 0 | Davis Gate, Berry Gate, Janus Mirror | ✅ Complete |
 | Layer 1 | 64-bit binary ISA encoding | ✅ Defined (spu_vm.py) |

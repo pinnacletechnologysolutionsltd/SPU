@@ -1,0 +1,6 @@
+read_verilog -I hardware/rtl/arch \
+    hardware/rtl/core/spu4/spu4_euclidean_alu.v \
+    hardware/rtl/common/prim/spu_multiplier_serial.v
+hierarchy -check -top spu4_euclidean_alu
+scc
+synth_ecp5 -top spu4_euclidean_alu

@@ -14,9 +14,9 @@
 
 # ─── Project paths (relative to repo root, where you run gw_sh) ───────────
 set BOARD_DIR  "hardware/boards/tang_primer_25k"
-set RTL_COMMON "hardware/common/rtl"
-set RTL_SPU4   "hardware/spu4/rtl"
-set RTL_SPU13  "hardware/spu13/rtl"
+# ─── Project paths (relative to repo root, where you run gw_sh) ───────────
+set BOARD_DIR  "hardware/boards/tang_primer_25k"
+set RTL_ROOT   "hardware/rtl"
 set OUT_DIR    "build/tang_primer_25k"
 
 # ─── Create output directory ───────────────────────────────────────────────
@@ -31,43 +31,43 @@ create_project -name spu13_25k -dir $OUT_DIR -pn GW5A-LV25MG121C1/I0 -opt_strate
 add_file -type verilog "$BOARD_DIR/pll_gowin_stub.v"
 
 # Primitives
-add_file -type verilog "$RTL_COMMON/prim/gowin_mult18.v"
-add_file -type verilog "$RTL_COMMON/prim/spu_multiplier_serial.v"
-add_file -type verilog "$RTL_COMMON/prim/spu_psram_ctrl.v"
-add_file -type verilog "$RTL_COMMON/prim/spu_smul_tdm.v"
-add_file -type verilog "$RTL_COMMON/prim/surd_multiplier.v"
+add_file -type verilog "$RTL_ROOT/common/prim/gowin_mult18.v"
+add_file -type verilog "$RTL_ROOT/common/prim/spu_multiplier_serial.v"
+add_file -type verilog "$RTL_ROOT/common/prim/spu_psram_ctrl.v"
+add_file -type verilog "$RTL_ROOT/common/prim/spu_smul_tdm.v"
+add_file -type verilog "$RTL_ROOT/common/prim/surd_multiplier.v"
 
 # Core
-add_file -type verilog "$RTL_COMMON/spu_cross_rotor.v"
-add_file -type verilog "$RTL_COMMON/core/davis_gate_dsp.v"
-add_file -type verilog "$RTL_COMMON/core/spu13_sequencer.v"
-add_file -type verilog "$RTL_COMMON/core/spu_rotor_vault.v"
-add_file -type verilog "$RTL_COMMON/core/spu_unified_alu_tdm.v"
-add_file -type verilog "$RTL_COMMON/core/spu13_core.v"
+add_file -type verilog "$RTL_ROOT/core/shared/spu_cross_rotor.v"
+add_file -type verilog "$RTL_ROOT/core/shared/davis_gate_dsp.v"
+add_file -type verilog "$RTL_ROOT/core/spu13/spu13_sequencer.v"
+add_file -type verilog "$RTL_ROOT/core/shared/spu_rotor_vault.v"
+add_file -type verilog "$RTL_ROOT/core/shared/spu_unified_alu_tdm.v"
+add_file -type verilog "$RTL_ROOT/core/spu13/spu13_core.v"
 
 # SPU-4 Sentinel
-add_file -type verilog "$RTL_SPU4/spu4_decoder.v"
-add_file -type verilog "$RTL_SPU4/spu_4_euclidean_alu.v"
-add_file -type verilog "$RTL_SPU4/spu4_regfile.v"
-add_file -type verilog "$RTL_SPU4/spu4_core.v"
-add_file -type verilog "$RTL_SPU4/spu4_top.v"
+add_file -type verilog "$RTL_ROOT/core/spu4/spu4_decoder.v"
+add_file -type verilog "$RTL_ROOT/core/spu4/spu4_euclidean_alu.v"
+add_file -type verilog "$RTL_ROOT/core/spu4/spu4_regfile.v"
+add_file -type verilog "$RTL_ROOT/core/spu4/spu4_core.v"
+add_file -type verilog "$RTL_ROOT/core/spu4/spu4_top.v"
 
 # SPU-13 sub-modules
-add_file -type verilog "$RTL_SPU13/spu_berry_gate.v"
-add_file -type verilog "$RTL_SPU13/spu_janus_mirror.v"
-add_file -type verilog "$RTL_SPU13/spu_permute_13.v"
-add_file -type verilog "$RTL_SPU13/spu_13_top.v"
+add_file -type verilog "$RTL_ROOT/core/spu13/spu13_berry_gate.v"
+add_file -type verilog "$RTL_ROOT/core/spu13/spu13_janus_mirror.v"
+add_file -type verilog "$RTL_ROOT/core/spu13/spu13_permute_13.v"
+add_file -type verilog "$RTL_ROOT/core/spu13/spu13_top.v"
 
 # System infrastructure
-add_file -type verilog "$RTL_COMMON/top/spu_sierpinski_clk.v"
-add_file -type verilog "$RTL_COMMON/spu_soft_start.v"
-add_file -type verilog "$RTL_COMMON/top/spu_laminar_power.v"
-add_file -type verilog "$RTL_COMMON/proto/SPU_ARTERY_FIFO.v"
-add_file -type verilog "$RTL_COMMON/proto/SPU_WHISPER_TX.v"
-add_file -type verilog "$RTL_COMMON/top/spu_system.v"
+add_file -type verilog "$RTL_ROOT/top/spu_sierpinski_clk.v"
+add_file -type verilog "$RTL_ROOT/common/sync/spu_soft_start.v"
+add_file -type verilog "$RTL_ROOT/top/spu_laminar_power.v"
+add_file -type verilog "$RTL_ROOT/peripherals/artery/spu_artery_fifo.v"
+add_file -type verilog "$RTL_ROOT/peripherals/artery/spu_whisper_tx.v"
+add_file -type verilog "$RTL_ROOT/top/spu_system.v"
 
 # Memory bridges
-add_file -type verilog "$RTL_COMMON/mem/spu_mem_bridge_qspi.v"
+add_file -type verilog "$RTL_ROOT/peripherals/storage/spu_mem_bridge_qspi.v"
 
 # Board top
 add_file -type verilog "$BOARD_DIR/spu_tang_top.v"

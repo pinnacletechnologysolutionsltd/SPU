@@ -24,107 +24,121 @@ read_verilog hardware/boards/tang_primer_25k/pll_gowin_stub.v
 read_verilog hardware/boards/tang_primer_25k/gowin_sp_stub.v
 
 # ─── Architecture defines ─────────────────────────────────────────────────
-read_verilog -sv -I hardware/common/rtl hardware/common/rtl/spu_arch_defines.vh
+read_verilog -sv -I hardware/rtl/arch hardware/rtl/arch/spu_arch_defines.vh
 
 # ─── Primitives ────────────────────────────────────────────────────────────
-read_verilog -I hardware/common/rtl hardware/common/rtl/prim/gowin_mult18.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/prim/spu_multiplier_serial.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/prim/spu_psram_ctrl.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/prim/spu_smul_tdm.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/prim/surd_multiplier.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/spu_gowin_prim.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/gowin_mult18.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/spu_multiplier_serial.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/spu_psram_ctrl.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/spu_smul_tdm.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/surd_multiplier.v
 
 # ─── Core RTL ──────────────────────────────────────────────────────────────
-read_verilog -I hardware/common/rtl hardware/common/rtl/spu_cross_rotor.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/davis_gate_dsp.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_sequencer.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_rotor_vault.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_unified_alu_tdm.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_core.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_scale_manager.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_lattice.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/laminar_node.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_add.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_mul.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_mul64.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/rational_surd5_norm.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_rotor_core.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu13_scoreboard.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu1_alu.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_command_processor.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_core.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_execution_unit.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_folded_alu.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_identity_monad.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_light_core.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_nano_core.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_tensegrity_balancer.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/toroidal_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_cross_rotor.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/davis_gate_dsp.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_sequencer.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_rotor_vault.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_unified_alu_tdm.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/math/rational_surd5_scale_manager.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_lattice.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/laminar_node.v
+read_verilog -I hardware/rtl/arch hardware/rtl/math/rational_surd5_add.v
+read_verilog -I hardware/rtl/arch hardware/rtl/math/rational_surd5_mul.v
+read_verilog -I hardware/rtl/arch hardware/rtl/math/rational_surd5_mul64.v
+read_verilog -I hardware/rtl/arch hardware/rtl/math/rational_surd5_norm.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_rotor_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_scoreboard.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu1_alu.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_command_processor.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_execution_unit.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_folded_alu.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_identity_monad.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_light_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_nano_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_tensegrity_balancer.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/toroidal_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_cfg_mux.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_proprioception.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_hw_bootrom.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_instruction_decoder.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_register_file.v
 
 # ─── SPU-4 Sentinel ────────────────────────────────────────────────────────
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_decoder.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu_4_euclidean_alu.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_regfile.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_core.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_top.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_decoder.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_euclidean_alu.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_top.v
 
 # ─── SPU-13 sub-modules ────────────────────────────────────────────────────
-read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_berry_gate.v
-read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_janus_mirror.v
-read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_permute_13.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/davis_to_rplu.v
-read_verilog -I hardware/common/rtl hardware/spu13/rtl/spu_13_top.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_berry_gate.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_janus_mirror.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_permute_13.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/davis_to_rplu.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_top.v
 
 # ─── System infrastructure ─────────────────────────────────────────────────
-read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_sierpinski_clk.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/spu_soft_start.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_laminar_power.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_ARTERY_FIFO.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/proto/SPU_WHISPER_TX.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/proto/spu_spi_slave.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/io/sd_card_master.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/io/sd_bram_loader_dp.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/io/uart_debug_tx.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/io/boot_ram_dp.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/io/sd_bram_loader.v
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_sierpinski_clk.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/sync/spu_soft_start.v
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_laminar_power.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/artery/spu_artery_fifo.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/artery/spu_whisper_tx.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_spi_slave.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/sd_card_master.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/sd_bram_loader_dp.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/uart_debug_tx.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/boot_ram_dp.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/sd_bram_loader.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_industrial_io.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/spu_sd_inhaler.v
 # IO bridge and UART/surd transmitter used for MCU–FPGA telemetry and control
-read_verilog -I hardware/common/rtl hardware/common/rtl/include/auto_stubs.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/io/surd_uart_tx.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/io/spu_io_bridge.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/spu_async_fifo.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/rplu_cfg_cdc.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_system.v
+read_verilog -I hardware/rtl/arch hardware/rtl/arch/auto_stubs.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/surd_uart_tx.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_io_bridge.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/sync/spu_async_fifo.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/sync/rplu_cfg_cdc.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_i2s_out.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_node_link.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/artery/rplu_artery_decoder.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/spu_flash_bridge.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/spu_qfs_pour.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/graphics/spu_resonance_gen.v
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_system.v
 
 # ─── Memory bridges ────────────────────────────────────────────────────────
-read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_sdram.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_sdram_arbiter.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/mem/spu_mem_bridge_qspi.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/spu_sdram_arbiter.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/spu_mem_bridge_qspi.v
 
 # Bio sensors (archived — stubs in auto_stubs.v if referenced)
 
 # ─── GPU / HAL ─────────────────────────────────────────────────────────────
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_video_timing.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_provider.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_rom.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rational_sine_rom_q32.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rplu_bram_wrapper.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rplu_exp.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/rplu_poly_step.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/pade_eval_4_4.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/spu_video_timing.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rational_sine_provider.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rational_sine_rom.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rational_sine_rom_q32.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rplu_bram_wrapper.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rplu_exp.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rplu_poly_step.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/pade_eval_4_4.v
 # laminar_detector.v removed (archived)
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu4_bram_ip.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_edge_stepper.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_raster_unit.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_dual_raster.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_bresenham_raster.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu_gpu_top.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/hal/HAL_VGA.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/hal/HAL_HDMI_TMDS.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/hal/HAL_HDMI.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/spu4_bram_ip.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/spu_edge_stepper.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/spu_raster_unit.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/spu_dual_raster.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/spu_bresenham_raster.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/spu_gpu_top.v
+read_verilog -I hardware/rtl/arch hardware/rtl/hal/hal_vga.v
+read_verilog -I hardware/rtl/arch hardware/rtl/hal/hal_hdmi_tmds.v
+read_verilog -I hardware/rtl/arch hardware/rtl/hal/hal_hdmi.v
 
 # ─── Board top ─────────────────────────────────────────────────────────────
-read_verilog -I hardware/common/rtl hardware/boards/tang_primer_25k/spu_tang_top.v
+read_verilog -I hardware/rtl/arch hardware/boards/tang_primer_25k/spu_tang_top.v
 
 # ─── Synthesis ─────────────────────────────────────────────────────────────
 hierarchy -check -top spu_tang_top
-synth_gowin -family gw5a -top spu_tang_top -json build/tang_primer_25k.json
+synth_gowin -family gw5a -top spu_tang_top -json build/tang_primer_25k/tang_primer_25k.json
 stat

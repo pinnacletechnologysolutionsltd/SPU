@@ -53,7 +53,7 @@ yosys hardware/boards/tang_primer_20k/synth_gowin_20k.ys
 | Core | RTL | Axes | Width | Role |
 |------|-----|------|-------|------|
 | **SPU-4 Sentinel** | `hardware/spu4/rtl/spu4_core.v` | 4 (Quadray) | 32-bit | Euclidean satellite, sensory input |
-| **SPU-13 Cortex** | `hardware/spu13/rtl/spu_13_top.v` | 13 | 832-bit | Sovereign manifold engine |
+| **SPU-13 Cortex** | `hardware/spu13/rtl/spu13_top.v` | 13 | 832-bit | Sovereign manifold engine |
 
 Both are orchestrated by `hardware/common/rtl/top/spu_system.v`.
 

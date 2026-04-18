@@ -99,6 +99,7 @@ static void assemble_frame(const uint8_t *abcd32, uint16_t dissonance,
 static void pio_piranha_init(void);
 static void pio_whisper_init(void);
 static void whisper_send(uint32_t pulse_width);
+static void spu_symmetry_breath(void);
 
 // ── Core 1: SPU poller + Chord receiver ──────────────────────────────────
 // Runs at ~1 kHz: poll FPGA, assemble frame, signal Core 0 via FIFO.
@@ -138,6 +139,16 @@ void core1_entry(void) {
         uint8_t scale_bytes[9];
         spi_read_scale_table(scale_bytes);
         assemble_frame(abcd32, dissonance, flags, frame_back);
+
+        // Periodically report Laminar Health (Proprioception)
+        static uint32_t last_health_report = 0;
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+        if (now - last_health_report > 1000) {
+            printf("SPU HEALTH [LFI]: 0x%04X | TURBULENCE: %s\n", 
+                   dissonance, (flags & 0x04) ? "YES" : "NO");
+            last_health_report = now;
+        }
+
         // Copy first 5 bytes of scale table into spare bytes in axis 12 for telemetry
         {
             int off = 12 * BYTES_PER_AXIS;
@@ -166,14 +177,32 @@ void core1_entry(void) {
         }
 
         // 5. Drain USB stdio (host): receive raw 8-byte Chords from PC → FPGA
+// #define DEBUG_VOICE  // Uncomment to enable 'Listen' (L) command for manifold triage
+
+    while (true) {
+        // ... (Core 1 loop continues)
         {
             int usb_ch;
             while ((usb_ch = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
-                usb_chord_buf[usb_chord_pos++] = (uint8_t)usb_ch;
-                if (usb_chord_pos == 8) {
-                    spi_write_chord(usb_chord_buf);
-                    usb_chord_pos = 0;
+#ifdef DEBUG_VOICE
+                if (usb_ch == 'l' || usb_ch == 'L') {
+                    static uint8_t audio_mode = 0;
+                    audio_mode = (audio_mode + 1) % 3;
+                    printf("SPU AUDIO MODE: %d (%s)\n", audio_mode, 
+                           audio_mode == 0 ? "Silent" : (audio_mode == 1 ? "Resonance" : "Triage"));
+                    // Send Chord 0xB5: [77:75]=010 (WR_DATA), [74]=0, [73:64]=addr5 (Audio Control)
+                    uint8_t audio_chord[8] = {0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, audio_mode};
+                    spi_write_chord(audio_chord);
+                } else {
+#endif
+                    usb_chord_buf[usb_chord_pos++] = (uint8_t)usb_ch;
+                    if (usb_chord_pos == 8) {
+                        spi_write_chord(usb_chord_buf);
+                        usb_chord_pos = 0;
+                    }
+#ifdef DEBUG_VOICE
                 }
+#endif
             }
         }
 
@@ -213,6 +242,10 @@ int main(void) {
     // Before starting the background poller, push default RPLU tables into the FPGA
     // so runtime parameters are initialized (can be overwritten later via Artery).
     rplu_boot_load();
+    
+    // Perform the Symmetry Breath (Mathematical Health Check)
+    spu_symmetry_breath();
+
     multicore_launch_core1(core1_entry);
 
     // Core 0: wait for FIFO signal → swap buffers → transmit
@@ -244,6 +277,20 @@ static void spi_read_status(uint16_t *dissonance, uint8_t *flags) {
     *flags      = resp[2];
 }
 
+// ── Flow Control Helpers ──────────────────────────────────────────────────
+static bool spu_is_fifo_full(void) {
+    uint16_t dissonance;
+    uint8_t flags;
+    spi_read_status(&dissonance, &flags);
+    return (flags >> 3) & 0x1;
+}
+
+static void wait_for_artery_ready(void) {
+    while (spu_is_fifo_full()) {
+        sleep_us(10); // Wait for Artery to drain
+    }
+}
+
 // Read the per-axis scale table and overflow flags from FPGA.
 // out9 must point to at least 9 bytes.
 static void spi_read_scale_table(uint8_t *out9) {
@@ -257,6 +304,10 @@ static void spi_read_scale_table(uint8_t *out9) {
 // Send one 8-byte Chord to the FPGA for execution.
 // FPGA latches it on the next Fibonacci tick (see spu13_sequencer.v).
 static void spi_write_chord(const uint8_t *chord8) {
+    // Before writing a chord that goes into the Artery FIFO, we must
+    // ensure the FIFO is not full.
+    wait_for_artery_ready();
+
     uint8_t cmd = CMD_WRITE_CHORD;
     gpio_put(SPI_CS_PIN, 0);
     spi_write_blocking(SPI_PORT, &cmd, 1);
@@ -305,6 +356,40 @@ static void rplu_boot_load(void) {
         send_u64_as_chord(header);
         send_u64_as_chord(data);
         sleep_us(50);
+    }
+}
+
+// Symmetry Breath: Intentionally inject a unit vector and wait for harmonic lock-in.
+static void spu_symmetry_breath(void) {
+    uint16_t lfi = 0;
+    uint8_t flags = 0;
+    int timeout = 0;
+
+    printf("SPU BOOT: Initiating Symmetry Breath...\n");
+
+    // Poll current health
+    spi_read_status(&lfi, &flags);
+    
+    if (lfi < 0xF000 || (flags & 0x04)) {
+        printf("SPU BOOT: Turbulence detected (LFI 0x%04X). Injecting Golden Seed...\n", lfi);
+        // Header: [77:75]=010 (WR_DATA), [74]=0 (Carbon), [73:64]=addr0
+        // Data: 0x0001_0001_0001_0001
+        uint8_t seed_chord[8] = {0x40, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01};
+        spi_write_chord(seed_chord);
+        
+        // Wait for stability
+        while (lfi < 0xF000 && timeout < 100) {
+            spi_read_status(&lfi, &flags);
+            sleep_ms(10);
+            timeout++;
+            if (timeout % 10 == 0) printf("SPU BOOT: Waiting for Janus lock... (LFI 0x%04X)\n", lfi);
+        }
+    }
+
+    if (lfi >= 0xF000) {
+        printf("SPU BOOT: Laminar Harmony reached (LFI 0x%04X). Sovereign active.\n", lfi);
+    } else {
+        printf("SPU BOOT: WARNING - Stability timeout. Proceeding in Turbulent mode.\n");
     }
 }
 

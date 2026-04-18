@@ -15,7 +15,7 @@
 //
 // Operating modes (mode_pin, sampled continuously):
 //   0 = Standalone  — spu4_core runs autonomously; Whisper TX emits A_out.
-//   1 = Satellite   — spu4_core substrate + spu_4_satellite active-inference
+//   1 = Satellite   — spu4_core substrate + spu4_satellite active-inference
 //                     kernel; Whisper RX decodes mother's prime anchor;
 //                     Whisper TX reports satellite dissonance back up.
 //
@@ -169,7 +169,7 @@ module tang_nano_9k_top (
     // ------------------------------------------------------------------ //
     wire anchor_ready;
 
-    SPU_WHISPER_RX #(.BIAS(16'd0)) u_whisper_rx (
+    spu_whisper_rx #(.BIAS(16'd0)) u_whisper_rx (
         .clk      (clk_spu),
         .rst_n    (rst_n),
         .pwi_in   (whisper_rx),
@@ -186,7 +186,7 @@ module tang_nano_9k_top (
     wire [7:0] dissonance;
     wire       snap_alert;
 
-    spu_4_satellite u_satellite (
+    spu4_satellite u_satellite (
         .clk        (clk_spu),
         .rst_n      (rst_n & mode_pin),
         .anchor_in  (anchor_decoded),
@@ -218,7 +218,7 @@ module tang_nano_9k_top (
     // ------------------------------------------------------------------ //
     wire [15:0] whisper_surd_a = mode_pin ? node_tx[31:16] : A_out;
 
-    SPU_WHISPER_TX u_whisper_tx (
+    spu_whisper_tx u_whisper_tx (
         .clk      (clk_spu),
         .rst_n    (rst_n),
         .trig_en  (heartbeat),

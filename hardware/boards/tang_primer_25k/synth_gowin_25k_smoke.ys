@@ -4,23 +4,25 @@
 read_verilog hardware/boards/tang_primer_25k/pll_gowin_stub.v
 read_verilog hardware/boards/tang_primer_25k/gowin_sp_stub.v
 
-read_verilog -sv -I hardware/common/rtl hardware/common/rtl/spu_arch_defines.vh
+read_verilog ~/.oss-cad-suite/share/yosys/gowin/cells_sim.v
 
-read_verilog -I hardware/common/rtl hardware/common/rtl/top/spu_sierpinski_clk.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/spu_soft_start.v
+read_verilog -sv -I hardware/rtl/arch hardware/rtl/arch/spu_arch_defines.vh
 
-read_verilog -I hardware/common/rtl hardware/common/rtl/prim/spu_multiplier_serial.v
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_sierpinski_clk.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/sync/spu_soft_start.v
 
-read_verilog -I hardware/common/rtl hardware/common/rtl/core/davis_gate_dsp.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/spu_multiplier_serial.v
 
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_decoder.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu_4_euclidean_alu.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_regfile.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_core.v
-read_verilog -I hardware/common/rtl hardware/spu4/rtl/spu4_top.v
-read_verilog -I hardware/common/rtl hardware/common/rtl/gpu/spu4_bram_ip.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/davis_gate_dsp.v
 
-read_verilog -I hardware/common/rtl hardware/boards/tang25k/spu_tang25k_top.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_decoder.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_euclidean_alu.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu4/spu4_top.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/spu4_bram_ip.v
+
+read_verilog -I hardware/rtl/arch hardware/boards/tang25k/spu_tang25k_top.v
 
 hierarchy -check -top spu_tang25k_top
 synth_gowin -family gw5a -top spu_tang25k_top -json build/smoke.json
