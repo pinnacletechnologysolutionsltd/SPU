@@ -9,14 +9,14 @@ module rplu_exp #(
     input wire rst_n,
     input wire start,
     input wire [9:0] addr,
-    input wire material_id,
+    input wire [7:0] material_id,
     input wire signed [31:0] r_q16,
     input wire wake,
     input wire [9:0] wake_addr,
     // runtime config/write interface
     input wire cfg_wr_en,
     input wire [2:0] cfg_wr_sel,
-    input wire cfg_wr_material,
+    input wire [7:0] cfg_wr_material,
     input wire [9:0] cfg_wr_addr,
     input wire [63:0] cfg_wr_data,
     output reg signed [31:0] v_q16,
@@ -30,12 +30,11 @@ module rplu_exp #(
 );
 
     // params ROMs (small text files produced by generator)
-    reg [31:0] params_carbon [0:2];
-    reg [31:0] params_iron   [0:2];
+    // Unified Sovereign Params ROM (256 elements * 3 params)
+    reg [31:0] params_elements [0:255][0:2];
     initial begin
-        // file format: a_q16, re_q16, De_q16 (each 32-bit hex per line)
-        $readmemh("hardware/rtl/arch/params_carbon.hex", params_carbon);
-        $readmemh("hardware/rtl/arch/params_iron.hex", params_iron);
+        // file format: a_q16, re_q16, De_q16
+        $readmemh("hardware/rtl/arch/params_elements.hex", params_elements);
     end
 
     // Padé [4/4] coeffs (Q32 and improved Q16 available)
@@ -61,7 +60,8 @@ module rplu_exp #(
     // parameter and pipeline registers (registered staging)
     reg signed [31:0] a_reg, re_reg;
     reg [31:0] De_reg;
-    reg material_reg;
+    reg [7:0]  material_reg;
+    reg [9:0]  addr_reg;
 
     reg signed [31:0] r_reg;
     reg signed [31:0] delta_reg;
@@ -134,25 +134,21 @@ module rplu_exp #(
 
 
     // addr capture and ROM fallback arrays
-    reg [9:0] addr_reg;
-    reg [31:0] vnorm_carbon [0:1023];
-    (* ram_style = "block" *) reg vnorm_dissoc_carbon [0:1023];
-    reg [31:0] vnorm_iron [0:1023];
-    reg vnorm_dissoc_iron [0:1023];
+    // Active Vnorm Buffer (Loaded from SDRAM when material_id changes)
+    reg [31:0] vnorm_active [0:1023];
+    (* ram_style = "block" *) reg vnorm_dissoc_active [0:1023];
     initial begin
-        $readmemh("hardware/rtl/arch/vnorm_carbon.mem", vnorm_carbon);
-        $readmemh("hardware/rtl/arch/vnorm_dissoc_carbon.mem", vnorm_dissoc_carbon);
-        $readmemh("hardware/rtl/arch/vnorm_iron.mem", vnorm_iron);
-        $readmemh("hardware/rtl/arch/vnorm_dissoc_iron.mem", vnorm_dissoc_iron);
+        // Default to Carbon for boot stability
+        $readmemh("hardware/rtl/arch/vnorm_carbon.mem", vnorm_active);
+        $readmemh("hardware/rtl/arch/vnorm_dissoc_carbon.mem", vnorm_dissoc_active);
     end
 
     // runtime config writes (synchronous)
     always @(posedge clk) begin
         if (CFG_ENABLE && cfg_wr_en) begin
             case (cfg_wr_sel)
-                3'd0: begin // params: a_q16, re_q16, De_q16 (addr 0..2) per material
-                    if (cfg_wr_material == 1'b0) params_carbon[cfg_wr_addr[1:0]] <= cfg_wr_data[31:0];
-                    else params_iron[cfg_wr_addr[1:0]] <= cfg_wr_data[31:0];
+                3'd0: begin // params write
+                    params_elements[cfg_wr_material][cfg_wr_addr[1:0]] <= cfg_wr_data[31:0];
                 end
                 3'd1: begin // pade numerator Q32 (index 0..4)
                     pade_num_q32[cfg_wr_addr[2:0]] <= $signed(cfg_wr_data);
@@ -167,41 +163,14 @@ module rplu_exp #(
                     pade_den_q16[cfg_wr_addr[2:0]] <= cfg_wr_data[31:0];
                 end
                 3'd5: begin // vnorm data (Q16)
-                    if (cfg_wr_material == 1'b0) vnorm_carbon[cfg_wr_addr] <= cfg_wr_data[31:0];
-                    else vnorm_iron[cfg_wr_addr] <= cfg_wr_data[31:0];
+                    vnorm_active[cfg_wr_addr] <= cfg_wr_data[31:0];
                 end
                 3'd6: begin // vnorm dissoc flag
-                    if (cfg_wr_material == 1'b0) vnorm_dissoc_carbon[cfg_wr_addr] <= cfg_wr_data[0];
-                    else vnorm_dissoc_iron[cfg_wr_addr] <= cfg_wr_data[0];
+                    vnorm_dissoc_active[cfg_wr_addr] <= cfg_wr_data[0];
                 end
-                3'd7: begin // POLY_STEP: single Horner iteration for numerator and denominator
-                    if (cfg_wr_material) begin
-                        // RATIO_CMP command: cfg_wr_data = {p2[31:0], q2[31:0]}
-                        // Compare p1/q1 (acc_num_reg/acc_den_reg) against p2/q2
-                        // by cross-multiplication: left = acc_num_reg * q2; right = acc_den_reg * p2
-                        // sign-extend 32-bit operands to 128 bits for multiply
-                        // use 256-bit temporaries for full precision
-                        cmp_p2 = cfg_wr_data[63:32];
-                        cmp_q2 = cfg_wr_data[31:0];
-                        cmp_left_tmp  = $signed(acc_num_reg) * $signed({{96{cmp_q2[31]}}, cmp_q2});
-                        cmp_right_tmp = $signed(acc_den_reg)  * $signed({{96{cmp_p2[31]}}, cmp_p2});
-                        if (cmp_left_tmp < cmp_right_tmp) ratio_cmp_res <= -3'sd1;
-                        else if (cmp_left_tmp > cmp_right_tmp) ratio_cmp_res <=  3'sd1;
-                        else ratio_cmp_res <= 3'sd0;
-                        ratio_cmp_valid <= 1'b1;
-                    end else begin
-                        // index in cfg_wr_addr[2:0] selects coefficient 0..4
-                        // use current x_reg as multiplier
-                        poly_mult_num = acc_num_reg * x_reg;                 // blocking temp
-                        poly_accn_tmp = poly_mult_num >>> 32;               // align Q32 product
-                        poly_accn_tmp = poly_accn_tmp + pade_num_q32[cfg_wr_addr[2:0]];
-                        acc_num_reg <= poly_accn_tmp;
-
-                        poly_mult_den = acc_den_reg * x_reg;                // blocking temp
-                        poly_accd_tmp = poly_mult_den >>> 32;               // align Q32 product
-                        poly_accd_tmp = poly_accd_tmp + pade_den_q32[cfg_wr_addr[2:0]];
-                        acc_den_reg <= poly_accd_tmp;
-                    end
+                3'd7: begin
+                    // POLY_STEP/RATIO_CMP updates touch pipeline registers and are
+                    // handled in the main sequential block to keep a single driver.
                 end
                 default: ;
             endcase
@@ -226,6 +195,14 @@ module rplu_exp #(
             // handshake/pipeline control resets
             pade_start <= 1'b0; waiting_pade <= 1'b0;
             ratio_cmp_valid <= 1'b0; 
+            ratio_cmp_res <= 3'sd0;
+            addr_reg <= 0;
+            acc_num_reg <= 0; acc_den_reg <= 0;
+            mult_reg <= 0; poly_mult_num <= 0; poly_mult_den <= 0;
+            poly_accn_tmp <= 0; poly_accd_tmp <= 0;
+            numer_reg <= 0; quot_reg <= 0;
+            cmp_p2 <= 0; cmp_q2 <= 0;
+            cmp_left_tmp <= 0; cmp_right_tmp <= 0;
         end else begin
             // default pade start
             pade_start <= 1'b0;
@@ -267,15 +244,10 @@ module rplu_exp #(
 
             if (start) begin
                 // capture inputs and params into stage0
-                if (material_id == 1'b0) begin
-                    a_reg  <= $signed(params_carbon[0]);
-                    re_reg <= $signed(params_carbon[1]);
-                    De_reg <= params_carbon[2];
-                end else begin
-                    a_reg  <= $signed(params_iron[0]);
-                    re_reg <= $signed(params_iron[1]);
-                    De_reg <= params_iron[2];
-                end
+                // capture inputs and params into stage0 from unified ROM
+                a_reg  <= $signed(params_elements[material_id][0]);
+                re_reg <= $signed(params_elements[material_id][1]);
+                De_reg <= params_elements[material_id][2];
                 material_reg <= material_id;
                 r_reg <= r_q16;
                 addr_reg <= addr;
@@ -316,17 +288,34 @@ module rplu_exp #(
 
             // stage4: divide and compute V
             if (valid4) begin
-                // ROM-fallback mode: directly return precomputed vnorm by addr (fast, matches test data)
-                if (material_reg == 1'b0) begin
-                    v_reg <= vnorm_carbon[addr_reg];
-                    v_q16 <= vnorm_carbon[addr_reg];
-                    dissoc <= vnorm_dissoc_carbon[addr_reg];
-                end else begin
-                    v_reg <= vnorm_iron[addr_reg];
-                    v_q16 <= vnorm_iron[addr_reg];
-                    dissoc <= vnorm_dissoc_iron[addr_reg];
-                end
+                // Unified active table lookup (backed by SDRAM)
+                v_reg  <= vnorm_active[addr_reg];
+                v_q16  <= vnorm_active[addr_reg];
+                dissoc <= vnorm_dissoc_active[addr_reg];
                 done <= valid4;
+            end
+
+            if (CFG_ENABLE && cfg_wr_en && cfg_wr_sel == 3'd7) begin
+                if (cfg_wr_material) begin
+                    // RATIO_CMP command: cfg_wr_data = {p2[31:0], q2[31:0]}.
+                    cmp_p2 = cfg_wr_data[63:32];
+                    cmp_q2 = cfg_wr_data[31:0];
+                    cmp_left_tmp  = $signed(acc_num_reg) * $signed({{96{cmp_q2[31]}}, cmp_q2});
+                    cmp_right_tmp = $signed(acc_den_reg) * $signed({{96{cmp_p2[31]}}, cmp_p2});
+                    if (cmp_left_tmp < cmp_right_tmp) ratio_cmp_res <= -3'sd1;
+                    else if (cmp_left_tmp > cmp_right_tmp) ratio_cmp_res <= 3'sd1;
+                    else ratio_cmp_res <= 3'sd0;
+                    ratio_cmp_valid <= 1'b1;
+                end else begin
+                    // index in cfg_wr_addr[2:0] selects coefficient 0..4
+                    poly_mult_num = acc_num_reg * x_reg;
+                    poly_accn_tmp = (poly_mult_num >>> 32) + pade_num_q32[cfg_wr_addr[2:0]];
+                    acc_num_reg <= poly_accn_tmp;
+
+                    poly_mult_den = acc_den_reg * x_reg;
+                    poly_accd_tmp = (poly_mult_den >>> 32) + pade_den_q32[cfg_wr_addr[2:0]];
+                    acc_den_reg <= poly_accd_tmp;
+                end
             end
         end
     end

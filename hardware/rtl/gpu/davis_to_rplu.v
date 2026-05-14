@@ -7,11 +7,11 @@ module davis_to_rplu(
     input  wire rst_n,
     input  wire start,
     input  wire [63:0] q_vector,
-    input  wire material_id,
+    input  wire [7:0] material_id,
     // runtime config inputs (piped from top-level rplu_cfg bus)
     input  wire cfg_wr_en,
     input  wire [2:0] cfg_wr_sel,
-    input  wire cfg_wr_material,
+    input  wire [7:0] cfg_wr_material,
     input  wire [9:0] cfg_wr_addr,
     input  wire [63:0] cfg_wr_data,
     output wire signed [31:0] v_q16,

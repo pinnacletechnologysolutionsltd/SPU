@@ -151,6 +151,10 @@ module spu_mem_bridge_sdram #(
             {sdram_ras_n, sdram_cas_n, sdram_we_n} <= CMD_NOP;
             sdram_ba       <= 0;
             sdram_addr     <= 0;
+            mem_rd_manifold <= 0;
+            rd_ptr         <= 0;
+            burst_is_rd    <= 0;
+            dq_out         <= 0;
         end else begin
             // Defaults overridden per-state below
             mem_burst_done <= 0;

@@ -8,7 +8,9 @@ module laminar_node #(
     input  wire                 rst_n,
     input  wire                 enable,
     input  wire [WIDTH-1:0]     surd_in,
-    output reg  [WIDTH-1:0]     surd_out
+    output reg  [WIDTH-1:0]     surd_out,
+    output wire [3:0]           scale_shift,
+    output wire                 scale_overflow
 );
 
 // Phinary Janus prototype: interpret the input as two HALF-width packed
@@ -41,6 +43,9 @@ rational_surd5_norm u_norm (
     .scale_shift(norm_shift),
     .overflow(norm_overflow)
 );
+
+assign scale_shift = norm_shift;
+assign scale_overflow = norm_overflow;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin

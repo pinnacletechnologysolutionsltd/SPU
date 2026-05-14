@@ -1,6 +1,12 @@
 # Tang Primer 25K Build Guide
 
-Target: **Sipeed Tang Primer 25K** (GW5A-LV25MG121C1/I0)
+Target: **Sipeed Tang Primer 25K**
+
+Vendor-flow project target in this directory: `GW5A-LV25MG121C1/I0`
+OSS-flow target used by the build scripts: `GW5A-LV25MG121NES` + family `GW5A-25A`
+
+Do not casually mix additional package codes from third-party CST examples into
+the active constraints. Use them as pin-reference material only.
 
 ---
 
@@ -117,5 +123,5 @@ or for any socketed flash/EEPROM ICs in your hardware stack.
 https://dl.sipeed.com/shareURL/TANG/Primer_25K
 
 Known issue to check:
-- `sdram_cke` and `sdram_addr[0]` — possible A10 conflict in current draft
-- PMOD-A / PMOD-B connector pinout (PSRAM CS/CLK/IO lines)
+- `sdram_cke` is hardwired on the board; it should not be constrained as an FPGA pin.
+- PMOD J4 SPI flash bring-up uses `G10` CS#, `D10` SCK, `C10` MOSI, `B10` MISO, verified by sweep `M01:EF4018`.

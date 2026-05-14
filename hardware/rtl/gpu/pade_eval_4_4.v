@@ -76,9 +76,19 @@ module pade_eval_4_4 #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= IDLE;
-            busy <= 1'b0;
             done <= 1'b0;
             exp_q16 <= 32'sd0;
+            acc_num <= 0;
+            acc_den <= 0;
+            mult_tmp <= 0;
+            numer_reg <= 0;
+            quot_reg <= 0;
+            tmp_numer <= 0;
+            tmp_quot <= 0;
+            local_prod <= 0;
+            local_accn <= 0;
+            local_accd <= 0;
+            next_state <= IDLE;
         end else begin
             state <= next_state;
             // simulation debug removed
