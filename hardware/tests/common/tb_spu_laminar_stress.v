@@ -60,7 +60,8 @@ module tb_spu_laminar_stress;
         .gasket_sum_out(gasket_sum),
         .quadrance_out(quadrance),
         .cycle_wrap(cycle_wrap),
-        .rplu_dissoc_out(rplu_dissoc)
+        .rplu_dissoc_out(rplu_dissoc),
+        .rplu_dissoc_mask_out()
     );
 
     // Rational Proprioception instance

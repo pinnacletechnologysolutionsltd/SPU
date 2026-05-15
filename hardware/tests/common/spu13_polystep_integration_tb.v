@@ -46,6 +46,7 @@ module spu13_polystep_integration_tb;
         .artery_wr_en(artery_wr_en), .artery_wr_data(artery_wr_data), .ratio_cmp_res(), .ratio_cmp_valid(), .scale_table_out(), .scale_overflow_out(),
         .current_axis_ptr(), .current_axis_data(),
         .manifold_out(), .bloom_complete(), .is_janus_point(),
+        .audio_mode(), .gasket_sum_out(), .quadrance_out(), .cycle_wrap(), .rplu_dissoc_out(), .rplu_dissoc_mask_out(),
         .inst_valid(inst_valid), .inst_word(inst_word)
     );
 

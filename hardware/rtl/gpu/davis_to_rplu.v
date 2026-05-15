@@ -37,7 +37,7 @@ module davis_to_rplu(
     // quadrance is roughly proportional to squared displacement; map by sqrt approximation
     // Here: treat quadrance[31:16] as Q16 value for r (coarse mapping). Replace with proper mapping later.
     wire signed [31:0] r_q16;
-    assign r_q16 = { quadrance[31:16] };
+    assign r_q16 = $signed({16'd0, quadrance[31:16]});
 
     reg r_start;
     rplu_exp u_rplu (.clk(clk), .rst_n(rst_n), .start(r_start), .addr(10'd0), .material_id(material_id), .r_q16(r_q16), .wake(1'b0), .wake_addr(10'd0), .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data), .v_q16(v_q16), .dissoc(dissoc), .done(done), .laminar_irq(), .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid));
@@ -53,11 +53,15 @@ module davis_to_rplu(
                 // start after one cycle to allow davis to compute
                 r_start <= 1'b1;
                 started <= 1'b1;
+                `ifdef SIM
                 $display("DAVIS2RPLU: start pulse time=%0t quadrance=%0d", $time, quadrance);
+                `endif
             end
             if (done) begin
                 started <= 1'b0;
+                `ifdef SIM
                 $display("DAVIS2RPLU: rplu done time=%0t v=%0d dissoc=%b", $time, v_q16, dissoc);
+                `endif
             end
         end
     end

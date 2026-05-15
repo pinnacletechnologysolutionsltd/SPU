@@ -105,6 +105,7 @@ module spu13_deep_spin_tb;
         .quadrance_out(),
         .cycle_wrap(),
         .rplu_dissoc_out(),
+        .rplu_dissoc_mask_out(),
         .inst_valid(1'b0),
         .inst_word(64'd0)
     );

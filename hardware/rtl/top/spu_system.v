@@ -361,6 +361,7 @@ module spu_system (
     wire               ratio_cmp_valid;
     wire [51:0] scale_table_out;
     wire [12:0] scale_overflow_out;
+    wire [12:0] rplu_dissoc_mask_out;
 
     spu13_core #(.DEVICE("GW5A")) u_cortex (
         .clk(clk_fast),
@@ -404,6 +405,7 @@ module spu_system (
         .quadrance_out(quadrance_out),
         .cycle_wrap(cycle_wrap),
         .rplu_dissoc_out(rplu_dissoc_out),
+        .rplu_dissoc_mask_out(rplu_dissoc_mask_out),
         // Instruction interface (unused by default in top-level)
         .inst_valid(1'b0),
         .inst_word(64'd0)

@@ -70,7 +70,8 @@ module spu13_core #(
     output wire [15:0]               gasket_sum_out,
     output wire [31:0]               quadrance_out,
     output wire                      cycle_wrap,
-    output wire                      rplu_dissoc_out
+    output wire                      rplu_dissoc_out,
+    output wire [`MANIFOLD_AXES-1:0] rplu_dissoc_mask_out
 );
 
     // 1. Manifold State Buffering
@@ -312,13 +313,24 @@ module spu13_core #(
     assign quadrance_out  = quadrance;
     assign cycle_wrap     = (axis_ptr == 4'd12);
     assign rplu_dissoc_out = rplu_dissoc;
+    assign rplu_dissoc_mask_out = rplu_dissoc_bits;
 
 
     // Scoreboard for RPLU results (since RPLU takes multiple cycles, we latch the result)
     reg [12:0] rplu_dissoc_bits;
+    reg [3:0]  rplu_axis_pending;
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) rplu_dissoc_bits <= 13'h0;
-        else if (rplu_done) rplu_dissoc_bits[axis_ptr] <= rplu_dissoc;
+        if (!rst_n) begin
+            rplu_dissoc_bits <= 13'h0;
+            rplu_axis_pending <= 4'd0;
+        end else begin
+            if (phi_21) begin
+                rplu_axis_pending <= axis_ptr;
+            end
+            if (rplu_done && (rplu_axis_pending <= 4'd12)) begin
+                rplu_dissoc_bits[rplu_axis_pending] <= rplu_dissoc;
+            end
+        end
     end
 
 

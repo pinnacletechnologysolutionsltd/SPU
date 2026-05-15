@@ -294,6 +294,8 @@ module spu13_tang25k_top #(
     wire [831:0] live_manifold;
     wire [51:0]  core_scale_table;
     wire [12:0]  core_scale_overflow;
+    wire         core_rplu_dissoc;
+    wire [12:0] core_rplu_dissoc_mask;
     reg          sdram_ready_seen_core;
     reg          sdram_wr_seen_core;
     reg          sdram_done_seen_core;
@@ -320,6 +322,8 @@ module spu13_tang25k_top #(
     assign telemetry_header_status = ENABLE_SDRAM
                                    ? {sdram_ready_seen_core, sdram_wr_seen_core,
                                       sdram_done_seen_core, sdram_ready}
+                                   : ENABLE_CORE_RPLU
+                                   ? {1'b1, core_rplu_dissoc, |core_rplu_dissoc_mask, core_rplu_dissoc_mask[0]}
                                    : current_axis_ptr;
 
     reg [7:0] core_release_cnt;
@@ -395,7 +399,8 @@ module spu13_tang25k_top #(
         .audio_mode(),
         .gasket_sum_out(),
         .quadrance_out(quadrance_out),
-        .rplu_dissoc_out(),
+        .rplu_dissoc_out(core_rplu_dissoc),
+        .rplu_dissoc_mask_out(core_rplu_dissoc_mask),
         .ratio_cmp_res(),
         .ratio_cmp_valid()
     );
@@ -442,6 +447,7 @@ module spu13_tang25k_top #(
     reg [415:0] boot_prime_words_core;
     reg [51:0]  telemetry_scale_snap_core;
     reg [12:0]  telemetry_overflow_snap_core;
+    reg [12:0]  telemetry_rplu_snap_core;
     reg [31:0] telemetry_cycle_count_core;
     reg [31:0] telemetry_cycle_count_snap_core;
     reg        telemetry_seq_core;
@@ -456,6 +462,7 @@ module spu13_tang25k_top #(
     reg [415:0] telemetry_q_burst;
     reg [51:0]  telemetry_scale_tx;
     reg [12:0]  telemetry_overflow_tx;
+    reg [12:0]  telemetry_rplu_tx;
     reg [31:0] telemetry_cycle_count_tx;
     reg [31:0] boot_summary_q_tx;
     reg [3:0]  boot_summary_a_tx;
@@ -465,6 +472,7 @@ module spu13_tang25k_top #(
     reg        line_is_boot;
     reg        line_is_alive;
     reg        line_is_lattice;
+    reg        line_is_rplu;
     reg        boot_done_meta;
     reg        boot_done_tx;
     reg        telemetry_seq_meta;
@@ -489,7 +497,7 @@ module spu13_tang25k_top #(
     assign uart_tx_telemetry = !tx_out_active_low;
 
     wire [7:0] msg [0:15];
-    assign msg[0]  = line_is_alive ? "U" : (line_is_header ? "S" : (line_is_lattice ? "L" : (line_is_boot ? "B" : "Q")));
+    assign msg[0]  = line_is_alive ? "U" : (line_is_header ? "S" : (line_is_rplu ? "R" : (line_is_lattice ? "L" : (line_is_boot ? "B" : "Q"))));
     assign msg[1]  = ":";
     assign msg[2]  = hex2ascii(q_latch[31:28]);
     assign msg[3]  = hex2ascii(q_latch[27:24]);
@@ -574,7 +582,7 @@ module spu13_tang25k_top #(
                 4'd10: q_latch <= telemetry_q_burst[10*32 +: 32];
                 4'd11: q_latch <= telemetry_q_burst[11*32 +: 32];
                 4'd12: q_latch <= telemetry_q_burst[12*32 +: 32];
-                4'd13: q_latch <= telemetry_scale_tx[31:0];
+                4'd13: q_latch <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE) ? {19'd0, telemetry_rplu_tx} : telemetry_scale_tx[31:0];
                 4'd14: q_latch <= {12'd0, telemetry_scale_tx[51:32]};
                 4'd15: q_latch <= {19'd0, telemetry_overflow_tx};
                 default: q_latch <= 32'd0;
@@ -589,6 +597,7 @@ module spu13_tang25k_top #(
             boot_prime_words_core <= 416'd0;
             telemetry_scale_snap_core <= 52'd0;
             telemetry_overflow_snap_core <= 13'd0;
+            telemetry_rplu_snap_core <= 13'd0;
             telemetry_cycle_count_core <= 32'd0;
             telemetry_cycle_count_snap_core <= 32'd0;
             telemetry_seq_core <= 1'b0;
@@ -641,6 +650,7 @@ module spu13_tang25k_top #(
                     telemetry_q_snap_core <= {quadrance_out, telemetry_q_cycle[383:0]};
                     telemetry_scale_snap_core <= core_scale_table;
                     telemetry_overflow_snap_core <= core_scale_overflow;
+                    telemetry_rplu_snap_core <= core_rplu_dissoc_mask;
                     telemetry_seq_core <= ~telemetry_seq_core;
                 end
             end
@@ -668,6 +678,7 @@ module spu13_tang25k_top #(
             telemetry_q_burst <= 416'd0;
             telemetry_scale_tx <= 52'd0;
             telemetry_overflow_tx <= 13'd0;
+            telemetry_rplu_tx <= 13'd0;
             telemetry_cycle_count_tx <= 32'd0;
             boot_summary_q_tx <= 32'd0;
             boot_summary_a_tx <= 4'd0;
@@ -677,6 +688,7 @@ module spu13_tang25k_top #(
             line_is_boot <= 1'b0;
             line_is_alive <= 1'b0;
             line_is_lattice <= 1'b0;
+            line_is_rplu <= 1'b0;
             boot_done_meta <= 1'b0;
             boot_done_tx <= 1'b0;
             telemetry_seq_meta <= 1'b0;
@@ -705,6 +717,7 @@ module spu13_tang25k_top #(
                 telemetry_q_tx <= telemetry_q_snap_core;
                 telemetry_scale_tx <= telemetry_scale_snap_core;
                 telemetry_overflow_tx <= telemetry_overflow_snap_core;
+                telemetry_rplu_tx <= telemetry_rplu_snap_core;
                 telemetry_cycle_count_tx <= telemetry_cycle_count_snap_core;
             end
 
@@ -747,6 +760,7 @@ module spu13_tang25k_top #(
                             line_is_boot <= 1'b1;
                             line_is_alive <= 1'b0;
                             line_is_lattice <= 1'b0;
+                            line_is_rplu <= 1'b0;
                             line_launch_pending <= 1'b1;
                             boot_summary_pending <= 1'b0;
                             if (boot_summary_repeat_count != 6'd0) begin
@@ -764,6 +778,7 @@ module spu13_tang25k_top #(
                                 line_is_boot <= 1'b1;
                                 line_is_alive <= 1'b0;
                                 line_is_lattice <= 1'b0;
+                                line_is_rplu <= 1'b0;
                                 line_launch_pending <= 1'b1;
                                 boot_summary_repeat_count <= boot_summary_repeat_count - 1'b1;
                             end
@@ -778,6 +793,7 @@ module spu13_tang25k_top #(
                                 line_is_boot <= 1'b0;
                                 line_is_alive <= 1'b1;
                                 line_is_lattice <= 1'b0;
+                                line_is_rplu <= 1'b0;
                                 line_launch_pending <= 1'b1;
                             end
                         end else if (msg_timer < UART_TX_MSG_PERIOD) begin
@@ -785,7 +801,7 @@ module spu13_tang25k_top #(
                         end else begin
                             msg_timer <= 28'd0;
                             burst_active <= 1'b1;
-                            burst_axis_idx <= ENABLE_CORE_LATTICE ? 4'd13 : 4'd0;
+                            burst_axis_idx <= (ENABLE_CORE_LATTICE || ENABLE_CORE_RPLU) ? 4'd13 : 4'd0;
                             telemetry_q_burst <= telemetry_q_tx;
                             q_latch <= telemetry_cycle_count_tx;
                             a_latch <= telemetry_header_status;
@@ -793,6 +809,7 @@ module spu13_tang25k_top #(
                             line_is_boot <= 1'b0;
                             line_is_alive <= 1'b0;
                             line_is_lattice <= 1'b0;
+                            line_is_rplu <= 1'b0;
                             line_launch_pending <= 1'b1;
                         end
                     end else begin
@@ -801,7 +818,8 @@ module spu13_tang25k_top #(
                         line_is_header <= 1'b0;
                         line_is_boot <= 1'b0;
                         line_is_alive <= 1'b0;
-                        line_is_lattice <= (burst_axis_idx >= 4'd13);
+                        line_is_rplu <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx == 4'd13));
+                        line_is_lattice <= (burst_axis_idx >= 4'd13) && !(ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx == 4'd13));
                         line_launch_pending <= 1'b1;
                     end
                 end else begin
@@ -831,6 +849,8 @@ module spu13_tang25k_top #(
                             msg_idx <= 4'd0;
                             if (line_is_header) begin
                                 burst_axis_idx <= burst_axis_idx;
+                            end else if (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx == 4'd13)) begin
+                                burst_axis_idx <= 4'd0;
                             end else if (burst_axis_idx == 4'd12) begin
                                 burst_axis_idx <= 4'd0;
                                 burst_active <= 1'b0;
