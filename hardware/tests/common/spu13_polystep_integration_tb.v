@@ -19,7 +19,7 @@ module spu13_polystep_integration_tb;
     // dec_fast cfg inputs (unused here)
     wire dec_fast_cfg_wr_en = 1'b0;
     wire [2:0] dec_fast_cfg_sel = 3'd0;
-    wire dec_fast_cfg_material = 1'b0;
+    wire [7:0] dec_fast_cfg_material = 8'd0;
     wire [9:0] dec_fast_cfg_addr = 10'd0;
     wire [63:0] dec_fast_cfg_data = 64'd0;
 
@@ -40,6 +40,9 @@ module spu13_polystep_integration_tb;
         .mem_addr(mem_addr), .mem_rd_manifold(mem_rd_manifold), .mem_wr_manifold(mem_wr_manifold),
         .mem_burst_done(mem_burst_done),
         .dec_fast_cfg_wr_en(dec_fast_cfg_wr_en), .dec_fast_cfg_sel(dec_fast_cfg_sel), .dec_fast_cfg_material(dec_fast_cfg_material), .dec_fast_cfg_addr(dec_fast_cfg_addr), .dec_fast_cfg_data(dec_fast_cfg_data), .phinary_cfg(16'd0),
+        .prime_data(24'd0), .prime_addr(4'd0), .prime_we(1'b0), .boot_done(1'b1),
+        .pell_data(32'd0), .pell_addr(3'd0), .pell_we(1'b0),
+        .manual_rotor_en(1'b0), .manual_rotor_data(64'd0),
         .artery_wr_en(artery_wr_en), .artery_wr_data(artery_wr_data), .ratio_cmp_res(), .ratio_cmp_valid(), .scale_table_out(), .scale_overflow_out(),
         .current_axis_ptr(), .current_axis_data(),
         .manifold_out(), .bloom_complete(), .is_janus_point(),

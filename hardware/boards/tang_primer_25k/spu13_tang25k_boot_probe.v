@@ -26,6 +26,9 @@ module spu13_tang25k_boot_probe (
     wire [23:0] prime_data;
     wire [3:0]  prime_addr;
     wire        prime_we;
+    wire [31:0] pell_data;
+    wire [2:0]  pell_addr;
+    wire        pell_we;
     wire        boot_done;
 
     spu_laminar_boot u_boot (
@@ -39,6 +42,9 @@ module spu13_tang25k_boot_probe (
         .bram_data(prime_data),
         .bram_addr(prime_addr),
         .bram_we(prime_we),
+        .pell_data(pell_data),
+        .pell_addr(pell_addr),
+        .pell_we(pell_we),
         .mem_burst_wr(),
         .mem_addr(),
         .mem_wr_manifold(),
@@ -61,11 +67,45 @@ module spu13_tang25k_boot_probe (
     reg [31:0] seed_word12 = 32'd0;
     reg [3:0]  seed_count = 4'd0;
     reg [3:0]  last_seed_axis = 4'd0;
+    reg [31:0] pell_word0 = 32'd0;
+    reg [31:0] pell_word1 = 32'd0;
+    reg [31:0] pell_word2 = 32'd0;
+    reg [31:0] pell_word3 = 32'd0;
+    reg [31:0] pell_word4 = 32'd0;
+    reg [31:0] pell_word5 = 32'd0;
+    reg [31:0] pell_word6 = 32'd0;
+    reg [31:0] pell_word7 = 32'd0;
+    reg [3:0]  pell_count = 4'd0;
+    reg [2:0]  last_pell_step = 3'd0;
 
     always @(posedge sys_clk) begin
         if (!rst_n) begin
             seed_count <= 4'd0;
             last_seed_axis <= 4'd0;
+            pell_count <= 4'd0;
+            last_pell_step <= 3'd0;
+            pell_word0 <= 32'd0;
+            pell_word1 <= 32'd0;
+            pell_word2 <= 32'd0;
+            pell_word3 <= 32'd0;
+            pell_word4 <= 32'd0;
+            pell_word5 <= 32'd0;
+            pell_word6 <= 32'd0;
+            pell_word7 <= 32'd0;
+        end else if (!boot_done && pell_we) begin
+            case (pell_addr)
+                3'd0: pell_word0 <= pell_data;
+                3'd1: pell_word1 <= pell_data;
+                3'd2: pell_word2 <= pell_data;
+                3'd3: pell_word3 <= pell_data;
+                3'd4: pell_word4 <= pell_data;
+                3'd5: pell_word5 <= pell_data;
+                3'd6: pell_word6 <= pell_data;
+                3'd7: pell_word7 <= pell_data;
+                default: ;
+            endcase
+            pell_count <= {1'b0, pell_addr} + 1'b1;
+            last_pell_step <= pell_addr;
         end else if (!boot_done && prime_we && prime_addr < 4'd13) begin
             case (prime_addr)
                 4'd0:  seed_word0 <= {8'd0, prime_data};
@@ -101,17 +141,21 @@ module spu13_tang25k_boot_probe (
     reg [3:0]  line_axis = 4'd0;
     reg [1:0]  line_kind = 2'd0;
     reg [3:0]  burst_axis = 4'd0;
+    reg [2:0]  pell_burst_step = 3'd0;
     reg [27:0] start_cnt = 28'd0;
     reg [27:0] line_timer = 28'd0;
     reg        start_ready = 1'b0;
     reg        boot_line_sent = 1'b0;
+    reg        pell_dump_done = 1'b0;
 
     localparam [1:0] KIND_U = 2'd0;
     localparam [1:0] KIND_B = 2'd1;
     localparam [1:0] KIND_Q = 2'd2;
+    localparam [1:0] KIND_P = 2'd3;
 
     wire [7:0] line_prefix =
         (line_kind == KIND_B) ? "B" :
+        (line_kind == KIND_P) ? "P" :
         (line_kind == KIND_Q) ? "Q" : "U";
 
     function [7:0] hex2ascii;
@@ -168,6 +212,23 @@ module spu13_tang25k_boot_probe (
         end
     endfunction
 
+    function [31:0] pell_word;
+        input [2:0] step;
+        begin
+            case (step)
+                3'd0: pell_word = pell_word0;
+                3'd1: pell_word = pell_word1;
+                3'd2: pell_word = pell_word2;
+                3'd3: pell_word = pell_word3;
+                3'd4: pell_word = pell_word4;
+                3'd5: pell_word = pell_word5;
+                3'd6: pell_word = pell_word6;
+                3'd7: pell_word = pell_word7;
+                default: pell_word = 32'd0;
+            endcase
+        end
+    endfunction
+
     reg [9:0]  tx_shift = 10'h3FF;
     reg [3:0]  tx_bits_remaining = 4'd0;
     reg [15:0] baud_cnt = 16'd0;
@@ -192,10 +253,12 @@ module spu13_tang25k_boot_probe (
             line_value <= 32'd0;
             line_axis <= 4'd0;
             burst_axis <= 4'd0;
+            pell_burst_step <= 3'd0;
             start_cnt <= 28'd0;
             line_timer <= 28'd0;
             start_ready <= 1'b0;
             boot_line_sent <= 1'b0;
+            pell_dump_done <= 1'b0;
         end else if (tx_busy) begin
             if (baud_cnt < CLKS_PER_BIT - 1) begin
                 baud_cnt <= baud_cnt + 1'b1;
@@ -240,9 +303,19 @@ module spu13_tang25k_boot_probe (
                 line_axis <= 4'd0;
             end else if (!boot_line_sent) begin
                 line_kind <= KIND_B;
-                line_value <= {seed_count, 4'h0, jedec_id};
+                line_value <= {pell_count, seed_count, jedec_id};
                 line_axis <= last_seed_axis;
                 boot_line_sent <= 1'b1;
+            end else if (!pell_dump_done) begin
+                line_kind <= KIND_P;
+                line_value <= pell_word(pell_burst_step);
+                line_axis <= {1'b0, pell_burst_step};
+                if (pell_burst_step == 3'd7) begin
+                    pell_burst_step <= 3'd0;
+                    pell_dump_done <= 1'b1;
+                end else begin
+                    pell_burst_step <= pell_burst_step + 1'b1;
+                end
             end else begin
                 line_kind <= KIND_Q;
                 line_value <= seed_word(burst_axis);

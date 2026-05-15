@@ -26,6 +26,7 @@ module spu_rotor_vault_tb;
     spu_rotor_vault uut (
         .clk(clk), .reset(reset),
         .axis_id(axis_id), .rot_en(rot_en),
+        .init_we(1'b0), .init_step(3'd0), .init_rotor(32'd0),
         .rotor_out(rotor_out), .octave_out(octave_out), .step_out(step_out)
     );
 

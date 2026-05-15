@@ -32,6 +32,9 @@ module spu13_core #(
     input  wire [3:0]   prime_addr,
     input  wire         prime_we,
     input  wire         boot_done,
+    input  wire [31:0]  pell_data,
+    input  wire [2:0]   pell_addr,
+    input  wire         pell_we,
 
     // Manual Rotor Interface (Interaction)
     input  wire         manual_rotor_en,
@@ -162,6 +165,9 @@ module spu13_core #(
                 .reset(!rst_n),
                 .axis_id(axis_ptr[3:0]),
                 .rot_en(phi_8),         // advance one Pell orbit step during the fetch pulse
+                .init_we(pell_we && !boot_done),
+                .init_step(pell_addr),
+                .init_rotor(pell_data),
                 .rotor_out(current_rotor),
                 .octave_out(current_octave),
                 .step_out(current_step)

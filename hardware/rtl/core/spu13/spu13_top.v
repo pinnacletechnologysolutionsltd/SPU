@@ -30,6 +30,9 @@ module spu13_top (
     wire [23:0] prime_anchor;
     wire [3:0]  prime_addr;
     wire        bram_we;
+    wire [31:0] pell_data;
+    wire [2:0]  pell_addr;
+    wire        pell_we;
     wire        boot_complete;
 
     // --- Metastability Guard (Double-Flop Sync) ---
@@ -50,9 +53,13 @@ module spu13_top (
         .flash_sck(flash_clk),
         .flash_miso(flash_miso),
         .flash_mosi(flash_mosi),
+        .jedec_id(),
         .bram_data(prime_anchor),
         .bram_addr(prime_addr),
         .bram_we(bram_we),
+        .pell_data(pell_data),
+        .pell_addr(pell_addr),
+        .pell_we(pell_we),
         .boot_done(boot_complete)
     );
 
@@ -90,6 +97,9 @@ module spu13_top (
         .reset  (~rst_n),
         .axis_id(alu_rot_axis),
         .rot_en (alu_rot_en),
+        .init_we(pell_we && !boot_synced),
+        .init_step(pell_addr),
+        .init_rotor(pell_data),
         .rotor_out (vault_rotor),
         .octave_out(vault_octave),
         .step_out  (vault_step)

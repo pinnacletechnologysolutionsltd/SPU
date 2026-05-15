@@ -38,8 +38,24 @@ module tb_spu_laminar_stress;
         .phi_8(phi_8),
         .phi_13(phi_13),
         .phi_21(phi_21),
+        .dec_fast_cfg_wr_en(1'b0),
+        .dec_fast_cfg_sel(3'd0),
+        .dec_fast_cfg_material(8'd0),
+        .dec_fast_cfg_addr(10'd0),
+        .dec_fast_cfg_data(64'd0),
+        .phinary_cfg(16'd0),
+        .prime_data(24'd0),
+        .prime_addr(4'd0),
+        .prime_we(1'b0),
+        .boot_done(1'b1),
+        .pell_data(32'd0),
+        .pell_addr(3'd0),
+        .pell_we(1'b0),
+        .manual_rotor_en(1'b0),
+        .manual_rotor_data(64'd0),
         .mem_ready(1'b1),
         .mem_rd_manifold(832'h0), // default to zero
+        .mem_burst_done(1'b0),
         .is_janus_point(is_janus),
         .gasket_sum_out(gasket_sum),
         .quadrance_out(quadrance),
@@ -92,7 +108,7 @@ module tb_spu_laminar_stress;
         // We inject a "Singularity" value (A=Large, B=0, C=0, D=0)
         // This should cause high quadrance and RPLU dissociation
         $display("Injecting Mathematical Singularity...");
-        force dut.manifold_reg[63:0] = {32'hFFFF_0000, 32'h0000_0000}; 
+        force dut.manifold_lane[0] = {32'hFFFF_0000, 32'h0000_0000};
 
         repeat(20) @(posedge cycle_wrap);
         $display("Turbulence LFI: 0x%h, Turbulence: %b, Dissoc: %b", lfi, turbulence, rplu_dissoc);
@@ -102,8 +118,8 @@ module tb_spu_laminar_stress;
         // --- Test 3: Recovery (The Symmetry Breath) ---
         // Inject a known stable seed (A=1, B=1, C=1, D=1)
         $display("Injecting Symmetry Breath...");
-        release dut.manifold_reg[63:0]; // stop forcing bad value
-        force dut.manifold_reg[63:0] = {32'h0001_0001, 32'h0001_0001};
+        release dut.manifold_lane[0]; // stop forcing bad value
+        force dut.manifold_lane[0] = {32'h0001_0001, 32'h0001_0001};
         
         repeat(50) @(posedge cycle_wrap);
         $display("Recovery LFI: 0x%h, Turbulence: %b", lfi, turbulence);

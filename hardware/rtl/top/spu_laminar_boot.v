@@ -1,6 +1,6 @@
 // spu_laminar_boot.v
 // First-stage bootloader: read JEDEC ID from SPI flash, then hydrate the core
-// with the 13 golden-prime seed words stored in the PMOD flash image.
+// with the Pell rotor and golden-prime seed tables stored in the PMOD flash image.
 module spu_laminar_boot (
     input  clk,       // Expected 12MHz domain
     input  rst_n,
@@ -14,6 +14,10 @@ module spu_laminar_boot (
     output reg [23:0] bram_data,
     output reg [3:0]  bram_addr,
     output reg        bram_we,
+    // Pell Rotor Vault Interface
+    output reg [31:0] pell_data,
+    output reg [2:0]  pell_addr,
+    output reg        pell_we,
     // SDRAM Inhaler Interface
     output reg        mem_burst_wr,
     output reg [24:0] mem_addr,
@@ -25,13 +29,17 @@ module spu_laminar_boot (
     // Flash Addresses
     localparam [7:0]  JEDEC_CMD           = 8'h9F;
     localparam [7:0]  READ_CMD            = 8'h03;
+    localparam [23:0] FLASH_PELL_BASE     = 24'h100000;
     localparam [23:0] FLASH_PRIME_BASE    = 24'h100100;
 
     reg [5:0] state;
     reg [7:0] bit_cnt;
     reg [31:0] shift_reg;
     reg [31:0] read_word;
+    reg [31:0] pell_p_word;
+    reg [31:0] pell_q_word;
     reg [3:0]  prime_cnt;
+    reg [2:0]  pell_cnt;
     reg [5:0]  sck_div;
     reg        sck_en;
 
@@ -53,9 +61,13 @@ module spu_laminar_boot (
             boot_done <= 0;
             bram_we <= 0;
             bram_addr <= 0;
+            pell_we <= 0;
+            pell_addr <= 0;
+            pell_data <= 0;
             sck_div <= 0;
             sck_en <= 0;
             prime_cnt <= 0;
+            pell_cnt <= 0;
             bit_cnt <= 0;
             bram_data <= 0;
             mem_burst_wr <= 0;
@@ -66,9 +78,12 @@ module spu_laminar_boot (
             word_in_burst <= 0;
             shift_reg <= 0;
             read_word <= 0;
+            pell_p_word <= 0;
+            pell_q_word <= 0;
         end else if (!boot_done) begin
             sck_div <= sck_div + 1'b1;
             bram_we <= 1'b0;
+            pell_we <= 1'b0;
             mem_burst_wr <= 1'b0;
 
             case (state)
@@ -125,25 +140,27 @@ module spu_laminar_boot (
                     end
                 end
 
-                4: begin // Start READ 0x03 at the golden-prime table base
+                4: begin // Start READ 0x03 at the Pell table base
                     flash_cs <= 1'b0;
                     sck_en <= 1'b1;
-                    shift_reg <= {READ_CMD, FLASH_PRIME_BASE};
+                    shift_reg <= {READ_CMD, FLASH_PELL_BASE};
                     flash_mosi <= READ_CMD[7];
                     bit_cnt <= 8'd0;
-                    prime_cnt <= 4'd0;
+                    pell_cnt <= 3'd0;
                     read_word <= 32'd0;
+                    pell_p_word <= 32'd0;
+                    pell_q_word <= 32'd0;
                     sck_div <= 6'd0;
                     state <= 5;
                 end
 
-                5: begin // Send READ command and 24-bit address
+                5: begin // Send Pell READ command and 24-bit address
                     if (sck_fall) begin
                         shift_reg <= {shift_reg[30:0], 1'b0};
                         if (bit_cnt == 8'd31) begin
                             bit_cnt <= 8'd0;
                             flash_mosi <= 1'b0;
-                            read_word <= 32'd0;
+                            pell_p_word <= 32'd0;
                             state <= 6;
                         end else begin
                             bit_cnt <= bit_cnt + 1'b1;
@@ -152,14 +169,98 @@ module spu_laminar_boot (
                     end
                 end
 
-                6: begin // Read one big-endian 32-bit prime word
+                6: begin // Read one big-endian 32-bit Pell P word
+                    if (sck_fall) begin
+                        if (bit_cnt == 8'd31) begin
+                            bit_cnt <= 8'd0;
+                            pell_q_word <= 32'd0;
+                            state <= 7;
+                        end else begin
+                            bit_cnt <= bit_cnt + 1'b1;
+                        end
+                    end else if (sck_rise) begin
+                        pell_p_word <= {pell_p_word[30:0], flash_miso};
+                    end
+                end
+
+                7: begin // Read one big-endian 32-bit Pell Q word
+                    if (sck_fall) begin
+                        if (bit_cnt == 8'd31) begin
+                            bit_cnt <= 8'd0;
+                            if (pell_cnt == 3'd7) begin
+                                sck_en <= 1'b0;
+                            end
+                            state <= 8;
+                        end else begin
+                            bit_cnt <= bit_cnt + 1'b1;
+                        end
+                    end else if (sck_rise) begin
+                        pell_q_word <= {pell_q_word[30:0], flash_miso};
+                    end
+                end
+
+                8: begin // Hydrate one Pell vault entry
+                    pell_addr <= pell_cnt;
+                    pell_data <= {pell_p_word[15:0], pell_q_word[15:0]};
+                    pell_we <= 1'b1;
+                    if (pell_cnt == 3'd7) begin
+                        flash_cs <= 1'b1;
+                        state <= 9;
+                    end else begin
+                        pell_cnt <= pell_cnt + 1'b1;
+                        pell_p_word <= 32'd0;
+                        pell_q_word <= 32'd0;
+                        state <= 6;
+                    end
+                end
+
+                9: begin // CS high gap between Pell and golden-prime reads
+                    flash_cs <= 1'b1;
+                    sck_en <= 1'b0;
+                    flash_mosi <= 1'b0;
+                    if (bit_cnt == 8'd15) begin
+                        bit_cnt <= 8'd0;
+                        state <= 10;
+                    end else begin
+                        bit_cnt <= bit_cnt + 1'b1;
+                    end
+                end
+
+                10: begin // Start READ 0x03 at the golden-prime table base
+                    flash_cs <= 1'b0;
+                    sck_en <= 1'b1;
+                    shift_reg <= {READ_CMD, FLASH_PRIME_BASE};
+                    flash_mosi <= READ_CMD[7];
+                    bit_cnt <= 8'd0;
+                    prime_cnt <= 4'd0;
+                    read_word <= 32'd0;
+                    sck_div <= 6'd0;
+                    state <= 11;
+                end
+
+                11: begin // Send prime READ command and 24-bit address
+                    if (sck_fall) begin
+                        shift_reg <= {shift_reg[30:0], 1'b0};
+                        if (bit_cnt == 8'd31) begin
+                            bit_cnt <= 8'd0;
+                            flash_mosi <= 1'b0;
+                            read_word <= 32'd0;
+                            state <= 12;
+                        end else begin
+                            bit_cnt <= bit_cnt + 1'b1;
+                            flash_mosi <= shift_reg[30];
+                        end
+                    end
+                end
+
+                12: begin // Read one big-endian 32-bit prime word
                     if (sck_fall) begin
                         if (bit_cnt == 8'd31) begin
                             bit_cnt <= 8'd0;
                             if (prime_cnt == 4'd12) begin
                                 sck_en <= 1'b0;
                             end
-                            state <= 7;
+                            state <= 13;
                         end else begin
                             bit_cnt <= bit_cnt + 1'b1;
                         end
@@ -168,21 +269,21 @@ module spu_laminar_boot (
                     end
                 end
 
-                7: begin // Present a one-cycle write strobe to the core
+                13: begin // Present a one-cycle prime write strobe to the core
                     bram_addr <= prime_cnt;
                     bram_data <= read_word[23:0];
                     bram_we <= 1'b1;
                     if (prime_cnt == 4'd12) begin
                         flash_cs <= 1'b1;
-                        state <= 8;
+                        state <= 14;
                     end else begin
                         prime_cnt <= prime_cnt + 1'b1;
                         read_word <= 32'd0;
-                        state <= 6;
+                        state <= 12;
                     end
                 end
 
-                8: begin // Final Cleanup
+                14: begin // Final Cleanup
                     flash_cs <= 1'b1;
                     sck_en <= 1'b0;
                     flash_mosi <= 1'b0;

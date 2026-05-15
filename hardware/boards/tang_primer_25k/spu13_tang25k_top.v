@@ -70,6 +70,9 @@ module spu13_tang25k_top #(
     wire [23:0] prime_data;
     wire [3:0]  prime_addr;
     wire        prime_we;
+    wire [31:0] pell_data;
+    wire [2:0]  pell_addr;
+    wire        pell_we;
     wire        boot_done;
     wire [23:0] boot_jedec_id;
 
@@ -177,6 +180,9 @@ module spu13_tang25k_top #(
         .bram_data(prime_data),
         .bram_addr(prime_addr),
         .bram_we(prime_we),
+        .pell_data(pell_data),
+        .pell_addr(pell_addr),
+        .pell_we(pell_we),
         .mem_burst_wr(boot_mem_wr),
         .mem_addr(boot_mem_addr),
         .mem_wr_manifold(boot_mem_data),
@@ -354,6 +360,9 @@ module spu13_tang25k_top #(
         .prime_addr(prime_addr),
         .prime_we(prime_we),
         .boot_done(boot_done),
+        .pell_data(pell_data),
+        .pell_addr(pell_addr),
+        .pell_we(pell_we),
 
         // Manual Rotor
         .manual_rotor_en(manual_en),

@@ -1,6 +1,6 @@
 // spu_rotor_vault.v (v2.0 - Pell Octave Sovereign Storage)
-// Stores the 8-entry Pell fundamental orbit as a ROM, with per-axis
-// step (int3) and octave (int8) registers.
+// Stores the 8-entry Pell fundamental orbit as a boot-hydratable ROM, with
+// per-axis step (int3) and octave (int8) registers.
 //
 // Pell orbit in Q(√3): r^n where r=(2+√3).  Fundamental domain: steps 0-7.
 // Representation:  orbit[step] = {P[15:0], Q[15:0]}  (raw integers, not scaled)
@@ -25,6 +25,9 @@ module spu_rotor_vault (
     input  wire        reset,
     input  wire [3:0]  axis_id,   // which of the 13 axes (0-12)
     input  wire        rot_en,    // 1 = apply one ROT step to axis_id
+    input  wire        init_we,   // 1 = hydrate an orbit entry from flash
+    input  wire [2:0]  init_step, // Pell fundamental step 0-7
+    input  wire [31:0] init_rotor,// {P[15:0], Q[15:0]} raw integer mantissa
     output reg  [31:0] rotor_out, // {P[15:0], Q[15:0]} fundamental mantissa
     output reg  [7:0]  octave_out,// absolute octave (0 = first 8 steps)
     output reg  [2:0]  step_out   // current step within octave (0-7)
@@ -60,6 +63,9 @@ module spu_rotor_vault (
             octave_out <= 8'd0;
             step_out   <= 3'd0;
         end else begin
+            if (init_we) begin
+                orbit[init_step] <= init_rotor;
+            end
             if (rot_en && (axis_id <= 4'd12)) begin
                 // Increment step; carry into octave when step wraps 7→0
                 if (axis_step[axis_id] == 3'd7) begin
@@ -84,4 +90,3 @@ module spu_rotor_vault (
     end
 
 endmodule
-

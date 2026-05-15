@@ -368,10 +368,19 @@ module spu_system (
         .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),
         .dec_fast_cfg_wr_en(dec_fast_cfg_wr_en),
         .dec_fast_cfg_sel(dec_fast_cfg_sel),
-        .dec_fast_cfg_material(dec_fast_cfg_material),
+        .dec_fast_cfg_material({7'd0, dec_fast_cfg_material}),
         .dec_fast_cfg_addr(dec_fast_cfg_addr),
         .dec_fast_cfg_data(dec_fast_cfg_data),
         .phinary_cfg(16'd0),
+        .prime_data(24'd0),
+        .prime_addr(4'd0),
+        .prime_we(1'b0),
+        .boot_done(1'b1),
+        .pell_data(32'd0),
+        .pell_addr(3'd0),
+        .pell_we(1'b0),
+        .manual_rotor_en(1'b0),
+        .manual_rotor_data(64'd0),
         .mem_ready(mem_ready),
         .mem_burst_rd(mem_burst_rd),
         .mem_burst_wr(mem_burst_wr),
@@ -422,6 +431,7 @@ module spu_system (
                 .pc(),
                 .snap_alert(),
                 .whisper_tx(),
+                .state_out(),
                 .debug_reg_r0(sentinel_telemetry[i*64 +: 64])
             );
         end
