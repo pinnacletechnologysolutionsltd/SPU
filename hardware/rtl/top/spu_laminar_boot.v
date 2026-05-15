@@ -1,6 +1,6 @@
 // spu_laminar_boot.v
-// Debug bootloader: read JEDEC ID from SPI flash, then hydrate the core with a
-// deterministic 13-prime seed set for processor bring-up.
+// First-stage bootloader: read JEDEC ID from SPI flash, then hydrate the core
+// with the 13 golden-prime seed words stored in the PMOD flash image.
 module spu_laminar_boot (
     input  clk,       // Expected 12MHz domain
     input  rst_n,
@@ -24,10 +24,13 @@ module spu_laminar_boot (
 
     // Flash Addresses
     localparam [7:0]  JEDEC_CMD           = 8'h9F;
+    localparam [7:0]  READ_CMD            = 8'h03;
+    localparam [23:0] FLASH_PRIME_BASE    = 24'h100100;
 
     reg [5:0] state;
     reg [7:0] bit_cnt;
     reg [31:0] shift_reg;
+    reg [31:0] read_word;
     reg [3:0]  prime_cnt;
     reg [5:0]  sck_div;
     reg        sck_en;
@@ -40,28 +43,6 @@ module spu_laminar_boot (
     assign flash_sck = sck_en ? sck_div[5] : 1'b0;
     wire sck_rise = (sck_div == 6'd31);
     wire sck_fall = (sck_div == 6'd63);
-
-    function [23:0] seed_prime;
-        input [3:0] idx;
-        begin
-            case (idx)
-                4'd0:  seed_prime = 24'd2;
-                4'd1:  seed_prime = 24'd3;
-                4'd2:  seed_prime = 24'd5;
-                4'd3:  seed_prime = 24'd7;
-                4'd4:  seed_prime = 24'd11;
-                4'd5:  seed_prime = 24'd13;
-                4'd6:  seed_prime = 24'd17;
-                4'd7:  seed_prime = 24'd19;
-                4'd8:  seed_prime = 24'd23;
-                4'd9:  seed_prime = 24'd29;
-                4'd10: seed_prime = 24'd31;
-                4'd11: seed_prime = 24'd37;
-                4'd12: seed_prime = 24'd41;
-                default: seed_prime = 24'd0;
-            endcase
-        end
-    endfunction
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -84,8 +65,11 @@ module spu_laminar_boot (
             burst_cnt <= 0;
             word_in_burst <= 0;
             shift_reg <= 0;
+            read_word <= 0;
         end else if (!boot_done) begin
             sck_div <= sck_div + 1'b1;
+            bram_we <= 1'b0;
+            mem_burst_wr <= 1'b0;
 
             case (state)
                 0: begin // Initial Idle -> Read JEDEC ID
@@ -116,6 +100,7 @@ module spu_laminar_boot (
                     if (sck_fall) begin
                         if (bit_cnt == 23) begin
                             sck_en <= 1'b0;
+                            bit_cnt <= 8'd0;
                             state <= 3;
                         end else begin
                             bit_cnt <= bit_cnt + 1;
@@ -124,30 +109,84 @@ module spu_laminar_boot (
                         shift_reg <= {shift_reg[30:0], flash_miso};
                         if (bit_cnt == 23) begin
                             jedec_id <= {shift_reg[22:0], flash_miso};
-                            bram_data <= seed_prime(4'd0);
-                            bram_addr <= 4'd0;
-                            bram_we <= 1;
-                            prime_cnt <= 4'd1;
                         end
                     end
                 end
 
-                3: begin // Write deterministic seed primes into all 13 slots
-                    flash_cs <= 1;
-                    bram_we <= 1;
-                    bram_addr <= prime_cnt;
-                    bram_data <= seed_prime(prime_cnt);
-                    if (prime_cnt == 4'd12) begin
+                3: begin // CS high gap between JEDEC and normal read command
+                    flash_cs <= 1'b1;
+                    sck_en <= 1'b0;
+                    flash_mosi <= 1'b0;
+                    if (bit_cnt == 8'd15) begin
+                        bit_cnt <= 8'd0;
                         state <= 4;
                     end else begin
-                        prime_cnt <= prime_cnt + 1'b1;
+                        bit_cnt <= bit_cnt + 1'b1;
                     end
                 end
 
-                4: begin // Final Cleanup
-                    flash_cs <= 1;
-                    bram_we <= 0;
-                    boot_done <= 1;
+                4: begin // Start READ 0x03 at the golden-prime table base
+                    flash_cs <= 1'b0;
+                    sck_en <= 1'b1;
+                    shift_reg <= {READ_CMD, FLASH_PRIME_BASE};
+                    flash_mosi <= READ_CMD[7];
+                    bit_cnt <= 8'd0;
+                    prime_cnt <= 4'd0;
+                    read_word <= 32'd0;
+                    sck_div <= 6'd0;
+                    state <= 5;
+                end
+
+                5: begin // Send READ command and 24-bit address
+                    if (sck_fall) begin
+                        shift_reg <= {shift_reg[30:0], 1'b0};
+                        if (bit_cnt == 8'd31) begin
+                            bit_cnt <= 8'd0;
+                            flash_mosi <= 1'b0;
+                            read_word <= 32'd0;
+                            state <= 6;
+                        end else begin
+                            bit_cnt <= bit_cnt + 1'b1;
+                            flash_mosi <= shift_reg[30];
+                        end
+                    end
+                end
+
+                6: begin // Read one big-endian 32-bit prime word
+                    if (sck_fall) begin
+                        if (bit_cnt == 8'd31) begin
+                            bit_cnt <= 8'd0;
+                            if (prime_cnt == 4'd12) begin
+                                sck_en <= 1'b0;
+                            end
+                            state <= 7;
+                        end else begin
+                            bit_cnt <= bit_cnt + 1'b1;
+                        end
+                    end else if (sck_rise) begin
+                        read_word <= {read_word[30:0], flash_miso};
+                    end
+                end
+
+                7: begin // Present a one-cycle write strobe to the core
+                    bram_addr <= prime_cnt;
+                    bram_data <= read_word[23:0];
+                    bram_we <= 1'b1;
+                    if (prime_cnt == 4'd12) begin
+                        flash_cs <= 1'b1;
+                        state <= 8;
+                    end else begin
+                        prime_cnt <= prime_cnt + 1'b1;
+                        read_word <= 32'd0;
+                        state <= 6;
+                    end
+                end
+
+                8: begin // Final Cleanup
+                    flash_cs <= 1'b1;
+                    sck_en <= 1'b0;
+                    flash_mosi <= 1'b0;
+                    boot_done <= 1'b1;
                 end
             endcase
         end
