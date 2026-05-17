@@ -140,6 +140,27 @@ def load_expected_checksum(value):
     return None
 
 
+def load_expected_loaded(value):
+    if value != "auto":
+        return parse_u32(value)
+
+    summary = ROOT / "build" / "rplu_metrics" / "rplu_metric_summary.json"
+    if summary.exists():
+        data = json.loads(summary.read_text(encoding="utf-8"))
+        records = data.get("flash", {}).get("records")
+        if records is not None:
+            return int(records)
+
+    payload = ROOT / "build" / "rplu_boot_chords.bin"
+    if payload.exists():
+        size = payload.stat().st_size
+        if size % 16 != 0:
+            raise SystemExit(f"{payload} length is not a multiple of 16 bytes")
+        return size // 16
+
+    return 2051
+
+
 def find_capture_matches(
     text,
     expected_jedec,
@@ -291,12 +312,13 @@ def main():
     parser.add_argument("--expected-rplu-marker", type=parse_u32, default=0x1A5)
     parser.add_argument("--expected-rplu-mask", type=parse_u32, default=0x0000)
     parser.add_argument("--expected-rplu-addr", type=parse_u32, default=0x3FF)
-    parser.add_argument("--expected-rplu-loaded", type=parse_u32, default=2051)
+    parser.add_argument("--expected-rplu-loaded", default="auto")
     parser.add_argument("--expected-rplu-checksum", default="auto")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
     port = resolve_port(args.port)
+    expected_loaded = load_expected_loaded(args.expected_rplu_loaded)
     expected_checksum = load_expected_checksum(args.expected_rplu_checksum)
     stop_when = lambda text: capture_satisfies(
         text,
@@ -304,7 +326,7 @@ def main():
         args.expected_rplu_marker,
         args.expected_rplu_mask,
         args.expected_rplu_addr,
-        args.expected_rplu_loaded,
+        expected_loaded,
         expected_checksum,
     )
     if not args.no_load:
@@ -319,7 +341,7 @@ def main():
         args.expected_rplu_marker,
         args.expected_rplu_mask,
         args.expected_rplu_addr,
-        args.expected_rplu_loaded,
+        expected_loaded,
         expected_checksum,
     )
 

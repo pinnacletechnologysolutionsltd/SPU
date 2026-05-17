@@ -2,18 +2,31 @@
 """Build a Tang Primer 25K J4 SPI flash image with SPU-13/RPLU boot assets."""
 
 import argparse
+import re
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "build"
+FLASH_MAP = ROOT / "hardware" / "rtl" / "arch" / "spu_flash_map.vh"
 
 FLASH_SIZE = 16 * 1024 * 1024
-FLASH_PELL_BASE = 0x100000
-FLASH_GOLDEN_BASE = 0x100100
-FLASH_RPLU_CFG_BASE = 0x110000
 
 OPCODE_RPLU_CFG = 0xA5
+
+
+def read_verilog_define(name):
+    pattern = re.compile(rf"`define\s+{re.escape(name)}\s+24'h([0-9A-Fa-f]+)\b")
+    for line in FLASH_MAP.read_text(encoding="utf-8").splitlines():
+        match = pattern.search(line)
+        if match:
+            return int(match.group(1), 16)
+    raise SystemExit(f"Missing `{name} in {FLASH_MAP}")
+
+
+FLASH_PELL_BASE = read_verilog_define("FLASH_PELL_BASE")
+FLASH_GOLDEN_BASE = read_verilog_define("FLASH_GOLDEN_BASE")
+FLASH_RPLU_CFG_BASE = read_verilog_define("FLASH_RPLU_CFG_BASE")
 
 
 def read_hex_words(path):

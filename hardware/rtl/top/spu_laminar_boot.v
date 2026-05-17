@@ -1,6 +1,8 @@
 // spu_laminar_boot.v
 // First-stage bootloader: read JEDEC ID from SPI flash, then hydrate the core
 // with the Pell rotor and golden-prime seed tables stored in the PMOD flash image.
+`include "spu_flash_map.vh"
+
 module spu_laminar_boot #(
     parameter ENABLE_RPLU_BOOT = 1,
     parameter [15:0] RPLU_CFG_RECORDS = 16'd2051,
@@ -41,9 +43,9 @@ module spu_laminar_boot #(
     // Flash Addresses
     localparam [7:0]  JEDEC_CMD           = 8'h9F;
     localparam [7:0]  READ_CMD            = 8'h03;
-    localparam [23:0] FLASH_PELL_BASE     = 24'h100000;
-    localparam [23:0] FLASH_PRIME_BASE    = 24'h100100;
-    localparam [23:0] FLASH_RPLU_CFG_BASE = 24'h110000;
+    localparam [23:0] FLASH_PELL_BOOT_BASE     = `FLASH_PELL_BASE;
+    localparam [23:0] FLASH_PRIME_BOOT_BASE    = `FLASH_GOLDEN_BASE;
+    localparam [23:0] FLASH_RPLU_CFG_BOOT_BASE = `FLASH_RPLU_CFG_BASE;
     localparam [7:0]  RPLU_CFG_OPCODE     = 8'hA5;
 
     reg [5:0] state;
@@ -178,7 +180,7 @@ module spu_laminar_boot #(
                 4: begin // Start READ 0x03 at the Pell table base
                     flash_cs <= 1'b0;
                     sck_en <= 1'b1;
-                    shift_reg <= {READ_CMD, FLASH_PELL_BASE};
+                    shift_reg <= {READ_CMD, FLASH_PELL_BOOT_BASE};
                     flash_mosi <= READ_CMD[7];
                     bit_cnt <= 8'd0;
                     pell_cnt <= 3'd0;
@@ -264,7 +266,7 @@ module spu_laminar_boot #(
                 10: begin // Start READ 0x03 at the golden-prime table base
                     flash_cs <= 1'b0;
                     sck_en <= 1'b1;
-                    shift_reg <= {READ_CMD, FLASH_PRIME_BASE};
+                    shift_reg <= {READ_CMD, FLASH_PRIME_BOOT_BASE};
                     flash_mosi <= READ_CMD[7];
                     bit_cnt <= 8'd0;
                     prime_cnt <= 4'd0;
@@ -340,7 +342,7 @@ module spu_laminar_boot #(
                 16: begin // Start READ 0x03 at the RPLU chord stream base
                     flash_cs <= 1'b0;
                     sck_en <= 1'b1;
-                    shift_reg <= {READ_CMD, FLASH_RPLU_CFG_BASE};
+                    shift_reg <= {READ_CMD, FLASH_RPLU_CFG_BOOT_BASE};
                     flash_mosi <= READ_CMD[7];
                     bit_cnt <= 8'd0;
                     rplu_record_cnt <= 16'd0;

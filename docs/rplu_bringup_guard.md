@@ -64,7 +64,10 @@ tools/probe_tang25k_rplu_flash.py
 The probe loads `build/tang_primer_25k_spu13_rplu_probe.fs`, listens on the
 Sipeed FTDI UART at 115200 baud, and waits up to 45 seconds. The timeout covers
 the repeated boot-summary window; capture exits early once the JEDEC, RPLU
-marker, loaded-count, and checksum lines have all been observed.
+marker, loaded-count, and checksum lines have all been observed. By default,
+the expected loaded count and checksum are read from the generated RPLU metric
+summary/payload, so the probe follows the flash image that the regression just
+built.
 
 The proof line is:
 
