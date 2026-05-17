@@ -168,8 +168,19 @@ module spu13_tang25k_top #(
     wire        boot_mem_wr;
     wire [24:0] boot_mem_addr;
     wire [831:0] boot_mem_data;
+    wire        boot_rplu_cfg_wr_en;
+    wire [2:0]  boot_rplu_cfg_sel;
+    wire [7:0]  boot_rplu_cfg_material;
+    wire [9:0]  boot_rplu_cfg_addr;
+    wire [63:0] boot_rplu_cfg_data;
+    wire [15:0] boot_rplu_cfg_loaded;
+    wire [31:0] boot_rplu_cfg_checksum;
 
-    spu_laminar_boot boot_unit (
+    spu_laminar_boot #(
+        .ENABLE_RPLU_BOOT(ENABLE_CORE_RPLU),
+        .RPLU_CFG_RECORDS(16'd2051),
+        .SPI_SCK_HALF_CYCLES(2)
+    ) boot_unit (
         .clk(clk_core),
         .rst_n(rst_n),
         .flash_cs(flash_cs),
@@ -187,6 +198,13 @@ module spu13_tang25k_top #(
         .mem_addr(boot_mem_addr),
         .mem_wr_manifold(boot_mem_data),
         .mem_burst_done(sdram_burst_done),
+        .rplu_cfg_wr_en(boot_rplu_cfg_wr_en),
+        .rplu_cfg_sel(boot_rplu_cfg_sel),
+        .rplu_cfg_material(boot_rplu_cfg_material),
+        .rplu_cfg_addr(boot_rplu_cfg_addr),
+        .rplu_cfg_data(boot_rplu_cfg_data),
+        .rplu_cfg_loaded(boot_rplu_cfg_loaded),
+        .rplu_cfg_checksum(boot_rplu_cfg_checksum),
         .boot_done(boot_done)
     );
 
@@ -296,6 +314,7 @@ module spu13_tang25k_top #(
     wire [12:0]  core_scale_overflow;
     wire         core_rplu_dissoc;
     wire [12:0] core_rplu_dissoc_mask;
+    wire [9:0]  core_rplu_addr;
     reg          sdram_ready_seen_core;
     reg          sdram_wr_seen_core;
     reg          sdram_done_seen_core;
@@ -352,12 +371,12 @@ module spu13_tang25k_top #(
         .phi_21(phi_21 && debug_run_core),
 
         // Config / Phinary Inputs
-        .dec_fast_cfg_wr_en(1'b0),
-        .dec_fast_cfg_sel(3'd0),
-        .dec_fast_cfg_material(8'd0),
-        .dec_fast_cfg_addr(10'd0),
-        .dec_fast_cfg_data(64'd0),
-        .phinary_cfg(16'h0201), // Enable=1, Material=0x01 (Carbon)
+        .dec_fast_cfg_wr_en(boot_rplu_cfg_wr_en),
+        .dec_fast_cfg_sel(boot_rplu_cfg_sel),
+        .dec_fast_cfg_material(boot_rplu_cfg_material),
+        .dec_fast_cfg_addr(boot_rplu_cfg_addr),
+        .dec_fast_cfg_data(boot_rplu_cfg_data),
+        .phinary_cfg(16'h0001), // Enable=1, Material=0
 
         // Prime Hydration (live core hydration restored through lane-local writes)
         .prime_data(prime_data),
@@ -401,6 +420,7 @@ module spu13_tang25k_top #(
         .quadrance_out(quadrance_out),
         .rplu_dissoc_out(core_rplu_dissoc),
         .rplu_dissoc_mask_out(core_rplu_dissoc_mask),
+        .rplu_addr_out(core_rplu_addr),
         .ratio_cmp_res(),
         .ratio_cmp_valid()
     );
@@ -448,6 +468,11 @@ module spu13_tang25k_top #(
     reg [51:0]  telemetry_scale_snap_core;
     reg [12:0]  telemetry_overflow_snap_core;
     reg [12:0]  telemetry_rplu_snap_core;
+    reg [9:0]   telemetry_rplu_addr_snap_core;
+    reg [9:0]   telemetry_rplu_addr_max_core;
+    reg [8:0]   telemetry_rplu_boot_mark_core;
+    reg [15:0]  telemetry_rplu_loaded_core;
+    reg [31:0]  telemetry_rplu_checksum_core;
     reg [31:0] telemetry_cycle_count_core;
     reg [31:0] telemetry_cycle_count_snap_core;
     reg        telemetry_seq_core;
@@ -463,6 +488,10 @@ module spu13_tang25k_top #(
     reg [51:0]  telemetry_scale_tx;
     reg [12:0]  telemetry_overflow_tx;
     reg [12:0]  telemetry_rplu_tx;
+    reg [9:0]   telemetry_rplu_addr_tx;
+    reg [8:0]   telemetry_rplu_boot_mark_tx;
+    reg [15:0]  telemetry_rplu_loaded_tx;
+    reg [31:0]  telemetry_rplu_checksum_tx;
     reg [31:0] telemetry_cycle_count_tx;
     reg [31:0] boot_summary_q_tx;
     reg [3:0]  boot_summary_a_tx;
@@ -582,9 +611,9 @@ module spu13_tang25k_top #(
                 4'd10: q_latch <= telemetry_q_burst[10*32 +: 32];
                 4'd11: q_latch <= telemetry_q_burst[11*32 +: 32];
                 4'd12: q_latch <= telemetry_q_burst[12*32 +: 32];
-                4'd13: q_latch <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE) ? {19'd0, telemetry_rplu_tx} : telemetry_scale_tx[31:0];
-                4'd14: q_latch <= {12'd0, telemetry_scale_tx[51:32]};
-                4'd15: q_latch <= {19'd0, telemetry_overflow_tx};
+                4'd13: q_latch <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE) ? {telemetry_rplu_boot_mark_tx, telemetry_rplu_tx, telemetry_rplu_addr_tx} : telemetry_scale_tx[31:0];
+                4'd14: q_latch <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE) ? {16'd0, telemetry_rplu_loaded_tx} : {12'd0, telemetry_scale_tx[51:32]};
+                4'd15: q_latch <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE) ? telemetry_rplu_checksum_tx : {19'd0, telemetry_overflow_tx};
                 default: q_latch <= 32'd0;
             endcase
         end
@@ -598,6 +627,11 @@ module spu13_tang25k_top #(
             telemetry_scale_snap_core <= 52'd0;
             telemetry_overflow_snap_core <= 13'd0;
             telemetry_rplu_snap_core <= 13'd0;
+            telemetry_rplu_addr_snap_core <= 10'd0;
+            telemetry_rplu_addr_max_core <= 10'd0;
+            telemetry_rplu_boot_mark_core <= 9'd0;
+            telemetry_rplu_loaded_core <= 16'd0;
+            telemetry_rplu_checksum_core <= 32'd0;
             telemetry_cycle_count_core <= 32'd0;
             telemetry_cycle_count_snap_core <= 32'd0;
             telemetry_seq_core <= 1'b0;
@@ -639,19 +673,29 @@ module spu13_tang25k_top #(
                 boot_summary_seq_core <= ~boot_summary_seq_core;
                 telemetry_q_snap_core <= boot_prime_words_core;
                 telemetry_cycle_count_snap_core <= 32'd0;
+                telemetry_rplu_boot_mark_core <= (boot_rplu_cfg_loaded != 16'd0) ? 9'h1A5 : 9'd0;
+                telemetry_rplu_loaded_core <= boot_rplu_cfg_loaded;
+                telemetry_rplu_checksum_core <= boot_rplu_cfg_checksum;
                 telemetry_seq_core <= ~telemetry_seq_core;
             end
 
-            if (debug_run_core && phi_21) begin
-                capture_cycle_quadrance(current_axis_ptr, quadrance_out);
-                if (current_axis_ptr == 4'd12) begin
-                    telemetry_cycle_count_core <= telemetry_cycle_count_core + 1'b1;
-                    telemetry_cycle_count_snap_core <= telemetry_cycle_count_core + 1'b1;
-                    telemetry_q_snap_core <= {quadrance_out, telemetry_q_cycle[383:0]};
-                    telemetry_scale_snap_core <= core_scale_table;
-                    telemetry_overflow_snap_core <= core_scale_overflow;
-                    telemetry_rplu_snap_core <= core_rplu_dissoc_mask;
-                    telemetry_seq_core <= ~telemetry_seq_core;
+            if (debug_run_core) begin
+                if (core_rplu_addr > telemetry_rplu_addr_max_core) begin
+                    telemetry_rplu_addr_max_core <= core_rplu_addr;
+                end
+
+                if (phi_21) begin
+                    capture_cycle_quadrance(current_axis_ptr, quadrance_out);
+                    if (current_axis_ptr == 4'd12) begin
+                        telemetry_cycle_count_core <= telemetry_cycle_count_core + 1'b1;
+                        telemetry_cycle_count_snap_core <= telemetry_cycle_count_core + 1'b1;
+                        telemetry_q_snap_core <= {quadrance_out, telemetry_q_cycle[383:0]};
+                        telemetry_scale_snap_core <= core_scale_table;
+                        telemetry_overflow_snap_core <= core_scale_overflow;
+                        telemetry_rplu_snap_core <= core_rplu_dissoc_mask;
+                        telemetry_rplu_addr_snap_core <= (core_rplu_addr > telemetry_rplu_addr_max_core) ? core_rplu_addr : telemetry_rplu_addr_max_core;
+                        telemetry_seq_core <= ~telemetry_seq_core;
+                    end
                 end
             end
         end
@@ -679,6 +723,10 @@ module spu13_tang25k_top #(
             telemetry_scale_tx <= 52'd0;
             telemetry_overflow_tx <= 13'd0;
             telemetry_rplu_tx <= 13'd0;
+            telemetry_rplu_addr_tx <= 10'd0;
+            telemetry_rplu_boot_mark_tx <= 9'd0;
+            telemetry_rplu_loaded_tx <= 16'd0;
+            telemetry_rplu_checksum_tx <= 32'd0;
             telemetry_cycle_count_tx <= 32'd0;
             boot_summary_q_tx <= 32'd0;
             boot_summary_a_tx <= 4'd0;
@@ -718,6 +766,10 @@ module spu13_tang25k_top #(
                 telemetry_scale_tx <= telemetry_scale_snap_core;
                 telemetry_overflow_tx <= telemetry_overflow_snap_core;
                 telemetry_rplu_tx <= telemetry_rplu_snap_core;
+                telemetry_rplu_addr_tx <= telemetry_rplu_addr_snap_core;
+                telemetry_rplu_boot_mark_tx <= telemetry_rplu_boot_mark_core;
+                telemetry_rplu_loaded_tx <= telemetry_rplu_loaded_core;
+                telemetry_rplu_checksum_tx <= telemetry_rplu_checksum_core;
                 telemetry_cycle_count_tx <= telemetry_cycle_count_snap_core;
             end
 
@@ -818,8 +870,8 @@ module spu13_tang25k_top #(
                         line_is_header <= 1'b0;
                         line_is_boot <= 1'b0;
                         line_is_alive <= 1'b0;
-                        line_is_rplu <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx == 4'd13));
-                        line_is_lattice <= (burst_axis_idx >= 4'd13) && !(ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx == 4'd13));
+                        line_is_rplu <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx >= 4'd13));
+                        line_is_lattice <= (burst_axis_idx >= 4'd13) && !(ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx >= 4'd13));
                         line_launch_pending <= 1'b1;
                     end
                 end else begin
@@ -849,8 +901,10 @@ module spu13_tang25k_top #(
                             msg_idx <= 4'd0;
                             if (line_is_header) begin
                                 burst_axis_idx <= burst_axis_idx;
-                            end else if (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx == 4'd13)) begin
+                            end else if (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx == 4'd15)) begin
                                 burst_axis_idx <= 4'd0;
+                            end else if (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx >= 4'd13)) begin
+                                burst_axis_idx <= burst_axis_idx + 1'b1;
                             end else if (burst_axis_idx == 4'd12) begin
                                 burst_axis_idx <= 4'd0;
                                 burst_active <= 1'b0;

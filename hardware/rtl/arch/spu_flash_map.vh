@@ -19,6 +19,7 @@
 `define FLASH_GOLDEN_COUNT     13
 
 `define FLASH_QROT_VEL_BASE    24'h100200  // QROT velocity table (reserved)
+`define FLASH_RPLU_CFG_BASE    24'h110000  // RPLU HEADER+DATA chord stream
 
 // ── World / archive region ────────────────────────────────────────────────────
 `define FLASH_BLOOM_BASE       24'h200000  // bloom.bin / IVM Golden Prime bloom

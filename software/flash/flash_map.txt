@@ -6,6 +6,7 @@ W25Q128JVSQ Flash Map — SPU-13 iCEsugar
   0x100000 – 0x100067  Pell table            (104 bytes)
   0x100100 – 0x100133  Golden Prime LUT      (52 bytes)
   0x100200 – 0x1003FF  QROT velocity table   (reserved)
+  0x110000 – 0x11802F  RPLU cfg chord stream (32816 bytes)
   0x200000 – 0xFFFFFF  bloom.bin / world data (~14MB free)
 
 Pell steps (a, b) where value = a + b·√3:

@@ -8,12 +8,12 @@ module rplu_exp_tb;
 
     reg start;
     reg [9:0] addr;
-    reg material_id;
+    reg [7:0] material_id;
     reg signed [31:0] r_q16;
     // runtime config interface (no-op by default)
     reg cfg_wr_en = 1'b0;
     reg [2:0] cfg_wr_sel = 3'd0;
-    reg cfg_wr_material = 1'b0;
+    reg [7:0] cfg_wr_material = 8'd0;
     reg [9:0] cfg_wr_addr = 10'd0;
     reg [63:0] cfg_wr_data = 64'd0;
     wire signed [31:0] v_q16;
@@ -30,9 +30,9 @@ module rplu_exp_tb;
     reg [31:0] r_rom [0:1023];
 
     initial begin
-        $readmemh("hardware/common/rtl/gpu/vnorm_carbon.mem", vnorm_exp);
-        $readmemh("hardware/common/rtl/gpu/vnorm_dissoc_carbon.mem", vnorm_diss);
-        $readmemh("hardware/common/rtl/gpu/r_rom_carbon.mem", r_rom);
+        $readmemh("hardware/rtl/arch/vnorm_carbon.mem", vnorm_exp);
+        $readmemh("hardware/rtl/arch/vnorm_dissoc_carbon.mem", vnorm_diss);
+        $readmemh("hardware/rtl/arch/r_rom_carbon.mem", r_rom);
     end
 
     integer i;

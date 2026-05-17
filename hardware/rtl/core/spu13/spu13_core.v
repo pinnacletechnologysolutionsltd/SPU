@@ -71,7 +71,8 @@ module spu13_core #(
     output wire [31:0]               quadrance_out,
     output wire                      cycle_wrap,
     output wire                      rplu_dissoc_out,
-    output wire [`MANIFOLD_AXES-1:0] rplu_dissoc_mask_out
+    output wire [`MANIFOLD_AXES-1:0] rplu_dissoc_mask_out,
+    output wire [9:0]                rplu_addr_out
 );
 
     // 1. Manifold State Buffering
@@ -292,6 +293,7 @@ module spu13_core #(
 
     wire rplu_dissoc;
     wire rplu_done;
+    wire [9:0] rplu_addr_dbg;
     generate
         if (ENABLE_RPLU) begin : gen_rplu
             davis_to_rplu u_davis_rplu (
@@ -299,26 +301,29 @@ module spu13_core #(
                 .cfg_wr_en(dec_fast_cfg_wr_en), .cfg_wr_sel(dec_fast_cfg_sel), .cfg_wr_material(dec_fast_cfg_material), .cfg_wr_addr(dec_fast_cfg_addr), .cfg_wr_data(dec_fast_cfg_data),
                 .v_q16(), .dissoc(rplu_dissoc), .done(rplu_done),
                 .quadrance(), .ivm_quadrance(), .gasket_sum(), .audio_p(), .audio_q(),
-                .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid)
+                .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid),
+                .r_addr_dbg(rplu_addr_dbg), .r_q16_dbg()
             );
         end else begin : gen_no_rplu
             assign rplu_dissoc = 1'b0;
             assign rplu_done = phi_21;
             assign ratio_cmp_res = 3'sd0;
             assign ratio_cmp_valid = 1'b0;
+            assign rplu_addr_dbg = 10'd0;
         end
     endgenerate
+
+    // Scoreboard for RPLU results (since RPLU takes multiple cycles, we latch the result)
+    reg [12:0] rplu_dissoc_bits;
+    reg [3:0]  rplu_axis_pending;
 
     assign gasket_sum_out = gasket_sum;
     assign quadrance_out  = quadrance;
     assign cycle_wrap     = (axis_ptr == 4'd12);
     assign rplu_dissoc_out = rplu_dissoc;
     assign rplu_dissoc_mask_out = rplu_dissoc_bits;
+    assign rplu_addr_out = rplu_addr_dbg;
 
-
-    // Scoreboard for RPLU results (since RPLU takes multiple cycles, we latch the result)
-    reg [12:0] rplu_dissoc_bits;
-    reg [3:0]  rplu_axis_pending;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             rplu_dissoc_bits <= 13'h0;
