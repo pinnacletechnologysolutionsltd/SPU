@@ -115,3 +115,12 @@ tools/probe_tang25k_rplu_flash.py \
 
 This uses the same UART proof lines, but now `A:D` comes from the RPLU lookup
 path driven by the live rotated SPU-13 axis data.
+
+The next composition step keeps lattice disabled but adds the external SDRAM
+bridge and manifold writeback:
+
+```sh
+./build_25k_spu13_rplu_math_sdram_probe.sh
+tools/probe_tang25k_rplu_flash.py \
+  --bitstream build/tang_primer_25k_spu13_rplu_math_sdram_probe.fs
+```
