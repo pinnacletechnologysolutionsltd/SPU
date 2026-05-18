@@ -22,6 +22,8 @@ It rebuilds the RPLU SPI payload and runs:
 - `davis_to_rplu_tb`: large-axis clamp and delayed-start address capture.
 - `rplu_exp_tb`: RPLU vnorm/dissoc table behavior.
 - `rplu_metric_vectors_tb`: RTL table lookup against generated metric vectors.
+- `spu_rotor_vault_tb`: Pell rotor vault reset, hydration-safe storage, and
+  per-axis octave walk used by the RPLU+math datapath probe.
 - `spu13_rplu_addr_tb`: SPU-13 axis walk reaches RPLU address `0x3FF`.
 - `spu_laminar_boot_rplu_tb`: SPI bootloader emits RPLU config writes from
   chord records read at `0x110000`.
@@ -98,3 +100,18 @@ The expected SPI flash ID line is:
 ```text
 B:D0EF4018 A:C
 ```
+
+## Datapath Probe
+
+After the RPLU-only proof passes, build the next-stage image that keeps SDRAM
+and lattice disabled but enables both flash-loaded RPLU and the SPU-13
+rotor/Davis math path:
+
+```sh
+./build_25k_spu13_rplu_math_probe.sh
+tools/probe_tang25k_rplu_flash.py \
+  --bitstream build/tang_primer_25k_spu13_rplu_math_probe.fs
+```
+
+This uses the same UART proof lines, but now `A:D` comes from the RPLU lookup
+path driven by the live rotated SPU-13 axis data.

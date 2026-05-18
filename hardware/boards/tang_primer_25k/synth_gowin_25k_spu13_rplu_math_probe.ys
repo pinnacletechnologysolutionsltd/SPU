@@ -1,0 +1,49 @@
+# SPU-13 Tang Primer 25K RPLU + math probe.
+# Enables the flash-loaded RPLU lookup path and the TDM rotor/Davis math path.
+# SDRAM and lattice stay off so this target proves RPLU consumption by the live
+# SPU-13 datapath before widening the full board image.
+
+read_verilog -lib +/gowin/cells_xtra_gw5a.v
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/tang_primer_25k/spu13_tang25k_top.v \
+    hardware/rtl/core/spu13/spu13_core.v \
+    hardware/rtl/core/spu13/spu13_lattice.v \
+    hardware/rtl/core/spu13/laminar_node.v \
+    hardware/rtl/top/spu_laminar_boot.v \
+    hardware/rtl/core/shared/spu_rotor_vault.v \
+    hardware/rtl/core/shared/spu_cross_rotor.v \
+    hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/gpu/davis_to_rplu.v \
+    hardware/rtl/gpu/rplu_exp.v \
+    hardware/rtl/gpu/pade_eval_4_4.v \
+    hardware/rtl/gpu/rplu_poly_step.v \
+    hardware/rtl/math/rational_surd5_add.v \
+    hardware/rtl/math/rational_surd5_mul.v \
+    hardware/rtl/math/rational_surd5_mul64.v \
+    hardware/rtl/math/rational_surd5_norm.v \
+    hardware/rtl/math/rational_surd5_scale_manager.v \
+    hardware/rtl/math/spu_quadrance_calc.v \
+    hardware/rtl/common/prim/spu_gowin_prim.v \
+    hardware/rtl/common/prim/gowin_mult18.v \
+    hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
+
+chparam -set ENABLE_SDRAM 0 \
+        -set ENABLE_CORE_RPLU 1 \
+        -set ENABLE_CORE_LATTICE 0 \
+        -set ENABLE_CORE_MATH 1 \
+        spu13_tang25k_top
+
+hierarchy -check -top spu13_tang25k_top
+
+# Keep the same no-autoname tail as the baseline build; the default autoname
+# pass has already OOM-killed this family of netlists on the bring-up host.
+synth_gowin -family gw5a -top spu13_tang25k_top -json build/spu13_rplu_math_probe.json -run begin:map_cells
+techmap -map +/gowin/cells_map.v
+opt_lut_ins -tech gowin
+hilomap -singleton -hicell VCC V -locell GND G
+clean
+hierarchy -check
+check -noinit
+blackbox =A:whitebox
+write_json build/spu13_rplu_math_probe.json

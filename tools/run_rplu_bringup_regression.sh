@@ -61,6 +61,9 @@ run_tb rplu_metric_vectors \
     hardware/rtl/gpu/rplu_exp.v \
     hardware/tests/common/rplu_metric_vectors_tb.v
 
+run_tb spu_rotor_vault \
+    hardware/tests/common/spu_rotor_vault_tb.v
+
 run_tb spu13_rplu_addr \
     hardware/rtl/math/rational_surd5_scale_manager.v \
     hardware/rtl/core/shared/davis_gate_dsp.v \
