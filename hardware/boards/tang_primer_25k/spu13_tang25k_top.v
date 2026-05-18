@@ -6,7 +6,8 @@ module spu13_tang25k_top #(
     parameter ENABLE_SDRAM = 0,
     parameter ENABLE_CORE_RPLU = 0,
     parameter ENABLE_CORE_LATTICE = 0,
-    parameter ENABLE_CORE_MATH = 0
+    parameter ENABLE_CORE_MATH = 0,
+    parameter ENABLE_RPLU_TELEMETRY = 0
 ) (
     input  wire periph_rx, // Pin B3: Input from RP2350
     input  wire sys_clk,
@@ -570,6 +571,7 @@ module spu13_tang25k_top #(
     reg [27:0] msg_timer;
     reg [27:0] telemetry_start_cnt;
     reg        telemetry_start_ready;
+    localparam RPLU_TELEMETRY_BURST = ENABLE_CORE_RPLU && (!ENABLE_CORE_LATTICE || ENABLE_RPLU_TELEMETRY);
 
     task capture_cycle_quadrance;
         input [3:0] axis_idx;
@@ -611,9 +613,9 @@ module spu13_tang25k_top #(
                 4'd10: q_latch <= telemetry_q_burst[10*32 +: 32];
                 4'd11: q_latch <= telemetry_q_burst[11*32 +: 32];
                 4'd12: q_latch <= telemetry_q_burst[12*32 +: 32];
-                4'd13: q_latch <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE) ? {telemetry_rplu_boot_mark_tx, telemetry_rplu_tx, telemetry_rplu_addr_tx} : telemetry_scale_tx[31:0];
-                4'd14: q_latch <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE) ? {16'd0, telemetry_rplu_loaded_tx} : {12'd0, telemetry_scale_tx[51:32]};
-                4'd15: q_latch <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE) ? telemetry_rplu_checksum_tx : {19'd0, telemetry_overflow_tx};
+                4'd13: q_latch <= RPLU_TELEMETRY_BURST ? {telemetry_rplu_boot_mark_tx, telemetry_rplu_tx, telemetry_rplu_addr_tx} : telemetry_scale_tx[31:0];
+                4'd14: q_latch <= RPLU_TELEMETRY_BURST ? {16'd0, telemetry_rplu_loaded_tx} : {12'd0, telemetry_scale_tx[51:32]};
+                4'd15: q_latch <= RPLU_TELEMETRY_BURST ? telemetry_rplu_checksum_tx : {19'd0, telemetry_overflow_tx};
                 default: q_latch <= 32'd0;
             endcase
         end
@@ -870,8 +872,8 @@ module spu13_tang25k_top #(
                         line_is_header <= 1'b0;
                         line_is_boot <= 1'b0;
                         line_is_alive <= 1'b0;
-                        line_is_rplu <= (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx >= 4'd13));
-                        line_is_lattice <= (burst_axis_idx >= 4'd13) && !(ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx >= 4'd13));
+                        line_is_rplu <= (RPLU_TELEMETRY_BURST && (burst_axis_idx >= 4'd13));
+                        line_is_lattice <= (burst_axis_idx >= 4'd13) && !(RPLU_TELEMETRY_BURST && (burst_axis_idx >= 4'd13));
                         line_launch_pending <= 1'b1;
                     end
                 end else begin
@@ -901,9 +903,9 @@ module spu13_tang25k_top #(
                             msg_idx <= 4'd0;
                             if (line_is_header) begin
                                 burst_axis_idx <= burst_axis_idx;
-                            end else if (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx == 4'd15)) begin
+                            end else if (RPLU_TELEMETRY_BURST && (burst_axis_idx == 4'd15)) begin
                                 burst_axis_idx <= 4'd0;
-                            end else if (ENABLE_CORE_RPLU && !ENABLE_CORE_LATTICE && (burst_axis_idx >= 4'd13)) begin
+                            end else if (RPLU_TELEMETRY_BURST && (burst_axis_idx >= 4'd13)) begin
                                 burst_axis_idx <= burst_axis_idx + 1'b1;
                             end else if (burst_axis_idx == 4'd12) begin
                                 burst_axis_idx <= 4'd0;

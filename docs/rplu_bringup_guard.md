@@ -124,3 +124,13 @@ bridge and manifold writeback:
 tools/probe_tang25k_rplu_flash.py \
   --bitstream build/tang_primer_25k_spu13_rplu_math_sdram_probe.fs
 ```
+
+The widened probe turns the lattice back on while keeping the same RPLU
+flash-load and live-lookup proof lines visible on UART axes `A:D` through
+`A:F`:
+
+```sh
+./build_25k_spu13_rplu_full_probe.sh
+tools/probe_tang25k_rplu_flash.py \
+  --bitstream build/tang_primer_25k_spu13_rplu_full_probe.fs
+```
