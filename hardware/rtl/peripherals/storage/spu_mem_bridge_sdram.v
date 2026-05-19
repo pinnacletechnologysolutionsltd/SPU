@@ -1,11 +1,11 @@
 // spu_mem_bridge_sdram.v (v1.1)
 // Sovereign Manifold Bus <-> SDR-SDRAM bridge
-// Target : Tang Primer 25K onboard W9825G6KH-6 (256Mbit/32MB, COL_BITS=9)
+// Target : Tang Primer 25K 40-pin W9825G6KH-6 module (256Mbit/32MB, COL_BITS=9)
 //          or 40-pin external 512Mbit/64MB module  (COL_BITS=10)
 // Burst  : 52 x 16-bit words = 832-bit manifold
 // Timing : tRCD=2cy, CAS=3, tRP=2cy, tRFC=7cy, tREFI=390cy (~7.8 us @ 50MHz)
-// Reads  : pipelined — 52 READs issued back-to-back, drain 3-cy CAS
-//          Total burst latency: tRCD + BURST_LEN + CAS_LAT + tRP = ~60 cy
+// Reads  : pipelined — 52 READs issued back-to-back, drain through CAS plus
+//          one clock of board-safe data-valid margin before sampling.
 //
 // COL_BITS=9  → addr {bank[1:0], row[12:0], col[8:0]}  = 24-bit → 32MB
 // COL_BITS=10 → addr {bank[1:0], row[12:0], col[9:0]}  = 25-bit → 64MB
@@ -19,7 +19,9 @@
 
 module spu_mem_bridge_sdram #(
     parameter T_INIT   = 10001, // 200 us at 50 MHz; override to small value in TB
-    parameter COL_BITS = 9      // 9 = 32MB onboard, 10 = 64MB external 40-pin module
+    parameter COL_BITS = 9,     // 9 = 32MB onboard, 10 = 64MB external 40-pin module
+    parameter READ_CAPTURE_OFFSET = 5,
+    parameter INVERT_SDRAM_CLK = 0
 )(
     input  wire         clk,
     input  wire         reset,
@@ -97,7 +99,9 @@ module spu_mem_bridge_sdram #(
     reg        dq_en;
     reg [15:0] dq_out;
     assign sdram_dq  = dq_en ? dq_out : 16'hzzzz;
-    assign sdram_clk = clk;
+    // Board builds can launch command/data on clk and sample them in the SDRAM
+    // half a cycle later by inverting the external SDRAM clock.
+    assign sdram_clk = INVERT_SDRAM_CLK ? ~clk : clk;
     assign sdram_cke = 1'b1;
     // DQM tied to 0 internally — all byte lanes always enabled
 
@@ -112,12 +116,13 @@ module spu_mem_bridge_sdram #(
     reg          burst_is_rd;
 
     // wr_ptr: which manifold word the arriving data maps to.
-    // Commands are driven as registered outputs; the SDRAM device latches
-    // them on the NEXT posedge, adding 1 implicit cycle to the CAS pipeline.
-    // Effective capture offset = CAS_LAT + 1 = 4.
-    // Unsigned 6-bit wrap when rd_ptr < 4 keeps wr_ptr >= BURST_LEN, so
-    // the guard `wr_ptr < BURST_LEN` alone is sufficient.
-    wire [5:0] wr_ptr = rd_ptr - 6'd4;  // effective CAS offset = CAS_LAT + 1
+    // Commands are driven as registered outputs; the SDRAM device latches them
+    // on the next posedge, then data becomes valid after CAS and tAC. Sampling
+    // one clock after nominal CAS is safer on the board than sampling on the
+    // same edge data appears.
+    localparam [5:0] READ_CAPTURE_OFFSET_U6 = READ_CAPTURE_OFFSET;
+    localparam [5:0] READ_LAST_PTR = BURST_LEN + READ_CAPTURE_OFFSET - 1;
+    wire [5:0] wr_ptr = rd_ptr - READ_CAPTURE_OFFSET_U6;
 
     // -------------------------------------------------------------------------
     // Refresh counter (independent of main FSM)
@@ -243,8 +248,8 @@ module spu_mem_bridge_sdram #(
                 // -----------------------------------------------------------------
                 // Pipelined burst read
                 // Commands are registered so SDRAM latches them 1 cycle late.
-                // Effective pipeline offset = CAS_LAT + 1 = 4.
-                // Loop runs BURST_LEN + CAS_LAT + 1 = 56 cycles to drain fully.
+                // READ_CAPTURE_OFFSET includes that command-register cycle,
+                // the CAS latency, and one board-safe data-valid cycle.
                 // -----------------------------------------------------------------
                 S_BURST_RD: begin
                     if (rd_ptr < BURST_LEN) begin
@@ -253,13 +258,13 @@ module spu_mem_bridge_sdram #(
                         sdram_addr <= {{(13-COL_BITS){1'b0}}, a_col + {{(COL_BITS-6){1'b0}}, rd_ptr}};
                     end
 
-                    // Capture: wr_ptr = rd_ptr - 4 (unsigned 6-bit wraps when < 4,
-                    // keeping wr_ptr >= BURST_LEN so the guard rejects those cycles)
+                    // Capture: wr_ptr wraps when rd_ptr is still before the
+                    // capture window, so the guard rejects those cycles.
                     if (wr_ptr < BURST_LEN) begin
                         mem_rd_manifold[wr_ptr * 16 +: 16] <= sdram_dq;
                     end
 
-                    if (rd_ptr == BURST_LEN + CAS_LAT) begin  // = 55
+                    if (rd_ptr == READ_LAST_PTR) begin
                         {sdram_ras_n, sdram_cas_n, sdram_we_n} <= CMD_PALL;
                         sdram_addr[10] <= 1;
                         state          <= S_BURST_PRE;

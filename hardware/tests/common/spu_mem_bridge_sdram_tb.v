@@ -72,10 +72,9 @@ module spu_mem_bridge_sdram_tb;
     // -------------------------------------------------------------------------
     // Behavioral SDRAM model
     //
-    // DQ output is COMBINATORIAL from the pipeline stage register so that
-    // data is visible to the DUT in the SAME cycle the pipeline stage fires.
-    // This matches real SDRAM behaviour: output data is valid on the rising
-    // edge CAS_LAT cycles after the READ command.
+    // DQ output is registered from the CAS pipeline. The SDRAM makes read data
+    // valid after the clock edge where the CAS pipeline fires, so the DUT sees
+    // stable data on the following clock.
     // -------------------------------------------------------------------------
     reg  [15:0] sdram_mem [0:63];   // 64-word scratch (covers one 52-word burst)
 
@@ -87,10 +86,16 @@ module spu_mem_bridge_sdram_tb;
     localparam MCMD_READ  = 3'b101;
     localparam MCMD_WRITE = 3'b100;
 
+    reg  [15:0] dq_out;
+    reg         dq_en;
+    assign sdram_dq = dq_en ? dq_out : 16'hzzzz;
+
     integer k;
     initial begin
         for (k = 0; k < 3; k = k + 1) begin cas_col[k] = 0; cas_valid[k] = 0; end
         for (k = 0; k < 64; k = k + 1) sdram_mem[k] = 0;
+        dq_out = 16'h0;
+        dq_en = 1'b0;
     end
 
     always @(posedge sdram_clk) begin
@@ -107,22 +112,10 @@ module spu_mem_bridge_sdram_tb;
             if (sdram_cmd == MCMD_WRITE)
                 sdram_mem[sdram_addr_pin[5:0]] <= sdram_dq;
         end
-    end
 
-    // Combinatorial DQ output: drives bus in the same cycle the pipeline fires.
-    // The DUT samples sdram_dq on the posedge CAS_LAT cycles after READ.
-    reg  [15:0] dq_out;
-    reg          dq_en;
-    assign sdram_dq = dq_en ? dq_out : 16'hzzzz;
-
-    always @(*) begin
-        if (cas_valid[2]) begin
-            dq_out = sdram_mem[cas_col[2]];
-            dq_en  = 1;
-        end else begin
-            dq_out = 16'h0;
-            dq_en  = 0;
-        end
+        dq_en <= cas_valid[2];
+        if (cas_valid[2]) dq_out <= sdram_mem[cas_col[2]];
+        else              dq_out <= 16'h0;
     end
 
     // -------------------------------------------------------------------------

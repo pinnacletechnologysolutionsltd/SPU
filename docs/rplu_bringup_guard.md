@@ -127,10 +127,19 @@ tools/probe_tang25k_rplu_flash.py \
 
 The widened probe turns the lattice back on while keeping the same RPLU
 flash-load and live-lookup proof lines visible on UART axes `A:D` through
-`A:F`:
+`A:F`. It also runs a probe-only SDRAM write/read self-test against the
+W9825G6KH module on the Dock's 40-pin header and reports the memory proof on
+UART axes `A:A` through `A:C`:
 
 ```sh
 ./build_25k_spu13_rplu_full_probe.sh
 tools/probe_tang25k_rplu_flash.py \
-  --bitstream build/tang_primer_25k_spu13_rplu_full_probe.fs
+  --bitstream build/tang_primer_25k_spu13_rplu_full_probe.fs \
+  --expect-sdram-selftest
 ```
+
+On the Tang Primer 25K Dock with the 40-pin W9825G6KH SDRAM module installed,
+the proven board timing is `INVERT_SDRAM_CLK=1` and
+`READ_CAPTURE_OFFSET=3`. A passing full probe reports RPLU loaded count
+`2051`, RPLU checksum `0x1D971036`, SDRAM endpoints `0x5D005D33`, and SDRAM
+checksum `0x0012E92E`.
