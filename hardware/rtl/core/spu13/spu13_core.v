@@ -257,6 +257,132 @@ module spu13_core #(
         end
     endgenerate
 
+    // ── Quadray Register File + ROTC Circulant ─────────────────────────
+    // 13 registers × 4 components × 64 bits each = 3328 bits total.
+    // Stores full (A,B,C,D) Quadray vectors for circulant rotation ops.
+    wire [63:0] qrf_rd_A, qrf_rd_B, qrf_rd_C, qrf_rd_D;
+    wire [63:0] qrf_wr_A, qrf_wr_B, qrf_wr_C, qrf_wr_D;
+    reg         qrf_wr_en;
+    reg  [3:0]  qrf_wr_lane;
+    reg  [3:0]  qrf_init_lane;
+    reg         rote_en;          // ROTC execute pulse
+    reg  [2:0]  rote_angle;       // F,G,H angle (0-5)
+    reg  [3:0]  rote_src_lane;
+
+    // F,G,H output from lookup
+    wire signed [63:0] rote_F, rote_G, rote_H;
+    // Rotated output from circulant
+    wire [63:0] rote_B_out, rote_C_out, rote_D_out;
+
+    generate
+        if (ENABLE_MATH) begin : gen_qrf
+            spu_quadray_regfile u_qrf (
+                .clk(clk), .rst_n(rst_n),
+                .rd_lane(rote_src_lane),
+                .rd_A(qrf_rd_A), .rd_B(qrf_rd_B),
+                .rd_C(qrf_rd_C), .rd_D(qrf_rd_D),
+                .wr_en(qrf_wr_en),
+                .wr_lane(qrf_wr_lane),
+                .wr_A(qrf_wr_A), .wr_B(qrf_wr_B),
+                .wr_C(qrf_wr_C), .wr_D(qrf_wr_D),
+                .init_en(1'b0), .init_lane(4'd0),
+                .init_A(64'd0), .init_B(64'd0),
+                .init_C(64'd0), .init_D(64'd0),
+                .dbg_A(), .dbg_B(), .dbg_C(), .dbg_D()
+            );
+
+            spu13_rotor_core u_rotc (
+                .clk(clk), .rst_n(rst_n),
+                .A_in(qrf_rd_A),
+                .B_in(qrf_rd_B),
+                .C_in(qrf_rd_C),
+                .D_in(qrf_rd_D),
+                .F(rote_F), .G(rote_G), .H(rote_H),
+                .bypass_p5(rote_angle == 3'd2),  // 120° → pure permutation
+                .A_out(qrf_wr_A),
+                .B_out(rote_B_out),
+                .C_out(rote_C_out),
+                .D_out(rote_D_out)
+            );
+
+            // Write-back: A is invariant, B',C',D' come from circulant
+            assign qrf_wr_B = rote_B_out;
+            assign qrf_wr_C = rote_C_out;
+            assign qrf_wr_D = rote_D_out;
+        end else begin : gen_no_qrf
+            assign qrf_rd_A = 64'd0; assign qrf_rd_B = 64'd0;
+            assign qrf_rd_C = 64'd0; assign qrf_rd_D = 64'd0;
+            assign qrf_wr_A = 64'd0; assign qrf_wr_B = 64'd0;
+            assign qrf_wr_C = 64'd0; assign qrf_wr_D = 64'd0;
+            assign rote_B_out = 64'd0; assign rote_C_out = 64'd0;
+            assign rote_D_out = 64'd0;
+            assign rote_F = 64'd0; assign rote_G = 64'd0; assign rote_H = 64'd0;
+        end
+    endgenerate
+
+    // ── F,G,H lookup table (combinational) ─────────────────────────────
+    // Identical to VM _ROTC_TABLE. Scaled by denominator 3 for tetrahedral
+    // angles; the rotor core handles the /3 scaling internally via
+    // fixed-point truncation in the surd multiplier path.
+    assign rote_F = (rote_angle == 3'd0) ? 64'sd1  :
+                    (rote_angle == 3'd1) ? 64'sd2  :
+                    (rote_angle == 3'd2) ? -64'sd1 :
+                    (rote_angle == 3'd3) ? -64'sd1 :
+                    (rote_angle == 3'd4) ? 64'sd2  :
+                    (rote_angle == 3'd5) ? 64'sd2  : 64'sd1;
+    assign rote_G = (rote_angle == 3'd0) ? 64'sd0  :
+                    (rote_angle == 3'd1) ? 64'sd2  :
+                    (rote_angle == 3'd2) ? 64'sd2  :
+                    (rote_angle == 3'd3) ? -64'sd1 :
+                    (rote_angle == 3'd4) ? -64'sd1 :
+                    (rote_angle == 3'd5) ? 64'sd2  : 64'sd0;
+    assign rote_H = (rote_angle == 3'd0) ? 64'sd0  :
+                    (rote_angle == 3'd1) ? -64'sd1 :
+                    (rote_angle == 3'd2) ? 64'sd2  :
+                    (rote_angle == 3'd3) ? -64'sd1 :
+                    (rote_angle == 3'd4) ? 64'sd2  :
+                    (rote_angle == 3'd5) ? -64'sd1 : 64'sd0;
+
+    // ── ROTC execution FSM ─────────────────────────────────────────────
+    // On ROTC instruction (0x1C): latch source/dest/angle, fire rote_en.
+    // The QR register file reads the source lane combinationally,
+    // the rotor core computes the circulant, and we write back on the
+    // next cycle.
+    reg rote_active;
+    reg [3:0] rote_dest_lane;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            rote_en <= 0;
+            rote_active <= 0;
+            rote_src_lane <= 0;
+            rote_dest_lane <= 0;
+            rote_angle <= 0;
+            qrf_wr_en <= 0;
+            qrf_wr_lane <= 0;
+        end else begin
+            qrf_wr_en <= 0;  // default: no write
+
+            if (inst_valid && inst_word[63:56] == 8'h1C) begin
+                // Latch ROTC parameters from instruction
+                rote_src_lane  <= inst_word[47:40] % 13;
+                rote_dest_lane <= inst_word[55:48] % 13;
+                rote_angle     <= inst_word[26:24];
+                rote_active    <= 1;
+            end else if (rote_active) begin
+                // Execute: fire rotor core (combinational read already
+                // feeding qrf_rd_*), then write back on next cycle.
+                rote_en    <= 1;
+                rote_active <= 0;
+            end else if (rote_en) begin
+                // Write-back cycle
+                qrf_wr_en   <= 1;
+                qrf_wr_lane <= rote_dest_lane;
+                rote_en     <= 0;
+            end
+        end
+    end
+
     // Stage 3: Stability Check & Commit (Pulse 21)
     wire [63:0] rotated_axis;
     assign rotated_axis = q_prime_ab;
@@ -435,43 +561,6 @@ module spu13_core #(
                     artery_wr_en <= 1'b1;
                     artery_wr_data <= {8'hA5, 8'd7, 1'b0, inst_word[33:24], 1'b1, 36'd0};
                 end
-            end
-
-            // ── ROTC Instruction Handler (0x1C) ────────────────────────────
-            // Encoding: [63:56]=0x1C, [55:48]=dest_lane, [47:40]=src_lane, [33:24]=angle(0-5)
-            // Applies Thomson's F,G,H circulant rotation to the source lane
-            // and writes the result to the destination lane.
-            if (inst_valid && inst_word[63:56] == 8'h1C) begin
-                automatic [3:0] dest_lane = inst_word[55:48] % 13;
-                automatic [3:0] src_lane  = inst_word[47:40] % 13;
-                automatic [2:0] angle     = inst_word[26:24];  // bits [33:24] → P1_A field
-                automatic signed [31:0] F, G, H;
-                automatic signed [31:0] b_new, c_new, d_new;
-
-                // F,G,H lookup table (identical to VM _ROTC_TABLE)
-                case (angle)
-                    3'd0: begin F = 32'sd1;  G = 32'sd0;  H = 32'sd0;  end  // 0°
-                    3'd1: begin F = 32'sd2;  G = 32'sd2;  H = -32'sd1; end  // 60°
-                    3'd2: begin F = -32'sd1; G = 32'sd2;  H = 32'sd2;  end  // 120°
-                    3'd3: begin F = -32'sd1; G = -32'sd1; H = -32'sd1; end  // 180°
-                    3'd4: begin F = 32'sd2;  G = -32'sd1; H = 32'sd2;  end  // 240°
-                    3'd5: begin F = 32'sd2;  G = 32'sd2;  H = -32'sd1; end  // 300°
-                    default: begin F = 32'sd1; G = 32'sd0; H = 32'sd0; end
-                endcase
-
-                // Unpack source lane: [63:48]=A_p, [47:32]=A_q, [31:16]=B, [15:0]=C... 
-                // Wait, the encoding is [63:32]=A {P[15:0],Q[15:0]}, [31:0] split across B,C,D.
-                // Actually each surd is 32-bit: P[15:0], Q[15:0]. The lane is 64-bit with 2 surds?
-                // Let me check the lane encoding. The manifold_lane is reg [63:0].
-                // From the spu13_rotor_core.v interface: A_in[63:0], B_in[63:0] etc.
-                // Each surd is 64-bit: [63:32]=Q(coefficient of √3), [31:0]=P(rational part).
-                // But the manifold lane is only 64 bits total — that's ONE surd, not four.
-                // The 4 components (A,B,C,D) would need 4×64 = 256 bits.
-                // The core's 64-bit lanes likely store a compressed representation.
-                // For now, note this architectural constraint: the core needs
-                // wider lanes or a different encoding to support full circulant ops.
-                // The ROTC handler exposes the interface; the lane encoding
-                // determines what can be done in a single cycle.
             end
 
             case (hydration_state)
