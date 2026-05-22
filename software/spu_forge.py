@@ -19,8 +19,8 @@ import subprocess
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOFTWARE_DIR = os.path.join(REPO_ROOT, 'software')
 VM_PATH = os.path.join(SOFTWARE_DIR, 'spu_vm.py')
-ASM_PATH = os.path.join(REPO_ROOT, 'reference/synergeticrenderer/Laminar-Core/toolchain/spu13_asm.py')
-BOARDS_DIR = os.path.join(REPO_ROOT, 'hardware/boards/icesugar')
+ASM_PATH = os.path.join(SOFTWARE_DIR, 'tools', 'spu13_asm.py')
+COMPILER_PATH = os.path.join(SOFTWARE_DIR, 'spu_compiler.py')
 PROGRAMS_DIR = os.path.join(SOFTWARE_DIR, 'programs')
 
 
@@ -35,14 +35,15 @@ def run_cmd(cmd, desc):
 
 
 def cmd_simulate(args):
-    """Run a .sas or .bin program through the SPU-13 soft-CPU."""
+    """Run a .lith, .sas, or .bin program through the SPU-13 soft-CPU.
+    .lith files are auto-compiled to .sas first via spu_compiler.py."""
     if not args:
-        print("Usage: spu-forge simulate <file.sas> [--steps N] [--quiet] [--proof]")
-        # Default: run all programs in software/programs/
+        print("Usage: spu-forge simulate <file.lith|file.sas> [--steps N] [--quiet] [--proof]")
         sas_files = [f for f in os.listdir(PROGRAMS_DIR) if f.endswith('.sas')]
-        if sas_files:
+        lith_files = [f for f in os.listdir(PROGRAMS_DIR) if f.endswith('.lith')]
+        if sas_files or lith_files:
             print(f"\nAvailable programs in {PROGRAMS_DIR}:")
-            for f in sorted(sas_files):
+            for f in sorted(sas_files + lith_files):
                 print(f"  {f}")
         return
 
@@ -50,11 +51,39 @@ def cmd_simulate(args):
     extra = ' '.join(args[1:])
 
     if not os.path.isabs(source):
-        # Try relative to cwd, then programs/
         if not os.path.exists(source):
-            candidate = os.path.join(PROGRAMS_DIR, source)
+            # Try in software/programs/ using basename only
+            basename = os.path.basename(source)
+            candidate = os.path.join(PROGRAMS_DIR, basename)
             if os.path.exists(candidate):
                 source = candidate
+    source = os.path.abspath(source)
+
+    # Auto-compile .lith to .sas, then assemble to .bin
+    if source.endswith('.lith'):
+        sas_path = source.replace('.lith', '.sas')
+        bin_path = source.replace('.lith', '.bin')
+        print(f"--- Compiling: {os.path.basename(source)} → {os.path.basename(sas_path)} ---")
+        result = subprocess.run(
+            f"python3 {COMPILER_PATH} {source} -o {sas_path}",
+            shell=True, capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            print(f"[FAIL] Compilation error:\n{result.stderr}")
+            sys.exit(1)
+        print(result.stdout.strip())
+
+        print(f"\n--- Assembling: {os.path.basename(sas_path)} → {os.path.basename(bin_path)} ---")
+        result = subprocess.run(
+            f"python3 {ASM_PATH} {sas_path} {bin_path}",
+            shell=True, capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            print(f"[FAIL] Assembly error:\n{result.stderr}")
+            sys.exit(1)
+        print(result.stdout.strip())
+        print("[PASS]\n")
+        source = bin_path
 
     run_cmd(f"python3 {VM_PATH} {source} {extra}", f"Simulating: {os.path.basename(source)}")
 
@@ -132,10 +161,10 @@ def cmd_verify(_args):
 
 
 COMMANDS = {
-    'simulate': (cmd_simulate, "Run a .sas/.bin program in the soft-CPU"),
+    'simulate': (cmd_simulate, "Run a .lith/.sas program in the soft-CPU  [--steps N] [--proof]"),
     'assemble': (cmd_assemble, "Assemble .sas source to .bin control words"),
-    'test':     (cmd_test,     "Run all programs/ as integration tests  [--proof for maths output]"),
-    'build':    (cmd_build,    "Synthesize RTL for iCEsugar (requires yosys/nextpnr)"),
+    'test':     (cmd_test,     "Run all programs/ as integration tests   [--proof for maths output]"),
+    'build':    (cmd_build,    "Synthesize RTL for Tang Primer 25K (requires yosys/nextpnr)"),
     'verify':   (cmd_verify,   "Formal verification (requires SymbiYosys)"),
 }
 

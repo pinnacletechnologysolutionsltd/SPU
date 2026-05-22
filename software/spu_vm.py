@@ -499,7 +499,7 @@ OPCODES = {
     "CALL":  0x21, "RET":   0x22,
     # Quadray IVM operations
     "QADD":  0x10, "QROT":  0x11, "QNORM": 0x12,
-    "QLOAD": 0x13, "QLOG":  0x14,
+    "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B,
     # Geometry output
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -1180,6 +1180,13 @@ class SPUCore:
             self.qregs[d] = self.qregs[d] + self.qregs[s]
             if self.verbose:
                 print(f"  [{self.pc:04d}] QADD QR{d} + QR{s} → {self.qregs[d]!r}")
+
+        elif opcode == OPCODES["QSUB"]:
+            # QSUB QRd, QRs — QRd = QRd - QRs
+            d, s = r1 % 13, r2 % 13
+            self.qregs[d] = self.qregs[d] - self.qregs[s]
+            if self.verbose:
+                print(f"  [{self.pc:04d}] QSUB QR{d} - QR{s} → {self.qregs[d]!r}")
 
         elif opcode == OPCODES["QROT"]:
             # QROT QRn — apply Pell rotor to each component + normalize

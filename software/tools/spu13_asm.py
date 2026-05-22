@@ -56,7 +56,7 @@ OPCODES: dict[str, int] = {
     "CALL":   0x21, "RET":    0x22, "HALT":   0x08,
     # Quadray IVM operations
     "QADD":   0x10, "QROT":   0x11, "QNORM":  0x12,
-    "QLOAD":  0x13, "QLOG":   0x14,
+    "QLOAD":  0x13, "QLOG":   0x14, "QSUB":   0x1B,
     # Geometry output
     "SPREAD": 0x15, "HEX":    0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -68,7 +68,7 @@ OPCODES: dict[str, int] = {
 # Opcodes that take no register/immediate arguments
 _NO_ARGS  = {"NOP", "HALT", "RET", "SNAP", "EQUIL"}
 # Opcodes where first arg is a QR register
-_QR_FIRST = {"QLOAD", "QLOG", "QADD", "QROT", "QNORM", "HEX",
+_QR_FIRST = {"QLOAD", "QLOG", "QADD", "QSUB", "QROT", "QNORM", "HEX",
               "SPREAD", "IDNT", "ANNE"}
 
 
@@ -88,7 +88,7 @@ def _parse_reg(tok: str) -> tuple[str, int]:
 
     Supports packed-phinary immediates with the PH0x... syntax.
     """
-    t = tok.upper()
+    t = tok.upper().replace('[', '').replace(']', '')
     if t.startswith('QR'):
         return 'QR', int(t[2:]) & 0xFF
     if t.startswith('R'):
@@ -184,6 +184,11 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
 
     elif mnemonic == "QADD":
         # QADD QRd, QRs
+        _, r1 = _parse_reg(args[0])
+        _, r2 = _parse_reg(args[1])
+
+    elif mnemonic == "QSUB":
+        # QSUB QRd, QRs
         _, r1 = _parse_reg(args[0])
         _, r2 = _parse_reg(args[1])
 
@@ -290,7 +295,7 @@ def _fold_pass(ir: list, labelled_positions: set) -> tuple[list, dict]:
     stats      = {'folded': 0, 'elim': 0}
 
     def reg(tok: str) -> tuple[str, int]:
-        t = tok.upper()
+        t = tok.upper().replace('[', '').replace(']', '')  # accept both R8 and R[8]
         if t.startswith('QR'): return 'QR', int(t[2:])
         if t.startswith('R'):  return 'R',  int(t[1:])
         return 'IMM', int(tok, 0)

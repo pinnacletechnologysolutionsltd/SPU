@@ -151,8 +151,8 @@ def expand_arc(emitter: AsmEmitter, regs: RegisterPool,
         QR[tmp] = QROT(QR[tmp])     ; Pell-rotate the offset
         QR[out] = QADD(QR[tmp], QR[c])  ; new point = center + offset
     """
-    c_reg = f"QR[{center_reg[1]}]"
-    p_reg = f"QR[{point_reg[1]}]"
+    c_reg = f"QR{center_reg[1]}"
+    p_reg = f"QR{point_reg[1]}"
 
     tmp_offset = regs.alloc_qr()
     tmp_result = regs.alloc_qr()
@@ -161,12 +161,12 @@ def expand_arc(emitter: AsmEmitter, regs: RegisterPool,
     emitter.comment(f"── circular_arc: {steps} Pell steps around {c_reg}, axis {axis} ──")
 
     # Load Pell rotor scalar r = (2, 1)
-    emitter.instr("LD", f"R[{r_pell}]", "2", "1")
-    emitter.comment(f"R[{r_pell}] = Pell rotor (2+√3)")
+    emitter.instr("LD", f"R{r_pell}", "2", "1")
+    emitter.comment(f"R{r_pell} = Pell rotor (2+√3)")
 
     # offset = point - center
-    emitter.instr("QSUB", f"QR[{tmp_offset}]", p_reg, c_reg)
-    emitter.comment(f"QR[{tmp_offset}] = offset = {p_reg} - {c_reg}")
+    emitter.instr("QSUB", f"QR{tmp_offset}", p_reg, c_reg)
+    emitter.comment(f"QR{tmp_offset} = offset = {p_reg} - {c_reg}")
 
     # Emit start point
     emitter.instr("QLOG", p_reg)
@@ -176,11 +176,11 @@ def expand_arc(emitter: AsmEmitter, regs: RegisterPool,
     for k in range(1, steps + 1):
         emitter.comment(f"step {k}")
         # Rotate offset by Pell rotor
-        emitter.instr("QROT", f"QR[{tmp_offset}]", f"R[{r_pell}]")
+        emitter.instr("QROT", f"QR{tmp_offset}", f"R{r_pell}")
         # new_point = center + rotated_offset
-        emitter.instr("QADD", f"QR[{tmp_result}]", f"QR[{tmp_offset}]", c_reg)
+        emitter.instr("QADD", f"QR{tmp_result}", f"QR{tmp_offset}", c_reg)
         # Output
-        emitter.instr("QLOG", f"QR[{tmp_result}]")
+        emitter.instr("QLOG", f"QR{tmp_result}")
 
     emitter.blank()
     return tmp_result
@@ -209,7 +209,7 @@ def expand_chain(emitter: AsmEmitter, regs: RegisterPool,
     Simplification for v1.0: use the bypass_p5 optimization for 120°
     (pure permutation) and the general path for 60°.
     """
-    b_reg = f"QR[{base_reg[1]}]"
+    b_reg = f"QR{base_reg[1]}"
     current_qr = base_reg[1]
     tmp_qr = regs.alloc_qr()
 
@@ -225,18 +225,18 @@ def expand_chain(emitter: AsmEmitter, regs: RegisterPool,
                         f"G={G_num}/{G_den}, H={H_num}/{H_den}")
 
         r_pell = regs.alloc_r()
-        emitter.instr("LD", f"R[{r_pell}]", "2", "1")
+        emitter.instr("LD", f"R{r_pell}", "2", "1")
 
         if F_num == -1 and F_den == 3 and G_num == 2 and G_den == 3 and H_num == 2 and H_den == 3:
             # 120° permutation case (bypass_p5 in hardware)
             emitter.comment("120° permutation (B→D, C→B, D→C)")
-            emitter.instr("QROT", f"QR[{current_qr}]", f"R[{r_pell}]")
-            emitter.instr("QROT", f"QR[{current_qr}]", f"R[{r_pell}]")
-            emitter.instr("QROT", f"QR[{current_qr}]", f"R[{r_pell}]")
+            emitter.instr("QROT", f"QR{current_qr}", f"R{r_pell}")
+            emitter.instr("QROT", f"QR{current_qr}", f"R{r_pell}")
+            emitter.instr("QROT", f"QR{current_qr}", f"R{r_pell}")
             emitter.comment("3 Pell steps → half-turn")
         else:
             emitter.comment("circulant_rotate via spu13_rotor_core.v (ROTC pending)")
-            emitter.instr("QROT", f"QR[{current_qr}]", f"R[{r_pell}]")
+            emitter.instr("QROT", f"QR{current_qr}", f"R{r_pell}")
             emitter.comment("placeholder — ROTC opcode needed for full circulant")
 
     emitter.blank()
@@ -284,10 +284,10 @@ def expand_delta(emitter: AsmEmitter, regs: RegisterPool,
         rhs_num = 4 * Q1 * Q2 * (steps - k)
         rhs_den = steps
         # s = k/steps, rhs² = 4·Q₁·Q₂·(1−s) = rhs_num / rhs_den
-        emitter.instr("LD", f"R[{dest_qr}]", str(Qsum), "0")
+        emitter.instr("LD", f"R{dest_qr}", str(Qsum), "0")
         emitter.comment(f"k={k}/{steps}: Q₃ = {Qsum} ± √({rhs_num}/{rhs_den})")
         # Store Q_sum and rhs_sq for later use
-        emitter.instr("LOG", f"R[{dest_qr}]")
+        emitter.instr("LOG", f"R{dest_qr}")
 
     emitter.blank()
 
