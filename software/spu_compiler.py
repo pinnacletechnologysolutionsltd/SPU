@@ -41,13 +41,32 @@ PELL_ORBIT = [
 # Each entry: (angle_name, F, G, H) as (num, den) triples
 # Values from Thomson Quadray-Rotors-v5 Table 2 / spu13_rotor_core.v
 
+# Extended table: 64 entries covering tetrahedral, octahedral, and icosahedral groups.
+# Entries 0-5: tetrahedral C₃ subgroup (D-axis)
+# Entries 6-11: full A₄ tetrahedral group
+# Entries 12-23: octahedral/cube S₄ group (placeholder — extended set)
+# Entries 24-63: icosahedral/dodecahedral A₅ and Thomson dynamic systems (placeholder)
+
 CIRCULANT_TABLE = {
+    # ── Tetrahedral C₃ (D-axis) ──────────────────────────────────────
     0:    ("0°",    (1,1), (0,1), (0,1)),
-    60:   ("60°",   (2,3), (2,3), (-1,3)),
-    120:  ("120°",  (-1,3), (2,3), (2,3)),
-    180:  ("180°",  (-1,3), (-1,3), (-1,3)),
-    240:  ("240°",  (2,3), (-1,3), (2,3)),
-    300:  ("300°",  (2,3), (2,3), (-1,3)),
+    1:    ("60°",   (2,3), (2,3), (-1,3)),
+    2:    ("120°",  (-1,3), (2,3), (2,3)),
+    3:    ("180°",  (-1,3), (-1,3), (-1,3)),
+    4:    ("240°",  (2,3), (-1,3), (2,3)),
+    5:    ("300°",  (2,3), (2,3), (-1,3)),
+    # ── A₄ group (other vertex axes) ────────────────────────────────
+    6:    ("120°A", (2,3), (-1,3), (2,3)),
+    7:    ("240°A", (2,3), (2,3), (-1,3)),
+    8:    ("120°B", (-1,3), (2,3), (2,3)),
+    9:    ("240°B", (2,3), (2,3), (-1,3)),
+    10:   ("120°C", (2,3), (-1,3), (2,3)),
+    11:   ("240°C", (-1,3), (2,3), (2,3)),
+    # ── Platonic (extended — requires flash-loaded F,G,H) ────────────
+    12:   ("cube90",    (0,1), (0,1), (0,1)),     # placeholder
+    15:   ("ico60",     (0,1), (0,1), (0,1)),     # placeholder (Q(√5))
+    19:   ("VE",        (0,1), (0,1), (0,1)),     # cuboctahedron placeholder
+    24:   ("RD",        (0,1), (0,1), (0,1)),     # rhombic dodecahedron placeholder
 }
 
 # ── Register allocator ──────────────────────────────────────────────────

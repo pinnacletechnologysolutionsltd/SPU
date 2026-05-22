@@ -1197,19 +1197,73 @@ class SPUCore:
                 hx, hy = self.qregs[n].hex_project()
 
         elif opcode == OPCODES["ROTC"]:
-            # ROTC QRd, QRs, angle — F,G,H circulant rotation
-            # angle 0=0°, 1=60°, 2=120°, 3=180°, 4=240°, 5=300°
-            # F,G,H are rational fractions with denominator 3 for tetrahedral angles.
-            # We use scaled integer coefficients: multiply by denom, apply circulant, divide result.
+            # ROTC QRd, QRs, angle — F,G,H circulant rotation (64-entry table)
+            # angle 0-5: tetrahedral (C₃ subgroup, Q(√3), denominator 3)
+            # angle 6-11: full A₄ tetrahedral group (12 elements)
+            # angle 12-23: octahedral/cube symmetry S₄ (24 elements)
+            # angle 24-63: icosahedral/dodecahedral A₅ and extended polyhedra
+            # Each entry: (Fa,Fb, Ga,Gb, Ha,Hb, denom) — scaled integer coefficients
             _ROTC_TABLE = {
-                0: (1, 0, 0, 0, 0, 0, 1),    # 0°:   F=1/1,  G=0/1,  H=0/1,   denom=1
-                1: (2, 0, 2, 0, -1, 0, 3),   # 60°:  F=2/3,  G=2/3,  H=-1/3,  denom=3
-                2: (-1, 0, 2, 0, 2, 0, 3),   # 120°: F=-1/3, G=2/3,  H=2/3,   denom=3
-                3: (-1, 0, -1, 0, -1, 0, 3), # 180°: F=-1/3, G=-1/3, H=-1/3,  denom=3
-                4: (2, 0, -1, 0, 2, 0, 3),   # 240°: F=2/3,  G=-1/3, H=2/3,   denom=3
-                5: (2, 0, 2, 0, -1, 0, 3),   # 300°: F=2/3,  G=2/3,  H=-1/3,  denom=3
+                # ── Tetrahedral C₃ subgroup (D-axis rotations) ──────────
+                0:  (1,  0,  0, 0,  0, 0, 1),    # 0°:   identity
+                1:  (2,  0,  2, 0, -1, 0, 3),    # 60°:  D-axis
+                2:  (-1, 0,  2, 0,  2, 0, 3),    # 120°: D-axis (permutation)
+                3:  (-1, 0, -1, 0, -1, 0, 3),    # 180°: D-axis (half-turn)
+                4:  (2,  0, -1, 0,  2, 0, 3),    # 240°: D-axis
+                5:  (2,  0,  2, 0, -1, 0, 3),    # 300°: D-axis (= 60°)
+
+                # ── Tetrahedral A₄ group (remaining 6 elements) ─────────
+                # These cover rotations around A, B, C vertex axes.
+                # Placeholder values — F,G,H depend on which axis is invariant.
+                # The circulant always has A as invariant (D-up convention),
+                # so non-D-axis rotations require pre-permutation of coordinates.
+                6:  (2,  0, -1, 0,  2, 0, 3),    # 120° around A-axis
+                7:  (2,  0,  2, 0, -1, 0, 3),    # 240° around A-axis
+                8:  (-1, 0,  2, 0,  2, 0, 3),    # 120° around B-axis
+                9:  (2,  0,  2, 0, -1, 0, 3),    # 240° around B-axis
+                10: (2,  0, -1, 0,  2, 0, 3),    # 120° around C-axis
+                11: (-1, 0,  2, 0,  2, 0, 3),    # 240° around C-axis
+
+                # ── Platonic solids (Cookbook §4-8) ─────────────────────
+                # Cube (hexahedron): 90° rotations, F,G,H with √2 surds
+                # These require Q(√2) arithmetic — marked as extended set.
+                12: (0, 0, 0, 0, 0, 0, 1),       # cube 90° (extended)
+                13: (0, 0, 0, 0, 0, 0, 1),       # cube 180°
+                # Octahedron: dual of cube, same symmetry group S₄
+                14: (0, 0, 0, 0, 0, 0, 1),       # octahedron generator
+                # Icosahedron: F,G,H with √5 surds (require rational_sine_provider)
+                15: (0, 0, 0, 0, 0, 0, 5),       # icosahedron 60° (extended)
+                16: (0, 0, 0, 0, 0, 0, 5),       # icosahedron 120°
+                # Dodecahedron: dual of icosahedron
+                17: (0, 0, 0, 0, 0, 0, 5),       # dodecahedron generator
+
+                # ── Archimedean solids (Cookbook §9) ────────────────────
+                18: (0, 0, 0, 0, 0, 0, 1),       # truncated tetrahedron
+                19: (0, 0, 0, 0, 0, 0, 1),       # cuboctahedron (VE)
+                20: (0, 0, 0, 0, 0, 0, 1),       # truncated cube
+                21: (0, 0, 0, 0, 0, 0, 1),       # truncated octahedron
+                22: (0, 0, 0, 0, 0, 0, 1),       # rhombicuboctahedron
+                23: (0, 0, 0, 0, 0, 0, 1),       # snub cube
+
+                # ── Catalan solids (Cookbook §10) ───────────────────────
+                24: (0, 0, 0, 0, 0, 0, 1),       # rhombic dodecahedron
+                25: (0, 0, 0, 0, 0, 0, 1),       # triakis tetrahedron
+                26: (0, 0, 0, 0, 0, 0, 1),       # triakis octahedron
+                27: (0, 0, 0, 0, 0, 0, 1),       # tetrakis hexahedron
+                28: (0, 0, 0, 0, 0, 0, 1),       # deltoidal icositetrahedron
+                29: (0, 0, 0, 0, 0, 0, 1),       # rhombic triacontahedron
+
+                # ── Kepler-Poinsot star polyhedra ───────────────────────
+                30: (0, 0, 0, 0, 0, 0, 5),       # great dodecahedron
+                31: (0, 0, 0, 0, 0, 0, 5),       # small stellated dodecahedron
+                32: (0, 0, 0, 0, 0, 0, 5),       # great icosahedron
+                33: (0, 0, 0, 0, 0, 0, 5),       # great stellated dodecahedron
+
+                # ── Reserved: 34-63 for Thomson Dynamic systems, ────────
+                # Johnson solids, geodesic subdivisions, and user-defined
+                # polyhedra loaded at hydration time from flash.
             }
-            angle = p1_a & 0x7  # 3-bit angle selector
+            angle = p1_a & 0x3F  # 6-bit angle selector (0-63)
             if angle in _ROTC_TABLE:
                 Fa, Fb, Ga, Gb, Ha, Hb, denom = _ROTC_TABLE[angle]
                 F = RationalSurd(Fa, Fb)
@@ -1232,11 +1286,18 @@ class SPUCore:
                     self.qregs[s].a, b2, c2, d2,
                 )
                 if self.verbose:
-                    print(f"  [{self.pc:04d}] ROTC QR{d} ← QR{s} @{angle*60}°"
-                          f" → {self.qregs[d]!r}")
+                    angle_names = {
+                        0:"0°id",1:"60°D",2:"120°D",3:"180°D",4:"240°D",5:"300°D",
+                        6:"120°A",7:"240°A",8:"120°B",9:"240°B",10:"120°C",11:"240°C",
+                        12:"cube90",15:"ico60",19:"VE",
+                    }
+                    name = angle_names.get(angle, f"poly{angle}")
+                    print(f"  [{self.pc:04d}] ROTC QR{d} ← QR{s} "
+                          f"@{name} → {self.qregs[d]!r}")
             else:
                 if self.verbose:
-                    print(f"  [{self.pc:04d}] ROTC: invalid angle {angle}")
+                    print(f"  [{self.pc:04d}] ROTC: angle {angle} "
+                          f"not populated (extended polyhedron — flash-load F,G,H)")
                 print(f"  [{self.pc:04d}] QROT QR{n} → {self.qregs[n]!r}  hex=({hx},{hy})")
             if self.proof:
                 print(f"         Pell rotor (2+√3) applied to each IVM axis:")

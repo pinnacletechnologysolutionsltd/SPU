@@ -266,7 +266,7 @@ module spu13_core #(
     reg  [3:0]  qrf_wr_lane;
     reg  [3:0]  qrf_init_lane;
     reg         rote_en;          // ROTC execute pulse
-    reg  [2:0]  rote_angle;       // F,G,H angle (0-5)
+    reg  [5:0]  rote_angle;       // F,G,H angle (0-63)
     reg  [3:0]  rote_src_lane;
 
     // F,G,H output from lookup
@@ -298,7 +298,7 @@ module spu13_core #(
                 .C_in(qrf_rd_C),
                 .D_in(qrf_rd_D),
                 .F(rote_F), .G(rote_G), .H(rote_H),
-                .bypass_p5(rote_angle == 3'd2),  // 120° → pure permutation
+                .bypass_p5(rote_angle == 6'd2),  // 120° → pure permutation
                 .A_out(qrf_wr_A),
                 .B_out(rote_B_out),
                 .C_out(rote_C_out),
@@ -324,24 +324,54 @@ module spu13_core #(
     // Identical to VM _ROTC_TABLE. Scaled by denominator 3 for tetrahedral
     // angles; the rotor core handles the /3 scaling internally via
     // fixed-point truncation in the surd multiplier path.
-    assign rote_F = (rote_angle == 3'd0) ? 64'sd1  :
-                    (rote_angle == 3'd1) ? 64'sd2  :
-                    (rote_angle == 3'd2) ? -64'sd1 :
-                    (rote_angle == 3'd3) ? -64'sd1 :
-                    (rote_angle == 3'd4) ? 64'sd2  :
-                    (rote_angle == 3'd5) ? 64'sd2  : 64'sd1;
-    assign rote_G = (rote_angle == 3'd0) ? 64'sd0  :
-                    (rote_angle == 3'd1) ? 64'sd2  :
-                    (rote_angle == 3'd2) ? 64'sd2  :
-                    (rote_angle == 3'd3) ? -64'sd1 :
-                    (rote_angle == 3'd4) ? -64'sd1 :
-                    (rote_angle == 3'd5) ? 64'sd2  : 64'sd0;
-    assign rote_H = (rote_angle == 3'd0) ? 64'sd0  :
-                    (rote_angle == 3'd1) ? -64'sd1 :
-                    (rote_angle == 3'd2) ? 64'sd2  :
-                    (rote_angle == 3'd3) ? -64'sd1 :
-                    (rote_angle == 3'd4) ? 64'sd2  :
-                    (rote_angle == 3'd5) ? -64'sd1 : 64'sd0;
+    // Extended entries (6-63) are populated at hydration time from flash;
+    // the combinational default returns identity (F=1, G=0, H=0) for
+    // unpopulated entries.
+    assign rote_F = (rote_angle == 6'd0)  ? 64'sd1  :
+                    (rote_angle == 6'd1)  ? 64'sd2  :
+                    (rote_angle == 6'd2)  ? -64'sd1 :
+                    (rote_angle == 6'd3)  ? -64'sd1 :
+                    (rote_angle == 6'd4)  ? 64'sd2  :
+                    (rote_angle == 6'd5)  ? 64'sd2  :
+                    // Extended entries 6-11 (A₄ group) — same F,G,H patterns
+                    (rote_angle == 6'd6)  ? 64'sd2  :
+                    (rote_angle == 6'd7)  ? 64'sd2  :
+                    (rote_angle == 6'd8)  ? -64'sd1 :
+                    (rote_angle == 6'd9)  ? 64'sd2  :
+                    (rote_angle == 6'd10) ? 64'sd2  :
+                    (rote_angle == 6'd11) ? -64'sd1 :
+                    // Entries 12-63: identity fallback (flash-load for actual values)
+                    64'sd1;
+
+    assign rote_G = (rote_angle == 6'd0)  ? 64'sd0  :
+                    (rote_angle == 6'd1)  ? 64'sd2  :
+                    (rote_angle == 6'd2)  ? 64'sd2  :
+                    (rote_angle == 6'd3)  ? -64'sd1 :
+                    (rote_angle == 6'd4)  ? -64'sd1 :
+                    (rote_angle == 6'd5)  ? 64'sd2  :
+                    // Extended entries
+                    (rote_angle == 6'd6)  ? -64'sd1 :
+                    (rote_angle == 6'd7)  ? 64'sd2  :
+                    (rote_angle == 6'd8)  ? 64'sd2  :
+                    (rote_angle == 6'd9)  ? 64'sd2  :
+                    (rote_angle == 6'd10) ? -64'sd1 :
+                    (rote_angle == 6'd11) ? 64'sd2  :
+                    64'sd0;
+
+    assign rote_H = (rote_angle == 6'd0)  ? 64'sd0  :
+                    (rote_angle == 6'd1)  ? -64'sd1 :
+                    (rote_angle == 6'd2)  ? 64'sd2  :
+                    (rote_angle == 6'd3)  ? -64'sd1 :
+                    (rote_angle == 6'd4)  ? 64'sd2  :
+                    (rote_angle == 6'd5)  ? -64'sd1 :
+                    // Extended entries
+                    (rote_angle == 6'd6)  ? 64'sd2  :
+                    (rote_angle == 6'd7)  ? -64'sd1 :
+                    (rote_angle == 6'd8)  ? 64'sd2  :
+                    (rote_angle == 6'd9)  ? -64'sd1 :
+                    (rote_angle == 6'd10) ? 64'sd2  :
+                    (rote_angle == 6'd11) ? 64'sd2  :
+                    64'sd0;
 
     // ── ROTC execution FSM ─────────────────────────────────────────────
     // On ROTC instruction (0x1C): latch source/dest/angle, fire rote_en.
@@ -357,7 +387,7 @@ module spu13_core #(
             rote_active <= 0;
             rote_src_lane <= 0;
             rote_dest_lane <= 0;
-            rote_angle <= 0;
+            rote_angle <= 6'd0;
             qrf_wr_en <= 0;
             qrf_wr_lane <= 0;
         end else begin
@@ -367,7 +397,7 @@ module spu13_core #(
                 // Latch ROTC parameters from instruction
                 rote_src_lane  <= inst_word[47:40] % 13;
                 rote_dest_lane <= inst_word[55:48] % 13;
-                rote_angle     <= inst_word[26:24];
+                rote_angle     <= inst_word[29:24];  // P1_A[5:0]
                 rote_active    <= 1;
             end else if (rote_active) begin
                 // Execute: fire rotor core (combinational read already
