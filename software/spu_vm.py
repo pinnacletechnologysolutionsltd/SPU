@@ -499,7 +499,7 @@ OPCODES = {
     "CALL":  0x21, "RET":   0x22,
     # Quadray IVM operations
     "QADD":  0x10, "QROT":  0x11, "QNORM": 0x12,
-    "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B,
+    "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C,
     # Geometry output
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -1195,6 +1195,48 @@ class SPUCore:
             self.qregs[n] = prev.rotate()
             if self.verbose:
                 hx, hy = self.qregs[n].hex_project()
+
+        elif opcode == OPCODES["ROTC"]:
+            # ROTC QRd, QRs, angle — F,G,H circulant rotation
+            # angle 0=0°, 1=60°, 2=120°, 3=180°, 4=240°, 5=300°
+            # F,G,H are rational fractions with denominator 3 for tetrahedral angles.
+            # We use scaled integer coefficients: multiply by denom, apply circulant, divide result.
+            _ROTC_TABLE = {
+                0: (1, 0, 0, 0, 0, 0, 1),    # 0°:   F=1/1,  G=0/1,  H=0/1,   denom=1
+                1: (2, 0, 2, 0, -1, 0, 3),   # 60°:  F=2/3,  G=2/3,  H=-1/3,  denom=3
+                2: (-1, 0, 2, 0, 2, 0, 3),   # 120°: F=-1/3, G=2/3,  H=2/3,   denom=3
+                3: (-1, 0, -1, 0, -1, 0, 3), # 180°: F=-1/3, G=-1/3, H=-1/3,  denom=3
+                4: (2, 0, -1, 0, 2, 0, 3),   # 240°: F=2/3,  G=-1/3, H=2/3,   denom=3
+                5: (2, 0, 2, 0, -1, 0, 3),   # 300°: F=2/3,  G=2/3,  H=-1/3,  denom=3
+            }
+            angle = p1_a & 0x7  # 3-bit angle selector
+            if angle in _ROTC_TABLE:
+                Fa, Fb, Ga, Gb, Ha, Hb, denom = _ROTC_TABLE[angle]
+                F = RationalSurd(Fa, Fb)
+                G = RationalSurd(Ga, Gb)
+                H = RationalSurd(Ha, Hb)
+                d, s = r1 % 13, r2 % 13
+                # Apply circulant with scaled coefficients
+                b2 = (F * self.qregs[s].b + H * self.qregs[s].c +
+                      G * self.qregs[s].d)
+                c2 = (G * self.qregs[s].b + F * self.qregs[s].c +
+                      H * self.qregs[s].d)
+                d2 = (H * self.qregs[s].b + G * self.qregs[s].c +
+                      F * self.qregs[s].d)
+                # Scale result down by denominator
+                if denom != 1:
+                    b2 = RationalSurd(b2.a // denom, b2.b // denom)
+                    c2 = RationalSurd(c2.a // denom, c2.b // denom)
+                    d2 = RationalSurd(d2.a // denom, d2.b // denom)
+                self.qregs[d] = QuadrayVector(
+                    self.qregs[s].a, b2, c2, d2,
+                )
+                if self.verbose:
+                    print(f"  [{self.pc:04d}] ROTC QR{d} ← QR{s} @{angle*60}°"
+                          f" → {self.qregs[d]!r}")
+            else:
+                if self.verbose:
+                    print(f"  [{self.pc:04d}] ROTC: invalid angle {angle}")
                 print(f"  [{self.pc:04d}] QROT QR{n} → {self.qregs[n]!r}  hex=({hx},{hy})")
             if self.proof:
                 print(f"         Pell rotor (2+√3) applied to each IVM axis:")

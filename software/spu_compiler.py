@@ -224,20 +224,28 @@ def expand_chain(emitter: AsmEmitter, regs: RegisterPool,
         emitter.comment(f"joint {i}: axis={axis_id}, F={F_num}/{F_den}, "
                         f"G={G_num}/{G_den}, H={H_num}/{H_den}")
 
-        r_pell = regs.alloc_r()
-        emitter.instr("LD", f"R{r_pell}", "2", "1")
+        # Determine ROTC angle from F,G,H values
+        angle = None
+        if F_num == 1 and F_den == 1 and G_num == 0 and H_num == 0:
+            angle = 0   # 0° identity
+        elif F_num == 2 and F_den == 3 and G_num == 2 and H_num == -1:
+            angle = 1   # 60° (or 300°)
+        elif F_num == -1 and F_den == 3 and G_num == 2 and H_num == 2:
+            angle = 2   # 120°
+        elif F_num == -1 and F_den == 3 and G_num == -1 and H_num == -1:
+            angle = 3   # 180°
+        elif F_num == 2 and F_den == 3 and G_num == -1 and H_num == 2:
+            angle = 4   # 240°
 
-        if F_num == -1 and F_den == 3 and G_num == 2 and G_den == 3 and H_num == 2 and H_den == 3:
-            # 120° permutation case (bypass_p5 in hardware)
-            emitter.comment("120° permutation (B→D, C→B, D→C)")
-            emitter.instr("QROT", f"QR{current_qr}", f"R{r_pell}")
-            emitter.instr("QROT", f"QR{current_qr}", f"R{r_pell}")
-            emitter.instr("QROT", f"QR{current_qr}", f"R{r_pell}")
-            emitter.comment("3 Pell steps → half-turn")
+        if angle is not None:
+            emitter.instr("ROTC", f"QR{current_qr}", f"QR{current_qr}", str(angle))
+            emitter.comment(f"{angle*60}° circulant rotation")
         else:
-            emitter.comment("circulant_rotate via spu13_rotor_core.v (ROTC pending)")
+            emitter.comment("circulant_rotate: custom F,G,H not in table")
+            r_pell = regs.alloc_r()
+            emitter.instr("LD", f"R{r_pell}", "2", "1")
             emitter.instr("QROT", f"QR{current_qr}", f"R{r_pell}")
-            emitter.comment("placeholder — ROTC opcode needed for full circulant")
+            emitter.comment("placeholder — custom angle needs ROTC table extension")
 
     emitter.blank()
     return current_qr
