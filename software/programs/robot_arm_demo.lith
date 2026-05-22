@@ -1,0 +1,27 @@
+;; robot_arm_demo.lith — 2-joint arm with circular trajectory
+;; Demonstrates: arc, chain, nlrep, snap, delta
+
+;; Initialize Quadray basis vectors
+IDNT QR[0]              ; QR[0] = (1,0,0,0) — nucleus
+IDNT QR[1]              ; QR[1] = B-axis start
+
+;; ── Forward Kinematics Chain ──
+;; 2-joint arm: D-axis at 60°, then B-axis at 240°
+chain base=QR[0] joints=[(3,2/3,2/3,-1/3),(1,2/3,-1/3,2/3)]
+
+;; ── Circular Arc Trajectory ──
+;; 12-step Pell orbit around the elbow (QR[0]) from wrist (QR[1])
+arc center=QR[0] point=QR[1] axis=3 steps=12
+
+;; ── Cayley NLERP ──
+;; Interpolate between Pell step 2 and step 6 at t=1/2
+nlrep a=2 b=6 t_num=1 t_den=2 dest=R[0]
+
+;; ── Delta Curve ──
+;; Parameterize Q₃ for Q₁=3, Q₂=4 as spread varies
+delta Q1=3 Q2=4 steps=4
+
+;; ── Davis Gate Snap ──
+snap
+
+HALT
