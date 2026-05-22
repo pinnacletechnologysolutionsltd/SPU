@@ -70,23 +70,30 @@ def main():
 
     # Directories for auto-discovery (-y) and includes (-I)
     inc_dirs = [
-        "hardware/common/rtl",
-        "hardware/common/rtl/core",
-        "hardware/common/rtl/mem",
-        "hardware/common/rtl/prim",
-        "hardware/common/rtl/proto",
-        "hardware/common/rtl/top",
-        "hardware/common/rtl/bio",
-        "hardware/common/rtl/graphics",
-        "hardware/common/rtl/include",
-        "hardware/common/rtl/io",
-        "hardware/common/rtl/audio",
-        "hardware/common/rtl/hal",
-        "hardware/spu13/rtl",
-        "hardware/spu4/rtl",
-        "hardware/common/rtl/spu4/rtl",
-        "hardware/boards/icesugar",       # local board tops (must precede reference/)
-        "hardware/boards/tang_nano_9k",
+        "hardware/rtl",
+        "hardware/rtl/arch",
+        "hardware/rtl/common",
+        "hardware/rtl/common/prim",
+        "hardware/rtl/common/sync",
+        "hardware/rtl/core",
+        "hardware/rtl/core/shared",
+        "hardware/rtl/core/spu13",
+        "hardware/rtl/core/spu4",
+        "hardware/rtl/gpu",
+        "hardware/rtl/hal",
+        "hardware/rtl/math",
+        "hardware/rtl/accel",
+        "hardware/rtl/top",
+        "hardware/rtl/triage",
+        "hardware/rtl/peripherals",
+        "hardware/rtl/peripherals/artery",
+        "hardware/rtl/peripherals/audio",
+        "hardware/rtl/peripherals/bio",
+        "hardware/rtl/peripherals/graphics",
+        "hardware/rtl/peripherals/io",
+        "hardware/rtl/peripherals/memory",
+        "hardware/rtl/peripherals/storage",
+        "hardware/rtl/peripherals/video",
         "hardware/boards/tang_primer_25k",
         "hardware/vendor/gowin",          # Gowin DSP / BSRAM primitives
         "hardware/vendor/ice40",          # iCE40 simulation stubs
@@ -98,7 +105,7 @@ def main():
     for d in inc_dirs:
         iverilog_args.extend(["-y", d, "-I", d])
     # Top-level include for spu_arch_defines.vh and sqr_params.vh
-    iverilog_args.extend(["-I", "hardware/common/rtl"])
+    iverilog_args.extend(["-I", "hardware/rtl/arch"])
 
     passed = 0
     failed = 0
@@ -113,19 +120,33 @@ def main():
         # Gather all source files from include directories so iverilog sees every module
         # Gather source files from a curated set of directories to avoid duplicates
         scan_dirs = [
-            "hardware/common/rtl",
-            "hardware/common/rtl/include",
-            "hardware/common/rtl/core",
-            "hardware/common/rtl/mem",
-            "hardware/common/rtl/prim",
-            "hardware/common/rtl/gpu",
-            "hardware/common/rtl/proto",
-            "hardware/spu13/rtl",
-            "hardware/spu4/rtl",
-            "hardware/common/rtl/spu4/rtl",
+            "hardware/rtl",
+            "hardware/rtl/arch",
+            "hardware/rtl/common",
+            "hardware/rtl/common/prim",
+            "hardware/rtl/common/sync",
+            "hardware/rtl/core",
+            "hardware/rtl/core/shared",
+            "hardware/rtl/core/spu13",
+            "hardware/rtl/core/spu4",
+            "hardware/rtl/gpu",
+            "hardware/rtl/hal",
+            "hardware/rtl/math",
+            "hardware/rtl/accel",
+            "hardware/rtl/top",
+            "hardware/rtl/triage",
+            "hardware/rtl/peripherals",
+            "hardware/rtl/peripherals/artery",
+            "hardware/rtl/peripherals/audio",
+            "hardware/rtl/peripherals/bio",
+            "hardware/rtl/peripherals/graphics",
+            "hardware/rtl/peripherals/io",
+            "hardware/rtl/peripherals/memory",
+            "hardware/rtl/peripherals/storage",
+            "hardware/rtl/peripherals/video",
             "hardware/boards/tang_primer_25k",
             "hardware/boards/tang25k",
-            "hardware/common/tests",  # include behavioral test helpers (e.g., sim_sd_card)
+            "hardware/tests/common",  # behavioral test helpers (e.g., sim_sd_card)
         ]
         src_files = []
         module_map = {}
@@ -133,13 +154,13 @@ def main():
             absd = root_dir / d
             if absd.exists():
                 for f in absd.rglob('*.v'):
-                    # Skip helper testbench files in the common tests directory
-                    if d == "hardware/common/tests" and f.name.endswith("_tb.v"):
+                    # Skip helper testbench files in the tests directory
+                    if 'hardware/tests' in d and f.name.endswith("_tb.v"):
                         continue
                     # Skip GPU/graphics RTL (may contain unsupported SV constructs for iverilog)
                     fp = str(f)
                     # For GPU/graphics sources, only include a tested subset to avoid SV-only files breaking iverilog
-                    if '/hardware/common/rtl/gpu/' in fp or '/hardware/common/rtl/graphics/' in fp:
+                    if '/hardware/rtl/gpu/' in fp or '/hardware/rtl/peripherals/graphics/' in fp:
                         allowed_gpu = ['pade_eval_4_4.v', 'rplu_exp.v', 'rational_sine_provider.v', 'rational_sine_rom.v', 'rational_sine_rom_q32.v', 'spu_edge_stepper.v', 'spu_raster_unit.v', 'spu_bresenham_raster.v']
                         if os.path.basename(fp) not in allowed_gpu:
                             continue
@@ -187,14 +208,14 @@ def main():
         # If TB_FILTER is set, restrict the source set to minimal directories to avoid pulling board tops and unrelated cores
         tb_filter = os.getenv('TB_FILTER')
         if tb_filter:
-            allowed_dirs = [str(root_dir / p) for p in ("hardware/common/rtl", "hardware/common/rtl/gpu", "hardware/spu13/rtl", "hardware/common/tests", "hardware/common/rtl/include")]
+            allowed_dirs = [str(root_dir / p) for p in ("hardware/rtl", "hardware/rtl/gpu", "hardware/rtl/core/shared", "hardware/rtl/core/spu13", "hardware/tests/common", "hardware/rtl/arch")]
             src_unique = [s for s in src_unique if any(s.startswith(d) for d in allowed_dirs)]
         cmd = iverilog_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
         
         if compile_result.returncode != 0:
             # If GPU sources are in the source set, attempt a Verilator simulation fallback
-            gpu_present = any('/hardware/common/rtl/gpu/' in s for s in src_unique)
+            gpu_present = any('/hardware/rtl/gpu/' in s for s in src_unique)
             if gpu_present:
                 print(f"[{tb.name}] iverilog failed; attempting Verilator simulation fallback...")
                 # Determine TB top module name
@@ -223,7 +244,7 @@ def main():
                 # When using TB_FILTER, restrict Verilator include paths to a minimal set to avoid pulling in board tops
                 tb_filter = os.getenv('TB_FILTER')
                 if tb_filter:
-                    verilator_inc_dirs = ["hardware/common/rtl", "hardware/common/rtl/gpu", "hardware/spu13/rtl", "hardware/common/rtl/include"]
+                    verilator_inc_dirs = ["hardware/rtl", "hardware/rtl/gpu", "hardware/rtl/core/shared", "hardware/rtl/core/spu13", "hardware/rtl/arch"]
                 else:
                     verilator_inc_dirs = inc_dirs
 
