@@ -196,7 +196,7 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
         # ROTC QRd, QRs, angle
         _, r1 = _parse_reg(args[0])
         _, r2 = _parse_reg(args[1])
-        p1_a = int(args[2]) & 0x7 if len(args) > 2 else 0
+        p1_a = int(args[2]) & 0xFF if len(args) > 2 else 0  # 8-bit: field[7:6] + angle[5:0]
 
     elif mnemonic == "QROT":
         # QROT QRd [, Rs]  — if one arg, use built-in Pell rotor (r2=0)
