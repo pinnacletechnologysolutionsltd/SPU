@@ -98,13 +98,26 @@ geometry of the IVM. It is not arbitrary. The SPU-13 operates in Q(√3) because
 the physics demands it.
 
 > **Provenance note:** The Q(√3) surd arithmetic — including the multiplication
-> formula above — was derived for the SPU-13 project from Wildberger's rational
-> trigonometry applied to the IVM lattice. It is not sourced from any external
-> hardware paper. Dr. Thomson's Spread-Quadray Rotor (SQR) paper covers rotor
-> *composition* at a higher level (Hamilton product); it does not specify field
-> arithmetic. The formula `(ac + 3bd) + (ad + bc)√3` is the SPU-13's own
-> mathematical foundation, verified in `MATHEMATICAL_FOUNDATIONS.md` and
-> implemented in `spu_surd_mul_gowin.v` and `spu_unified_alu_tdm.v`.
+> formula `(ac + 3bd) + (ad + bc)√3` — was derived for the SPU-13 project from
+> Wildberger's rational trigonometry applied to the IVM lattice. The specific
+> field extensions Q(√3), Q(√5), and Q(√15) are SPU-13 originals, verified in
+> simulation and implemented in `spu_surd_mul_gowin.v` and `spu_unified_alu_tdm.v`.
+>
+> The broader idea of applying rational surd fields to tetrahedral geometry has
+> since appeared independently in Dr. Andy Ross Thomson's *Synergetics Cookbook*
+> (May 2026, §11.6 "Future: Surd-Exact Hull"), which proposes Q(√2, √3) as a
+> field for exact convex-hull computation of rotated ABCD vertices — a convergent
+> but different field extension targeting rendering rather than control. The
+> surd-field approach was shared with Thomson in early 2026; the Cookbook's
+> future-work section reflects this convergence. Neither party derived their
+> specific field choices from the other.
+>
+> Thomson's *Spread-Quadray Rotors* (v5, May 2026) covers rotor composition
+> via half-angle ABCD Hamilton product and Rodrigues-style K(u) exponential
+> (with the K³ = −K cubic identity contributed by Leo Murillo, Zenodo 19689050,
+> 2026). The SQR paper does not specify fixed-point field arithmetic; it uses
+> f64 throughout. The SPU's contribution is the translation of these algebraic
+> structures into division-free, fixed-point rational hardware.
 
 ---
 
@@ -153,14 +166,32 @@ numbers. It is field-agnostic, which is exactly what hardware requires.
 
 ## 5. Davis Law: Stability Without Approximation
 
-Bee Rosa Davis's extension of Wildberger's framework introduced the *Davis Ratio*
-C = τ/K, where τ is the manifold tension and K is the quadrance of the collective
-state. The Davis Law states:
+Bee Rosa Davis introduced the *Davis Law* as the governing field equation of
+the Davis Framework:
 
-> A geometric manifold is *laminar* (stable, non-dissipative) if and only if
-> the sum ΣABCD = 0 — i.e., the quadratic form over the 13 axes closes exactly.
+> **C = τ / K** — inference capacity equals tolerance divided by curvature barrier.
 
-This is the *Navier-Stokes regularity condition* expressed in the IVM basis.
+This appears in her January 2026 paper *Holonomy-First Navier-Stokes Regularity*
+(`Theory/navier_stokes_regularity_v2.pdf`), which proposes a geometric proof of
+global regularity for 3D incompressible Navier-Stokes using a cache/bin/barrier
+architecture. The proof is conditional on the Davis Field-Equation axioms
+(axioms A1–A7) and includes an explicit gap ledger (Section 7). The framework is
+also explored in her December 2025 papers on BSD conjecture and Poincaré
+isomorphism (`Theory/Davis_BSD_Conjecture_Conditional.pdf`,
+`Theory/Davis_Poincare_Isomorphism_Conditional.pdf`).
+
+The Davis-Wilson map — Γ_DW(A) = (Φ(A), r(A)) where Φ is a continuous cache
+from Wilson loop traces and r is discrete topological charge — is developed in
+the Davis-Wilson map project (github.com/nurdymuny/davis-wilson-map) and
+generalized to Navier-Stokes in Appendix C.7 of the regularity paper, using
+circulation signatures Γ(u) and helicity sector r(u) as the fluid analogue.
+
+> **SPU mapping:** A geometric manifold is *laminar* (stable, non-dissipative)
+> if and only if the sum ΣABCD = 0 — i.e., the quadratic form over the 13 axes
+> closes exactly. This is the SPU's hardware implementation of the Davis
+> laminar condition, inspired by but distinct from the Davis Framework's
+> mathematical treatment.
+
 In floating-point simulation, this condition can never be checked exactly —
 you always compare against an epsilon. In Q(√3) arithmetic, it is a comparison
 against zero. It is exact.
@@ -168,6 +199,9 @@ against zero. It is exact.
 When the Davis Gate detects ΣABCD ≠ 0 (a "Cubic Leak"), it triggers Henosis —
 a one-cycle correction pulse that restores the laminar condition. This is not
 an approximation or a numerical stabiliser. It is an algebraic identity check.
+The RPLU (Rational Polynomial Look-Up) surface acts as the hardware cache
+analogue of the Davis-Wilson map: an indexed rational response surface for
+deterministic state classification, correction lookup, and bounded output.
 
 The implication for physics simulation is significant:
 - Navier-Stokes in Q(√3) cannot develop numerical instability — the manifold
@@ -181,7 +215,8 @@ The implication for physics simulation is significant:
 
 ## 6. The Quadray Coordinate System
 
-Developed by Kirby Urner from Fuller's synergetics, the Quadray system uses
+Developed by Kirby Urner from Fuller's synergetics, and given its algebraic
+basis matrix by Tom Ace (1997, minortriad.com), the Quadray system uses
 four axes pointing to the vertices of a regular tetrahedron:
 
 ```
@@ -212,10 +247,14 @@ Fuller (1944–75):   Tetrahedral basis → whole-number volumes
 Wildberger (2005):  Angles → Spread/Quadrance (division-free, exact)
                     Geometry requires no transcendentals, no approximation
 
-Davis (2010s+):     Laminar condition ΣABCD = 0 → exact stability check
-                    Navier-Stokes regularity without epsilon comparison
+Thomson (2024–26):  Spread-Quadray Rotors (Murillo's K³=−K; Pohl's D-up)
+                    ABCD-native pipeline; surd-exact hull (future work)
 
-SPU-13 (2024+):     Q(√3) arithmetic in silicon
+Davis (2025–26):    Davis Law C=τ/K; cache/bin/barrier architecture
+                    Davis-Wilson map; conditional regularity proof
+
+SPU-13 (2024+):     Q(√3)/Q(√5)/Q(√15) arithmetic in silicon
+                    RPLU hardware cache/correction surface
                     Division-free ALU, 13-axis IVM manifold, Davis Gate
                     Bit-exact physics. No float. No drift. No approximation.
 ```
@@ -239,17 +278,48 @@ wrong choice of basis. The SPU-13 removes the workaround.
 
 ## References
 
+### Foundational
 - R. Buckminster Fuller, *Synergetics: Explorations in the Geometry of Thinking*,
   Macmillan, 1975
 - R. Buckminster Fuller, *Synergetics 2*, Macmillan, 1979
 - N.J. Wildberger, *Divine Proportions: Rational Trigonometry to Universal Geometry*,
   Wild Egg Books, 2005
-- N.J. Wildberger, WildEgg YouTube channel — advanced chromogeometry, rational
-  calculus, universal hyperbolic geometry
-- Kirby Urner, Quadray coordinate system documentation,
+- N.J. Wildberger, WildEgg YouTube channel — chromogeometry, rational calculus,
+  universal hyperbolic geometry
+
+### Quadray Coordinates & Rotors
+- Kirby Urner, Quadray coordinate system,
   https://kirbyurner.github.io/quadrays/
-- Bee Rosa Davis, Davis Law and Universal Geometry framework (in preparation)
-- Andrew Thomson, Spread-Quadray Rotors (SQR) framework
+- Tom Ace, Quadray basis matrix and F,G,H circulant (1997),
+  http://minortriad.com/quadray.html
+- Andy Ross Thomson, *Spread-Quadray Rotors: A Rational, Tetrahedral-Native
+  Algebra for 3D Rotation*, v5, May 2026 (`Theory/Quadray-Rotors-v5.pdf`)
+- Andy Ross Thomson, *Synergetics Cookbook*, May 2026
+  (`Theory/Synergetics-Cookbook.pdf`) — DOI: 10.13140/RG.2.2.14110.91207
+- Andy Ross Thomson, *The 4D± Prime Projection Conjecture*, v5.1, February 2026
+  (`Theory/Prime_Projection_Conjecture_v5.1.pdf`)
+- Leo Murillo, K(u) cubic identity K³ = −K and closed-form simplicial Rodrigues
+  formula, Zenodo 19689050, 2026
+- Strüppi Pohl, D-up (Strüppi-Up) world-up convention, 2026 (personal
+  communication / ABCD.Earth contributor note)
+
+### Davis Framework
+- Bee Rosa Davis, *Holonomy-First Navier-Stokes Regularity: A Geometric Proof
+  via the Davis Field Equations*, January 2026
+  (`Theory/navier_stokes_regularity_v2.pdf`)
+- Bee Rosa Davis, *The Spectral Geometry of Rank: Relating the L-Function to the
+  Mass Gap — A Davis Framework Approach to BSD*, December 2025
+  (`Theory/Davis_BSD_Conjecture_Conditional.pdf`)
+- Bee Rosa Davis, *The Davis-Poincaré Isomorphism: Wilson Flow as Ricci Flow —
+  Re-Deriving Poincaré from Gauge Theory*, December 2025
+  (`Theory/Davis_Poincare_Isomorphism_Conditional.pdf`)
+- Davis-Wilson map project, https://github.com/nurdymuny/davis-wilson-map
+
+### SPU Project Hardware
+- `docs/hardware_evidence.md` — Evidence ledger: commands, board conditions,
+  probe results, and remaining gaps
+- `docs/rplu_bringup_guard.md` — RPLU flash-load repeatability procedures
+- `knowledge/PELL_OCTAVE.md` — Pell octave: unbounded rotor range with 16-bit registers
 
 ---
 

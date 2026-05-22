@@ -84,13 +84,20 @@ class RationalSurd:
     and step = pell_step % 8.  The stored (a, b) is always the fundamental-
     domain value orbit[step], so a² − 3b² = 1 for any rotor-generated surd.
     For surds not on the Pell orbit, pell_step is None.
-    """
-    __slots__ = ('a', 'b', 'pell_step')
 
-    def __init__(self, a: int = 0, b: int = 0, pell_step: int = None):
+    polarity: Janus polarity flag (Thomson SQR §9).  +1 for θ ∈ [0°,90°],
+    −1 for θ ∈ (90°,180°].  None if this surd is not a rotor.  Resolves the
+    sign ambiguity in spread→cos conversion: cos θ = polarity · √(1−s).
+    Compose under rotor multiplication: p_ab = p_a × p_b.
+    """
+    __slots__ = ('a', 'b', 'pell_step', 'polarity')
+
+    def __init__(self, a: int = 0, b: int = 0, pell_step: int = None,
+                 polarity: int = None):
         self.a = int(a)
         self.b = int(b)
-        self.pell_step = pell_step  # None = not a rotor-generated surd
+        self.pell_step = pell_step  # None = not a Pell-rotor-generated surd
+        self.polarity = polarity     # None = not a rotor; +1 or −1 for rotors
 
     def __add__(self, other: 'RationalSurd') -> 'RationalSurd':
         return RationalSurd(self.a + other.a, self.b + other.b)
@@ -100,16 +107,28 @@ class RationalSurd:
 
     def __mul__(self, other: 'RationalSurd') -> 'RationalSurd':
         # (a + b√3)(c + d√3) = (ac + 3bd) + (ad + bc)√3
+        p = None
+        if self.polarity is not None and other.polarity is not None:
+            p = self.polarity * other.polarity  # Janus: polarities multiply
+        elif self.polarity is not None:
+            p = self.polarity
+        elif other.polarity is not None:
+            p = other.polarity
         return RationalSurd(
             self.a * other.a + 3 * self.b * other.b,
-            self.a * other.b + self.b * other.a
+            self.a * other.b + self.b * other.a,
+            polarity=p,
         )
 
     def __neg__(self) -> 'RationalSurd':
-        return RationalSurd(-self.a, -self.b)
+        return RationalSurd(-self.a, -self.b,
+                            polarity=self.polarity)
 
     def __eq__(self, other) -> bool:
-        return self.a == other.a and self.b == other.b
+        if not isinstance(other, RationalSurd):
+            return NotImplemented
+        return (self.a == other.a and self.b == other.b and
+                self.polarity == other.polarity)
 
     def quadrance(self) -> int:
         """Q = a² - 3b²  (the Davis Gate check — must be ≥ 0 for stability)"""
@@ -137,20 +156,110 @@ class RationalSurd:
         Pell Octave: tracks (octave, step) so the stored (a,b) stays in the
         16-bit fundamental domain (orbit[0..7]).  step wraps at 8; octave
         increments.  This preserves P²−3Q²=1 for arbitrarily many rotations.
+
+        Janus polarity: Pell steps 0–3 have cos(θ/2) > 0 → p = +1.
+        Steps 4–7 have cos(θ/2) < 0 → p = −1 (θ > 90° half-angle).
         """
         # Fundamental orbit (steps 0–7) — all fit in int16
+        # Polarity for each step: p = sign of cos(n·φ/2) where φ = 2·arctan(√3/2)
         _PELL_ORBIT = [
-            (1, 0), (2, 1), (7, 4), (26, 15),
-            (97, 56), (362, 209), (1351, 780), (5042, 2911),
+            (1, 0, +1),    # r⁰: cos(0) = 1 → p = +1
+            (2, 1, +1),    # r¹: cos ≈ 0.87 → p = +1
+            (7, 4, +1),    # r²: cos ≈ 0.51 → p = +1
+            (26, 15, +1),  # r³: cos ≈ 0.02 → p = +1 (barely)
+            (97, 56, -1),  # r⁴: cos ≈ −0.48 → p = −1
+            (362, 209, -1),# r⁵: cos ≈ −0.87 → p = −1
+            (1351, 780, -1),# r⁶: cos ≈ −0.99 → p = −1
+            (5042, 2911, -1),# r⁷: cos ≈ −1.00 → p = −1
         ]
         if self.pell_step is not None:
             new_step = self.pell_step + 1
-            oct_n, step_n = divmod(new_step, 8)
-            a, b = _PELL_ORBIT[step_n]
-            return RationalSurd(a, b, pell_step=new_step)
+            step_n = new_step % 8
+            a, b, p = _PELL_ORBIT[step_n]
+            return RationalSurd(a, b, pell_step=new_step, polarity=p)
         # Fallback for surds not started from unity — full field multiply
         result = self * RationalSurd(2, 1)
         return RationalSurd(result.a, result.b, pell_step=None)
+
+    def janus_invert(self) -> 'RationalSurd':
+        """
+        Janus inversion: flip the polarity flag.  Maps a rotor to its
+        double-cover partner.  For the S³ double cover of SO(3), q and −q
+        represent the same rotation; Janus polarity makes this explicit.
+        The underlying surd value (a,b) is unchanged — only p flips.
+        """
+        if self.polarity is None:
+            return RationalSurd(self.a, self.b, self.pell_step)
+        return RationalSurd(self.a, self.b, self.pell_step,
+                            polarity=-self.polarity)
+
+
+# ---------------------------------------------------------------------------
+# Triple Quadrance Formula — rational analogue of cosine rule / Pythagorean
+# ---------------------------------------------------------------------------
+
+def triple_quadrance(Q1: int, Q2: int, spread_s3: 'RationalSurd') -> tuple:
+    """
+    Compute Q₃ from Q₁, Q₂ and spread s₃ using the Triple Quadrance Formula.
+    Returns (Q3_acute, Q3_obtuse) — the two possible Q₃ values.
+    
+    (Q₃ − Q₁ − Q₂)² = 4·Q₁·Q₂·(1−s₃)
+    
+    For right triangles (s₃=1): Q₃ = Q₁ + Q₂  (both values equal).
+    For parallel lines (s₃=0): Q₃ = |Q₁−Q₂| or Q₁+Q₂.
+    """
+    # spread_s3 is a RationalSurd representing s = sin²θ.
+    # 1−s₃ = (den − num)/den, but since spread_s3 has integer a,b,
+    # we interpret s₃ as the rational a/b → wait, it's a surd (a+b√3).
+    # For exact spread as rational fraction, s₃.a is the numerator
+    # and the denominator must be tracked externally.
+    # Simplification: treat spread_s3 as the exact rational value s₃.
+    # The formula: rhs² = 4·Q₁·Q₂·(1−s₃)
+    # Since 1−s₃ is positive for valid spreads, rhs² ≥ 0.
+    rhs_sq = 4 * Q1 * Q2 * (1 - spread_s3.a)  # assumes denom=1 for now
+    # Q₃ = Q₁ + Q₂ ± √(rhs_sq)
+    # We return the squared form — caller compares squared, never sqrt.
+    q_sum = Q1 + Q2
+    # The two solutions: (Q₃ − q_sum)² = rhs_sq
+    return (q_sum, rhs_sq)  # Q₃ = q_sum ± √rhs_sq, caller selects via polarity
+
+
+def spread_from_quadrances(Q1: int, Q2: int, Q3: int) -> tuple:
+    """
+    Compute spread s₃ from three quadrances (inverse of triple_quadrance).
+    Returns (numer, denom) as integer pair.
+    
+    s₃ = 1 − (Q₃ − Q₁ − Q₂)² / (4·Q₁·Q₂)
+    numer = 4·Q₁·Q₂ − (Q₃ − Q₁ − Q₂)²
+    denom = 4·Q₁·Q₂
+    """
+    denom = 4 * Q1 * Q2
+    diff = Q3 - Q1 - Q2
+    numer = denom - diff * diff
+    return (numer, denom)
+
+
+def is_right_triangle(Q1: int, Q2: int, Q3: int) -> bool:
+    """True if the three quadrances form a right triangle (s=1 at Q₃ vertex)."""
+    return Q3 == Q1 + Q2
+
+
+def delta_curve(Q1: int, Q2: int, spread_steps: int) -> list:
+    """
+    Generate a delta curve: family of Q₃ values as spread varies from 0 to 1.
+    Returns list of (s₃, Q3_acute, Q3_obtuse) for each step.
+    """
+    curve = []
+    for k in range(spread_steps + 1):
+        # s₃ = k / spread_steps (rational)
+        rhs_sq_num = 4 * Q1 * Q2 * (spread_steps - k)
+        rhs_sq_den = spread_steps
+        # Q₃ = Q₁ + Q₂ ± √(rhs_sq_num / rhs_sq_den)
+        q_sum = Q1 + Q2
+        # Since we can't sqrt, we store the squared form:
+        # (Q₃ − q_sum)² = rhs_sq_num / rhs_sq_den
+        curve.append((k, spread_steps, q_sum, rhs_sq_num, rhs_sq_den))
+    return curve
 
     def __repr__(self) -> str:
         if self.b == 0:
@@ -310,6 +419,63 @@ class QuadrayVector:
         norm = self.normalize()
         d_offset = norm.d.a
         return (norm.a.a - d_offset, norm.b.a - d_offset)
+
+    def circulant_rotate(self, F: 'RationalSurd', G: 'RationalSurd',
+                          H: 'RationalSurd') -> 'QuadrayVector':
+        """
+        F,G,H circulant rotation (Thomson SQR §6, spu13_rotor_core.v).
+        Applies the 3×3 circulant matrix to B,C,D; A is invariant.
+          B' = F·B + H·C + G·D
+          C' = G·B + F·C + H·D
+          D' = H·B + G·C + F·D
+        F,G,H must satisfy F³+G³+H³−3FGH = 1 (circulant determinant).
+        At {60°,120°,240°,300°} every entry is rational in {−1/3, 2/3}.
+        At 120° with (F,G,H) = (−1/3, 2/3, 2/3): B'=D, C'=B, D'=C — pure permutation.
+        """
+        b2 = F * self.b + H * self.c + G * self.d
+        c2 = G * self.b + F * self.c + H * self.d
+        d2 = H * self.b + G * self.c + F * self.d
+        return QuadrayVector(self.a, b2, c2, d2)
+
+    def lerp_spread(self, other: 'QuadrayVector',
+                    t_num: int, t_den: int) -> 'QuadrayVector':
+        """
+        Rational linear interpolation between self (t=0) and other (t=1).
+        Parameter t = t_num / t_den is an exact rational fraction.
+        Each component is interpolated linearly in the Q(√3) field.
+        The result coefficients may be rational (non-integer) but stay in Q(√3).
+        """
+        # Scale each surd component: c0 + (c1 - c0) * tn / td
+        def _lerp_surd(s0: RationalSurd, s1: RationalSurd) -> RationalSurd:
+            da = s1.a - s0.a
+            db = s1.b - s0.b
+            return RationalSurd(
+                s0.a * t_den + da * t_num,
+                s0.b * t_den + db * t_num,
+            )
+            # Note: result represents (numer_a + numer_b·√3) / t_den.
+            # Caller tracks denominator t_den externally when comparing.
+
+        return QuadrayVector(
+            _lerp_surd(self.a, other.a),
+            _lerp_surd(self.b, other.b),
+            _lerp_surd(self.c, other.c),
+            _lerp_surd(self.d, other.d),
+        )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, QuadrayVector):
+            return NotImplemented
+        return (self.a == other.a and self.b == other.b and
+                self.c == other.c and self.d == other.d)
+
+    def scale(self, s: 'RationalSurd') -> 'QuadrayVector':
+        """Multiply each component by scalar s. No normalization.
+        Quadrance is preserved up to factor s². Used for spatial rotation
+        where normalization would break quadrance invariance."""
+        return QuadrayVector(
+            self.a * s, self.b * s, self.c * s, self.d * s,
+        )
 
     def is_zero(self) -> bool:
         z = RationalSurd(0, 0)

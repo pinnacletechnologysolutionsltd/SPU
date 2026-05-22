@@ -48,7 +48,7 @@ def run_cpp_tests(root_dir):
 
 
 def main():
-    root_dir = Path("/home/john/projects/hardware/SPU")
+    root_dir = Path(__file__).resolve().parent
     os.chdir(root_dir)
 
     # Find all testbenches

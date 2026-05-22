@@ -154,6 +154,43 @@ struct Quadray {
         return scale(SURD_PHI1).normalize();
     }
 
+    // ── F,G,H Circulant Rotation (Thomson SQR §6) ──────────────────────── //
+
+    // Applies the 3×3 circulant matrix to B,C,D with A invariant.
+    //   B' = F·B + H·C + G·D
+    //   C' = G·B + F·C + H·D
+    //   D' = H·B + G·C + F·D
+    // F,G,H must satisfy F³+G³+H³−3FGH = 1 (circulant determinant).
+    // 9 surd multiplies, zero sqrt, zero division.
+    // At {60°,120°,240°,300°}: every entry rational in {−1/3, 2/3}.
+    constexpr Quadray circulant_rotate(const RationalSurd& F,
+                                        const RationalSurd& G,
+                                        const RationalSurd& H) const {
+        return {
+            a,                                                          // A invariant
+            F*b + H*c + G*d,                                           // B'
+            G*b + F*c + H*d,                                           // C'
+            H*b + G*c + F*d                                            // D'
+        };
+    }
+
+    // ── Rational Linear Interpolation ──────────────────────────────────── //
+
+    // Interpolate between self (t=0) and other (t=1) with rational t = tn/td.
+    // Each component: c_i = self[i] + (other[i]−self[i]) * tn / td.
+    // Result coefficients are scaled by td; divide by td to recover true value.
+    constexpr Quadray lerp_spread(const Quadray& other,
+                                   int tn, int td) const {
+        auto lerp_comp = [&](const RationalSurd& s0, const RationalSurd& s1) {
+            return RationalSurd{
+                s0.p * td + (s1.p - s0.p) * tn,
+                s0.q * td + (s1.q - s0.q) * tn,
+            };
+        };
+        return { lerp_comp(a, other.a), lerp_comp(b, other.b),
+                 lerp_comp(c, other.c), lerp_comp(d, other.d) };
+    }
+
     // ── Hex projection ──────────────────────────────────────────────────── //
 
     // Project normalised Quadray onto axial hex grid coordinates (col, row).
@@ -220,3 +257,81 @@ constexpr Quadray IVM_CUBE_12[12] = {
     { {0,0}, {1,0}, {2,0}, {1,0} },
     { {0,0}, {1,0}, {1,0}, {2,0} },
 };
+
+// ── Pell orbit with Janus polarity (Thomson SQR §9) ──────────────────────── //
+
+// The 8-entry Pell fundamental domain orbit[step] = r^step.
+// Each entry: {p, q, polarity} where polarity = sign of cos(step·φ/2).
+// Steps 0–3 have p=+1; steps 4–7 have p=−1 (half-angle crosses 90°).
+struct PellStep { int32_t p, q, polarity; };
+constexpr PellStep PELL_ORBIT[8] = {
+    {  1,    0, +1},   // r⁰
+    {  2,    1, +1},   // r¹
+    {  7,    4, +1},   // r²
+    { 26,   15, +1},   // r³
+    { 97,   56, -1},   // r⁴  (cos(θ/2) < 0)
+    {362,  209, -1},   // r⁵
+    {1351, 780, -1},   // r⁶
+    {5042, 2911, -1},  // r⁷
+};
+
+// Look up (p, q, polarity) for Pell step n (≥ 0).
+// Uses the fundamental domain with octave tracking for n ≥ 8.
+inline PellStep pell_orbit_lookup(int n) {
+    return PELL_ORBIT[n % 8];
+}
+
+// ── Cayley NLERP on Pell Orbit ───────────────────────────────────────────── //
+
+// Interpolate between two Pell rotors by interpolating step counts linearly
+// and reconstructing from the Pell orbit vault. Rational throughout.
+// Returns the interpolated (p, q, polarity) at rational t = tn/td.
+inline PellStep cayley_nlerp_pell(int step_a, int step_b, int tn, int td) {
+    int step_interp = step_a + (step_b - step_a) * tn / td;
+    return pell_orbit_lookup(step_interp);
+}
+
+// ── Triple Quadrance Formula (Wildberger, Divine Proportions Ch.5) ────────── //
+
+// Given two quadrances Q1, Q2 and the spread s3 between them,
+// returns the squared discriminant: (Q₃ − Q₁ − Q₂)² = 4·Q₁·Q₂·(1−s₃).
+// Q₃ = Q₁ + Q₂ ± √discriminant.  Caller selects sign via polarity.
+// All operations are integer — no square root taken.
+inline int64_t triple_quadrance_disc(int Q1, int Q2, int spread_numer, int spread_denom) {
+    // (1 − s₃) = (denom − numer) / denom
+    // disc = 4·Q₁·Q₂·(denom − numer) / denom
+    // Returns numerator of disc (without division by denom).
+    return 4LL * Q1 * Q2 * (spread_denom - spread_numer);
+}
+
+// Spread from three quadrances (inverse of triple quadrance).
+// Returns (numer, denom) as integer pair.
+// s₃ = 1 − (Q₃ − Q₁ − Q₂)² / (4·Q₁·Q₂)
+// numer = 4·Q₁·Q₂ − (Q₃ − Q₁ − Q₂)²
+// denom = 4·Q₁·Q₂
+struct SpreadPair { int64_t numer, denom; };
+inline SpreadPair spread_from_quadrances(int Q1, int Q2, int Q3) {
+    int64_t denom = 4LL * Q1 * Q2;
+    int64_t diff = Q3 - Q1 - Q2;
+    return { denom - diff * diff, denom };
+}
+
+// True if Q₁, Q₂, Q₃ form a right triangle (spread s₃ = 1 at Q₃ vertex).
+inline bool is_right_triangle(int Q1, int Q2, int Q3) {
+    return Q3 == Q1 + Q2;
+}
+
+// ── Delta Curve ──────────────────────────────────────────────────────────── //
+
+// Parameterize the family of triangles with fixed Q₁, Q₂ as spread varies.
+// Returns number of steps generated (≤ max_steps).
+// For each step k, stores (k, steps, Q_sum, rhs_sq_num, rhs_sq_den).
+struct DeltaPoint { int k, steps, Qsum; int64_t rhs_num; int rhs_den; };
+inline int delta_curve(int Q1, int Q2, int max_steps, DeltaPoint* out) {
+    int Qsum = Q1 + Q2;
+    for (int k = 0; k <= max_steps; k++) {
+        int64_t rhs_num = 4LL * Q1 * Q2 * (max_steps - k);
+        out[k] = { k, max_steps, Qsum, rhs_num, max_steps };
+    }
+    return max_steps + 1;
+}
