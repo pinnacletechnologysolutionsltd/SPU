@@ -396,6 +396,25 @@ module spu13_core #(
         end else begin
             qrf_wr_en <= 0;  // default: no write
 
+            // ── QLDI Handler (0x1D) ────────────────────────────────
+            // QLDI QRd, A, B, C, D — load integer Quadray from immediate.
+            // P1_A[15:8]=A, P1_A[7:0]=B, P1_B[15:8]=C, P1_B[7:0]=D
+            // Each component is sign-extended from 8-bit to 64-bit surd
+            // with Q=0 (pure rational, no √3 component).
+            if (inst_valid && inst_word[63:56] == 8'h1D) begin
+                qrf_wr_en   <= 1;
+                qrf_wr_lane <= inst_word[55:48] % 13;
+                // Sign-extend 8-bit A→64-bit: P=sign_ext, Q=0
+                qrf_wr_A[31:0]  <= {{24{inst_word[39]}}, inst_word[39:32]};
+                qrf_wr_A[63:32] <= 32'd0;
+                qrf_wr_B[31:0]  <= {{24{inst_word[31]}}, inst_word[31:24]};
+                qrf_wr_B[63:32] <= 32'd0;
+                qrf_wr_C[31:0]  <= {{24{inst_word[23]}}, inst_word[23:16]};
+                qrf_wr_C[63:32] <= 32'd0;
+                qrf_wr_D[31:0]  <= {{24{inst_word[15]}}, inst_word[15:8]};
+                qrf_wr_D[63:32] <= 32'd0;
+            end
+
             if (inst_valid && inst_word[63:56] == 8'h1C) begin
                 // Latch ROTC parameters from instruction
                 rote_src_lane  <= inst_word[47:40] % 13;
