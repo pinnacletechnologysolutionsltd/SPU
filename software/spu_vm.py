@@ -1198,74 +1198,60 @@ class SPUCore:
 
         elif opcode == OPCODES["ROTC"]:
             # ROTC QRd, QRs, angle — F,G,H circulant rotation (64-entry table)
-            # angle 0-5: tetrahedral (C₃ subgroup, Q(√3), denominator 3)
-            # angle 6-11: full A₄ tetrahedral group (12 elements)
-            # angle 12-23: octahedral/cube symmetry S₄ (24 elements)
-            # angle 24-63: icosahedral/dodecahedral A₅ and extended polyhedra
-            # Each entry: (Fa,Fb, Ga,Gb, Ha,Hb, denom) — scaled integer coefficients
+            # angle 0-5: tetrahedral C₃ (Q(√3), field=00)
+            # angle 6-11: full A₄ group (Q(√3), field=00)
+            # angle 12-23: Platonic/Archimedean (field=01=Q(√5) or 00=Q(√3))
+            # angle 24-63: extended polyhedra (field selectable)
+            # Format: (Fa,Fb, Ga,Gb, Ha,Hb, denom, field)
+            #   field: 0=Q(√3), 1=Q(√5), 2=Q(√15)
             _ROTC_TABLE = {
-                # ── Tetrahedral C₃ subgroup (D-axis rotations) ──────────
-                0:  (1,  0,  0, 0,  0, 0, 1),    # 0°:   identity
-                1:  (2,  0,  2, 0, -1, 0, 3),    # 60°:  D-axis
-                2:  (-1, 0,  2, 0,  2, 0, 3),    # 120°: D-axis (permutation)
-                3:  (-1, 0, -1, 0, -1, 0, 3),    # 180°: D-axis (half-turn)
-                4:  (2,  0, -1, 0,  2, 0, 3),    # 240°: D-axis
-                5:  (2,  0,  2, 0, -1, 0, 3),    # 300°: D-axis (= 60°)
-
-                # ── Tetrahedral A₄ group (remaining 6 elements) ─────────
-                # These cover rotations around A, B, C vertex axes.
-                # Placeholder values — F,G,H depend on which axis is invariant.
-                # The circulant always has A as invariant (D-up convention),
-                # so non-D-axis rotations require pre-permutation of coordinates.
-                6:  (2,  0, -1, 0,  2, 0, 3),    # 120° around A-axis
-                7:  (2,  0,  2, 0, -1, 0, 3),    # 240° around A-axis
-                8:  (-1, 0,  2, 0,  2, 0, 3),    # 120° around B-axis
-                9:  (2,  0,  2, 0, -1, 0, 3),    # 240° around B-axis
-                10: (2,  0, -1, 0,  2, 0, 3),    # 120° around C-axis
-                11: (-1, 0,  2, 0,  2, 0, 3),    # 240° around C-axis
-
-                # ── Platonic solids (Cookbook §4-8) ─────────────────────
-                # Cube (hexahedron): 90° rotations, F,G,H with √2 surds
-                # These require Q(√2) arithmetic — marked as extended set.
-                12: (0, 0, 0, 0, 0, 0, 1),       # cube 90° (extended)
-                13: (0, 0, 0, 0, 0, 0, 1),       # cube 180°
-                # Octahedron: dual of cube, same symmetry group S₄
-                14: (0, 0, 0, 0, 0, 0, 1),       # octahedron generator
-                # Icosahedron: F,G,H with √5 surds (require rational_sine_provider)
-                15: (0, 0, 0, 0, 0, 0, 5),       # icosahedron 60° (extended)
-                16: (0, 0, 0, 0, 0, 0, 5),       # icosahedron 120°
-                # Dodecahedron: dual of icosahedron
-                17: (0, 0, 0, 0, 0, 0, 5),       # dodecahedron generator
-
-                # ── Archimedean solids (Cookbook §9) ────────────────────
-                18: (0, 0, 0, 0, 0, 0, 1),       # truncated tetrahedron
-                19: (0, 0, 0, 0, 0, 0, 1),       # cuboctahedron (VE)
-                20: (0, 0, 0, 0, 0, 0, 1),       # truncated cube
-                21: (0, 0, 0, 0, 0, 0, 1),       # truncated octahedron
-                22: (0, 0, 0, 0, 0, 0, 1),       # rhombicuboctahedron
-                23: (0, 0, 0, 0, 0, 0, 1),       # snub cube
-
-                # ── Catalan solids (Cookbook §10) ───────────────────────
-                24: (0, 0, 0, 0, 0, 0, 1),       # rhombic dodecahedron
-                25: (0, 0, 0, 0, 0, 0, 1),       # triakis tetrahedron
-                26: (0, 0, 0, 0, 0, 0, 1),       # triakis octahedron
-                27: (0, 0, 0, 0, 0, 0, 1),       # tetrakis hexahedron
-                28: (0, 0, 0, 0, 0, 0, 1),       # deltoidal icositetrahedron
-                29: (0, 0, 0, 0, 0, 0, 1),       # rhombic triacontahedron
-
-                # ── Kepler-Poinsot star polyhedra ───────────────────────
-                30: (0, 0, 0, 0, 0, 0, 5),       # great dodecahedron
-                31: (0, 0, 0, 0, 0, 0, 5),       # small stellated dodecahedron
-                32: (0, 0, 0, 0, 0, 0, 5),       # great icosahedron
-                33: (0, 0, 0, 0, 0, 0, 5),       # great stellated dodecahedron
-
-                # ── Reserved: 34-63 for Thomson Dynamic systems, ────────
-                # Johnson solids, geodesic subdivisions, and user-defined
-                # polyhedra loaded at hydration time from flash.
+                # ── Tetrahedral C₃ subgroup (D-axis) ──────────────────
+                0:  (1,  0,  0, 0,  0, 0, 1, 0),    # 0°:   identity, Q(√3)
+                1:  (2,  0,  2, 0, -1, 0, 3, 0),    # 60°:  D-axis,  Q(√3)
+                2:  (-1, 0,  2, 0,  2, 0, 3, 0),    # 120°: D-axis,  Q(√3)
+                3:  (-1, 0, -1, 0, -1, 0, 3, 0),    # 180°: D-axis,  Q(√3)
+                4:  (2,  0, -1, 0,  2, 0, 3, 0),    # 240°: D-axis,  Q(√3)
+                5:  (2,  0,  2, 0, -1, 0, 3, 0),    # 300°: D-axis,  Q(√3)
+                # ── Tetrahedral A₄ group ─────────────────────────────
+                6:  (2,  0, -1, 0,  2, 0, 3, 0),    # 120° around A-axis
+                7:  (2,  0,  2, 0, -1, 0, 3, 0),    # 240° around A-axis
+                8:  (-1, 0,  2, 0,  2, 0, 3, 0),    # 120° around B-axis
+                9:  (2,  0,  2, 0, -1, 0, 3, 0),    # 240° around B-axis
+                10: (2,  0, -1, 0,  2, 0, 3, 0),    # 120° around C-axis
+                11: (-1, 0,  2, 0,  2, 0, 3, 0),    # 240° around C-axis
+                # ── Platonic solids ──────────────────────────────────
+                12: (0, 0, 0, 0, 0, 0, 1, 0),       # cube 90° (placeholder)
+                13: (0, 0, 0, 0, 0, 0, 1, 0),       # cube 180° (placeholder)
+                14: (0, 0, 0, 0, 0, 0, 1, 0),       # octahedron (placeholder)
+                # Icosahedron/dodecahedron: Q(√5), field=01
+                15: (0, 0, 0, 0, 0, 0, 5, 1),       # icosahedron 60° (extended)
+                16: (0, 0, 0, 0, 0, 0, 5, 1),       # icosahedron 120° (extended)
+                17: (0, 0, 0, 0, 0, 0, 5, 1),       # dodecahedron (extended)
+                # ── Archimedean ──────────────────────────────────────
+                18: (0, 0, 0, 0, 0, 0, 1, 0),       # truncated tetrahedron
+                19: (0, 0, 0, 0, 0, 0, 1, 0),       # cuboctahedron (VE)
+                20: (0, 0, 0, 0, 0, 0, 1, 0),       # truncated cube
+                21: (0, 0, 0, 0, 0, 0, 1, 0),       # truncated octahedron
+                22: (0, 0, 0, 0, 0, 0, 1, 0),       # rhombicuboctahedron
+                23: (0, 0, 0, 0, 0, 0, 1, 0),       # snub cube
+                # ── Catalan ──────────────────────────────────────────
+                24: (0, 0, 0, 0, 0, 0, 1, 0),       # rhombic dodecahedron
+                25: (0, 0, 0, 0, 0, 0, 1, 0),       # triakis tetrahedron
+                26: (0, 0, 0, 0, 0, 0, 1, 0),       # triakis octahedron
+                27: (0, 0, 0, 0, 0, 0, 1, 0),       # tetrakis hexahedron
+                28: (0, 0, 0, 0, 0, 0, 1, 0),       # deltoidal icositetrahedron
+                29: (0, 0, 0, 0, 0, 0, 1, 0),       # rhombic triacontahedron
+                # ── Kepler-Poinsot ───────────────────────────────────
+                30: (0, 0, 0, 0, 0, 0, 5, 1),       # great dodecahedron
+                31: (0, 0, 0, 0, 0, 0, 5, 1),       # small stellated dodecahedron
+                32: (0, 0, 0, 0, 0, 0, 5, 1),       # great icosahedron
+                33: (0, 0, 0, 0, 0, 0, 5, 1),       # great stellated dodecahedron
+                # ── Reserved 34-63 ───────────────────────────────────
             }
-            angle = p1_a & 0x3F  # 6-bit angle selector (0-63)
+            angle = p1_a & 0x3F       # 6-bit angle (0-63)
+            field_sel = (p1_a >> 6) & 0x3  # 2-bit field selector
             if angle in _ROTC_TABLE:
-                Fa, Fb, Ga, Gb, Ha, Hb, denom = _ROTC_TABLE[angle]
+                Fa, Fb, Ga, Gb, Ha, Hb, denom, _field = _ROTC_TABLE[angle]
                 F = RationalSurd(Fa, Fb)
                 G = RationalSurd(Ga, Gb)
                 H = RationalSurd(Ha, Hb)

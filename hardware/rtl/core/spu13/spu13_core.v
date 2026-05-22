@@ -267,6 +267,7 @@ module spu13_core #(
     reg  [3:0]  qrf_init_lane;
     reg         rote_en;          // ROTC execute pulse
     reg  [5:0]  rote_angle;       // F,G,H angle (0-63)
+    reg  [1:0]  rote_field;       // Q(√k) field: 00=√3, 01=√5, 10=√15
     reg  [3:0]  rote_src_lane;
 
     // F,G,H output from lookup
@@ -298,6 +299,7 @@ module spu13_core #(
                 .C_in(qrf_rd_C),
                 .D_in(qrf_rd_D),
                 .F(rote_F), .G(rote_G), .H(rote_H),
+                .field_sel(rote_field),
                 .bypass_p5(rote_angle == 6'd2),  // 120° → pure permutation
                 .A_out(qrf_wr_A),
                 .B_out(rote_B_out),
@@ -388,6 +390,7 @@ module spu13_core #(
             rote_src_lane <= 0;
             rote_dest_lane <= 0;
             rote_angle <= 6'd0;
+            rote_field <= 2'b00;
             qrf_wr_en <= 0;
             qrf_wr_lane <= 0;
         end else begin
@@ -397,7 +400,8 @@ module spu13_core #(
                 // Latch ROTC parameters from instruction
                 rote_src_lane  <= inst_word[47:40] % 13;
                 rote_dest_lane <= inst_word[55:48] % 13;
-                rote_angle     <= inst_word[29:24];  // P1_A[5:0]
+                rote_angle     <= inst_word[29:24];  // P1_A[5:0] = angle
+                rote_field     <= inst_word[31:30];  // P1_A[7:6] = field
                 rote_active    <= 1;
             end else if (rote_active) begin
                 // Execute: fire rotor core (combinational read already
