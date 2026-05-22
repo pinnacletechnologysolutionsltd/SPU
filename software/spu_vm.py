@@ -1220,13 +1220,18 @@ class SPUCore:
                 10: (2,  0, -1, 0,  2, 0, 3, 0),    # 120° around C-axis
                 11: (-1, 0,  2, 0,  2, 0, 3, 0),    # 240° around C-axis
                 # ── Platonic solids ──────────────────────────────────
-                12: (0, 0, 0, 0, 0, 0, 1, 0),       # cube 90° (placeholder)
-                13: (0, 0, 0, 0, 0, 0, 1, 0),       # cube 180° (placeholder)
-                14: (0, 0, 0, 0, 0, 0, 1, 0),       # octahedron (placeholder)
-                # Icosahedron/dodecahedron: Q(√5), field=01
-                15: (0, 0, 0, 0, 0, 0, 5, 1),       # icosahedron 60° (extended)
-                16: (0, 0, 0, 0, 0, 0, 5, 1),       # icosahedron 120° (extended)
-                17: (0, 0, 0, 0, 0, 0, 5, 1),       # dodecahedron (extended)
+                # Cube/octahedron: S₄ group (90° rotations).
+                #   Requires Q(√2) arithmetic — not in supported fields.
+                #   Use vertex ROM + tetrahedral ROTC to generate.
+                12: (0, 0, 0, 0, 0, 0, 1, 0),       # cube 90° (needs Q(√2))
+                13: (0, 0, 0, 0, 0, 0, 1, 0),       # cube 180° (needs Q(√2))
+                14: (0, 0, 0, 0, 0, 0, 1, 0),       # octahedron (needs Q(√2))
+                # Icosahedron/dodecahedron: A₅ group (72° rotations).
+                #   F = (1+√5)/6 is in Q(√5), but G,H require √(5+√5)
+                #   which is not in Q(√3,√5,√15). Use vertex ROM.
+                15: (0, 0, 0, 0, 0, 0, 5, 1),       # icosahedron 72° (needs A₅)
+                16: (0, 0, 0, 0, 0, 0, 5, 1),       # icosahedron 144° (needs A₅)
+                17: (0, 0, 0, 0, 0, 0, 5, 1),       # dodecahedron (needs A₅)
                 # ── Archimedean ──────────────────────────────────────
                 18: (0, 0, 0, 0, 0, 0, 1, 0),       # truncated tetrahedron
                 19: (0, 0, 0, 0, 0, 0, 1, 0),       # cuboctahedron (VE)
