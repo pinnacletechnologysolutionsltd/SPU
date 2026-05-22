@@ -1288,11 +1288,17 @@ class SPUCore:
                       H * self.qregs[s].d)
                 d2 = (H * self.qregs[s].b + G * self.qregs[s].c +
                       F * self.qregs[s].d)
-                # Scale result down by denominator
+                # Scale result down by denominator with proper rounding
+                # Integer truncation (//) corrupts fractional intermediates:
+                #   2//3=0 (should round to 1), -1//3=-1 (should round to 0).
+                # Use round-to-nearest to preserve integer orbits under A₄.
                 if denom != 1:
-                    b2 = RationalSurd(b2.a // denom, b2.b // denom)
-                    c2 = RationalSurd(c2.a // denom, c2.b // denom)
-                    d2 = RationalSurd(d2.a // denom, d2.b // denom)
+                    half = denom // 2
+                    def rdiv(num):
+                        return (num + half) // denom if num >= 0 else (num - half) // denom
+                    b2 = RationalSurd(rdiv(b2.a), rdiv(b2.b))
+                    c2 = RationalSurd(rdiv(c2.a), rdiv(c2.b))
+                    d2 = RationalSurd(rdiv(d2.a), rdiv(d2.b))
                 self.qregs[d] = QuadrayVector(
                     self.qregs[s].a, b2, c2, d2,
                 )
