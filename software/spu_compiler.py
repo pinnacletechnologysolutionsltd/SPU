@@ -374,21 +374,17 @@ def expand_polyhedron(emitter: AsmEmitter, regs: RegisterPool,
     vertices = info.get("vertices", None)
 
     if vertices:
-        # Pre-computed integer vertices — emit as comment table + IDNT alloc
+        # Pre-computed integer vertices — emit QLDI directly
         emitter.comment(f"── {name}: {len(vertices)} vertices ──")
-        emitter.comment(f";; Integer Quadray (A,B,C,D), sum=4, no √3")
         for i, (A, B, C, D) in enumerate(vertices):
             qr_idx = dest_base[1] + i
             if qr_idx > 12:
                 qr_idx = qr_idx % 13
-            emitter.instr("IDNT", f"QR{qr_idx}")
-            emitter.comment(f"vertex {i}: ({A},{B},{C},{D}) → QR{qr_idx}")
-            # TODO: QLOAD or component-store instructions to set A,B,C,D
+            emitter.instr("QLDI", f"QR{qr_idx}", str(A), str(B), str(C), str(D))
+            emitter.comment(f"vertex {i}: ({A},{B},{C},{D})")
         emitter.blank()
-        emitter.comment(f";; {len(vertices)} vertices allocated in "
+        emitter.comment(f";; {len(vertices)} vertices loaded in "
                         f"QR{dest_base[1]}–QR{dest_base[1] + len(vertices) - 1}")
-        emitter.comment(f";; (Vertex loading requires QLOAD immediate or "
-                        f"QR component-write instructions)")
         return
 
     rotations = info["rotations"]
@@ -516,11 +512,11 @@ def compile_lith(source: str, filename: str = "<input>") -> str:
                 dest = int(kwargs.get('dest', '0'))
                 expand_delta(emitter, regs, Q1, Q2, steps, dest)
 
-            elif cmd == 'polyhedron':
+            elif cmd == 'polyhedron' or cmd == 'polyhedron:':
                 # polyhedron: <name> [seed=QR[n]] [dest=QR[m]]
                 kwargs = parse_kwargs(remainder)
                 name = tokens[1] if len(tokens) > 1 else remainder.strip()
-                name = name.rstrip(':')  # allow "polyhedron: VE" syntax
+                name = name.rstrip(':')
                 seed = parse_register(kwargs.get('seed', 'QR[0]'))
                 dest_base = parse_register(kwargs.get('dest', 'QR[1]'))
                 expand_polyhedron(emitter, regs, name, seed, dest_base)

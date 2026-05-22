@@ -499,7 +499,7 @@ OPCODES = {
     "CALL":  0x21, "RET":   0x22,
     # Quadray IVM operations
     "QADD":  0x10, "QROT":  0x11, "QNORM": 0x12,
-    "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C,
+    "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C, "QLDI":  0x1D,
     # Geometry output
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -1173,6 +1173,26 @@ class SPUCore:
             self.qregs[r1 % 13] = qr
             if self.verbose:
                 print(f"  [{self.pc:04d}] QLOAD QR{r1} ← R{base}..R{base+3} = {qr!r}")
+
+        elif opcode == OPCODES["QLDI"]:
+            # QLDI QRd, A, B, C, D — load integer Quadray from immediate
+            # P1_A[15:8]=A, P1_A[7:0]=B, P1_B[15:8]=C, P1_B[7:0]=D
+            a = (p1_a >> 8) & 0xFF
+            b = p1_a & 0xFF
+            c = (p1_b >> 8) & 0xFF
+            d = p1_b & 0xFF
+            # Sign-extend from 8-bit to signed int
+            A = a - 256 if a >= 128 else a
+            B = b - 256 if b >= 128 else b
+            C = c - 256 if c >= 128 else c
+            D = d - 256 if d >= 128 else d
+            self.qregs[r1 % 13] = QuadrayVector(
+                RationalSurd(A, 0), RationalSurd(B, 0),
+                RationalSurd(C, 0), RationalSurd(D, 0),
+            )
+            if self.verbose:
+                print(f"  [{self.pc:04d}] QLDI QR{r1} ← ({A},{B},{C},{D}) "
+                      f"→ {self.qregs[r1 % 13]!r}")
 
         elif opcode == OPCODES["QADD"]:
             # QADD QRd, QRs — QRd = QRd + QRs

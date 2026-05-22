@@ -56,7 +56,7 @@ OPCODES: dict[str, int] = {
     "CALL":   0x21, "RET":    0x22, "HALT":   0x08,
     # Quadray IVM operations
     "QADD":   0x10, "QROT":   0x11, "QNORM":  0x12,
-    "QLOAD":  0x13, "QLOG":   0x14, "QSUB":   0x1B, "ROTC":   0x1C,
+    "QLOAD":  0x13, "QLOG":   0x14, "QSUB":   0x1B, "ROTC":   0x1C, "QLDI":   0x1D,
     # Geometry output
     "SPREAD": 0x15, "HEX":    0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -69,7 +69,7 @@ OPCODES: dict[str, int] = {
 _NO_ARGS  = {"NOP", "HALT", "RET", "SNAP", "EQUIL"}
 # Opcodes where first arg is a QR register
 _QR_FIRST = {"QLOAD", "QLOG", "QADD", "QSUB", "QROT", "QNORM", "HEX",
-              "SPREAD", "IDNT", "ANNE", "ROTC"}
+              "SPREAD", "IDNT", "ANNE", "ROTC", "QLDI"}
 
 
 def _s16(val: int) -> int:
@@ -197,6 +197,16 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
         _, r1 = _parse_reg(args[0])
         _, r2 = _parse_reg(args[1])
         p1_a = int(args[2]) & 0xFF if len(args) > 2 else 0  # 8-bit: field[7:6] + angle[5:0]
+
+    elif mnemonic == "QLDI":
+        # QLDI QRd, A, B, C, D
+        _, r1 = _parse_reg(args[0])
+        a = int(args[1]) & 0xFF if len(args) > 1 else 0
+        b = int(args[2]) & 0xFF if len(args) > 2 else 0
+        c = int(args[3]) & 0xFF if len(args) > 3 else 0
+        d = int(args[4]) & 0xFF if len(args) > 4 else 0
+        p1_a = (a << 8) | b
+        p1_b = (c << 8) | d
 
     elif mnemonic == "QROT":
         # QROT QRd [, Rs]  — if one arg, use built-in Pell rotor (r2=0)
