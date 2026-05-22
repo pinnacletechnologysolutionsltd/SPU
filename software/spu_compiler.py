@@ -325,11 +325,19 @@ def expand_delta(emitter: AsmEmitter, regs: RegisterPool,
 # seed_abcd: initial (A_p,A_q, B_p,B_q, C_p,C_q, D_p,D_q) in Q(√3)
 
 POLYHEDRON_TABLE = {
-    # Vector Equilibrium (cuboctahedron): 12 vertices from identity seed
-    # Vertices are the orbit of (1,0,0,0) under all 12 A₄ rotations.
+    # Vector Equilibrium (cuboctahedron): 12 vertices from A₄ orbit
+    # Integer Quadray coordinates: permutations of (2,1,1,0), sum=4
+    # Computed from Cartesian (±1,±1,0) via Tom Ace basis.
     "VE": {
         "rotations": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-        "seed_abcd": (1, 0, 0, 0, 0, 0, 0, 0),  # (1,0,0,0)
+        "seed_abcd": (1, 0, 0, 0, 0, 0, 0, 0),
+        # Pre-computed vertices as (A,B,C,D) quadruples (all integer, no √3)
+        "vertices": [
+            (0, 1, 1, 2), (0, 1, 2, 1), (0, 2, 1, 1),
+            (1, 0, 1, 2), (1, 0, 2, 1), (1, 1, 0, 2),
+            (1, 1, 2, 0), (1, 2, 0, 1), (1, 2, 1, 0),
+            (2, 0, 1, 1), (2, 1, 0, 1), (2, 1, 1, 0),
+        ],
     },
     # Tetrahedron: 4 vertices from (1,0,0,0) under C₃ rotations only
     "tetrahedron": {
@@ -363,6 +371,26 @@ def expand_polyhedron(emitter: AsmEmitter, regs: RegisterPool,
         return
 
     info = POLYHEDRON_TABLE[name_upper]
+    vertices = info.get("vertices", None)
+
+    if vertices:
+        # Pre-computed integer vertices — emit as comment table + IDNT alloc
+        emitter.comment(f"── {name}: {len(vertices)} vertices ──")
+        emitter.comment(f";; Integer Quadray (A,B,C,D), sum=4, no √3")
+        for i, (A, B, C, D) in enumerate(vertices):
+            qr_idx = dest_base[1] + i
+            if qr_idx > 12:
+                qr_idx = qr_idx % 13
+            emitter.instr("IDNT", f"QR{qr_idx}")
+            emitter.comment(f"vertex {i}: ({A},{B},{C},{D}) → QR{qr_idx}")
+            # TODO: QLOAD or component-store instructions to set A,B,C,D
+        emitter.blank()
+        emitter.comment(f";; {len(vertices)} vertices allocated in "
+                        f"QR{dest_base[1]}–QR{dest_base[1] + len(vertices) - 1}")
+        emitter.comment(f";; (Vertex loading requires QLOAD immediate or "
+                        f"QR component-write instructions)")
+        return
+
     rotations = info["rotations"]
     if not rotations:
         emitter.comment(f";; {name} — rotation set not populated (needs vertex ROM)")
