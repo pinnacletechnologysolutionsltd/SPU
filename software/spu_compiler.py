@@ -326,17 +326,16 @@ def expand_delta(emitter: AsmEmitter, regs: RegisterPool,
 
 POLYHEDRON_TABLE = {
     # Vector Equilibrium (cuboctahedron): 12 vertices from A₄ orbit
-    # Integer Quadray coordinates: permutations of (2,1,1,0), sum=4
-    # Computed from Cartesian (±1,±1,0) via Tom Ace basis.
+    # Zero-sum Quadray coordinates (A+B+C+D=0, centered at origin).
+    # Permutations of (-1,0,0,1): 12 vertices, Davis-laminar.
     "VE": {
         "rotations": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
         "seed_abcd": (1, 0, 0, 0, 0, 0, 0, 0),
-        # Pre-computed vertices as (A,B,C,D) quadruples (all integer, no √3)
         "vertices": [
-            (0, 1, 1, 2), (0, 1, 2, 1), (0, 2, 1, 1),
-            (1, 0, 1, 2), (1, 0, 2, 1), (1, 1, 0, 2),
-            (1, 1, 2, 0), (1, 2, 0, 1), (1, 2, 1, 0),
-            (2, 0, 1, 1), (2, 1, 0, 1), (2, 1, 1, 0),
+            (-1,  0,  0,  1), (-1,  0,  1,  0), (-1,  1,  0,  0),
+            ( 0, -1,  0,  1), ( 0, -1,  1,  0), ( 0,  0, -1,  1),
+            ( 0,  0,  1, -1), ( 0,  1, -1,  0), ( 0,  1,  0, -1),
+            ( 1, -1,  0,  0), ( 1,  0, -1,  0), ( 1,  0,  0, -1),
         ],
     },
     # Tetrahedron: 4 vertices from A₄ orbit of (1,0,0,0)
