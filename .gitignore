@@ -14,16 +14,8 @@ tmp_*.vvp
 # Root-level test logs
 *.log
 
-# ─── Build directory (all synthesis/PnR/pack outputs) ─────────────────────
-build/*.json
-build/*.fs
-build/*.asc
-build/*.bit
-build/*.bin
-# Keep directory structure markers
-!build/.gitkeep
-!build/vcd/.gitkeep
-!build/sim/.gitkeep
+# ─── Build directory (all synthesis/PnR/pack/test outputs) ────────────────
+build/
 
 # Legacy root-level artifacts (pre-build/ era — safe to delete these files)
 tang_primer_25k.json
