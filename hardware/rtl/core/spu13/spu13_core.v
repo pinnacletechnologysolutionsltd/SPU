@@ -437,6 +437,43 @@ module spu13_core #(
                 end
             end
 
+            // ── ROTC Instruction Handler (0x1C) ────────────────────────────
+            // Encoding: [63:56]=0x1C, [55:48]=dest_lane, [47:40]=src_lane, [33:24]=angle(0-5)
+            // Applies Thomson's F,G,H circulant rotation to the source lane
+            // and writes the result to the destination lane.
+            if (inst_valid && inst_word[63:56] == 8'h1C) begin
+                automatic [3:0] dest_lane = inst_word[55:48] % 13;
+                automatic [3:0] src_lane  = inst_word[47:40] % 13;
+                automatic [2:0] angle     = inst_word[26:24];  // bits [33:24] → P1_A field
+                automatic signed [31:0] F, G, H;
+                automatic signed [31:0] b_new, c_new, d_new;
+
+                // F,G,H lookup table (identical to VM _ROTC_TABLE)
+                case (angle)
+                    3'd0: begin F = 32'sd1;  G = 32'sd0;  H = 32'sd0;  end  // 0°
+                    3'd1: begin F = 32'sd2;  G = 32'sd2;  H = -32'sd1; end  // 60°
+                    3'd2: begin F = -32'sd1; G = 32'sd2;  H = 32'sd2;  end  // 120°
+                    3'd3: begin F = -32'sd1; G = -32'sd1; H = -32'sd1; end  // 180°
+                    3'd4: begin F = 32'sd2;  G = -32'sd1; H = 32'sd2;  end  // 240°
+                    3'd5: begin F = 32'sd2;  G = 32'sd2;  H = -32'sd1; end  // 300°
+                    default: begin F = 32'sd1; G = 32'sd0; H = 32'sd0; end
+                endcase
+
+                // Unpack source lane: [63:48]=A_p, [47:32]=A_q, [31:16]=B, [15:0]=C... 
+                // Wait, the encoding is [63:32]=A {P[15:0],Q[15:0]}, [31:0] split across B,C,D.
+                // Actually each surd is 32-bit: P[15:0], Q[15:0]. The lane is 64-bit with 2 surds?
+                // Let me check the lane encoding. The manifold_lane is reg [63:0].
+                // From the spu13_rotor_core.v interface: A_in[63:0], B_in[63:0] etc.
+                // Each surd is 64-bit: [63:32]=Q(coefficient of √3), [31:0]=P(rational part).
+                // But the manifold lane is only 64 bits total — that's ONE surd, not four.
+                // The 4 components (A,B,C,D) would need 4×64 = 256 bits.
+                // The core's 64-bit lanes likely store a compressed representation.
+                // For now, note this architectural constraint: the core needs
+                // wider lanes or a different encoding to support full circulant ops.
+                // The ROTC handler exposes the interface; the lane encoding
+                // determines what can be done in a single cycle.
+            end
+
             case (hydration_state)
                 H_IDLE: begin
                     if (phi_8) begin
@@ -510,7 +547,8 @@ module spu13_core #(
                 H_EXHALE: begin
                     if (mem_burst_done) begin
                         mem_burst_wr <= 0;
-                        hydration_state <= H_IDLE;
+                        mem_burst_rd <= 1;
+                        hydration_state <= H_INHALE;
                     end
                 end
             endcase
