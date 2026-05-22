@@ -319,6 +319,90 @@ def expand_delta(emitter: AsmEmitter, regs: RegisterPool,
     emitter.blank()
 
 
+# ── Polyhedron table ──────────────────────────────────────────────────
+# Maps polyhedron names to { rotation_set, seed_abcd }
+# rotation_set: list of ROTC angle indices (0-63)
+# seed_abcd: initial (A_p,A_q, B_p,B_q, C_p,C_q, D_p,D_q) in Q(√3)
+
+POLYHEDRON_TABLE = {
+    # Vector Equilibrium (cuboctahedron): 12 vertices from identity seed
+    # Vertices are the orbit of (1,0,0,0) under all 12 A₄ rotations.
+    "VE": {
+        "rotations": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "seed_abcd": (1, 0, 0, 0, 0, 0, 0, 0),  # (1,0,0,0)
+    },
+    # Tetrahedron: 4 vertices from (1,0,0,0) under C₃ rotations only
+    "tetrahedron": {
+        "rotations": [0, 1, 2],  # 0°, 60°, 120° around D-axis
+        "seed_abcd": (1, 0, 0, 0, 0, 0, 0, 0),
+    },
+    # Octahedron: 6 vertices (dual of cube) — placeholder
+    "octahedron": {
+        "rotations": [],  # requires vertex ROM
+        "seed_abcd": (0, 0, 0, 0, 0, 0, 0, 0),
+    },
+    # Icosahedron: 20 vertices (A₅ symmetry) — placeholder
+    "icosahedron": {
+        "rotations": [],
+        "seed_abcd": (0, 0, 0, 0, 0, 0, 0, 0),
+    },
+}
+
+
+def expand_polyhedron(emitter: AsmEmitter, regs: RegisterPool,
+                      name: str, seed_reg: tuple, dest_base: tuple):
+    """Generate vertices of a polyhedron via A₄ ROTC orbit.
+
+    Applies each rotation in the polyhedron's rotation set to the seed,
+    storing results in consecutive QR registers starting from dest_base.
+    """
+    name_upper = name.upper()
+    if name_upper not in POLYHEDRON_TABLE:
+        emitter.comment(f";; Unknown polyhedron: {name}")
+        emitter.comment(f";; Known: {', '.join(POLYHEDRON_TABLE.keys())}")
+        return
+
+    info = POLYHEDRON_TABLE[name_upper]
+    rotations = info["rotations"]
+    if not rotations:
+        emitter.comment(f";; {name} — rotation set not populated (needs vertex ROM)")
+        return
+
+    seed_abcd = info["seed_abcd"]
+    seed_qr = seed_reg[1]
+    dest_qr = dest_base[1]
+
+    emitter.comment(f"── {name}: {len(rotations)} vertices via A₄ ROTC ──")
+
+    # Initialize seed register with the seed Quadray vector
+    if seed_abcd != (1, 0, 0, 0, 0, 0, 0, 0):
+        # Custom seed: load components
+        Ap, Aq, Bp, Bq, Cp, Cq, Dp, Dq = seed_abcd
+        emitter.instr("IDNT", f"QR{seed_qr}")  # start from identity
+        # Load B,C,D components explicitly (placeholder for full seed loading)
+        emitter.comment(f";; seed = ({Ap}+{Aq}√3, {Bp}+{Bq}√3, "
+                        f"{Cp}+{Cq}√3, {Dp}+{Dq}√3)")
+        # In a full implementation, LD each component from Pell vault or constants
+    else:
+        emitter.instr("IDNT", f"QR{seed_qr}")
+        emitter.comment(f";; seed QR{seed_qr} = (1,0,0,0)")
+
+    emitter.blank()
+
+    # Generate orbit: apply each rotation to the seed
+    for i, rot in enumerate(rotations):
+        qr_dest = dest_qr + i
+        if qr_dest > 12:
+            qr_dest = qr_dest % 13  # wrap around
+        angle_name = CIRCULANT_TABLE.get(rot, (f"@{rot*60}°",))[0]
+        emitter.instr("ROTC", f"QR{qr_dest}", f"QR{seed_qr}", str(rot))
+        emitter.comment(f"vertex {i}: ROTC angle {rot} ({angle_name}) → QR{qr_dest}")
+
+    emitter.blank()
+    emitter.comment(f";; {len(rotations)} vertices generated in "
+                    f"QR{dest_qr}–QR{dest_qr + len(rotations) - 1}")
+
+
 # ── Main compiler ───────────────────────────────────────────────────────
 
 def compile_lith(source: str, filename: str = "<input>") -> str:
@@ -403,6 +487,15 @@ def compile_lith(source: str, filename: str = "<input>") -> str:
                 steps = int(kwargs.get('steps', 4))
                 dest = int(kwargs.get('dest', '0'))
                 expand_delta(emitter, regs, Q1, Q2, steps, dest)
+
+            elif cmd == 'polyhedron':
+                # polyhedron: <name> [seed=QR[n]] [dest=QR[m]]
+                kwargs = parse_kwargs(remainder)
+                name = tokens[1] if len(tokens) > 1 else remainder.strip()
+                name = name.rstrip(':')  # allow "polyhedron: VE" syntax
+                seed = parse_register(kwargs.get('seed', 'QR[0]'))
+                dest_base = parse_register(kwargs.get('dest', 'QR[1]'))
+                expand_polyhedron(emitter, regs, name, seed, dest_base)
 
             elif cmd in (';', ';;'):
                 emitter.emit(raw)
