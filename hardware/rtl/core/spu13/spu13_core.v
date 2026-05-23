@@ -88,7 +88,41 @@ module spu13_core #(
         manifold_lane[4],  manifold_lane[3],  manifold_lane[2],  manifold_lane[1],
         manifold_lane[0]
     };
-    assign manifold_out = manifold_reg;
+    assign manifold_out = annealed_manifold;
+
+    // ── Isotropic Annealer (Golden-Noise Lattice Unlock) ────────────
+    // Injects sub-Planckian φ-noise when the full manifold is laminar
+    // for 16 consecutive cycles — prevents frozen lattice-lock.
+    wire [831:0] annealed_manifold;
+    reg          anneal_enable;
+    reg [4:0]    laminar_cycle_count;
+
+    spu_annealer u_annealer (
+        .clk(clk), .reset(!rst_n),
+        .enable(anneal_enable),
+        .reg_in(manifold_reg),
+        .reg_out(annealed_manifold)
+    );
+
+    // Laminar persistence detector: fires annealer after 16 stable cycles
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            laminar_cycle_count <= 0;
+            anneal_enable <= 0;
+        end else begin
+            anneal_enable <= 0;
+            if (is_janus_point) begin
+                if (laminar_cycle_count < 16)
+                    laminar_cycle_count <= laminar_cycle_count + 1;
+                else begin
+                    anneal_enable <= 1;       // fire φ-perturbation
+                    laminar_cycle_count <= 0;
+                end
+            end else begin
+                laminar_cycle_count <= 0;
+            end
+        end
+    end
 
     function [`MANIFOLD_WIDTH-1:0] manifold_with_axis;
         input [`MANIFOLD_WIDTH-1:0] manifold_in;
