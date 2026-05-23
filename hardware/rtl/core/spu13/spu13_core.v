@@ -272,7 +272,9 @@ module spu13_core #(
 
     // F,G,H output from lookup
     wire signed [63:0] rote_F, rote_G, rote_H;
-    // Rotated output from circulant
+    // Rotated output from circulant (raw, before inverse permute)
+    wire [63:0] rote_A_out_raw, rote_B_out_raw, rote_C_out_raw, rote_D_out_raw;
+    // Rotated output after inverse permute (final writeback values)
     wire [63:0] rote_B_out, rote_C_out, rote_D_out;
 
     generate
@@ -308,19 +310,56 @@ module spu13_core #(
                 .dbg_A(), .dbg_B(), .dbg_C(), .dbg_D()
             );
 
+            // ── Quadray Permuter ──────────────────────────────────
+            // For ROTC angles 6-11 (non-A-invariant rotations), permute
+            // coordinates so the target axis becomes A, apply ROTC, then
+            // un-permute back. Angles 0-5 are direct (A is invariant).
+            wire [1:0] rote_perm_sel;
+            wire [63:0] perm_A, perm_B, perm_C, perm_D;
+            wire [63:0] rotor_A_in, rotor_B_in, rotor_C_in, rotor_D_in;
+
+            // Angle → perm_sel: 0-5→id, 6-7→B→A, 8-9→C→A, 10-11→D→A
+            assign rote_perm_sel = (rote_angle < 6) ? 2'b00 :
+                                   (rote_angle < 8) ? 2'b01 :
+                                   (rote_angle < 10) ? 2'b10 : 2'b11;
+
+            spu_quadray_permute u_perm_fwd (
+                .perm_sel(rote_perm_sel),
+                .A_in(qrf_rd_A), .B_in(qrf_rd_B),
+                .C_in(qrf_rd_C), .D_in(qrf_rd_D),
+                .A_out(rotor_A_in), .B_out(rotor_B_in),
+                .C_out(rotor_C_in), .D_out(rotor_D_in)
+            );
+
             spu13_rotor_core u_rotc (
                 .clk(clk), .rst_n(rst_n),
-                .A_in(qrf_rd_A),
-                .B_in(qrf_rd_B),
-                .C_in(qrf_rd_C),
-                .D_in(qrf_rd_D),
+                .A_in(rotor_A_in),
+                .B_in(rotor_B_in),
+                .C_in(rotor_C_in),
+                .D_in(rotor_D_in),
                 .F(rote_F), .G(rote_G), .H(rote_H),
                 .field_sel(rote_field),
                 .bypass_p5(rote_angle == 6'd2),  // 120° → pure permutation
-                .A_out(qrf_wr_A),
-                .B_out(rote_B_out),
-                .C_out(rote_C_out),
-                .D_out(rote_D_out)
+                .A_out(rote_A_out_raw),
+                .B_out(rote_B_out_raw),
+                .C_out(rote_C_out_raw),
+                .D_out(rote_D_out_raw)
+            );
+
+            // ── Inverse Permuter ───────────────────────────────────
+            // Undo the coordinate permutation for angles 6-11.
+            // inv(00)=00, inv(01)=11, inv(10)=10, inv(11)=01
+            wire [1:0] rote_inv_sel;
+            assign rote_inv_sel = (rote_perm_sel == 2'b01) ? 2'b11 :
+                                  (rote_perm_sel == 2'b11) ? 2'b01 :
+                                  rote_perm_sel;
+
+            spu_quadray_permute u_perm_inv (
+                .perm_sel(rote_inv_sel),
+                .A_in(rote_A_out_raw), .B_in(rote_B_out_raw),
+                .C_in(rote_C_out_raw), .D_in(rote_D_out_raw),
+                .A_out(qrf_wr_A), .B_out(rote_B_out),
+                .C_out(rote_C_out), .D_out(rote_D_out)
             );
 
             // Write-back: A is invariant, B',C',D' come from circulant
