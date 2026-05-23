@@ -1328,7 +1328,12 @@ class SPUCore:
                 scale = Q12 * denom
                 half = scale // 2
                 def rdiv(num):
-                    return (num + half) // scale if num >= 0 else (num - half) // scale
+                    # Symmetric round-half-up toward zero (matches hardware >>>
+                    # arithmetic shift, not Python's floor-division).
+                    if num >= 0:
+                        return (num + half) // scale
+                    else:
+                        return -((-num + half) // scale)
                 b2 = RationalSurd(rdiv(b2.a), rdiv(b2.b))
                 c2 = RationalSurd(rdiv(c2.a), rdiv(c2.b))
                 d2 = RationalSurd(rdiv(d2.a), rdiv(d2.b))
