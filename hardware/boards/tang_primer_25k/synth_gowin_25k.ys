@@ -37,6 +37,7 @@ read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/surd_multiplier.v
 # ─── Core RTL ──────────────────────────────────────────────────────────────
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_cross_rotor.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/davis_gate_dsp.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_sequencer.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_rotor_vault.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_unified_alu_tdm.v
@@ -136,9 +137,10 @@ read_verilog -I hardware/rtl/arch hardware/rtl/hal/hal_hdmi_tmds.v
 read_verilog -I hardware/rtl/arch hardware/rtl/hal/hal_hdmi.v
 
 # ─── Board top ─────────────────────────────────────────────────────────────
-read_verilog -I hardware/rtl/arch hardware/boards/tang_primer_25k/spu_tang_top.v
+read_verilog -I hardware/rtl/arch hardware/boards/tang25k/spu_tang25k_blink.v
+# read_verilog -I hardware/rtl/arch hardware/boards/tang25k/spu_tang25k_hello.v
 
 # ─── Synthesis ─────────────────────────────────────────────────────────────
-hierarchy -check -top spu_tang_top
-synth_gowin -family gw5a -top spu_tang_top -json build/tang_primer_25k/tang_primer_25k.json
+hierarchy -check -top spu_tang25k_blink
+synth_gowin -family gw5a -top spu_tang25k_blink -json build/tang_primer_25k.json
 stat
