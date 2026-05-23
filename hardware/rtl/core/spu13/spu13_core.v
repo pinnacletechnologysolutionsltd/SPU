@@ -277,6 +277,22 @@ module spu13_core #(
 
     generate
         if (ENABLE_MATH) begin : gen_qrf
+            // ── VE QR Hydration ──────────────────────────────────
+            wire ve_qr_init_en;
+            wire [3:0] ve_qr_init_lane;
+            wire [63:0] ve_qr_init_A, ve_qr_init_B, ve_qr_init_C, ve_qr_init_D;
+            wire ve_qr_init_done;
+
+            spu_ve_qr_init u_ve_qr_init (
+                .clk(clk), .rst_n(rst_n),
+                .boot_done(boot_done),
+                .init_en(ve_qr_init_en),
+                .init_lane(ve_qr_init_lane),
+                .init_A(ve_qr_init_A), .init_B(ve_qr_init_B),
+                .init_C(ve_qr_init_C), .init_D(ve_qr_init_D),
+                .init_done(ve_qr_init_done)
+            );
+
             spu_quadray_regfile u_qrf (
                 .clk(clk), .rst_n(rst_n),
                 .rd_lane(rote_src_lane),
@@ -286,9 +302,9 @@ module spu13_core #(
                 .wr_lane(qrf_wr_lane),
                 .wr_A(qrf_wr_A), .wr_B(qrf_wr_B),
                 .wr_C(qrf_wr_C), .wr_D(qrf_wr_D),
-                .init_en(1'b0), .init_lane(4'd0),
-                .init_A(64'd0), .init_B(64'd0),
-                .init_C(64'd0), .init_D(64'd0),
+                .init_en(ve_qr_init_en), .init_lane(ve_qr_init_lane),
+                .init_A(ve_qr_init_A), .init_B(ve_qr_init_B),
+                .init_C(ve_qr_init_C), .init_D(ve_qr_init_D),
                 .dbg_A(), .dbg_B(), .dbg_C(), .dbg_D()
             );
 

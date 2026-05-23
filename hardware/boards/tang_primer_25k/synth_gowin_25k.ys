@@ -144,3 +144,4 @@ read_verilog -I hardware/rtl/arch hardware/boards/tang25k/spu_tang25k_blink.v
 hierarchy -check -top spu_tang25k_blink
 synth_gowin -family gw5a -top spu_tang25k_blink -json build/tang_primer_25k.json
 stat
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
