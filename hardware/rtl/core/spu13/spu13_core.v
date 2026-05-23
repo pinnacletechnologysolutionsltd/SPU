@@ -235,10 +235,14 @@ module spu13_core #(
         end
     end
 
+    // Combined fault: RPLU dissociation OR proprioceptive damping
+    wire combined_fault;
+    assign combined_fault = rplu_dissoc || damping_active;
+
     spu_soul_metabolism #(.CLK_HZ(24_000_000)) u_metabolism (
         .clk(clk), .reset(!rst_n),
         .q_state(manifold_reg[127:0]),
-        .fault_pulse(rplu_dissoc),
+        .fault_pulse(combined_fault),
         .is_idle(~|stability_bits),     // idle when no axis is stable
         .adaptive_tau_q(adaptive_tau_q),
         .tuck_count(soul_tuck_count),
