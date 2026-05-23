@@ -164,6 +164,43 @@ module spu13_core #(
         .laminar_flow_index(laminar_flow_index)
     );
 
+    // ── Toroidal Register File (Manifold Frame Buffer) ────────────
+    // 832-bit × 8-entry rotating buffer. Stores manifold snapshots
+    // on each axis-wrap for history comparison and Artery distribution.
+    wire [831:0] torus_rd_data;
+    reg          torus_wr_en;
+    reg  [2:0]   torus_wr_addr;
+
+    toroidal_regfile #(.WIDTH(832), .NUM(8)) u_torus (
+        .clk(clk), .rst_n(rst_n),
+        .wr_en(torus_wr_en),
+        .wr_addr(torus_wr_addr),
+        .wr_data(manifold_commit_reg),
+        .rd_en(1'b0),        // read port unused for now
+        .rd_addr(3'd0),
+        .rd_data(torus_rd_data),
+        .rotate_start(1'b0), // rotate on demand
+        .rotate_amount(32'd0),
+        .rotate_idx(3'd0),
+        .rotate_dir(1'b0),
+        .method_sel(1'b0),
+        .rotate_done()
+    );
+
+    // Write manifold frame on each axis-wrap
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            torus_wr_en <= 0;
+            torus_wr_addr <= 0;
+        end else begin
+            torus_wr_en <= 0;
+            if (cycle_wrap) begin
+                torus_wr_en <= 1;
+                torus_wr_addr <= torus_wr_addr + 1;  // ring buffer
+            end
+        end
+    end
+
     spu_soul_metabolism #(.CLK_HZ(24_000_000)) u_metabolism (
         .clk(clk), .reset(!rst_n),
         .q_state(manifold_reg[127:0]),
