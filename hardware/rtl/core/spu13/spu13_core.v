@@ -79,6 +79,7 @@ module spu13_core #(
     output wire                      i2s_lrclk,
     output wire                      i2s_dout,
     output wire [7:0]                laminar_flow_index_out,
+    output wire [31:0]               thermal_pressure_out,
     output wire signed [31:0]        audio_p_out,
     output wire signed [31:0]        audio_q_out
 );
@@ -725,6 +726,7 @@ module spu13_core #(
     assign audio_p_out = audio_p;
     assign audio_q_out = audio_q;
     assign laminar_flow_index_out = laminar_flow_index;
+    assign thermal_pressure_out = thermal_pressure;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
