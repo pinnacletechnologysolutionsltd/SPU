@@ -499,7 +499,7 @@ OPCODES = {
     "CALL":  0x21, "RET":   0x22,
     # Quadray IVM operations
     "QADD":  0x10, "QROT":  0x11, "QNORM": 0x12,
-    "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C, "QLDI":  0x1D,
+    "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C, "QLDI":  0x1D, "DELTA": 0x1E,
     # Geometry output
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -1193,6 +1193,34 @@ class SPUCore:
             if self.verbose:
                 print(f"  [{self.pc:04d}] QLDI QR{r1} ← ({A},{B},{C},{D}) "
                       f"→ {self.qregs[r1 % 13]!r}")
+
+        elif opcode == OPCODES["DELTA"]:
+            # DELTA QRd, Q1, Q2, steps — triple quadrance parameterization
+            # P1_A[15:0] = Q1, P1_B[15:0] = Q2, R2 = steps
+            # Computes (Q3 − Q1 − Q2)² = 4·Q1·Q2·(1−s) for s = k/steps.
+            # Stores q_sum in QRd.A, last rhs² in QRd.B (num) and QRd.C (den).
+            Q1 = p1_a & 0xFFFF
+            Q2 = p1_b & 0xFFFF
+            steps = r2 if r2 > 0 else 4
+            d = r1 % 13
+            q_sum = Q1 + Q2
+            rhs_sq = 4 * Q1 * Q2  # for k=0 (collapsed), rhs² is maximal
+
+            # Iterate through steps to find the last meaningful rhs²
+            for k in range(steps + 1):
+                rhs = (4 * Q1 * Q2 * (steps - k)) // steps
+                if k == steps:
+                    rhs_sq = rhs  # right triangle: rhs² = 0
+
+            self.qregs[d] = QuadrayVector(
+                RationalSurd(q_sum, 0),
+                RationalSurd(rhs_sq, 0),
+                RationalSurd(steps, 0),
+                RationalSurd(0, 0),
+            )
+            if self.verbose:
+                print(f"  [{self.pc:04d}] DELTA QR{d} Q1={Q1} Q2={Q2} "
+                      f"steps={steps} → q_sum={q_sum} rhs²={rhs_sq}/{steps}")
 
         elif opcode == OPCODES["QADD"]:
             # QADD QRd, QRs — QRd = QRd + QRs

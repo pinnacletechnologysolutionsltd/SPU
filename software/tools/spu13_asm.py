@@ -56,7 +56,7 @@ OPCODES: dict[str, int] = {
     "CALL":   0x21, "RET":    0x22, "HALT":   0x08,
     # Quadray IVM operations
     "QADD":   0x10, "QROT":   0x11, "QNORM":  0x12,
-    "QLOAD":  0x13, "QLOG":   0x14, "QSUB":   0x1B, "ROTC":   0x1C, "QLDI":   0x1D,
+    "QLOAD":  0x13, "QLOG":   0x14, "QSUB":   0x1B, "ROTC":   0x1C, "QLDI":   0x1D, "DELTA":  0x1E,
     # Geometry output
     "SPREAD": 0x15, "HEX":    0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -207,6 +207,16 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
         d = int(args[4]) & 0xFF if len(args) > 4 else 0
         p1_a = (a << 8) | b
         p1_b = (c << 8) | d
+
+    elif mnemonic == "DELTA":
+        # DELTA QRd, Q1, Q2, steps
+        _, r1 = _parse_reg(args[0])
+        Q1 = int(args[1]) & 0xFFFF if len(args) > 1 else 3
+        Q2 = int(args[2]) & 0xFFFF if len(args) > 2 else 4
+        steps = int(args[3]) & 0xFF if len(args) > 3 else 4
+        p1_a = Q1
+        p1_b = Q2
+        r2 = steps
 
     elif mnemonic == "QROT":
         # QROT QRd [, Rs]  — if one arg, use built-in Pell rotor (r2=0)

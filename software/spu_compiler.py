@@ -301,21 +301,13 @@ def expand_delta(emitter: AsmEmitter, regs: RegisterPool,
                  Q1: int, Q2: int, steps: int, dest_qr: int):
     """
     Delta curve: parameterize Q₃ as spread varies s = k/steps for k=0..steps.
-    Emits the (Q_sum, rhs_sq_num/rhs_sq_den) for each step as a comment;
-    the actual quadrance values are computed at plan time, not runtime.
+    Uses the DELTA opcode (0x1E) which computes the full triple quadrance
+    parameterization in one instruction: stores q_sum + rhs² in QRdest.
     """
     Qsum = Q1 + Q2
     emitter.comment(f"── delta_curve: Q1={Q1}, Q2={Q2}, {steps} steps ──")
-
-    for k in range(steps + 1):
-        rhs_num = 4 * Q1 * Q2 * (steps - k)
-        rhs_den = steps
-        # s = k/steps, rhs² = 4·Q₁·Q₂·(1−s) = rhs_num / rhs_den
-        emitter.instr("LD", f"R{dest_qr}", str(Qsum), "0")
-        emitter.comment(f"k={k}/{steps}: Q₃ = {Qsum} ± √({rhs_num}/{rhs_den})")
-        # Store Q_sum and rhs_sq for later use
-        emitter.instr("LOG", f"R{dest_qr}")
-
+    emitter.instr("DELTA", f"QR{dest_qr}", str(Q1), str(Q2), str(steps))
+    emitter.comment(f"Q₃ = {Qsum} ± √(4·{Q1}·{Q2}·(steps−k)/{steps})")
     emitter.blank()
 
 
