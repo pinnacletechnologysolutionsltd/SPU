@@ -154,6 +154,16 @@ module spu13_core #(
     wire [23:0] soul_flash_addr;
     wire [255:0] soul_flash_page;
 
+    // ── Viscosity Monitor ─────────────────────────────────────────
+    // Measures manifold flow quality: 0xFF = liquid, 0x00 = cubic friction.
+    wire [7:0] laminar_flow_index;
+
+    spu_viscosity_monitor u_viscosity (
+        .clk(clk), .reset(!rst_n),
+        .abcd_vector(manifold_reg[127:0]),
+        .laminar_flow_index(laminar_flow_index)
+    );
+
     spu_soul_metabolism #(.CLK_HZ(24_000_000)) u_metabolism (
         .clk(clk), .reset(!rst_n),
         .q_state(manifold_reg[127:0]),
