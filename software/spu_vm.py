@@ -1281,24 +1281,30 @@ class SPUCore:
                 G = RationalSurd(Ga, Gb)
                 H = RationalSurd(Ha, Hb)
                 d, s = r1 % 13, r2 % 13
+
+                # Q12 fixed-point scaling (matching hardware surd_multiplier >>16).
+                # Scale source components by 4096 to preserve fractional precision
+                # through the circulant. After multiply, divide by 4096*denom.
+                Q12 = 4096
+                src = self.qregs[s]
+                B = RationalSurd(src.b.a * Q12, src.b.b * Q12)
+                C = RationalSurd(src.c.a * Q12, src.c.b * Q12)
+                D = RationalSurd(src.d.a * Q12, src.d.b * Q12)
+
                 # Apply circulant with scaled coefficients
-                b2 = (F * self.qregs[s].b + H * self.qregs[s].c +
-                      G * self.qregs[s].d)
-                c2 = (G * self.qregs[s].b + F * self.qregs[s].c +
-                      H * self.qregs[s].d)
-                d2 = (H * self.qregs[s].b + G * self.qregs[s].c +
-                      F * self.qregs[s].d)
-                # Scale result down by denominator with proper rounding
-                # Integer truncation (//) corrupts fractional intermediates:
-                #   2//3=0 (should round to 1), -1//3=-1 (should round to 0).
-                # Use round-to-nearest to preserve integer orbits under A₄.
-                if denom != 1:
-                    half = denom // 2
-                    def rdiv(num):
-                        return (num + half) // denom if num >= 0 else (num - half) // denom
-                    b2 = RationalSurd(rdiv(b2.a), rdiv(b2.b))
-                    c2 = RationalSurd(rdiv(c2.a), rdiv(c2.b))
-                    d2 = RationalSurd(rdiv(d2.a), rdiv(d2.b))
+                b2 = F * B + H * C + G * D
+                c2 = G * B + F * C + H * D
+                d2 = H * B + G * C + F * D
+
+                # Scale result down by Q12*denom with proper rounding
+                scale = Q12 * denom
+                half = scale // 2
+                def rdiv(num):
+                    return (num + half) // scale if num >= 0 else (num - half) // scale
+                b2 = RationalSurd(rdiv(b2.a), rdiv(b2.b))
+                c2 = RationalSurd(rdiv(c2.a), rdiv(c2.b))
+                d2 = RationalSurd(rdiv(d2.a), rdiv(d2.b))
+
                 self.qregs[d] = QuadrayVector(
                     self.qregs[s].a, b2, c2, d2,
                 )

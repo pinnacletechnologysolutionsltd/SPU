@@ -347,10 +347,30 @@ POLYHEDRON_TABLE = {
             (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1),
         ],
     },
-    # Octahedron: 6 vertices (dual of cube) — placeholder
+    # Octahedron: 6 vertices in zero-sum Quadray
+    # Permutations of (1,-1,0,0), sum=0.
     "octahedron": {
-        "rotations": [],  # requires vertex ROM
+        "rotations": [],
         "seed_abcd": (0, 0, 0, 0, 0, 0, 0, 0),
+        "vertices": [
+            (1, -1,  0,  0), (1,  0, -1,  0), (1,  0,  0, -1),
+            (0,  1, -1,  0), (0,  1,  0, -1), (0,  0,  1, -1),
+        ],
+    },
+    # Rhombic Dodecahedron: 14 vertices (8 cube + 6 octahedron)
+    # Dual of cuboctahedron. All Q(√3), zero-sum.
+    "RD": {
+        "rotations": [],
+        "seed_abcd": (0, 0, 0, 0, 0, 0, 0, 0),
+        "vertices": [
+            ( 3, -1, -1, -1), (-1,  3, -1, -1),
+            (-1, -1,  3, -1), (-1, -1, -1,  3),
+            (-3,  1,  1,  1), ( 1, -3,  1,  1),
+            ( 1,  1, -3,  1), ( 1,  1,  1, -3),
+            ( 1, -1,  0,  0), ( 1,  0, -1,  0),
+            ( 1,  0,  0, -1), ( 0,  1, -1,  0),
+            ( 0,  1,  0, -1), ( 0,  0,  1, -1),
+        ],
     },
     # Icosahedron: 20 vertices (A₅ symmetry) — placeholder
     "icosahedron": {
@@ -368,12 +388,16 @@ def expand_polyhedron(emitter: AsmEmitter, regs: RegisterPool,
     storing results in consecutive QR registers starting from dest_base.
     """
     name_upper = name.upper()
-    if name_upper not in POLYHEDRON_TABLE:
+    # Case-insensitive lookup
+    info = None
+    for key, val in POLYHEDRON_TABLE.items():
+        if key.upper() == name_upper:
+            info = val
+            break
+    if info is None:
         emitter.comment(f";; Unknown polyhedron: {name}")
-        emitter.comment(f";; Known: {', '.join(POLYHEDRON_TABLE.keys())}")
+        emitter.comment(f";; Known: {', '.join(sorted(POLYHEDRON_TABLE.keys()))}")
         return
-
-    info = POLYHEDRON_TABLE[name_upper]
     vertices = info.get("vertices", None)
 
     if vertices:
