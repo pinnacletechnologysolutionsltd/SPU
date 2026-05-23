@@ -528,7 +528,15 @@ def compile_lith(source: str, filename: str = "<input>") -> str:
                 Q1 = int(kwargs.get('Q1', 3))
                 Q2 = int(kwargs.get('Q2', 4))
                 steps = int(kwargs.get('steps', 4))
-                dest = int(kwargs.get('dest', '0'))
+                dest_s = str(kwargs.get('dest', '0'))
+                # Accept 'QR0', 'QR[0]', or just '0'
+                dest_s = dest_s.strip().upper().replace('[', '').replace(']', '')
+                if dest_s.startswith('QR'):
+                    dest = int(dest_s[2:])
+                elif dest_s.startswith('R'):
+                    dest = int(dest_s[1:])
+                else:
+                    dest = int(dest_s)
                 expand_delta(emitter, regs, Q1, Q2, steps, dest)
 
             elif cmd == 'polyhedron' or cmd == 'polyhedron:':
