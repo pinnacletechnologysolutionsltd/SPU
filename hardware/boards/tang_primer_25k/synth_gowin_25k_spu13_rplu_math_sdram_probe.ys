@@ -13,6 +13,8 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/top/spu_laminar_boot.v \
     hardware/rtl/core/shared/spu_rotor_vault.v \
     hardware/rtl/core/shared/spu_cross_rotor.v \
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
     hardware/rtl/core/shared/davis_gate_dsp.v \
     hardware/rtl/gpu/davis_to_rplu.v \
     hardware/rtl/gpu/rplu_exp.v \
@@ -29,9 +31,15 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
 
 chparam -set ENABLE_SDRAM 1 \
+        -set SDRAM_COL_BITS 9 \
+        -set SDRAM_ROW_BITS 13 \
+        -set SDRAM_RANK_BITS 1 \
+        -set SDRAM_XSDS_INVERTED_RANK_CS 1 \
+        -set SDRAM_REFRESH_CYCLES 49 \
         -set ENABLE_CORE_RPLU 1 \
         -set ENABLE_CORE_LATTICE 0 \
         -set ENABLE_CORE_MATH 1 \
+        -set DQ_STUCK_MASK 16'h0402 \
         spu13_tang25k_top
 
 hierarchy -check -top spu13_tang25k_top

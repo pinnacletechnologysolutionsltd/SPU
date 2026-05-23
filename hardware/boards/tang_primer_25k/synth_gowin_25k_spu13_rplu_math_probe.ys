@@ -13,6 +13,8 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/top/spu_laminar_boot.v \
     hardware/rtl/core/shared/spu_rotor_vault.v \
     hardware/rtl/core/shared/spu_cross_rotor.v \
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
     hardware/rtl/core/shared/davis_gate_dsp.v \
     hardware/rtl/gpu/davis_to_rplu.v \
     hardware/rtl/gpu/rplu_exp.v \
