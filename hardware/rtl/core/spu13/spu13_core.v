@@ -652,9 +652,13 @@ module spu13_core #(
 
 
     wire [31:0] quadrance_err;
-    assign quadrance_err = (quadrance > 32'h0100_0000) ? (quadrance - 32'h0100_0000) : (32'h0100_0000 - quadrance);
+    // Adaptive threshold from soul metabolism (default 0x0100_0000 = 256 in Q16).
+    // When fault rate is high, tau widens → gate less sensitive.
+    // When stable, tau tightens → gate more sensitive.
+    wire [31:0] adaptive_threshold;
+    assign adaptive_threshold = (adaptive_tau_q != 32'd0) ? adaptive_tau_q : 32'h0100_0000;
+    assign quadrance_err = (quadrance > adaptive_threshold) ? (quadrance - adaptive_threshold) : (adaptive_threshold - quadrance);
     wire axis_stable;
-    // For bring-up: stable if quadrance is non-zero (axis is spinning, not idle at zero)
     assign axis_stable = (quadrance > 32'h0000_0000) && !rplu_dissoc;
 
 
