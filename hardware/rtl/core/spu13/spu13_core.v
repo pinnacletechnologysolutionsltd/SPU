@@ -8,7 +8,9 @@ module spu13_core #(
     parameter DEVICE = "GW2A",  // "GW1N" | "GW2A" | "GW5A" | "SIM"
     parameter ENABLE_RPLU = 1,
     parameter ENABLE_LATTICE = 1,
-    parameter ENABLE_MATH = 1
+    parameter ENABLE_MATH = 1,
+    parameter ENABLE_SEQUENCER = 1,
+    parameter [255:0] MEM_FILE = "hardware/rtl/arch/hw_test.mem"
 )(
     input  wire         clk,            // Fast Clock (e.g. 12-24MHz)
     input  wire         rst_n,
@@ -54,6 +56,7 @@ module spu13_core #(
     // Instruction input (optional). When unused, tie inst_valid=0 at instantiation.
     input  wire                    inst_valid,
     input  wire [63:0]             inst_word,
+    output wire                    inst_done,   // pulsed when instruction completes
 
     // RPLU comparator outputs (fast domain)
     output wire signed [2:0]       ratio_cmp_res,
@@ -441,6 +444,48 @@ module spu13_core #(
     // Rotated output after inverse permute (final writeback values)
     wire [63:0] rote_B_out, rote_C_out, rote_D_out;
 
+    // ── Instruction Sequencer (autonomous program execution) ─────
+    // When ENABLE_SEQUENCER=1, the sequencer loads program from
+    // MEM_FILE and drives inst_valid/inst_word automatically.
+    wire        seq_inst_valid;
+    wire [63:0] seq_inst_word;
+    wire        seq_halted;
+    wire [7:0]  seq_pc;
+
+    generate
+        if (ENABLE_SEQUENCER) begin : gen_sequencer
+            spu_sequencer #(
+                .IMEM_DEPTH(256),
+                .MEM_FILE(MEM_FILE)
+            ) u_sequencer (
+                .clk(clk), .rst_n(rst_n),
+                .boot_done(boot_done),
+                .inst_valid(seq_inst_valid),
+                .inst_word(seq_inst_word),
+                .inst_done(inst_done),
+                .pc_out(seq_pc),
+                .halted(seq_halted),
+                .program_size()
+            );
+        end else begin : gen_no_sequencer
+            assign seq_inst_valid = 1'b0;
+            assign seq_inst_word  = 64'd0;
+            assign seq_pc         = 8'd0;
+            assign seq_halted     = 1'b1;
+        end
+    endgenerate
+
+    // Mux: external inst_valid or sequencer-driven
+    wire        eff_inst_valid;
+    wire [63:0] eff_inst_word;
+    assign eff_inst_valid = ENABLE_SEQUENCER ? seq_inst_valid : inst_valid;
+    assign eff_inst_word  = ENABLE_SEQUENCER ? seq_inst_word  : inst_word;
+
+    // Alias for internal use (so existing code uses muxed signals)
+    // Note: inst_valid and inst_word are port names; we override them
+    // inside the gen_qrf block by using eff_* versions via parameters.
+    // Actually, we just use eff_inst_valid/eff_inst_word everywhere.
+
     generate
         if (ENABLE_MATH) begin : gen_qrf
             // ── VE QR Hydration ──────────────────────────────────
@@ -601,6 +646,9 @@ module spu13_core #(
     // next cycle.
     reg rote_active;
     reg [3:0] rote_dest_lane;
+    reg       inst_done_r;
+
+    assign inst_done = inst_done_r;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -612,45 +660,43 @@ module spu13_core #(
             rote_field <= 2'b00;
             qrf_wr_en <= 0;
             qrf_wr_lane <= 0;
+            inst_done_r <= 0;
         end else begin
             qrf_wr_en <= 0;  // default: no write
+            inst_done_r <= 0;
 
             // ── QLDI Handler (0x1D) ────────────────────────────────
-            // QLDI QRd, A, B, C, D — load integer Quadray from immediate.
-            // P1_A[15:8]=A, P1_A[7:0]=B, P1_B[15:8]=C, P1_B[7:0]=D
-            // Each component is sign-extended from 8-bit to 64-bit surd
-            // with Q=0 (pure rational, no √3 component).
-            if (inst_valid && inst_word[63:56] == 8'h1D) begin
+            if (eff_inst_valid && eff_inst_word[63:56] == 8'h1D) begin
                 qrf_wr_en   <= 1;
-                qrf_wr_lane <= inst_word[55:48] % 13;
-                // Sign-extend 8-bit A→64-bit: P=sign_ext, Q=0
-                qrf_wr_A[31:0]  <= {{24{inst_word[39]}}, inst_word[39:32]};
+                qrf_wr_lane <= eff_inst_word[55:48] % 13;
+                qrf_wr_A[31:0]  <= {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
                 qrf_wr_A[63:32] <= 32'd0;
-                qrf_wr_B[31:0]  <= {{24{inst_word[31]}}, inst_word[31:24]};
+                qrf_wr_B[31:0]  <= {{24{eff_inst_word[31]}}, eff_inst_word[31:24]};
                 qrf_wr_B[63:32] <= 32'd0;
-                qrf_wr_C[31:0]  <= {{24{inst_word[23]}}, inst_word[23:16]};
+                qrf_wr_C[31:0]  <= {{24{eff_inst_word[23]}}, eff_inst_word[23:16]};
                 qrf_wr_C[63:32] <= 32'd0;
-                qrf_wr_D[31:0]  <= {{24{inst_word[15]}}, inst_word[15:8]};
+                qrf_wr_D[31:0]  <= {{24{eff_inst_word[15]}}, eff_inst_word[15:8]};
                 qrf_wr_D[63:32] <= 32'd0;
+                inst_done_r <= 1;
             end
 
-            if (inst_valid && inst_word[63:56] == 8'h1C) begin
-                // Latch ROTC parameters from instruction
-                rote_src_lane  <= inst_word[47:40] % 13;
-                rote_dest_lane <= inst_word[55:48] % 13;
-                rote_angle     <= inst_word[29:24];  // P1_A[5:0] = angle
-                rote_field     <= inst_word[31:30];  // P1_A[7:6] = field
+            if (eff_inst_valid && eff_inst_word[63:56] == 8'h1C) begin
+                rote_src_lane  <= eff_inst_word[47:40] % 13;
+                rote_dest_lane <= eff_inst_word[55:48] % 13;
+                rote_angle     <= eff_inst_word[29:24];
+                rote_field     <= eff_inst_word[31:30];
                 rote_active    <= 1;
             end else if (rote_active) begin
-                // Execute: fire rotor core (combinational read already
-                // feeding qrf_rd_*), then write back on next cycle.
                 rote_en    <= 1;
                 rote_active <= 0;
             end else if (rote_en) begin
-                // Write-back cycle
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= rote_dest_lane;
                 rote_en     <= 0;
+                inst_done_r <= 1;
+            end else if (eff_inst_valid && eff_inst_word[63:56] != 8'h1D && inst_word[63:56] != 8'h1C) begin
+                // Unknown/HEX/QLOG — consume immediately
+                inst_done_r <= 1;
             end
         end
     end

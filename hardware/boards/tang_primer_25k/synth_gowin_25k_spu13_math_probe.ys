@@ -33,6 +33,9 @@ chparam -set ENABLE_SDRAM 0 \
         -set ENABLE_CORE_MATH 1 \
         spu13_tang25k_top
 
+# ── Sequencer ──
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_sequencer.v
+
 # ── Added SPU-13 modules ──
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
@@ -45,8 +48,8 @@ read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu
 read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_viscosity_monitor.v
 read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_proprioception.v
 read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_i2s_out.v
-
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/toroidal_regfile.v
+
 hierarchy -check -top spu13_tang25k_top
 
 # Keep the same no-autoname tail as the baseline build; the default autoname
@@ -56,6 +59,9 @@ techmap -map +/gowin/cells_map.v
 opt_lut_ins -tech gowin
 hilomap -singleton -hicell VCC V -locell GND G
 clean
+# ── Sequencer ──
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_sequencer.v
+
 # ── Added SPU-13 modules ──
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
@@ -68,8 +74,8 @@ read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu
 read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_viscosity_monitor.v
 read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_proprioception.v
 read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_i2s_out.v
-
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/toroidal_regfile.v
+
 hierarchy -check
 check -noinit
 blackbox =A:whitebox
