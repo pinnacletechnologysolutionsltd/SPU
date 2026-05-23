@@ -124,6 +124,50 @@ module spu13_core #(
         end
     end
 
+    // ── Active Inference (Predictive Coding Filter) ─────────────────
+    // Filters transient cubic leaks from genuine manifold divergence
+    // using the Free Energy Principle. Prior is the last manifold frame;
+    // sensory input is the current frame. Dissonance flags real events.
+    wire [127:0] inference_posterior;
+    wire [127:0] inference_error;
+    wire         inference_dissonant;
+    reg          fault_pulse_d1;  // delayed fault to align with manifold
+
+    spu_active_inference u_inference (
+        .clk(clk), .reset(!rst_n),
+        .prior_state(manifold_reg[127:0]),       // low 128 bits of manifold
+        .prior_precision(adaptive_tau_q[15:0]),  // from soul metabolism
+        .sensory_in(manifold_commit_reg[127:0]),
+        .sensory_valid(phi_21),
+        .posterior_state(inference_posterior),
+        .prediction_error(inference_error),
+        .is_dissonant(inference_dissonant)
+    );
+
+    // ── Soul Metabolism (Adaptive Safety Valve) ─────────────────────
+    // Tracks fault rate and adjusts Davis Gate sensitivity (adaptive_tau).
+    // Widens tau when tuck rate > 13% (Fibonacci threshold), tightens
+    // when stable. Periodically saves health state to SPI flash.
+    wire [31:0] adaptive_tau_q;
+    wire [31:0] soul_tuck_count, soul_cycle_count;
+    wire        soul_flash_we;
+    wire [23:0] soul_flash_addr;
+    wire [255:0] soul_flash_page;
+
+    spu_soul_metabolism #(.CLK_HZ(24_000_000)) u_metabolism (
+        .clk(clk), .reset(!rst_n),
+        .q_state(manifold_reg[127:0]),
+        .fault_pulse(rplu_dissoc),
+        .is_idle(~|stability_bits),     // idle when no axis is stable
+        .adaptive_tau_q(adaptive_tau_q),
+        .tuck_count(soul_tuck_count),
+        .cycle_count(soul_cycle_count),
+        .flash_we(soul_flash_we),
+        .flash_addr(soul_flash_addr),
+        .soul_page(soul_flash_page),
+        .flash_ready(1'b0)               // SPI flash not ready in sim
+    );
+
     function [`MANIFOLD_WIDTH-1:0] manifold_with_axis;
         input [`MANIFOLD_WIDTH-1:0] manifold_in;
         input [3:0] axis_idx;

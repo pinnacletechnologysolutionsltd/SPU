@@ -147,3 +147,5 @@ stat
 read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
 read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/bio/spu_annealer.v
+read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_active_inference.v
+read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_soul_metabolism.v
