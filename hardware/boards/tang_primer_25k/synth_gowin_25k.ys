@@ -150,3 +150,4 @@ read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/bio/spu_annealer.v
 read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_active_inference.v
 read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_soul_metabolism.v
 read_verilog -I hardware/rtl/arch hardware/archive/legacy_rtl/common/rtl/bio/spu_viscosity_monitor.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_i2s_out.v

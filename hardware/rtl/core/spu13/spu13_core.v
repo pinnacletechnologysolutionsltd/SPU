@@ -164,6 +164,21 @@ module spu13_core #(
         .laminar_flow_index(laminar_flow_index)
     );
 
+    // ── I2S Audio Output ──────────────────────────────────────────
+    // Converts Davis Gate audio surds to I2S protocol for PCM5102A DAC.
+    wire        i2s_bclk, i2s_lrclk, i2s_dout;
+
+    spu_i2s_out u_i2s (
+        .clk(clk), .rst_n(rst_n),
+        .mode(2'b01),               // passthrough mode
+        .lfi(laminar_flow_index),
+        .left_data(audio_p[23:0]),
+        .right_data(audio_q[23:0]),
+        .i2s_bclk(i2s_bclk),
+        .i2s_lrclk(i2s_lrclk),
+        .i2s_dout(i2s_dout)
+    );
+
     // ── Toroidal Register File (Manifold Frame Buffer) ────────────
     // 832-bit × 8-entry rotating buffer. Stores manifold snapshots
     // on each axis-wrap for history comparison and Artery distribution.
