@@ -72,7 +72,15 @@ module spu13_core #(
     output wire                      cycle_wrap,
     output wire                      rplu_dissoc_out,
     output wire [`MANIFOLD_AXES-1:0] rplu_dissoc_mask_out,
-    output wire [9:0]                rplu_addr_out
+    output wire [9:0]                rplu_addr_out,
+
+    // ── Audio / I2S outputs ─────────────────────────────────────
+    output wire                      i2s_bclk,
+    output wire                      i2s_lrclk,
+    output wire                      i2s_dout,
+    output wire [7:0]                laminar_flow_index_out,
+    output wire signed [31:0]        audio_p_out,
+    output wire signed [31:0]        audio_q_out
 );
 
     // 1. Manifold State Buffering
@@ -166,8 +174,6 @@ module spu13_core #(
 
     // ── I2S Audio Output ──────────────────────────────────────────
     // Converts Davis Gate audio surds to I2S protocol for PCM5102A DAC.
-    wire        i2s_bclk, i2s_lrclk, i2s_dout;
-
     spu_i2s_out u_i2s (
         .clk(clk), .rst_n(rst_n),
         .mode(2'b01),               // passthrough mode
@@ -697,6 +703,11 @@ module spu13_core #(
     assign rplu_dissoc_out = rplu_dissoc;
     assign rplu_dissoc_mask_out = rplu_dissoc_bits;
     assign rplu_addr_out = rplu_addr_dbg;
+
+    // Audio/I2S output assignments
+    assign audio_p_out = audio_p;
+    assign audio_q_out = audio_q;
+    assign laminar_flow_index_out = laminar_flow_index;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
