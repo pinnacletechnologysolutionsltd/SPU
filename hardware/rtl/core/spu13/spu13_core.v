@@ -172,6 +172,19 @@ module spu13_core #(
         .laminar_flow_index(laminar_flow_index)
     );
 
+    // ── Proprioception (Thermal Awareness) ─────────────────────────
+    // Monitors switching density across the full manifold. Detects
+    // myopic distortion (90° grid vs 60° IVM) as elevated pressure.
+    wire [31:0] thermal_pressure;
+    wire        damping_active;
+
+    spu_proprioception u_proprio (
+        .clk(clk), .reset(!rst_n),
+        .manifold_state(manifold_reg),
+        .thermal_pressure(thermal_pressure),
+        .damping_active(damping_active)
+    );
+
     // ── I2S Audio Output ──────────────────────────────────────────
     // Converts Davis Gate audio surds to I2S protocol for PCM5102A DAC.
     spu_i2s_out u_i2s (
