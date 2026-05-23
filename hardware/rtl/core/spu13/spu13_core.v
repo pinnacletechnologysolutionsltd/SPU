@@ -83,11 +83,17 @@ module spu13_core #(
     output wire                      i2s_dout,
     output wire [7:0]                laminar_flow_index_out,
     output wire [31:0]               thermal_pressure_out,
+
+    // ── Hex coordinate output (for UART telemetry) ──────────────
+    output reg                      hex_valid,
+    output reg  [15:0]              hex_q,
+    output reg  [15:0]              hex_r,
     output wire signed [31:0]        audio_p_out,
     output wire signed [31:0]        audio_q_out
 );
 
     // 1. Manifold State Buffering
+
     // Keep the live manifold as explicit 64-bit lanes so boot hydration and
     // axis commits compile into narrow per-lane enables rather than a single
     // wide indexed write across the entire 832-bit slab.
@@ -645,6 +651,7 @@ module spu13_core #(
     // the rotor core computes the circulant, and we write back on the
     // next cycle.
     reg rote_active;
+    reg       hex_active;
     reg [3:0] rote_dest_lane;
     reg       inst_done_r;
 
@@ -654,6 +661,10 @@ module spu13_core #(
         if (!rst_n) begin
             rote_en <= 0;
             rote_active <= 0;
+            hex_active <= 0;
+            hex_valid <= 0;
+            hex_q <= 0;
+            hex_r <= 0;
             rote_src_lane <= 0;
             rote_dest_lane <= 0;
             rote_angle <= 6'd0;
@@ -694,8 +705,17 @@ module spu13_core #(
                 qrf_wr_lane <= rote_dest_lane;
                 rote_en     <= 0;
                 inst_done_r <= 1;
-            end else if (eff_inst_valid && eff_inst_word[63:56] != 8'h1D && inst_word[63:56] != 8'h1C) begin
-                // Unknown/HEX/QLOG — consume immediately
+            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h16) begin
+                // ── HEX handler: project QRn → (q,r) hex coordinates ──
+                // HEX Rd, QRn — read QR[n], compute A-D, B-D, output hex
+                rote_src_lane <= eff_inst_word[47:40] % 13;  // QRs
+                // hex projection = A[15:0] - D[15:0], B[15:0] - D[15:0]
+                hex_q   <= qrf_rd_A[15:0] - qrf_rd_D[15:0];
+                hex_r   <= qrf_rd_B[15:0] - qrf_rd_D[15:0];
+                hex_valid <= 1;
+                inst_done_r <= 1;
+            end else if (eff_inst_valid && eff_inst_word[63:56] != 8'h1D && inst_word[63:56] != 8'h1C && eff_inst_word[63:56] != 8'h16) begin
+                // Unknown/QLOG — consume immediately
                 inst_done_r <= 1;
             end
         end
