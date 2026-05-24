@@ -31,10 +31,11 @@ module spu_sequencer #(
     assign prog_words[9] = 64'h1604_0400_0000_0000;  // HEX  R4, QR4
 
     // ── Execution FSM ───────────────────────────────────────────────
-    localparam S_IDLE = 0, S_FETCH = 2, S_WAIT = 3;
+    localparam S_IDLE = 0, S_FETCH = 2, S_WAIT = 3, S_DELAY = 4;
     reg [2:0] state;
     reg [7:0] pc;
     reg       boot_done_d1;
+    reg [15:0] delay_cnt;  // delay between instructions for UART
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -71,7 +72,15 @@ module spu_sequencer #(
                     end
                 end
                 S_WAIT: begin
-                    if (inst_done)
+                    if (inst_done) begin
+                        delay_cnt <= 16000;  // ~10ms at 6.25MHz → enough for UART
+                        state <= S_DELAY;
+                    end
+                end
+                S_DELAY: begin
+                    if (delay_cnt > 0)
+                        delay_cnt <= delay_cnt - 1;
+                    else
                         state <= S_FETCH;
                 end
             endcase
