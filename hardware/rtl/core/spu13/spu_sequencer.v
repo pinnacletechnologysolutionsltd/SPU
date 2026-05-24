@@ -14,7 +14,8 @@ module spu_sequencer #(
     input  wire        inst_done,
     output reg  [7:0]  pc_out,
     output reg         halted,
-    output reg  [7:0]  program_size
+    output reg  [7:0]  program_size,
+    input  wire        damping_active   // throttle from proprioception
 );
     // ── Program ROM ──────────────────────────────────────────────────
     // QLDI test: write (-1,0,0,1) to QR0, read it, then ROTC + read
@@ -65,7 +66,8 @@ module spu_sequencer #(
                 end
                 S_WAIT: begin
                     if (inst_done) begin
-                        delay_cnt <= 16000;  // ~10ms at 6.25MHz → enough for UART
+                        // Damping throttle: longer delay when manifold is turbulent
+                        delay_cnt <= damping_active ? 32000 : 16000;
                         state <= S_DELAY;
                     end
                 end
