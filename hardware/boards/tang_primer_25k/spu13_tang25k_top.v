@@ -958,7 +958,7 @@ module spu13_tang25k_top #(
             hex_q_latch <= 0;
             hex_r_latch <= 0;
         end else begin
-            if (core_hex_valid) begin
+            if (core_hex_valid && !hex_msg_pending) begin
                 hex_q_latch <= core_hex_q;
                 hex_r_latch <= core_hex_r;
                 hex_msg_pending <= 1;
