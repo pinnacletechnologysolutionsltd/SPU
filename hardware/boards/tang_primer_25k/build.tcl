@@ -79,7 +79,7 @@ add_file -type cst     "$BOARD_DIR/tang_primer_25k.cst"
 set_option -synthesis_tool gowinsynthesis
 set_option -top_module     spu_tang_top
 set_option -verilog_std    v2001
-set_option -use_cpu_as_gpio 0
+set_option -use_cpu_as_gpio 1
 set_option -output_base_name spu13_25k
 
 # Timing: target 24 MHz (41.667 ns period)

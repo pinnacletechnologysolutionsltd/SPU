@@ -19,7 +19,7 @@
 set -euo pipefail
 
 DEVICE="GW5A-LV25MG121NES"
-TOP="spu_tang_top"
+TOP="spu_tang25k_blink"
 YS="hardware/boards/tang_primer_25k/synth_gowin_25k.ys"
 CST="hardware/boards/tang_primer_25k/tang_primer_25k.cst"
 JSON="build/tang_primer_25k.json"
@@ -39,21 +39,25 @@ pnr() {
     mkdir -p build
     nextpnr-himbaechel \
         --device "${DEVICE}" \
+        --vopt family=GW5A-25A \
+        --vopt sspi_as_gpio \
         --json  "${JSON}"    \
-        -o cst="${CST}"      \
-        -o sspi_as_gpio      \
+        --vopt cst="${CST}"  \
         --write "${PNR_JSON}"
 }
 
 pack() {
     echo "=== Pack: ${PNR_JSON} → ${FS} ==="
     mkdir -p build
-    gowin_pack -d GW5A-25A --sspi_as_gpio "${PNR_JSON}" -o "${FS}"
+    gowin_pack -d GW5A-25A --sspi_as_gpio --cpu_as_gpio "${PNR_JSON}" -o "${FS}"
 }
 
 flash() {
-    echo "=== Flash: ${FS} → board ==="
-    openFPGALoader -b tang_primer_25k "${FS}"
+    echo "=== Flash Diagnostics ==="
+    openFPGALoader --list-boards
+    openFPGALoader -b tangprimer25k --detect
+    echo "=== Attempting Flash: ${FS} → board ==="
+    openFPGALoader -b tangprimer25k "${FS}"
 }
 
 clean() {

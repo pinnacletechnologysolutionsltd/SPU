@@ -1,26 +1,23 @@
-// Tang-25k board top for SPU-4 smoketest
-// Minimal wrapper: includes Sierpinski clock, SPU-4 core (RPLU disabled),
-// an inert Davis gate instantiation (monitor-only) and a simple smoke driver
-// that toggles an LED and emits a single UART byte on power-up (sim-only)
-
-`timescale 1ns/1ps
-
 module spu_tang25k_top (
-    input  wire        sys_clk,
-    output wire [5:0]  led,
-    output wire        uart_tx
+    input  wire sys_clk,
+    output wire [2:0] led,
+    output wire uart_tx
 );
+    // 1. Simple counter for heartbeat
+    reg [25:0] count = 0;
+    always @(posedge sys_clk) count <= count + 1;
+    assign led = ~{count[25], 1'b0, 1'b0};
 
-    // Use the BUFG primitive for the clock to ensure global clock routing
-    wire clk;
-    BUFG i_clk (.I(sys_clk), .O(clk));
+    // 2. Delayed UART output
+    // Give the bridge chip 2 seconds of silence (Idle High)
+    // to negotiate "UART mode" before we start toggling the line.
+    reg [27:0] boot_delay = 0;
+    always @(posedge sys_clk) begin
+        if (boot_delay < 28'd100_000_000)
+            boot_delay <= boot_delay + 1;
+    end
+    wire tx_allowed = (boot_delay == 28'd100_000_000);
 
-    // Directly toggle led[0] and uart_tx at a high frequency
-    // This will appear as a dim LED or very rapid flicker if the clock is running
-    assign led[0] = clk;
-    assign uart_tx = clk;
-
-    // Keep other LEDs off
-    assign led[5:1] = 5'b11111;
-
+    // Toggle TX only after delay
+    assign uart_tx = tx_allowed ? count[20] : 1'b1;
 endmodule

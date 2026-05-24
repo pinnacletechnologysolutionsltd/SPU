@@ -94,7 +94,7 @@ No SDRAM add-on needed — ideal for early full-SPU-13 development.
 | Property | Value |
 |----------|-------|
 | Core width | 832-bit (same as Tier 2) |
-| External RAM | **32MB SDRAM** via Dock 40-pin header (W9825G6KH, 3.3V SDRAM — not DDR3) |
+| External RAM | **64MB SDRAM** via Dock 40-pin header (Tang_sdram_xsds v1.3, 2x W9825G6KH, 3.3V SDRAM - not DDR3) |
 | PMODs | 3× available (SD card, display, expansion) |
 | Process | 22nm — lowest power of the ladder |
 | Toolchain | nextpnr-gowin (Apicula) + Gowin EDA |

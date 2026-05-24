@@ -3,7 +3,17 @@ cmake_minimum_required(VERSION 3.13)
 # Target: Raspberry Pi Pico (RP2040) — visualiser & debug bridge
 set(PICO_BOARD pico)
 
-include(pico_sdk_import.cmake)
+if(NOT DEFINED PICO_SDK_PATH AND DEFINED ENV{PICO_SDK_PATH})
+    set(PICO_SDK_PATH "$ENV{PICO_SDK_PATH}")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/pico_sdk_import.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/pico_sdk_import.cmake")
+elseif(DEFINED PICO_SDK_PATH AND EXISTS "${PICO_SDK_PATH}/external/pico_sdk_import.cmake")
+    include("${PICO_SDK_PATH}/external/pico_sdk_import.cmake")
+else()
+    message(FATAL_ERROR "Set PICO_SDK_PATH to a Raspberry Pi Pico SDK checkout")
+endif()
 
 project(rp2040_visualiser C CXX ASM)
 set(CMAKE_C_STANDARD 11)

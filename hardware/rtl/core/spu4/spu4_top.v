@@ -27,6 +27,7 @@ module spu4_top #(
     input         bank_sel,       // RPLU mode: 0=Smooth(Q3) 1=Turbulent(Q5)
     output snap_alert,
     output whisper_tx,
+    output [1:0]  state_out,      // Exported for telemetry
     output [63:0] debug_reg_r0
 );
 
@@ -53,6 +54,7 @@ module spu4_top #(
     // 2. Register File
     wire [63:0] reg_dout_a, reg_dout_b;
     wire [63:0] reg_din;
+    wire [63:0] reg_r0;
     wire reg_we;
 
     spu4_regfile u_regfile (
@@ -67,8 +69,6 @@ module spu4_top #(
         .r0_out(reg_r0)
     );
 
-    wire [63:0] reg_r0;
-
     // 3. ALU Dispatcher
     wire [15:0] rot_a, rot_b, rot_c, rot_d;
     wire rot_done;
@@ -79,6 +79,7 @@ module spu4_top #(
         .reset(!rst_n),
         .start(rot_start),
         .bloom_intensity(8'hFF), 
+        .mode_autonomous(1'b0),
         .A_in(reg_dout_a[63:48]), 
         .B_in(reg_dout_a[47:32]), 
         .C_in(reg_dout_a[31:16]), 
@@ -87,13 +88,15 @@ module spu4_top #(
         .G(16'h0019), 
         .H(16'h0019), 
         .A_out(rot_a), .B_out(rot_b), .C_out(rot_c), .D_out(rot_d),
-        .done(rot_done)
+        .done(rot_done),
+        .henosis_pulse()
     );
 
 
     // 4. Control State Transitions (Gestalt Logic)
     // 0: FETCH, 1: EXEC, 2: WAIT_ALU, 3: WRITEBACK
     reg [1:0] state; 
+    assign state_out = state;
     
     wire is_fetch;
     assign is_fetch = (state == 2'd0);

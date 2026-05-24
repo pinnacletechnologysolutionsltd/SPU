@@ -29,8 +29,10 @@ IO_PORT "led[0]"         IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led[1]"         IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led[2]"         IO_TYPE=LVCMOS33 DRIVE=8;
 
-// ─── Onboard SDRAM (W9825G6KH-6, 32 MB) ─────────────────────────────────
-// sdram_cke is hardwired to VCC on board — no pin assignment needed.
+// ─── 40-pin SDRAM module (Tang_sdram_xsds v1.3, dual W9825G6KH-6) ───────
+// sdram_cke is hardwired on the module/header — no FPGA pin assignment needed.
+// The v1.3 X2 module exposes one CS input on K9; the second chip is selected
+// through the module's inverter, so the RTL treats sdram_cs_n as rank select.
 IO_LOC  "sdram_clk"      E3;
 IO_PORT "sdram_clk"      IO_TYPE=LVCMOS33 DRIVE=16;
 
@@ -87,14 +89,14 @@ IO_LOC  "sdram_dq[4]"   K4;
 IO_LOC  "sdram_dq[5]"   J4;
 IO_LOC  "sdram_dq[6]"   G1;
 IO_LOC  "sdram_dq[7]"   G2;
-IO_LOC  "sdram_dq[8]"   E1;
-IO_LOC  "sdram_dq[9]"   A1;
-IO_LOC  "sdram_dq[10]"  F2;
-IO_LOC  "sdram_dq[11]"  F1;
-IO_LOC  "sdram_dq[12]"  B2;
-IO_LOC  "sdram_dq[13]"  C2;
-IO_LOC  "sdram_dq[14]"  L4;
-IO_LOC  "sdram_dq[15]"  L3;
+IO_LOC  "sdram_dq[8]"   L3;
+IO_LOC  "sdram_dq[9]"   L4;
+IO_LOC  "sdram_dq[10]"  B2;
+IO_LOC  "sdram_dq[11]"  C2;
+IO_LOC  "sdram_dq[12]"  F2;
+IO_LOC  "sdram_dq[13]"  F1;
+IO_LOC  "sdram_dq[14]"  E1;
+IO_LOC  "sdram_dq[15]"  A1;
 IO_PORT "sdram_dq[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[2]"   IO_TYPE=LVCMOS33 DRIVE=8;

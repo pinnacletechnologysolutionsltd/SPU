@@ -461,8 +461,7 @@ module spu13_core #(
     generate
         if (ENABLE_SEQUENCER) begin : gen_sequencer
             spu_sequencer #(
-                .IMEM_DEPTH(256),
-                .MEM_FILE(MEM_FILE)
+                .IMEM_DEPTH(32)
             ) u_sequencer (
                 .clk(clk), .rst_n(rst_n),
                 .boot_done(boot_done),

@@ -48,7 +48,7 @@ The SPU-13 utilises a **Hardware Abstraction Layer (HAL)** for bit-exact parity 
 | GW1N-9C | **671 LUT + 1636 ALU** of 8,640 (26.9%) | 5/20 | `spu4_core` + sentinel | — (PnR TBD) | 8MB PSRAM onboard |
 | GW2A-18 | **~5,300** of 18,432 (28.7%) | 14/48 | `spu13_top` full core | — (PnR TBD) | 128MB DDR3 onboard |
 | iCE40UP5K | **4,026** of 5,280 (76%) | 8 SB_MAC16 | `spu4_sentinel` v1.3 (2-stage pipe) | **48 MHz** | QSPI PSRAM (PMOD) |
-| GW5A-25A | **~8,500** of 20,736 (41%) | 29 | `spu13_top` full core | **140.83 MHz** | 32MB SDRAM |
+| GW5A-25A | **~8,500** of 20,736 (41%) | 29 | `spu13_top` full core | **140.83 MHz** | 64MB XSDS SDRAM |
 | GW5AST-138C | ~1 (stub) | 0 | Placeholder | — | — |
 
 ### SPU-4 topology: nano sentinel vs. cluster co-processor

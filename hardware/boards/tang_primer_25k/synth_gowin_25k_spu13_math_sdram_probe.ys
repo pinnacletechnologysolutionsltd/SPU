@@ -1,0 +1,51 @@
+# SPU-13 Tang Primer 25K math + SDRAM probe.
+# Enables the TDM rotor/cross-rotor/Davis math path and the external SDRAM
+# bridge together. Lattice and RPLU stay off for this composition test.
+
+read_verilog -lib +/gowin/cells_xtra_gw5a.v
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/tang_primer_25k/spu13_tang25k_top.v \
+    hardware/rtl/core/spu13/spu13_core.v \
+    hardware/rtl/core/spu13/spu13_lattice.v \
+    hardware/rtl/core/spu13/laminar_node.v \
+    hardware/rtl/top/spu_laminar_boot.v \
+    hardware/rtl/core/shared/spu_rotor_vault.v \
+    hardware/rtl/core/shared/spu_cross_rotor.v \
+    hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/gpu/davis_to_rplu.v \
+    hardware/rtl/gpu/rplu_exp.v \
+    hardware/rtl/gpu/pade_eval_4_4.v \
+    hardware/rtl/gpu/rplu_poly_step.v \
+    hardware/rtl/math/rational_surd5_add.v \
+    hardware/rtl/math/rational_surd5_mul.v \
+    hardware/rtl/math/rational_surd5_mul64.v \
+    hardware/rtl/math/rational_surd5_norm.v \
+    hardware/rtl/math/rational_surd5_scale_manager.v \
+    hardware/rtl/math/spu_quadrance_calc.v \
+    hardware/rtl/common/prim/spu_gowin_prim.v \
+    hardware/rtl/common/prim/gowin_mult18.v \
+    hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
+
+chparam -set ENABLE_SDRAM 1 \
+        -set SDRAM_COL_BITS 9 \
+        -set SDRAM_ROW_BITS 13 \
+        -set SDRAM_RANK_BITS 1 \
+        -set SDRAM_XSDS_INVERTED_RANK_CS 1 \
+        -set SDRAM_REFRESH_CYCLES 49 \
+        -set ENABLE_CORE_RPLU 0 \
+        -set ENABLE_CORE_LATTICE 0 \
+        -set ENABLE_CORE_MATH 1 \
+        spu13_tang25k_top
+
+hierarchy -check -top spu13_tang25k_top
+
+synth_gowin -family gw5a -top spu13_tang25k_top -json build/spu13_math_sdram_probe.json -run begin:map_cells
+techmap -map +/gowin/cells_map.v
+opt_lut_ins -tech gowin
+hilomap -singleton -hicell VCC V -locell GND G
+clean
+hierarchy -check
+check -noinit
+blackbox =A:whitebox
+write_json build/spu13_math_sdram_probe.json

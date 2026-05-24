@@ -41,6 +41,7 @@
 #include "hardware/pio.h"
 #include "pico/multicore.h"
 #include "spu_bio_resonance.pio.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -93,12 +94,14 @@ static uint8_t frame_front[TX_FRAME_BYTES];   // pre-built with SOF header
 // ── Forward declarations ──────────────────────────────────────────────────
 static void spi_read_manifold(uint8_t *out32);
 static void spi_read_status(uint16_t *dissonance, uint8_t *flags);
+static void spi_read_scale_table(uint8_t *out9);
 static void spi_write_chord(const uint8_t *chord8);
 static void assemble_frame(const uint8_t *abcd32, uint16_t dissonance,
                            uint8_t flags, uint8_t *frame);
 static void pio_piranha_init(void);
 static void pio_whisper_init(void);
 static void whisper_send(uint32_t pulse_width);
+static void rplu_boot_load(void);
 static void spu_symmetry_breath(void);
 
 // ── Core 1: SPU poller + Chord receiver ──────────────────────────────────
@@ -178,9 +181,6 @@ void core1_entry(void) {
 
         // 5. Drain USB stdio (host): receive raw 8-byte Chords from PC → FPGA
 // #define DEBUG_VOICE  // Uncomment to enable 'Listen' (L) command for manifold triage
-
-    while (true) {
-        // ... (Core 1 loop continues)
         {
             int usb_ch;
             while ((usb_ch = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {

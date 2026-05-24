@@ -1,7 +1,8 @@
 // flash_map_tang25k.vh — Tang Primer 25K PMOD SPI Flash Layout
 // Device: 16MB SPI Flash on PMOD connector (e.g. W25Q128JVSQ or compatible)
 //
-// The Tang Primer 25K has 32MB onboard SDRAM for runtime manifold data.
+// The Tang Primer 25K uses the 64MB Tang_sdram_xsds v1.3 SDRAM module on the
+// 40-pin header for runtime manifold data.
 // This PMOD flash holds persistent initialisation tables only:
 //   — Pell orbit seeds (read once at boot into rotor vault)
 //   — Golden prime strides (read once into PSRAM controller)
