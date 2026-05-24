@@ -30,7 +30,7 @@ module spu_sequencer #(
     //   9: HEX  R4, QR4            → hex (-2,-1)
     localparam PROG_SIZE = 10;
     wire [63:0] prog_words [0:PROG_SIZE-1];
-    assign prog_words[0] = 64'h1D00_0000_00FF_0100;  // QLDI QR0, -1, 0, 0, 1
+    assign prog_words[0] = 64'h1D00_00FF_0000_0100;  // QLDI QR0, -1, 0, 0, 1
     assign prog_words[1] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0
     assign prog_words[2] = 64'h1C01_0000_0100_0000;  // ROTC QR1, QR0, 1
     assign prog_words[3] = 64'h1601_0100_0000_0000;  // HEX  R1, QR1
@@ -38,7 +38,7 @@ module spu_sequencer #(
     assign prog_words[5] = 64'h1602_0200_0000_0000;  // HEX  R2, QR2
     assign prog_words[6] = 64'h1C03_0000_0400_0000;  // ROTC QR3, QR0, 4
     assign prog_words[7] = 64'h1603_0300_0000_0000;  // HEX  R3, QR3
-    assign prog_words[8] = 64'h1D04_00FF_0000_0100;  // QLDI QR4, -1, 0, 0, -1
+    assign prog_words[8] = 64'h1D04_00FF_0000_FF00;  // QLDI QR4, -1, 0, 0, -1
     assign prog_words[9] = 64'h1604_0400_0000_0000;  // HEX  R4, QR4
 
     // ── Execution FSM ───────────────────────────────────────────────

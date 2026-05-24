@@ -516,8 +516,8 @@ module spu13_core #(
                 .rd_C(qrf_rd_C), .rd_D(qrf_rd_D),
                 .wr_en(qrf_wr_en),
                 .wr_lane(qrf_wr_lane),
-                .wr_A(qrf_wr_A), .wr_B(qrf_wr_B),
-                .wr_C(qrf_wr_C), .wr_D(qrf_wr_D),
+                .wr_A(regfile_wr_A_mux), .wr_B(regfile_wr_B_mux),
+                .wr_C(regfile_wr_C_mux), .wr_D(regfile_wr_D_mux),
                 .init_en(ve_qr_init_en), .init_lane(ve_qr_init_lane),
                 .init_A(ve_qr_init_A), .init_B(ve_qr_init_B),
                 .init_C(ve_qr_init_C), .init_D(ve_qr_init_D),
@@ -577,6 +577,12 @@ module spu13_core #(
             );
 
             // Write-back: A is invariant, B',C',D' come from circulant
+            // Mux: instruction-driven write data vs rotor-core write data
+            wire [63:0] regfile_wr_A_mux = instr_wr_active ? instr_wr_A : qrf_wr_A;
+            wire [63:0] regfile_wr_B_mux = instr_wr_active ? instr_wr_B : rote_B_out;
+            wire [63:0] regfile_wr_C_mux = instr_wr_active ? instr_wr_C : rote_C_out;
+            wire [63:0] regfile_wr_D_mux = instr_wr_active ? instr_wr_D : rote_D_out;
+
             assign qrf_wr_B = rote_B_out;
             assign qrf_wr_C = rote_C_out;
             assign qrf_wr_D = rote_D_out;
@@ -653,6 +659,8 @@ module spu13_core #(
     reg       hex_active;
     reg [3:0] rote_dest_lane;
     reg       inst_done_r;
+    reg       instr_wr_active;
+    reg [63:0] instr_wr_A, instr_wr_B, instr_wr_C, instr_wr_D;
 
     assign inst_done = inst_done_r;
 
@@ -679,14 +687,15 @@ module spu13_core #(
             if (eff_inst_valid && eff_inst_word[63:56] == 8'h1D) begin
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= eff_inst_word[55:48] % 13;
-                qrf_wr_A[31:0]  <= {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
-                qrf_wr_A[63:32] <= 32'd0;
-                qrf_wr_B[31:0]  <= {{24{eff_inst_word[31]}}, eff_inst_word[31:24]};
-                qrf_wr_B[63:32] <= 32'd0;
-                qrf_wr_C[31:0]  <= {{24{eff_inst_word[23]}}, eff_inst_word[23:16]};
-                qrf_wr_C[63:32] <= 32'd0;
+                instr_wr_A[31:0]  <= {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
+                instr_wr_A[63:32] <= 32'd0;
+                instr_wr_B[31:0]  <= {{24{eff_inst_word[31]}}, eff_inst_word[31:24]};
+                instr_wr_B[63:32] <= 32'd0;
+                instr_wr_C[31:0]  <= {{24{eff_inst_word[23]}}, eff_inst_word[23:16]};
+                instr_wr_C[63:32] <= 32'd0;
                 qrf_wr_D[31:0]  <= {{24{eff_inst_word[15]}}, eff_inst_word[15:8]};
-                qrf_wr_D[63:32] <= 32'd0;
+                instr_wr_D[63:32] <= 32'd0;
+                instr_wr_active <= 1;
                 inst_done_r <= 1;
             end
 
