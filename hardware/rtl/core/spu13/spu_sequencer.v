@@ -16,18 +16,7 @@ module spu_sequencer #(
     output reg         halted,
     output reg  [7:0]  program_size
 );
-    // ── Program ROM (embedded at synthesis) ─────────────────────────
-    // hw_test.sas:
-    //   0: QLDI QR0, -1, 0, 0, 1   → hex (-1,-1)
-    //   1: HEX  R0, QR0
-    //   2: ROTC QR1, QR0, 1        → 60° around D
-    //   3: HEX  R1, QR1            → hex (0,1)
-    //   4: ROTC QR2, QR0, 2        → 120° around D
-    //   5: HEX  R2, QR2            → hex (1,1)
-    //   6: ROTC QR3, QR0, 4        → 240° around D
-    //   7: HEX  R3, QR3            → hex (-1,-2)
-    //   8: QLDI QR4, -1, 0, 0, -1  → QLDI with negative D
-    //   9: HEX  R4, QR4            → hex (-2,-1)
+    // ── Program ROM ──────────────────────────────────────────────────
     localparam PROG_SIZE = 10;
     wire [63:0] prog_words [0:PROG_SIZE-1];
     assign prog_words[0] = 64'h1D00_00FF_0000_0100;  // QLDI QR0, -1, 0, 0, 1
@@ -42,9 +31,10 @@ module spu_sequencer #(
     assign prog_words[9] = 64'h1604_0400_0000_0000;  // HEX  R4, QR4
 
     // ── Execution FSM ───────────────────────────────────────────────
-    localparam S_IDLE = 0, S_WAIT_BOOT = 1, S_FETCH = 2, S_WAIT = 3;
+    localparam S_IDLE = 0, S_FETCH = 2, S_WAIT = 3;
     reg [2:0] state;
     reg [7:0] pc;
+    reg       boot_done_d1;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -55,12 +45,15 @@ module spu_sequencer #(
             halted <= 0;
             pc_out <= 0;
             program_size <= PROG_SIZE;
+            boot_done_d1 <= 0;
         end else begin
             inst_valid <= 0;
+            boot_done_d1 <= boot_done;
             case (state)
                 S_IDLE: begin
                     halted <= 0;
-                    if (boot_done) begin
+                    // One-shot: start on rising edge of boot_done
+                    if (boot_done && !boot_done_d1) begin
                         pc <= 0;
                         state <= S_FETCH;
                     end
