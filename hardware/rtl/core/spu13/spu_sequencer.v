@@ -17,15 +17,14 @@ module spu_sequencer #(
     output reg  [7:0]  program_size
 );
     // ── Program ROM ──────────────────────────────────────────────────
-    // Read 6 VE init vertices to prove the read path.
-    localparam PROG_SIZE = 6;
+    // QLDI test: write (-1,0,0,1) to QR0, read it, then ROTC + read
+    localparam PROG_SIZE = 5;
     wire [63:0] prog_words [0:PROG_SIZE-1];
-    assign prog_words[0] = 64'h1600_0000_0000_0000;  // HEX R0, QR0
-    assign prog_words[1] = 64'h1601_0100_0000_0000;  // HEX R1, QR1
-    assign prog_words[2] = 64'h1602_0200_0000_0000;  // HEX R2, QR2
-    assign prog_words[3] = 64'h1603_0300_0000_0000;  // HEX R3, QR3
-    assign prog_words[4] = 64'h1604_0400_0000_0000;  // HEX R4, QR4
-    assign prog_words[5] = 64'h1605_0500_0000_0000;  // HEX R5, QR5
+    assign prog_words[0] = 64'h1D00_00FF_0000_0100;  // QLDI QR0, -1, 0, 0, 1
+    assign prog_words[1] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0
+    assign prog_words[2] = 64'h1C01_0000_0100_0000;  // ROTC QR1, QR0, 1 (60°)
+    assign prog_words[3] = 64'h1601_0100_0000_0000;  // HEX  R1, QR1
+    assign prog_words[4] = 64'h1C02_0000_0200_0000;  // ROTC QR2, QR0, 2 (120°)
 
     // ── Execution FSM ───────────────────────────────────────────────
     localparam S_IDLE = 0, S_FETCH = 2, S_WAIT = 3, S_DELAY = 4;
