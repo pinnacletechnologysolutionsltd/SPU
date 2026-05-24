@@ -49,6 +49,13 @@ module spu13_tang25k_boot_probe (
         .mem_addr(),
         .mem_wr_manifold(),
         .mem_burst_done(1'b1),
+        .rplu_cfg_wr_en(),
+        .rplu_cfg_sel(),
+        .rplu_cfg_material(),
+        .rplu_cfg_addr(),
+        .rplu_cfg_data(),
+        .rplu_cfg_loaded(),
+        .rplu_cfg_checksum(),
         .boot_done(boot_done)
     );
 

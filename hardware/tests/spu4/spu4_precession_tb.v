@@ -8,6 +8,7 @@ module spu4_precession_tb;
     wire [9:0] pc;
     wire snap_alert;
     wire whisper_tx;
+    wire [1:0] state_out;
     wire [63:0] debug_reg_r0;
 
     // 1. Program Memory (BRAM Simulation)
@@ -15,18 +16,29 @@ module spu4_precession_tb;
     integer i;
     initial begin
         for (i = 0; i < 1024; i = i + 1) prog_mem[i] = 24'h0;
-        $readmemh("hardware/spu4/tests/precession.hex", prog_mem);
+        $readmemh("hardware/tests/spu4/precession.hex", prog_mem);
     end
     assign inst_data = (pc < 1024) ? prog_mem[pc] : 24'h0;
 
     // 2. Unit Under Test
-    spu4_top uut (
+    spu4_top #(
+        .ENABLE_RPLU_BRAM(0)
+    ) uut (
         .clk(clk),
         .rst_n(rst_n),
+        .rplu_cfg_wr_en(1'b0),
+        .rplu_cfg_sel(3'd0),
+        .rplu_cfg_material(1'b0),
+        .rplu_cfg_addr(10'd0),
+        .rplu_cfg_data(64'd0),
         .inst_data(inst_data),
         .pc(pc),
+        .sentinel_mode(1'b0),
+        .piranha_pulse(1'b0),
+        .bank_sel(1'b0),
         .snap_alert(snap_alert),
         .whisper_tx(whisper_tx),
+        .state_out(state_out),
         .debug_reg_r0(debug_reg_r0)
     );
 

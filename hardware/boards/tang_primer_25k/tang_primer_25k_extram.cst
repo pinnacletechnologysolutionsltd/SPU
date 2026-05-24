@@ -1,12 +1,12 @@
 // tang_primer_25k_extram.cst — Physical Constraints for Tang Primer 25K (EXT_SDRAM config)
 // Includes all base constraints + expansion SDRAM 40-pin module placeholders.
 // Uncomment ext_sdram_* entries once pinout is confirmed from Sipeed schematic.
-// Device:  GW5A-LV25MG121NES  (GW5A-25A, 121-ball BGA)
+// Device:  GW5A-LV25MG121NES  (GW5A-25A, 121-ball BGA in the OSS flow)
 // Crystal: 50 MHz at E2
 //
 // Pin sources (cross-referenced against three official Sipeed CSTs):
 //   nestang-25k/src/nestang.cst          (GW5A-LV25MG121NES)
-//   ZiyangYE/LicheeTang25k_SDRAM         (GW5A-LV25MG121NC2/I1, same pinout)
+//   ZiyangYE/LicheeTang25k_SDRAM         (reference only; different package code)
 //   sipeed/TangPrimer-25K-example pmod_led.cst
 //
 // sdram_cke is NOT exposed here — it is hardwired to VCC on the board.
@@ -35,8 +35,8 @@ IO_PORT "led[3]"         IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led[4]"         IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "led[5]"         IO_TYPE=LVCMOS33 DRIVE=8;
 
-// ─── Onboard SDRAM (W9825G6KH-6, 32 MB) ─────────────────────────────────
-// sdram_cke is hardwired to VCC on board — no pin assignment needed.
+// ─── 40-pin SDRAM module (Tang_sdram_xsds v1.3, dual W9825G6KH-6) ───────
+// sdram_cke is hardwired on the module/header — no FPGA pin assignment needed.
 IO_LOC  "sdram_clk"      E3;
 IO_PORT "sdram_clk"      IO_TYPE=LVCMOS33 DRIVE=16;
 
@@ -92,14 +92,14 @@ IO_LOC  "sdram_dq[4]"   K4;
 IO_LOC  "sdram_dq[5]"   J4;
 IO_LOC  "sdram_dq[6]"   G1;
 IO_LOC  "sdram_dq[7]"   G2;
-IO_LOC  "sdram_dq[8]"   E1;
-IO_LOC  "sdram_dq[9]"   A1;
-IO_LOC  "sdram_dq[10]"  F2;
-IO_LOC  "sdram_dq[11]"  F1;
-IO_LOC  "sdram_dq[12]"  B2;
-IO_LOC  "sdram_dq[13]"  C2;
-IO_LOC  "sdram_dq[14]"  L4;
-IO_LOC  "sdram_dq[15]"  L3;
+IO_LOC  "sdram_dq[8]"   L3;
+IO_LOC  "sdram_dq[9]"   L4;
+IO_LOC  "sdram_dq[10]"  B2;
+IO_LOC  "sdram_dq[11]"  C2;
+IO_LOC  "sdram_dq[12]"  F2;
+IO_LOC  "sdram_dq[13]"  F1;
+IO_LOC  "sdram_dq[14]"  E1;
+IO_LOC  "sdram_dq[15]"  A1;
 IO_PORT "sdram_dq[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dq[2]"   IO_TYPE=LVCMOS33 DRIVE=8;
@@ -130,7 +130,7 @@ IO_LOC  "whisper_tx"     L5;
 IO_PORT "whisper_tx"     IO_TYPE=LVCMOS33 DRIVE=8;
 
 // ─── Expansion SDRAM (Sipeed 512Mb 40-pin module) ─────────────────────────
-// NOTE: Original draft duplicated onboard SDRAM LOCs and caused IO bank collisions
+// NOTE: Original draft duplicated 40-pin SDRAM LOCs and caused IO bank collisions
 // during packing (ext_* and sdram_* mapped to same physical pins).  Until the
 // official Sipeed 40-pin expansion pinout is confirmed, ext_sdram LOCs are
 // left UNASSIGNED here to avoid hard conflicts.  Populate the mapping below
@@ -202,25 +202,24 @@ IO_LOC  "ext_sdram_dq[6]"    G1;
 IO_PORT "ext_sdram_dq[6]"    IO_TYPE=LVCMOS33 DRIVE=8;
 IO_LOC  "ext_sdram_dq[7]"    G2;
 IO_PORT "ext_sdram_dq[7]"    IO_TYPE=LVCMOS33 DRIVE=8;
-IO_LOC  "ext_sdram_dq[8]"    E1;
+IO_LOC  "ext_sdram_dq[8]"    L3;
 IO_PORT "ext_sdram_dq[8]"    IO_TYPE=LVCMOS33 DRIVE=8;
-IO_LOC  "ext_sdram_dq[9]"    A1;
+IO_LOC  "ext_sdram_dq[9]"    L4;
 IO_PORT "ext_sdram_dq[9]"    IO_TYPE=LVCMOS33 DRIVE=8;
-IO_LOC  "ext_sdram_dq[10]"   F2;
+IO_LOC  "ext_sdram_dq[10]"   B2;
 IO_PORT "ext_sdram_dq[10]"   IO_TYPE=LVCMOS33 DRIVE=8;
-IO_LOC  "ext_sdram_dq[11]"   F1;
+IO_LOC  "ext_sdram_dq[11]"   C2;
 IO_PORT "ext_sdram_dq[11]"   IO_TYPE=LVCMOS33 DRIVE=8;
-IO_LOC  "ext_sdram_dq[12]"   B2;
+IO_LOC  "ext_sdram_dq[12]"   F2;
 IO_PORT "ext_sdram_dq[12]"   IO_TYPE=LVCMOS33 DRIVE=8;
-IO_LOC  "ext_sdram_dq[13]"   C2;
+IO_LOC  "ext_sdram_dq[13]"   F1;
 IO_PORT "ext_sdram_dq[13]"   IO_TYPE=LVCMOS33 DRIVE=8;
-IO_LOC  "ext_sdram_dq[14]"   L4;
+IO_LOC  "ext_sdram_dq[14]"   E1;
 IO_PORT "ext_sdram_dq[14]"   IO_TYPE=LVCMOS33 DRIVE=8;
-IO_LOC  "ext_sdram_dq[15]"   L3;
+IO_LOC  "ext_sdram_dq[15]"   A1;
 IO_PORT "ext_sdram_dq[15]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_LOC  "ext_sdram_dqm[0]"   L8;
 IO_PORT "ext_sdram_dqm[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_LOC  "ext_sdram_dqm[1]"   L7;
 IO_PORT "ext_sdram_dqm[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
 */
-

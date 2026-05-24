@@ -5,7 +5,7 @@
 - **I/O Host:** RP2350 microcontroller (USB-A port) handling USB stack/peripherals (Keyboards, Mice, Sensors), bridged to FPGA via `uart_tx` (C3).
 - **Bridge/Console:** BL616 MCU (USB-C port) providing JTAG programming and verified serial UART telemetry at 115,200 baud on Pin B11.
 - **Clocking:** Raw 50 MHz crystal (PLLA bypassed in open-source synthesis flow).
-- **Storage:** Onboard 32 MB SDRAM (W9825G6KH-6); SD card (optional) for asset streaming via `spu_sd_inhaler`.
+- **Storage:** Tang_sdram_xsds v1.3 dual-chip SDRAM module (2x W9825G6KH-6, 64 MB total); SD card (optional) for asset streaming via `spu_sd_inhaler`.
 
 ## Hardware/Toolchain Known Issues
 - **CPU/SSPI Config Pins (GW5A-25A):** The Tang Primer 25K raw 50 MHz clock on `E2` sits on special configuration-pin territory. Treat any `PR2017`/`sspi_as_gpio` style error as a target-configuration problem first, not a reason to patch `apycula`.

@@ -1,56 +1,45 @@
 // spu_sequencer.v — SPU-13 Standalone Instruction Sequencer (v1.0)
-// Drives the core's inst_word/inst_valid ports from a BRAM program.
-// Loads program from .mem file at synthesis time.
-//
-// The core already has instruction decode (QLDI, ROTC in gen_qrf block).
-// The sequencer just feeds it 64-bit words one at a time.
-//
+// Drives the core's inst_word/inst_valid ports from embedded program ROM.
+// Program is hardcoded (small programs for initial bring-up).
 // CC0 1.0 Universal.
 
 module spu_sequencer #(
-    parameter IMEM_DEPTH = 256,
-    parameter IMEM_ADDR_WIDTH = 8,
-    parameter MEM_FILE = "hw_test.mem"
+    parameter IMEM_DEPTH = 32
 ) (
     input  wire        clk,
     input  wire        rst_n,
-    input  wire        boot_done,      // start execution after boot
-
-    // Instruction output → core
+    input  wire        boot_done,
     output reg         inst_valid,
     output reg  [63:0] inst_word,
-
-    // Core feedback
-    input  wire        inst_done,      // core finished instruction
-    
-    // Status  
+    input  wire        inst_done,
     output reg  [7:0]  pc_out,
     output reg         halted,
     output reg  [7:0]  program_size
 );
-
-    // ── Instruction BRAM ────────────────────────────────────────────
-    (* ram_style = "block" *)
-    reg [63:0] imem [0:IMEM_DEPTH-1];
-
-    // Load from .mem file at initialization
-    integer _i;
-    initial begin
-        for (_i = 0; _i < IMEM_DEPTH; _i = _i + 1)
-            imem[_i] = 64'd0;
-        $readmemh(MEM_FILE, imem);
-    end
-
-    // Count valid instructions (non-zero words)
-    reg [7:0] prog_end;
-    integer _j;
-    always @(*) begin
-        prog_end = 0;
-        for (_j = 0; _j < IMEM_DEPTH; _j = _j + 1) begin
-            if (imem[_j] != 64'd0)
-                prog_end = _j + 1;
-        end
-    end
+    // ── Program ROM (embedded at synthesis) ─────────────────────────
+    // hw_test.sas:
+    //   0: QLDI QR0, -1, 0, 0, 1   → hex (-1,-1)
+    //   1: HEX  R0, QR0
+    //   2: ROTC QR1, QR0, 1        → 60° around D
+    //   3: HEX  R1, QR1            → hex (0,1)
+    //   4: ROTC QR2, QR0, 2        → 120° around D
+    //   5: HEX  R2, QR2            → hex (1,1)
+    //   6: ROTC QR3, QR0, 4        → 240° around D
+    //   7: HEX  R3, QR3            → hex (-1,-2)
+    //   8: QLDI QR4, -1, 0, 0, -1  → QLDI with negative D
+    //   9: HEX  R4, QR4            → hex (-2,-1)
+    localparam PROG_SIZE = 10;
+    wire [63:0] prog_words [0:PROG_SIZE-1];
+    assign prog_words[0] = 64'h1D00_0000_00FF_0100;  // QLDI QR0, -1, 0, 0, 1
+    assign prog_words[1] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0
+    assign prog_words[2] = 64'h1C01_0000_0100_0000;  // ROTC QR1, QR0, 1
+    assign prog_words[3] = 64'h1601_0100_0000_0000;  // HEX  R1, QR1
+    assign prog_words[4] = 64'h1C02_0000_0200_0000;  // ROTC QR2, QR0, 2
+    assign prog_words[5] = 64'h1602_0200_0000_0000;  // HEX  R2, QR2
+    assign prog_words[6] = 64'h1C03_0000_0400_0000;  // ROTC QR3, QR0, 4
+    assign prog_words[7] = 64'h1603_0300_0000_0000;  // HEX  R3, QR3
+    assign prog_words[8] = 64'h1D04_00FF_0000_0100;  // QLDI QR4, -1, 0, 0, -1
+    assign prog_words[9] = 64'h1604_0400_0000_0000;  // HEX  R4, QR4
 
     // ── Execution FSM ───────────────────────────────────────────────
     localparam S_IDLE = 0, S_WAIT_BOOT = 1, S_FETCH = 2, S_WAIT = 3;
@@ -65,23 +54,20 @@ module spu_sequencer #(
             inst_word <= 0;
             halted <= 0;
             pc_out <= 0;
-            program_size <= 0;
+            program_size <= PROG_SIZE;
         end else begin
-            inst_valid <= 0;  // pulse
-
+            inst_valid <= 0;
             case (state)
                 S_IDLE: begin
                     halted <= 0;
-                    program_size <= prog_end;
-                    if (boot_done && prog_end > 0) begin
+                    if (boot_done) begin
                         pc <= 0;
                         state <= S_FETCH;
                     end
                 end
-
                 S_FETCH: begin
-                    if (pc < prog_end) begin
-                        inst_word <= imem[pc];
+                    if (pc < PROG_SIZE) begin
+                        inst_word <= prog_words[pc];
                         inst_valid <= 1;
                         pc_out <= pc;
                         pc <= pc + 1;
@@ -91,11 +77,9 @@ module spu_sequencer #(
                         state <= S_IDLE;
                     end
                 end
-
                 S_WAIT: begin
-                    if (inst_done) begin
+                    if (inst_done)
                         state <= S_FETCH;
-                    end
                 end
             endcase
         end

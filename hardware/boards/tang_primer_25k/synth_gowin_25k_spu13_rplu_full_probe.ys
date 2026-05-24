@@ -30,11 +30,17 @@ read_verilog -I hardware/rtl/arch \
 
 chparam -set ENABLE_SDRAM 1 \
         -set SDRAM_COL_BITS 9 \
+        -set SDRAM_ROW_BITS 13 \
+        -set SDRAM_RANK_BITS 1 \
+        -set SDRAM_XSDS_INVERTED_RANK_CS 1 \
+        -set SDRAM_REFRESH_CYCLES 49 \
         -set ENABLE_CORE_RPLU 1 \
         -set ENABLE_CORE_LATTICE 1 \
         -set ENABLE_CORE_MATH 1 \
         -set ENABLE_RPLU_TELEMETRY 1 \
         -set ENABLE_SDRAM_SELFTEST 1 \
+        -set ENABLE_CORE_SDRAM_VERIFY 1 \
+        -set DQ_STUCK_MASK 16'h0402 \
         spu13_tang25k_top
 
 hierarchy -check -top spu13_tang25k_top

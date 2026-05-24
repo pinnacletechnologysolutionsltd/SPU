@@ -5,9 +5,8 @@ module spu_tang_top (
     output wire        smoke_ok,
     output wire        uart_tx
 );
-    // Use the BUFG primitive for the clock to ensure global clock routing
-    wire clk;
-    BUFG i_clk (.I(clk_in), .O(clk));
+    // BUFG was here, but it's not needed/recognized in some OSS flows
+    wire clk = clk_in;
     
     // Explicitly drive GSR high (inactive) using the primitive
     GSR i_gsr (.GSRI(1'b1));

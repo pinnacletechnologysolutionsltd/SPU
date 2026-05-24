@@ -28,6 +28,11 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
 
 chparam -set ENABLE_SDRAM 1 \
+        -set SDRAM_COL_BITS 9 \
+        -set SDRAM_ROW_BITS 13 \
+        -set SDRAM_RANK_BITS 1 \
+        -set SDRAM_XSDS_INVERTED_RANK_CS 1 \
+        -set SDRAM_REFRESH_CYCLES 49 \
         -set ENABLE_CORE_RPLU 0 \
         -set ENABLE_CORE_LATTICE 1 \
         -set ENABLE_CORE_MATH 1 \

@@ -1,0 +1,5 @@
+# Tang Primer 25K B2/J3 pin-14 hold-low probe.
+
+read_verilog hardware/boards/tang_primer_25k/spu_tang25k_b2_hold_probe.v
+hierarchy -top spu_tang25k_b2_hold_probe
+synth_gowin -family gw5a -top spu_tang25k_b2_hold_probe -json build/b2_hold_probe.json
