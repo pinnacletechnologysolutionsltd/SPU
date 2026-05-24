@@ -5,11 +5,19 @@
 module spu13_tang25k_top #(
     parameter ENABLE_SDRAM = 0,
     parameter SDRAM_COL_BITS = 9,
+    parameter SDRAM_ROW_BITS = 13,
+    parameter SDRAM_RANK_BITS = 1,
+    parameter SDRAM_XSDS_INVERTED_RANK_CS = 1,
+    parameter SDRAM_REFRESH_CYCLES = 49,
     parameter ENABLE_CORE_RPLU = 0,
     parameter ENABLE_CORE_LATTICE = 0,
     parameter ENABLE_CORE_MATH = 0,
     parameter ENABLE_RPLU_TELEMETRY = 0,
-    parameter ENABLE_SDRAM_SELFTEST = 0
+    parameter ENABLE_SDRAM_SELFTEST = 0,
+    parameter ENABLE_CORE_SDRAM_VERIFY = 0,
+    parameter SDRAM_READ_CAPTURE_OFFSET = 3,
+    parameter SDRAM_INVERT_CLK = 1,
+    parameter [15:0] DQ_STUCK_MASK = 16'h0000  // bits forced high on stuck DQ lines (0x0402 = bits 1,10)
 ) (
     input  wire periph_rx, // Pin B3: Input from RP2350
     input  wire sys_clk,
@@ -220,11 +228,27 @@ module spu13_tang25k_top #(
     wire [831:0] sdram_wr_manifold;
     wire        sdram_burst_done;
 
+    // Mask stuck DQ bits in every 16-bit word of the read manifold.
+    // Word i gets: rd_manifold[i*16 +: 16] | DQ_STUCK_MASK
+    wire [831:0] sdram_rd_manifold_masked;
+    genvar gen_mask_i;
+    generate
+        for (gen_mask_i = 0; gen_mask_i < 52; gen_mask_i = gen_mask_i + 1) begin : gen_dq_mask
+            assign sdram_rd_manifold_masked[gen_mask_i*16 +: 16] =
+                sdram_rd_manifold[gen_mask_i*16 +: 16] | DQ_STUCK_MASK;
+        end
+    endgenerate
+
     wire [12:0] sdram_addr_bus;
-    wire [SDRAM_COL_BITS+14:0] sdram_bridge_mem_addr = sdram_mem_addr[SDRAM_COL_BITS+14:0];
-    localparam [24:0] SDRAM_SELFTEST_ADDR = 25'h01A040;
+    wire [SDRAM_COL_BITS+SDRAM_ROW_BITS+SDRAM_RANK_BITS+1:0] sdram_bridge_mem_addr =
+        sdram_mem_addr[SDRAM_COL_BITS+SDRAM_ROW_BITS+SDRAM_RANK_BITS+1:0];
+    localparam integer SDRAM_RANK_SELECT_BIT = SDRAM_COL_BITS + SDRAM_ROW_BITS + 2;
+    localparam [24:0] SDRAM_SELFTEST_ADDR =
+        (SDRAM_RANK_BITS != 0) ? (25'h000A040 | (25'd1 << SDRAM_RANK_SELECT_BIT))
+                               : 25'h01A040;
     localparam [11:0] SDRAM_SELFTEST_TIMEOUT = 12'hFFF;
     localparam SDRAM_SELFTEST_REQUIRED = ENABLE_SDRAM && ENABLE_SDRAM_SELFTEST;
+    localparam CORE_SDRAM_VERIFY_REQUIRED = ENABLE_SDRAM && ENABLE_CORE_SDRAM_VERIFY;
 
     reg         sdram_selftest_burst_rd;
     reg         sdram_selftest_burst_wr;
@@ -241,6 +265,8 @@ module spu13_tang25k_top #(
     reg [15:0]  sdram_selftest_first_word;
     reg [15:0]  sdram_selftest_last_word;
     reg [31:0]  sdram_selftest_checksum;
+    reg [15:0]  sdram_selftest_exp0_obs1_mask;
+    reg [15:0]  sdram_selftest_exp1_obs0_mask;
 
     localparam SDRAM_ST_IDLE       = 3'd0;
     localparam SDRAM_ST_WRITE      = 3'd1;
@@ -252,7 +278,7 @@ module spu13_tang25k_top #(
     function [15:0] sdram_selftest_pattern;
         input [5:0] idx;
         begin
-            sdram_selftest_pattern = 16'h5D00 + {10'd0, idx};
+            sdram_selftest_pattern = 16'hA55A ^ {idx, ~idx, idx[3:0]};
         end
     endfunction
 
@@ -267,15 +293,26 @@ module spu13_tang25k_top #(
     reg        sdram_selftest_match_calc;
     reg [5:0]  sdram_selftest_mismatch_calc;
     reg [31:0] sdram_selftest_checksum_calc;
+    reg [15:0] sdram_selftest_exp0_obs1_mask_calc;
+    reg [15:0] sdram_selftest_exp1_obs0_mask_calc;
     integer sdram_check_i;
     always @(*) begin
         sdram_selftest_match_calc = 1'b1;
         sdram_selftest_mismatch_calc = 6'd0;
         sdram_selftest_checksum_calc = 32'd0;
+        sdram_selftest_exp0_obs1_mask_calc = 16'd0;
+        sdram_selftest_exp1_obs0_mask_calc = 16'd0;
         for (sdram_check_i = 0; sdram_check_i < 52; sdram_check_i = sdram_check_i + 1) begin
             sdram_selftest_checksum_calc = sdram_selftest_checksum_calc
-                                         + {16'd0, sdram_rd_manifold[sdram_check_i*16 +: 16]};
-            if (sdram_rd_manifold[sdram_check_i*16 +: 16] != sdram_selftest_pattern(sdram_check_i[5:0])) begin
+                                         + {16'd0, sdram_rd_manifold_masked[sdram_check_i*16 +: 16]};
+            sdram_selftest_exp0_obs1_mask_calc = sdram_selftest_exp0_obs1_mask_calc
+                                               | ((~sdram_selftest_pattern(sdram_check_i[5:0]) & ~DQ_STUCK_MASK)
+                                                  & (sdram_rd_manifold_masked[sdram_check_i*16 +: 16] & ~DQ_STUCK_MASK));
+            sdram_selftest_exp1_obs0_mask_calc = sdram_selftest_exp1_obs0_mask_calc
+                                               | ((sdram_selftest_pattern(sdram_check_i[5:0]) & ~DQ_STUCK_MASK)
+                                                  & (~sdram_rd_manifold_masked[sdram_check_i*16 +: 16] & ~DQ_STUCK_MASK));
+            if (sdram_rd_manifold_masked[sdram_check_i*16 +: 16] !=
+                    (sdram_selftest_pattern(sdram_check_i[5:0]) | DQ_STUCK_MASK)) begin
                 sdram_selftest_match_calc = 1'b0;
                 if (sdram_selftest_mismatch_calc != 6'h3F) begin
                     sdram_selftest_mismatch_calc = sdram_selftest_mismatch_calc + 1'b1;
@@ -300,6 +337,8 @@ module spu13_tang25k_top #(
             sdram_selftest_first_word <= 16'd0;
             sdram_selftest_last_word <= 16'd0;
             sdram_selftest_checksum <= 32'd0;
+            sdram_selftest_exp0_obs1_mask <= 16'd0;
+            sdram_selftest_exp1_obs0_mask <= 16'd0;
         end else begin
             sdram_selftest_burst_rd <= 1'b0;
             sdram_selftest_burst_wr <= 1'b0;
@@ -317,6 +356,8 @@ module spu13_tang25k_top #(
                         sdram_selftest_wr_done <= 1'b0;
                         sdram_selftest_rd_done <= 1'b0;
                         sdram_selftest_mismatch_count <= 6'd0;
+                        sdram_selftest_exp0_obs1_mask <= 16'd0;
+                        sdram_selftest_exp1_obs0_mask <= 16'd0;
                         sdram_selftest_wait <= 12'd0;
                         sdram_selftest_retries <= 4'd0;
                         if (boot_done && sdram_ready) begin
@@ -363,9 +404,11 @@ module spu13_tang25k_top #(
                             sdram_selftest_pass <= sdram_selftest_match_calc;
                             sdram_selftest_fail <= !sdram_selftest_match_calc;
                             sdram_selftest_mismatch_count <= sdram_selftest_mismatch_calc;
-                            sdram_selftest_first_word <= sdram_rd_manifold[15:0];
-                            sdram_selftest_last_word <= sdram_rd_manifold[831:816];
+                            sdram_selftest_first_word <= sdram_rd_manifold_masked[15:0];
+                            sdram_selftest_last_word <= sdram_rd_manifold_masked[831:816];
                             sdram_selftest_checksum <= sdram_selftest_checksum_calc;
+                            sdram_selftest_exp0_obs1_mask <= sdram_selftest_exp0_obs1_mask_calc;
+                            sdram_selftest_exp1_obs0_mask <= sdram_selftest_exp1_obs0_mask_calc;
                             sdram_selftest_state <= SDRAM_ST_DONE;
                         end else if (sdram_selftest_wait == SDRAM_SELFTEST_TIMEOUT) begin
                             if (sdram_selftest_retries == 4'hF) begin
@@ -403,19 +446,170 @@ module spu13_tang25k_top #(
         sdram_selftest_mismatch_count
     };
     wire [31:0] sdram_selftest_endpoints_word = {sdram_selftest_first_word, sdram_selftest_last_word};
+    wire [31:0] sdram_selftest_error_mask_word = {
+        sdram_selftest_exp1_obs0_mask,
+        sdram_selftest_exp0_obs1_mask
+    };
+
+    reg [2:0]   core_sdram_verify_state;
+    reg [11:0]  core_sdram_verify_wait;
+    reg         core_sdram_verify_done;
+    reg         core_sdram_verify_pass;
+    reg         core_sdram_verify_fail;
+    reg         core_sdram_verify_wr_seen;
+    reg         core_sdram_verify_rd_done;
+    reg [31:0]  core_sdram_verify_wr_checksum;
+    reg [31:0]  core_sdram_verify_rd_checksum;
+    reg [5:0]   core_sdram_verify_sum_idx;
+    wire        core_mem_rd_request;
+    wire        core_mem_wr_request;
+
+    localparam CORE_SDRAM_ST_IDLE       = 3'd0;
+    localparam CORE_SDRAM_ST_SUM_WR     = 3'd1;
+    localparam CORE_SDRAM_ST_WAIT_READ  = 3'd2;
+    localparam CORE_SDRAM_ST_DONE       = 3'd3;
+    localparam CORE_SDRAM_ST_SUM_RD     = 3'd4;
+
+    wire [15:0] core_sdram_verify_wr_word =
+        core_mem_wr_data[core_sdram_verify_sum_idx * 16 +: 16] | DQ_STUCK_MASK;
+    wire [15:0] core_sdram_verify_rd_word =
+        sdram_rd_manifold_masked[core_sdram_verify_sum_idx * 16 +: 16];
+    wire [31:0] core_sdram_verify_rd_checksum_next =
+        core_sdram_verify_rd_checksum + {16'd0, core_sdram_verify_rd_word};
+
+    wire core_sdram_verify_capture = CORE_SDRAM_VERIFY_REQUIRED
+                                   && (core_sdram_verify_state == CORE_SDRAM_ST_IDLE)
+                                   && sdram_selftest_complete
+                                   && !sdram_selftest_owns_bus
+                                   && core_mem_wr_request;
+    wire core_sdram_verify_read_complete = CORE_SDRAM_VERIFY_REQUIRED
+                                         && (core_sdram_verify_state == CORE_SDRAM_ST_WAIT_READ)
+                                         && core_mem_rd
+                                         && sdram_burst_done;
+
+    always @(posedge clk_core or negedge rst_n) begin
+        if (!rst_n) begin
+            core_sdram_verify_state <= CORE_SDRAM_ST_IDLE;
+            core_sdram_verify_wait <= 12'd0;
+            core_sdram_verify_done <= 1'b0;
+            core_sdram_verify_pass <= 1'b0;
+            core_sdram_verify_fail <= 1'b0;
+            core_sdram_verify_wr_seen <= 1'b0;
+            core_sdram_verify_rd_done <= 1'b0;
+            core_sdram_verify_wr_checksum <= 32'd0;
+            core_sdram_verify_rd_checksum <= 32'd0;
+            core_sdram_verify_sum_idx <= 6'd0;
+        end else begin
+            if (!CORE_SDRAM_VERIFY_REQUIRED) begin
+                core_sdram_verify_state <= CORE_SDRAM_ST_DONE;
+                core_sdram_verify_done <= 1'b1;
+                core_sdram_verify_pass <= 1'b1;
+            end else begin
+                case (core_sdram_verify_state)
+                    CORE_SDRAM_ST_IDLE: begin
+                        core_sdram_verify_wait <= 12'd0;
+                        if (core_sdram_verify_capture) begin
+                            core_sdram_verify_sum_idx <= 6'd0;
+                            core_sdram_verify_wr_checksum <= 32'd0;
+                            core_sdram_verify_rd_checksum <= 32'd0;
+                            core_sdram_verify_wr_seen <= 1'b1;
+                            core_sdram_verify_state <= CORE_SDRAM_ST_SUM_WR;
+                        end
+                    end
+
+                    CORE_SDRAM_ST_SUM_WR: begin
+                        core_sdram_verify_wr_checksum <= core_sdram_verify_wr_checksum
+                                                       + {16'd0, core_sdram_verify_wr_word};
+                        if (core_sdram_verify_sum_idx == 6'd51) begin
+                            core_sdram_verify_sum_idx <= 6'd0;
+                            core_sdram_verify_state <= CORE_SDRAM_ST_WAIT_READ;
+                        end else begin
+                            core_sdram_verify_sum_idx <= core_sdram_verify_sum_idx + 1'b1;
+                        end
+                    end
+
+                    CORE_SDRAM_ST_WAIT_READ: begin
+                        if (core_sdram_verify_read_complete) begin
+                            core_sdram_verify_sum_idx <= 6'd0;
+                            core_sdram_verify_rd_checksum <= 32'd0;
+                            core_sdram_verify_state <= CORE_SDRAM_ST_SUM_RD;
+                        end else if (core_sdram_verify_wait == SDRAM_SELFTEST_TIMEOUT) begin
+                            core_sdram_verify_done <= 1'b1;
+                            core_sdram_verify_fail <= 1'b1;
+                            core_sdram_verify_state <= CORE_SDRAM_ST_DONE;
+                        end else begin
+                            core_sdram_verify_wait <= core_sdram_verify_wait + 1'b1;
+                        end
+                    end
+
+                    CORE_SDRAM_ST_SUM_RD: begin
+                        core_sdram_verify_rd_checksum <= core_sdram_verify_rd_checksum_next;
+                        if (core_sdram_verify_sum_idx == 6'd51) begin
+                            core_sdram_verify_rd_done <= 1'b1;
+                            core_sdram_verify_done <= 1'b1;
+                            core_sdram_verify_pass <= (core_sdram_verify_rd_checksum_next == core_sdram_verify_wr_checksum)
+                                                    && (core_sdram_verify_wr_checksum != 32'd0);
+                            core_sdram_verify_fail <= (core_sdram_verify_rd_checksum_next != core_sdram_verify_wr_checksum)
+                                                    || (core_sdram_verify_wr_checksum == 32'd0);
+                            core_sdram_verify_state <= CORE_SDRAM_ST_DONE;
+                        end else begin
+                            core_sdram_verify_sum_idx <= core_sdram_verify_sum_idx + 1'b1;
+                        end
+                    end
+
+                    default: begin
+                        core_sdram_verify_state <= CORE_SDRAM_ST_DONE;
+                    end
+                endcase
+            end
+        end
+    end
+
+    wire [31:0] core_sdram_verify_status_word = {
+        8'hC0, 8'h5D,
+        core_sdram_verify_done,
+        core_sdram_verify_pass,
+        core_sdram_verify_fail,
+        core_sdram_verify_wr_seen,
+        core_sdram_verify_rd_done,
+        core_sdram_verify_state,
+        2'b00,
+        core_mem_rd,
+        core_mem_wr,
+        core_mem_rd_pending,
+        core_mem_wr_pending,
+        core_mem_rd_request,
+        core_mem_wr_request
+    };
 
     generate
         if (ENABLE_SDRAM) begin : gen_sdram
             // Bus Arbitration: Bootloader has priority until boot_done is high
-            assign sdram_burst_rd = boot_done ? (sdram_selftest_owns_bus ? sdram_selftest_burst_rd : core_mem_rd) : 1'b0;
-            assign sdram_burst_wr = boot_done ? (sdram_selftest_owns_bus ? sdram_selftest_burst_wr : core_mem_wr) : boot_mem_wr;
-            assign sdram_mem_addr = boot_done ? (sdram_selftest_owns_bus ? SDRAM_SELFTEST_ADDR : {1'b0, core_mem_addr}) : boot_mem_addr;
-            assign sdram_wr_manifold = boot_done ? (sdram_selftest_owns_bus ? sdram_selftest_wr_manifold : core_mem_wr_data) : boot_mem_data;
+            assign sdram_burst_rd = boot_done
+                                   ? (sdram_selftest_owns_bus ? sdram_selftest_burst_rd
+                                      : core_mem_rd_request)
+                                   : 1'b0;
+            assign sdram_burst_wr = boot_done
+                                   ? (sdram_selftest_owns_bus ? sdram_selftest_burst_wr
+                                      : (core_sdram_verify_capture ? 1'b0
+                                         : core_mem_wr_request))
+                                   : boot_mem_wr;
+            assign sdram_mem_addr = boot_done
+                                  ? (sdram_selftest_owns_bus ? SDRAM_SELFTEST_ADDR
+                                     : {1'b0, core_mem_addr})
+                                  : boot_mem_addr;
+            assign sdram_wr_manifold = boot_done
+                                     ? (sdram_selftest_owns_bus ? sdram_selftest_wr_manifold : core_mem_wr_data)
+                                     : boot_mem_data;
 
             spu_mem_bridge_sdram #(
                 .COL_BITS(SDRAM_COL_BITS),
-                .READ_CAPTURE_OFFSET(3),
-                .INVERT_SDRAM_CLK(1)
+                .ROW_BITS(SDRAM_ROW_BITS),
+                .RANK_BITS(SDRAM_RANK_BITS),
+                .XSDS_INVERTED_RANK_CS(SDRAM_XSDS_INVERTED_RANK_CS),
+                .T_REFI(SDRAM_REFRESH_CYCLES),
+                .READ_CAPTURE_OFFSET(SDRAM_READ_CAPTURE_OFFSET),
+                .INVERT_SDRAM_CLK(SDRAM_INVERT_CLK)
             ) u_sdram (
                 .clk(clk_core),
                 .reset(!rst_n),
@@ -487,6 +681,9 @@ module spu13_tang25k_top #(
 
     // 5. The Body: SPU-13 Sovereign Core
     wire core_janus;           // from core state machine
+    wire        core_hex_valid;
+    wire [15:0] core_hex_q;
+    wire [15:0] core_hex_r;
     wire [31:0] quadrance_out; // raw quadrance from Davis gate
     wire artery_wr_en;
     wire [63:0] artery_data;
@@ -504,10 +701,41 @@ module spu13_tang25k_top #(
     wire         core_rplu_dissoc;
     wire [12:0] core_rplu_dissoc_mask;
     wire [9:0]  core_rplu_addr;
+    reg          core_mem_rd_d;
+    reg          core_mem_wr_d;
+    reg          core_mem_rd_pending;
+    reg          core_mem_wr_pending;
     reg          sdram_ready_seen_core;
     reg          sdram_wr_seen_core;
     reg          sdram_done_seen_core;
     wire [3:0]   telemetry_header_status;
+
+    always @(posedge clk_core or negedge rst_n) begin
+        if (!rst_n) begin
+            core_mem_rd_d <= 1'b0;
+            core_mem_wr_d <= 1'b0;
+            core_mem_rd_pending <= 1'b0;
+            core_mem_wr_pending <= 1'b0;
+        end else begin
+            core_mem_rd_d <= core_mem_rd;
+            core_mem_wr_d <= core_mem_wr;
+
+            if (core_mem_rd && !core_mem_rd_d) begin
+                core_mem_rd_pending <= 1'b1;
+            end else if (sdram_burst_done && core_mem_rd_pending) begin
+                core_mem_rd_pending <= 1'b0;
+            end
+
+            if (core_mem_wr && !core_mem_wr_d) begin
+                core_mem_wr_pending <= 1'b1;
+            end else if (sdram_burst_done && core_mem_wr_pending) begin
+                core_mem_wr_pending <= 1'b0;
+            end
+        end
+    end
+
+    assign core_mem_rd_request = core_mem_rd_pending && !sdram_burst_done;
+    assign core_mem_wr_request = core_mem_wr_pending && !sdram_burst_done;
 
     always @(posedge clk_core or negedge rst_n) begin
         if (!rst_n) begin
@@ -580,16 +808,20 @@ module spu13_tang25k_top #(
         .manual_rotor_en(manual_en),
         .manual_rotor_data({rotor_p_reg, rotor_q_reg}),
 
-        // Instruction port (unused)
-        .inst_valid(1'b0),
-        .inst_word(64'd0),
+        // Instruction port (driven by internal sequencer)
+        .inst_valid(),
+        .inst_word(),
+        .inst_done(),
+        .hex_valid(core_hex_valid),
+        .hex_q(core_hex_q),
+        .hex_r(core_hex_r),
 
         // Memory Interface
         .mem_ready(sdram_ready),
         .mem_burst_rd(core_mem_rd),
         .mem_burst_wr(core_mem_wr),
         .mem_addr(core_mem_addr),
-        .mem_rd_manifold(sdram_rd_manifold),
+        .mem_rd_manifold(sdram_rd_manifold_masked),
         .mem_wr_manifold(core_mem_wr_data),
         .mem_burst_done(sdram_burst_done),
 
@@ -716,23 +948,42 @@ module spu13_tang25k_top #(
     assign uart_tx_telemetry = !tx_out_active_low;
 
     wire [7:0] msg [0:15];
-    assign msg[0]  = line_is_alive ? "U" : (line_is_header ? "S" : (line_is_rplu ? "R" : (line_is_sdram ? "M" : (line_is_lattice ? "L" : (line_is_boot ? "B" : "Q")))));
+    // When hex_valid pulses, override the message type
+    reg        hex_msg_pending;
+    reg [15:0] hex_q_latch, hex_r_latch;
+
+    always @(posedge clk_core or negedge rst_n) begin
+        if (!rst_n) begin
+            hex_msg_pending <= 0;
+            hex_q_latch <= 0;
+            hex_r_latch <= 0;
+        end else begin
+            if (core_hex_valid) begin
+                hex_q_latch <= core_hex_q;
+                hex_r_latch <= core_hex_r;
+                hex_msg_pending <= 1;
+            end else if (msg_idx == 4'd15) begin
+                hex_msg_pending <= 0;
+            end
+        end
+    end
+
+    assign msg[0]  = hex_msg_pending ? "H" : (line_is_alive ? "U" : (line_is_header ? "S" : (line_is_rplu ? "R" : (line_is_sdram ? "M" : (line_is_lattice ? "L" : (line_is_boot ? "B" : "Q"))))));
     assign msg[1]  = ":";
-    assign msg[2]  = hex2ascii(q_latch[31:28]);
-    assign msg[3]  = hex2ascii(q_latch[27:24]);
-    assign msg[4]  = hex2ascii(q_latch[23:20]);
-    assign msg[5]  = hex2ascii(q_latch[19:16]);
-    assign msg[6]  = hex2ascii(q_latch[15:12]);
-    assign msg[7]  = hex2ascii(q_latch[11:8]);
-    assign msg[8]  = hex2ascii(q_latch[7:4]);
-    assign msg[9]  = hex2ascii(q_latch[3:0]);
-    assign msg[10] = " ";
-    assign msg[11] = line_is_header ? "C" : "A";
-    assign msg[12] = ":";
-    assign msg[13] = hex2ascii(a_latch);
+    assign msg[2]  = hex_msg_pending ? hex2ascii(hex_q_latch[15:12]) : hex2ascii(q_latch[31:28]);
+    assign msg[3]  = hex_msg_pending ? hex2ascii(hex_q_latch[11:8])  : hex2ascii(q_latch[27:24]);
+    assign msg[4]  = hex_msg_pending ? hex2ascii(hex_q_latch[7:4])   : hex2ascii(q_latch[23:20]);
+    assign msg[5]  = hex_msg_pending ? hex2ascii(hex_q_latch[3:0])   : hex2ascii(q_latch[19:16]);
+    assign msg[6]  = hex_msg_pending ? " "                           : hex2ascii(q_latch[15:12]);
+    assign msg[7]  = hex_msg_pending ? hex2ascii(hex_r_latch[15:12]) : hex2ascii(q_latch[11:8]);
+    assign msg[8]  = hex_msg_pending ? hex2ascii(hex_r_latch[11:8])  : hex2ascii(q_latch[7:4]);
+    assign msg[9]  = hex_msg_pending ? hex2ascii(hex_r_latch[7:4])   : hex2ascii(q_latch[3:0]);
+    assign msg[10] = hex_msg_pending ? hex2ascii(hex_r_latch[3:0])   : " ";
+    assign msg[11] = hex_msg_pending ? " "                            : (line_is_header ? "C" : "A");
+    assign msg[12] = hex_msg_pending ? "("                            : ":";
+    assign msg[13] = hex_msg_pending ? hex2ascii(hex_q_latch[15:12]) : hex2ascii(a_latch);
     assign msg[14] = 8'h0D;
     assign msg[15] = 8'h0A;
-
     reg [7:0] tx_msg_byte;
     always @(*) begin
         case (msg_idx)
@@ -762,6 +1013,7 @@ module spu13_tang25k_top #(
     reg        telemetry_start_ready;
     localparam RPLU_TELEMETRY_BURST = ENABLE_CORE_RPLU && (!ENABLE_CORE_LATTICE || ENABLE_RPLU_TELEMETRY);
     localparam SDRAM_SELFTEST_TELEMETRY = ENABLE_SDRAM && ENABLE_SDRAM_SELFTEST;
+    localparam CORE_SDRAM_VERIFY_TELEMETRY = ENABLE_SDRAM && ENABLE_CORE_SDRAM_VERIFY;
 
     task capture_cycle_quadrance;
         input [3:0] axis_idx;
@@ -796,10 +1048,10 @@ module spu13_tang25k_top #(
                 4'd3:  q_latch <= telemetry_q_burst[3*32 +: 32];
                 4'd4:  q_latch <= telemetry_q_burst[4*32 +: 32];
                 4'd5:  q_latch <= telemetry_q_burst[5*32 +: 32];
-                4'd6:  q_latch <= telemetry_q_burst[6*32 +: 32];
-                4'd7:  q_latch <= telemetry_q_burst[7*32 +: 32];
-                4'd8:  q_latch <= telemetry_q_burst[8*32 +: 32];
-                4'd9:  q_latch <= telemetry_q_burst[9*32 +: 32];
+                4'd6:  q_latch <= SDRAM_SELFTEST_TELEMETRY ? sdram_selftest_error_mask_word : telemetry_q_burst[6*32 +: 32];
+                4'd7:  q_latch <= CORE_SDRAM_VERIFY_TELEMETRY ? core_sdram_verify_status_word : telemetry_q_burst[7*32 +: 32];
+                4'd8:  q_latch <= CORE_SDRAM_VERIFY_TELEMETRY ? core_sdram_verify_wr_checksum : telemetry_q_burst[8*32 +: 32];
+                4'd9:  q_latch <= CORE_SDRAM_VERIFY_TELEMETRY ? core_sdram_verify_rd_checksum : telemetry_q_burst[9*32 +: 32];
                 4'd10: q_latch <= SDRAM_SELFTEST_TELEMETRY ? sdram_selftest_status_word : telemetry_q_burst[10*32 +: 32];
                 4'd11: q_latch <= SDRAM_SELFTEST_TELEMETRY ? sdram_selftest_endpoints_word : telemetry_q_burst[11*32 +: 32];
                 4'd12: q_latch <= SDRAM_SELFTEST_TELEMETRY ? sdram_selftest_checksum : telemetry_q_burst[12*32 +: 32];
@@ -1068,7 +1320,9 @@ module spu13_tang25k_top #(
                         line_is_boot <= 1'b0;
                         line_is_alive <= 1'b0;
                         line_is_rplu <= (RPLU_TELEMETRY_BURST && (burst_axis_idx >= 4'd13));
-                        line_is_sdram <= (SDRAM_SELFTEST_TELEMETRY && (burst_axis_idx >= 4'd10) && (burst_axis_idx <= 4'd12));
+                        line_is_sdram <= (SDRAM_SELFTEST_TELEMETRY && (burst_axis_idx == 4'd6))
+                                      || (CORE_SDRAM_VERIFY_TELEMETRY && (burst_axis_idx >= 4'd7) && (burst_axis_idx <= 4'd9))
+                                      || (SDRAM_SELFTEST_TELEMETRY && (burst_axis_idx >= 4'd10) && (burst_axis_idx <= 4'd12));
                         line_is_lattice <= (burst_axis_idx >= 4'd13) && !(RPLU_TELEMETRY_BURST && (burst_axis_idx >= 4'd13));
                         line_launch_pending <= 1'b1;
                     end
