@@ -470,7 +470,8 @@ module spu13_core #(
                 .inst_done(inst_done),
                 .pc_out(seq_pc),
                 .halted(seq_halted),
-                .program_size()
+                .program_size(),
+                .damping_active(damping_active)
             );
         end else begin : gen_no_sequencer
             assign seq_inst_valid = 1'b0;
