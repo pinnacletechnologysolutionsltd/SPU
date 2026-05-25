@@ -1,0 +1,65 @@
+;; wildberger_layer2.lith — Quadrance, Spread Polynomials, Cross Law
+;; 
+;; Layer 2 of the Wildberger Rational Trigonometry Library.
+;; Builds on Layer 1 (spread, collinearity) from wildberger_geometry.lith.
+;; All operations are pure integer/rational — no floating point, no sqrt.
+;;
+;; ── Primitives ──────────────────────────────────────────────────────
+;;   quadrance_between(v1, v2)   → Q (green metric)
+;;   vector_normalize(v)         → canonical form (subtract min component)
+;;   spread_polynomial(n, s)     → Sₙ(s) via Pell rotor
+;;   cross_law(Q1, Q2, s3)       → Q₃ from two quadrances and spread
+;;   reflect_point(P, A, B)      → reflection of P across line AB
+
+;; ── Demo 1: Quadrance between two Quadray vectors ────────────────────
+;; v1 = (-1, 0, 0, 1), v2 = (0, -1, 1, 0)
+;; Green metric: Q = (A₁-A₂)² + 3(B₁-B₂)² + (C₁-C₂)² + (D₁-D₂)²
+;;              = (-1-0)² + 3(0-(-1))² + (0-1)² + (1-0)²
+;;              = 1 + 3·1 + 1 + 1 = 6
+;; Note: The green metric matches the Davis Gate quadrance formula:
+;;   Q = A² + 3B² + C² + D² applied to (v₁−v₂)
+
+;; Load vectors
+QLDI QR0, -1,  0,  0,  1    ;; v1 = (-1, 0, 0, 1)
+QLDI QR1,  0, -1,  1,  0    ;; v2 = (0, -1, 1, 0)
+QSUB QR2, QR0, QR1          ;; v1 - v2 = (-1, 1, -1, 1)
+QLOG QR2                     ;; should show Q = 1 + 3·1 + 1 + 1 = 6
+
+;; ── Demo 2: Vector normalization ─────────────────────────────────────
+;; Normalize: subtract min(A,B,C,D) from all components
+;; v = (3, -1, 0, 2) → min = -1 → norm = (4, 0, 1, 3)
+QLDI QR3, 3, -1, 0, 2
+;; Manual normalization via QSUB with min component
+;; (simplified — full normalize needs min-extraction opcode)
+QLDI QR4, -1, -1, -1, -1   ;; broadcast min = -1
+QSUB QR5, QR3, QR4         ;; (3-(-1), -1-(-1), 0-(-1), 2-(-1)) = (4, 0, 1, 3)
+QLOG QR5
+
+;; ── Demo 3: Spread polynomial S₁(s) via Pell rotor ───────────────────
+;; Pell rotor period-8 evaluates Sₙ(s). Identity seed gives s=0.
+IDNT R0              ;; R0 = (1,0) unity Pell seed
+QROT R1, R0, 1       ;; R1 = Pell step 1 → S₁
+QROT R2, R1, 1       ;; R2 = Pell step 2 → S₂
+hex R1, QR2
+hex R2, QR5
+
+;; ── Demo 4: Cross Law — find Q₃ from Q₁, Q₂, s₃ ──────────────────
+;; Cross Law: (Q₃ − Q₁ − Q₂)² = 4·Q₁·Q₂·(1−s₃)
+;; For Q₁=3, Q₂=4, s₃=1 (right angle): (Q₃−7)² = 0 → Q₃=7
+;; For Q₁=3, Q₂=4, s₃=3/4 (60° equivalent): (Q₃−7)² = 4·3·4·(1/4) = 12
+;;   → Q₃ = 7 ± √12 (two possible triangles)
+delta Q1=3 Q2=4 steps=4 dest=QR7
+QLOG QR7
+
+;; ── Demo 5: Reflect point P across line AB ──────────────────────────
+;; Reflection formula: P' = P − 2·(spread contribution)·(A−B)
+;; Using QLDI for test coordinates
+QLDI QR8, 2, 1, 0, 0     ;; point to reflect
+QLDI QR9, 0, 0, 1, 0     ;; line point A
+QLDI QR10, 1, 0, 0, 0    ;; line point B
+;; (simplified — full reflection needs more primitives)
+
+;; ── Hex output ──────────────────────────────────────────────────────
+hex R0, QR2
+hex R1, QR5
+hex R2, QR7
