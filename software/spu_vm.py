@@ -501,6 +501,7 @@ OPCODES = {
     "QADD":  0x10, "QROT":  0x11, "QNORM": 0x12,
     "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C, "QLDI":  0x1D, "DELTA": 0x1E,
     "CALL":  0x20, "RET":   0x21,
+    "MIN4":  0x1F, "QREAD": 0x22,
     # Geometry output
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -1414,6 +1415,30 @@ class SPUCore:
                     print(f"         spread = 1 - {dot}²/({v2}·{w2})"
                           f" = ({d_val}-{dot*dot})/{d_val}"
                           f" = {n_val//g}/{d_val//g}  ✓ exact rational")
+
+
+        elif opcode == OPCODES["MIN4"]:
+            # MIN4 QRd — normalize QRd by subtracting min(A,B,C,D)
+            d = r1 % 13
+            v = self.qregs[d]
+            m = min(v.a.a, v.b.a, v.c.a, v.d.a)
+            self.qregs[d] = QuadrayVector(
+                RationalSurd(v.a.a - m, v.a.b),
+                RationalSurd(v.b.a - m, v.b.b),
+                RationalSurd(v.c.a - m, v.c.b),
+                RationalSurd(v.d.a - m, v.d.b),
+            )
+            if self.verbose:
+                print(f"  [{self.pc:04d}] MIN4 QR{d}  min={m} → "
+                      f"({v.a.a-m}, {v.b.a-m}, {v.c.a-m}, {v.d.a-m})")
+
+        elif opcode == OPCODES["QREAD"]:
+            # QREAD QRd, lane — read QR lane into another QR
+            d = r1 % 13
+            lane = r2 % 13
+            self.qregs[d] = self.qregs[lane]
+            if self.verbose:
+                print(f"  [{self.pc:04d}] QREAD QR{d} ← QR{lane}")
 
         elif opcode == OPCODES["HEX"]:
             # HEX Rd, QRn — project QRn to hex pixel (q,r); store q in Rd, r in R(d+1)
