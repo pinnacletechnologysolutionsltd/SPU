@@ -546,8 +546,11 @@ module spu13_core #(
                 .C_out(rotor_C_in), .D_out(rotor_D_in)
             );
 
-            spu13_rotor_core u_rotc (
+            wire rote_done;
+            spu13_rotor_core_tdm u_rotc (
                 .clk(clk), .rst_n(rst_n),
+                .start(rote_en),
+                .done(rote_done),
                 .A_in(rotor_A_in),
                 .B_in(rotor_B_in),
                 .C_in(rotor_C_in),
@@ -595,6 +598,7 @@ module spu13_core #(
             assign rote_B_out = 64'd0; assign rote_C_out = 64'd0;
             assign rote_D_out = 64'd0;
             assign rote_F = 64'd0; assign rote_G = 64'd0; assign rote_H = 64'd0;
+            assign rote_done = 1'b1;
         end
     endgenerate
 
@@ -708,14 +712,14 @@ module spu13_core #(
                 rote_angle     <= eff_inst_word[29:24];
                 rote_field     <= eff_inst_word[31:30];
                 rote_active    <= 1;
+                rote_en        <= 1; // start TDM cycle
             end else if (rote_active) begin
-                rote_en    <= 1;
-                rote_active <= 0;
-            end else if (rote_en) begin
-                qrf_wr_en   <= 1;
-                qrf_wr_lane <= rote_dest_lane;
-                rote_en     <= 0;
-                inst_done_r <= 1;
+                if (rote_done) begin
+                    qrf_wr_en   <= 1;
+                    qrf_wr_lane <= rote_dest_lane;
+                    rote_active <= 0;
+                    inst_done_r <= 1;
+                end
             end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h16) begin
                 // ── HEX handler: project QRn → (q,r) hex coordinates ──
                 // HEX Rd, QRn — read QR[n], compute A-D, B-D, output hex

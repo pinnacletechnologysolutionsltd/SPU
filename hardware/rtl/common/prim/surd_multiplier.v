@@ -5,7 +5,7 @@
 
 module surd_multiplier #(
     parameter WIDTH = 32,
-    parameter SHIFT = 16     // 16 for Q16 I/O, 0 for pure integer
+    parameter SHIFT = 0    // 0 = integer, 16 = Q16 fixed-point
 )(
     input  wire clk,
     input  wire reset,
@@ -19,13 +19,13 @@ module surd_multiplier #(
     // 1. Parallel Cross-Products
     // We use four 32x32 multipliers to resolve the rotor expansion in one cycle.
     wire signed [63:0] prod_a1a2;
-    assign prod_a1a2 = a1 * a2;
+    assign prod_a1a2 = $signed(a1) * $signed(a2);
     wire signed [63:0] prod_b1b2;
-    assign prod_b1b2 = b1 * b2;
+    assign prod_b1b2 = $signed(b1) * $signed(b2);
     wire signed [63:0] prod_a1b2;
-    assign prod_a1b2 = a1 * b2;
+    assign prod_a1b2 = $signed(a1) * $signed(b2);
     wire signed [63:0] prod_b1a2;
-    assign prod_b1a2 = b1 * a2;
+    assign prod_b1a2 = $signed(b1) * $signed(a2);
 
     // 2. Field-Selectable Surd Term: k × b1 × b2
     //    k=3:   (x << 1) + x       = 3x    (adder)
@@ -47,8 +47,9 @@ module surd_multiplier #(
             res_a <= {WIDTH{1'b0}};
             res_b <= {WIDTH{1'b0}};
         end else begin
+            // Result A: aa + k·bb (normalized by SHIFT)
             res_a <= (prod_a1a2 + surd_term) >>> SHIFT;
-            // Result B: ab + ba (normalized)
+            // Result B: ab + ba (normalized by SHIFT)
             res_b <= (prod_a1b2 + prod_b1a2) >>> SHIFT;
         end
     end
