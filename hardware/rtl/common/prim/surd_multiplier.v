@@ -4,7 +4,8 @@
 // Objective: Single multiplier for all polyhedral symmetry groups.
 
 module surd_multiplier #(
-    parameter WIDTH = 32
+    parameter WIDTH = 32,
+    parameter SHIFT = 16     // 16 for Q16 I/O, 0 for pure integer
 )(
     input  wire clk,
     input  wire reset,
@@ -46,10 +47,9 @@ module surd_multiplier #(
             res_a <= {WIDTH{1'b0}};
             res_b <= {WIDTH{1'b0}};
         end else begin
-            // Result A: aa + k·bb (normalized by 16-bit shift)
-            res_a <= (prod_a1a2 + surd_term) >>> 16;
-            // Result B: ab + ba (normalized by 16-bit shift)
-            res_b <= (prod_a1b2 + prod_b1a2) >>> 16;
+            res_a <= (prod_a1a2 + surd_term) >>> SHIFT;
+            // Result B: ab + ba (normalized)
+            res_b <= (prod_a1b2 + prod_b1a2) >>> SHIFT;
         end
     end
 
