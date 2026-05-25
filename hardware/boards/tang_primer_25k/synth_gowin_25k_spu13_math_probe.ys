@@ -25,7 +25,8 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/math/spu_quadrance_calc.v \
     hardware/rtl/common/prim/spu_gowin_prim.v \
     hardware/rtl/common/prim/gowin_mult18.v \
-    hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
+    hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v \
+    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v
 
 chparam -set ENABLE_SDRAM 0 \
         -set ENABLE_CORE_RPLU 0 \
