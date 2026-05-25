@@ -500,6 +500,7 @@ OPCODES = {
     # Quadray IVM operations
     "QADD":  0x10, "QROT":  0x11, "QNORM": 0x12,
     "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C, "QLDI":  0x1D, "DELTA": 0x1E,
+    "CALL":  0x20, "RET":   0x21,
     # Geometry output
     "SPREAD":0x15, "HEX":   0x16,
     # v1.2 — Vector Equilibrium + Janus layer
@@ -1221,6 +1222,7 @@ class SPUCore:
             if self.verbose:
                 print(f"  [{self.pc:04d}] DELTA QR{d} Q1={Q1} Q2={Q2} "
                       f"steps={steps} → q_sum={q_sum} rhs²={rhs_sq}/{steps}")
+
 
         elif opcode == OPCODES["QADD"]:
             # QADD QRd, QRs — QRd = QRd + QRs
