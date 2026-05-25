@@ -54,6 +54,8 @@ OPCODES: dict[str, int] = {
     # Control flow
     "JMP":    0x06, "SNAP":   0x07, "COND":   0x20,
     "CALL":   0x20, "RET":    0x21, "HALT":   0x08,
+    "MIN4":    0x1F, "QREAD":  0x22,
+    "CALL":    0x20, "RET":     0x21,
     # Quadray IVM operations
     "QADD":   0x10, "QROT":   0x11, "QNORM":  0x12,
     "QLOAD":  0x13, "QLOG":   0x14, "QSUB":   0x1B, "ROTC":   0x1C, "QLDI":   0x1D, "DELTA":  0x1E,
@@ -69,8 +71,8 @@ OPCODES: dict[str, int] = {
 # Opcodes that take no register/immediate arguments
 _NO_ARGS  = {"NOP", "HALT", "RET", "SNAP", "EQUIL"}
 # Opcodes where first arg is a QR register
-_QR_FIRST = {"QLOAD", "QLOG", "QADD", "QSUB", "QROT", "QNORM", "HEX",
-              "SPREAD", "IDNT", "ANNE", "ROTC", "QLDI"}
+_QR_FIRST = {"QLOAD", "QLOG", "QADD", "QSUB", "QROT", "QNORM", "HEX", "MIN4",
+              "SPREAD", "IDNT", "ANNE", "ROTC", "QLDI", "QREAD"}
 
 
 def _s16(val: int) -> int:
