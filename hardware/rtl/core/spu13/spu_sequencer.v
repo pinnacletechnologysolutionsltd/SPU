@@ -18,11 +18,12 @@ module spu_sequencer #(
 );
     // ── Program ROM ──────────────────────────────────────────────────
     // QLDI test: load (2,-2,0,0), read hex, rotate, read again
-    localparam PROG_SIZE = 3;
+    localparam PROG_SIZE = 4;
     wire [63:0] prog_words [0:PROG_SIZE-1];
     assign prog_words[0] = 64'h1D00_0002_FE00_0000;  // QLDI QR0, 2, -2, 0, 0
-    assign prog_words[1] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0
-    assign prog_words[2] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0 (read again)
+    assign prog_words[1] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0 (readback)
+    assign prog_words[2] = 64'h1C01_0000_0100_0000;  // ROTC QR1, QR0, 60
+    assign prog_words[3] = 64'h1601_0100_0000_0000;  // HEX  R1, QR1 (rotated)
 
     // ── Execution FSM ───────────────────────────────────────────────
     localparam S_IDLE = 0, S_FETCH = 2, S_WAIT = 3, S_DELAY = 4;
