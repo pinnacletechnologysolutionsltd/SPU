@@ -62,7 +62,19 @@ def main():
     prog_data = pack_program(prog_path)
     print(f"  Program: {len(prog_data)} bytes (header + words + terminator)")
     
-    # Build 64 KB sector starting at 0x010000
+    # Raw program data for flash offset 0x010000
+    output_path = os.path.join(os.path.dirname(__file__), 'build', 'spu13_program.bin')
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'wb') as f:
+        f.write(prog_data)
+    print(f"Written: {output_path}")
+    print(f"  {len(prog_data)} bytes (flash offset 0x010000)")
+    print()
+    print("To flash with existing bootloader:")
+    print("  1. Backup: minipro -p W25Q128JV -r build/flash_backup.bin")
+    print("  2. Merge:  dd if=build/spu13_program.bin of=build/flash_backup.bin bs=1 seek=65536 conv=notrunc")
+    print("  3. Write:  minipro -p W25Q128JV -w build/flash_backup.bin -s")
+    print()
     sector = bytearray(65536)  # 64 KB blank sector
     sector[:len(prog_data)] = prog_data
     
