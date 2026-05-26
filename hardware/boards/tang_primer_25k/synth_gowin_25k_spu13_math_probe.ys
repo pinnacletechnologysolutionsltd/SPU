@@ -34,24 +34,11 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/common/prim/surd_multiplier.v \
     hardware/rtl/arch/spu_bio_stubs.v
 
-# ── Essential modules (read before chparam for generate-block resolution) ──
-read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_sequencer.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
-read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_rotor_core.v
-read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/surd_multiplier.v
-read_verilog -I hardware/rtl/arch hardware/rtl/arch/spu_bio_stubs.v
-
 chparam -set ENABLE_SDRAM 0 \
         -set ENABLE_CORE_RPLU 0 \
         -set ENABLE_CORE_LATTICE 0 \
         -set ENABLE_CORE_MATH 1 \
         spu13_tang25k_top
-
-# ── Sequencer + QR + Rotor (essential) ──
-
-# ── Bio/I2S/Torus stubs (no LUT cost) ──
 
 hierarchy -check -top spu13_tang25k_top
 
@@ -62,11 +49,9 @@ techmap -map +/gowin/cells_map.v
 opt_lut_ins -tech gowin
 hilomap -singleton -hicell VCC V -locell GND G
 clean
-# ── Sequencer + QR + Rotor (essential) ──
-
-# ── Bio/I2S/Torus stubs (no LUT cost) ──
 
 hierarchy -check
 check -noinit
 blackbox =A:whitebox
 write_json build/spu13_math_probe.json
+
