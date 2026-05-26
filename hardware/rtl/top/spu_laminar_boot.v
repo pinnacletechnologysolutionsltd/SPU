@@ -37,8 +37,11 @@ module spu_laminar_boot #(
     output reg [63:0] rplu_cfg_data,
     output reg [15:0] rplu_cfg_loaded,
     output reg [31:0] rplu_cfg_checksum,
-    output reg        boot_done
+    output reg        boot_done,
+    output wire [5:0]  boot_state
 );
+
+    assign boot_state = state;
 
     // Flash Addresses
     localparam [7:0]  JEDEC_CMD           = 8'h9F;
