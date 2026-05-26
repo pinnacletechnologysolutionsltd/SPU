@@ -684,6 +684,7 @@ module spu13_core #(
             qrf_wr_lane <= 0;
             inst_done_r <= 0;
             instr_wr_active <= 0;
+            hex_valid <= 0;   // default: one-cycle pulse
         end else begin
             qrf_wr_en <= 0;  // default: no write
             inst_done_r <= 0;
