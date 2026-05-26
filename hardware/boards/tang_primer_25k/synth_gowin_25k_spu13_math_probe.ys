@@ -44,15 +44,8 @@ chparam -set ENABLE_SDRAM 0 \
         spu13_tang25k_top
 
 # ── Sequencer + QR + Rotor (essential) ──
-read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_sequencer.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
-read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_rotor_core.v
-read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/surd_multiplier.v
 
 # ── Bio/I2S/Torus stubs (no LUT cost) ──
-read_verilog -I hardware/rtl/arch hardware/rtl/arch/spu_bio_stubs.v
 
 hierarchy -check -top spu13_tang25k_top
 
@@ -64,15 +57,8 @@ opt_lut_ins -tech gowin
 hilomap -singleton -hicell VCC V -locell GND G
 clean
 # ── Sequencer + QR + Rotor (essential) ──
-read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_sequencer.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
-read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_rotor_core.v
-read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/surd_multiplier.v
 
 # ── Bio/I2S/Torus stubs (no LUT cost) ──
-read_verilog -I hardware/rtl/arch hardware/rtl/arch/spu_bio_stubs.v
 
 hierarchy -check
 check -noinit
