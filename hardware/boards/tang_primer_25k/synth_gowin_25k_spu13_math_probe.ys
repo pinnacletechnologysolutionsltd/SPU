@@ -28,6 +28,15 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v \
     hardware/rtl/core/spu13/spu13_rotor_core_tdm.v
 
+# ── Essential modules (read before chparam for generate-block resolution) ──
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_sequencer.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_rotor_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/surd_multiplier.v
+read_verilog -I hardware/rtl/arch hardware/rtl/arch/spu_bio_stubs.v
+
 chparam -set ENABLE_SDRAM 0 \
         -set ENABLE_CORE_RPLU 0 \
         -set ENABLE_CORE_LATTICE 0 \
