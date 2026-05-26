@@ -26,8 +26,7 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/common/prim/spu_gowin_prim.v \
     hardware/rtl/common/prim/gowin_mult18.v \
     hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v \
-    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
-    hardware/rtl/core/spu13/spu13_rotor_core.v \
+    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v
     hardware/rtl/core/shared/spu_quadray_permute.v \
     hardware/rtl/core/shared/spu_quadray_regfile.v \
     hardware/rtl/top/spu_ve_qr_init.v \
