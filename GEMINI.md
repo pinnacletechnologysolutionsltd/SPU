@@ -14,6 +14,14 @@
   - In the vendor flow, the project baseline should enable `CPU as regular IO` when testing the raw `E2` clock path.
   - **Constraint:** Ensure `IO_PORT "sys_clk" PULL_MODE=NONE;` is set in the `.cst` file.
 
+## Engineering Standards (RationalSurd Math)
+- **Coefficient Encoding:** Never use raw signed decimal literals (e.g., `-64'sd1`) for `RationalSurd` assignments. This causes unintended sign-extension across the component boundary (Rational vs. Surd).
+- **Standard Pattern:** Always use explicit bit-packing for constants:
+  - Identity: `{32'd0, 32'd1}`
+  - Negative Rational: `{32'd0, 32'hFFFFFFFF}`
+  - Standard Surd: `{32'd1, 32'd0}`
+- **Division Scaling:** All tetrahedral rotations and quadrance normalization steps must use bit-exact division logic (e.g., Hacker's Delight `div3`) rather than fixed-point approximations to maintain compatibility with the SPU VM.
+
 ## Verified Pinout Baseline (Tang Primer 25K)
 After extensive testing, a stable physical baseline has been established via the `spu_tang25k_uart_led_test.v` smoketest. This gives us a guaranteed working reference point for I/O.
 - **Clock (`sys_clk`):** Pin `E2` (Raw 50 MHz crystal). `PULL_MODE=NONE` is mandatory.
