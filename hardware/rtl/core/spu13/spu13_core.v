@@ -558,6 +558,7 @@ module spu13_core #(
                 .F(rote_F), .G(rote_G), .H(rote_H),
                 .field_sel(rote_field),
                 .bypass_p5(rote_angle == 6'd2),  // 120° → pure permutation
+                .apply_div3(rote_denom_3),
                 .A_out(rote_A_out_raw),
                 .B_out(rote_B_out_raw),
                 .C_out(rote_C_out_raw),
@@ -602,57 +603,60 @@ module spu13_core #(
     endgenerate
 
     // ── F,G,H lookup table (combinational) ─────────────────────────────
-    // Identical to VM _ROTC_TABLE. Scaled by denominator 3 for tetrahedral
-    // angles; the rotor core handles the /3 scaling internally via
-    // fixed-point truncation in the surd multiplier path.
-    // Extended entries (6-63) are populated at hydration time from flash;
-    // the combinational default returns identity (F=1, G=0, H=0) for
-    // unpopulated entries.
-    assign rote_F = (rote_angle == 6'd0)  ? 64'sd1  :
-                    (rote_angle == 6'd1)  ? 64'sd2  :
-                    (rote_angle == 6'd2)  ? -64'sd1 :
-                    (rote_angle == 6'd3)  ? -64'sd1 :
-                    (rote_angle == 6'd4)  ? 64'sd2  :
-                    (rote_angle == 6'd5)  ? 64'sd2  :
-                    // Extended entries 6-11 (A₄ group) — same F,G,H patterns
-                    (rote_angle == 6'd6)  ? 64'sd2  :
-                    (rote_angle == 6'd7)  ? 64'sd2  :
-                    (rote_angle == 6'd8)  ? -64'sd1 :
-                    (rote_angle == 6'd9)  ? 64'sd2  :
-                    (rote_angle == 6'd10) ? 64'sd2  :
-                    (rote_angle == 6'd11) ? -64'sd1 :
-                    // Entries 12-63: identity fallback (flash-load for actual values)
-                    64'sd1;
+    // Identical to VM _ROTC_TABLE.
+    // Negative values are explicitly bit-packed to avoid sign-extension across components.
+    
+    localparam [63:0] RS_1 = {32'd0, 32'd1};
+    localparam [63:0] RS_2 = {32'd0, 32'd2};
+    localparam [63:0] RS_N1 = {32'd0, 32'hFFFFFFFF};
 
-    assign rote_G = (rote_angle == 6'd0)  ? 64'sd0  :
-                    (rote_angle == 6'd1)  ? 64'sd2  :
-                    (rote_angle == 6'd2)  ? 64'sd2  :
-                    (rote_angle == 6'd3)  ? -64'sd1 :
-                    (rote_angle == 6'd4)  ? -64'sd1 :
-                    (rote_angle == 6'd5)  ? 64'sd2  :
-                    // Extended entries
-                    (rote_angle == 6'd6)  ? -64'sd1 :
-                    (rote_angle == 6'd7)  ? 64'sd2  :
-                    (rote_angle == 6'd8)  ? 64'sd2  :
-                    (rote_angle == 6'd9)  ? 64'sd2  :
-                    (rote_angle == 6'd10) ? -64'sd1 :
-                    (rote_angle == 6'd11) ? 64'sd2  :
-                    64'sd0;
+    assign rote_F = (rote_angle == 6'd0)  ? RS_1  :
+                    (rote_angle == 6'd1)  ? RS_2  :
+                    (rote_angle == 6'd2)  ? RS_N1 :
+                    (rote_angle == 6'd3)  ? RS_N1 :
+                    (rote_angle == 6'd4)  ? RS_2  :
+                    (rote_angle == 6'd5)  ? RS_2  :
+                    // Extended entries 6-11 (A₄ group)
+                    (rote_angle == 6'd6)  ? RS_2  :
+                    (rote_angle == 6'd7)  ? RS_2  :
+                    (rote_angle == 6'd8)  ? RS_N1 :
+                    (rote_angle == 6'd9)  ? RS_2  :
+                    (rote_angle == 6'd10) ? RS_2  :
+                    (rote_angle == 6'd11) ? RS_N1 :
+                    RS_1;
 
-    assign rote_H = (rote_angle == 6'd0)  ? 64'sd0  :
-                    (rote_angle == 6'd1)  ? -64'sd1 :
-                    (rote_angle == 6'd2)  ? 64'sd2  :
-                    (rote_angle == 6'd3)  ? -64'sd1 :
-                    (rote_angle == 6'd4)  ? 64'sd2  :
-                    (rote_angle == 6'd5)  ? -64'sd1 :
+    assign rote_G = (rote_angle == 6'd0)  ? 64'd0 :
+                    (rote_angle == 6'd1)  ? RS_2  :
+                    (rote_angle == 6'd2)  ? RS_2  :
+                    (rote_angle == 6'd3)  ? RS_N1 :
+                    (rote_angle == 6'd4)  ? RS_N1 :
+                    (rote_angle == 6'd5)  ? RS_2  :
                     // Extended entries
-                    (rote_angle == 6'd6)  ? 64'sd2  :
-                    (rote_angle == 6'd7)  ? -64'sd1 :
-                    (rote_angle == 6'd8)  ? 64'sd2  :
-                    (rote_angle == 6'd9)  ? -64'sd1 :
-                    (rote_angle == 6'd10) ? 64'sd2  :
-                    (rote_angle == 6'd11) ? 64'sd2  :
-                    64'sd0;
+                    (rote_angle == 6'd6)  ? RS_N1 :
+                    (rote_angle == 6'd7)  ? RS_2  :
+                    (rote_angle == 6'd8)  ? RS_2  :
+                    (rote_angle == 6'd9)  ? RS_2  :
+                    (rote_angle == 6'd10) ? RS_N1 :
+                    (rote_angle == 6'd11) ? RS_2  :
+                    64'd0;
+
+    assign rote_H = (rote_angle == 6'd0)  ? 64'd0 :
+                    (rote_angle == 6'd1)  ? RS_N1 :
+                    (rote_angle == 6'd2)  ? RS_2  :
+                    (rote_angle == 6'd3)  ? RS_N1 :
+                    (rote_angle == 6'd4)  ? RS_2  :
+                    (rote_angle == 6'd5)  ? RS_N1 :
+                    // Extended entries
+                    (rote_angle == 6'd6)  ? RS_2  :
+                    (rote_angle == 6'd7)  ? RS_N1 :
+                    (rote_angle == 6'd8)  ? RS_2  :
+                    (rote_angle == 6'd9)  ? RS_N1 :
+                    (rote_angle == 6'd10) ? RS_2  :
+                    (rote_angle == 6'd11) ? RS_2  :
+                    64'd0;
+
+    wire rote_denom_3;
+    assign rote_denom_3 = (rote_angle > 6'd0 && rote_angle < 6'd12);
 
     // ── ROTC execution FSM ─────────────────────────────────────────────
     // On ROTC instruction (0x1C): latch source/dest/angle, fire rote_en.

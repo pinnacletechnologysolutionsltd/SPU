@@ -8,14 +8,19 @@ read_verilog -lib +/gowin/cells_xtra_gw5a.v
 read_verilog -I hardware/rtl/arch \
     hardware/boards/tang_primer_25k/spu13_tang25k_top.v \
     hardware/rtl/core/spu13/spu13_core.v \
+    hardware/rtl/core/spu13/spu_instr_decode.v \
+    hardware/rtl/core/spu13/spu_sequencer.v \
+    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
     hardware/rtl/core/spu13/spu13_lattice.v \
     hardware/rtl/core/spu13/laminar_node.v \
     hardware/rtl/top/spu_laminar_boot.v \
+    hardware/rtl/arch/spu_bio_stubs.v \
     hardware/rtl/core/shared/spu_rotor_vault.v \
     hardware/rtl/core/shared/spu_cross_rotor.v \
-read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
+    hardware/rtl/core/shared/spu_quadray_permute.v \
+    hardware/rtl/core/shared/spu_quadray_regfile.v \
     hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/top/spu_ve_qr_init.v \
     hardware/rtl/gpu/davis_to_rplu.v \
     hardware/rtl/gpu/rplu_exp.v \
     hardware/rtl/gpu/pade_eval_4_4.v \
@@ -28,6 +33,7 @@ read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
     hardware/rtl/math/spu_quadrance_calc.v \
     hardware/rtl/common/prim/spu_gowin_prim.v \
     hardware/rtl/common/prim/gowin_mult18.v \
+    hardware/rtl/common/prim/surd_multiplier.v \
     hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
 
 chparam -set ENABLE_SDRAM 0 \

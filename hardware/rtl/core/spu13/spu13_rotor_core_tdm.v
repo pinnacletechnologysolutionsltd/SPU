@@ -20,6 +20,7 @@ module spu13_rotor_core_tdm #(
 
     input  wire [1:0]  field_sel,
     input  wire        bypass_p5,
+    input  wire        apply_div3,
     
     // Quadray Output Coordinates
     output reg  [63:0] A_out, B_out, C_out, D_out
@@ -27,7 +28,7 @@ module spu13_rotor_core_tdm #(
 
     // --- TDM Controller ---
     reg [3:0] state;
-    localparam S_IDLE = 0, S_CALC = 1, S_DONE = 10;
+    localparam S_IDLE = 0, S_CALC = 1, S_DONE = 11;
 
     reg [63:0] sm_op1, sm_op2;
     wire [63:0] sm_res;
@@ -39,6 +40,27 @@ module spu13_rotor_core_tdm #(
         .a2(sm_op2[31:0]),  .b2(sm_op2[63:32]),
         .res_a(sm_res[31:0]), .res_b(sm_res[63:32])
     );
+
+    // Division by 3 for Tetrahedral Angles (Hacker's Delight magic constant)
+    function signed [31:0] div3;
+        input signed [31:0] n;
+        reg signed [63:0] q;
+        begin
+            q = $signed(n) * $signed(32'h55555556);
+            div3 = q[63:32] + n[31];
+        end
+    endfunction
+
+    function [63:0] scale_axis;
+        input [63:0] axis;
+        input        en;
+        begin
+            if (en)
+                scale_axis = {div3(axis[63:32]), div3(axis[31:0])};
+            else
+                scale_axis = axis;
+        end
+    endfunction
 
     // Accumulators for B, C, D rows
     reg [63:0] acc_B, acc_C, acc_D;
@@ -112,10 +134,10 @@ module spu13_rotor_core_tdm #(
                     acc_D <= {acc_D[63:32] + sm_res[63:32], acc_D[31:0] + sm_res[31:0]};
                     state <= 4'd10;
                 end
-                4'd10: begin // FD result latched; final sum
-                    B_out <= acc_B;
-                    C_out <= acc_C;
-                    D_out <= {acc_D[63:32] + sm_res[63:32], acc_D[31:0] + sm_res[31:0]};
+                4'd10: begin // FD result latched; final sum and optional scale
+                    B_out <= scale_axis(acc_B, apply_div3);
+                    C_out <= scale_axis(acc_C, apply_div3);
+                    D_out <= scale_axis({acc_D[63:32] + sm_res[63:32], acc_D[31:0] + sm_res[31:0]}, apply_div3);
                     state <= S_DONE;
                 end
 
