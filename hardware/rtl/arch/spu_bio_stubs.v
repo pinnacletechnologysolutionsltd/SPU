@@ -44,3 +44,4 @@ module spu_soul_metabolism #(parameter CLK_HZ = 12000000)
     assign tuck_count = 0; assign cycle_count = 0;
     assign flash_we = 0; assign flash_addr = 0; assign soul_page = 0;
 endmodule
+module spu13_rotor_core(input clk, rst_n, input [63:0] A_in, B_in, C_in, D_in, F, G, H, input [1:0] field_sel, input bypass_p5, output [63:0] A_out, B_out, C_out, D_out); assign A_out=0; assign B_out=0; assign C_out=0; assign D_out=0; endmodule
