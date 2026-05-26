@@ -545,8 +545,12 @@ module spu13_core #(
                 .C_out(rotor_C_in), .D_out(rotor_D_in)
             );
 
-            spu13_rotor_core u_rotc (
+            // TDM rotor core — 11-cycle pipeline, shared multiplier
+            wire rote_done_tdm;
+            spu13_rotor_core_tdm u_rotc (
                 .clk(clk), .rst_n(rst_n),
+                .start(rote_en),
+                .done(rote_done_tdm),
                 .A_in(rotor_A_in),
                 .B_in(rotor_B_in),
                 .C_in(rotor_C_in),
@@ -708,9 +712,10 @@ module spu13_core #(
                 rote_field     <= eff_inst_word[31:30];
                 rote_active    <= 1;
             end else if (rote_active) begin
-                rote_en    <= 1;
+                rote_en    <= 1;  // assert TDM start
                 rote_active <= 0;
-            end else if (rote_en) begin
+            end else if (rote_done_tdm) begin
+                // TDM rotor core done — writeback
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= rote_dest_lane;
                 rote_en     <= 0;
