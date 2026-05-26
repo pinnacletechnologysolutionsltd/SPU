@@ -99,16 +99,11 @@ module spu_sequencer #(
             case (state)
 
                 S_BOOT: begin
-                    // Bypass SPI flash — go straight to execution
-                    if (boot_done) begin
-                        state <= S_IDLE;
-                    end
-                end
-                S_FLASH_SKIP: begin
+                    // Bypass SPI flash — go straight to S_IDLE
                     state <= S_IDLE;
                 end
-                S_FLASH_CMD: begin
-                    if (1'b0) begin  // unreachable — keep syntax valid
+                S_FLASH_SKIP_DUMMY: begin
+                    if (1'b0) begin  // unreachable, SPI flash FSM preserved
                         flash_csn  <= 0;
                         spi_sr     <= 8'h03;   // READ command
                         bit_count  <= 7;
@@ -194,7 +189,11 @@ module spu_sequencer #(
 
                 S_IDLE: begin
                     halted <= 0;
-                    if (1'b0) begin  // disabled — skip SPI flash
+                    // Bypass SPI flash — go straight to S_IDLE
+                    state <= S_IDLE;
+                end
+                S_FLASH_SKIP_DUMMY: begin
+                    if (1'b0) begin  // unreachable, SPI flash FSM preserved
                         state <= S_FETCH;
                     end
                 end

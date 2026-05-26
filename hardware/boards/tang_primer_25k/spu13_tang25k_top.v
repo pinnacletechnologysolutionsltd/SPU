@@ -782,7 +782,7 @@ module spu13_tang25k_top #(
         .inst_done(seq_inst_done),
         .pc_out(), .halted(), .program_size(),
         .damping_active(1'b0),
-        .flash_csn(), .flash_sck(), .flash_mosi(), .flash_miso(1'b0)
+        
     );
 
     wire debug_run_core;
