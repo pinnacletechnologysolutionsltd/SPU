@@ -719,9 +719,9 @@ module spu13_core #(
                 // ── HEX handler: project QRn → (q,r) hex coordinates ──
                 // HEX Rd, QRn — read QR[n], compute A-D, B-D, output hex
                 rote_src_lane <= eff_inst_word[47:40] % 13;  // QRs
-                // hex projection = A[15:0] - D[15:0], B[15:0] - D[15:0]
-                hex_q   <= qrf_rd_A[15:0] - qrf_rd_D[15:0];
-                hex_r   <= qrf_rd_B[15:0] - qrf_rd_D[15:0];
+                // hex projection = B[15:0] - D[15:0], A[15:0] - D[15:0] (components swapped in RTL)
+                hex_q   <= qrf_rd_B[15:0] - qrf_rd_D[15:0];
+                hex_r   <= qrf_rd_A[15:0] - qrf_rd_D[15:0];
                 hex_valid <= 1;
                 inst_done_r <= 1;
             end else if (eff_inst_valid && eff_inst_word[63:56] != 8'h1D && inst_word[63:56] != 8'h1C && eff_inst_word[63:56] != 8'h16) begin
