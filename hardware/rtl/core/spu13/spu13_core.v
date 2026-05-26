@@ -679,9 +679,11 @@ module spu13_core #(
             qrf_wr_en <= 0;
             qrf_wr_lane <= 0;
             inst_done_r <= 0;
+            instr_wr_active <= 0;
         end else begin
             qrf_wr_en <= 0;  // default: no write
             inst_done_r <= 0;
+            instr_wr_active <= 0;
 
             // ── QLDI Handler (0x1D) ────────────────────────────────
             if (eff_inst_valid && eff_inst_word[63:56] == 8'h1D) begin
@@ -693,7 +695,7 @@ module spu13_core #(
                 instr_wr_B[63:32] <= 32'd0;
                 instr_wr_C[31:0]  <= {{24{eff_inst_word[23]}}, eff_inst_word[23:16]};
                 instr_wr_C[63:32] <= 32'd0;
-                qrf_wr_D[31:0]  <= {{24{eff_inst_word[15]}}, eff_inst_word[15:8]};
+                instr_wr_D[31:0]  <= {{24{eff_inst_word[15]}}, eff_inst_word[15:8]};
                 instr_wr_D[63:32] <= 32'd0;
                 instr_wr_active <= 1;
                 inst_done_r <= 1;
