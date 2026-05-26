@@ -776,11 +776,13 @@ module spu13_tang25k_top #(
     wire seq_inst_valid;
     wire [63:0] seq_inst_word;
     wire seq_inst_done;
+    wire [7:0] seq_pc_raw;
+    wire seq_halted_raw;
     spu_sequencer #(.IMEM_DEPTH(64)) u_seq(
         .clk(clk_core), .rst_n(rst_n), .boot_done(boot_done),
         .inst_valid(seq_inst_valid), .inst_word(seq_inst_word),
         .inst_done(seq_inst_done),
-        .pc_out(), .halted(), .program_size()
+        .pc_out(seq_pc_raw), .halted(seq_halted_raw), .program_size()
     );
 
     wire debug_run_core;
@@ -907,6 +909,9 @@ module spu13_tang25k_top #(
     reg [31:0]  telemetry_rplu_checksum_core;
     reg [31:0] telemetry_cycle_count_core;
     reg [31:0] telemetry_cycle_count_snap_core;
+    reg [5:0]  boot_state_snap_core;
+    reg [7:0]  seq_pc_snap_core;
+    reg        seq_halted_snap_core;
     reg        telemetry_seq_core;
     reg [3:0]  boot_prime_count_core;
     reg [3:0]  boot_last_prime_addr_core;
@@ -925,6 +930,9 @@ module spu13_tang25k_top #(
     reg [15:0]  telemetry_rplu_loaded_tx;
     reg [31:0]  telemetry_rplu_checksum_tx;
     reg [31:0] telemetry_cycle_count_tx;
+    reg [5:0]  boot_state_tx;
+    reg [7:0]  seq_pc_tx;
+    reg        seq_halted_tx;
     reg [31:0] boot_summary_q_tx;
     reg [3:0]  boot_summary_a_tx;
     reg [31:0] q_latch;
@@ -935,6 +943,7 @@ module spu13_tang25k_top #(
     reg        line_is_lattice;
     reg        line_is_rplu;
     reg        line_is_sdram;
+    reg        line_is_core;
     reg        boot_done_meta;
     reg        boot_done_tx;
     reg        telemetry_seq_meta;
@@ -979,7 +988,7 @@ module spu13_tang25k_top #(
         end
     end
 
-    assign msg[0]  = hex_msg_pending ? "H" : (line_is_alive ? "U" : (line_is_header ? "S" : (line_is_rplu ? "R" : (line_is_sdram ? "M" : (line_is_lattice ? "L" : (line_is_boot ? "B" : "Q"))))));
+    assign msg[0]  = hex_msg_pending ? "H" : (line_is_core ? "C" : (line_is_alive ? "U" : (line_is_header ? "S" : (line_is_rplu ? "R" : (line_is_sdram ? "M" : (line_is_lattice ? "L" : (line_is_boot ? "B" : "Q")))))));
     assign msg[1]  = ":";
     assign msg[2]  = hex_msg_pending ? hex2ascii(hex_q_latch[15:12]) : hex2ascii(q_latch[31:28]);
     assign msg[3]  = hex_msg_pending ? hex2ascii(hex_q_latch[11:8])  : hex2ascii(q_latch[27:24]);
@@ -1059,7 +1068,7 @@ module spu13_tang25k_top #(
                 4'd3:  q_latch <= telemetry_q_burst[3*32 +: 32];
                 4'd4:  q_latch <= telemetry_q_burst[4*32 +: 32];
                 4'd5:  q_latch <= telemetry_q_burst[5*32 +: 32];
-                4'd6:  q_latch <= SDRAM_SELFTEST_TELEMETRY ? sdram_selftest_error_mask_word : telemetry_q_burst[6*32 +: 32];
+                4'd6:  q_latch <= SDRAM_SELFTEST_TELEMETRY ? sdram_selftest_error_mask_word : telemetry_cycle_count_tx;
                 4'd7:  q_latch <= CORE_SDRAM_VERIFY_TELEMETRY ? core_sdram_verify_status_word : telemetry_q_burst[7*32 +: 32];
                 4'd8:  q_latch <= CORE_SDRAM_VERIFY_TELEMETRY ? core_sdram_verify_wr_checksum : telemetry_q_burst[8*32 +: 32];
                 4'd9:  q_latch <= CORE_SDRAM_VERIFY_TELEMETRY ? core_sdram_verify_rd_checksum : telemetry_q_burst[9*32 +: 32];
@@ -1149,6 +1158,9 @@ module spu13_tang25k_top #(
                         telemetry_overflow_snap_core <= core_scale_overflow;
                         telemetry_rplu_snap_core <= core_rplu_dissoc_mask;
                         telemetry_rplu_addr_snap_core <= (core_rplu_addr > telemetry_rplu_addr_max_core) ? core_rplu_addr : telemetry_rplu_addr_max_core;
+                        boot_state_snap_core <= boot_unit.boot_state;
+                        seq_pc_snap_core <= seq_pc_raw;
+                        seq_halted_snap_core <= seq_halted_raw;
                         telemetry_seq_core <= ~telemetry_seq_core;
                     end
                 end
@@ -1193,6 +1205,7 @@ module spu13_tang25k_top #(
             line_is_lattice <= 1'b0;
             line_is_rplu <= 1'b0;
             line_is_sdram <= 1'b0;
+            line_is_core <= 1'b0;
             boot_done_meta <= 1'b0;
             boot_done_tx <= 1'b0;
             telemetry_seq_meta <= 1'b0;
@@ -1227,6 +1240,9 @@ module spu13_tang25k_top #(
                 telemetry_rplu_loaded_tx <= telemetry_rplu_loaded_core;
                 telemetry_rplu_checksum_tx <= telemetry_rplu_checksum_core;
                 telemetry_cycle_count_tx <= telemetry_cycle_count_snap_core;
+                boot_state_tx <= boot_state_snap_core;
+                seq_pc_tx <= seq_pc_snap_core;
+                seq_halted_tx <= seq_halted_snap_core;
             end
 
             if (boot_summary_seq_sync != boot_summary_seq_seen) begin
@@ -1297,11 +1313,13 @@ module spu13_tang25k_top #(
                                 msg_timer <= msg_timer + 1'b1;
                             end else begin
                                 msg_timer <= 28'd0;
-                                q_latch <= {6'd0, sys_blink_cnt};
+                                // Core status while booting: [23:18]=boot_state, [15:8]=PC, [0]=halted
+                                q_latch <= {8'd0, boot_state_tx, seq_pc_tx, 7'd0, seq_halted_tx};
                                 a_latch <= {3'd0, boot_done_tx};
                                 line_is_header <= 1'b0;
                                 line_is_boot <= 1'b0;
-                                line_is_alive <= 1'b1;
+                                line_is_alive <= 1'b0;
+                                line_is_core <= 1'b1;
                                 line_is_lattice <= 1'b0;
                                 line_is_rplu <= 1'b0;
                                 line_is_sdram <= 1'b0;
@@ -1314,7 +1332,8 @@ module spu13_tang25k_top #(
                             burst_active <= 1'b1;
                             burst_axis_idx <= (ENABLE_CORE_LATTICE || ENABLE_CORE_RPLU) ? 4'd13 : 4'd0;
                             telemetry_q_burst <= telemetry_q_tx;
-                            q_latch <= telemetry_cycle_count_tx;
+                            // Header Status: [23:18]=boot_state, [15:8]=PC, [0]=halted
+                            q_latch <= {8'd0, boot_state_tx, seq_pc_tx, 7'd0, seq_halted_tx};
                             a_latch <= telemetry_header_status;
                             line_is_header <= 1'b1;
                             line_is_boot <= 1'b0;
