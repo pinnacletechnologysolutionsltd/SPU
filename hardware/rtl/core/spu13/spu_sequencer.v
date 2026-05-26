@@ -20,7 +20,7 @@ module spu_sequencer #(
     // QLDI test: load (2,-2,0,0), read hex, rotate, read again
     localparam PROG_SIZE = 3;
     wire [63:0] prog_words [0:PROG_SIZE-1];
-    assign prog_words[0] = 64'h1D00_02FE_0000_0000;  // QLDI QR0, 2, -2, 0, 0
+    assign prog_words[0] = 64'h1D00_0002_FE00_0000;  // QLDI QR0, 2, -2, 0, 0
     assign prog_words[1] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0
     assign prog_words[2] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0 (read again)
 
