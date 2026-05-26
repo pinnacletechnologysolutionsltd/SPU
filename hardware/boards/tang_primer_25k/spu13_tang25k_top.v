@@ -772,19 +772,6 @@ module spu13_tang25k_top #(
             core_release_cnt <= core_release_cnt + 1'b1;
         end
     end
-    // ── Instruction Sequencer ──────────────────────────────────
-    wire seq_inst_valid;
-    wire [63:0] seq_inst_word;
-    wire seq_inst_done;
-    spu_sequencer #(.IMEM_DEPTH(64)) u_seq(
-        .clk(clk_core), .rst_n(rst_n), .boot_done(boot_done),
-        .inst_valid(seq_inst_valid), .inst_word(seq_inst_word),
-        .inst_done(seq_inst_done),
-        .pc_out(), .halted(), .program_size(),
-        .damping_active(1'b0),
-        
-    );
-
     wire debug_run_core;
     assign debug_run_core = boot_done && sdram_selftest_complete && (core_release_cnt == 8'hFF);
 
@@ -822,9 +809,9 @@ module spu13_tang25k_top #(
         .manual_rotor_data({rotor_p_reg, rotor_q_reg}),
 
         // Instruction port (driven by internal sequencer)
-        .inst_valid(seq_inst_valid),
-        .inst_word(seq_inst_word),
-        .inst_done(seq_inst_done),
+        .inst_valid(),
+        .inst_word(),
+        .inst_done(),
         .hex_valid(core_hex_valid),
         .hex_q(core_hex_q),
         .hex_r(core_hex_r),
@@ -970,18 +957,17 @@ module spu13_tang25k_top #(
             hex_msg_pending <= 0;
             hex_q_latch <= 0;
             hex_r_latch <= 0;
-            telemetry_ack_seen <= 0;
         end else begin
             if (core_hex_valid && !hex_msg_pending) begin
                 hex_q_latch <= core_hex_q;
                 hex_r_latch <= core_hex_r;
                 hex_msg_pending <= 1;
-                telemetry_ack_seen <= hex_msg_ack_sync;
-            end else if (telemetry_ack_seen != hex_msg_ack_sync) begin
+            end else if (msg_idx == 4'd15) begin
                 hex_msg_pending <= 0;
             end
         end
     end
+
     assign msg[0]  = hex_msg_pending ? "H" : (line_is_alive ? "U" : (line_is_header ? "S" : (line_is_rplu ? "R" : (line_is_sdram ? "M" : (line_is_lattice ? "L" : (line_is_boot ? "B" : "Q"))))));
     assign msg[1]  = ":";
     assign msg[2]  = hex_msg_pending ? hex2ascii(hex_q_latch[15:12]) : hex2ascii(q_latch[31:28]);
@@ -1077,22 +1063,8 @@ module spu13_tang25k_top #(
         end
     endtask
 
-    // CDC Ack logic for HEX messages
-    reg        hex_msg_ack;
-    always @(posedge clk_50m) begin
-        if (!rst_n) hex_msg_ack <= 0;
-        else if (msg_idx == 4'd15 && tx_busy && tx_bit_cnt == 4'd9) hex_msg_ack <= ~hex_msg_ack;
-    end
-    reg        hex_msg_ack_sync;
-    always @(posedge clk_core) hex_msg_ack_sync <= hex_msg_ack;
-    reg        telemetry_ack_seen;
-
     always @(posedge clk_core) begin
         if (!rst_n) begin
-            hex_msg_pending <= 0;
-            hex_q_latch <= 0;
-            hex_r_latch <= 0;
-            telemetry_ack_seen <= 0;
             telemetry_q_cycle <= 416'd0;
             telemetry_q_snap_core <= 416'd0;
             boot_prime_words_core <= 416'd0;
