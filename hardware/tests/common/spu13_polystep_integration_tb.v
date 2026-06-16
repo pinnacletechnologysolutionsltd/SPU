@@ -53,7 +53,7 @@ module spu13_polystep_integration_tb;
     // Small decoder that converts core artery header into rplu_exp CFG write (test harness)
     reg cfg_wr_en = 1'b0;
     reg [2:0] cfg_wr_sel = 3'd0;
-    reg cfg_wr_material = 1'b0;
+    reg [7:0] cfg_wr_material = 8'd0;
     reg [9:0] cfg_wr_addr = 10'd0;
     reg [63:0] cfg_wr_data = 64'd0;
     reg [63:0] lat_header = 64'd0;
@@ -68,8 +68,8 @@ module spu13_polystep_integration_tb;
         if (lat_header[63:56] == 8'hA5) begin
             // build cfg write from sampled header (TB must pulse cfg_wr_en if desired)
             cfg_wr_sel <= lat_header[50:48];
-            cfg_wr_material <= lat_header[47];
-            cfg_wr_addr <= lat_header[46:37];
+            cfg_wr_material <= {4'd0, lat_header[47:44]};
+            cfg_wr_addr <= lat_header[43:34];
             cfg_wr_data <= 64'd0; // no DATA chord in this simple test
             // clear lat_header so we don't replay
             lat_header <= 64'd0;
@@ -84,7 +84,7 @@ module spu13_polystep_integration_tb;
     wire ratio_cmp_valid;
 
     rplu_exp rplu_u (
-        .clk(clk), .rst_n(rst_n), .start(1'b0), .addr(10'd0), .material_id(1'b0), .r_q16(32'd0), .wake(1'b0), .wake_addr(10'd0),
+        .clk(clk), .rst_n(rst_n), .start(1'b0), .addr(10'd0), .material_id(8'd0), .r_q16(32'd0), .wake(1'b0), .wake_addr(10'd0),
         .cfg_wr_en(cfg_wr_en), .cfg_wr_sel(cfg_wr_sel), .cfg_wr_material(cfg_wr_material), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_data(cfg_wr_data),
         .v_q16(v_q16), .dissoc(dissoc), .done(done), .laminar_irq(), .ratio_cmp_res(ratio_cmp_res), .ratio_cmp_valid(ratio_cmp_valid)
     );
@@ -138,7 +138,7 @@ module spu13_polystep_integration_tb;
         cfg_wr_data = {32'sd200, 32'sd50};
         // issue RATIO_CMP: sel=7, material=1
         cfg_wr_sel = 3'd7;
-        cfg_wr_material = 1'b1;
+        cfg_wr_material = 8'd1;
         cfg_wr_addr = 10'd0;
         $display("[TB] Issuing RATIO_CMP cfg_wr_sel=%0d material=%b data=%h at time=%0t", cfg_wr_sel, cfg_wr_material, cfg_wr_data, $time);
         cfg_wr_en = 1'b1; #1; @(posedge clk); cfg_wr_en = 1'b0;

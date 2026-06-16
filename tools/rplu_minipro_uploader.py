@@ -115,8 +115,8 @@ def main():
     group.add_argument('--sel', type=int, help='selector for single write (0..255)')
 
     # single-write fields
-    p.add_argument('--material', type=int, default=0, choices=[0, 1], help='material id (0/1)')
-    p.add_argument('--addr', type=int, help='address for single write (0..1023)')
+    p.add_argument('--material', type=int, default=0, choices=range(16), metavar='0..15', help='material id')
+    p.add_argument('--addr', type=lambda x: int(x, 0), help='address for single write (0..1023)')
     p.add_argument('--data', type=lambda x: int(x, 0), help='64-bit data payload for single write')
 
     # flashing options

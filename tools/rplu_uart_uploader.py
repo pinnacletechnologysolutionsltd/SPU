@@ -55,7 +55,7 @@ def main():
     parser.add_argument('--baud', type=int, default=115200, help='Baud for opening USB CDC (ignored for native USB but required by pyserial)')
     parser.add_argument('--sel', type=int, required=True, help='cfg selector (0=params,1=pade_num_q32,2=pade_den_q32,3=pade_num_q16,4=pade_den_q16,5=vnorm,6=vnorm_dissoc)')
     parser.add_argument('--material', type=int, default=0, choices=range(16), metavar='0..15', help='material id')
-    parser.add_argument('--addr', type=int, required=True, help='address/index for the write (0..1023)')
+    parser.add_argument('--addr', type=lambda x: int(x, 0), required=True, help='address/index for the write (0..1023)')
     parser.add_argument('--data', type=lambda x: int(x,0), required=True, help='64-bit data payload (hex or dec)')
     parser.add_argument('--wait', type=float, default=0.01, help='seconds to wait between header and data (default 10 ms)')
 

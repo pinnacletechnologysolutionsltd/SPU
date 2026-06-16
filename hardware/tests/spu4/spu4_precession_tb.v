@@ -28,7 +28,7 @@ module spu4_precession_tb;
         .rst_n(rst_n),
         .rplu_cfg_wr_en(1'b0),
         .rplu_cfg_sel(3'd0),
-        .rplu_cfg_material(1'b0),
+        .rplu_cfg_material(8'd0),
         .rplu_cfg_addr(10'd0),
         .rplu_cfg_data(64'd0),
         .inst_data(inst_data),

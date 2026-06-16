@@ -13,7 +13,7 @@ module spu4_top #(
     // runtime config inputs (piranha domain)
     input         rplu_cfg_wr_en,
     input [2:0]   rplu_cfg_sel,
-    input         rplu_cfg_material,
+    input [7:0]   rplu_cfg_material,
     input [9:0]   rplu_cfg_addr,
     input [63:0]  rplu_cfg_data,
     
