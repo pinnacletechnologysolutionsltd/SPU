@@ -57,8 +57,8 @@ def q16_float(value):
 def build_header(sel, material, addr):
     header = (OPCODE_RPLU_CFG & 0xFF) << 56
     header |= (sel & 0x7) << 48
-    header |= (material & 0x1) << 47
-    header |= (addr & 0x3FF) << 37
+    header |= (material & 0xF) << 44
+    header |= (addr & 0x3FF) << 34
     return header
 
 

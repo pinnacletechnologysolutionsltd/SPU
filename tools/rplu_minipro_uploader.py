@@ -22,9 +22,9 @@ Notes:
  - HEADER format (64-bit):
      [63:56] OPCODE = 0xA5
      [55:48] sel (8-bit; low 3 bits used)
-     [47]    material (0/1)
-     [46:37] addr (10-bit)
-     [36:0]  reserved
+     [47:44] material (0..15)
+     [43:34] addr (10-bit)
+     [33:0]  reserved
 
 """
 
@@ -44,14 +44,14 @@ def to_u64_be(v):
 def build_header(sel, material, addr):
     if sel < 0 or sel > 0xFF:
         raise ValueError('sel out of range')
-    if material not in (0, 1):
-        raise ValueError('material must be 0 or 1')
+    if material < 0 or material > 0xF:
+        raise ValueError('material out of range')
     if addr < 0 or addr > 0x3FF:
         raise ValueError('addr out of range')
     header = (OPCODE & 0xFF) << 56
     header |= (sel & 0xFF) << 48
-    header |= (material & 0x1) << 47
-    header |= (addr & 0x3FF) << 37
+    header |= (material & 0xF) << 44
+    header |= (addr & 0x3FF) << 34
     return header
 
 

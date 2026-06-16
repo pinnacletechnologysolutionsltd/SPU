@@ -1,7 +1,9 @@
 // RPLU Artery Decoder
 // Listens for multi-chord writes on the Artery FIFO output (piranha/fast domain)
 // Protocol (two-chord):
-//  - CHORD 0 (HEADER): [63:56]=0xA5 (opcode), [55:48]=sel (8-bit, low 3 bits used), [47]=material, [46:37]=addr (10-bit), rest reserved
+//  - CHORD 0 (HEADER): [63:56]=0xA5 (opcode), [55:48]=sel (8-bit, low 3 bits used),
+//                      [47:44]=material, [43:34]=addr (10-bit),
+//                      [33]=singleton, rest reserved
 //  - CHORD 1 (DATA):   full 64-bit payload (cfg_wr_data)
 // When a header is seen, the next inbound chord is delivered as DATA and a single-cycle
 // cfg_wr_en is asserted with the collected parameters.
@@ -16,7 +18,7 @@ module rplu_artery_decoder(
     // decoded outputs (pulsed for one clk when DATA chord arrives)
     output reg         cfg_wr_en,
     output reg [2:0]   cfg_wr_sel,
-    output reg         cfg_wr_material,
+    output reg [7:0]   cfg_wr_material,
     output reg [9:0]   cfg_wr_addr,
     output reg [63:0]  cfg_wr_data
 );
@@ -25,7 +27,7 @@ module rplu_artery_decoder(
 
     reg waiting_data;
     reg [2:0] sel_r;
-    reg material_r;
+    reg [7:0] material_r;
     reg [9:0] addr_r;
 
     always @(posedge clk or negedge rst_n) begin
@@ -45,17 +47,18 @@ module rplu_artery_decoder(
                 if (!waiting_data) begin
                     if (inhale_chord[63:56] == OPCODE_HDR) begin
                         // latch header fields
-                        // NOTE: fields layout: [63:56]=OP, [55:48]=sel (8-bit), [47]=material, [46:37]=addr, [36]=singleton
+                        // NOTE: fields layout: [63:56]=OP, [55:48]=sel (8-bit),
+                        // [47:44]=material, [43:34]=addr, [33]=singleton
                         sel_r      <= inhale_chord[50:48];  // low 3 bits of sel
-                        material_r <= inhale_chord[47];
-                        addr_r     <= inhale_chord[46:37];
+                        material_r <= {4'd0, inhale_chord[47:44]};
+                        addr_r     <= inhale_chord[43:34];
                         
-                        if (inhale_chord[36]) begin
+                        if (inhale_chord[33]) begin
                             // SINGLETON MODE: emit pulse immediately with header params
                             cfg_wr_en       <= 1'b1;
                             cfg_wr_sel      <= inhale_chord[50:48];
-                            cfg_wr_material <= inhale_chord[47];
-                            cfg_wr_addr     <= inhale_chord[46:37];
+                            cfg_wr_material <= {4'd0, inhale_chord[47:44]};
+                            cfg_wr_addr     <= inhale_chord[43:34];
                             cfg_wr_data     <= inhale_chord; // Payload is the header itself for singleton triggers
                             waiting_data    <= 1'b0;
                         end else begin

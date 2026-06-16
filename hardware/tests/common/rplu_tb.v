@@ -10,11 +10,11 @@ module rplu_tb;
 
     reg start;
     reg [9:0] addr;
-    reg material_id;
+    reg [3:0] material_id;
     // runtime config interface (no-op by default)
     reg cfg_wr_en = 1'b0;
     reg [2:0] cfg_wr_sel = 3'd0;
-    reg cfg_wr_material = 1'b0;
+    reg [3:0] cfg_wr_material = 4'd0;
     reg [9:0] cfg_wr_addr = 10'd0;
     reg [63:0] cfg_wr_data = 64'd0;
     wire signed [31:0] p_out;
@@ -30,10 +30,10 @@ module rplu_tb;
     reg [0:0]  exp_diss_c [0:1023];
     reg [0:0]  exp_diss_i [0:1023];
     initial begin
-        $readmemh("hardware/common/rtl/gpu/rplu_rom_carbon.mem", exp_carbon);
-        $readmemh("hardware/common/rtl/gpu/rplu_rom_iron.mem",   exp_iron);
-        $readmemh("hardware/common/rtl/gpu/rplu_dissoc_carbon.mem", exp_diss_c);
-        $readmemh("hardware/common/rtl/gpu/rplu_dissoc_iron.mem",   exp_diss_i);
+        $readmemh("hardware/rtl/arch/rplu_rom_carbon.mem", exp_carbon);
+        $readmemh("hardware/rtl/arch/rplu_rom_iron.mem",   exp_iron);
+        $readmemh("hardware/rtl/arch/rplu_dissoc_carbon.mem", exp_diss_c);
+        $readmemh("hardware/rtl/arch/rplu_dissoc_iron.mem",   exp_diss_i);
     end
 
     integer i;

@@ -76,14 +76,14 @@ module boot_spi_flash_model (
 
     function [63:0] rplu_header;
         input [2:0] sel;
-        input material;
+        input [3:0] material;
         input [9:0] table_addr;
         begin
             rplu_header = 64'd0;
             rplu_header[63:56] = 8'hA5;
             rplu_header[50:48] = sel;
-            rplu_header[47] = material;
-            rplu_header[46:37] = table_addr;
+            rplu_header[47:44] = material;
+            rplu_header[43:34] = table_addr;
         end
     endfunction
 
@@ -302,14 +302,14 @@ module spu_laminar_boot_rplu_tb;
 
     function [63:0] expected_rplu_header;
         input [2:0] sel;
-        input material;
+        input [3:0] material;
         input [9:0] table_addr;
         begin
             expected_rplu_header = 64'd0;
             expected_rplu_header[63:56] = 8'hA5;
             expected_rplu_header[50:48] = sel;
-            expected_rplu_header[47] = material;
-            expected_rplu_header[46:37] = table_addr;
+            expected_rplu_header[47:44] = material;
+            expected_rplu_header[43:34] = table_addr;
         end
     endfunction
 
