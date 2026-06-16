@@ -11,9 +11,9 @@ Notes:
 - This tool sends two 8-byte big-endian words: HEADER then DATA. HEADER layout (64-bit):
     [63:56] OPCODE = 0xA5
     [55:48] sel (8-bit; low 3 bits used)
-    [47]    material (0/1)
-    [46:37] addr (10-bit)
-    [36:0]  reserved
+    [47:44] material (0..15)
+    [43:34] addr (10-bit)
+    [33:0]  reserved
 
 Requires: pyserial (pip install pyserial)
 """
@@ -38,14 +38,14 @@ def to_u64_be(v):
 def build_header(sel, material, addr):
     if sel < 0 or sel > 0xFF:
         raise ValueError('sel out of range')
-    if material not in (0, 1):
-        raise ValueError('material must be 0 or 1')
+    if material < 0 or material > 0xF:
+        raise ValueError('material out of range')
     if addr < 0 or addr > 0x3FF:
         raise ValueError('addr out of range')
     header = (OPCODE & 0xFF) << 56
     header |= (sel & 0xFF) << 48
-    header |= (material & 0x1) << 47
-    header |= (addr & 0x3FF) << 37
+    header |= (material & 0xF) << 44
+    header |= (addr & 0x3FF) << 34
     return header
 
 
@@ -54,7 +54,7 @@ def main():
     parser.add_argument('--port', required=True, help='Serial device for RP2350 USB CDC (e.g. /dev/ttyACM0)')
     parser.add_argument('--baud', type=int, default=115200, help='Baud for opening USB CDC (ignored for native USB but required by pyserial)')
     parser.add_argument('--sel', type=int, required=True, help='cfg selector (0=params,1=pade_num_q32,2=pade_den_q32,3=pade_num_q16,4=pade_den_q16,5=vnorm,6=vnorm_dissoc)')
-    parser.add_argument('--material', type=int, default=0, choices=[0,1], help='material id (0 carbon, 1 iron)')
+    parser.add_argument('--material', type=int, default=0, choices=range(16), metavar='0..15', help='material id')
     parser.add_argument('--addr', type=int, required=True, help='address/index for the write (0..1023)')
     parser.add_argument('--data', type=lambda x: int(x,0), required=True, help='64-bit data payload (hex or dec)')
     parser.add_argument('--wait', type=float, default=0.01, help='seconds to wait between header and data (default 10 ms)')

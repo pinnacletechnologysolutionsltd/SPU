@@ -140,6 +140,9 @@ tools/probe_tang25k_rplu_flash.py \
 
 On the Tang Primer 25K Dock with the 40-pin W9825G6KH SDRAM module installed,
 the proven board timing is `INVERT_SDRAM_CLK=1` and
-`READ_CAPTURE_OFFSET=3`. A passing full probe reports RPLU loaded count
-`2051`, RPLU checksum `0x1D971036`, SDRAM endpoints `0x5D005D33`, and SDRAM
-checksum `0x0012E92E`.
+`READ_CAPTURE_OFFSET=3`. The historical full-probe capture used the old
+one-bit material chord format and reported RPLU checksum `0x1D971036`.
+The regenerated 16-material chord payload reports loaded count `2051` and
+checksum `0x1BD77FE2` from `tools/rplu_metric_reference.py`; re-capture this
+line on hardware after flashing the new payload. SDRAM endpoints remain
+`0x5D005D33` with checksum `0x0012E92E` for the full probe.

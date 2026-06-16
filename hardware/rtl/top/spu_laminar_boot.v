@@ -41,8 +41,6 @@ module spu_laminar_boot #(
     output wire [5:0]  boot_state
 );
 
-    assign boot_state = state;
-
     // Flash Addresses
     localparam [7:0]  JEDEC_CMD           = 8'h9F;
     localparam [7:0]  READ_CMD            = 8'h03;
@@ -64,6 +62,8 @@ module spu_laminar_boot #(
     reg [15:0] rplu_record_cnt;
     reg [7:0]  sck_div;
     reg        sck_en;
+
+    assign boot_state = state;
 
     // SDRAM Inhaler Regs
     reg [6:0]  element_cnt;     // 0-117
@@ -401,8 +401,8 @@ module spu_laminar_boot #(
                 20: begin // Decode the chord pair into one RPLU config write
                     if (rplu_header_word[63:56] == RPLU_CFG_OPCODE) begin
                         rplu_cfg_sel <= rplu_header_word[50:48];
-                        rplu_cfg_material <= {7'd0, rplu_header_word[47]};
-                        rplu_cfg_addr <= rplu_header_word[46:37];
+                        rplu_cfg_material <= {4'd0, rplu_header_word[47:44]};
+                        rplu_cfg_addr <= rplu_header_word[43:34];
                         rplu_cfg_data <= rplu_data_word;
                         rplu_cfg_wr_en <= 1'b1;
                         rplu_cfg_loaded <= rplu_cfg_loaded + 1'b1;

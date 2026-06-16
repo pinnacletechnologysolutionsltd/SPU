@@ -49,26 +49,51 @@ module davis_to_rplu(
     assign abs_q_q12 = axis_q_q12[31] ? (~axis_q_q12 + 1'b1) : axis_q_q12;
     assign radius_q12 = (abs_p_q12 > abs_q_q12) ? abs_p_q12 : abs_q_q12;
 
-    // Carbon vnorm/r_rom spans r=0x0000c51f..0x00024f5c in Q16.16.
-    // Convert the radius into a 10-bit table address with a Q16 reciprocal
-    // for 1023 / span, then clamp outside the calibrated table range.
-    localparam signed [31:0] R_MIN_Q16 = 32'sh0000_c51f;
-    localparam signed [31:0] R_MAX_Q16 = 32'sh0002_4f5c;
-    localparam [31:0] R_MAX_Q12 = 32'h0000_24f5;
-    localparam [15:0] R_ADDR_RECIP_Q16 = 16'd664;
+    // ── Per-material radius calibration ─────────────────────────────
+    // Each Morse table samples r from 0.5×re to 1.5×re in 1024 steps.
+    // R_MIN/R_MAX in Q16.16, R_ADDR_RECIP = int(1023 * 65536 / re).
+    //
+    // Material re (Å): C=1.54, Fe=2.48, Al=2.86, Si=2.35,
+    //                  Ti=2.93, Ni=2.49, Cu=2.56, W=2.74
+    wire signed [31:0] calib_R_MIN_Q16;
+    wire signed [31:0] calib_R_MAX_Q16;
+    wire [15:0]        calib_R_ADDR_RECIP_Q16;
+
+    // Combinational calibration lookup by material_id
+    reg signed [31:0] r_min_lut, r_max_lut;
+    reg [15:0]        recip_lut;
+    always @(*) begin
+        case (material_id)
+            8'd0: begin r_min_lut = 32'sh0000_C51F; r_max_lut = 32'sh0002_4F5C; recip_lut = 16'd664;  end // carbon
+            8'd1: begin r_min_lut = 32'sh0001_3D71; r_max_lut = 32'sh0003_B852; recip_lut = 16'd413;  end // iron
+            8'd2: begin r_min_lut = 32'sh0001_6E14; r_max_lut = 32'sh0004_4A3D; recip_lut = 16'd358;  end // aluminum
+            8'd3: begin r_min_lut = 32'sh0001_2CD1; r_max_lut = 32'sh0003_8666; recip_lut = 16'd435;  end // silicon
+            8'd4: begin r_min_lut = 32'sh0001_770A; r_max_lut = 32'sh0004_651F; recip_lut = 16'd349;  end // titanium
+            8'd5: begin r_min_lut = 32'sh0001_3EB8; r_max_lut = 32'sh0003_BC29; recip_lut = 16'd411;  end // nickel
+            8'd6: begin r_min_lut = 32'sh0001_47AE; r_max_lut = 32'sh0003_D70A; recip_lut = 16'd400;  end // copper
+            8'd7: begin r_min_lut = 32'sh0001_5EB8; r_max_lut = 32'sh0004_1C29; recip_lut = 16'd373;  end // tungsten
+            default: begin r_min_lut = 32'sh0000_C51F; r_max_lut = 32'sh0002_4F5C; recip_lut = 16'd664; end // fallback carbon
+        endcase
+    end
+
+    assign calib_R_MIN_Q16 = r_min_lut;
+    assign calib_R_MAX_Q16 = r_max_lut;
+    assign calib_R_ADDR_RECIP_Q16 = recip_lut;
 
     wire [31:0] radius_q16_clamped;
+    wire [35:0] radius_q16_wide;
     wire signed [31:0] r_delta_q16;
     wire [47:0] r_addr_scaled;
     wire [15:0] r_addr_unclamped;
     wire [9:0] r_addr;
-    assign radius_q16_clamped = (radius_q12 >= R_MAX_Q12) ? R_MAX_Q16[31:0] : (radius_q12 << 4);
+    assign radius_q16_wide = {4'd0, radius_q12} << 4;
+    assign radius_q16_clamped = (radius_q16_wide >= {4'd0, calib_R_MAX_Q16[31:0]}) ? calib_R_MAX_Q16[31:0] : radius_q16_wide[31:0];
     assign r_q16 = $signed(radius_q16_clamped);
-    assign r_delta_q16 = r_q16 - R_MIN_Q16;
-    assign r_addr_scaled = r_delta_q16[31:0] * R_ADDR_RECIP_Q16;
+    assign r_delta_q16 = r_q16 - calib_R_MIN_Q16;
+    assign r_addr_scaled = r_delta_q16[31:0] * calib_R_ADDR_RECIP_Q16;
     assign r_addr_unclamped = r_addr_scaled[31:16];
-    assign r_addr = (r_q16 <= R_MIN_Q16) ? 10'd0 :
-                    (r_q16 >= R_MAX_Q16) ? 10'd1023 :
+    assign r_addr = (r_q16 <= calib_R_MIN_Q16) ? 10'd0 :
+                    (r_q16 >= calib_R_MAX_Q16) ? 10'd1023 :
                     (r_addr_unclamped > 16'd1023) ? 10'd1023 :
                     r_addr_unclamped[9:0];
 
