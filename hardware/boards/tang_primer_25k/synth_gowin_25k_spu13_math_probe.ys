@@ -32,12 +32,16 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/top/spu_ve_qr_init.v \
     hardware/rtl/core/spu13/spu_sequencer.v \
     hardware/rtl/common/prim/surd_multiplier.v \
+    hardware/rtl/core/spu13/spu_quadrance_accum.v \
+    hardware/rtl/core/spu13/spu_som_bmu.v \
+    hardware/rtl/core/spu13/spu_cluster_reduce.v \
     hardware/rtl/arch/spu_bio_stubs.v
 
 chparam -set ENABLE_SDRAM 0 \
         -set ENABLE_CORE_RPLU 0 \
         -set ENABLE_CORE_LATTICE 0 \
         -set ENABLE_CORE_MATH 1 \
+        -set ENABLE_CORE_SOM 0 \
         spu13_tang25k_top
 
 hierarchy -check -top spu13_tang25k_top

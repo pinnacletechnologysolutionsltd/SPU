@@ -12,6 +12,7 @@ module spu13_tang25k_top #(
     parameter ENABLE_CORE_RPLU = 0,
     parameter ENABLE_CORE_LATTICE = 0,
     parameter ENABLE_CORE_MATH = 0,
+    parameter ENABLE_CORE_SOM  = 0,
     parameter ENABLE_RPLU_TELEMETRY = 0,
     parameter ENABLE_SDRAM_SELFTEST = 0,
     parameter ENABLE_CORE_SDRAM_VERIFY = 0,
@@ -792,7 +793,9 @@ module spu13_tang25k_top #(
         .DEVICE("GW5A"),
         .ENABLE_RPLU(ENABLE_CORE_RPLU),
         .ENABLE_LATTICE(ENABLE_CORE_LATTICE),
-        .ENABLE_MATH(ENABLE_CORE_MATH), .ENABLE_SEQUENCER(1'b0)
+        .ENABLE_MATH(ENABLE_CORE_MATH),
+        .ENABLE_SEQUENCER(1'b0),
+        .ENABLE_CORE_SOM(ENABLE_CORE_SOM)
     ) u_core (
         .clk(clk_core),
         .rst_n(rst_n),

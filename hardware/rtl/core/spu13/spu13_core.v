@@ -10,6 +10,7 @@ module spu13_core #(
     parameter ENABLE_LATTICE = 1,
     parameter ENABLE_MATH = 1,
     parameter ENABLE_SEQUENCER = 1,
+    parameter ENABLE_CORE_SOM  = 0,   // SOM/BMU classifier pipeline
     parameter [255:0] MEM_FILE = "hardware/rtl/arch/hw_test.mem"
 )(
     input  wire         clk,            // Fast Clock (e.g. 12-24MHz)
@@ -782,10 +783,32 @@ module spu13_core #(
     wire rplu_dissoc;
     wire rplu_done;
     wire [9:0] rplu_addr_dbg;
+    wire        som_classify_valid;
+    wire [15:0] som_label;
+    wire [63:0] som_gap;
+    wire        som_ambiguous;
+
+    // ── Material ID: SOM-driven when both SOM and RPLU are enabled ────
+    // SOM cluster labels (0-3) map to material classes:
+    //   0 → carbon (diamond/polymer)    2 → aluminum (lightweight)
+    //   1 → iron (structural)           3 → titanium (aerospace)
+    reg [7:0] som_material_id;
+    always @(*) begin
+        case (som_label[1:0])
+            2'd0: som_material_id = 8'd0;  // carbon
+            2'd1: som_material_id = 8'd1;  // iron
+            2'd2: som_material_id = 8'd2;  // aluminum
+            2'd3: som_material_id = 8'd4;  // titanium
+        endcase
+    end
+
+    wire [7:0] rplu_material_id;
+    assign rplu_material_id = (ENABLE_CORE_SOM && ENABLE_RPLU) ? som_material_id : phinary_chirality;
+
     generate
         if (ENABLE_RPLU) begin : gen_rplu
             davis_to_rplu u_davis_rplu (
-                .clk(clk), .rst_n(rst_n), .start(phi_21), .q_vector(rotated_axis), .material_id(phinary_chirality),
+                .clk(clk), .rst_n(rst_n), .start(phi_21), .q_vector(rotated_axis), .material_id(rplu_material_id),
                 .cfg_wr_en(dec_fast_cfg_wr_en), .cfg_wr_sel(dec_fast_cfg_sel), .cfg_wr_material(dec_fast_cfg_material), .cfg_wr_addr(dec_fast_cfg_addr), .cfg_wr_data(dec_fast_cfg_data),
                 .v_q16(), .dissoc(rplu_dissoc), .done(rplu_done),
                 .quadrance(), .ivm_quadrance(), .gasket_sum(), .audio_p(), .audio_q(),
@@ -1017,5 +1040,99 @@ module spu13_core #(
     end
 
     assign bloom_complete = (hydration_state == H_IDLE);
+
+    // ── SOM / BMU Classifier Pipeline ───────────────────────────────────
+    // Stage-gated behind ENABLE_CORE_SOM.  Feeds 4-feature vectors from
+    // the QR register file (A,B components of 2 selected lanes) through
+    // spu_som_bmu → spu_cluster_reduce.  Output on som_label, som_gap,
+    // som_ambiguous for telemetry / downstream classification.
+    //
+    generate
+        if (ENABLE_CORE_SOM) begin : gen_som
+            wire        som_bmu_valid;
+            wire [15:0] som_best_id, som_sec_id, som_label_in;
+            wire [63:0] som_best_q, som_sec_q, som_gap_in;
+            wire        som_has_sec;
+
+            // Feature vector: 4 RationalSurd features (256 bits wide)
+            // Mapped from qrf_rd_A[31:0]/qrf_rd_A[63:32] of som_src_lane
+            // and rote_src_lane for a 4-feature input.
+            // Default: identity wiring using existing QR reads.
+            wire [255:0] som_features;
+            assign som_features = {
+                qrf_rd_D,    // feature 3 = D component of source lane 1
+                qrf_rd_C,    // feature 2 = C component
+                qrf_rd_B,    // feature 1 = B component
+                qrf_rd_A     // feature 0 = A component
+            };
+
+            // Feature weights: unit weights (all RationalSurd 1)
+            wire [255:0] som_fw;
+            assign som_fw = {64'd1, 64'd1, 64'd1, 64'd1};
+
+            wire som_start;
+            wire som_done;
+
+            spu_som_bmu #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(32)) u_som_bmu (
+                .clk(clk), .rst_n(rst_n),
+                .start(som_start), .done(som_done),
+                .features(som_features),
+                .feature_weights(som_fw),
+                .bmu_valid(som_bmu_valid),
+                .best_node_id(som_best_id),
+                .second_node_id(som_sec_id),
+                .cluster_label(som_label_in),
+                .best_q(som_best_q),
+                .second_q(som_sec_q),
+                .confidence_gap(som_gap_in),
+                .has_second(som_has_sec)
+            );
+
+            spu_cluster_reduce #(.WIDTH(32)) u_som_reduce (
+                .clk(clk), .rst_n(rst_n),
+                .bmu_valid(som_bmu_valid),
+                .best_node_id(som_best_id),
+                .cluster_label_in(som_label_in),
+                .best_q(som_best_q),
+                .second_q(som_sec_q),
+                .confidence_gap_in(som_gap_in),
+                .has_second(som_has_sec),
+                .ambiguity_threshold(64'd0),
+                .classify_valid(som_classify_valid),
+                .label(som_label),
+                .confidence_gap(som_gap),
+                .ambiguous(som_ambiguous)
+            );
+
+            // ── SOM opcode FSM (0x2A = SOM_CLASSIFY) ─────────────────
+            reg som_active;
+            assign som_start = som_active;
+
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    som_active <= 0;
+                end else begin
+                    if (eff_inst_valid && eff_inst_word[63:56] == 8'h2A) begin
+                        // SOM_CLASSIFY QRs: classify QR[s] through the SOM map
+                        // Layout: [63:56]=0x2A, [55:48]=dest(ignored), [47:40]=src
+                        rote_src_lane <= eff_inst_word[47:40] % 13;
+                        som_active <= 1;
+                    end else if (som_done) begin
+                        som_active <= 0;
+                        // On classify done, emit result to hex display for telemetry
+                        hex_q <= som_label;
+                        hex_r <= {15'd0, som_ambiguous};
+                        hex_valid <= 1;
+                        inst_done_r <= 1;
+                    end
+                end
+            end
+        end else begin : gen_no_som
+            assign som_classify_valid = 1'b0;
+            assign som_label = 16'd0;
+            assign som_gap = 64'd0;
+            assign som_ambiguous = 1'b0;
+        end
+    endgenerate
 
 endmodule
