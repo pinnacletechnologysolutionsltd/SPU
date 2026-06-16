@@ -557,7 +557,8 @@ module spu13_core #(
                 .D_in(rotor_D_in),
                 .F(rote_F), .G(rote_G), .H(rote_H),
                 .field_sel(rote_field),
-                .bypass_p5(rote_angle == 6'd2),  // 120° → pure permutation
+                .bypass_p5(rote_angle == 6'd2),  // P5 forward → pure permutation
+                .bypass_p5_inv(rote_angle == 6'd5),  // P5 inverse → reverse permutation
                 .apply_div3(rote_denom_3),
                 .A_out(rote_A_out_raw),
                 .B_out(rote_B_out_raw),
@@ -612,10 +613,10 @@ module spu13_core #(
 
     assign rote_F = (rote_angle == 6'd0)  ? RS_1  :
                     (rote_angle == 6'd1)  ? RS_2  :
-                    (rote_angle == 6'd2)  ? RS_N1 :
+                    (rote_angle == 6'd2)  ? 64'd0 :
                     (rote_angle == 6'd3)  ? RS_N1 :
                     (rote_angle == 6'd4)  ? RS_2  :
-                    (rote_angle == 6'd5)  ? RS_2  :
+                    (rote_angle == 6'd5)  ? 64'd0 :
                     // Extended entries 6-11 (A₄ group)
                     (rote_angle == 6'd6)  ? RS_2  :
                     (rote_angle == 6'd7)  ? RS_2  :
@@ -627,10 +628,10 @@ module spu13_core #(
 
     assign rote_G = (rote_angle == 6'd0)  ? 64'd0 :
                     (rote_angle == 6'd1)  ? RS_2  :
-                    (rote_angle == 6'd2)  ? RS_2  :
-                    (rote_angle == 6'd3)  ? RS_N1 :
+                    (rote_angle == 6'd2)  ? RS_1  :
+                    (rote_angle == 6'd3)  ? RS_2  :
                     (rote_angle == 6'd4)  ? RS_N1 :
-                    (rote_angle == 6'd5)  ? RS_2  :
+                    (rote_angle == 6'd5)  ? 64'd0 :
                     // Extended entries
                     (rote_angle == 6'd6)  ? RS_N1 :
                     (rote_angle == 6'd7)  ? RS_2  :
@@ -642,10 +643,10 @@ module spu13_core #(
 
     assign rote_H = (rote_angle == 6'd0)  ? 64'd0 :
                     (rote_angle == 6'd1)  ? RS_N1 :
-                    (rote_angle == 6'd2)  ? RS_2  :
-                    (rote_angle == 6'd3)  ? RS_N1 :
+                    (rote_angle == 6'd2)  ? 64'd0 :
+                    (rote_angle == 6'd3)  ? RS_2  :
                     (rote_angle == 6'd4)  ? RS_2  :
-                    (rote_angle == 6'd5)  ? RS_N1 :
+                    (rote_angle == 6'd5)  ? RS_1  :
                     // Extended entries
                     (rote_angle == 6'd6)  ? RS_2  :
                     (rote_angle == 6'd7)  ? RS_N1 :
@@ -656,7 +657,10 @@ module spu13_core #(
                     64'd0;
 
     wire rote_denom_3;
-    assign rote_denom_3 = (rote_angle > 6'd0 && rote_angle < 6'd12);
+    assign rote_denom_3 = (rote_angle == 6'd1) ||
+                          (rote_angle == 6'd3) ||
+                          (rote_angle == 6'd4) ||
+                          (rote_angle >= 6'd6 && rote_angle < 6'd12);
 
     // ── ROTC execution FSM ─────────────────────────────────────────────
     // On ROTC instruction (0x1C): latch source/dest/angle, fire rote_en.

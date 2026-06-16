@@ -12,6 +12,7 @@ module spu13_rotc_tdm_tb;
     reg [63:0] F, G, H;
     reg [1:0] field_sel = 0;
     reg bypass_p5 = 0;
+    reg bypass_p5_inv = 0;
     reg apply_div3 = 0;
     wire [63:0] A_out, B_out, C_out, D_out;
 
@@ -21,6 +22,7 @@ module spu13_rotc_tdm_tb;
         .A_in(A_in), .B_in(B_in), .C_in(C_in), .D_in(D_in),
         .F(F), .G(G), .H(H),
         .field_sel(field_sel), .bypass_p5(bypass_p5),
+        .bypass_p5_inv(bypass_p5_inv),
         .apply_div3(apply_div3),
         .A_out(A_out), .B_out(B_out), .C_out(C_out), .D_out(D_out)
     );
@@ -84,6 +86,7 @@ module spu13_rotc_tdm_tb;
         // TEST 2: Bypass P5 (120°)
         #20 @(posedge clk);
         bypass_p5 <= 1;
+        bypass_p5_inv <= 0;
         start <= 1;
         done_seen <= 0;
         wait(done);
@@ -98,6 +101,7 @@ module spu13_rotc_tdm_tb;
         // TEST 3: Angle 1 (60°)
         #20 @(posedge clk);
         bypass_p5 <= 0;
+        bypass_p5_inv <= 0;
         apply_div3 <= 1;
         F <= {32'd0, 32'd2};
         G <= {32'd0, 32'd2};
@@ -118,6 +122,7 @@ module spu13_rotc_tdm_tb;
         // This exercises the coordinate permuter logic.
         #20 @(posedge clk);
         bypass_p5 <= 0;
+        bypass_p5_inv <= 0;
         apply_div3 <= 1;
         F <= {32'd0, 32'd2};
         G <= {32'd0, 32'd2};
@@ -134,6 +139,35 @@ module spu13_rotc_tdm_tb;
             $display("  PASS: Angle 6 B_out correctly scaled by 3");
         else
             $display("  FAIL: Angle 6 B_out = %d (Expected 3)", B_out[31:0]);
+
+        // TEST 5: P5 inverse cycle (angle 5 semantics): B'=C, C'=D, D'=B.
+        // This uses the explicit reverse bypass with no multiply and no /3.
+        #20 @(posedge clk);
+        bypass_p5 <= 0;
+        bypass_p5_inv <= 1;
+        apply_div3 <= 0;
+        F <= 64'd0;
+        G <= 64'd0;
+        H <= {32'd0, 32'd1};
+        start <= 1;
+        done_seen <= 0;
+        wait(done);
+        @(posedge clk);
+        #1;
+        if (done_seen) $display("TEST 5: P5 inverse rotation DONE");
+        if (B_out === C_in)
+            $display("  PASS: P5 inverse B_out = C_in");
+        else
+            $display("  FAIL: P5 inverse B_out=%h C_in=%h", B_out, C_in);
+        if (C_out === D_in)
+            $display("  PASS: P5 inverse C_out = D_in");
+        else
+            $display("  FAIL: P5 inverse C_out=%h D_in=%h", C_out, D_in);
+        if (D_out === B_in)
+            $display("  PASS: P5 inverse D_out = B_in");
+        else
+            $display("  FAIL: P5 inverse D_out=%h B_in=%h", D_out, B_in);
+        bypass_p5_inv <= 0;
 
         #200;
         $finish;
