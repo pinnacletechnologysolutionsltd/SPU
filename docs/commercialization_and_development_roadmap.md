@@ -5,6 +5,9 @@ Date: 2026-06-17
 This roadmap keeps SPU-13 fully open while giving the project a practical path
 to money, users, certification evidence, and industrial credibility.
 
+For the FPGA board ladder behind the dev-kit strategy, see
+`docs/fpga_board_scaling_strategy.md`.
+
 ## Core Positioning
 
 SPU-13 is an open deterministic rational coprocessor for:

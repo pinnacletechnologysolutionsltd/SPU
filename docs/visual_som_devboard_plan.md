@@ -7,6 +7,7 @@ or host tool renders those frames on a screen.
 
 For the business and dev-kit path around this display surface, see
 `docs/commercialization_and_development_roadmap.md`.
+For the FPGA board ladder, see `docs/fpga_board_scaling_strategy.md`.
 
 ## Purpose
 
