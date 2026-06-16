@@ -50,11 +50,11 @@ PELL_ORBIT = [
 CIRCULANT_TABLE = {
     # ── Tetrahedral C₃ (D-axis) ──────────────────────────────────────
     0:    ("0°",    (1,1), (0,1), (0,1)),
-    1:    ("60°",   (2,3), (2,3), (-1,3)),
-    2:    ("120°",  (-1,3), (2,3), (2,3)),
-    3:    ("180°",  (-1,3), (-1,3), (-1,3)),
-    4:    ("240°",  (2,3), (-1,3), (2,3)),
-    5:    ("300°",  (2,3), (2,3), (-1,3)),
+    1:    ("thirds_period6",      (2,3), (2,3), (-1,3)),
+    2:    ("p5_forward",          (0,1), (1,1), (0,1)),
+    3:    ("thirds_period2",      (-1,3), (2,3), (2,3)),
+    4:    ("thirds_period6_inv",  (2,3), (-1,3), (2,3)),
+    5:    ("p5_inverse",          (0,1), (0,1), (1,1)),
     # ── A₄ group (other vertex axes) ────────────────────────────────
     6:    ("120°A", (2,3), (-1,3), (2,3)),
     7:    ("240°A", (2,3), (2,3), (-1,3)),
@@ -249,16 +249,18 @@ def expand_chain(emitter: AsmEmitter, regs: RegisterPool,
             angle = 0   # 0° identity
         elif F_num == 2 and F_den == 3 and G_num == 2 and H_num == -1:
             angle = 1   # 60° (or 300°)
+        elif F_num == 0 and F_den == 1 and G_num == 1 and H_num == 0:
+            angle = 2   # P5 forward cycle
         elif F_num == -1 and F_den == 3 and G_num == 2 and H_num == 2:
-            angle = 2   # 120°
-        elif F_num == -1 and F_den == 3 and G_num == -1 and H_num == -1:
-            angle = 3   # 180°
+            angle = 3   # determinant-1 period-2 operator
         elif F_num == 2 and F_den == 3 and G_num == -1 and H_num == 2:
             angle = 4   # 240°
+        elif F_num == 0 and F_den == 1 and G_num == 0 and H_num == 1:
+            angle = 5   # P5 inverse cycle
 
         if angle is not None:
             emitter.instr("ROTC", f"QR{current_qr}", f"QR{current_qr}", str(angle))
-            emitter.comment(f"{angle*60}° circulant rotation")
+            emitter.comment(f"{CIRCULANT_TABLE[angle][0]} circulant rotation")
         else:
             emitter.comment("circulant_rotate: custom F,G,H not in table")
             r_pell = regs.alloc_r()

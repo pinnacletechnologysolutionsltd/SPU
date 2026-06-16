@@ -1258,11 +1258,11 @@ class SPUCore:
             _ROTC_TABLE = {
                 # ── Tetrahedral C₃ subgroup (D-axis) ──────────────────
                 0:  (1,  0,  0, 0,  0, 0, 1, 0),    # 0°:   identity, Q(√3)
-                1:  (2,  0,  2, 0, -1, 0, 3, 0),    # 60°:  D-axis,  Q(√3)
-                2:  (-1, 0,  2, 0,  2, 0, 3, 0),    # 120°: D-axis,  Q(√3)
-                3:  (-1, 0, -1, 0, -1, 0, 3, 0),    # 180°: D-axis,  Q(√3)
-                4:  (2,  0, -1, 0,  2, 0, 3, 0),    # 240°: D-axis,  Q(√3)
-                5:  (2,  0,  2, 0, -1, 0, 3, 0),    # 300°: D-axis,  Q(√3)
+                1:  (2,  0,  2, 0, -1, 0, 3, 0),    # period-6 thirds rotor
+                2:  (0,  0,  1, 0,  0, 0, 1, 0),    # P5 forward: B'=D,C'=B,D'=C
+                3:  (-1, 0,  2, 0,  2, 0, 3, 0),    # period-2 determinant-1 operator
+                4:  (2,  0, -1, 0,  2, 0, 3, 0),    # inverse of angle 1
+                5:  (0,  0,  0, 0,  1, 0, 1, 0),    # P5 inverse: B'=C,C'=D,D'=B
                 # ── Tetrahedral A₄ group ─────────────────────────────
                 6:  (2,  0, -1, 0,  2, 0, 3, 0),    # 120° around A-axis
                 7:  (2,  0,  2, 0, -1, 0, 3, 0),    # 240° around A-axis
