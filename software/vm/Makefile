@@ -23,6 +23,7 @@ test: spu_vm
 	./spu_vm ../programs/jitterbug.sas --quiet
 	./spu_vm ../programs/equilibrium_test.sas --quiet
 	./spu_vm ../programs/pell_octave_test.sas --quiet
+	./spu_vm ../programs/isa_test.sas --quiet
 	-./spu_vm ../programs/quadrance_test.sas --quiet  # intentional SNAP failures — exit 2 is expected
 	@echo "VM smoke tests passed."
 
