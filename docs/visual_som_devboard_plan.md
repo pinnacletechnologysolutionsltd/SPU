@@ -5,6 +5,9 @@ debugging, demos, and funding conversations. It must not sit in the hot compute
 path. The SPU-13 computes, then emits bounded telemetry frames; an RP2040/RP2350
 or host tool renders those frames on a screen.
 
+For the business and dev-kit path around this display surface, see
+`docs/commercialization_and_development_roadmap.md`.
+
 ## Purpose
 
 - Make SOM, RPLU, Davis Gate, rotor, and memory-tier behavior visible without
