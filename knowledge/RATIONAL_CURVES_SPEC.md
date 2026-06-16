@@ -29,6 +29,61 @@ The spec builds on two existing rotation primitives in silicon:
 
 ## Type 1: Rotor Application
 
+### 1.0 Inverse Closure Requirement
+
+Every rational robotics motion primitive must define and test its inverse. A
+forward-only path can be algebraically valid but topologically unbalanced: the
+manifold has moved away from its source state without a proof that the motion
+can close exactly.
+
+For Pell rotor motion:
+
+```
+r      = 2 + √3
+r_inv  = 2 - √3
+r × r_inv = 1
+```
+
+For F,G,H circulant rotation using the SPU convention:
+
+```
+B' = F·B + H·C + G·D
+C' = G·B + F·C + H·D
+D' = H·B + G·C + F·D
+```
+
+and determinant condition:
+
+```
+F³ + G³ + H³ − 3FGH = 1
+```
+
+the inverse coefficients are:
+
+```
+F_inv = F² − G·H
+G_inv = H² − F·G
+H_inv = G² − F·H
+```
+
+Example:
+
+```
+60°  = ( 2/3,  2/3, -1/3)
+240° = ( 2/3, -1/3,  2/3) = inverse(60°)
+```
+
+Required test pattern for every robotics primitive:
+
+```
+start = state
+end = apply_forward(start)
+recovered = apply_inverse(end)
+assert recovered == start
+assert end != start        # unless the primitive is identity
+SNAP
+```
+
 ### 1.1 Pell Step (`ROT`)
 
 ```
@@ -364,12 +419,29 @@ for pt in arc_pts:
 
 | Layer | File | What |
 |---|---|---|
-| Python VM | `software/spu_vm.py` | Type 1–5 primitives as methods on RationalSurd/QuadrayVector |
-| C++ Reference | `software/common/include/spu_ivm.h` | Corresponding C++17 implementations |
+| Python Reference | `software/lib/rational_robotics.py` | Exact rational robotics oracle with inverse closure |
+| Python Tests | `software/tests/test_rational_robotics.py` | Pell, circulant, FK, and arc closure tests |
+| C++ Reference | `software/common/include/spu_rational_robotics.h` | C++17 exact rational robotics oracle |
+| C++ Tests | `software/common/tests/spu_rational_robotics_test.cpp` | C++ parity for closure tests |
+| Python VM | `software/spu_vm.py` | Type 1–5 primitives as VM methods/instructions |
+| C++ IVM Core | `software/common/include/spu_ivm.h` | Corresponding low-level C++17 primitives |
 | Hardware (exists) | `spu_rotor_vault.v`, `spu13_rotor_core.v` | Type 1 in silicon |
+| Hardware (new) | `spu_robotics_inverse.v` | Pell inverse and F/G/H inverse coefficient path |
+| Hardware (new) | `spu_robotics_fk.v` | Forward/inverse chain execution |
 | Hardware (new) | `spu_rplu_trajectory.v` | Type 5: dedicated RPLU port for trajectory error |
 | Test suite | `software/programs/rational_curves_test.sas` | Lithic-L test program exercising all primitives |
 | RPLU table gen | `tools/build_rplu_trajectory_table.py` | Pre-compute correction tables from simulation data |
+
+### RTL Handoff Order
+
+1. Mirror the software oracle exactly in an RTL testbench fixture.
+2. Implement Pell inverse closure first: multiply by `(2,1)`, then `(2,-1)`,
+   and assert exact recovery.
+3. Implement F/G/H inverse coefficient generation for determinant-1 circulants.
+4. Implement single-joint forward/inverse closure.
+5. Implement short FK chain forward/inverse closure.
+6. Only after closure is proven, add RPLU trajectory correction and real sensor
+   error bins.
 
 ---
 
