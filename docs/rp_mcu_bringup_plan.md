@@ -1,5 +1,8 @@
 # RP2040/RP2350 Bring-Up Plan
 
+For the display and deterministic SOM map direction, see
+`docs/visual_som_devboard_plan.md`.
+
 Status anchor: Tang Primer 25K RPLU full probe passes with the damaged-board
 SDRAM mask `0x0402`. Keep that image as the stable FPGA target while bringing
 up the RP2040/RP2350 side.
