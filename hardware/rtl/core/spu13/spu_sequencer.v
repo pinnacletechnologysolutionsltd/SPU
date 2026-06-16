@@ -24,8 +24,8 @@ module spu_sequencer #(
     assign prog_words[1] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0 (readback)
     assign prog_words[2] = 64'h1C01_0000_0100_0000;  // ROTC QR1, QR0, 60
     assign prog_words[3] = 64'h1601_0100_0000_0000;  // HEX  R1, QR1 (rotated)
-    assign prog_words[4] = 64'h1B02_0001_0000_0000;  // QSUB QR2, QR0, QR1 (delta)
-    assign prog_words[5] = 64'h1E03_000A_0003_0004;  // DELTA QR3, Q1=3, Q2=4, steps=10
+    assign prog_words[4] = 64'h1B02_0000_0000_0100;  // QSUB QR2, QR0, QR1 (delta)
+    assign prog_words[5] = 64'h1E03_0A00_0300_0400;  // DELTA QR3, Q1=3, Q2=4, steps=10
 
     // ── Execution FSM ───────────────────────────────────────────────
     localparam S_IDLE = 0, S_FETCH = 2, S_WAIT = 3, S_DELAY = 4;

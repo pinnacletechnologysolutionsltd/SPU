@@ -170,7 +170,7 @@ module spu_instr_decode (
                         end
 
                         OP_QSUB: begin
-                            // QSUB QRd, QRa, QRb (r1=d, r2=a, p1_a[3:0]=b)
+                            // QSUB QRd, QRa, QRb (r1=d, r2=a, p1_b[3:0]=b)
                             qrf_rd_addr <= saved_r2[3:0]; // Fetch QRa
                             state <= S_FETCH_OP2;
                         end
@@ -178,11 +178,9 @@ module spu_instr_decode (
                         OP_DELTA: begin
                             // DELTA QRd, Q1, Q2, steps
                             // p1_a=Q1, p1_b=Q2, r2=steps (if 0, default 4)
-                            // Computes (Q1+Q2) and 4*Q1*Q2*(steps-k)/steps
-                            // Correcting per VM: q_sum = Q1 + Q2
-                            qrf_wr_A <= {32'd0, {16'd0, saved_p1a + saved_p1b}};
-                            // rhs_sq = 4 * Q1 * Q2 (for k=0)
-                            qrf_wr_B <= {32'd0, 32'd4 * saved_p1a * saved_p1b};
+                            // VM parity endpoint: q_sum=Q1+Q2, rhs_sq=0, C=steps.
+                            qrf_wr_A <= {32'd0, ({16'd0, saved_p1a} + {16'd0, saved_p1b})};
+                            qrf_wr_B <= 64'd0;
                             // steps: use saved_r2 directly (default 4 if 0)
                             qrf_wr_C <= {32'd0, (saved_r2 > 0 ? {24'd0, saved_r2} : 32'd4)}; 
                             qrf_wr_D <= 64'd0;
@@ -210,7 +208,7 @@ module spu_instr_decode (
                     op1_A <= qrf_rd_A; op1_B <= qrf_rd_B;
                     op1_C <= qrf_rd_C; op1_D <= qrf_rd_D;
                     // Fetch Op2 (QRb)
-                    qrf_rd_addr <= saved_p1a[3:0];
+                    qrf_rd_addr <= saved_p1b[3:0];
                     state <= S_EXEC;
                 end
 

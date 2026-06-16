@@ -450,6 +450,7 @@ module spu13_core #(
     wire [63:0] rote_A_out_raw, rote_B_out_raw, rote_C_out_raw, rote_D_out_raw;
     // Rotated output after inverse permute (final writeback values)
     wire [63:0] rote_B_out, rote_C_out, rote_D_out;
+    wire rote_done_tdm;
 
     // ── Instruction Sequencer (autonomous program execution) ─────
     // When ENABLE_SEQUENCER=1, the sequencer loads program from
@@ -547,7 +548,6 @@ module spu13_core #(
             );
 
             // TDM rotor core — 11-cycle pipeline, shared multiplier
-            wire rote_done_tdm;
             spu13_rotor_core_tdm u_rotc (
                 .clk(clk), .rst_n(rst_n),
                 .start(rote_en),
@@ -601,6 +601,7 @@ module spu13_core #(
             assign rote_B_out = 64'd0; assign rote_C_out = 64'd0;
             assign rote_D_out = 64'd0;
             assign rote_F = 64'd0; assign rote_G = 64'd0; assign rote_H = 64'd0;
+            assign rote_done_tdm = 1'b0;
         end
     endgenerate
 
@@ -674,8 +675,21 @@ module spu13_core #(
     reg       inst_done_r;
     reg       instr_wr_active;
     reg [63:0] instr_wr_A, instr_wr_B, instr_wr_C, instr_wr_D;
+    reg       qsub_active;
+    reg       qsub_stage;
+    reg [3:0] qsub_dest_lane;
+    reg [3:0] qsub_rhs_lane;
+    reg [63:0] qsub_lhs_A, qsub_lhs_B, qsub_lhs_C, qsub_lhs_D;
 
     assign inst_done = inst_done_r;
+
+    function [63:0] rs_sub64;
+        input [63:0] left;
+        input [63:0] right;
+        begin
+            rs_sub64 = {left[63:32] - right[63:32], left[31:0] - right[31:0]};
+        end
+    endfunction
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -693,14 +707,44 @@ module spu13_core #(
             qrf_wr_lane <= 0;
             inst_done_r <= 0;
             instr_wr_active <= 0;
+            qsub_active <= 0;
+            qsub_stage <= 0;
+            qsub_dest_lane <= 0;
+            qsub_rhs_lane <= 0;
+            qsub_lhs_A <= 0;
+            qsub_lhs_B <= 0;
+            qsub_lhs_C <= 0;
+            qsub_lhs_D <= 0;
             hex_valid <= 0;   // default: one-cycle pulse
         end else begin
             qrf_wr_en <= 0;  // default: no write
             inst_done_r <= 0;
             instr_wr_active <= 0;
 
+            // ── QSUB Handler (0x1B): two-cycle single-read-port FSM ──
+            if (qsub_active) begin
+                if (qsub_stage == 1'b0) begin
+                    qsub_lhs_A <= qrf_rd_A;
+                    qsub_lhs_B <= qrf_rd_B;
+                    qsub_lhs_C <= qrf_rd_C;
+                    qsub_lhs_D <= qrf_rd_D;
+                    rote_src_lane <= qsub_rhs_lane;
+                    qsub_stage <= 1'b1;
+                end else begin
+                    qrf_wr_en   <= 1;
+                    qrf_wr_lane <= qsub_dest_lane;
+                    instr_wr_A <= rs_sub64(qsub_lhs_A, qrf_rd_A);
+                    instr_wr_B <= rs_sub64(qsub_lhs_B, qrf_rd_B);
+                    instr_wr_C <= rs_sub64(qsub_lhs_C, qrf_rd_C);
+                    instr_wr_D <= rs_sub64(qsub_lhs_D, qrf_rd_D);
+                    instr_wr_active <= 1;
+                    qsub_active <= 0;
+                    qsub_stage <= 0;
+                    inst_done_r <= 1;
+                end
+
             // ── QLDI Handler (0x1D) ────────────────────────────────
-            if (eff_inst_valid && eff_inst_word[63:56] == 8'h1D) begin
+            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h1D) begin
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= eff_inst_word[55:48] % 13;
                 instr_wr_A[31:0]  <= {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
@@ -713,9 +757,20 @@ module spu13_core #(
                 instr_wr_D[63:32] <= 32'd0;
                 instr_wr_active <= 1;
                 inst_done_r <= 1;
-            end
 
-            if (eff_inst_valid && eff_inst_word[63:56] == 8'h1C) begin
+            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h1E) begin
+                // DELTA QRd, Q1, Q2, steps.
+                // VM parity endpoint: QRd.A=Q1+Q2, QRd.B=0, QRd.C=steps, QRd.D=0.
+                qrf_wr_en   <= 1;
+                qrf_wr_lane <= eff_inst_word[55:48] % 13;
+                instr_wr_A <= {32'd0, ({16'd0, eff_inst_word[39:24]} + {16'd0, eff_inst_word[23:8]})};
+                instr_wr_B <= 64'd0;
+                instr_wr_C <= {32'd0, (eff_inst_word[47:40] != 8'd0 ? {24'd0, eff_inst_word[47:40]} : 32'd4)};
+                instr_wr_D <= 64'd0;
+                instr_wr_active <= 1;
+                inst_done_r <= 1;
+
+            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h1C) begin
                 rote_src_lane  <= eff_inst_word[47:40] % 13;
                 rote_dest_lane <= eff_inst_word[55:48] % 13;
                 rote_angle     <= eff_inst_word[29:24];
@@ -730,6 +785,13 @@ module spu13_core #(
                 qrf_wr_lane <= rote_dest_lane;
                 rote_en     <= 0;
                 inst_done_r <= 1;
+            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h1B) begin
+                // QSUB QRd, QRa, QRb: QR[d] = QR[a] - QR[b].
+                qsub_dest_lane <= eff_inst_word[55:48] % 13;
+                qsub_rhs_lane <= eff_inst_word[11:8] % 13;
+                rote_src_lane <= eff_inst_word[47:40] % 13;
+                qsub_active <= 1;
+                qsub_stage <= 0;
             end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h16) begin
                 // ── HEX handler: project QRn → (q,r) hex coordinates ──
                 // HEX Rd, QRn — read QR[n], compute A-D, B-D, output hex
@@ -739,7 +801,7 @@ module spu13_core #(
                 hex_r   <= qrf_rd_A[15:0] - qrf_rd_D[15:0];
                 hex_valid <= 1;
                 inst_done_r <= 1;
-            end else if (eff_inst_valid && eff_inst_word[63:56] != 8'h1D && inst_word[63:56] != 8'h1C && eff_inst_word[63:56] != 8'h16) begin
+            end else if (eff_inst_valid && eff_inst_word[63:56] != 8'h1D && eff_inst_word[63:56] != 8'h1C && eff_inst_word[63:56] != 8'h16 && eff_inst_word[63:56] != 8'h1B && eff_inst_word[63:56] != 8'h1E) begin
                 // Unknown/QLOG — consume immediately
                 inst_done_r <= 1;
             end

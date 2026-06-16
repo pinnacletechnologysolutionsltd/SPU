@@ -540,6 +540,32 @@ def assemble_line(line: str, line_no: int, labels: dict) -> int | None:
     opcode = OPCODES[mnemonic]
     r1 = r2 = p1_a = p1_b = 0
 
+    if mnemonic == "QSUB":
+        if len(parts) < 3:
+            print(f"  ASM error line {line_no}: QSUB requires QRd, QRs or QRd, QRa, QRb")
+            return None
+
+        def parse_qr(tok: str) -> int:
+            tok = tok.upper()
+            if not tok.startswith('QR'):
+                raise ValueError(f"expected QR register, got {tok}")
+            return int(tok[2:]) & 0xFF
+
+        try:
+            r1 = parse_qr(parts[1])
+            if len(parts) > 3:
+                r2 = parse_qr(parts[2])
+                p1_b = parse_qr(parts[3])
+            else:
+                r2 = r1
+                p1_b = parse_qr(parts[2])
+        except ValueError as exc:
+            print(f"  ASM error line {line_no}: {exc}")
+            return None
+
+        word = (opcode << 56) | (r1 << 48) | (r2 << 40) | (p1_a << 24) | (p1_b << 8)
+        return word
+
     def parse_arg(arg: str, is_first: bool) -> tuple[int, int, int]:
         """Returns (r1_val, r2_val, p1_a_val) for a single argument."""
         arg = arg.upper()
@@ -1233,11 +1259,12 @@ class SPUCore:
                 print(f"  [{self.pc:04d}] QADD QR{d} + QR{s} → {self.qregs[d]!r}")
 
         elif opcode == OPCODES["QSUB"]:
-            # QSUB QRd, QRs — QRd = QRd - QRs
-            d, s = r1 % 13, r2 % 13
-            self.qregs[d] = self.qregs[d] - self.qregs[s]
+            # QSUB QRd, QRa, QRb — QR[d] = QR[a] - QR[b]
+            # Two-operand assembly is encoded as QSUB QRd, QRd, QRs.
+            d, a, b = r1 % 13, r2 % 13, p1_b % 13
+            self.qregs[d] = self.qregs[a] - self.qregs[b]
             if self.verbose:
-                print(f"  [{self.pc:04d}] QSUB QR{d} - QR{s} → {self.qregs[d]!r}")
+                print(f"  [{self.pc:04d}] QSUB QR{d} ← QR{a} - QR{b} → {self.qregs[d]!r}")
 
         elif opcode == OPCODES["QROT"]:
             # QROT QRn — apply Pell rotor to each component + normalize

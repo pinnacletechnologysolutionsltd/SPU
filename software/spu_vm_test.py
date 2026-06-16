@@ -243,7 +243,35 @@ ok(comps[0].a == 1, "QADD: QR0.a = 1")
 ok(comps[1].a == 1, "QADD: QR0.b = 1")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 12. QROT — Pell rotation on Quadray register
+# 12. QSUB — Quadray register subtraction
+# ─────────────────────────────────────────────────────────────────────────────
+section("QSUB")
+c = make_core()
+c.load([
+    word("QLDI", r1=1, a=0x0A14, b=0x1E28),  # QR1 = (10,20,30,40)
+    word("QLDI", r1=2, a=0x0102, b=0x0304),  # QR2 = (1,2,3,4)
+    word("QSUB", r1=3, r2=1, b=2),            # QR3 = QR1 - QR2
+])
+c.run()
+comps = c.qregs[3].components()
+ok([v.a for v in comps] == [9, 18, 27, 36], "QSUB: QR3 = QR1 - QR2")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 13. DELTA — Triple quadrance endpoint
+# ─────────────────────────────────────────────────────────────────────────────
+section("DELTA")
+c = make_core()
+c.load([
+    word("DELTA", r1=4, r2=10, a=3, b=4),
+])
+c.run()
+comps = c.qregs[4].components()
+ok(comps[0].a == 7, "DELTA: A stores Q1+Q2")
+ok(comps[1].a == 0, "DELTA: B stores right-triangle endpoint rhs_sq=0")
+ok(comps[2].a == 10, "DELTA: C stores step count")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 14. QROT — Pell rotation on Quadray register
 # ─────────────────────────────────────────────────────────────────────────────
 section("QROT")
 c = make_core()
@@ -261,7 +289,7 @@ comps = c.qregs[0].components()
 ok(comps[0].a == 2 and comps[0].b == 1, "QROT: first component (1,0) → (2,1)")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 13. QNORM — normalize Quadray to canonical IVM form
+# 15. QNORM — normalize Quadray to canonical IVM form
 # ─────────────────────────────────────────────────────────────────────────────
 section("QNORM")
 c = make_core()
@@ -279,7 +307,7 @@ comps = c.qregs[0].components()
 ok(comps[0].a == 1, "QNORM: a component preserved when already canonical")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 14. SPREAD — Wildberger Spread between two Quadray registers
+# 16. SPREAD — Wildberger Spread between two Quadray registers
 # ─────────────────────────────────────────────────────────────────────────────
 section("SPREAD")
 c = make_core()
@@ -300,7 +328,7 @@ ok(c.regs[10].a == 8, "SPREAD: identical QR_A vectors → numerator stored in R1
 ok(c.regs[11].a == 9, "SPREAD: identical QR_A vectors → denominator in R11")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 15. HEX — project Quadray to hex grid pixel
+# 17. HEX — project Quadray to hex grid pixel
 # ─────────────────────────────────────────────────────────────────────────────
 section("HEX")
 c = make_core()
@@ -316,7 +344,7 @@ ok(c.regs[5].a == 1,  "HEX: QR(1,0,0,0) → col=1")
 ok(c.regs[6].a == 0,  "HEX: QR(1,0,0,0) → row=0")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 16. EQUIL — Vector Equilibrium check (hex sum = 0)
+# 18. EQUIL — Vector Equilibrium check (hex sum = 0)
 # ─────────────────────────────────────────────────────────────────────────────
 section("EQUIL")
 # All QR zero → balanced (vacuously)
