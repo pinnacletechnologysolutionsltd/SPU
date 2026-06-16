@@ -111,19 +111,45 @@ Applies the F,G,H circulant matrix to the B,C,D components of a Quadray vertex.
 A is invariant (the rotation axis). The F,G,H coefficients must satisfy
 F³ + G³ + H³ − 3FGH = 1.
 
-**Key F,G,H values (Thomson Table 2):**
+**Corrected ROTC 0-5 catalog:**
 
-| Angle θ | Spread s | F | G | H | Matrix entries |
-|---|---|---|---|---|---|
-| 0° | 0 | 1 | 0 | 0 | Identity |
-| 60° | 3/4 | 2/3 | 2/3 | −1/3 | Rational in {−1/3, 2/3} |
-| 120° | 3/4 | −1/3 | 2/3 | 2/3 | Permutation (bypass_p5=1 in hardware) |
-| 180° | 0 | −1/3 | −1/3 | −1/3 | (not in {−1,0,+1} — needs surd multiply) |
-| 240° | 3/4 | 2/3 | −1/3 | 2/3 | Rational in {−1/3, 2/3} |
-| 300° | 3/4 | 2/3 | 2/3 | −1/3 | Rational in {−1/3, 2/3} |
+The old angle names conflated distinct operators. The hardware P5 bypass is a
+pure cyclic permutation `(F,G,H)=(0,1,0)`, while `(-1,2,2)/3` is a separate
+determinant-1 period-2 circulant. The release table uses explicit closure
+semantics instead of relying on angle labels.
 
-At θ = 120°, `bypass_p5` triggers a pure bit-permutation with zero
-floating-point operations (hardware: `spu13_rotor_core.v:70-73`).
+| ROTC angle | Name | F | G | H | Period | Inverse |
+|---:|---|---:|---:|---:|---:|---:|
+| 0 | identity | 1 | 0 | 0 | 1 | 0 |
+| 1 | thirds period-6 | 2/3 | 2/3 | -1/3 | 6 | 4 |
+| 2 | P5 forward cycle | 0 | 1 | 0 | 3 | 5 |
+| 3 | thirds period-2 | -1/3 | 2/3 | 2/3 | 2 | 3 |
+| 4 | thirds period-6 inverse | 2/3 | -1/3 | 2/3 | 6 | 1 |
+| 5 | P5 inverse cycle | 0 | 0 | 1 | 3 | 2 |
+
+At ROTC angle 2, `bypass_p5` can trigger the pure bit-permutation with zero
+multiplies:
+
+```
+B' = D
+C' = B
+D' = C
+```
+
+Angle 5 is the reverse cycle:
+
+```
+B' = C
+C' = D
+D' = B
+```
+
+Legacy table audit:
+
+- angle 2 was documented with thirds coefficients while hardware bypassed it as
+  P5 permutation;
+- angle 3 used `(-1,-1,-1)/3`, which is singular (`det=0`);
+- angle 5 duplicated angle 1 instead of providing an inverse/reverse operation.
 
 ---
 

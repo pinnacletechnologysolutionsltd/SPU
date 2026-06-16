@@ -171,11 +171,29 @@ inline RoboticsJoint robotics_joint_240(int axis_id = 3) {
     return { axis_id, q3(2, 0, 3), q3(-1, 0, 3), q3(2, 0, 3) };
 }
 
+inline RoboticsJoint robotics_joint_p5_forward(int axis_id = 3) {
+    return { axis_id, q3(0), q3(1), q3(0) };
+}
+
+inline RoboticsJoint robotics_joint_p5_inverse(int axis_id = 3) {
+    return { axis_id, q3(0), q3(0), q3(1) };
+}
+
 inline RationalQ3 robotics_circulant_determinant(const RoboticsJoint& j) {
     return j.f * j.f * j.f
          + j.g * j.g * j.g
          + j.h * j.h * j.h
          - q3(3) * j.f * j.g * j.h;
+}
+
+inline RoboticsJoint robotics_compose_circulant(const RoboticsJoint& first,
+                                                const RoboticsJoint& second) {
+    return {
+        first.axis_id,
+        first.f * second.f + first.h * second.g + first.g * second.h,
+        first.g * second.f + first.f * second.g + first.h * second.h,
+        first.h * second.f + first.g * second.g + first.f * second.h,
+    };
 }
 
 inline RoboticsJoint robotics_circulant_inverse(const RoboticsJoint& j) {
@@ -238,7 +256,17 @@ inline bool robotics_is_closed(const RoboticsQuadray& start,
     return robotics_closure_error(start, recovered).is_zero();
 }
 
+inline int robotics_circulant_period(const RoboticsJoint& j, int max_steps = 12) {
+    RoboticsJoint identity = robotics_joint_identity(j.axis_id);
+    RoboticsJoint current = identity;
+    for (int n = 1; n <= max_steps; n++) {
+        current = robotics_compose_circulant(j, current);
+        if (current == identity)
+            return n;
+    }
+    return 0;
+}
+
 inline RoboticsQuadray robotics_sample_vector() {
     return { q3(1), q3(0, 1), q3(1, 0, 3), q3(-2) };
 }
-

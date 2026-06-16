@@ -146,9 +146,34 @@ def joint_240(axis_id: int = 3) -> CirculantJoint:
     return CirculantJoint(axis_id, q3(Fraction(2, 3)), q3(Fraction(-1, 3)), q3(Fraction(2, 3)))
 
 
+def joint_p5_forward(axis_id: int = 3) -> CirculantJoint:
+    """Pure P5 cyclic bypass: B'=D, C'=B, D'=C."""
+
+    return CirculantJoint(axis_id, q3(0), q3(1), q3(0))
+
+
+def joint_p5_inverse(axis_id: int = 3) -> CirculantJoint:
+    """Inverse P5 cycle: B'=C, C'=D, D'=B."""
+
+    return CirculantJoint(axis_id, q3(0), q3(0), q3(1))
+
+
 def circulant_determinant(joint: CirculantJoint) -> Q3:
     f, g, h = joint.f, joint.g, joint.h
     return f * f * f + g * g * g + h * h * h - q3(3) * f * g * h
+
+
+def compose_circulant(first: CirculantJoint, second: CirculantJoint) -> CirculantJoint:
+    """Compose circulants: result applies `second`, then `first`."""
+
+    f1, g1, h1 = first.f, first.g, first.h
+    f2, g2, h2 = second.f, second.g, second.h
+    return CirculantJoint(
+        first.axis_id,
+        f1 * f2 + h1 * g2 + g1 * h2,
+        g1 * f2 + f1 * g2 + h1 * h2,
+        h1 * f2 + g1 * g2 + f1 * h2,
+    )
 
 
 def circulant_inverse(joint: CirculantJoint) -> CirculantJoint:
@@ -212,6 +237,66 @@ def is_closed(start: QuadrayQ, recovered: QuadrayQ) -> bool:
     return closure_error(start, recovered).is_zero()
 
 
+def circulant_period(joint: CirculantJoint, max_steps: int = 12) -> int | None:
+    """Return the smallest n where joint^n is identity, or None."""
+
+    identity = joint_identity(joint.axis_id)
+    current = identity
+    for n in range(1, max_steps + 1):
+        current = compose_circulant(joint, current)
+        if current == identity:
+            return n
+    return None
+
+
+ROTATION_KINEMATICS = {
+    "identity": joint_identity(),
+    "thirds_period6": joint_60(),
+    "thirds_period6_inverse": joint_240(),
+    "thirds_period2": joint_120(),
+    "p5_forward": joint_p5_forward(),
+    "p5_inverse": joint_p5_inverse(),
+}
+
+
+CORRECTED_ROTC_ANGLE_TABLE = {
+    0: joint_identity(),
+    1: joint_60(),
+    2: joint_p5_forward(),
+    3: joint_120(),
+    4: joint_240(),
+    5: joint_p5_inverse(),
+}
+
+
+LEGACY_ROTC_ANGLE_TABLE = {
+    # Matches the current VM/compiler angle descriptions for audit purposes.
+    # Do not treat this as the corrected hardware contract.
+    0: joint_identity(),
+    1: joint_60(),
+    2: joint_120(),
+    3: CirculantJoint(3, q3(Fraction(-1, 3)), q3(Fraction(-1, 3)), q3(Fraction(-1, 3))),
+    4: joint_240(),
+    5: joint_60(),
+}
+
+
+def legacy_rotc_table_issues() -> list[str]:
+    """Return known issues in the legacy 0..5 ROTC angle table."""
+
+    issues: list[str] = []
+    for angle, joint in LEGACY_ROTC_ANGLE_TABLE.items():
+        det = circulant_determinant(joint)
+        if det != Q3_ONE:
+            issues.append(f"angle {angle}: determinant {det} != 1")
+
+    if LEGACY_ROTC_ANGLE_TABLE[2] != joint_p5_forward():
+        issues.append("angle 2: VM/compiler thirds coefficients disagree with hardware P5 bypass")
+    if LEGACY_ROTC_ANGLE_TABLE[5] == LEGACY_ROTC_ANGLE_TABLE[1]:
+        issues.append("angle 5: duplicates angle 1 instead of providing an inverse/reverse rotation")
+
+    return issues
+
+
 def sample_robot_vector() -> QuadrayQ:
     return QuadrayQ(q3(1), q3(0, 1), q3(Fraction(1, 3)), q3(-2))
-

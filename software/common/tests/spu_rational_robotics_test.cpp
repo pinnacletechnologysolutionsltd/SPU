@@ -43,6 +43,44 @@ static void test_circulant_inverse_coefficients() {
     CHECK("inverse of 60 equals 240-degree joint", inv == j240);
 }
 
+static void test_recalculated_rotation_catalog() {
+    std::array<RoboticsJoint, 6> joints {
+        robotics_joint_identity(),
+        robotics_joint_60(),
+        robotics_joint_240(),
+        robotics_joint_120(),
+        robotics_joint_p5_forward(),
+        robotics_joint_p5_inverse(),
+    };
+
+    for (const auto& j : joints) {
+        RoboticsJoint identity = robotics_joint_identity(j.axis_id);
+        CHECK_Q3("catalog determinant = 1", robotics_circulant_determinant(j), q3(1));
+        RoboticsJoint inv = robotics_circulant_inverse(j);
+        CHECK("catalog inverse closes", robotics_compose_circulant(j, inv) == identity);
+    }
+
+    CHECK("thirds period-6 rotor has period 6",
+          robotics_circulant_period(robotics_joint_60()) == 6);
+    CHECK("thirds period-2 rotor has period 2",
+          robotics_circulant_period(robotics_joint_120()) == 2);
+    CHECK("P5 forward bypass has period 3",
+          robotics_circulant_period(robotics_joint_p5_forward()) == 3);
+    CHECK("P5 inverse is reverse cycle",
+          robotics_circulant_inverse(robotics_joint_p5_forward()) == robotics_joint_p5_inverse());
+}
+
+static void test_p5_bypass_semantics() {
+    RoboticsQuadray v = robotics_sample_vector();
+    RoboticsQuadray p5 = robotics_apply_joint(v, robotics_joint_p5_forward());
+    RoboticsQuadray recovered = robotics_apply_joint(p5, robotics_joint_p5_inverse());
+
+    CHECK("P5 forward B'=D", p5.b == v.d);
+    CHECK("P5 forward C'=B", p5.c == v.b);
+    CHECK("P5 forward D'=C", p5.d == v.c);
+    CHECK("P5 inverse closes vector", recovered == v);
+}
+
 static void test_single_joint_inverse_closure() {
     RoboticsQuadray v0 = robotics_sample_vector();
     RoboticsJoint j = robotics_joint_60(3);
@@ -79,6 +117,8 @@ static void test_arc_out_and_back_closure() {
 int main() {
     test_pell_inverse_closure();
     test_circulant_inverse_coefficients();
+    test_recalculated_rotation_catalog();
+    test_p5_bypass_semantics();
     test_single_joint_inverse_closure();
     test_fk_inverse_chain_closure();
     test_arc_out_and_back_closure();
