@@ -30,6 +30,7 @@ Syntax:
     QLOAD QRn, Rb          ; load QR[n] from R[b]..R[b+3]
     QLOG  QRn              ; print QR[n]
     QADD  QRd, QRs         ; QRd += QRs
+    QSUB  QRd, QRa, QRb    ; QRd = QRa - QRb
     QROT  QRd, Rs          ; Pell-rotate each component by Rs
     QNORM QRn              ; normalize (min component → 0)
     HEX   Rd, QRn          ; Rd = hex_project(QR[n])
@@ -191,9 +192,14 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
         _, r2 = _parse_reg(args[1])
 
     elif mnemonic == "QSUB":
-        # QSUB QRd, QRs
+        # QSUB QRd, QRa, QRb.  Two-operand form is sugar for QRd = QRd - QRs.
         _, r1 = _parse_reg(args[0])
-        _, r2 = _parse_reg(args[1])
+        if len(args) > 2:
+            _, r2 = _parse_reg(args[1])
+            _, p1_b = _parse_reg(args[2])
+        else:
+            r2 = r1
+            _, p1_b = _parse_reg(args[1])
 
     elif mnemonic == "ROTC":
         # ROTC QRd, QRs, angle

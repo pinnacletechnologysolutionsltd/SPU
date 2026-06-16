@@ -96,8 +96,8 @@ module spu13_isa_math_tb;
 
         // TEST 3: QSUB QR3, QR1, QR2 (QR3 = QR1 - QR2)
         $display("TEST 3: QSUB QR3, QR1, QR2");
-        // QSUB QRd, QRa, QRb -> r1=3, r2=1, p1_a=2
-        send_instr(8'h1B, 8'd3, 8'd1, 16'h0002, 16'h0000);
+        // QSUB QRd, QRa, QRb -> r1=3, r2=1, p1_b=2
+        send_instr(8'h1B, 8'd3, 8'd1, 16'h0000, 16'h0002);
         
         // Expected: (9, 19, 29, 39)
         if (u_qrf.reg_A[3][31:0] === 32'sd9 && u_qrf.reg_B[3][31:0] === 32'sd19 && 
@@ -110,9 +110,9 @@ module spu13_isa_math_tb;
         $display("TEST 4: DELTA QR4, Q1=3, Q2=4, steps=10");
         send_instr(8'h1E, 8'd4, 8'd10, 16'd3, 16'd4);
         
-        // Expected A=7 (q_sum), C=10 (steps)
-        if (u_qrf.reg_A[4][31:0] === 32'sd7 && u_qrf.reg_C[4][31:0] === 32'sd10)
-            $display("  PASS: DELTA result correct (partial implementation)");
+        // Expected A=7 (q_sum), B=0 (right-triangle endpoint), C=10 (steps)
+        if (u_qrf.reg_A[4][31:0] === 32'sd7 && u_qrf.reg_B[4][31:0] === 32'sd0 && u_qrf.reg_C[4][31:0] === 32'sd10)
+            $display("  PASS: DELTA result correct");
         else
             $display("  FAIL: DELTA failed! A=%d C=%d", u_qrf.reg_A[4][31:0], u_qrf.reg_C[4][31:0]);
 
