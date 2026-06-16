@@ -450,6 +450,7 @@ for pt in arc_pts:
 | C++ Reference | `software/common/include/spu_rational_robotics.h` | C++17 exact rational robotics oracle |
 | C++ Tests | `software/common/tests/spu_rational_robotics_test.cpp` | C++ parity for closure and six-step trace tests |
 | Trace Tool | `tools/rational_robotics_trace.py` | Exact JSON output for six-step visualizer and RTL vectors |
+| RTL Trace Test | `software/tests/test_rotc_six_step_rtl_trace.py` | Generated Verilog fixture for six forward/inverse ROTC phases |
 | Python VM | `software/spu_vm.py` | Type 1–5 primitives as VM methods/instructions |
 | C++ IVM Core | `software/common/include/spu_ivm.h` | Corresponding low-level C++17 primitives |
 | Hardware (exists) | `spu_rotor_vault.v`, `spu13_rotor_core.v` | Type 1 in silicon |
