@@ -20,6 +20,7 @@ module spu13_rotor_core_tdm #(
 
     input  wire [1:0]  field_sel,
     input  wire        bypass_p5,
+    input  wire        bypass_p5_inv,
     input  wire        apply_div3,
     
     // Quadray Output Coordinates
@@ -79,6 +80,9 @@ module spu13_rotor_core_tdm #(
                     if (start) begin
                         if (bypass_p5) begin
                             A_out <= A_in; B_out <= D_in; C_out <= B_in; D_out <= C_in;
+                            state <= S_DONE;
+                        end else if (bypass_p5_inv) begin
+                            A_out <= A_in; B_out <= C_in; C_out <= D_in; D_out <= B_in;
                             state <= S_DONE;
                         end else begin
                             acc_B <= 0; acc_C <= 0; acc_D <= 0;
