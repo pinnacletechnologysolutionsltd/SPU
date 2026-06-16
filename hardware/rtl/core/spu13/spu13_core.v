@@ -1017,10 +1017,11 @@ module spu13_core #(
                             hydration_state <= H_EXHALE;
 
                             // Emit a POLY_STEP Artery chord using toroidal index (if enabled).
-                            // Header layout: [63:56]=0xA5, [55:48]=sel, [47]=material, [46:37]=addr, [36]=singleton
+                            // Header layout: [63:56]=0xA5, [55:48]=sel,
+                            // [47:44]=material, [43:34]=addr, [33]=singleton
                             if (torus_emit_enable) begin
                                 artery_wr_en <= 1'b1;
-                                artery_wr_data <= {8'hA5, 8'd7, 1'b0, torus_idx[9:0], 1'b1, 36'd0};
+                                artery_wr_data <= {8'hA5, 8'd7, 4'd0, torus_idx[9:0], 1'b1, 33'd0};
                                 // advance torus index (wraps naturally at 10 bits)
                                 torus_idx <= torus_idx + 10'd1;
                             end

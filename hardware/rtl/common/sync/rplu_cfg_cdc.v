@@ -1,6 +1,6 @@
 // rplu_cfg_cdc.v
 // Wrapper for spu_async_fifo to handle RPLU config writes across clock domains.
-// Transfers a single 78-bit payload: {sel[2:0], material[0], addr[9:0], data[63:0]}
+// Transfers a single 85-bit payload: {sel[2:0], material[7:0], addr[9:0], data[63:0]}
 // from src clock domain into dst clock domain. Provides a single-cycle wr_dst
 // pulse in the destination domain when a word is popped from the FIFO.
 //
@@ -11,7 +11,7 @@ module rplu_cfg_cdc(
     input  wire        rst_n_src,
     input  wire        wr_src,
     input  wire [2:0]  sel_src,
-    input  wire        material_src,
+    input  wire [7:0]  material_src,
     input  wire [9:0]  addr_src,
     input  wire [63:0] data_src,
 
@@ -19,12 +19,12 @@ module rplu_cfg_cdc(
     input  wire        rst_n_dst,
     output reg         wr_dst,
     output reg  [2:0]  sel_dst,
-    output reg         material_dst,
+    output reg  [7:0]  material_dst,
     output reg  [9:0]  addr_dst,
     output reg  [63:0] data_dst
 );
 
-    localparam WPAY = 78; // 3 + 1 + 10 + 64
+    localparam WPAY = 85; // 3 + 8 + 10 + 64
 
     wire [WPAY-1:0] wr_data = {sel_src, material_src, addr_src, data_src};
     wire [WPAY-1:0] rd_data;
@@ -56,16 +56,16 @@ module rplu_cfg_cdc(
         if (!rst_n_dst) begin
             wr_dst       <= 1'b0;
             sel_dst      <= 3'd0;
-            material_dst <= 1'b0;
+            material_dst <= 8'd0;
             addr_dst     <= 10'd0;
             data_dst     <= 64'd0;
         end else begin
             // If the FIFO was not empty this cycle, we pop it and assert write pulse
             if (!empty) begin
                 wr_dst       <= 1'b1;
-                sel_dst      <= rd_data[WPAY-1:WPAY-3];    // [77:75]
-                material_dst <= rd_data[WPAY-4];             // [74]
-                addr_dst     <= rd_data[WPAY-5:WPAY-14];   // [73:64]
+                sel_dst      <= rd_data[84:82];
+                material_dst <= rd_data[81:74];
+                addr_dst     <= rd_data[73:64];
                 data_dst     <= rd_data[63:0];               // [63:0]
             end else begin
                 wr_dst       <= 1'b0;

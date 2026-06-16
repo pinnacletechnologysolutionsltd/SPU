@@ -7,8 +7,8 @@
 //   CMD 0xA0 → 32-byte manifold burst:
 //              4 axes × 8 bytes = [{P_hi,P_lo,0,0,Q_hi,Q_lo,0,0},...]
 //              P,Q = signed int16, Q12 big-endian. Latched at CS assertion.
-//   CMD 0xAC → 3-byte status:
-//              [dissonance_hi, dissonance_lo, flags]
+//   CMD 0xAC → 4-byte status:
+//              [laminar_hi, laminar_lo, flags, rplu_mode]
 //              flags bit0 = satellite_snaps[0] (snap_lock)
 //              flags bit1 = is_janus_point
 //
@@ -41,9 +41,10 @@ module spu_spi_slave (
     input  wire             rplu_ratio_valid,
 
     // RPLU runtime config outputs (pulsed on DATA chord)
+    // HEADER layout: [63:56]=0xA5, [55:48]=sel, [47:44]=material, [43:34]=addr.
     output reg         rplu_cfg_wr_en,
     output reg  [2:0]  rplu_cfg_sel,
-    output reg         rplu_cfg_material,
+    output reg  [7:0]  rplu_cfg_material,
     output reg  [9:0]  rplu_cfg_addr,
     output reg [63:0]  rplu_cfg_data,
 
@@ -167,13 +168,15 @@ module spu_spi_slave (
 
             rplu_cfg_wr_en   <= 1'b0;
             rplu_cfg_sel     <= 3'd0;
-            rplu_cfg_material<= 1'b0;
+            rplu_cfg_material<= 8'd0;
             rplu_cfg_addr    <= 10'd0;
             rplu_cfg_data    <= 64'd0;
 
             hdr_shift <= 64'd0;
             data_shift<= 64'd0;
             recv_bits <= 6'd0;
+            ratio_lat <= 3'sd0;
+            ratio_valid_lat <= 1'b0;
 
             for (b = 0; b < 64; b = b + 1) resp_buf[b] <= 8'h0;
         end else begin
@@ -355,9 +358,9 @@ module spu_spi_slave (
                             // Decode HEADER and emit single-cycle cfg pulse
                             if (hdr_shift[63:56] == 8'hA5) begin
                                 rplu_cfg_sel      <= hdr_shift[50:48];
-                                rplu_cfg_material <= hdr_shift[47];
-                                rplu_cfg_addr     <= hdr_shift[46:37];
-                                rplu_cfg_data     <= data_shift;
+                                rplu_cfg_material <= {4'd0, hdr_shift[47:44]};
+                                rplu_cfg_addr     <= hdr_shift[43:34];
+                                rplu_cfg_data     <= {data_shift[62:0], mosi_d};
                                 rplu_cfg_wr_en    <= 1'b1; // single-cycle pulse (cleared by default at next tick)
                             end
                             // Return to idle and wait for CS to be deasserted

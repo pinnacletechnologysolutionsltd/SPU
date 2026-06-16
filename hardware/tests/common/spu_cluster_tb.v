@@ -30,7 +30,7 @@ module spu_cluster_tb;
         // External RPLU inputs (not used in this TB)
         .ext_rplu_cfg_wr_en_fast(1'b0),
         .ext_rplu_cfg_sel_fast(3'd0),
-        .ext_rplu_cfg_material_fast(1'b0),
+        .ext_rplu_cfg_material_fast(8'd0),
         .ext_rplu_cfg_addr_fast(10'd0),
         .ext_rplu_cfg_data_fast(64'd0)
     );

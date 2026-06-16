@@ -1,5 +1,5 @@
 // spu_spi_slave_tb.v — testbench for spu_spi_slave
-// Tests CMD 0xA0 (32-byte manifold burst) and CMD 0xAC (3-byte status)
+// Tests CMD 0xA0 (32-byte manifold burst) and CMD 0xAC (4-byte status)
 `timescale 1ns/1ps
 
 module spu_spi_slave_tb;
@@ -11,7 +11,7 @@ module spu_spi_slave_tb;
     // RPLU CFG outputs (observed only in advanced tests)
     wire       rplu_cfg_wr_en;
     wire [2:0] rplu_cfg_sel;
-    wire       rplu_cfg_material;
+    wire [7:0] rplu_cfg_material;
     wire [9:0] rplu_cfg_addr;
     wire [63:0] rplu_cfg_data;
 
@@ -39,7 +39,12 @@ module spu_spi_slave_tb;
         .rplu_cfg_sel(rplu_cfg_sel),
         .rplu_cfg_material(rplu_cfg_material),
         .rplu_cfg_addr(rplu_cfg_addr),
-        .rplu_cfg_data(rplu_cfg_data)
+        .rplu_cfg_data(rplu_cfg_data),
+        .fifo_full(1'b0),
+        .laminar_index(dissonance),
+        .turbulence(1'b0),
+        .rplu_mode(1'b0),
+        .sentinel_telemetry(512'd0)
     );
 
     // 24 MHz system clock
@@ -67,6 +72,11 @@ module spu_spi_slave_tb;
     // SPI transaction: assert CS, send cmd, receive n_bytes
     reg [7:0] rx_buf [0:31];
     integer   pass_count, fail_count;
+    reg        seen_cfg_wr;
+    reg [2:0]  seen_cfg_sel;
+    reg [7:0]  seen_cfg_material;
+    reg [9:0]  seen_cfg_addr;
+    reg [63:0] seen_cfg_data;
 
     task spi_transaction;
         input [7:0]  cmd;
@@ -84,6 +94,61 @@ module spu_spi_slave_tb;
             #1000;
         end
     endtask
+
+    task spi_u64_send;
+        input [63:0] word;
+        integer b;
+        reg [7:0] dummy;
+        begin
+            for (b = 7; b >= 0; b = b - 1)
+                spi_byte_send(word[b*8 +: 8], dummy);
+        end
+    endtask
+
+    task spi_rplu_write;
+        input [63:0] header;
+        input [63:0] data;
+        reg [7:0] dummy;
+        begin
+            spi_cs_n = 0;
+            #500;
+            spi_byte_send(8'hA5, dummy);
+            spi_u64_send(header);
+            spi_u64_send(data);
+            #500;
+            spi_cs_n = 1;
+            #2000;
+        end
+    endtask
+
+    function [63:0] rplu_header;
+        input [2:0] sel;
+        input [3:0] material;
+        input [9:0] addr;
+        begin
+            rplu_header = 64'd0;
+            rplu_header[63:56] = 8'hA5;
+            rplu_header[50:48] = sel;
+            rplu_header[47:44] = material;
+            rplu_header[43:34] = addr;
+        end
+    endfunction
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            seen_cfg_wr <= 1'b0;
+            seen_cfg_sel <= 3'd0;
+            seen_cfg_material <= 8'd0;
+            seen_cfg_addr <= 10'd0;
+            seen_cfg_data <= 64'd0;
+        end else if (rplu_cfg_wr_en) begin
+            seen_cfg_wr <= 1'b1;
+            seen_cfg_sel <= rplu_cfg_sel;
+            seen_cfg_material <= rplu_cfg_material;
+            seen_cfg_addr <= rplu_cfg_addr;
+            seen_cfg_data <= rplu_cfg_data;
+        end
+    end
 
     initial begin
         // Initialise
@@ -132,16 +197,17 @@ module spu_spi_slave_tb;
             fail_count = fail_count + 1;
         end
 
-        // --- T2: CMD 0xAC — 3-byte status ---
-        spi_transaction(8'hAC, 3);
+        // --- T2: CMD 0xAC — 4-byte status ---
+        spi_transaction(8'hAC, 4);
 
-        // dissonance=0xBEEF → bytes 0,1=BE,EF; flags bit1=janus=1, bit0=snaps[0]=0 → 0x02
-        if (rx_buf[0] === 8'hBE && rx_buf[1] === 8'hEF && rx_buf[2] === 8'h02) begin
-            $display("T2 PASS: status bytes correct (dis=BEEF flags=02)");
+        // laminar_index=0xBEEF; flags bit1=janus=1, bit0=snaps[0]=0 -> 0x02; rplu_mode=0
+        if (rx_buf[0] === 8'hBE && rx_buf[1] === 8'hEF &&
+            rx_buf[2] === 8'h02 && rx_buf[3] === 8'h00) begin
+            $display("T2 PASS: status bytes correct (laminar=BEEF flags=02 mode=00)");
             pass_count = pass_count + 1;
         end else begin
-            $display("T2 FAIL: [%02h,%02h,%02h] expected BE,EF,02",
-                rx_buf[0], rx_buf[1], rx_buf[2]);
+            $display("T2 FAIL: [%02h,%02h,%02h,%02h] expected BE,EF,02,00",
+                rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3]);
             fail_count = fail_count + 1;
         end
 
@@ -152,6 +218,22 @@ module spu_spi_slave_tb;
             pass_count = pass_count + 1;
         end else begin
             $display("T3 FAIL: expected 0x00 got %02h", rx_buf[0]);
+            fail_count = fail_count + 1;
+        end
+
+        // --- T4: CMD 0xA5 RPLU write with material ID 7 ---
+        seen_cfg_wr = 1'b0;
+        spi_rplu_write(rplu_header(3'd5, 4'd7, 10'h123), 64'h1122_3344_5566_7788);
+        if (seen_cfg_wr &&
+            seen_cfg_sel === 3'd5 &&
+            seen_cfg_material === 8'd7 &&
+            seen_cfg_addr === 10'h123 &&
+            seen_cfg_data === 64'h1122_3344_5566_7788) begin
+            $display("T4 PASS: RPLU material 7 config decoded");
+            pass_count = pass_count + 1;
+        end else begin
+            $display("T4 FAIL: wr=%b sel=%0d material=%0d addr=%h data=%h",
+                seen_cfg_wr, seen_cfg_sel, seen_cfg_material, seen_cfg_addr, seen_cfg_data);
             fail_count = fail_count + 1;
         end
 

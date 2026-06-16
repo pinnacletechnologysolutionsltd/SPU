@@ -16,14 +16,14 @@ module spu_system (
     // RPLU config broadcast (piranha domain) — pulsed on DATA chord
     output wire        rplu_cfg_wr_en,
     output wire [2:0]  rplu_cfg_sel,
-    output wire        rplu_cfg_material,
+    output wire [7:0]  rplu_cfg_material,
     output wire [9:0]  rplu_cfg_addr,
     output wire [63:0] rplu_cfg_data,
 
     // External RPLU CFG inputs (fast domain) — optional: connect board SPI loader here
     input  wire        ext_rplu_cfg_wr_en_fast,
     input  wire [2:0]  ext_rplu_cfg_sel_fast,
-    input  wire        ext_rplu_cfg_material_fast,
+    input  wire [7:0]  ext_rplu_cfg_material_fast,
     input  wire [9:0]  ext_rplu_cfg_addr_fast,
     input  wire [63:0] ext_rplu_cfg_data_fast,
 
@@ -105,7 +105,7 @@ module spu_system (
     // CDC: move SPU13 core-originated config writes (fast -> piranha)
     wire        core_piranha_cfg_wr_en;
     wire [2:0]  core_piranha_cfg_sel;
-    wire        core_piranha_cfg_material;
+    wire [7:0]  core_piranha_cfg_material;
     wire [9:0]  core_piranha_cfg_addr;
     wire [63:0] core_piranha_cfg_data;
 
@@ -114,8 +114,8 @@ module spu_system (
         .rst_n_src     (rst_n),
         .wr_src        (cortex_artery_wr_en),
         .sel_src       (cortex_artery_wr_data[50:48]),
-        .material_src  (cortex_artery_wr_data[47]),
-        .addr_src      (cortex_artery_wr_data[46:37]),
+        .material_src  ({4'd0, cortex_artery_wr_data[47:44]}),
+        .addr_src      (cortex_artery_wr_data[43:34]),
         .data_src      (cortex_artery_wr_data),
         .clk_dst       (clk_piranha),
         .rst_n_dst     (rst_n),
@@ -134,7 +134,7 @@ module spu_system (
 
     wire        dec_cfg_wr_en;
     wire [2:0]  dec_cfg_sel;
-    wire        dec_cfg_material;
+    wire [7:0]  dec_cfg_material;
     wire [9:0]  dec_cfg_addr;
     wire [63:0] dec_cfg_data;
 
@@ -156,7 +156,7 @@ module spu_system (
     // -----------------------------------------------------------------
     wire        ext_piranha_cfg_wr_en;
     wire [2:0]  ext_piranha_cfg_sel;
-    wire        ext_piranha_cfg_material;
+    wire [7:0]  ext_piranha_cfg_material;
     wire [9:0]  ext_piranha_cfg_addr;
     wire [63:0] ext_piranha_cfg_data;
 
@@ -228,7 +228,7 @@ module spu_system (
     );
 
     wire        mux_rplu_cfg_wr_en;
-    wire [77:0] mux_rplu_cfg_data;
+    wire [84:0] mux_rplu_cfg_data;
 
     spu_cfg_mux u_cfg_mux (
         .boot_done(hw_boot_done),
@@ -244,8 +244,8 @@ module spu_system (
         .clk_src       (clk_fast),
         .rst_n_src     (rst_n),
         .wr_src        (mux_rplu_cfg_wr_en),
-        .sel_src       (mux_rplu_cfg_data[77:75]),
-        .material_src  (mux_rplu_cfg_data[74]),
+        .sel_src       (mux_rplu_cfg_data[84:82]),
+        .material_src  (mux_rplu_cfg_data[81:74]),
         .addr_src      (mux_rplu_cfg_data[73:64]),
         .data_src      (mux_rplu_cfg_data[63:0]),
         .clk_dst       (clk_piranha),
@@ -296,7 +296,7 @@ module spu_system (
     // -----------------------------------------------------------------
     wire        dec_fast_cfg_wr_en;
     wire [2:0]  dec_fast_cfg_sel;
-    wire        dec_fast_cfg_material;
+    wire [7:0]  dec_fast_cfg_material;
     wire [9:0]  dec_fast_cfg_addr;
     wire [63:0] dec_fast_cfg_data;
 
@@ -369,7 +369,7 @@ module spu_system (
         .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),
         .dec_fast_cfg_wr_en(dec_fast_cfg_wr_en),
         .dec_fast_cfg_sel(dec_fast_cfg_sel),
-        .dec_fast_cfg_material({7'd0, dec_fast_cfg_material}),
+        .dec_fast_cfg_material(dec_fast_cfg_material),
         .dec_fast_cfg_addr(dec_fast_cfg_addr),
         .dec_fast_cfg_data(dec_fast_cfg_data),
         .phinary_cfg(16'd0),
