@@ -445,6 +445,47 @@ Flat `node_id` addressing keeps the BMU datapath boring and fast. Native
 coordinates remain authoritative for topology, but not for physical memory
 layout.
 
+## Stage 1 Software Oracle
+
+Initial reconstruction should simulate before RTL. The current Stage 1 oracle is
+a tiny exact SOM/BMU model in both Python and C++:
+
+- `software/lib/rational_som.py`
+- `software/tests/test_rational_som.py`
+- `software/common/include/spu_rational_som.h`
+- `software/common/tests/spu_rational_som_test.cpp`
+
+Covered behavior:
+
+- weighted quadrance BMU: `Q_i = sum_j r_j * (x_j - w_ij)^2`
+- exact `Q(sqrt(3))` field-square path, including surd-valued features
+- stable tie-breaking by lowest `node_id`
+- second-best tracking and `confidence_gap = second_q - best_q`
+- Nguyen-style cluster label reduction from BMU result
+- ambiguity flag when the confidence gap is zero or below an exact threshold
+- flat node storage with sidecar axial hex coordinates
+- six axial hex neighbor deltas
+
+Targeted verification:
+
+```text
+python3 software/tests/test_rational_som.py
+g++ -std=c++17 -Isoftware/common/include \
+    software/common/tests/spu_rational_som_test.cpp \
+    -o /tmp/spu_rational_som_test
+/tmp/spu_rational_som_test
+```
+
+The next RTL handoff should mirror the C++ header first:
+
+1. `spu_quadrance_accum.v`: subtract, square, rational weight multiply,
+   accumulate.
+2. `spu_som_bmu.v`: scan/parallel-reduce node scores, track best and second
+   best with stable `node_id` tie-breaking.
+3. `spu_cluster_reduce.v`: emit label, confidence gap, and ambiguity flag.
+4. `spu_som_bmu_tb.v`: replay the seven-node fixture and expected outputs from
+   the software tests.
+
 ## Architecture Sentence
 
 Use this as the compact design claim:
