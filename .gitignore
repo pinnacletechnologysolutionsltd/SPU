@@ -17,6 +17,24 @@ tmp_*.vvp
 # ─── Build directory (all synthesis/PnR/pack/test outputs) ────────────────
 build/
 
+# ─── Root-level generated files (test logs, mem dumps, images) ──────────
+/*.log
+/*.mem
+/*.hex
+/*.bin
+/*.png
+/*.webp
+/*.vcd
+/*.pid
+
+# ─── Proprietary board files — NEVER commit ──────────────────────────────
+*.pdf
+*.sch
+*.brd
+*_Schematic.*
+*_Dock_*
+*Tang_Primer*Dock*
+
 # Legacy root-level artifacts (pre-build/ era — safe to delete these files)
 tang_primer_25k.json
 tang_primer_25k_pnr.json
