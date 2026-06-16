@@ -1,5 +1,13 @@
 # Nguyen Weight Partitioning — Laminar Translation for SPU-13
 
+Related recovered design notes:
+- `knowledge/RATIONAL_SOM_NGUYEN_CLUSTER_NOTES.md` extends this partitioning
+  idea toward deterministic topological classification, rough/tolerance
+  membership, and a rational Kohonen/SOM BMU RTL path.
+- `knowledge/STSC_SSAM_MULTI_AGENT_NOTES.md` captures the STSC/SSAM
+  reconstruction path, Global Nguyen arbitration, and Lithic-L microkernel
+  layer.
+
 ## Source
 Distilled from Nguyen's recursive metric-space subdivision algorithm (weight-based
 treemap / cone-tree partitioning). The Java implementation is discarded; only the
