@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from fractions import Fraction
-from typing import Iterable
+from typing import Iterable, Sequence
 
 
 @dataclass(frozen=True)
@@ -128,6 +128,23 @@ class CirculantJoint:
     f: Q3
     g: Q3
     h: Q3
+
+
+@dataclass(frozen=True)
+class SixStepKinematicsFrame:
+    """One commanded rational-robotics rotor phase and inverse-balance check."""
+
+    phase: int
+    forward_angle: int
+    inverse_angle: int
+    input_vector: QuadrayQ
+    commanded_vector: QuadrayQ
+    recovered_vector: QuadrayQ
+    closure_error_vector: QuadrayQ
+    quadrance_before: Q3
+    quadrance_after: Q3
+    inverse_balanced: bool
+    orbit_closed: bool
 
 
 def joint_identity(axis_id: int = 0) -> CirculantJoint:
@@ -269,6 +286,16 @@ CORRECTED_ROTC_ANGLE_TABLE = {
 }
 
 
+ROTC_INVERSE_ANGLE_TABLE = {
+    0: 0,
+    1: 4,
+    2: 5,
+    3: 3,
+    4: 1,
+    5: 2,
+}
+
+
 LEGACY_ROTC_ANGLE_TABLE = {
     # Matches the current VM/compiler angle descriptions for audit purposes.
     # Do not treat this as the corrected hardware contract.
@@ -300,3 +327,107 @@ def legacy_rotc_table_issues() -> list[str]:
 
 def sample_robot_vector() -> QuadrayQ:
     return QuadrayQ(q3(1), q3(0, 1), q3(Fraction(1, 3)), q3(-2))
+
+
+def inverse_angle_for(angle: int) -> int:
+    """Return the corrected ROTC angle that exactly inverts `angle`."""
+
+    if angle not in ROTC_INVERSE_ANGLE_TABLE:
+        raise ValueError(f"unsupported corrected ROTC angle: {angle}")
+    return ROTC_INVERSE_ANGLE_TABLE[angle]
+
+
+def six_step_kinematics_trace(
+    start: QuadrayQ | None = None,
+    angle: int = 1,
+) -> tuple[SixStepKinematicsFrame, ...]:
+    """
+    Emit the recovered six-step rational robotics rotor trace.
+
+    The default angle is the corrected period-6 ROTC step. Each frame advances
+    the commanded state once, then applies the inverse angle to prove that the
+    command is topologically balanced before the next command is accepted.
+    """
+
+    if angle not in CORRECTED_ROTC_ANGLE_TABLE:
+        raise ValueError(f"unsupported corrected ROTC angle: {angle}")
+
+    root = sample_robot_vector() if start is None else start
+    current = root
+    forward_joint = CORRECTED_ROTC_ANGLE_TABLE[angle]
+    inverse_angle = inverse_angle_for(angle)
+    inverse_joint = CORRECTED_ROTC_ANGLE_TABLE[inverse_angle]
+    frames: list[SixStepKinematicsFrame] = []
+
+    for phase in range(6):
+        commanded = apply_joint(current, forward_joint)
+        recovered = apply_joint(commanded, inverse_joint)
+        error = closure_error(current, recovered)
+        frames.append(SixStepKinematicsFrame(
+            phase=phase,
+            forward_angle=angle,
+            inverse_angle=inverse_angle,
+            input_vector=current,
+            commanded_vector=commanded,
+            recovered_vector=recovered,
+            closure_error_vector=error,
+            quadrance_before=current.quadrance(),
+            quadrance_after=commanded.quadrance(),
+            inverse_balanced=error.is_zero(),
+            orbit_closed=is_closed(root, commanded),
+        ))
+        current = commanded
+
+    return tuple(frames)
+
+
+def six_step_trace_is_balanced(trace: Sequence[SixStepKinematicsFrame]) -> bool:
+    """Return true when every phase is inverse-balanced and the orbit closes."""
+
+    return bool(trace) and all(frame.inverse_balanced for frame in trace) and trace[-1].orbit_closed
+
+
+def fraction_to_trace_string(value: Fraction) -> str:
+    return str(value)
+
+
+def q3_to_trace_value(value: Q3) -> dict[str, str]:
+    return {
+        "p": fraction_to_trace_string(value.p),
+        "q": fraction_to_trace_string(value.q),
+    }
+
+
+def quadray_to_trace_value(value: QuadrayQ) -> dict[str, dict[str, str]]:
+    return {
+        "a": q3_to_trace_value(value.a),
+        "b": q3_to_trace_value(value.b),
+        "c": q3_to_trace_value(value.c),
+        "d": q3_to_trace_value(value.d),
+    }
+
+
+def six_step_frame_to_dict(frame: SixStepKinematicsFrame) -> dict:
+    return {
+        "phase": frame.phase,
+        "forward_angle": frame.forward_angle,
+        "inverse_angle": frame.inverse_angle,
+        "input_vector": quadray_to_trace_value(frame.input_vector),
+        "commanded_vector": quadray_to_trace_value(frame.commanded_vector),
+        "recovered_vector": quadray_to_trace_value(frame.recovered_vector),
+        "closure_error_vector": quadray_to_trace_value(frame.closure_error_vector),
+        "quadrance_before": q3_to_trace_value(frame.quadrance_before),
+        "quadrance_after": q3_to_trace_value(frame.quadrance_after),
+        "inverse_balanced": frame.inverse_balanced,
+        "orbit_closed": frame.orbit_closed,
+    }
+
+
+def six_step_trace_to_dict(trace: Sequence[SixStepKinematicsFrame]) -> dict:
+    return {
+        "name": "rational_robotics_six_step_trace",
+        "field": "Q(sqrt(3))",
+        "steps": len(trace),
+        "balanced": six_step_trace_is_balanced(trace),
+        "frames": [six_step_frame_to_dict(frame) for frame in trace],
+    }
