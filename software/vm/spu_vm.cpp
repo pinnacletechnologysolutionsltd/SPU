@@ -1,11 +1,11 @@
 // spu_vm.cpp — SPU-13 Sovereign Virtual Machine (C++17)
-// Feature-parity with software/spu_vm.py v1.2
+// Feature-parity with the recovered SPU-13 Python VM baseline.
 //
 // Q(√3) arithmetic: all values are (a + b·√3), a,b ∈ int32_t.
 // No floating point. No division. int64_t intermediates for multiplication.
 //
 // Supported ISA: LD ADD SUB MUL ROT LOG JMP SNAP COND CALL RET
-//                QADD QROT QNORM QLOAD QLOG SPREAD HEX
+//                QADD QSUB QROT ROTC QNORM QLOAD QLDI QLOG DELTA SPREAD HEX
 //                EQUIL IDNT JINV ANNE NOP
 //
 // Build: c++ -std=c++17 -O2 -Wall -o spu_vm spu_vm.cpp
@@ -35,6 +35,7 @@
 #include <cctype>
 #include <climits>
 #include <numeric>
+#include <stdexcept>
 
 // ============================================================================
 // RationalSurd — element of Q(√3): value = a + b·√3
@@ -137,6 +138,22 @@ RationalSurd rs_min(const RationalSurd& a, const RationalSurd& b,
     return m;
 }
 
+static int32_t sign_extend8(uint32_t x) {
+    x &= 0xFFu;
+    return (x & 0x80u) ? (int32_t)(x | 0xFFFFFF00u) : (int32_t)x;
+}
+
+static int32_t round_div(int64_t num, int32_t denom) {
+    int64_t half = denom / 2;
+    if (num >= 0)
+        return (int32_t)((num + half) / denom);
+    return (int32_t)(-((-num + half) / denom));
+}
+
+static RationalSurd rs_div_round(const RationalSurd& value, int32_t denom) {
+    return RationalSurd(round_div(value.a, denom), round_div(value.b, denom));
+}
+
 // ============================================================================
 // QuadrayVector — 4-axis IVM tetrahedral coordinates in Q(√3)⁴
 // Canonical form: min component = 0 (subtract min from all)
@@ -152,6 +169,10 @@ struct QuadrayVector {
 
     QuadrayVector operator+(const QuadrayVector& o) const {
         return QuadrayVector(a+o.a, b+o.b, c+o.c, d+o.d);
+    }
+
+    QuadrayVector operator-(const QuadrayVector& o) const {
+        return QuadrayVector(a-o.a, b-o.b, c-o.c, d-o.d);
     }
 
     // Normalize: subtract min component from all axes (canonical IVM form)
@@ -219,7 +240,7 @@ static const std::unordered_map<std::string,uint8_t> OPCODES = {
     {"LD",0x00},{"ADD",0x01},{"SUB",0x02},{"MUL",0x03},{"ROT",0x04},
     {"LOG",0x05},{"JMP",0x06},{"SNAP",0x07},
     {"QADD",0x10},{"QROT",0x11},{"QNORM",0x12},{"QLOAD",0x13},{"QLOG",0x14},
-    {"SPREAD",0x15},{"HEX",0x16},
+    {"SPREAD",0x15},{"HEX",0x16},{"QSUB",0x1B},{"ROTC",0x1C},{"QLDI",0x1D},{"DELTA",0x1E},
     {"EQUIL",0x17},{"IDNT",0x18},{"JINV",0x19},{"ANNE",0x1A},
     {"COND",0x20},{"CALL",0x21},{"RET",0x22},
     {"NOP",0xFF},
@@ -271,13 +292,106 @@ static uint64_t assemble_line(const std::vector<std::string>& parts,
     uint8_t  r1 = 0, r2 = 0;
     uint16_t p1_a = 0, p1_b = 0;
 
+    auto parse_reg_index = [](const std::string& raw) -> uint8_t {
+        std::string arg = str_toupper(raw);
+        if (arg.substr(0,2) == "QR") return (uint8_t)(std::stoi(arg.substr(2)) & 0xFF);
+        if (arg[0] == 'R') return (uint8_t)(std::stoi(arg.substr(1)) & 0xFF);
+        return (uint8_t)(std::stoi(raw) & 0xFF);
+    };
+
+    auto parse_qr_index = [](const std::string& raw) -> uint8_t {
+        std::string arg = str_toupper(raw);
+        if (arg.substr(0,2) != "QR")
+            throw std::runtime_error("expected QR register");
+        return (uint8_t)(std::stoi(arg.substr(2)) & 0xFF);
+    };
+
+    if (mnemonic == "QSUB") {
+        if (parts.size() < 3) {
+            std::cerr << "  ASM error line " << line_no
+                      << ": QSUB requires QRd, QRs or QRd, QRa, QRb\n";
+            return (uint64_t)-1;
+        }
+        try {
+            r1 = parse_qr_index(parts[1]);
+            if (parts.size() > 3) {
+                r2 = parse_qr_index(parts[2]);
+                p1_b = parse_qr_index(parts[3]);
+            } else {
+                r2 = r1;
+                p1_b = parse_qr_index(parts[2]);
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "  ASM error line " << line_no << ": " << e.what() << "\n";
+            return (uint64_t)-1;
+        }
+        return ((uint64_t)opcode << 56)
+             | ((uint64_t)r1    << 48)
+             | ((uint64_t)r2    << 40)
+             | ((uint64_t)p1_a  << 24)
+             | ((uint64_t)p1_b  <<  8);
+    }
+
+    if (mnemonic == "ROTC") {
+        if (parts.size() < 4) {
+            std::cerr << "  ASM error line " << line_no
+                      << ": ROTC requires QRd, QRs, angle\n";
+            return (uint64_t)-1;
+        }
+        r1 = parse_qr_index(parts[1]);
+        r2 = parse_qr_index(parts[2]);
+        p1_a = (uint16_t)(std::stoi(parts[3]) & 0xFF);
+        return ((uint64_t)opcode << 56)
+             | ((uint64_t)r1    << 48)
+             | ((uint64_t)r2    << 40)
+             | ((uint64_t)p1_a  << 24)
+             | ((uint64_t)p1_b  <<  8);
+    }
+
+    if (mnemonic == "QLDI") {
+        if (parts.size() < 6) {
+            std::cerr << "  ASM error line " << line_no
+                      << ": QLDI requires QRd, A, B, C, D\n";
+            return (uint64_t)-1;
+        }
+        r1 = parse_qr_index(parts[1]);
+        uint8_t a = (uint8_t)(std::stoi(parts[2]) & 0xFF);
+        uint8_t b = (uint8_t)(std::stoi(parts[3]) & 0xFF);
+        uint8_t c = (uint8_t)(std::stoi(parts[4]) & 0xFF);
+        uint8_t d = (uint8_t)(std::stoi(parts[5]) & 0xFF);
+        p1_a = (uint16_t)(((uint16_t)a << 8) | b);
+        p1_b = (uint16_t)(((uint16_t)c << 8) | d);
+        return ((uint64_t)opcode << 56)
+             | ((uint64_t)r1    << 48)
+             | ((uint64_t)r2    << 40)
+             | ((uint64_t)p1_a  << 24)
+             | ((uint64_t)p1_b  <<  8);
+    }
+
+    if (mnemonic == "DELTA") {
+        if (parts.size() < 5) {
+            std::cerr << "  ASM error line " << line_no
+                      << ": DELTA requires QRd, Q1, Q2, steps\n";
+            return (uint64_t)-1;
+        }
+        r1 = parse_qr_index(parts[1]);
+        p1_a = (uint16_t)(std::stoi(parts[2]) & 0xFFFF);
+        p1_b = (uint16_t)(std::stoi(parts[3]) & 0xFFFF);
+        r2 = (uint8_t)(std::stoi(parts[4]) & 0xFF);
+        return ((uint64_t)opcode << 56)
+             | ((uint64_t)r1    << 48)
+             | ((uint64_t)r2    << 40)
+             | ((uint64_t)p1_a  << 24)
+             | ((uint64_t)p1_b  <<  8);
+    }
+
     auto parse_arg = [&](const std::string& raw, bool is_first) {
         std::string arg = str_toupper(raw);
         if (arg.substr(0,2) == "QR") {
-            uint8_t idx = (uint8_t)(std::stoi(arg.substr(2)) & 0xFF);
+            uint8_t idx = parse_reg_index(raw);
             if (is_first) r1 = idx; else r2 = idx;
         } else if (arg[0] == 'R') {
-            uint8_t idx = (uint8_t)(std::stoi(arg.substr(1)) & 0xFF);
+            uint8_t idx = parse_reg_index(raw);
             if (is_first) r1 = idx; else r2 = idx;
         } else {
             auto lit = labels.find(arg);
@@ -609,11 +723,63 @@ public:
                                    << " = " << qv.repr() << "\n";
             break;
         }
+        case 0x1D: { // QLDI
+            uint16_t pa = (uint16_t)d.p1_a;
+            uint16_t pb = (uint16_t)d.p1_b;
+            int32_t A = sign_extend8(pa >> 8);
+            int32_t B = sign_extend8(pa);
+            int32_t C = sign_extend8(pb >> 8);
+            int32_t D = sign_extend8(pb);
+            int n = d.r1 % 13;
+            qregs[n] = QuadrayVector(
+                RationalSurd(A, 0), RationalSurd(B, 0),
+                RationalSurd(C, 0), RationalSurd(D, 0));
+            if (verbose) std::cout << "  [" << pc << "] QLDI QR" << n
+                                   << " ← (" << A << "," << B << ","
+                                   << C << "," << D << ") → "
+                                   << qregs[n].repr() << "\n";
+            break;
+        }
+        case 0x1E: { // DELTA
+            uint16_t Q1 = (uint16_t)d.p1_a;
+            uint16_t Q2 = (uint16_t)d.p1_b;
+            int steps = d.r2 > 0 ? d.r2 : 4;
+            int n = d.r1 % 13;
+            int32_t q_sum = (int32_t)Q1 + (int32_t)Q2;
+            int32_t rhs_sq = 4 * (int32_t)Q1 * (int32_t)Q2;
+
+            for (int k = 0; k <= steps; k++) {
+                int32_t rhs = (4 * (int32_t)Q1 * (int32_t)Q2 * (steps - k)) / steps;
+                if (k == steps) rhs_sq = rhs;
+            }
+
+            qregs[n] = QuadrayVector(
+                RationalSurd(q_sum, 0),
+                RationalSurd(rhs_sq, 0),
+                RationalSurd(steps, 0),
+                RationalSurd(0, 0));
+            if (verbose) std::cout << "  [" << pc << "] DELTA QR" << n
+                                   << " Q1=" << Q1 << " Q2=" << Q2
+                                   << " steps=" << steps
+                                   << " → q_sum=" << q_sum
+                                   << " rhs²=" << rhs_sq << "/" << steps << "\n";
+            break;
+        }
         case 0x10: { // QADD
             int dd = d.r1 % 13, s = d.r2 % 13;
             qregs[dd] = qregs[dd] + qregs[s];
             if (verbose) std::cout << "  [" << pc << "] QADD QR" << dd
                                    << " + QR" << s << " → " << qregs[dd].repr() << "\n";
+            break;
+        }
+        case 0x1B: { // QSUB
+            int dd = d.r1 % 13;
+            int a = d.r2 % 13;
+            int b = ((uint16_t)d.p1_b) % 13;
+            qregs[dd] = qregs[a] - qregs[b];
+            if (verbose) std::cout << "  [" << pc << "] QSUB QR" << dd
+                                   << " ← QR" << a << " - QR" << b
+                                   << " → " << qregs[dd].repr() << "\n";
             break;
         }
         case 0x11: { // QROT
@@ -624,6 +790,56 @@ public:
                 std::cout << "  [" << pc << "] QROT QR" << n
                           << " → " << qregs[n].repr()
                           << "  hex=(" << hx << "," << hy << ")\n";
+            }
+            break;
+        }
+        case 0x1C: { // ROTC
+            struct RotcCoeff {
+                int32_t fa, fb, ga, gb, ha, hb, denom;
+            };
+            static const std::unordered_map<int, RotcCoeff> ROTC_TABLE = {
+                {0, { 1, 0,  0, 0,  0, 0, 1}},
+                {1, { 2, 0,  2, 0, -1, 0, 3}},
+                {2, { 0, 0,  1, 0,  0, 0, 1}},
+                {3, {-1, 0,  2, 0,  2, 0, 3}},
+                {4, { 2, 0, -1, 0,  2, 0, 3}},
+                {5, { 0, 0,  0, 0,  1, 0, 1}},
+            };
+
+            int angle = ((uint16_t)d.p1_a) & 0x3F;
+            auto it_rotc = ROTC_TABLE.find(angle);
+            if (it_rotc == ROTC_TABLE.end()) {
+                if (verbose) std::cout << "  [" << pc << "] ROTC angle "
+                                       << angle << " not populated — NOP\n";
+                break;
+            }
+
+            int dd = d.r1 % 13;
+            int s = d.r2 % 13;
+            const RotcCoeff& rc = it_rotc->second;
+            RationalSurd F(rc.fa, rc.fb);
+            RationalSurd G(rc.ga, rc.gb);
+            RationalSurd H(rc.ha, rc.hb);
+            const QuadrayVector& src = qregs[s];
+
+            RationalSurd b_acc = F * src.b + H * src.c + G * src.d;
+            RationalSurd c_acc = G * src.b + F * src.c + H * src.d;
+            RationalSurd d_acc = H * src.b + G * src.c + F * src.d;
+
+            qregs[dd] = QuadrayVector(
+                src.a,
+                rs_div_round(b_acc, rc.denom),
+                rs_div_round(c_acc, rc.denom),
+                rs_div_round(d_acc, rc.denom));
+
+            if (verbose) {
+                static const char* names[6] = {
+                    "identity", "thirds period-6", "P5 forward",
+                    "thirds period-2", "thirds period-6 inverse", "P5 inverse"
+                };
+                std::cout << "  [" << pc << "] ROTC QR" << dd
+                          << " ← QR" << s << " @" << names[angle]
+                          << " → " << qregs[dd].repr() << "\n";
             }
             break;
         }
