@@ -114,6 +114,31 @@ static void test_arc_out_and_back_closure() {
     CHECK("Pell arc out and back closes", robotics_is_closed(v0, back));
 }
 
+static void test_six_step_robotics_trace_closure() {
+    auto trace = robotics_six_step_trace();
+    RoboticsQuadray root = robotics_sample_vector();
+
+    CHECK("six-step trace is balanced", robotics_six_step_trace_is_balanced(trace));
+
+    for (int phase = 0; phase < 6; phase++) {
+        const auto& frame = trace[phase];
+        CHECK("six-step trace phase index", frame.phase == phase);
+        CHECK("six-step trace forward angle", frame.forward_angle == 1);
+        CHECK("six-step trace inverse angle", frame.inverse_angle == 4);
+        CHECK("six-step trace inverse-balanced", frame.inverse_balanced);
+        CHECK("six-step trace closure error zero", frame.closure_error_vector.is_zero());
+        CHECK("six-step trace quadrance preserved",
+              frame.quadrance_before == frame.quadrance_after);
+
+        if (phase < 5) {
+            CHECK("six-step trace pre-final phase not orbit-closed", !frame.orbit_closed);
+        } else {
+            CHECK("six-step trace final orbit closes", frame.orbit_closed);
+            CHECK("six-step trace final command equals root", frame.commanded_vector == root);
+        }
+    }
+}
+
 int main() {
     test_pell_inverse_closure();
     test_circulant_inverse_coefficients();
@@ -122,6 +147,7 @@ int main() {
     test_single_joint_inverse_closure();
     test_fk_inverse_chain_closure();
     test_arc_out_and_back_closure();
+    test_six_step_robotics_trace_closure();
 
     if (failures == 0) {
         printf("PASS\n");

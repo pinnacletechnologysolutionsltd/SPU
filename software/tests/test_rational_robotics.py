@@ -35,6 +35,9 @@ from lib.rational_robotics import (
     q3,
     ROTATION_KINEMATICS,
     sample_robot_vector,
+    six_step_kinematics_trace,
+    six_step_trace_is_balanced,
+    six_step_trace_to_dict,
 )
 
 
@@ -162,6 +165,46 @@ def test_arc_out_and_back_closure():
     check("Pell arc out and back closes", is_closed(v0, back))
 
 
+def test_six_step_robotics_trace_closure():
+    trace = six_step_kinematics_trace()
+    root = sample_robot_vector()
+
+    check("six-step trace has six phases", len(trace) == 6)
+    check("six-step trace is balanced", six_step_trace_is_balanced(trace))
+
+    for phase, frame in enumerate(trace):
+        check(f"six-step trace phase {phase}", frame.phase == phase)
+        check(f"six-step trace forward angle {phase}", frame.forward_angle == 1)
+        check(f"six-step trace inverse angle {phase}", frame.inverse_angle == 4)
+        check(f"six-step trace inverse-balanced {phase}", frame.inverse_balanced)
+        check(f"six-step trace closure error zero {phase}", frame.closure_error_vector.is_zero())
+        check(f"six-step trace quadrance preserved {phase}",
+              frame.quadrance_before == frame.quadrance_after)
+
+        if phase < 5:
+            check(f"six-step trace phase {phase} not orbit-closed", not frame.orbit_closed)
+        else:
+            check("six-step trace final orbit closes", frame.orbit_closed)
+            check("six-step trace final command equals root", frame.commanded_vector == root)
+
+
+def test_six_step_trace_serialization_is_exact():
+    data = six_step_trace_to_dict(six_step_kinematics_trace())
+
+    def has_no_float(value):
+        if isinstance(value, float):
+            return False
+        if isinstance(value, dict):
+            return all(has_no_float(item) for item in value.values())
+        if isinstance(value, list):
+            return all(has_no_float(item) for item in value)
+        return True
+
+    check("six-step trace serialization has no float values", has_no_float(data))
+    check("six-step trace serialization reports balance", data["balanced"])
+    check("six-step trace serialization records Q(sqrt(3))", data["field"] == "Q(sqrt(3))")
+
+
 def test_no_float_or_sqrt_calls():
     source = inspect.getsource(rational_robotics)
     tree = ast.parse(source)
@@ -186,6 +229,8 @@ def main():
     test_single_joint_inverse_closure()
     test_fk_inverse_chain_closure()
     test_arc_out_and_back_closure()
+    test_six_step_robotics_trace_closure()
+    test_six_step_trace_serialization_is_exact()
     test_no_float_or_sqrt_calls()
 
     if FAIL:

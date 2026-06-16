@@ -155,6 +155,20 @@ struct RoboticsJoint {
     }
 };
 
+struct RoboticsSixStepFrame {
+    int phase;
+    int forward_angle;
+    int inverse_angle;
+    RoboticsQuadray input_vector;
+    RoboticsQuadray commanded_vector;
+    RoboticsQuadray recovered_vector;
+    RoboticsQuadray closure_error_vector;
+    RationalQ3 quadrance_before;
+    RationalQ3 quadrance_after;
+    bool inverse_balanced;
+    bool orbit_closed;
+};
+
 inline RoboticsJoint robotics_joint_identity(int axis_id = 0) {
     return { axis_id, q3(1), q3(0), q3(0) };
 }
@@ -269,4 +283,76 @@ inline int robotics_circulant_period(const RoboticsJoint& j, int max_steps = 12)
 
 inline RoboticsQuadray robotics_sample_vector() {
     return { q3(1), q3(0, 1), q3(1, 0, 3), q3(-2) };
+}
+
+inline RoboticsJoint robotics_corrected_rotc_joint(int angle) {
+    switch (angle) {
+    case 0: return robotics_joint_identity();
+    case 1: return robotics_joint_60();
+    case 2: return robotics_joint_p5_forward();
+    case 3: return robotics_joint_120();
+    case 4: return robotics_joint_240();
+    case 5: return robotics_joint_p5_inverse();
+    default: return robotics_joint_identity();
+    }
+}
+
+inline int robotics_inverse_angle_for(int angle) {
+    switch (angle) {
+    case 0: return 0;
+    case 1: return 4;
+    case 2: return 5;
+    case 3: return 3;
+    case 4: return 1;
+    case 5: return 2;
+    default: return -1;
+    }
+}
+
+inline std::array<RoboticsSixStepFrame, 6> robotics_six_step_trace(
+    const RoboticsQuadray& start,
+    int angle = 1
+) {
+    std::array<RoboticsSixStepFrame, 6> trace {};
+    RoboticsQuadray root = start;
+    RoboticsQuadray current = start;
+    RoboticsJoint forward_joint = robotics_corrected_rotc_joint(angle);
+    int inverse_angle = robotics_inverse_angle_for(angle);
+    RoboticsJoint inverse_joint = robotics_corrected_rotc_joint(inverse_angle);
+
+    for (int phase = 0; phase < 6; phase++) {
+        RoboticsQuadray commanded = robotics_apply_joint(current, forward_joint);
+        RoboticsQuadray recovered = robotics_apply_joint(commanded, inverse_joint);
+        RoboticsQuadray error = robotics_closure_error(current, recovered);
+        trace[phase] = {
+            phase,
+            angle,
+            inverse_angle,
+            current,
+            commanded,
+            recovered,
+            error,
+            current.quadrance(),
+            commanded.quadrance(),
+            error.is_zero(),
+            robotics_is_closed(root, commanded),
+        };
+        current = commanded;
+    }
+
+    return trace;
+}
+
+inline std::array<RoboticsSixStepFrame, 6> robotics_six_step_trace(int angle = 1) {
+    return robotics_six_step_trace(robotics_sample_vector(), angle);
+}
+
+inline bool robotics_six_step_trace_is_balanced(
+    const std::array<RoboticsSixStepFrame, 6>& trace
+) {
+    for (const auto& frame : trace) {
+        if (!frame.inverse_balanced)
+            return false;
+    }
+    return trace[5].orbit_closed;
 }
