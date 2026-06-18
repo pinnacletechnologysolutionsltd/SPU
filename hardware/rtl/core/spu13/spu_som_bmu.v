@@ -29,6 +29,7 @@ module spu_som_bmu #(
     input  wire        train_we,
     input  wire [$clog2(MAX_NODES)-1:0] train_addr,
     input  wire [(2*WIDTH*NUM_FEATURES)-1:0] train_wdata,
+    output wire [(2*WIDTH*NUM_FEATURES)-1:0] train_rdata,
 
     // ── Axiomatic Gatekeeper ───────────────────────────────
     input  wire [1:0]  axiomatic_level,
@@ -67,9 +68,10 @@ module spu_som_bmu #(
     wire [VEC_W-1:0]  bram_rd_data;
     assign bram_rd_data = weight_mem[bram_rd_addr];
 
-    // Port B: write for training
+    // Port B: read/write for training
     always @(posedge clk)
         if (train_we) weight_mem[train_addr] <= train_wdata;
+    assign train_rdata = weight_mem[train_addr];
 
     // BRAM defaults (same as the original 7-node fixture)
     wire signed [WIDTH-1:0] c0=0, c1=1, c2=2, cn2=-2;
