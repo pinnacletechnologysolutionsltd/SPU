@@ -63,7 +63,7 @@ module spu_quadrance_accum #(
     reg  [SURD_W-1:0] sm_op1, sm_op2;
     wire [SURD_W-1:0] sm_res;
 
-    surd_multiplier #(.WIDTH(WIDTH), .SHIFT(0), .DEVICE("GW5A")) u_sm (
+    surd_multiplier #(.WIDTH(WIDTH), .SHIFT(0), .DEVICE("SIM")) u_sm (
         .clk(clk), .reset(!rst_n),
         .field_sel(2'b00),  // Q(√3)
         .a1(sm_op1[WIDTH-1:0]),  .b1(sm_op1[SURD_W-1:WIDTH]),
