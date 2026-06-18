@@ -1119,6 +1119,7 @@ module spu13_core #(
             wire        som_train_we;
             wire [2:0]  som_train_addr;
             wire [143:0] som_train_wdata;
+            wire [143:0] som_train_rdata;
             wire        som_train_start;
             wire        som_train_done;
             wire [3:0]  som_train_shift;
@@ -1161,7 +1162,8 @@ module spu13_core #(
                 .fault_count(),
                 .train_we(som_train_we),
                 .train_addr(som_train_addr),
-                .train_wdata(som_train_wdata)
+                .train_wdata(som_train_wdata),
+                .train_rdata(som_train_rdata)
             );
 
             spu_som_train #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(18)) u_som_train (
@@ -1175,7 +1177,7 @@ module spu13_core #(
                 .bram_addr(som_train_addr),
                 .bram_we(som_train_we),
                 .bram_wdata(som_train_wdata),
-                .bram_rdata()
+                .bram_rdata(som_train_rdata)
             );
 
             spu_cluster_reduce #(.WIDTH(18)) u_som_reduce (
