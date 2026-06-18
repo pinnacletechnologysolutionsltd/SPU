@@ -1116,27 +1116,33 @@ module spu13_core #(
             wire [15:0] som_best_id, som_sec_id, som_label_in;
             wire [63:0] som_best_q, som_sec_q, som_gap_in;
             wire        som_has_sec;
+            wire        som_train_we;
+            wire [2:0]  som_train_addr;
+            wire [143:0] som_train_wdata;
+            wire        som_train_start;
+            wire        som_train_done;
+            wire [3:0]  som_train_shift;
 
-            // Feature vector: 4 RationalSurd features (256 bits wide)
-            // Mapped from qrf_rd_A[31:0]/qrf_rd_A[63:32] of som_src_lane
-            // and rote_src_lane for a 4-feature input.
-            // Default: identity wiring using existing QR reads.
-            wire [255:0] som_features;
+            // Feature vector: 4 features, truncated to SOM_SURD_W (WIDTH=18)
+            localparam SOM_SURD_W = 2 * 18;
+            wire [4*SOM_SURD_W-1:0] som_features;
             assign som_features = {
-                qrf_rd_D,    // feature 3 = D component of source lane 1
-                qrf_rd_C,    // feature 2 = C component
-                qrf_rd_B,    // feature 1 = B component
-                qrf_rd_A     // feature 0 = A component
+                qrf_rd_D[SOM_SURD_W-1:0],
+                qrf_rd_C[SOM_SURD_W-1:0],
+                qrf_rd_B[SOM_SURD_W-1:0],
+                qrf_rd_A[SOM_SURD_W-1:0]
             };
 
-            // Feature weights: unit weights (all RationalSurd 1)
-            wire [255:0] som_fw;
-            assign som_fw = {64'd1, 64'd1, 64'd1, 64'd1};
+            wire [4*SOM_SURD_W-1:0] som_fw;
+            assign som_fw = {{(SOM_SURD_W-1){1'b0}}, 1'b1,
+                             {(SOM_SURD_W-1){1'b0}}, 1'b1,
+                             {(SOM_SURD_W-1){1'b0}}, 1'b1,
+                             {(SOM_SURD_W-1){1'b0}}, 1'b1};
 
             wire som_start;
             wire som_done;
 
-            spu_som_bmu #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(32)) u_som_bmu (
+            spu_som_bmu #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(18)) u_som_bmu (
                 .clk(clk), .rst_n(rst_n),
                 .start(som_start), .done(som_done),
                 .features(som_features),
@@ -1148,10 +1154,31 @@ module spu13_core #(
                 .best_q(som_best_q),
                 .second_q(som_sec_q),
                 .confidence_gap(som_gap_in),
-                .has_second(som_has_sec)
+                .has_second(som_has_sec),
+                .axiomatic_level(2'b11),
+                .axiomatic_fault(),
+                .fault_type(),
+                .fault_count(),
+                .train_we(som_train_we),
+                .train_addr(som_train_addr),
+                .train_wdata(som_train_wdata)
             );
 
-            spu_cluster_reduce #(.WIDTH(32)) u_som_reduce (
+            spu_som_train #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(18)) u_som_train (
+                .clk(clk), .rst_n(rst_n),
+                .train_start(som_train_start),
+                .train_done(som_train_done),
+                .shift_amount(som_train_shift),
+                .bmu_valid(som_bmu_valid),
+                .bmu_node_id(som_best_id),
+                .features(som_features),
+                .bram_addr(som_train_addr),
+                .bram_we(som_train_we),
+                .bram_wdata(som_train_wdata),
+                .bram_rdata()
+            );
+
+            spu_cluster_reduce #(.WIDTH(18)) u_som_reduce (
                 .clk(clk), .rst_n(rst_n),
                 .bmu_valid(som_bmu_valid),
                 .best_node_id(som_best_id),
@@ -1169,23 +1196,29 @@ module spu13_core #(
 
             // ── SOM opcode FSM (0x2A = SOM_CLASSIFY) ─────────────────
             reg som_active;
+            reg som_train_active;
             assign som_start = som_active;
+            assign som_train_start = som_train_active;
 
             always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
                     som_active <= 0;
+                    som_train_active <= 0;
                 end else begin
                     if (eff_inst_valid && eff_inst_word[63:56] == 8'h2A) begin
-                        // SOM_CLASSIFY QRs: classify QR[s] through the SOM map
-                        // Layout: [63:56]=0x2A, [55:48]=dest(ignored), [47:40]=src
                         rote_src_lane <= eff_inst_word[47:40] % 13;
                         som_active <= 1;
+                    end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h2B) begin
+                        som_train_shift <= eff_inst_word[27:24];
+                        som_train_active <= 1;
                     end else if (som_done) begin
                         som_active <= 0;
-                        // On classify done, emit result to hex display for telemetry
                         hex_q <= som_label;
                         hex_r <= {15'd0, som_ambiguous};
                         hex_valid <= 1;
+                        inst_done_r <= 1;
+                    end else if (som_train_done) begin
+                        som_train_active <= 0;
                         inst_done_r <= 1;
                     end
                 end
