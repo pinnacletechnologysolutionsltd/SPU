@@ -1,22 +1,13 @@
-# SPU-13 Tang Primer 25K SOM probe (MATH-disabled, SOM-enabled).
-#
-# Uses the full math probe file list but disables MATH via chparam.
-# The spu13_core's gen_qrf now gates on (ENABLE_MATH || ENABLE_CORE_SOM),
-# so the QR regfile stays available for SOM_CLASSIFY even with MATH=0.
-# The rotor core, cross-rotor, and Davis gate all drop out.
-#
-# Opcode 0x2A (SOM_CLASSIFY) drives hex_q/hex_r to UART telemetry.
-#
-# The synth_gowin no-autoname tail is kept to avoid OOM on the bring-up host.
+# synth_gowin_25k_spu13_som_probe.ys — 25K SOM Probe (MATH=0, SOM=1)
+# Tests SOM_CLASSIFY + SOM_TRAIN with 49-word training program in sequencer ROM.
 
 read_verilog -lib +/gowin/cells_xtra_gw5a.v
 
 read_verilog -I hardware/rtl/arch \
-    hardware/boards/tang_primer_25k/spu13_tang25k_top.v \
+    hardware/boards/tang_primer_25k/spu13_tang25k_som_top.v \
     hardware/rtl/core/spu13/spu13_core.v \
     hardware/rtl/core/spu13/spu13_lattice.v \
     hardware/rtl/core/spu13/laminar_node.v \
-    hardware/rtl/top/spu_laminar_boot.v \
     hardware/rtl/core/shared/spu_rotor_vault.v \
     hardware/rtl/core/shared/spu_cross_rotor.v \
     hardware/rtl/core/shared/davis_gate_dsp.v \
@@ -29,10 +20,8 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/math/rational_surd5_mul64.v \
     hardware/rtl/math/rational_surd5_norm.v \
     hardware/rtl/math/rational_surd5_scale_manager.v \
-    hardware/rtl/math/spu_quadrance_calc.v \
     hardware/rtl/common/prim/spu_gowin_prim.v \
     hardware/rtl/common/prim/gowin_mult18.v \
-    hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v \
     hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
     hardware/rtl/core/shared/spu_quadray_permute.v \
     hardware/rtl/core/shared/spu_quadray_regfile.v \
@@ -41,27 +30,16 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/common/prim/surd_multiplier.v \
     hardware/rtl/core/spu13/spu_quadrance_accum.v \
     hardware/rtl/core/spu13/spu_som_bmu.v \
+    hardware/rtl/core/spu13/spu_som_train.v \
     hardware/rtl/core/spu13/spu_cluster_reduce.v \
     hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v \
     hardware/rtl/arch/spu_bio_stubs.v
 
-chparam -set ENABLE_SDRAM 0 \
-        -set ENABLE_CORE_RPLU 0 \
-        -set ENABLE_CORE_LATTICE 0 \
-        -set ENABLE_CORE_MATH 0 \
-        -set ENABLE_CORE_SOM 1 \
-        spu13_tang25k_top
-
-hierarchy -check -top spu13_tang25k_top
-
-# Keep the same no-autoname tail as the baseline build; the default autoname
-# pass has already OOM-killed this family of netlists on the bring-up host.
-synth_gowin -family gw5a -top spu13_tang25k_top -json build/spu13_som_probe.json -run begin:map_cells
+synth_gowin -family gw5a -top spu13_tang25k_som_top -json build/spu13_som_probe.json -run begin:map_cells
 techmap -map +/gowin/cells_map.v
 opt_lut_ins -tech gowin
 hilomap -singleton -hicell VCC V -locell GND G
 clean
-
 hierarchy -check
 check -noinit
 blackbox =A:whitebox
