@@ -1,0 +1,38 @@
+# synth_a7_math.ys — SPU-13 Artix-7 Math Probe Synthesis
+# Uses spu_xilinx_prim.v for behavioral DSP48E1 mapping.
+# synth_xilinx maps: a*b → DSP48E1, reg arrays → RAMB18E1.
+
+read_verilog -lib +/xilinx/cells_sim.v
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/artix7/spu_a7_math_top.v \
+    hardware/rtl/core/spu13/spu13_core.v \
+    hardware/rtl/core/spu13/spu13_lattice.v \
+    hardware/rtl/core/spu13/laminar_node.v \
+    hardware/rtl/core/shared/spu_rotor_vault.v \
+    hardware/rtl/core/shared/spu_cross_rotor.v \
+    hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/core/shared/spu_quadray_permute.v \
+    hardware/rtl/core/shared/spu_quadray_regfile.v \
+    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
+    hardware/rtl/common/prim/surd_multiplier.v \
+    hardware/rtl/common/prim/spu_xilinx_prim.v \
+    hardware/rtl/core/spu13/spu_sequencer.v \
+    hardware/rtl/core/spu13/spu_quadrance_accum.v \
+    hardware/rtl/core/spu13/spu_som_bmu.v \
+    hardware/rtl/core/spu13/spu_cluster_reduce.v \
+    hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v \
+    hardware/rtl/top/spu_ve_qr_init.v \
+    hardware/rtl/gpu/davis_to_rplu.v \
+    hardware/rtl/gpu/rplu_exp.v \
+    hardware/rtl/gpu/pade_eval_4_4.v \
+    hardware/rtl/gpu/rplu_poly_step.v \
+    hardware/rtl/math/rational_surd5_add.v \
+    hardware/rtl/math/rational_surd5_mul.v \
+    hardware/rtl/math/rational_surd5_mul64.v \
+    hardware/rtl/math/rational_surd5_norm.v \
+    hardware/rtl/math/rational_surd5_scale_manager.v \
+    hardware/rtl/arch/spu_bio_stubs.v
+
+synth_xilinx -family xc7 -top spu_a7_math_top -json build/a7_math.json
+stat -top spu_a7_math_top

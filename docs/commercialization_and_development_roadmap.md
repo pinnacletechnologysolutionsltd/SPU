@@ -186,14 +186,17 @@ This is fundable because it gives users something concrete:
   traces.
 - Produce deterministic trace artifacts under `build/`.
 - Rebuild the rational robotics simulation harness.
+  See `docs/rotc_robotics_bringup_plan.md`.
+- Run SOM BMU trace replay and produce golden visual artifacts.
+  See `docs/som_bringup_plan.md`.
 - Add QSUB and DELTA RTL FSMs, then trace-verify against the VM.
 
 ### Phase 1: Replacement Tang 25K Bring-Up
 
 - Re-run known flash/RPLU proof.
 - Prove SDRAM hydration on the replacement board.
-- Prove ROTC in silicon.
-- Prove SOM_CLASSIFY in silicon.
+- Prove ROTC in silicon — see `docs/rotc_robotics_bringup_plan.md`.
+- Prove SOM_CLASSIFY in silicon — see `docs/som_bringup_plan.md`.
 - Capture UART telemetry and visual renderer replay.
 - Validate RPLU periodic pack loading and runtime material update.
 
@@ -251,3 +254,6 @@ products.
   https://www.crowdsupply.com/guide
 - EIC Accelerator deep-tech funding reference:
   https://eic.ec.europa.eu/eic-funding-opportunities/eic-accelerator_en
+- SOM bring-up plan: `docs/som_bringup_plan.md`
+- ROTC/Robotics bring-up plan: `docs/rotc_robotics_bringup_plan.md`
+- FPGA board scaling: `docs/fpga_board_scaling_strategy.md`

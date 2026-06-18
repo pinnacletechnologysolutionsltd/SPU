@@ -1,6 +1,13 @@
-# SPU-13 Tang Primer 25K math probe.
-# Enables only the TDM rotor/cross-rotor/Davis math path. SDRAM, lattice, and
-# RPLU stay off so this build isolates the next resource/timing step.
+# SPU-13 Tang Primer 25K SOM probe (MATH-disabled, SOM-enabled).
+#
+# Uses the full math probe file list but disables MATH via chparam.
+# The spu13_core's gen_qrf now gates on (ENABLE_MATH || ENABLE_CORE_SOM),
+# so the QR regfile stays available for SOM_CLASSIFY even with MATH=0.
+# The rotor core, cross-rotor, and Davis gate all drop out.
+#
+# Opcode 0x2A (SOM_CLASSIFY) drives hex_q/hex_r to UART telemetry.
+#
+# The synth_gowin no-autoname tail is kept to avoid OOM on the bring-up host.
 
 read_verilog -lib +/gowin/cells_xtra_gw5a.v
 
@@ -41,15 +48,15 @@ read_verilog -I hardware/rtl/arch \
 chparam -set ENABLE_SDRAM 0 \
         -set ENABLE_CORE_RPLU 0 \
         -set ENABLE_CORE_LATTICE 0 \
-        -set ENABLE_CORE_MATH 1 \
-        -set ENABLE_CORE_SOM 0 \
+        -set ENABLE_CORE_MATH 0 \
+        -set ENABLE_CORE_SOM 1 \
         spu13_tang25k_top
 
 hierarchy -check -top spu13_tang25k_top
 
 # Keep the same no-autoname tail as the baseline build; the default autoname
 # pass has already OOM-killed this family of netlists on the bring-up host.
-synth_gowin -family gw5a -top spu13_tang25k_top -json build/spu13_math_probe.json -run begin:map_cells
+synth_gowin -family gw5a -top spu13_tang25k_top -json build/spu13_som_probe.json -run begin:map_cells
 techmap -map +/gowin/cells_map.v
 opt_lut_ins -tech gowin
 hilomap -singleton -hicell VCC V -locell GND G
@@ -58,5 +65,4 @@ clean
 hierarchy -check
 check -noinit
 blackbox =A:whitebox
-write_json build/spu13_math_probe.json
-
+write_json build/spu13_som_probe.json

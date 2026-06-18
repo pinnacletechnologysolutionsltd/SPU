@@ -137,11 +137,12 @@ with larger boards documented as expansion targets.
 
 1. Finish Tang 25K component bring-up on the replacement board.
 2. Keep all new demos trace-first: VM, RTL, FPGA, then visual replay.
-3. Rebuild the six-step rational robotics kinematics harness.
-4. Add a host visual renderer for SOM/RPLU/Davis/rotor frames.
-5. Add `hardware/boards/icesugar_pro/` only if an iCESugar Pro is purchased.
-6. Keep `hardware/boards/gowin_mega/` as the full-suite integration target.
-7. Draft KiCad carrier requirements after the visual telemetry ABI stabilizes.
+3. Rebuild the six-step rational robotics kinematics harness — see `docs/rotc_robotics_bringup_plan.md`.
+4. Prove SOM BMU classifier in simulation and silicon — see `docs/som_bringup_plan.md`.
+5. Add a host visual renderer for SOM/RPLU/Davis/rotor frames.
+6. Add `hardware/boards/icesugar_pro/` only if an iCESugar Pro is purchased.
+7. Keep `hardware/boards/gowin_mega/` as the full-suite integration target.
+8. Draft KiCad carrier requirements after the visual telemetry ABI stabilizes.
 
 ## References
 
@@ -153,3 +154,7 @@ with larger boards documented as expansion targets.
   `docs/commercialization_and_development_roadmap.md`
 - Visual SOM devboard plan:
   `docs/visual_som_devboard_plan.md`
+- SOM bring-up plan:
+  `docs/som_bringup_plan.md`
+- ROTC/Robotics bring-up plan:
+  `docs/rotc_robotics_bringup_plan.md`

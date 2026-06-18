@@ -3,9 +3,32 @@ import sys
 import subprocess
 from pathlib import Path
 
+SKIP_DISCOVERY_DIRS = {
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".venv",
+    "__pycache__",
+    "build",
+}
+
+
+def is_under_skipped_dir(path, root_dir):
+    """Return true for generated/cache/vendor trees that are not repo tests."""
+
+    try:
+        parts = path.relative_to(root_dir).parts
+    except ValueError:
+        parts = path.parts
+    return any(part in SKIP_DISCOVERY_DIRS for part in parts)
+
+
 def run_cpp_tests(root_dir):
     """Discover, compile and run *_test.cpp files. Returns (passed, failed, errors)."""
-    cpp_tests = list(root_dir.rglob("*_test.cpp"))
+    cpp_tests = [
+        p for p in root_dir.rglob("*_test.cpp")
+        if not is_under_skipped_dir(p, root_dir)
+    ]
     if not cpp_tests:
         return 0, 0, 0
 
@@ -56,6 +79,8 @@ def main():
     test_files = set()
     for p in patterns:
         for f in root_dir.rglob(p):
+            if is_under_skipped_dir(f, root_dir):
+                continue
             # Skip heavy legacy/reference tests during triage
             if '/reference/' in str(f):
                 continue
@@ -239,7 +264,7 @@ def main():
                 build_dir = root_dir / "build" / "verilator" / tb.stem
                 build_dir.mkdir(parents=True, exist_ok=True)
                 sim_cpp = build_dir / "sim_main.cpp"
-                sim_cpp.write_text(f'''#include "verilated.h"\n#include "V{top_mod}.h"\n#include <iostream>\nint main(int argc, char **argv) {{\n    Verilated::commandArgs(argc, argv);\n    V{top_mod}* top = new V{top_mod}();\n    while (!Verilated::gotFinish()) {{\n        top->eval();\n    }}\n    delete top;\n    return 0;\n}}\n''')
+                sim_cpp.write_text(f'''#include "verilated.h"\n#include "V{top_mod}.h"\n#include <iostream>\nint main(int argc, char **argv) {{\n    VerilatedContext* contextp = new VerilatedContext;\n    contextp->commandArgs(argc, argv);\n    V{top_mod}* top = new V{top_mod}(contextp);\n    while (!contextp->gotFinish()) {{\n        top->eval();\n        contextp->timeInc(1);\n    }}\n    delete top;\n    delete contextp;\n    return 0;\n}}\n''')
 
                 # When using TB_FILTER, restrict Verilator include paths to a minimal set to avoid pulling in board tops
                 tb_filter = os.getenv('TB_FILTER')
@@ -248,7 +273,13 @@ def main():
                 else:
                     verilator_inc_dirs = inc_dirs
 
-                verilator_cmd = ["verilator", "--cc", "--Mdir", str(build_dir), "--top-module", top_mod, "--no-timing"]
+                verilator_cmd = [
+                    "verilator", "--cc",
+                    "--Mdir", str(build_dir),
+                    "--top-module", top_mod,
+                    "--timing",
+                    "-Wno-fatal",
+                ]
                 for d in verilator_inc_dirs:
                     verilator_cmd.append("-I" + d)
                 verilator_cmd.extend(src_unique + [tb_str])

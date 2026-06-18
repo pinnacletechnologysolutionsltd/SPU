@@ -1,0 +1,34 @@
+# synth_ecp5_math.ys — ECP5-25F Math Probe (minimal validation)
+# Proves SPU-13 runs on 100% open toolchain: Yosys → nextpnr-ecp5 → ecppack.
+# No vendor tools, no proprietary blobs. Full Project Trellis bitstream.
+
+read_verilog -lib +/ecp5/cells_sim.v
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/ecp5_25f/spu_ecp5_math_top.v \
+    hardware/rtl/core/spu13/spu13_core.v \
+    hardware/rtl/core/spu13/spu13_lattice.v \
+    hardware/rtl/core/spu13/laminar_node.v \
+    hardware/rtl/core/shared/spu_rotor_vault.v \
+    hardware/rtl/core/shared/spu_cross_rotor.v \
+    hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/core/shared/spu_quadray_permute.v \
+    hardware/rtl/core/shared/spu_quadray_regfile.v \
+    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
+    hardware/rtl/common/prim/spu_ecp5_prim.v \
+    hardware/rtl/common/prim/surd_multiplier.v \
+    hardware/rtl/core/spu13/spu_sequencer.v \
+    hardware/rtl/top/spu_ve_qr_init.v \
+    hardware/rtl/gpu/davis_to_rplu.v \
+    hardware/rtl/gpu/rplu_exp.v \
+    hardware/rtl/gpu/pade_eval_4_4.v \
+    hardware/rtl/gpu/rplu_poly_step.v \
+    hardware/rtl/math/rational_surd5_add.v \
+    hardware/rtl/math/rational_surd5_mul.v \
+    hardware/rtl/math/rational_surd5_mul64.v \
+    hardware/rtl/math/rational_surd5_norm.v \
+    hardware/rtl/math/rational_surd5_scale_manager.v \
+    hardware/rtl/arch/spu_bio_stubs.v
+
+synth_ecp5 -top spu_ecp5_math_top -json build/ecp5_math.json
+stat -top spu_ecp5_math_top

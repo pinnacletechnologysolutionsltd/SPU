@@ -17,15 +17,37 @@ module spu_sequencer #(
     output reg  [7:0]  program_size
 );
     // ── Program ROM ──────────────────────────────────────────────────
-    // QLDI, HEX, ROTC, QSUB, DELTA
-    localparam PROG_SIZE = 6;
+    // robotics_fk_closure.sas — 27 words
+    // Tests: inverse closure, P5 cycle, FK chain, self-inverse, period-6 orbit
+    localparam PROG_SIZE = 27;
     wire [63:0] prog_words [0:PROG_SIZE-1];
-    assign prog_words[0] = 64'h1D00_0002_FE00_0000;  // QLDI QR0, 2, -2, 0, 0
-    assign prog_words[1] = 64'h1600_0000_0000_0000;  // HEX  R0, QR0 (readback)
-    assign prog_words[2] = 64'h1C01_0000_0100_0000;  // ROTC QR1, QR0, 60
-    assign prog_words[3] = 64'h1601_0100_0000_0000;  // HEX  R1, QR1 (rotated)
-    assign prog_words[4] = 64'h1B02_0000_0000_0100;  // QSUB QR2, QR0, QR1 (delta)
-    assign prog_words[5] = 64'h1E03_0A00_0300_0400;  // DELTA QR3, Q1=3, Q2=4, steps=10
+    assign prog_words[0]  = 64'h1D00000100000000;  // QLDI QR0, (1,0,0,0)
+    assign prog_words[1]  = 64'h1600000000000000;  // HEX  R0, QR0
+    assign prog_words[2]  = 64'h1C01000001000000;  // ROTC QR1, QR0, 1 (60°)
+    assign prog_words[3]  = 64'h1602010000000000;  // HEX  R2, QR1
+    assign prog_words[4]  = 64'h1C02010004000000;  // ROTC QR2, QR1, 4 (240° inv)
+    assign prog_words[5]  = 64'h1604020000000000;  // HEX  R4, QR2
+    assign prog_words[6]  = 64'h1D03000000010000;  // QLDI QR3, (0,0,1,0)
+    assign prog_words[7]  = 64'h1C04030002000000;  // ROTC QR4, QR3, 2 (P5 fwd)
+    assign prog_words[8]  = 64'h1606040000000000;  // HEX  R6, QR4
+    assign prog_words[9]  = 64'h1C05040005000000;  // ROTC QR5, QR4, 5 (P5 inv)
+    assign prog_words[10] = 64'h1608050000000000;  // HEX  R8, QR5
+    assign prog_words[11] = 64'h1D06000001000000;  // QLDI QR6, (0,1,0,0)
+    assign prog_words[12] = 64'h1C07060001000000;  // ROTC QR7, QR6, 1 (60°)
+    assign prog_words[13] = 64'h1C08070004000000;  // ROTC QR8, QR7, 4 (240°)
+    assign prog_words[14] = 64'h160A080000000000;  // HEX  R10, QR8
+    assign prog_words[15] = 64'h1D09000100000000;  // QLDI QR9, (1,0,0,0)
+    assign prog_words[16] = 64'h1C0A090003000000;  // ROTC QR10, QR9, 3 (120°)
+    assign prog_words[17] = 64'h1C0B0A0003000000;  // ROTC QR11, QR10, 3 (120°)
+    assign prog_words[18] = 64'h160C0B0000000000;  // HEX  R12, QR11
+    assign prog_words[19] = 64'h1D0C000100000000;  // QLDI QR12, (1,0,0,0)
+    assign prog_words[20] = 64'h1C000C0001000000;  // ROTC QR0, QR12, 1
+    assign prog_words[21] = 64'h1C00000001000000;  // ROTC QR0, QR0, 1
+    assign prog_words[22] = 64'h1C00000001000000;  // ROTC QR0, QR0, 1
+    assign prog_words[23] = 64'h1C00000001000000;  // ROTC QR0, QR0, 1
+    assign prog_words[24] = 64'h1C00000001000000;  // ROTC QR0, QR0, 1
+    assign prog_words[25] = 64'h1C00000001000000;  // ROTC QR0, QR0, 1 (6th → identity)
+    assign prog_words[26] = 64'h160E000000000000;  // HEX  R14, QR0
 
     // ── Execution FSM ───────────────────────────────────────────────
     localparam S_IDLE = 0, S_FETCH = 2, S_WAIT = 3, S_DELAY = 4;
