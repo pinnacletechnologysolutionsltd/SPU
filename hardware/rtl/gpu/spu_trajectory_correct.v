@@ -59,6 +59,13 @@ module spu_trajectory_correct #(
     wire signed [WIDTH-1:0] corr_A_b = rplu_data[2*WIDTH-1:WIDTH];
     wire signed [WIDTH-1:0] corr_B_a = rplu_data[3*WIDTH-1:2*WIDTH];
     wire signed [WIDTH-1:0] corr_B_b = rplu_data[4*WIDTH-1:3*WIDTH];
+    // Quadrance wires (combinational)
+    wire signed [63:0] qA = err_A_a*err_A_a - 3*err_A_b*err_A_b;
+    wire signed [63:0] qB = err_B_a*err_B_a - 3*err_B_b*err_B_b;
+    wire signed [63:0] qC = err_C_a*err_C_a - 3*err_C_b*err_C_b;
+    wire signed [63:0] qD = err_D_a*err_D_a - 3*err_D_b*err_D_b;
+    wire signed [63:0] q_sum = qA + qB + qC + qD;
+
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -92,18 +99,17 @@ module spu_trajectory_correct #(
                 end
 
                 S_QUADRANCE: begin
-                    // Quadrance per component: Q_c = a² − 3b²
-                    // Sum all 4 components, take absolute value
-                    wire signed [63:0] qA = err_A_a*err_A_a - 3*err_A_b*err_A_b;
-                    wire signed [63:0] qB = err_B_a*err_B_a - 3*err_B_b*err_B_b;
-                    wire signed [63:0] qC = err_C_a*err_C_a - 3*err_C_b*err_C_b;
-                    wire signed [63:0] qD = err_D_a*err_D_a - 3*err_D_b*err_D_b;
-                    wire signed [63:0] q_sum = qA + qB + qC + qD;
 
-                    // Hash: abs(q_sum) >> Q_BITS → RPLU address
+
                     rplu_addr <= (q_sum[63] ? -q_sum : q_sum) >> Q_BITS;
+
+
                     error_quadrance <= q_sum[31:0];
+
+
                     state <= S_CORRECT;
+
+
                 end
 
                 S_CORRECT: begin
