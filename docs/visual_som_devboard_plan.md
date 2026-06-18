@@ -181,6 +181,7 @@ Before the replacement Tang 25K arrives, implement Phase 0:
 
 1. Generate deterministic visual frames from existing SOM BMU and ROTC trace
    tests.
+   See `docs/som_bringup_plan.md` Phase 0 and `docs/rotc_robotics_bringup_plan.md` Phase 0.
 2. Add a desktop renderer for the five map views.
 3. Save golden trace files under `build/` only, not in the repo.
 4. Once SDRAM pins are available, add the memory-tier hydration view.

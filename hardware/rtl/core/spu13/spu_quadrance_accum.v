@@ -13,7 +13,7 @@
 
 module spu_quadrance_accum #(
     parameter NUM_FEATURES = 4,
-    parameter WIDTH = 32
+    parameter WIDTH = 18
 )(
     input  wire                  clk,
     input  wire                  rst_n,
@@ -32,7 +32,8 @@ module spu_quadrance_accum #(
     input  wire [(2*WIDTH*NUM_FEATURES)-1:0] feature_weights,
 
     // Accumulated quadrance Q_node  {surd_b, surd_a}
-    output reg  [2*WIDTH-1:0] q_node
+    output reg  [2*WIDTH-1:0] q_node,
+    output reg                 accum_overflow   // high bits lost in truncation
 );
 
     localparam SURD_W = 2 * WIDTH;  // 64 bits per RationalSurd
@@ -62,7 +63,7 @@ module spu_quadrance_accum #(
     reg  [SURD_W-1:0] sm_op1, sm_op2;
     wire [SURD_W-1:0] sm_res;
 
-    surd_multiplier #(.WIDTH(WIDTH), .SHIFT(0)) u_sm (
+    surd_multiplier #(.WIDTH(WIDTH), .SHIFT(0), .DEVICE("GW5A")) u_sm (
         .clk(clk), .reset(!rst_n),
         .field_sel(2'b00),  // Q(√3)
         .a1(sm_op1[WIDTH-1:0]),  .b1(sm_op1[SURD_W-1:WIDTH]),
@@ -83,6 +84,7 @@ module spu_quadrance_accum #(
             q_node   <= 0;
             sm_op1   <= 0;
             sm_op2   <= 0;
+            accum_overflow <= 0;
         end else begin
             done <= 0;
             case (state)
@@ -135,6 +137,9 @@ module spu_quadrance_accum #(
                 S_DONE: begin
                     // acc updated on this clock edge — truncate to WIDTH bits per component
                     q_node <= {acc_b[WIDTH-1:0], acc_a[WIDTH-1:0]};
+                    // Overflow: high bits beyond WIDTH are not pure sign extension
+                    accum_overflow <= (|acc_a[2*WIDTH-1:WIDTH]) != (&acc_a[2*WIDTH-1:WIDTH]) ||
+                                      (|acc_b[2*WIDTH-1:WIDTH]) != (&acc_b[2*WIDTH-1:WIDTH]);
                     done   <= 1;
                     state  <= S_IDLE;
                 end

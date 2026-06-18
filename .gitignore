@@ -78,3 +78,4 @@ hardware/rp2350/build/
 
 # Standalone compiled binaries in repo root
 vd_det
+nextpnr-xilinx-git

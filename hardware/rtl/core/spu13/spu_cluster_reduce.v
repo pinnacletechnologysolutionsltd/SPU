@@ -10,7 +10,7 @@
 // and spu_class_emit.
 
 module spu_cluster_reduce #(
-    parameter WIDTH = 32
+    parameter WIDTH = 18
 )(
     input  wire               clk,
     input  wire               rst_n,

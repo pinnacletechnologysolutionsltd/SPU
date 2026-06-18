@@ -3,7 +3,7 @@
 A boring, reproducible record of what passed, what failed, and what remains
 unproven.  No speculation — only commands, conditions, and results.
 
-*Last updated: 2026-05-22*
+*Last updated: 2026-06-17*
 
 ---
 
@@ -93,9 +93,79 @@ Covers seven testbenches:
 | `spu13/` | 3 | spu13_manifold_tb, spu_artery_tb, spu_whisper_tb |
 | `spu4/` | 2 | spu4_precession_tb, tang25k_smoketest_tb |
 
-### 2.5 C++ Test Suite
+### 2.5 ROTC Angle Catalog Correction & Trace Equivalence
 
-9 C++ test files under `software/common/tests/`:
+**Corrected ROTC table (June 2026):** Three legacy defects fixed:
+- Angle 2: documented as thirds coefficients, hardware bypasses as P5 permutation
+- Angle 3: was singular (det=0) — corrected to thirds period-2
+- Angle 5: duplicated angle 1 — corrected to P5 inverse cycle
+
+All six angles now have determinant=1, documented inverse, and matching
+VM/RTL/silicon path.
+
+**ROTC testbench:**
+
+| Testbench | Status |
+|---|---|
+| `spu13_rotc_tdm_tb` | PASS — all 5 non-identity ROTC cases on TDM rotor core |
+| `test_rotc_vm_rtl_trace.py` | PASS — bit-exact for all 6 angles (VM vs RTL) |
+
+**Command:** `python3 software/tests/test_rotc_vm_rtl_trace.py`
+
+### 2.6 SOM/BMU Classifier Pipeline
+
+**Command:** `python3 software/tests/test_som_bmu_rtl_trace.py`
+
+| Testbench | Status |
+|---|---|
+| `spu_som_bmu_tb` (generated) | PASS — 7-node fixture, all 12 BMU scenarios |
+| `test_som_bmu_rtl_trace.py` | PASS — bit-exact VM-vs-RTL on best_id, second_id, label, gap, ambiguity |
+
+Core integration in `spu13_core.v` behind `ENABLE_CORE_SOM=1` (+39 LUTs).
+Opcode 0x2A `SOM_CLASSIFY` wired into sequencer FSM.
+
+### 2.7 Rational Robotics Oracle
+
+**Command:** `python3 software/tests/test_rational_robotics.py`
+
+**Result:** `56 passed, 0 failed — PASS`
+
+Covers: Pell inverse closure (scalar + vector), F/G/H circulant determinant=1,
+circulant inverse closure (5 joints), circulant period validation, FK chain
+identity, FK/IK round-trip closure, six-step kinematics trace (inverse-balanced
+every phase, orbit closes at phase 5), legacy table audit.
+
+C++ parity: `software/common/tests/spu_rational_robotics_test.cpp`
+
+### 2.8 Rational SOM Oracle
+
+**Command:** `python3 software/tests/test_rational_som.py`
+
+**Result:** `24 passed, 0 failed — PASS`
+
+Covers: integer and surd BMU scenarios, weighted quadrance ordering,
+stable tie-breaking (lower node_id wins ties), hex neighbor deltas,
+confidence gap, ambiguity flag.
+
+C++ parity: `software/common/tests/spu_rational_som_test.cpp`
+
+### 2.9 Wildberger Rational Trigonometry Library
+
+7 files, 30+ primitives under `tools/` as `.lith` source:
+
+| File | Contents |
+|---|---|
+| `wildberger_spread.lith` | Spread + collinearity via Delta opcode |
+| `wildberger_geometry.lith` | 5 geometry primitives |
+| `wildberger_calculus.lith` | Tangents + Faulhaber areas |
+| `wildberger_layer2.lith` | Quadrance_between, normalize, Pell polynomials |
+| `wildberger_chromogeometry.lith` | Blue/red/green triple, Pell-quintic connection |
+| `wildberger_higher_dim.lith` | Cross matrix, diagonal rule, 2-subspaces |
+| `call_demo.lith` | CALL/RET subroutine test |
+
+### 2.10 C++ Test Suite
+
+11 C++ test files under `software/common/tests/`:
 
 | Test | Domain |
 |---|---|
@@ -108,6 +178,8 @@ Covers seven testbenches:
 | `spu_hex_hierarchy_test.cpp` | Concentric hierarchy polyhedra |
 | `spu_lithic_l_test.cpp` | Lithic-L assembler/disassembler |
 | `spu_sdf_test.cpp` | Signed distance function evaluation |
+| `spu_rational_robotics_test.cpp` | C++17 exact rational robotics oracle (56 checks parity) |
+| `spu_rational_som_test.cpp` | C++17 rational SOM BMU oracle (24 checks parity) |
 
 ---
 
@@ -261,6 +333,10 @@ yosys synth_gowin resource report:
 | Pell octave rollover at r⁹ boundary | Verified in simulation (`spu_rotor_vault_tb`, `spu_vm_test.py`); hardware probe covers r⁰–r⁷ |
 | Inter-SPU node link protocol | `spu_node_link_tb` exists, not probed on hardware |
 | SDRAM arbiter under concurrent access | Simulated (`spu_sdram_arbiter_tb`), not stress-tested on hardware |
+| ROTC angles 0–5 in silicon | All 6 angles verified in RTL (`spu13_rotc_tdm_tb`), VM-vs-RTL trace equivalence proven; silicon blaze pending replacement 25K — see `docs/rotc_robotics_bringup_plan.md` |
+| SOM/BMU classifier in silicon | 7-node fixture verified in RTL (`test_som_bmu_rtl_trace.py`), VM-vs-RTL trace equivalence proven; silicon blaze pending replacement 25K — see `docs/som_bringup_plan.md` |
+| Six-step robotics kinematics harness | Oracle exists (56 checks), RTL trace test exists; harness rebuild and silicon proof pending — see `docs/rotc_robotics_bringup_plan.md` |
+| QSUB and DELTA RTL FSMs | VM handlers ready; RTL FSM not yet implemented — pending per `commercialization_and_development_roadmap.md` Phase 0 |
 
 ### Application Domain
 

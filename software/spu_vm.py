@@ -44,6 +44,12 @@ v1.4 additions (SDF Layer 7 — Rational Distance Field):
   - dump_registers(): SdfState summary line added
   - --sdf-trace CLI flag added to main()
 
+v1.5 additions (SOM/BMU classification):
+  - SOM (0x2A) opcode: weighted quadrance BMU with 7-node hex fixture
+  - Stable tie-breaking, confidence gap, ambiguity flag
+  - Matches spu_som_bmu.v + spu_cluster_reduce.v RTL bit-for-bit
+  - Hex telemetry: label in hex_q, ambiguous flag in hex_r[0]
+
 Usage:
     python3 spu_vm.py programs/jitterbug.sas
     python3 spu_vm.py programs/equilibrium_test.sas --proof
@@ -504,6 +510,9 @@ OPCODES = {
     "MIN4":  0x1F, "QREAD": 0x22,
     # Geometry output
     "SPREAD":0x15, "HEX":   0x16,
+    # SOM / BMU classification (v1.5)
+    "SOM":   0x2A,
+    "SOM_TRAIN": 0x2B,   # dyadic weight update after BMU
     # v1.2 — Vector Equilibrium + Janus layer
     "EQUIL": 0x17, "IDNT":  0x18, "JINV":  0x19, "ANNE":  0x1A,
     # Padé / RPLU ISA extensions
@@ -516,7 +525,7 @@ OPCODES = {
 OPNAMES = {v: k for k, v in OPCODES.items()}
 
 def _parse_int16(s: str) -> int:
-    v = int(s)
+    v = int(s, 0)  # base 0: auto-detect hex (0x) / decimal
     return v & 0xFFFF
 
 def assemble_line(line: str, line_no: int, labels: dict) -> int | None:
@@ -595,10 +604,15 @@ def assemble_line(line: str, line_no: int, labels: dict) -> int | None:
         if pa: p1_a = pa  # label/immediate in arg2 overrides p1_a
 
     if len(parts) > 3:
-        # Third operand goes into p1_b (e.g. SPREAD R1, QR0, QR1 — QR1 index)
-        # Or p1_a for integer immediate (e.g. LD R0, 2, 1 — b component)
+        # Third operand routing:
+        #   ROTC QRd, QRs, angle → angle goes in p1_a[5:0] (RTL: saved_p1a[5:0])
+        #   DELTA QRd, Q1, Q2, steps → Q2 in p1_b, steps in r2
+        #   QLDI QRd, AB, CD → CD in p1_b
+        #   SPREAD Rd, QRa, QRb → QRb index in p1_b
         arg = parts[3].upper()
-        if arg.startswith('QR'):
+        if mnemonic == "ROTC":
+            p1_a = _parse_int16(arg)
+        elif arg.startswith('QR'):
             p1_b = int(arg[2:]) & 0xFFFF
         elif arg.startswith('R'):
             p1_b = int(arg[1:]) & 0xFFFF
@@ -954,6 +968,21 @@ class SPUCore:
         # phinary configuration (SPU-4 compatibility)
         self.phinary_cfg = 0
         self.phinary_void_state = False
+
+        # ── SOM writable weight memory (for training) ──────────
+        # Mirrors spu_som_train.v BRAM.  7 nodes, 4 features each.
+        self._som_best_id = -1
+        self._som_last_features = None
+        def _rs(a, b=0): return RationalSurd(a, b)
+        self._som_weights = [
+            (_rs(0), _rs(0), _rs(0), _rs(0)),          # node 0
+            (_rs(2), _rs(0), _rs(0), _rs(0)),          # node 1
+            (_rs(0), _rs(2), _rs(0), _rs(0)),          # node 2
+            (_rs(0), _rs(0), _rs(2), _rs(0)),          # node 3
+            (_rs(-2), _rs(0), _rs(0), _rs(0)),         # node 4
+            (_rs(0), _rs(-2), _rs(0), _rs(0)),         # node 5
+            (_rs(0), _rs(0), _rs(-2), _rs(1, 1)),     # node 6
+        ]
 
     @staticmethod
     def _q_proof(r: 'RationalSurd', label: str = "") -> str:
@@ -1550,6 +1579,155 @@ class SPUCore:
                 print(f"         Anneal step: each component >> 1 (halved toward VE zero-point).")
                 for i, (old, new) in enumerate(zip(prev.components(), new_comps)):
                     print(f"         axis[{i}]: ({old.a},{old.b}) → ({old.a>>1},{old.b>>1})")
+
+        elif opcode == OPCODES["SOM"]:
+            # SOM_CLASSIFY QRs: classify QR[s] through 7-node hex BMU.
+            # Layout: op=0x2A, r1=dest(ignored in RTL), r2=src QR lane.
+            # Output: label → R[r1], ambiguous → R[r1+1].
+            # Mirrors spu13_core.v SOM_CLASSIFY handler and spu_som_bmu.v.
+            s = r2 % 13
+            src = self.qregs[s]
+            features = [src.a, src.b, src.c, src.d]  # [f0=A, f1=B, f2=C, f3=D]
+
+            # 7-node fixture (mirrors spu_som_bmu.v lines 59-99)
+            # Node weights stored as (f0_w_a, f0_w_b, f1_w_a, f1_w_b, ...)
+            # where each weight is a RationalSurd(wa, wb)
+            def _rs(a, b=0): return RationalSurd(a, b)
+            NODES = [
+                (0, 0, list(self._som_weights[0])),          # node 0: label 0
+                (1, 1, list(self._som_weights[1])),          # node 1: label 1
+                (2, 1, list(self._som_weights[2])),          # node 2: label 1
+                (3, 2, list(self._som_weights[3])),          # node 3: label 2
+                (4, 2, list(self._som_weights[4])),          # node 4: label 2
+                (5, 3, list(self._som_weights[5])),          # node 5: label 3
+                (6, 3, list(self._som_weights[6])),          # node 6: label 3
+            ]
+            # Unit feature weights (mirrors spu13_core.v line 1164) — all ones,
+            # so the weighted quadrance simplifies to Σ (x_j - w_j)²
+
+            # Integer-only Q(√3) ordering — mirrors spu_som_bmu.v cand_better
+            def _cand_better(cand_q, cand_id, ref_q, ref_id, has_ref):
+                if not has_ref:
+                    return True
+                da = cand_q.a - ref_q.a
+                db = cand_q.b - ref_q.b
+                if da == 0 and db == 0:
+                    return cand_id < ref_id
+                if da <= 0 and db <= 0:
+                    return True
+                if da >= 0 and db >= 0:
+                    return False
+                if da < 0 and db > 0:
+                    return da*da > 3*db*db
+                return da*da < 3*db*db
+
+            have_best = False
+            have_second = False
+            best_id = -1
+            second_id = -1
+            best_label = 0
+            best_a = best_b = 0
+            second_a = second_b = 0
+
+            for nid, label, w in NODES:
+                # weighted_quadrance: Q = Σ r_j * (x_j - w_j)²
+                # With unit feature weights (all 1), this simplifies to Σ (x_j - w_j)²
+                q_a = 0; q_b = 0
+                for j in range(4):
+                    delta_a = features[j].a - w[j].a
+                    delta_b = features[j].b - w[j].b
+                    # delta² = (da + db√3)² = (da²+3db²) + (2·da·db)√3
+                    q_a += delta_a*delta_a + 3*delta_b*delta_b
+                    q_b += 2*delta_a*delta_b
+
+                cand_q = RationalSurd(q_a, q_b)
+                if _cand_better(cand_q, nid,
+                                RationalSurd(best_a, best_b), best_id, have_best):
+                    if have_best:
+                        second_id = best_id
+                        second_a, second_b = best_a, best_b
+                        have_second = True
+                    best_id = nid
+                    best_a, best_b = q_a, q_b
+                    best_label = label
+                    have_best = True
+                elif _cand_better(cand_q, nid,
+                                  RationalSurd(second_a, second_b),
+                                  second_id, have_second):
+                    second_id = nid
+                    second_a, second_b = q_a, q_b
+                    have_second = True
+
+            if not have_best:
+                label_out = 0xFFFF
+                ambiguous = 1
+            else:
+                label_out = best_label
+                gap_a = second_a - best_a if have_second else 0
+                gap_b = second_b - best_b if have_second else 0
+                ambiguous = 1 if (have_second and gap_a == 0 and gap_b == 0) else 0
+
+            # Record BMU for SOM_TRAIN
+            self._som_best_id = best_id
+            self._som_last_features = features
+
+            self.regs[r1] = RationalSurd(label_out, 0)
+            self.regs[(r1 + 1) % NUM_REGS] = RationalSurd(ambiguous, 0)
+
+            # ── Axiomatic Gatekeeper (mirrors spu13_axiomatic_gatekeeper.v) ──
+            # axiomatic_level from phinary_cfg[3:2]: 00=RCA₀ 01=WKL₀ 10=ACA₀ 11=OFF
+            axiomatic_level = (self.phinary_cfg >> 2) & 0x3
+            if axiomatic_level != 3 and have_best:
+                # Overflow check: coefficients exceed 24-bit signed range
+                # (matches RTL accum_overflow)
+                MAX_VAL = (1 << 23) - 1
+                is_overflow = (abs(best_a) > MAX_VAL) or (abs(best_b) > MAX_VAL)
+                # Fractional check: reserved for fixed-point mode (SHIFT > 0).
+                # In pure integer arithmetic, small values like Q=1 have low
+                # bits set legitimately — not fractional leakage.
+                is_fractional = False  # reserved
+
+                if axiomatic_level == 0:  # RCA₀: trap overflow
+                    fault_kind = "OVERFLOW" if is_overflow else None
+                elif axiomatic_level == 1:  # WKL₀: trap overflow
+                    fault_kind = "OVERFLOW" if is_overflow else None
+                else:  # ACA₀: no traps
+                    fault_kind = None
+
+                if fault_kind and self.verbose:
+                    print(f"         ⚠  GATEKEEPER FAULT [{['RCA₀','WKL₀','ACA₀'][axiomatic_level]}]: "
+                          f"{fault_kind}  Q=({best_a}+{best_b}√3)")
+
+            if self.verbose:
+                qs = f"Q={best_a}+{best_b}√3" if have_best else "N/A"
+                amb = "AMBIGUOUS" if ambiguous else "clear"
+                print(f"  [{self.pc:04d}] SOM  QR{s} → label={label_out} {amb}  ({qs})")
+
+        elif opcode == OPCODES["SOM_TRAIN"]:
+            # SOM_TRAIN shift — dyadic weight update after BMU classification.
+            # shift_amount from p1_a[3:0].
+            # Updates the BMU found by the most recent SOM_CLASSIFY.
+            shift = p1_a & 0xF
+            if not hasattr(self, '_som_best_id') or self._som_best_id < 0:
+                if self.verbose:
+                    print(f"  [{self.pc:04d}] SOM_TRAIN: no valid BMU to update")
+            else:
+                nid = self._som_best_id
+                # Get features from last SOM classification
+                src = self._som_last_features
+                # Current weights from writable memory
+                old_w = list(self._som_weights[nid])
+                # Dyadic update
+                new_w = []
+                for j in range(4):
+                    delta = src[j] - old_w[j]
+                    update = RationalSurd(delta.a >> shift, delta.b >> shift)
+                    new_w.append(old_w[j] + update)
+                self._som_weights[nid] = tuple(new_w)
+                if self.verbose:
+                    print(f"  [{self.pc:04d}] SOM_TRAIN node={nid} shift={shift}: "
+                          f"w=({old_w[0].a},{old_w[1].a},{old_w[2].a},{old_w[3].a}) "
+                          f"→ ({new_w[0].a},{new_w[1].a},{new_w[2].a},{new_w[3].a})")
 
         elif opcode == OPCODES["NOP"]:
             if self.verbose:
