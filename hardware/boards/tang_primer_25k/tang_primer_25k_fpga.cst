@@ -1,0 +1,28 @@
+// tang_primer_25k_southbridge.cst — Minimal SPU-13 + RP2350 Southbridge
+// Uses only: clock and 4 SPI pins on PMOD J4.
+// All other board peripherals (SDRAM, UART, SD, flash, whisper) removed.
+
+// ─── System clock (50 MHz crystal) ──────────────────────────────────────
+IO_LOC  "sys_clk"        E2;
+IO_PORT "sys_clk"        IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+
+// ─── User LEDs (active-low, 3 on-board) ──────────────────────────────────
+IO_LOC  "led[0]"         L6;
+IO_LOC  "led[1]"         E8;
+IO_LOC  "led[2]"         D7;
+IO_PORT "led[0]"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led[1]"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led[2]"         IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── SPI southbridge (PMOD J4 pins, to RP2350-Zero header) ────────────────
+// RP2350-Zero header: GP0=MISO, GP1=CS, GP2=SCK, GP3=MOSI
+// FPGA  PMOD J4: B10=MISO, G10=CS, D10=SCK, C10=MOSI
+// Build with: -DSPU_RP2350_ZERO_HEADER_SPI=ON
+IO_LOC  "spi_cs_n"       G10;
+IO_LOC  "spi_sck"        D10;
+IO_LOC  "spi_mosi"       C10;
+IO_LOC  "spi_miso"       B10;
+IO_PORT "spi_cs_n"       IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "spi_sck"        IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "spi_mosi"       IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "spi_miso"       IO_TYPE=LVCMOS33 PULL_MODE=UP;

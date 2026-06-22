@@ -2,22 +2,42 @@
 
 **A bit-exact, division-free, rational-field processor for geometric manifold arithmetic.**
 
-The SPU-13 operates entirely within Q(√3) — the algebraic field of rational surds —
-eliminating floating-point error at the hardware level. All values are exact. All
-stability checks are integer comparisons. There is no epsilon, no rounding, no drift.
+[![License: CC0](https://img.shields.io/badge/License-CC0_1.0-lightgrey)](LICENSE)
+[![Hardware: CERN-OHL-P](https://img.shields.io/badge/Hardware-CERN--OHL--P-blue)](hardware/LICENSE)
+[![Software: MIT](https://img.shields.io/badge/Software-MIT-green)](software/LICENSE)
 
-**Hardware proof:** Running on Tang Primer 25K (GW5A-25A), the full probe produces
-these reproducible UART telemetry lines — same values, every power cycle:
+## Architecture
+
+The SPU-13 is split across two chips connected by SPI:
 
 ```
-B:D0EF4018 A:C              # SPI flash JEDEC ID confirmed
-R:D28003FF A:D              # RPLU: marker=0x1A5, mask=0x0000, addr=0x3FF
-R:00000803 A:E              # RPLU: 2051 records loaded
-R:1D971036 A:F              # RPLU: checksum verified
-SDRAM: 0x5D005D33 / 0x0012E92E   # SDRAM write/read self-test
+SD Card → RP2350 (RISC-V Southbridge) → SPI @ 2 MHz → Tang 25K FPGA (SPU-13 Core)
 ```
 
-See [`docs/hardware_evidence.md`](docs/hardware_evidence.md) for the full evidence ledger.
+- **RP2350** does: boot, filesystem, chord streaming, USB CDC telemetry
+- **FPGA** does: Rational Arithmetic Unit, twine-register file, pipeline control
+
+## Next-Gen ISA Status (Wheeler-Feynman v1.0)
+
+| Component | Status | Tests |
+|-----------|--------|-------|
+| ISA decoder (RTL) | ✅ Completed | 34 iverilog PASS |
+| Twine-register file (RTL) | ✅ Completed | 16 iverilog PASS |
+| Rational Arithmetic Unit (RTL) | ✅ Completed | 16 iverilog PASS |
+| Pipeline controller (RTL) | ✅ Completed | 10 iverilog PASS |
+| Yosys synthesis | ✅ 11,125 LUTs (46%) | 0 errors |
+| Python simulator | ✅ 35 PASS | cross-validated C++ |
+| C++ simulator | ✅ 40 PASS | cross-validated Python |
+| RP2350 SPI firmware | ✅ Ready | waiting on cables |
+| SD card hydration | ✅ Ready | waiting on SD reader |
+
+## Licensing
+
+| Layer | License | Directory |
+|-------|---------|-----------|
+| Hardware (RTL, board files) | [CERN-OHL-P](hardware/LICENSE) | `hardware/` |
+| Software (VM, tools, firmware) | [MIT](software/LICENSE) | `software/` |
+| Documentation | [CC0 1.0](LICENSE) | `docs/`, `knowledge/` |
 
 ---
 
@@ -51,6 +71,7 @@ python3 software/cross_validate.py       # 5/5 snaps matched (VM vs C++)
 | **SPU-13 Cortex** | 13 (cuboctahedral) | Sovereign manifold engine |
 
 Both synthesized with [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
+For Artix-7 / Wukong, use the repo OpenXC7 setup in [`docs/toolchain_setup.md`](docs/toolchain_setup.md).
 
 ### Data representation — Q(√3) surds
 
