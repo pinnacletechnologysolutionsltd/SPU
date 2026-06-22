@@ -40,7 +40,7 @@ module spu_isa_decoder (
 
     // RAU control (quadrance arithmetic + geometric ops)
     output reg          rau_start,         // strobe: start RAU computation
-    output reg  [ 2:0]  rau_opcode,        // RAU operation select
+    output reg  [ 3:0]  rau_opcode,        // RAU operation select
 
     // Phase-lock control
     output reg          phslk_start,       // strobe: execute phase-lock
@@ -114,7 +114,7 @@ module spu_isa_decoder (
         rplu_cfg_data      = 64'd0;
 
         rau_start     = 1'b0;
-        rau_opcode    = 3'd0;
+        rau_opcode    = 4'd0;
 
         phslk_start   = 1'b0;
         invj_en       = 1'b0;
@@ -190,7 +190,7 @@ module spu_isa_decoder (
             // ═══════════════════════════════════════════════════════════════
             `SPU_OP_QADD: begin
                 rau_start   = 1'b1;
-                rau_opcode  = 3'd1;       // RAU ADD
+                rau_opcode  = 4'd1;       // RAU ADD
                 reg_write_en   = 1'b1;
                 reg_write_addr = fR_dest;
                 reg_readA_addr = fR_srcA;
@@ -199,7 +199,7 @@ module spu_isa_decoder (
 
             `SPU_OP_QSUB: begin
                 rau_start   = 1'b1;
-                rau_opcode  = 3'd2;       // RAU SUB
+                rau_opcode  = 4'd2;       // RAU SUB
                 reg_write_en   = 1'b1;
                 reg_write_addr = fR_dest;
                 reg_readA_addr = fR_srcA;
@@ -208,7 +208,7 @@ module spu_isa_decoder (
 
             `SPU_OP_QMUL: begin
                 rau_start   = 1'b1;
-                rau_opcode  = 3'd3;       // RAU MUL
+                rau_opcode  = 4'd3;       // RAU MUL
                 reg_write_en   = 1'b1;
                 reg_write_addr = fR_dest;
                 reg_readA_addr = fR_srcA;
@@ -216,7 +216,7 @@ module spu_isa_decoder (
             end
 
             `SPU_OP_QCMP: begin
-                rau_opcode  = 3'd4;       // RAU CMP
+                rau_opcode  = 4'd4;       // RAU CMP
                 reg_readA_addr = fR_srcA;
                 reg_readB_addr = fR_srcB;
             end
@@ -227,7 +227,7 @@ module spu_isa_decoder (
             `SPU_OP_SPRD, `SPU_OP_ROTR, `SPU_OP_CROSS,
             `SPU_OP_DOT, `SPU_OP_TNSR, `SPU_OP_SOM: begin
                 rau_start   = 1'b1;
-                rau_opcode  = 3'd5;       // RAU GEOMETRIC
+                rau_opcode  = 4'd5;       // RAU GEOMETRIC
                 reg_write_en   = 1'b1;
                 reg_write_addr = fR_dest;
                 reg_readA_addr = fR_srcA;
@@ -262,14 +262,15 @@ module spu_isa_decoder (
             `SPU_OP_PHSLK: begin
                 // PHSLK: phase-lock Offer ∩ Confirmation
                 phslk_start       = 1'b1;
+                rau_start         = 1'b1;
+                rau_opcode        = 4'd9;       // PHSLK → RAU op 9
+                reg_write_en      = 1'b1;
+                reg_write_addr    = fR_dest;
+                reg_offer_sel     = 1'b1;       // result → .O
                 reg_readA_addr    = fR_srcA;
                 reg_readB_addr    = fR_srcB;
                 reg_readA_O_sel   = 1'b1;       // srcA = Offer
                 reg_readB_O_sel   = 1'b0;       // srcB = Confirmation
-                // Result goes to RAU cross-multiply comparator
-                reg_write_en      = 1'b1;
-                reg_write_addr    = fR_dest;
-                reg_offer_sel     = 1'b1;       // result → .O
             end
 
             `SPU_OP_INVJ: begin

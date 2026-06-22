@@ -29,7 +29,7 @@ module spu_isa_decoder_tb;
     wire [63:0] rplu_cfg_data;
 
     wire rau_start;
-    wire [ 2:0] rau_opcode;
+    wire [ 3:0] rau_opcode;
     wire phslk_start, invj_en, phclr_en;
     wire branch_taken;
     wire [50:0] branch_offset;
