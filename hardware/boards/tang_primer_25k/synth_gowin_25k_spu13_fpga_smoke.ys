@@ -1,0 +1,7 @@
+read_verilog \
+    hardware/boards/tang_primer_25k/spu13_tang25k_southbridge_smoke_top.v \
+    hardware/rtl/peripherals/io/spu_spi_slave.v
+
+hierarchy -check -top spu13_tang25k_southbridge_smoke_top
+synth_gowin -family gw5a -top spu13_tang25k_southbridge_smoke_top \
+    -json build/spu13_southbridge_smoke.json

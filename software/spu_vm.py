@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-SPU-13 Sovereign Virtual Machine (spu_vm.py) — v1.4
-Pure Python interpreter for the Sovereign Assembly (SAS) ISA.
+SPU-13 Sovereign Virtual Machine (spu_vm.py) — Legacy Linear Architecture v3.2
+Pure Python interpreter for the Legacy Sovereign Assembly (SAS) ISA.
 
 Executes 64-bit control words in Q(√3) — the rational surd field.
 No floating point. No approximation. Bit-exact by construction.

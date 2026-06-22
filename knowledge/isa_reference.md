@@ -1,6 +1,15 @@
-# SPU-13 Sovereign ISA Reference
+# SPU-13 Sovereign ISA Reference — LEGACY v3.2
 
-Version 3.2 — 26 opcodes
+> **⚠ LEGACY ARCHITECTURE — Linear Forward-Flowing Execution**
+>
+> This ISA (v3.2) is the currently-silicon-proven architecture, running on Tang Primer 25K hardware.
+> It is **slated for deprecation** in favor of the Wheeler-Feynman Next-Gen ISA (v1.0).
+>
+> **Migration path:**
+> - New development should target `docs/spu13_isa_spec.md` (Wheeler-Feynman v1.0)
+> - Use `spu13_asm.py --arch linear` to assemble programs for this legacy ISA
+> - Use `spu13_asm.py --arch wf` (default) for the next-gen ISA
+> - The `spu_vm.py` emulator supports v3.2; `spu13_arch_sim.py` supports v1.0
 
 ## Instruction Encoding
 

@@ -1,4 +1,7 @@
 // SPU-13 Sovereign Architecture Definitions (v2.3 - SQR v3.1)
+// Includes: spu_isa_defines.vh for ISA-level constants
+
+`include "spu_isa_defines.vh"
 
 `define SPURIOUS_WIDTH 18
 `define DELTA_WIDTH    18
