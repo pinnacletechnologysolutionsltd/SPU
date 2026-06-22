@@ -87,16 +87,18 @@ module spu_pipeline_ctrl (
     reg [ 3:0]  stage_rau_op;
     reg         stage_is_phslk;
     reg         stage_is_invj;
+    reg         stage_is_load;        // true for LOAD/LDO/LDC/MOVI
     reg         stage_is_mfold;
     reg         stage_is_stat;
     reg         stage_is_halt;
+    reg [63:0]  stage_offset_or_imm;  // captured offset/immediate for loads
 
     // ── Decoder instantiation ──
     wire [ 7:0] dec_opcode;
     wire [ 4:0] dec_dest, dec_srcA, dec_srcB;
     wire        dec_reg_write_en, dec_reg_offer_sel;
     wire        dec_rau_start;
-    wire [ 2:0] dec_rau_opcode;
+    wire [ 3:0] dec_rau_opcode;
     wire        dec_phslk_start, dec_invj_en;
     wire        dec_mfold_en, dec_stat_en;
     wire        dec_halt;
@@ -171,7 +173,16 @@ module spu_pipeline_ctrl (
     assign rf_wren    = stage_rf_wren;
     assign rf_waddr   = stage_dest;
     assign rf_wsel_O  = stage_rf_wsel_O;
-    assign rf_wdata   = stage_is_invj ? ~rau_result + 1'b1 : rau_result;
+
+    // Writeback data mux:
+    //   - LOAD/LDO/LDC: use the instruction offset or immediate field
+    //   - INVJ: negate the RAU result (two's complement)
+    //   - All others: use RAU result
+    wire [63:0] wb_load_data;
+    assign wb_load_data = {52'd0, stage_offset_or_imm[11:0]};  // offset or low 12 bits
+    assign rf_wdata = stage_is_load ? wb_load_data : 
+                      stage_is_invj ? ~rau_result + 1'b1 : 
+                      rau_result;
     // INVJ: negate result (two's complement: invert + 1)
     // For quadray negation: ( -a, -b, -c, -d ) = ~result + 1 in each component
     // Simpler: just use RAU's own result for all non-INVJ ops
@@ -203,9 +214,11 @@ module spu_pipeline_ctrl (
             stage_rselB_O <= 1'b0;
             stage_is_phslk <= 1'b0;
             stage_is_invj  <= 1'b0;
+            stage_is_load  <= 1'b0;
             stage_is_mfold <= 1'b0;
             stage_is_stat  <= 1'b0;
             stage_is_halt  <= 1'b0;
+            stage_offset_or_imm <= 64'd0;
 
             telem_valid <= 1'b0;
             telem_opcode <= 8'd0;
@@ -227,14 +240,22 @@ module spu_pipeline_ctrl (
                 stage_dest    <= dec_dest;
                 stage_srcA    <= dec_srcA;
                 stage_srcB    <= dec_srcB;
-                stage_rau_op  <= {1'b0, dec_rau_opcode};
+                stage_rau_op  <= dec_rau_opcode;
                 stage_rf_wren <= dec_reg_write_en;
                 stage_rf_wsel_O <= dec_reg_offer_sel;
                 stage_is_phslk <= (dec_opcode == `SPU_OP_PHSLK);
                 stage_is_invj  <= (dec_opcode == `SPU_OP_INVJ);
+                stage_is_load  <= (dec_opcode == `SPU_OP_LOAD || 
+                                   dec_opcode == `SPU_OP_LDO  ||
+                                   dec_opcode == `SPU_OP_LDC  ||
+                                   dec_opcode == `SPU_OP_MOVI);
                 stage_is_mfold <= (dec_opcode == `SPU_OP_MFOLD);
                 stage_is_stat  <= (dec_opcode == `SPU_OP_STAT);
                 stage_is_halt  <= (dec_opcode == `SPU_OP_HALT);
+                // Capture offset/immediate from instruction word
+                // Format L: offset at [45:36] (10-bit signed)
+                // Format I: immediate at [50:0] (51-bit)
+                stage_offset_or_imm <= {54'd0, stage_fetch_instr[45:36]};
             end else begin
                 stage_decode_valid <= 1'b0;
             end
