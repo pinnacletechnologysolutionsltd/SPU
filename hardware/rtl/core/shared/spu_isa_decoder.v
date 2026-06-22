@@ -225,7 +225,7 @@ module spu_isa_decoder (
             // Geometric Operations → RAU
             // ═══════════════════════════════════════════════════════════════
             `SPU_OP_SPRD, `SPU_OP_ROTR, `SPU_OP_CROSS,
-            `SPU_OP_DOT, `SPU_OP_TNSR: begin
+            `SPU_OP_DOT, `SPU_OP_TNSR, `SPU_OP_SOM: begin
                 rau_start   = 1'b1;
                 rau_opcode  = 3'd5;       // RAU GEOMETRIC
                 reg_write_en   = 1'b1;

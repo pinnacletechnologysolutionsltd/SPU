@@ -69,6 +69,36 @@ OPCODES: dict[str, int] = {
     "NOP":    0xFF,
 }
 
+# ---------------------------------------------------------------------------
+# Wheeler-Feynman Opcode Table (Next-Gen)
+# ---------------------------------------------------------------------------
+OPCODES_WF: dict[str, int] = {
+    # System & Control
+    "NOP": 0x00, "HALT": 0x01, "SYNC": 0x02,
+    # Data Movement
+    "LOAD": 0x10, "STORE": 0x11, "MOV": 0x12, "MOVI": 0x13,
+    "LDO": 0x14, "LDC": 0x15, "MOV_O": 0x16, "MOV_C": 0x17,
+    # Quadrance Arithmetic
+    "QADD": 0x20, "QSUB": 0x21, "QMUL": 0x22, "QDIV": 0x23,
+    "QNORM": 0x24, "QCMP": 0x25,
+    # Geometric
+    "SPRD": 0x30, "ROTR": 0x31, "CROSS": 0x32, "DOT": 0x33,
+    "TNSR": 0x34, "PROJ": 0x35,
+    # Bidirectional / Temporal
+    "OFFR": 0x40, "CNFM": 0x41, "PHSLK": 0x42, "INVJ": 0x43,
+    "PHSTA": 0x44, "PHCLR": 0x45,
+    # RPLU
+    "RCFG": 0x50, "RREAD": 0x51, "RLOAD": 0x52, "RDISSOC": 0x53,
+    # Flow control
+    "CMP": 0x60, "JMP": 0x61, "JZ": 0x62, "JNZ": 0x63,
+    "JC": 0x64, "JNC": 0x65, "CALL": 0x66, "RET": 0x67, "IRET": 0x68,
+    # Output
+    "MFOLD": 0x70, "STAT": 0x71, "SCALE": 0x72, "QR": 0x73,
+    "HEX": 0x74, "SENT": 0x75, "CHRDOUT": 0x76,
+    # SOM Classification (0x2A-0x2B, same values as legacy ISA)
+    "SOM": 0x2A, "SOM_TRAIN": 0x2B
+}
+
 # Opcodes that take no register/immediate arguments
 _NO_ARGS  = {"NOP", "HALT", "RET", "SNAP", "EQUIL"}
 # Opcodes where first arg is a QR register
@@ -544,8 +574,19 @@ def assemble(source: str, filename: str = "<input>",
 def main(argv: list[str]) -> int:
     hex_mode  = '--hex'     in argv
     no_fold   = '--no-fold' in argv
+    
+    arch_wf = False
+    if '--arch' in argv:
+        idx = argv.index('--arch')
+        if idx + 1 < len(argv) and argv[idx+1] == 'wf':
+            arch_wf = True
+    
     flags     = {a for a in argv if a.startswith('--')}
-    args      = [a for a in argv if not a.startswith('--')]
+    args      = [a for a in argv if not a.startswith('--') and a != 'wf']
+    
+    if arch_wf:
+        OPCODES.clear()
+        OPCODES.update(OPCODES_WF)
 
     if not args:
         print(__doc__)
