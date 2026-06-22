@@ -279,7 +279,24 @@ When PHSLK executes:
 | 0x68 | IRET | X | Return from interrupt |
 | 0x69–0x6F | — | — | Reserved |
 
-### 5.8 Telemetry / Output (0x70–0x7F)
+### 5.8 Classification / SOM (0x2A–0x2B)
+
+| Opcode | Mnemonic | Format | Description |
+|--------|----------|--------|-------------|
+| 0x2A | SOM | R | SOM classify: PHSLK input against RPLU cluster material |
+| 0x2B | SOM_TRAIN | R | SOM train: update RPLU material weights from input |
+
+The SOM opcodes use the temporal pipeline for classification. Instead of scanning
+all nodes serially, SOM loads the input as Offer and the cluster centroid from
+RPLU as Confirmation, then PHSLK checks coherence in one cycle.
+
+```
+SOM   R2, R1, R3    ; Classify R1.O against RPLU material[R3] → label in R2
+                     ; FLAGS.C=1 if classified, 0 if unknown
+SOM_TRAIN R1, R2, R3 ; Train: update RPLU material[R3] with R1.O weights
+```
+
+### 5.9 Telemetry / Output (0x70–0x7F)
 
 | Opcode | Mnemonic | Format | Description |
 |--------|----------|--------|-------------|

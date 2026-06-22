@@ -79,6 +79,8 @@
 `define SPU_OP_QDIV          8'h23
 `define SPU_OP_QNORM         8'h24       // Reduce fraction
 `define SPU_OP_QCMP          8'h25       // Compare quadrances
+`define SPU_OP_SOM           8'h2A       // SOM classify (PHSLK vs RPLU material)
+`define SPU_OP_SOM_TRAIN     8'h2B       // SOM train (update RPLU weights)
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Geometric Operations (0x30–0x3F)
