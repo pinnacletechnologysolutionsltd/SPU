@@ -32,6 +32,10 @@ module rplu_pipeline #(
     input  wire         pade_coeff_is_den,
     input  wire [2:0]   pade_coeff_addr,
     input  wire [31:0]  pade_c0, pade_c1, pade_c2, pade_c3,
+    input  wire         btu_cfg_we,
+    input  wire [5:0]   btu_cfg_addr,
+    input  wire         btu_cfg_pair,
+    input  wire [63:0]  btu_cfg_data,
     input  wire [31:0]  quadray_target_kappa,
 
     // ── Φ₄: Final output ───────────────────────────────────────────
@@ -127,6 +131,10 @@ module rplu_pipeline #(
     spu13_btu_core_top u_btu (
         .clk(clk), .rst_n(rst_n),
         .neuron_activation_lines(btu_activation),
+        .cfg_we(btu_cfg_we),
+        .cfg_addr(btu_cfg_addr),
+        .cfg_pair(btu_cfg_pair),
+        .cfg_data(btu_cfg_data),
         .btu_lane_c0(btu_c0), .btu_lane_c1(btu_c1),
         .btu_lane_c2(btu_c2), .btu_lane_c3(btu_c3),
         .pipeline_stall(btu_stall),
