@@ -166,8 +166,9 @@ module toroidal_regression_tb;
         test_w3(833,0,1);
         test_w3(7,1,0);
 
-        $display("REGRESSION: PASS=%0d FAIL=%0d", pass_count, fail_count);
-        if (fail_count == 0) $display("REGRESSION PASS"); else $display("REGRESSION FAIL");
+        $display("REGRESSION: pass=%0d fail=%0d", pass_count, fail_count);
+        if (fail_count == 0) begin $display("REGRESSION PASS"); $display("PASS"); end
+        else $display("REGRESSION FAIL");
         $finish;
     end
 endmodule

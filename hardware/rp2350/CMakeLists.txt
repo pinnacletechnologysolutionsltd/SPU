@@ -28,6 +28,12 @@ option(SPU_RP2350_ZERO_HEADER_SPI
 option(SPU_RP2350_ZERO_G25_SPI
     "Use RP2350-Zero G-25 edge SPI0 pinset: GP20 MISO, GP21 CS, GP22 SCK, GP23 MOSI"
     OFF)
+set(SPU_SD_SPI_PORT "spi1" CACHE STRING "SPI instance used for SPI-mode microSD")
+set(SPU_SD_SCK_PIN "10" CACHE STRING "SPI-mode microSD SCK pin")
+set(SPU_SD_MOSI_PIN "11" CACHE STRING "SPI-mode microSD MOSI/CMD pin")
+set(SPU_SD_MISO_PIN "12" CACHE STRING "SPI-mode microSD MISO/DAT0 pin")
+set(SPU_SD_CS_PIN "13" CACHE STRING "SPI-mode microSD CS/DAT3 pin")
+set(SPU_SD_BAUD_HZ "8000000" CACHE STRING "SPI-mode microSD post-init baud rate")
 
 set(SPU_SPI_PIN_DEFS "")
 if(SPU_RP2350_ZERO_HEADER_SPI AND SPU_RP2350_ZERO_G25_SPI)
@@ -48,26 +54,41 @@ elseif(SPU_RP2350_ZERO_G25_SPI)
     )
 endif()
 
+set(FATFS_SOURCE_DIR "${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source")
+if(NOT EXISTS "${FATFS_SOURCE_DIR}/ff.c")
+    message(FATAL_ERROR "FatFS source not found at ${FATFS_SOURCE_DIR}")
+endif()
+
 add_library(spu_rp_common
+    ${FATFS_SOURCE_DIR}/ff.c
+    ${FATFS_SOURCE_DIR}/ffsystem.c
+    ${FATFS_SOURCE_DIR}/ffunicode.c
+    ../rp_common/diskio.c
     ../rp_common/spu_boot.c
     ../rp_common/spu_diag.c
     ../rp_common/spu_link.c
     ../rp_common/spu_sd.c
     ../rp_common/spu_storage.c
-    ../rp_common/diskio.c
-    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ff.c
-    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ffunicode.c
-)
+                )
 
 target_include_directories(spu_rp_common PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/../rp_common
-    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source
+    ${FATFS_SOURCE_DIR}
 )
 
 target_link_libraries(spu_rp_common PUBLIC
     pico_stdlib
     hardware_gpio
     hardware_spi
+)
+
+target_compile_definitions(spu_rp_common PUBLIC
+    SPU_SD_SPI_PORT=${SPU_SD_SPI_PORT}
+    SPU_SD_SCK_PIN=${SPU_SD_SCK_PIN}
+    SPU_SD_MOSI_PIN=${SPU_SD_MOSI_PIN}
+    SPU_SD_MISO_PIN=${SPU_SD_MISO_PIN}
+    SPU_SD_CS_PIN=${SPU_SD_CS_PIN}
+    SPU_SD_BAUD_HZ=${SPU_SD_BAUD_HZ}
 )
 
 add_executable(rp2350_spu_interface
@@ -132,6 +153,21 @@ target_compile_definitions(rp2350_spu_diag PRIVATE
 pico_enable_stdio_usb(rp2350_spu_diag 1)
 pico_enable_stdio_uart(rp2350_spu_diag 0)
 pico_add_extra_outputs(rp2350_spu_diag)
+
+# Standalone SD/FAT32 smoke test. No FPGA connection required.
+add_executable(spu_sd_test
+    ../rp_common/spu_sd_test.c
+)
+
+target_link_libraries(spu_sd_test
+    pico_stdlib
+    hardware_spi
+    spu_rp_common
+)
+
+pico_enable_stdio_usb(spu_sd_test 1)
+pico_enable_stdio_uart(spu_sd_test 0)
+pico_add_extra_outputs(spu_sd_test)
 
 # Standalone SPI link test (exercises all Whisper Bridge commands)
 add_executable(spu_link_test
