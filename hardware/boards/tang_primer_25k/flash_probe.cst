@@ -1,0 +1,17 @@
+IO_LOC "clk" E2;
+IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+
+IO_LOC "led" L6;
+IO_PORT "led" IO_TYPE=LVCMOS33 DRIVE=8;
+
+IO_LOC "flash_cs"   G10;
+IO_LOC "flash_sck"  D10;
+IO_LOC "flash_mosi" C10;
+IO_LOC "flash_miso" B10;
+IO_PORT "flash_cs"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "flash_sck"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "flash_mosi" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "flash_miso" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+IO_LOC "uart_tx" C3;
+IO_PORT "uart_tx" IO_TYPE=LVCMOS33 DRIVE=8;
