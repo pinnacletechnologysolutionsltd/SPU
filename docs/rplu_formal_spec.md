@@ -182,6 +182,19 @@ updates weights in-situ.
 
 **BTU address space:** 64 neurons per cluster, 4 clusters per quadrant.
 
+**Config hydration:** BTU rows are writable through the fast config stream.
+Selector `sel=3` writes one row pair per record:
+
+| Field | Meaning |
+|---|---|
+| `addr[5:0]` | BTU row index, 0-63 |
+| `addr[6] = 0` | `data[31:0] -> c0`, `data[63:32] -> c1` |
+| `addr[6] = 1` | `data[31:0] -> c2`, `data[63:32] -> c3` |
+
+The lane memories are synchronous; `data_valid` is delayed one cycle after
+the priority-selected row so the downstream Quadray variety and Padé stages
+consume the configured row, not the previous row.
+
 ### 4.3 Stage Φ₃ — [4/4] Padé Rational Approximant (`rplu_thimble_pade.v`)
 
 **Function:** Evaluate $R(x) = \frac{\sum_{i=0}^{4} p_i x^i}{\sum_{i=0}^{4} q_i x^i}$ via Horner's method.
@@ -191,8 +204,24 @@ updates weights in-situ.
 - Denominator: Parallel Horner $(···(q_4·x + q_3)·x + ··· + q_0)$
 - Unit inversion: $A_{31}$ conjugate reduction tower (Section 3.3) to compute $D^{-1}$, then multiply.
 
-**Coefficient storage:** 2 × 5 × 32-bit BRAM (numerator + denominator coefficient banks).
-Coefficients loaded at boot via config port.
+**Coefficient storage:** 2 × 5 × 4 × 32-bit registers (numerator + denominator
+coefficient banks, each coefficient an $A_{31}$ element). Coefficients are
+loaded at boot via the fast config stream:
+
+| Selector | Target | Address | Data packing |
+|---:|---|---|---|
+| `sel=1` | Padé numerator | `addr[2:0]=i`, `addr[3]=0` | `data[31:0] -> p_i.c0`, `data[63:32] -> p_i.c1` |
+| `sel=1` | Padé numerator | `addr[2:0]=i`, `addr[3]=1` | `data[31:0] -> p_i.c2`, `data[63:32] -> p_i.c3`, commit coefficient |
+| `sel=2` | Padé denominator | `addr[2:0]=i`, `addr[3]=0` | `data[31:0] -> q_i.c0`, `data[63:32] -> q_i.c1` |
+| `sel=2` | Padé denominator | `addr[2:0]=i`, `addr[3]=1` | `data[31:0] -> q_i.c2`, `data[63:32] -> q_i.c3`, commit coefficient |
+
+Firmware must write the low pair before the high pair. RTL defaults to the
+identity rational function (`p_0=1`, `q_0=1`) so an unhydrated pipeline remains
+safe for smoke tests.
+
+**Quadray variety target:** selector `sel=6` writes `target_kappa` from
+`data[31:0]`. A configured mismatch asserts the RPLU2 dissociation predicate
+for the valid residual cycle.
 
 **Latency:** 12 cycles (Horner) + ~76 cycles (inverter) = ~88 cycles total.
 

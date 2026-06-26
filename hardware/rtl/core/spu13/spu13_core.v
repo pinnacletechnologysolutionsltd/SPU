@@ -132,6 +132,60 @@ module spu13_core #(
     reg         quadray_target_valid;
     reg [12:0] stability_bits;
 
+    // RPLU v2 fast config stream:
+    //   sel=1: Padé numerator coefficient pair, addr[2:0]=coeff, addr[3]=pair
+    //   sel=2: Padé denominator coefficient pair, addr[2:0]=coeff, addr[3]=pair
+    //   sel=3: BTU row pair, addr[5:0]=row, addr[6]=pair
+    //   sel=6: Quadray target kappa
+    localparam [2:0] RPLU2_CFG_PADE_NUM = 3'd1;
+    localparam [2:0] RPLU2_CFG_PADE_DEN = 3'd2;
+    localparam [2:0] RPLU2_CFG_BTU_ROW  = 3'd3;
+    localparam [2:0] RPLU2_CFG_KAPPA    = 3'd6;
+    reg [31:0] rplu2_pade_num_c0 [0:4];
+    reg [31:0] rplu2_pade_num_c1 [0:4];
+    reg [31:0] rplu2_pade_den_c0 [0:4];
+    reg [31:0] rplu2_pade_den_c1 [0:4];
+    integer rplu2_cfg_i;
+    initial begin
+        for (rplu2_cfg_i = 0; rplu2_cfg_i < 5; rplu2_cfg_i = rplu2_cfg_i + 1) begin
+            rplu2_pade_num_c0[rplu2_cfg_i] = 32'd0;
+            rplu2_pade_num_c1[rplu2_cfg_i] = 32'd0;
+            rplu2_pade_den_c0[rplu2_cfg_i] = 32'd0;
+            rplu2_pade_den_c1[rplu2_cfg_i] = 32'd0;
+        end
+        rplu2_pade_num_c0[0] = 32'd1;
+        rplu2_pade_den_c0[0] = 32'd1;
+    end
+
+    wire [2:0] rplu2_pade_cfg_idx_raw = dec_fast_cfg_addr[2:0];
+    wire [2:0] rplu2_pade_cfg_idx =
+        (rplu2_pade_cfg_idx_raw < 3'd5) ? rplu2_pade_cfg_idx_raw : 3'd0;
+    wire rplu2_pade_cfg_idx_valid = (rplu2_pade_cfg_idx_raw < 3'd5);
+    wire rplu2_pade_cfg_high = dec_fast_cfg_addr[3];
+    wire rplu2_cfg_pade_num = dec_fast_cfg_wr_en &&
+                              dec_fast_cfg_sel == RPLU2_CFG_PADE_NUM &&
+                              rplu2_pade_cfg_idx_valid;
+    wire rplu2_cfg_pade_den = dec_fast_cfg_wr_en &&
+                              dec_fast_cfg_sel == RPLU2_CFG_PADE_DEN &&
+                              rplu2_pade_cfg_idx_valid;
+    wire rplu2_pade_coeff_we = (rplu2_cfg_pade_num || rplu2_cfg_pade_den) &&
+                               rplu2_pade_cfg_high;
+    wire rplu2_pade_coeff_is_den = rplu2_cfg_pade_den;
+    wire [2:0] rplu2_pade_coeff_addr = rplu2_pade_cfg_idx;
+    wire [31:0] rplu2_pade_coeff_c0 = rplu2_cfg_pade_den
+                                     ? rplu2_pade_den_c0[rplu2_pade_cfg_idx]
+                                     : rplu2_pade_num_c0[rplu2_pade_cfg_idx];
+    wire [31:0] rplu2_pade_coeff_c1 = rplu2_cfg_pade_den
+                                     ? rplu2_pade_den_c1[rplu2_pade_cfg_idx]
+                                     : rplu2_pade_num_c1[rplu2_pade_cfg_idx];
+    wire [31:0] rplu2_pade_coeff_c2 = dec_fast_cfg_data[31:0];
+    wire [31:0] rplu2_pade_coeff_c3 = dec_fast_cfg_data[63:32];
+    wire rplu2_btu_cfg_we = dec_fast_cfg_wr_en &&
+                            dec_fast_cfg_sel == RPLU2_CFG_BTU_ROW;
+    wire [5:0] rplu2_btu_cfg_addr = dec_fast_cfg_addr[5:0];
+    wire rplu2_btu_cfg_pair = dec_fast_cfg_addr[6];
+    wire [63:0] rplu2_btu_cfg_data = dec_fast_cfg_data;
+
     assign manifold_reg = {
         manifold_lane[12], manifold_lane[11], manifold_lane[10], manifold_lane[9],
         manifold_lane[8],  manifold_lane[7],  manifold_lane[6],  manifold_lane[5],
@@ -1078,10 +1132,22 @@ module spu13_core #(
                 torus_emit_enable <= dec_fast_cfg_data[10];
             end
 
+            // RPLU2 Padé coefficients arrive as two 64-bit records per
+            // coefficient.  The low pair is staged here; the high pair pulses
+            // coeff_we into the Padé engine with all four A31 components.
+            if (rplu2_cfg_pade_num && !rplu2_pade_cfg_high) begin
+                rplu2_pade_num_c0[rplu2_pade_cfg_idx] <= dec_fast_cfg_data[31:0];
+                rplu2_pade_num_c1[rplu2_pade_cfg_idx] <= dec_fast_cfg_data[63:32];
+            end
+            if (rplu2_cfg_pade_den && !rplu2_pade_cfg_high) begin
+                rplu2_pade_den_c0[rplu2_pade_cfg_idx] <= dec_fast_cfg_data[31:0];
+                rplu2_pade_den_c1[rplu2_pade_cfg_idx] <= dec_fast_cfg_data[63:32];
+            end
+
             // fast-domain config writes: quadray target kappa (sel==6)
             // Allows firmware to write the target M31 quadrance invariant
             // that the BTU variety sidecar closes against.
-            if (dec_fast_cfg_wr_en && dec_fast_cfg_sel == 3'd6) begin
+            if (dec_fast_cfg_wr_en && dec_fast_cfg_sel == RPLU2_CFG_KAPPA) begin
                 quadray_target_kappa <= dec_fast_cfg_data[31:0];
                 quadray_target_valid <= 1'b1;
             end
@@ -1375,11 +1441,15 @@ module spu13_core #(
                 .som_best_id(rplu2_som_best_id),
                 .som_cluster_label(rplu2_som_label),
                 .som_best_q(rplu2_som_best_q),
-                .pade_coeff_we(1'b0),      // Coeffs loaded at boot via SPI
-                .pade_coeff_is_den(1'b0),
-                .pade_coeff_addr(3'd0),
-                .pade_c0(32'd0), .pade_c1(32'd0),
-                .pade_c2(32'd0), .pade_c3(32'd0),
+                .pade_coeff_we(rplu2_pade_coeff_we),
+                .pade_coeff_is_den(rplu2_pade_coeff_is_den),
+                .pade_coeff_addr(rplu2_pade_coeff_addr),
+                .pade_c0(rplu2_pade_coeff_c0), .pade_c1(rplu2_pade_coeff_c1),
+                .pade_c2(rplu2_pade_coeff_c2), .pade_c3(rplu2_pade_coeff_c3),
+                .btu_cfg_we(rplu2_btu_cfg_we),
+                .btu_cfg_addr(rplu2_btu_cfg_addr),
+                .btu_cfg_pair(rplu2_btu_cfg_pair),
+                .btu_cfg_data(rplu2_btu_cfg_data),
                 .quadray_target_kappa(quadray_target_kappa),
                 .thimble_c0(rplu2_thimble_c0),
                 .thimble_c1(rplu2_thimble_c1),

@@ -6,6 +6,9 @@ module spu_bram_32x64_array #(
 ) (
     input  wire clk,
     input  wire [ADDR_WIDTH-1:0] addr,
+    input  wire                  wr_en,
+    input  wire [ADDR_WIDTH-1:0] wr_addr,
+    input  wire [DATA_WIDTH-1:0] data_in,
     output reg  [DATA_WIDTH-1:0] data_out
 );
 
@@ -25,6 +28,8 @@ end
 
 // Synchronous read to match BRAM behaviour (1-cycle latency)
 always @(posedge clk) begin
+    if (wr_en)
+        mem[wr_addr] <= data_in;
     data_out <= mem[addr];
 end
 
