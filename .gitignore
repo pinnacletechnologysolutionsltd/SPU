@@ -11,6 +11,9 @@ tmp_*.vvp
 # Backup files
 *.bak
 
+# Compiled C++ test binaries (source is *_test.cpp)
+software/common/tests/*_test
+
 # Root-level test logs
 *.log
 
