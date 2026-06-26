@@ -46,12 +46,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "rplu_default_tables.h"
+#include "spu_sd.h"
 
 // ── Pin assignments ────────────────────────────────────────────────────────
-#define SPI_MISO_PIN    16
-#define SPI_CS_PIN      17
-#define SPI_SCK_PIN     18
-#define SPI_MOSI_PIN    19
+#define SPI_MISO_PIN    0
+#define SPI_CS_PIN      1
+#define SPI_SCK_PIN     2
+#define SPI_MOSI_PIN    3
 #define VIS_UART_TX_PIN  4   // UART1 TX → RP2040
 #define VIS_UART_RX_PIN  5   // UART1 RX ← RP2040 (Chord passthrough)
 #define PIRANHA_PIN      6   // PIO SM0: Piranha Pulse
@@ -88,6 +89,7 @@
 #define WHISPER_LEAK_THRESHOLD 0x0100u   // dissonance > 256 → Cubic Leak
 
 // ── Double buffer (swapped via multicore FIFO) ────────────────────────────
+static bool sd_ok = false;
 static uint8_t frame_back[FRAME_BYTES];
 static uint8_t frame_front[TX_FRAME_BYTES];   // pre-built with SOF header
 
@@ -147,8 +149,8 @@ void core1_entry(void) {
         static uint32_t last_health_report = 0;
         uint32_t now = to_ms_since_boot(get_absolute_time());
         if (now - last_health_report > 1000) {
-            printf("SPU HEALTH [LFI]: 0x%04X | TURBULENCE: %s\n", 
-                   dissonance, (flags & 0x04) ? "YES" : "NO");
+            printf("SPU HEALTH [LFI]: 0x%04X | TURB: %s | SD: %s\n", 
+                   dissonance, (flags & 0x04) ? "YES" : "NO", sd_ok ? "OK" : "none");
             last_health_report = now;
         }
 
@@ -228,6 +230,7 @@ int main(void) {
     gpio_init(SPI_CS_PIN);
     gpio_set_dir(SPI_CS_PIN, GPIO_OUT);
     gpio_put(SPI_CS_PIN, 1);   // CS idle-high
+    sd_ok = spu_sd_init();
 
     // PIO SM0: Piranha Pulse (61.44 kHz heartbeat) on GP6
     pio_piranha_init();

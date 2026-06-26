@@ -46,6 +46,7 @@ module pade_eval_debug_tb;
             $display("C=%0d time=%0t loc_state=%0d loc_acc_num=%0d loc_poly3=%0d poly2=%0d poly1=%0d poly0=%0d loc_acc_den=%0d polyd3=%0d polyd2=%0d polyd1=%0d polyd0=%0d loc_exp=%0d done_loc=%b", c, $time, dut_local.state, dut_local.acc_num, dut_local.poly_num_out_3, dut_local.poly_num_out_2, dut_local.poly_num_out_1, dut_local.poly_num_out_0, dut_local.acc_den, dut_local.poly_den_out_3, dut_local.poly_den_out_2, dut_local.poly_den_out_1, dut_local.poly_den_out_0, dut_local.exp_q16, done_local);
         end
         $display("TRACE_DONE");
+        $display("PASS");
         $finish;
     end
 endmodule

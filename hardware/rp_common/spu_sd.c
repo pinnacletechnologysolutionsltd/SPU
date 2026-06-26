@@ -5,12 +5,31 @@
 #include "pico/stdlib.h"
 #include <string.h>
 
-#define SD_SPI       spi1
-#define SD_BAUD_HZ   25000000
-#define SD_CS_PIN    13
-#define SD_SCK_PIN   10
-#define SD_MOSI_PIN  11
-#define SD_MISO_PIN  12
+#ifndef SPU_SD_SPI_PORT
+#define SPU_SD_SPI_PORT spi1
+#endif
+#ifndef SPU_SD_BAUD_HZ
+#define SPU_SD_BAUD_HZ 8000000
+#endif
+#ifndef SPU_SD_CS_PIN
+#define SPU_SD_CS_PIN 13
+#endif
+#ifndef SPU_SD_SCK_PIN
+#define SPU_SD_SCK_PIN 10
+#endif
+#ifndef SPU_SD_MOSI_PIN
+#define SPU_SD_MOSI_PIN 11
+#endif
+#ifndef SPU_SD_MISO_PIN
+#define SPU_SD_MISO_PIN 12
+#endif
+
+#define SD_SPI       SPU_SD_SPI_PORT
+#define SD_BAUD_HZ   SPU_SD_BAUD_HZ
+#define SD_CS_PIN    SPU_SD_CS_PIN
+#define SD_SCK_PIN   SPU_SD_SCK_PIN
+#define SD_MOSI_PIN  SPU_SD_MOSI_PIN
+#define SD_MISO_PIN  SPU_SD_MISO_PIN
 
 #define SD_CMD_TIMEOUT  500
 #define SD_INIT_RETRIES 10

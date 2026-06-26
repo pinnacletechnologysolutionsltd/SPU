@@ -67,6 +67,7 @@ module pade_eval_compare_tb;
             #10;
         end
         $display("COMPARE_DONE");
+        $display("PASS");
         $finish;
     end
 endmodule
