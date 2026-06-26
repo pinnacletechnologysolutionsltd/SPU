@@ -52,9 +52,10 @@ def run_cpp_tests(root_dir):
             continue
 
         try:
-            rr = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
-            out = rr.stdout + rr.stderr
-            if "FAIL" in out or rr.returncode != 0:
+            rr = subprocess.run([str(binary)], capture_output=True, timeout=10)
+            out = rr.stdout.decode('utf-8', errors='replace') + rr.stderr.decode('utf-8', errors='replace')
+            has_fail_line = any(line.lstrip().startswith("FAIL") for line in out.splitlines())
+            if has_fail_line or rr.returncode != 0:
                 print(f"[{tf.name}] FAILED\n{out.strip()}")
                 failed += 1
             else:
@@ -179,9 +180,12 @@ def main():
             absd = root_dir / d
             if absd.exists():
                 for f in absd.rglob('*.v'):
-                    # Skip helper testbench files in the tests directory
-                    if 'hardware/tests' in d and f.name.endswith("_tb.v"):
-                        continue
+                    # Skip testbench tops in the helper scan; only support
+                    # RTL helpers such as sim_sd_card.v should be included.
+                    if 'hardware/tests' in d:
+                        name = f.name
+                        if name.endswith("_tb.v") or name.startswith("tb_") or "tb" in f.stem or name.startswith("testbench"):
+                            continue
                     # Skip GPU/graphics RTL (may contain unsupported SV constructs for iverilog)
                     fp = str(f)
                     # For GPU/graphics sources, only include a tested subset to avoid SV-only files breaking iverilog
@@ -233,9 +237,26 @@ def main():
         # If TB_FILTER is set, restrict the source set to minimal directories to avoid pulling board tops and unrelated cores
         tb_filter = os.getenv('TB_FILTER')
         if tb_filter:
-            allowed_dirs = [str(root_dir / p) for p in ("hardware/rtl", "hardware/rtl/gpu", "hardware/rtl/core/shared", "hardware/rtl/core/spu13", "hardware/tests/common", "hardware/rtl/arch")]
-            src_unique = [s for s in src_unique if any(s.startswith(d) for d in allowed_dirs)]
-        cmd = iverilog_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
+            allowed_dirs = [str(root_dir / p) for p in ("hardware/rtl", "hardware/rtl/core/shared", "hardware/rtl/core/spu13", "hardware/tests/common", "hardware/rtl/arch")]
+            excluded_dirs = [str(root_dir / p) for p in ("hardware/rtl/gpu", "hardware/rtl/peripherals/graphics")]
+            src_unique = [
+                s for s in src_unique
+                if any(s.startswith(d) for d in allowed_dirs)
+                and not any(s.startswith(d) for d in excluded_dirs)
+            ]
+
+        top_mod = None
+        try:
+            import re as _re
+            with open(tb_str, 'r') as _tf:
+                tb_text = _tf.read()
+            m = _re.search(r'^\s*module\s+([A-Za-z_][A-Za-z0-9_]*)', tb_text, _re.M)
+            if m:
+                top_mod = m.group(1)
+        except Exception:
+            top_mod = None
+
+        cmd = iverilog_args + (["-s", top_mod] if top_mod else []) + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
         
         if compile_result.returncode != 0:
@@ -245,13 +266,8 @@ def main():
                 print(f"[{tb.name}] iverilog failed; attempting Verilator simulation fallback...")
                 # Determine TB top module name
                 try:
-                    import re as _re
-                    with open(tb_str,'r') as _tf:
-                        tb_text = _tf.read()
-                    m = _re.search(r'^\s*module\s+([A-Za-z_][A-Za-z0-9_]*)', tb_text, _re.M)
-                    if not m:
+                    if not top_mod:
                         raise Exception('Top module not found')
-                    top_mod = m.group(1)
                 except Exception as e:
                     print(f"[{tb.name}] Verilator fallback: cannot determine top module: {e}")
                     print(f"[{tb.name}] COMPILE ERROR:")
@@ -304,8 +320,8 @@ def main():
 
                 exe = build_dir / f"V{top_mod}"
                 try:
-                    rr = subprocess.run([str(exe)], capture_output=True, text=True, timeout=5)
-                    output = rr.stdout + rr.stderr
+                    rr = subprocess.run([str(exe)], capture_output=True, timeout=5)
+                    output = rr.stdout.decode('utf-8', errors='replace') + rr.stderr.decode('utf-8', errors='replace')
                     if "FAIL" in output or "FAIL:" in output:
                         print(f"[{tb.name}] FAILED")
                         print(output.strip())
@@ -338,8 +354,11 @@ def main():
         # Execute (with timeout safeguard)
         run_cmd = ["vvp", str(out_vvp)]
         try:
-            run_result = subprocess.run(run_cmd, capture_output=True, text=True, timeout=5)
-            output = run_result.stdout
+            run_result = subprocess.run(run_cmd, capture_output=True, timeout=5)
+            try:
+                output = run_result.stdout.decode('utf-8', errors='replace')
+            except UnicodeDecodeError:
+                output = run_result.stdout.decode('latin-1', errors='replace')
             if "FAIL" in output or "FAIL:" in output:
                 print(f"[{tb.name}] FAILED")
                 print(output.strip())

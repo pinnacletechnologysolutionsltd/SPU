@@ -13,7 +13,23 @@ module spu13_core_qsub_delta_tb;
     wire mem_burst_wr;
     wire [23:0] mem_addr;
     wire [831:0] mem_wr_manifold;
+    wire qr_commit_valid;
+    wire [3:0] qr_commit_lane;
+    wire [63:0] qr_commit_A, qr_commit_B, qr_commit_C, qr_commit_D;
+    reg [3:0] seen_qr_commit_lane;
+    reg [63:0] seen_qr_commit_A, seen_qr_commit_B;
+    reg [63:0] seen_qr_commit_C, seen_qr_commit_D;
     integer errors = 0;
+
+    always @(posedge clk) begin
+        if (qr_commit_valid) begin
+            seen_qr_commit_lane <= qr_commit_lane;
+            seen_qr_commit_A <= qr_commit_A;
+            seen_qr_commit_B <= qr_commit_B;
+            seen_qr_commit_C <= qr_commit_C;
+            seen_qr_commit_D <= qr_commit_D;
+        end
+    end
 
     spu13_core #(
         .DEVICE("SIM"),
@@ -37,6 +53,9 @@ module spu13_core_qsub_delta_tb;
         .mem_burst_done(1'b0),
         .artery_wr_en(), .artery_wr_data(),
         .current_axis_ptr(), .current_axis_data(),
+        .qr_commit_valid(qr_commit_valid), .qr_commit_lane(qr_commit_lane),
+        .qr_commit_A(qr_commit_A), .qr_commit_B(qr_commit_B),
+        .qr_commit_C(qr_commit_C), .qr_commit_D(qr_commit_D),
         .inst_valid(inst_valid), .inst_word(inst_word), .inst_done(inst_done),
         .ratio_cmp_res(), .ratio_cmp_valid(),
         .manifold_out(), .bloom_complete(), .scale_table_out(),
@@ -91,6 +110,16 @@ module spu13_core_qsub_delta_tb;
 
         $display("TEST 1: live-core QLDI/QSUB");
         issue(pack(8'h1D, 8'd1, 8'd0, 16'h0A14, 16'h1E28)); // QR1=(10,20,30,40)
+        if (seen_qr_commit_lane !== 4'd1 ||
+            seen_qr_commit_A !== 64'd10 || seen_qr_commit_B !== 64'd20 ||
+            seen_qr_commit_C !== 64'd30 || seen_qr_commit_D !== 64'd40) begin
+            $display("FAIL: QLDI telemetry lane=%0d A=%0d B=%0d C=%0d D=%0d",
+                     seen_qr_commit_lane, seen_qr_commit_A, seen_qr_commit_B,
+                     seen_qr_commit_C, seen_qr_commit_D);
+            errors = errors + 1;
+        end else begin
+            $display("PASS: QLDI telemetry reports QR1=(10,20,30,40)");
+        end
         issue(pack(8'h1D, 8'd2, 8'd0, 16'h0102, 16'h0304)); // QR2=(1,2,3,4)
         issue(pack(8'h1B, 8'd3, 8'd1, 16'h0000, 16'h0002)); // QR3=QR1-QR2
 

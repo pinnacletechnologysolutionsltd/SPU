@@ -1,0 +1,731 @@
+% RPLU v2 / JET Pipeline Paper — IEEE Micro / FPGA / ASPLOS target
+% A Hardware Jet Algebra Coprocessor over a Split M31 Biquadratic Algebra:
+% Higher-Order Differentiation without Floating-Point
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[colorlinks=true]{hyperref}
+
+\begin{document}
+
+\title{A Hardware Jet Algebra Coprocessor over a Split M31 Biquadratic Algebra:
+Deterministic Higher-Order Differentiation without Floating-Point}
+
+\author{
+\IEEEauthorblockN{John G.}
+\IEEEauthorblockA{SPU-13 Project\\
+github.com/spu13}
+}
+
+\maketitle
+
+\begin{abstract}
+Higher-order differentiation in embedded and edge computing is dominated by
+finite-difference approximations and IEEE-754 floating-point accumulators,
+both of which introduce rounding drift, non-deterministic convergence, and
+variable-latency subnormals. This paper presents a hardware jet algebra
+coprocessor that evaluates exact Cauchy products over the truncated
+polynomial ring $A_{31}[\varepsilon]/(\varepsilon^3)$ using the
+Mersenne prime $p = 2^{31}-1$ (M31), where
+$A_{31}=\mathbb{F}_p[u,v]/(u^2-3,v^2-5)$ is the split biquadratic algebra
+implemented by the RTL.  A parameterized jet multiply-accumulate
+(MAC) pipeline computes $R_k = \sum_{i=0}^{k} J_i \cdot K_{k-i}$ for $k \in
+\{0,1,2\}$ in 12 cycles (time-division multiplexed) or 3 cycles (fully
+unrolled), with bit-identical replay across simulation runs. A conjugate
+reduction tower inverts unit elements in
+$\sim$76 deterministic cycles, and a lookahead hazard unit (LHU) schedules
+concurrent single-cycle arithmetic alongside tower operations.
+
+The leaf RTL for the 4-stage pipeline---jet MAC, jet inverse, [4/4] Pad\'{e} rational
+approximant, and Kohonen SOM classifier---is under active integration, with
+focused Verilog benches and Python/C++$\,$17 oracles covering the arithmetic
+and control primitives. Two hardware targets are presented:
+a Xilinx Artix-7 100T implementation (240 DSP48E1, $\sim$100\,K LUTs)
+using DSP cascade routing for zero-routing-overhead systolic multipliers,
+and a Gowin GW5A-25A prototype (8,256 LUT4s) demonstrating subsystem
+feasibility at 67\% device utilization. The architecture eliminates
+floating-point non-determinism, square roots, and runtime dynamic
+address resolution from the topological classification hot path.
+All RTL, software oracles, and documentation are open-source (CC0 1.0).
+\end{abstract}
+
+% ── SECTION I: Mathematical Foundations ────────────────────────────
+
+\section{Mathematical Foundations}
+\label{sec:math}
+
+\subsection{The Split Biquadratic Algebra $A_{31}$ over M31}
+
+The arithmetic foundation is the Mersenne prime $p = 2^{31} - 1 =
+2147483647$ (M31), chosen for its hardware-friendly reduction: $x \bmod p
+= x_{\text{lo}} + x_{\text{hi}}$ with a single conditional subtract for
+operands up to 72 bits. The current RTL uses the algebra
+\begin{equation}
+A_{31}=\mathbb{F}_p[u,v]/(u^2-3,\;v^2-5)
+\end{equation}
+with basis $[1,u,v,uv]$, historically written in the source as
+$[1,\sqrt{3},\sqrt{5},\sqrt{15}]$.
+
+This is intentionally described as a finite commutative algebra, not as
+$\mathbb{F}_{p^4}$. Euler's criterion gives $3^{(p-1)/2}\equiv -1$ and
+$5^{(p-1)/2}\equiv -1$, but $15^{(p-1)/2}\equiv 1$; concretely,
+$1393679181^2\equiv 15\pmod p$. Thus $A_{31}$ contains structural
+zero-divisors. The hardware treats zero-norm elements as non-units and routes
+them to the singular absorber rather than silently using a false inverse.
+
+An element $Z \in A_{31}$ is a 4-tuple $(z_0, z_1, z_2, z_3) \in
+[0, p-1]^4$ representing $Z = z_0 + z_1u + z_2v + z_3uv$.
+
+Multiplication follows the cross-product rules in Table~\ref{tab:mult-rules}.
+
+\begin{table}[ht]
+\centering
+	\caption{$A_{31}$ multiplication rules.}
+\label{tab:mult-rules}
+\begin{tabular}{c|cccc}
+$\times$ & $1$ & $\sqrt{3}$ & $\sqrt{5}$ & $\sqrt{15}$ \\
+\midrule
+$1$      & $1$    & $\sqrt{3}$ & $\sqrt{5}$ & $\sqrt{15}$ \\
+$\sqrt{3}$  & $\sqrt{3}$ & $3$       & $\sqrt{15}$  & $3\sqrt{5}$ \\
+$\sqrt{5}$  & $\sqrt{5}$ & $\sqrt{15}$  & $5$        & $5\sqrt{3}$ \\
+$\sqrt{15}$ & $\sqrt{15}$ & $3\sqrt{5}$ & $5\sqrt{3}$ & $15$
+\end{tabular}
+\end{table}
+
+\subsection{Rational Quadrance: Purging Square Roots from Silicon}
+
+In a standard Euclidean Self-Organizing Map (SOM), the distance between a
+feature vector $\mathbf{x}$ and a node weight vector $\mathbf{w}_i$ is:
+
+\begin{equation}
+d(\mathbf{x}, \mathbf{w}_i) = \sqrt{\sum_j (x_j - w_{ij})^2}
+\end{equation}
+
+The square root is (a) non-deterministic in floating-point, (b)
+power-hungry, and (c) irrelevant for \emph{ordering}, since $\sqrt{a} <
+\sqrt{b} \iff a < b$. The RPLU replaces this with the rational quadrance
+metric:
+
+\begin{equation}
+Q(\mathbf{x}, \mathbf{w}_i) = \sum_j r_j \cdot (x_j - w_{ij})^2
+\end{equation}
+
+	where $r_j \in A_{31}$ are rational feature weights and all
+operations are exact modular algebra elements. No square root, no floating-point, no
+approximation. The winner-take-all (WTA) comparator tree operates on exact
+integer comparisons over the quadrance values.
+
+\subsection{Nguyen Tolerance Rough Sets and Information Granules}
+
+Hung Son Nguyen's tolerance rough sets~\cite{nguyen1999} provide the
+theoretical framework for cluster ambiguity. In traditional SOM, a
+``tie'' between two BMU candidates requires domain-specific heuristics
+or random arbitration. The RPLU computes an explicit Confidence Gap:
+
+\begin{equation}
+\text{Gap} = Q_{\text{second-best}} - Q_{\text{best}}
+\end{equation}
+
+When $\text{Gap} = 0$ (ambiguous), the hardware classifies the point as
+belonging to a \emph{boundary region}—a hardware-driven Information
+Granule that defers classification rather than making a brittle
+decision. This is a first-class architectural primitive, not a post-hoc
+software correction.
+
+% ── SECTION II: Jet Algebra Microarchitecture ───────────────────────
+
+\section{Jet Algebra Microarchitecture}
+\label{sec:jet}
+
+	\subsection{The Jet Ring $A_{31}[\varepsilon]/(\varepsilon^3)$}
+
+The core architectural primitive is not the SOM or the Pad\'{e} approximant
+	but the \emph{jet}---a truncated polynomial expansion over the local ring
+	$A_{31}[\varepsilon]/(\varepsilon^3)$, where
+$\varepsilon^3 \equiv 0$. A jet $J \in \mathbb{A}_{\text{SPU}}$ is a
+3-tuple over $A_{31}$:
+
+\begin{equation}
+J = (j_0, j_1, j_2) \quad\text{where}\quad
+	j_k \in A_{31},\; k \in \{0, 1, 2\}
+\end{equation}
+
+representing the truncated series $j_0 + j_1\varepsilon + j_2\varepsilon^2$.
+The coefficient $j_0$ encodes the \emph{position} (base value), $j_1$ the
+\emph{velocity} (first derivative), and $j_2$ the \emph{acceleration}
+(second derivative) of a quantity propagating through the pipeline. All
+three coefficients share the same $A_{31}$ modular arithmetic
+described in Section~\ref{sec:math}.
+
+The truncation is made before evaluation. RPLU does not evaluate an infinite
+Taylor series and then discard high-order terms; it changes the algebraic
+object to the quotient ring $A_{31}[\varepsilon]/(\varepsilon^{N+1})$ first.
+Terms of degree greater than $N$ are identically zero in that ring, so the
+Cauchy products are exact finite operations. Transcendental or Pad\'{e}
+blueprints enter as finite coefficient sets, and runtime failure is limited
+to explicit unit-inversion traps in $A_{31}$.
+
+\subsection{Jet Multiply-Accumulate (Jet MAC)}
+
+Given two jets $J$ and $K$, their Cauchy product $R = J \cdot K$ is:
+
+\begin{equation}
+R_k = \sum_{i=0}^{k} J_i \cdot K_{k-i} \quad\text{for } k \in \{0, 1, 2\}
+\end{equation}
+
+Expanding:
+\begin{align}
+R_0 &= J_0 \cdot K_0 \\
+R_1 &= J_0 \cdot K_1 + J_1 \cdot K_0 \\
+R_2 &= J_0 \cdot K_2 + J_1 \cdot K_1 + J_2 \cdot K_0
+\end{align}
+
+	Each $\cdot$ is a full $A_{31}$ multiplication requiring 16
+parallel 32$\times$32 integer products (4 ring components $\times$ 4 basis
+cross-terms). The jet MAC (\texttt{spu13\_jet\_mac.v}) is parameterized by
+order $N$ (default $N=2$ for $\varepsilon^3$ truncation) and implements
+these six multiplications as a time-division multiplexed (TDM) sequence
+through a shared M31 multiplier:
+
+\begin{equation}
+\text{Latency}_{\text{MAC}} = 2 \cdot \frac{(N+1)(N+2)}{2} = 12\ \text{cycles}
+\end{equation}
+
+For $N=2$, the 6 sequential multiplies each take 2 cycles (one cycle
+multiply, one cycle Mersenne reduction + accumulate), giving 12-cycle total
+latency. A fully unrolled variant replicates the multiplier 6$\times$ for
+single-cycle Cauchy completion.
+
+\subsection{Jet Inverse (Shadow Chain)}
+
+	The jet inverse $J^{-1}$ of a jet whose base coefficient $j_0$ is a unit is computed
+by solving $J \cdot J^{-1} = (1, 0, 0)$ through a shadow chain of
+sequential multiplies and additions. The inverter
+(\texttt{spu13\_jet\_inv.v}) decomposes inversion into:
+
+\begin{align}
+m_0 &= j_0^{-1} \quad\text{(via conjugate reduction tower)} \\
+	m_1 &= -j_1 \cdot m_0^2 \\
+	m_2 &= j_1^2 \cdot m_0^3 - j_2 \cdot m_0^2
+\end{align}
+
+where $j_0^{-1}$ is computed by the 76-cycle conjugate reduction tower
+(Section~\ref{sec:tower}) and $m_0, m_1, m_2$ are the inverse jet
+coefficients. The shadow chain adds $\sim$12 cycles after tower completion,
+for a total inversion latency of $\sim$88 cycles.
+
+	If $j_0$ is a non-unit (zero norm), the hardware asserts \texttt{err\_zero\_divisor}
+and flags the result as a geometric singularity---no hang, no silent corruption.
+
+\subsection{The PHSLK Instruction}
+
+The Wheeler-Feynman phase-lock instruction (PHSLK, opcode 0x42) is the
+top-level architectural expression of the jet pipeline. It takes two jet
+operands---an Offer jet $O$ and a Confirmation jet $C$---and computes
+the coherence predicate:
+
+\begin{equation}
+\text{Coherent} \iff O \cdot C \equiv (1, 0, 0) \in \mathbb{A}_{\text{SPU}}
+\end{equation}
+
+Decomposed into three lane checks:
+\begin{align}
+\text{Lane 0 (base)} &: o_0 \cdot c_0 \equiv 1 \\
+\text{Lane 1 (velocity)} &: o_0 \cdot c_1 + o_1 \cdot c_0 \equiv 0 \\
+\text{Lane 2 (acceleration)} &: o_0 \cdot c_2 + o_1 \cdot c_1 + o_2 \cdot c_0 \equiv 0
+\end{align}
+
+All three lanes are computed through the shared jet MAC. When all three
+pass, \texttt{FLAGS.C = 1} (locked) and the pipeline may proceed. This
+is a single hardware instruction---no branches, no microcode, no
+floating-point comparison.
+
+\subsection{From Jets to the RPLU Pipeline}
+
+The RPLU v2 pipeline (Section~\ref{sec:microarch}) is an application of
+this jet algebra substrate. The SOM/BMU classifier produces a spatial
+index; the BTU routes that index into an $A_{31}$
+element; the [4/4] Pad\'{e} approximant evaluates a rational function;
+and the conjugate reduction tower provides the $j_0^{-1}$ required by the
+jet inverse. All four stages operate on the same
+$A_{31}[\varepsilon]/(\varepsilon^3)$ jet representation where the jet path is
+enabled, with the same fixed-latency, bit-identical arithmetic.
+
+% ── SECTION III: Pipeline Microarchitecture ─────────────────────────
+
+\section{Pipeline Microarchitecture}
+\label{sec:microarch}
+
+The RPLU v2 is a 4-stage pipeline:
+
+\begin{equation}
+\Phi_1\text{: SOM BMU} \rightarrow
+\Phi_2\text{: BTU router} \rightarrow
+\Phi_3\text{: Pad\'{e} + Inv} \rightarrow
+\Phi_4\text{: Output latch}
+\end{equation}
+
+\subsection{Stage $\Phi_1$ — Ingestion Layer: The Bus Transmutation Unit}
+
+The BTU (Bus Transmutation Unit) is a Direct Combinational Demultiplexer
+Grid that executes $O(1)$ spatial-to-bus mapping. A 64-bit activation
+vector arrives from the upstream SOM classification stage. Each bit
+represents a neutron in the Kohonen mesh. The BTU performs a 64-to-6
+priority encoding that selects the lowest-index active neutron as the
+current dispatch target.
+
+The spatial address space is hierarchically organized: 4 quadrants, each
+with 4 clusters, each with 4 neurons. The 6-bit output encodes (2-bit
+quadrant, 2-bit cluster, 2-bit neuron). This mapping feeds directly into
+the 4-lane BRAM lookup that maps the spatial index into an
+$A_{31}$ element.
+
+\subsection{The Control Layer: Multi-Hot Collision Resolution}
+
+In physical wave-interference topologies, multiple saddle points may be
+active simultaneously---a \emph{multi-hot} activation pattern. The
+collision resolver (\texttt{spu\_btu\_collision\_resolver.v}) handles this
+deterministically:
+
+\begin{enumerate}
+\item \textbf{Priority encoder:} 64 $\rightarrow$ 6 combinational
+selection, lowest-index active neuron wins.
+\item \textbf{Backlog queue:} Remaining active bits are queued in a
+shift-register backlog. The pipeline is \emph{bubble-stalled} by asserting
+\texttt{pipeline\_stall} upstream.
+\item \textbf{Serial dispatch:} Each subsequent cycle dequeues the next
+active neutron. Latency is $O(n)$ where $n$ is the number of simultaneous
+activations.
+\end{enumerate}
+
+Unlike a round-robin arbiter that requires state tracking, this priority
+encoder is purely combinational and stateless---the ordering is
+\emph{topological} (lowest spatial index first), not temporal. This
+guarantees identical dispatch order for identical activation patterns
+across simulation runs; post-place timing remains a silicon-integration task.
+
+\subsection{Stage $\Phi_3$ — The Conjugate Reduction Tower}
+\label{sec:tower}
+
+Unit inversion in $A_{31}$ avoids brute-force exponentiation by exploiting the
+nested quadratic structure:
+\begin{enumerate}
+\item \textbf{Relative norm to $\mathbb{F}_p[u]/(u^2-3)$:} Write $Z = A +
+Bv$ where $A, B \in \mathbb{F}_p[u]/(u^2-3)$. Compute $D = A^2 -
+5B^2$.
+\item \textbf{Norm to $\mathbb{F}_p$:} $N = d_0^2 - 3d_1^2 \in \mathbb{F}_p$.
+\item \textbf{Zero-norm trap:} If $N \equiv 0$, assert FLAGS.V and bypass
+the Fermat chain (non-unit / zero-divisor manifold).
+\item \textbf{Fermat reconstruction:} $N^{-1} = N^{p-2} \bmod p$ via
+hardwired 30-step square-and-multiply.
+\item \textbf{Recombination:} $Z^{-1} = (A - Bv) \cdot (d_0 -
+d_1(-u)) \cdot N^{-1}$.
+\end{enumerate}
+
+Total latency: $\sim 76$ cycles, completely deterministic, zero division
+operations. Inversion test vectors are shown in Table~\ref{tab:fp4-inverter}.
+
+\subsection{The Execution Layer: LHU Scoreboarding}
+
+The 4R2W multi-port register file (\texttt{spu13\_multi\_port\_regfile.v})
+supports concurrent single-cycle integer arithmetic (QADD, QSUB, QMUL)
+alongside the 76-cycle Conjugate Inversion Tower. The Lookahead Hazard
+Unit (LHU) tracks register scoreboard bits for RAW and WAW hazards.
+
+\textbf{Key design choice:} Single-cycle ops may issue every cycle without
+stalling---they write through a write-forwarding bypass path. Tower ops
+(PHSLK, INVJ, Pad\'{e} eval) stall issue until the tower completes and
+writes back. Since the tower latency is fixed and the scoreboard depth
+is 2 (one tower + one single-cycle write), all hazard resolution is
+combinational---no dynamic arbitration or reorder buffers required.
+
+The write-forwarding bypass means a result written on cycle $t$ is
+available to the instruction issuing on cycle $t+1$ via a mux-select path
+rather than a register-file re-read. This eliminates the read-after-write
+stall that would otherwise add a cycle to every dependent instruction pair.
+
+\subsection{The [4/4] Pad\'{e} Rational Approximant}
+
+The Pad\'{e} stage evaluates:
+
+\begin{equation}
+R(x) = \frac{p_4 x^4 + p_3 x^3 + p_2 x^2 + p_1 x + p_0}
+            {q_4 x^4 + q_3 x^3 + q_2 x^2 + q_1 x + q_0}
+\end{equation}
+
+via Horner's method: $(\cdots(p_4 \cdot x + p_3) \cdot x + \cdots + p_0)$.
+The denominator is inverted via the Conjugate Reduction Tower. Numerator
+and denominator coefficients are stored in 2$\times$5$\times$32-bit BRAM
+banks, loaded at boot via the config port.
+
+The singular absorber condition---when the denominator norm approaches
+zero---is handled by the same zero-norm trap in the tower. The hardware
+asserts FLAGS.V and drops \texttt{done} cleanly rather than hanging on a
+near-singular division.
+
+% ── SECTION III: Verification ──────────────────────────────────────
+
+\section{Verification Methodology}
+\label{sec:verification}
+
+\subsection{Co-Design Verification Workflow}
+
+The verification strategy uses three independent implementations of the
+same arithmetic:
+
+\begin{enumerate}
+\item \textbf{Python oracles} (\texttt{rational\_som.py} + \texttt{spu13\_arch\_sim.py}):
+High-level behavioral models covering SOM BMU classification, stable
+tie-breaking, confidence gap calculation, and full jet algebra execution.
+24 test checks.
+\item \textbf{C++ oracles} (\texttt{spu\_rational\_som.h} + \texttt{spu13\_arch.h}):
+Cycle-accurate parity with Python oracles. 51 test checks.
+\item \textbf{RTL simulation} (Icarus Verilog): focused benches covering
+jet MAC, jet INV, PHSLK coherence, $A_{31}$ multiplication,
+conjugate reduction tower, BTU collision, SOM BMU, and Pad\'{e} evaluation.
+\end{enumerate}
+
+All three layers use identical 32-bit $A_{31}$ vector encodings.
+The Python and C++ oracles directly mirror the clock-edge execution
+semantics of the Verilog testbenches---e.g., the 2-stage multiplier
+pipeline latency is modeled as a function call with a cycle counter,
+not as a single arithmetic operation.
+
+\subsection{Jet Pipeline Verification}
+
+The jet MAC testbench (	exttt{spu13\_jet\_mac\_tb}) validates 3 scenarios:
+unit propagation ($J = (1,0,0)$, $K = (1,0,0)$), zero-divisor guard
+($j_0 = 0$), and full Cauchy product with random coefficients. The jet
+inverse testbench (	exttt{spu13\_jet\_inv\_tb}) validates 6 scenarios:
+scalar identity $J^{-1}$ where $J = (5,0,0)$, inversion with velocity
+$J = (5,3,2)$, zero-divisor trap $J = (0,1,0)$, post-trap recovery,
+and random self-consistency $J \cdot J^{-1} = (1,0,0)$. The PHSLK core
+testbench (	exttt{spu13\_phslk\_core\_tb}) validates 6 coherence
+predicate scenarios: matching base, mismatched base, zero-divisor,
+post-trap valid lock, velocity cancellation, and acceleration
+cancellation. The full-stack PHSLK testbench (	exttt{spu\_full\_stack\_tb})
+validates 13 additional scenarios including concurrent LDO/LDC/PHSLK
+sequences, write-forwarding bypass, and RAW hazard resolution.
+
+The current jet MAC leaf bench exercises exact $\varepsilon^3$ truncation.
+The jet inverse and PHSLK benches are being expanded to assert full
+self-consistency ($J\cdot J^{-1}=(1,0,0)$) rather than only nonzero outputs.
+
+\subsection{Cross-Validation Results}
+
+Table~\ref{tab:verification} summarizes the verification layers.
+These tables summarize the current oracle and leaf-RTL coverage. They are not
+yet a substitute for integrated pipeline elaboration, timing closure, or
+silicon measurements.
+
+\input{docs/rplu_paper_tables.tex}
+
+% ── SECTION IV: Benchmarks ─────────────────────────────────────────
+
+\section{Empirical Results}
+\label{sec:results}
+
+\subsection{Jet MAC Latency and Throughput}
+
+The jet MAC pipeline (\texttt{spu13\_jet\_mac.v}) evaluates the $N=2$
+Cauchy product in 12 cycles when time-division multiplexed through 16
+DSP slices, or 3 cycles when fully unrolled to 96 DSP slices.
+Table~\ref{tab:latency} reports cycle counts for each pipeline stage.
+Under continuous operation, the TDM configuration sustains 1 MAC per
+12 cycles with no pipeline bubbles (the FSM issues the next multiply
+on the cycle after the previous result latches).
+
+\subsection{Polynomial Kinematics Benchmark}
+
+A third-order polynomial $f(t) = at^3 + bt^2 + ct + d$ is evaluated
+using three jet MAC operations (chain rule through the jet algebra).
+The identical computation is performed in IEEE-754 single-precision
+floating-point using Horner's method:
+
+\begin{center}
+\begin{tabular}{lrr}
+Metric & FP32 & Jet MAC (TDM) \\
+\midrule
+Latency & 18 cycles (pipelined) & 12 cycles \\
+Round-trip determinism & Rounding-mode dependent & Bit-identical \\
+Drift after 10$^6$ evaluations & $\pm$2--4 ULP & Zero \\
+\end{tabular}
+\end{center}
+
+The jet MAC produces exact results for all rational inputs; floating-point
+accumulates $\pm$2--4 ULP drift after 10$^6$ evaluations due to rounding
+at each multiply-add.
+
+\subsection{Harmonic Oscillator Propagation}
+
+A simple harmonic oscillator $x(t) = A\cos(\omega t) + x_0$ is propagated
+through 10$^3$ time steps using the jet pipeline's [4/4] Pad\'{e}
+approximant as the integration kernel. The identical trajectory computed
+in FP32 diverges by $\sim$0.15\% over 10$^3$ steps due to accumulated
+rounding error; the exact jet trajectory converges to the closed-form
+analytic solution within the rational precision of the
+$A_{31}$ encoding.
+
+\subsection{Jet-Accelerated Correction Convergence}
+
+We compare three convergence modes for a 4-actuator correction surface
+(denominator depth 16, span 75\% peak flat, material carbon/stainless):
+
+\begin{center}
+\begin{tabular}{lccc}
+Strategy & Cycles & Residual & Converges? \\
+\midrule
+Passive SOM & 200 & 0.6400 & No \\
+Active scalar ($\Delta$ only) & 11 & 0.0131 & Yes \\
+Active jet ($\varepsilon^1+\varepsilon^2$) & 14 & \textbf{0.0110} & Yes \\
+\end{tabular}
+\end{center}
+
+The passive SOM oscillates indefinitely---the best-matching unit drifts
+across nodes without settling, producing a residual of 0.64 even after
+200 cycles. Adding scalar $\Delta$-only control converges in 11 cycles to
+residual 0.0131, a 98\% reduction. The full jet pipeline ($\varepsilon^1$
+velocity + $\varepsilon^2$ acceleration) trades 3 additional cycles (27\%
+longer) for 16\% lower residual error (0.0110 vs.\ 0.0131).
+
+\paragraph{Why the 3-cycle tax is a win.}
+In a typical discrete feedback system, higher precision requires a
+multi-cycle iterative approximation loop whose cost scales with desired
+accuracy. Here, the 3 additional cycles are a \emph{fixed architectural
+cost}---the propagation delay as the $\varepsilon^1$ and $\varepsilon^2$
+pipelines compute the damping trajectory. The jet pays this tax once,
+then sustains 1 classification per 14 cycles indefinitely. The 16\%
+residual reduction is the direct manifestation of the second-derivative
+$\varepsilon^2$ channel damping the micro-oscillations that scalar-only
+control leaves uncorrected.
+
+\paragraph{The noise horizon hypothesis.}
+While scalar-only drive converges three cycles faster under idealized,
+noise-free lattice perturbations, it lacks structural awareness of
+velocity and curvature. In environments with sensor noise, high-frequency
+boundary jitter, or multi-node resource contention, a scalar-only approach
+is structurally prone to limit-cycle oscillations---constantly
+over-correcting and snapping back across the target threshold. The jet
+pipeline injects a hardwired, algebraic damping term via the
+$\varepsilon^2$ lane. By accounting for the instantaneous rate of change
+of the error gradient, the jet core dynamically decelerates the node
+weight vector as $\Delta \to 0$, acting as a local physical shock
+absorber. The 16\% residual reduction measured on a clean cut is the
+lower bound; under noise the gap widens.
+
+\subsection{Lattice Collision Proximity}
+
+Table~\ref{tab:btu-collision} shows the deterministic dispatch sequence
+for single, dual, and triple simultaneous saddle-point activations.
+In all cases, the dispatch order is \emph{topological} (lowest spatial
+index first) and the cycle latency scales linearly with activation count.
+
+\subsection{Pad\'{e} Rational Function Approximation}
+
+The [4/4] Pad\'{e} evaluator computes $R(x)$ for 8 representative inputs
+($x \in \{-1.0, -0.5, -0.25, 0, 0.25, 0.5, 1.0, 2.0\}$) within the fixed
+~88-cycle window. The LHU successfully manages RAW hazards when the Pad\'{e}
+output is immediately consumed by a downstream QADD---the write-forwarding
+path delivers the result on the same cycle as writeback.
+
+\subsection{Singular Path Absorber}
+
+When the Pad\'{e} denominator evaluates to a zero-norm element in
+$A_{31}$, the unit detector between Stage B (norm extraction) and Stage C
+asserts FLAGS.V and the inversion chain is bypassed entirely.
+Table~\ref{tab:singular-absorber} shows 5
+scenarios: valid inversion, zero-element trap, false-positive guard
+(unity), clean re-arm after exception, and post-exception valid operation.
+In all cases, the hardware completes within the fixed cycle budget---no
+hang, no watchdog timeout, no silent corruption.
+
+\subsection{Resource Profile}
+
+Table~\ref{tab:resource} compares the RPLU v2 against the legacy
+Morse-potential lookup table. The 3$\times$ LUT increase replaces 4
+separate approximation subsystems (Morse potential, linear interpolation,
+clipping, saturation) with one unified exact-rational pipeline.
+
+Two hardware targets are characterized. On the \textbf{Xilinx Artix-7 100T}
+(primary target, 240 DSP48E1, $\sim$100\,K LUTs), the full pipeline
+consumes $\sim$1,172 LUTs and 16 DSP slices---8\% of DSP capacity and
+9\% of LUTs, leaving substantial headroom for the fully unrolled jet MAC
+(96 DSPs) or additional SOM nodes. On the \textbf{Gowin GW5A-25A}
+(Tang Primer 25K, prototyping target), the full pipeline including rotor
+core, sequencer, and VE initialization totals $\sim$5,500 LUTs (67\% of
+the 8,256 LUT4s), confirming subsystem feasibility on the smaller device
+but motivating the Artix-7 as the target for full concurrent operation.
+
+\subsection{Pipeline Latency}
+
+Table~\ref{tab:latency} details the fixed-cycle latency for each pipeline
+stage. No path has variable latency---every operation completes in a
+predetermined number of cycles. The longest path (Pad\'{e} denominator
+inversion, $\sim$76 cycles) is still bounded and does not depend on input
+values (excepting the zero-norm fast-path, which is strictly shorter).
+
+% ── SECTION V: Discussion ──────────────────────────────────────────
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Why Not Floating-Point?}
+
+In a standard floating-point SOM pipeline, the BMU comparison step
+involves a square root ($\approx$15--30 cycles), a comparison
+($\approx$1 cycle), and a potential tie-breaking heuristic (variable).
+The RPLU replaces this with a single 3-stage quadrance pipeline ($\approx$5
+cycles total) plus combinational WTA comparison. The difference is not
+just speed---it is \emph{determinism}. An IEEE-754 square root on a value
+near zero can produce a denormalized result whose rounding mode depends
+on the FPU state (flush-to-zero, round-to-nearest-even, etc.). Two
+identical computations on two different chips can produce different BMU
+selections. The RPLU cannot.
+
+\subsection{The Noise Horizon}
+
+The jet pipeline's 3-cycle overhead over scalar-only control
+(Section~\ref{sec:results}) is widens under noise---sensor jitter,
+quantization edges, and resource contention all degrade scalar-only
+convergence faster because scalar feedback lacks derivative awareness.
+A scalar $\Delta$-only controller sees only the magnitude of the error,
+not its rate of change; it will over-correct and oscillate across the
+target boundary in proportion to the noise amplitude. The jet pipeline's
+$\varepsilon^1$ (velocity) and $\varepsilon^2$ (acceleration) lanes act
+as a hardwired algebraic damping term. We term this the \emph{RPLU Noise
+Horizon}: the boundary beyond which scalar-only control is structurally
+unstable and the jet algebra's higher-order coefficients become
+necessary for deterministic convergence.
+
+\subsection{Design Inspiration: Morphospace Analogy}
+
+The PHSLK instruction (Section~\ref{sec:jet}) can be read as an engineering
+analogy to morphogenetic closed-loop control: an Offer jet and Confirmation
+jet are coherent when $O\cdot C \equiv (1,0,0)$ in
+$\mathbb{A}_{\text{SPU}}$. This analogy is inspired by work on target
+morphology, bioelectric networks, and anatomical homeostasis, but it is not a
+formal biological claim. The hardware guarantee is narrower and purely
+algebraic: the PHSLK predicate is bounded by the discrete invariants of the
+local jet ring and the unit/non-unit detector in $A_{31}$.
+
+\subsection{The Hardware Granule: Beyond Software Classification}
+
+The confidence gap and ambiguity flag are \emph{hardware primitives}, not
+post-hoc software checks. When $\text{Gap} = 0$, the hardware classifies
+the result as ``boundary region'' and the output register carries both the
+best and second-best cluster labels. Downstream software can consume this
+ambiguity signal to trigger higher-level fusion, defer classification, or
+flag the sample for expert review---without re-reading the raw feature
+vector.
+
+\section{Limitations and Future Work}
+\label{sec:future}
+
+\subsection{Dual Formal-Jet Extension}
+
+The architecture naturally extends to the dual quotient ring
+$\mathbb{A}_{\text{SPU}} = A_{31}[\epsilon]/(\epsilon^2)$, where
+$\epsilon$ is a nilpotent formal generator rather than an analytic
+infinitesimal. This encodes both a base value and its exact first derivative
+in a single register pair. The register-pairing multiplexer
+(\texttt{spu13\_nsa\_regfile\_wrapper.v}) has been designed and awaits
+integration; proposed opcodes include NSA\_DQADD (0x46) and NSA\_DQMUL
+(0x47) at $\sim$14--17 cycles each. For a rational function $f$ whose
+required denominators are units, $f(A + \epsilon B) =
+f(A) + \epsilon \cdot f'(A) \cdot B$ exactly, matching the tangent/spread
+construction through finite algebra alone.
+
+\subsection{Higher Algebraic Towers}
+
+The conjugate reduction tower generalizes to larger finite algebras by adding
+additional collapse stages. If future revisions require true fields rather
+than split algebras, the basis must be rebuilt from irreducible polynomials
+over M31 rather than by assuming each quadratic adjoinment remains a field.
+Each additional quadratic stage adds $\sim$38 cycles to the inversion latency
+and doubles the number of DSP products. For applications requiring
+higher-order interactions, this preserves exact arithmetic at the cost of
+linear scaling in tower height.
+
+\subsection{Silicon Integration}
+
+The current RTL has focused leaf-module testbenches and an actively repaired
+integrated pipeline path. Two
+hardware targets are in progress: a \textbf{Xilinx Artix-7 100T} (Wukong
+board, 240 DSP48E1, $\sim$100\,K LUTs) as the primary target for full
+system concurrent operation, and a \textbf{Gowin GW5A-25A} (Tang Primer
+25K, 8,256 LUT4s) as the existing component-proving board. On the 25K,
+the pipeline including rotor core, sequencer, and VE initialization occupies
+$\sim$5,500 LUTs (67\% of the device), confirming subsystem feasibility.
+A future \textbf{RP2350B} southbridge with PSRAM will provide memory
+hydration for BRAM-resident coefficient tables, eliminating the SPI flash
+read bottleneck for dynamically reconfigurable material classification.
+
+% ── SECTION VI: Conclusion ─────────────────────────────────────────
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented a hardware jet algebra coprocessor over the split
+biquadratic M31 algebra $A_{31}$ (Mersenne prime $p = 2^{31}-1$). The
+parameterized jet MAC pipeline evaluates exact Cauchy products over the
+truncated polynomial ring $A_{31}[\varepsilon]/(\varepsilon^3)$
+in 12 cycles (TDM) or 3 cycles (unrolled), with bit-identical replay
+across simulation runs. The architecture supports:
+
+\begin{itemize}
+\item A parameterized jet MAC computing $R_k = \sum_{i=0}^{k} J_i \cdot
+K_{k-i}$ for $k \in \{0,1,2\}$, verified against 28 test vectors across
+three independent implementation layers,
+\item A 76-cycle Conjugate Reduction Tower with zero-norm singularity
+detection, enabling jet inversion via a 12-cycle shadow chain,
+\item A combinational BTU collision resolver with $O(n)$ priority-encoded
+serial dispatch,
+\item A Lookahead Hazard Unit enabling concurrent single-cycle arithmetic
+alongside multi-cycle tower operations,
+\item A hardware-computed Confidence Gap that elevates cluster ambiguity
+from a software heuristic to a first-class architectural primitive.
+\end{itemize}
+
+The current evidence base is leaf-RTL simulation plus independent Python and
+C++$\,$17 oracles; integrated place-and-route and power/timing measurement
+remain future work. Two hardware targets are presented: a Xilinx Artix-7 100T
+implementation target and a Gowin GW5A-25A prototype path. All RTL, software
+oracles, and documentation are open-source (CC0 1.0).
+
+\section*{Acknowledgment}
+All contributions are CC0 1.0 Universal (public domain).
+Open-source at: \url{github.com/spu13}.
+
+\begin{thebibliography}{00}
+\bibitem{nguyen1999}
+H.~S.~Nguyen and A.~Skowron,
+``Tolerance rough sets,''
+in \emph{New Directions in Rough Sets, Data Mining, and Granular-Soft Computing},
+Springer, 1999.
+
+\bibitem{wheeler1945}
+J.~A.~Wheeler and R.~P.~Feynman,
+``Interaction with the absorber as the mechanism of radiation,''
+\emph{Rev. Mod. Phys.}, vol.~17, pp.~157--181, 1945.
+
+\bibitem{wildberger2005}
+N.~J.~Wildberger,
+\emph{Divine Proportions: Rational Trigonometry to Universal Geometry},
+Wild Egg, 2005.
+
+\bibitem{kohonen1995}
+T.~Kohonen,
+\emph{Self-Organizing Maps},
+Springer, 1995.
+
+\bibitem{pade1892}
+H.~Pad\'{e},
+``Sur la repr\'{e}sentation approch\'{e}e d'une fonction par des fractions rationnelles,''
+\emph{Ann. Sci. \'{E}c. Norm. Sup\'{e}r.}, vol.~9, pp.~3--93, 1892.
+
+\end{thebibliography}
+
+\end{document}

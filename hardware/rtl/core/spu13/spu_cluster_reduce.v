@@ -1,73 +1,81 @@
-// SPU-13 Cluster/Classification Reduce (v1.0)
-//
-// Validates BMU result and emits final classification output:
-//   - cluster_label from best matching unit
-//   - confidence_gap = second_q − best_q
-//   - ambiguity flag when gap ≤ threshold or no valid BMU
-//
-// This is a thin pipeline stage that bridges the BMU to the classifier
-// emission layer.  In the staged RTL plan it sits between spu_som_bmu
-// and spu_class_emit.
+`timescale 1ns / 1ps
+
+// spu_cluster_reduce.v — BMU cluster label + confidence gap arbiter
+// Port interface matched to spu13_core.v gen_som instantiation (WIDTH parameter).
 
 module spu_cluster_reduce #(
     parameter WIDTH = 18
-)(
-    input  wire               clk,
-    input  wire               rst_n,
+) (
+    input  wire         clk,
+    input  wire         rst_n,
 
-    input  wire               bmu_valid,
-    input  wire [15:0]        best_node_id,
-    input  wire [15:0]        cluster_label_in,
-    input  wire [2*WIDTH-1:0] best_q,
-    input  wire [2*WIDTH-1:0] second_q,
-    input  wire [2*WIDTH-1:0] confidence_gap_in,
-    input  wire               has_second,
+    // From spu_som_bmu
+    input  wire         bmu_valid,
+    input  wire [15:0]  best_node_id,
+    input  wire [15:0]  cluster_label_in,
+    input  wire [63:0]  best_q,
+    input  wire [63:0]  second_q,
+    input  wire [63:0]  confidence_gap_in,
+    input  wire         has_second,
 
-    // Optional ambiguity threshold (default: zero)
-    input  wire [2*WIDTH-1:0] ambiguity_threshold,
+    // Thresholds
+    input  wire [63:0]  ambiguity_threshold,
 
-    output reg                 classify_valid,
-    output reg  [15:0]         label,
-    output reg  [2*WIDTH-1:0]  confidence_gap,
-    output reg                 ambiguous
+    // Outputs
+    output reg          classify_valid,
+    output reg  [15:0]  label,
+    output reg  [63:0]  confidence_gap,
+    output reg          ambiguous
 );
 
-    wire signed [2*WIDTH-1:0] gap_a, gap_b;
-    wire signed [2*WIDTH-1:0] thresh_a, thresh_b;
-    wire signed [63:0]        da, db;
+    wire signed [63:0] best_a_ext   = {32'd0, best_q[63:32]};
+    wire signed [63:0] second_a_ext = {32'd0, second_q[63:32]};
+    wire signed [63:0] best_b_ext   = {{32{best_q[31]}}, best_q[31:0]};
+    wire signed [63:0] second_b_ext = {{32{second_q[31]}}, second_q[31:0]};
+    wire signed [63:0] thresh_a     = {32'd0, ambiguity_threshold[63:32]};
+    wire signed [63:0] thresh_b     = {{32{ambiguity_threshold[31]}}, ambiguity_threshold[31:0]};
+    wire signed [63:0] gap_a = second_a_ext - best_a_ext;
+    wire signed [63:0] gap_b = second_b_ext - best_b_ext;
+    wire signed [63:0] da = gap_a - thresh_a;
+    wire signed [63:0] db = gap_b - thresh_b;
 
-    // Recompute confidence_gap from second_q - best_q for safety
-    assign gap_a = second_q[WIDTH-1:0] - best_q[WIDTH-1:0];
-    assign gap_b = second_q[2*WIDTH-1:WIDTH] - best_q[2*WIDTH-1:WIDTH];
+    function [127:0] abs_square64;
+        input signed [63:0] v;
+        reg signed [63:0] mag;
+        begin
+            mag = (v < 0) ? -v : v;
+            abs_square64 = mag * mag;
+        end
+    endfunction
 
-    assign thresh_a = ambiguity_threshold[WIDTH-1:0];
-    assign thresh_b = ambiguity_threshold[2*WIDTH-1:WIDTH];
-
-    // gap ≤ threshold check using integer-only Q(√3) ordering
-    wire gap_le_thresh;
-
-    assign da = gap_a - thresh_a;
-    assign db = gap_b - thresh_b;
-
-    assign gap_le_thresh =
-        (da == 0 && db == 0) ? 1 :
-        (da <= 0 && db <= 0) ? 1 :
-        (da >= 0 && db >= 0) ? 0 :
-        (da < 0 && db > 0)   ? (da*da > 3*db*db) :
-                               (da*da < 3*db*db);
+    wire [127:0] da_sq = abs_square64(da);
+    wire [127:0] db_sq3 = abs_square64(db) * 3;
+    wire gap_le_thresh =
+        (da == 0 && db == 0) ? 1'b1 :
+        (da <= 0 && db <= 0) ? 1'b1 :
+        (da >= 0 && db >= 0) ? 1'b0 :
+        (da < 0 && db > 0)   ? (da_sq > db_sq3) :
+                               (da_sq < db_sq3);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            classify_valid <= 0;
-            label          <= 0;
+            label <= 0;
             confidence_gap <= 0;
-            ambiguous      <= 0;
+            ambiguous <= 0;
+            classify_valid <= 0;
         end else begin
-            classify_valid <= bmu_valid;
-            label          <= cluster_label_in;
-            confidence_gap <= confidence_gap_in;
-            ambiguous      <= !bmu_valid ||
-                              (has_second && gap_le_thresh);
+            classify_valid <= 1'b0;
+            if (bmu_valid) begin
+                label <= cluster_label_in;
+                if (has_second) begin
+                    confidence_gap <= confidence_gap_in;
+                    ambiguous <= gap_le_thresh;
+                end else begin
+                    confidence_gap <= 64'd0;
+                    ambiguous <= 1'b0;
+                end
+                classify_valid <= 1'b1;
+            end
         end
     end
 

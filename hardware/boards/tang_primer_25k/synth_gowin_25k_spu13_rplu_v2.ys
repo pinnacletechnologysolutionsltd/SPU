@@ -1,0 +1,90 @@
+# Yosys synthesis script for Tang Primer 25K — SPU-13 core + RPLU v2 Thimble-Padé pipeline
+#
+# Enables the RPLU v2 A31/Quadray pipeline: M31/A31 multiplier, conjugate
+# reduction tower, BTU collision resolver, Quadray variety sidecar, and
+# Thimble-Padé evaluator.
+#
+# Targets: Tang Primer 25K (GW5A-25A) with Gowin toolchain.
+# Build:  yosys -m ghdl synth_gowin_25k_spu13_rplu_v2.ys
+
+# ── Read all sources ──────────────────────────────────────────────────
+# Primitive wrappers and common support
+read_verilog hardware/vendor/gowin/gowin_dsp.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/spu_gowin_prim.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/surd_multiplier.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/sync/spu_async_fifo.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/sync/rplu_cfg_cdc.v
+
+# Shared SPU-13 support used by the core, even with legacy RPLU disabled
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_rotor_vault.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_cross_rotor.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/davis_gate_dsp.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/toroidal_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
+read_verilog -I hardware/rtl/arch hardware/rtl/math/rational_surd5_scale_manager.v
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v
+read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_laminar_boot.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rplu_poly_step.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_sequencer.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_quadrance_accum.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_rotor_core_tdm.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/laminar_node.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/bio/spu_annealer.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/spu_i2s_out.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/io/surd_uart_tx.v
+read_verilog -I hardware/rtl/arch hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
+
+# RPLU v2 pipeline
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_m31_multiplier.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_m31_inverter.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_fp4_inverter.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_bram_32x64_array.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_btu_collision_resolver.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_btu_core_top.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_som_bmu.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_som_train.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_cluster_reduce.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_multi_port_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_nsa_core.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_nsa_dual_alu.v
+read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rplu_thimble_pade.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_quadray_variety.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/rplu_pipeline.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_core.v
+
+# Top-level board wrapper
+read_verilog -I hardware/rtl/arch hardware/boards/tang_primer_25k/spu13_tang25k_top.v
+
+# Vendor BSRAM primitive
+read_verilog hardware/vendor/gowin/gowin_bsram.v
+
+# ── Hierarchy ─────────────────────────────────────────────────────────
+chparam -set ENABLE_SDRAM 0 \
+        -set ENABLE_CORE_RPLU 0 \
+        -set ENABLE_CORE_LATTICE 0 \
+        -set ENABLE_CORE_MATH 1 \
+        -set ENABLE_CORE_SOM 0 \
+        -set ENABLE_CORE_RPLU_V2 1 \
+        -set ENABLE_SDRAM_SELFTEST 0 \
+        -set ENABLE_CORE_SDRAM_VERIFY 0 \
+        spu13_tang25k_top
+
+hierarchy -top spu13_tang25k_top
+hierarchy -check
+
+# ── Synthesis ─────────────────────────────────────────────────────────
+proc
+opt
+fsm
+memory -nomap
+opt
+techmap
+opt
+
+# ── Map to Gowin primitives ───────────────────────────────────────────
+synth_gowin -json build/tang_primer_25k_spu13_rplu_v2.json -top spu13_tang25k_top \
+    -vout build/tang_primer_25k_spu13_rplu_v2.v
+
+stat

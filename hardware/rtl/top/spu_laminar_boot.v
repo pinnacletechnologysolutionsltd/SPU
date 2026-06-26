@@ -1,7 +1,9 @@
 // spu_laminar_boot.v
 // First-stage bootloader: read JEDEC ID from SPI flash, then hydrate the core
 // with the Pell rotor and golden-prime seed tables stored in the PMOD flash image.
-`include "spu_flash_map.vh"
+`ifndef FLASH_PELL_BASE
+`include "hardware/rtl/arch/spu_flash_map.vh"
+`endif
 
 module spu_laminar_boot #(
     parameter ENABLE_RPLU_BOOT = 1,

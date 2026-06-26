@@ -10,7 +10,8 @@ module spu13_core #(
     parameter ENABLE_LATTICE = 1,
     parameter ENABLE_MATH = 1,
     parameter ENABLE_SEQUENCER = 1,
-    parameter ENABLE_CORE_SOM  = 0,   // SOM/BMU classifier pipeline
+    parameter ENABLE_CORE_SOM  = 0,   // SOM/BMU classifier pipeline (legacy serial scan)
+    parameter ENABLE_CORE_RPLU_V2 = 0, // RPLU v2: F_{p^4} Thimble-Padé pipeline (parallel SOM + BTU + Padé + M31)
     parameter [255:0] MEM_FILE = "hardware/rtl/arch/hw_test.mem"
 )(
     input  wire         clk,            // Fast Clock (e.g. 12-24MHz)
@@ -54,6 +55,14 @@ module spu13_core #(
     output wire [3:0]   current_axis_ptr,
     output wire [63:0]  current_axis_data,
 
+    // Last QLDI QR commit telemetry for the southbridge.
+    output wire                   qr_commit_valid,
+    output wire [3:0]             qr_commit_lane,
+    output wire [63:0]            qr_commit_A,
+    output wire [63:0]            qr_commit_B,
+    output wire [63:0]            qr_commit_C,
+    output wire [63:0]            qr_commit_D,
+
     // Instruction input (optional). When unused, tie inst_valid=0 at instantiation.
     input  wire                    inst_valid,
     input  wire [63:0]             inst_word,
@@ -90,7 +99,12 @@ module spu13_core #(
     output reg  [15:0]              hex_q,
     output reg  [15:0]              hex_r,
     output wire signed [31:0]        audio_p_out,
-    output wire signed [31:0]        audio_q_out
+    output wire signed [31:0]        audio_q_out,
+
+    // ── SOM / gatekeeper fault telemetry ───────────────────────
+    output wire                      axiomatic_fault,
+    output wire [1:0]                fault_type,
+    output wire [15:0]               fault_count
 );
 
     // 1. Manifold State Buffering
@@ -100,6 +114,23 @@ module spu13_core #(
     // wide indexed write across the entire 832-bit slab.
     reg [63:0] manifold_lane [0:(`MANIFOLD_AXES-1)];
     wire [`MANIFOLD_WIDTH-1:0] manifold_reg;
+    wire [831:0] annealed_manifold;
+    wire [`MANIFOLD_WIDTH-1:0] manifold_commit_reg;
+    wire [31:0] adaptive_tau_q;
+    wire signed [31:0] audio_p;
+    wire signed [31:0] audio_q;
+    wire rplu_dissoc;
+    wire rplu_done;
+    wire [9:0] rplu_addr_dbg;
+    wire        som_done;
+    wire        som_train_done;
+    wire        som_classify_valid;
+    wire [15:0] som_label;
+    wire [63:0] som_gap;
+    wire        som_ambiguous;
+    reg  [31:0] quadray_target_kappa;
+    reg         quadray_target_valid;
+    reg [12:0] stability_bits;
 
     assign manifold_reg = {
         manifold_lane[12], manifold_lane[11], manifold_lane[10], manifold_lane[9],
@@ -112,7 +143,6 @@ module spu13_core #(
     // ── Isotropic Annealer (Golden-Noise Lattice Unlock) ────────────
     // Injects sub-Planckian φ-noise when the full manifold is laminar
     // for 16 consecutive cycles — prevents frozen lattice-lock.
-    wire [831:0] annealed_manifold;
     reg          anneal_enable;
     reg [4:0]    laminar_cycle_count;
 
@@ -143,65 +173,45 @@ module spu13_core #(
         end
     end
 
-    // ── Active Inference (Predictive Coding Filter) ─────────────────
+    // ── Active Inference (Predictive Coding Filter) [STUBBED - archived]
     // Filters transient cubic leaks from genuine manifold divergence
-    // using the Free Energy Principle. Prior is the last manifold frame;
-    // sensory input is the current frame. Dissonance flags real events.
+    // using the Free Energy Principle. Archived; outputs unused.
     wire [127:0] inference_posterior;
     wire [127:0] inference_error;
     wire         inference_dissonant;
     reg          fault_pulse_d1;  // delayed fault to align with manifold
-
-    spu_active_inference u_inference (
-        .clk(clk), .reset(!rst_n),
-        .prior_state(manifold_reg[127:0]),       // low 128 bits of manifold
-        .prior_precision(adaptive_tau_q[15:0]),  // from soul metabolism
-        .sensory_in(manifold_commit_reg[127:0]),
-        .sensory_valid(phi_21),
-        .posterior_state(inference_posterior),
-        .prediction_error(inference_error),
-        .is_dissonant(inference_dissonant)
-    );
+    assign inference_posterior = 128'd0;
+    assign inference_error = 128'd0;
+    assign inference_dissonant = 1'b0;
 
     // ── Soul Metabolism (Adaptive Safety Valve) ─────────────────────
     // Tracks fault rate and adjusts Davis Gate sensitivity (adaptive_tau).
     // Widens tau when tuck rate > 13% (Fibonacci threshold), tightens
     // when stable. Periodically saves health state to SPI flash.
-    wire [31:0] adaptive_tau_q;
     wire [31:0] soul_tuck_count, soul_cycle_count;
     wire        soul_flash_we;
     wire [23:0] soul_flash_addr;
     wire [255:0] soul_flash_page;
 
-    // ── Viscosity Monitor ─────────────────────────────────────────
-    // Measures manifold flow quality: 0xFF = liquid, 0x00 = cubic friction.
+    // ── Viscosity Monitor [STUBBED - archived]
+    // Measures manifold flow quality. Archived; defaults to liquid (0xFF).
     wire [7:0] laminar_flow_index;
+    assign laminar_flow_index = 8'hFF;
 
-    spu_viscosity_monitor u_viscosity (
-        .clk(clk), .reset(!rst_n),
-        .abcd_vector(manifold_reg[127:0]),
-        .laminar_flow_index(laminar_flow_index)
-    );
-
-    // ── Proprioception (Thermal Awareness) ─────────────────────────
-    // Monitors switching density across the full manifold. Detects
-    // myopic distortion (90° grid vs 60° IVM) as elevated pressure.
+    // ── Proprioception (Thermal Awareness) [STUBBED - archived]
+    // Monitors switching density across the full manifold.
+    // Archived; defaults to zero pressure, no damping.
     wire [31:0] thermal_pressure;
     wire        damping_active;
-
-    spu_proprioception u_proprio (
-        .clk(clk), .reset(!rst_n),
-        .manifold_state(manifold_reg),
-        .thermal_pressure(thermal_pressure),
-        .damping_active(damping_active)
-    );
+    assign thermal_pressure = 32'd0;
+    assign damping_active = 1'b0;
 
     // ── I2S Audio Output ──────────────────────────────────────────
     // Converts Davis Gate audio surds to I2S protocol for PCM5102A DAC.
     spu_i2s_out u_i2s (
         .clk(clk), .rst_n(rst_n),
         .mode(2'b01),               // passthrough mode
-        .lfi(laminar_flow_index),
+        .lfi({8'd0, laminar_flow_index}),
         .left_data(audio_p[23:0]),
         .right_data(audio_q[23:0]),
         .i2s_bclk(i2s_bclk),
@@ -250,19 +260,14 @@ module spu13_core #(
     wire combined_fault;
     assign combined_fault = rplu_dissoc || damping_active;
 
-    spu_soul_metabolism #(.CLK_HZ(24_000_000)) u_metabolism (
-        .clk(clk), .reset(!rst_n),
-        .q_state(manifold_reg[127:0]),
-        .fault_pulse(combined_fault),
-        .is_idle(~|stability_bits),     // idle when no axis is stable
-        .adaptive_tau_q(adaptive_tau_q),
-        .tuck_count(soul_tuck_count),
-        .cycle_count(soul_cycle_count),
-        .flash_we(soul_flash_we),
-        .flash_addr(soul_flash_addr),
-        .soul_page(soul_flash_page),
-        .flash_ready(1'b0)               // SPI flash not ready in sim
-    );
+    // spu_soul_metabolism [STUBBED - archived]
+    // Adaptive tau defaults to 0x0100_0000 (Q16 = 256).
+    assign adaptive_tau_q = 32'h0100_0000;
+    assign soul_tuck_count = 32'd0;
+    assign soul_cycle_count = 32'd0;
+    assign soul_flash_we = 1'b0;
+    assign soul_flash_addr = 24'd0;
+    assign soul_flash_page = 256'd0;
 
     function [`MANIFOLD_WIDTH-1:0] manifold_with_axis;
         input [`MANIFOLD_WIDTH-1:0] manifold_in;
@@ -451,6 +456,34 @@ module spu13_core #(
     // Rotated output after inverse permute (final writeback values)
     wire [63:0] rote_B_out, rote_C_out, rote_D_out;
     wire rote_done_tdm;
+    localparam RPLU2_SOM_COEFF_W = 18;
+    localparam RPLU2_SOM_SURD_W = 2 * RPLU2_SOM_COEFF_W;
+    function [RPLU2_SOM_SURD_W-1:0] rplu2_narrow_rs;
+        input [63:0] rs;
+        begin
+            rplu2_narrow_rs = {rs[32 +: RPLU2_SOM_COEFF_W], rs[0 +: RPLU2_SOM_COEFF_W]};
+        end
+    endfunction
+    wire [143:0] rplu2_features;
+    assign rplu2_features = {
+        rplu2_narrow_rs(qrf_rd_D),
+        rplu2_narrow_rs(qrf_rd_C),
+        rplu2_narrow_rs(qrf_rd_B),
+        rplu2_narrow_rs(qrf_rd_A)
+    };
+
+    reg       inst_done_r;
+    reg       instr_wr_active;
+    reg [63:0] instr_wr_A, instr_wr_B, instr_wr_C, instr_wr_D;
+    reg       qr_commit_valid_r;
+    reg [3:0] qr_commit_lane_r;
+    reg [63:0] qr_commit_A_r, qr_commit_B_r, qr_commit_C_r, qr_commit_D_r;
+    assign qr_commit_valid = qr_commit_valid_r;
+    assign qr_commit_lane = qr_commit_lane_r;
+    assign qr_commit_A = qr_commit_A_r;
+    assign qr_commit_B = qr_commit_B_r;
+    assign qr_commit_C = qr_commit_C_r;
+    assign qr_commit_D = qr_commit_D_r;
 
     // ── Instruction Sequencer (autonomous program execution) ─────
     // When ENABLE_SEQUENCER=1, the sequencer loads program from
@@ -485,8 +518,20 @@ module spu13_core #(
     // Mux: external inst_valid or sequencer-driven
     wire        eff_inst_valid;
     wire [63:0] eff_inst_word;
+    wire        inst_accept;
+    reg         inst_seen;
     assign eff_inst_valid = ENABLE_SEQUENCER ? seq_inst_valid : inst_valid;
     assign eff_inst_word  = ENABLE_SEQUENCER ? seq_inst_word  : inst_word;
+    assign inst_accept    = eff_inst_valid && !inst_seen;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            inst_seen <= 1'b0;
+        else if (!eff_inst_valid)
+            inst_seen <= 1'b0;
+        else if (inst_accept)
+            inst_seen <= 1'b1;
+    end
 
     // Alias for internal use (so existing code uses muxed signals)
     // Note: inst_valid and inst_word are port names; we override them
@@ -494,12 +539,16 @@ module spu13_core #(
     // Actually, we just use eff_inst_valid/eff_inst_word everywhere.
 
     generate
-        if (ENABLE_MATH) begin : gen_qrf
+        if (ENABLE_MATH || ENABLE_CORE_SOM || ENABLE_CORE_RPLU_V2) begin : gen_qrf
             // ── VE QR Hydration ──────────────────────────────────
             wire ve_qr_init_en;
             wire [3:0] ve_qr_init_lane;
             wire [63:0] ve_qr_init_A, ve_qr_init_B, ve_qr_init_C, ve_qr_init_D;
             wire ve_qr_init_done;
+            wire [63:0] regfile_wr_A_mux;
+            wire [63:0] regfile_wr_B_mux;
+            wire [63:0] regfile_wr_C_mux;
+            wire [63:0] regfile_wr_D_mux;
 
             spu_ve_qr_init u_ve_qr_init (
                 .clk(clk), .rst_n(rst_n),
@@ -526,73 +575,85 @@ module spu13_core #(
                 .dbg_A(), .dbg_B(), .dbg_C(), .dbg_D()
             );
 
-            // ── Quadray Permuter ──────────────────────────────────
-            // For ROTC angles 6-11 (non-A-invariant rotations), permute
-            // coordinates so the target axis becomes A, apply ROTC, then
-            // un-permute back. Angles 0-5 are direct (A is invariant).
-            wire [1:0] rote_perm_sel;
-            wire [63:0] perm_A, perm_B, perm_C, perm_D;
-            wire [63:0] rotor_A_in, rotor_B_in, rotor_C_in, rotor_D_in;
+            if (ENABLE_MATH) begin : gen_rotc_datapath
+                // ── Quadray Permuter ──────────────────────────────────
+                // For ROTC angles 6-11 (non-A-invariant rotations), permute
+                // coordinates so the target axis becomes A, apply ROTC, then
+                // un-permute back. Angles 0-5 are direct (A is invariant).
+                wire [1:0] rote_perm_sel;
+                wire [63:0] rotor_A_in, rotor_B_in, rotor_C_in, rotor_D_in;
 
-            // Angle → perm_sel: 0-5→id, 6-7→B→A, 8-9→C→A, 10-11→D→A
-            assign rote_perm_sel = (rote_angle < 6) ? 2'b00 :
-                                   (rote_angle < 8) ? 2'b01 :
-                                   (rote_angle < 10) ? 2'b10 : 2'b11;
+                // Angle → perm_sel: 0-5→id, 6-7→B→A, 8-9→C→A, 10-11→D→A
+                assign rote_perm_sel = (rote_angle < 6) ? 2'b00 :
+                                       (rote_angle < 8) ? 2'b01 :
+                                       (rote_angle < 10) ? 2'b10 : 2'b11;
 
-            spu_quadray_permute u_perm_fwd (
-                .perm_sel(rote_perm_sel),
-                .A_in(qrf_rd_A), .B_in(qrf_rd_B),
-                .C_in(qrf_rd_C), .D_in(qrf_rd_D),
-                .A_out(rotor_A_in), .B_out(rotor_B_in),
-                .C_out(rotor_C_in), .D_out(rotor_D_in)
-            );
+                spu_quadray_permute u_perm_fwd (
+                    .perm_sel(rote_perm_sel),
+                    .A_in(qrf_rd_A), .B_in(qrf_rd_B),
+                    .C_in(qrf_rd_C), .D_in(qrf_rd_D),
+                    .A_out(rotor_A_in), .B_out(rotor_B_in),
+                    .C_out(rotor_C_in), .D_out(rotor_D_in)
+                );
 
-            // TDM rotor core — 11-cycle pipeline, shared multiplier
-            spu13_rotor_core_tdm u_rotc (
-                .clk(clk), .rst_n(rst_n),
-                .start(rote_en),
-                .done(rote_done_tdm),
-                .A_in(rotor_A_in),
-                .B_in(rotor_B_in),
-                .C_in(rotor_C_in),
-                .D_in(rotor_D_in),
-                .F(rote_F), .G(rote_G), .H(rote_H),
-                .field_sel(rote_field),
-                .bypass_p5(rote_angle == 6'd2),  // P5 forward → pure permutation
-                .bypass_p5_inv(rote_angle == 6'd5),  // P5 inverse → reverse permutation
-                .apply_div3(rote_denom_3),
-                .A_out(rote_A_out_raw),
-                .B_out(rote_B_out_raw),
-                .C_out(rote_C_out_raw),
-                .D_out(rote_D_out_raw)
-            );
+                // TDM rotor core — 11-cycle pipeline, shared multiplier
+                spu13_rotor_core_tdm u_rotc (
+                    .clk(clk), .rst_n(rst_n),
+                    .start(rote_en),
+                    .done(rote_done_tdm),
+                    .A_in(rotor_A_in),
+                    .B_in(rotor_B_in),
+                    .C_in(rotor_C_in),
+                    .D_in(rotor_D_in),
+                    .F(rote_F), .G(rote_G), .H(rote_H),
+                    .field_sel(rote_field),
+                    .bypass_p5(rote_angle == 6'd2),      // P5 forward pure permutation
+                    .bypass_p5_inv(rote_angle == 6'd5),  // P5 inverse reverse permutation
+                    .apply_div3(rote_denom_3),
+                    .A_out(rote_A_out_raw),
+                    .B_out(rote_B_out_raw),
+                    .C_out(rote_C_out_raw),
+                    .D_out(rote_D_out_raw)
+                );
 
-            // ── Inverse Permuter ───────────────────────────────────
-            // Undo the coordinate permutation for angles 6-11.
-            // inv(00)=00, inv(01)=11, inv(10)=10, inv(11)=01
-            wire [1:0] rote_inv_sel;
-            assign rote_inv_sel = (rote_perm_sel == 2'b01) ? 2'b11 :
-                                  (rote_perm_sel == 2'b11) ? 2'b01 :
-                                  rote_perm_sel;
+                // ── Inverse Permuter ───────────────────────────────────
+                // Undo the coordinate permutation for angles 6-11.
+                // inv(00)=00, inv(01)=11, inv(10)=10, inv(11)=01
+                wire [1:0] rote_inv_sel;
+                assign rote_inv_sel = (rote_perm_sel == 2'b01) ? 2'b11 :
+                                      (rote_perm_sel == 2'b11) ? 2'b01 :
+                                      rote_perm_sel;
 
-            spu_quadray_permute u_perm_inv (
-                .perm_sel(rote_inv_sel),
-                .A_in(rote_A_out_raw), .B_in(rote_B_out_raw),
-                .C_in(rote_C_out_raw), .D_in(rote_D_out_raw),
-                .A_out(qrf_wr_A), .B_out(rote_B_out),
-                .C_out(rote_C_out), .D_out(rote_D_out)
-            );
+                spu_quadray_permute u_perm_inv (
+                    .perm_sel(rote_inv_sel),
+                    .A_in(rote_A_out_raw), .B_in(rote_B_out_raw),
+                    .C_in(rote_C_out_raw), .D_in(rote_D_out_raw),
+                    .A_out(qrf_wr_A), .B_out(rote_B_out),
+                    .C_out(rote_C_out), .D_out(rote_D_out)
+                );
 
-            // Write-back: A is invariant, B',C',D' come from circulant
-            // Mux: instruction-driven write data vs rotor-core write data
-            wire [63:0] regfile_wr_A_mux = instr_wr_active ? instr_wr_A : qrf_wr_A;
-            wire [63:0] regfile_wr_B_mux = instr_wr_active ? instr_wr_B : rote_B_out;
-            wire [63:0] regfile_wr_C_mux = instr_wr_active ? instr_wr_C : rote_C_out;
-            wire [63:0] regfile_wr_D_mux = instr_wr_active ? instr_wr_D : rote_D_out;
+                assign regfile_wr_A_mux = instr_wr_active ? instr_wr_A : qrf_wr_A;
+                assign regfile_wr_B_mux = instr_wr_active ? instr_wr_B : rote_B_out;
+                assign regfile_wr_C_mux = instr_wr_active ? instr_wr_C : rote_C_out;
+                assign regfile_wr_D_mux = instr_wr_active ? instr_wr_D : rote_D_out;
 
-            assign qrf_wr_B = rote_B_out;
-            assign qrf_wr_C = rote_C_out;
-            assign qrf_wr_D = rote_D_out;
+                assign qrf_wr_B = rote_B_out;
+                assign qrf_wr_C = rote_C_out;
+                assign qrf_wr_D = rote_D_out;
+            end else begin : gen_qrf_only
+                assign regfile_wr_A_mux = instr_wr_A;
+                assign regfile_wr_B_mux = instr_wr_B;
+                assign regfile_wr_C_mux = instr_wr_C;
+                assign regfile_wr_D_mux = instr_wr_D;
+                assign qrf_wr_A = 64'd0;
+                assign qrf_wr_B = 64'd0;
+                assign qrf_wr_C = 64'd0;
+                assign qrf_wr_D = 64'd0;
+                assign rote_B_out = 64'd0;
+                assign rote_C_out = 64'd0;
+                assign rote_D_out = 64'd0;
+                assign rote_done_tdm = 1'b0;
+            end
         end else begin : gen_no_qrf
             assign qrf_rd_A = 64'd0; assign qrf_rd_B = 64'd0;
             assign qrf_rd_C = 64'd0; assign qrf_rd_D = 64'd0;
@@ -672,9 +733,6 @@ module spu13_core #(
     reg rote_active;
     reg       hex_active;
     reg [3:0] rote_dest_lane;
-    reg       inst_done_r;
-    reg       instr_wr_active;
-    reg [63:0] instr_wr_A, instr_wr_B, instr_wr_C, instr_wr_D;
     reg       qsub_active;
     reg       qsub_stage;
     reg [3:0] qsub_dest_lane;
@@ -707,6 +765,14 @@ module spu13_core #(
             qrf_wr_lane <= 0;
             inst_done_r <= 0;
             instr_wr_active <= 0;
+            qr_commit_valid_r <= 0;
+            qr_commit_lane_r <= 0;
+            qr_commit_A_r <= 0;
+            qr_commit_B_r <= 0;
+            qr_commit_C_r <= 0;
+            qr_commit_D_r <= 0;
+            quadray_target_kappa <= 32'd0;
+            quadray_target_valid <= 1'b0;
             qsub_active <= 0;
             qsub_stage <= 0;
             qsub_dest_lane <= 0;
@@ -720,6 +786,8 @@ module spu13_core #(
             qrf_wr_en <= 0;  // default: no write
             inst_done_r <= 0;
             instr_wr_active <= 0;
+            qr_commit_valid_r <= 0;
+            hex_valid <= 0;   // default: one-cycle pulse
 
             // ── QSUB Handler (0x1B): two-cycle single-read-port FSM ──
             if (qsub_active) begin
@@ -744,7 +812,7 @@ module spu13_core #(
                 end
 
             // ── QLDI Handler (0x1D) ────────────────────────────────
-            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h1D) begin
+            end else if (inst_accept && eff_inst_word[63:56] == 8'h1D) begin
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= eff_inst_word[55:48] % 13;
                 instr_wr_A[31:0]  <= {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
@@ -756,9 +824,15 @@ module spu13_core #(
                 instr_wr_D[31:0]  <= {{24{eff_inst_word[15]}}, eff_inst_word[15:8]};
                 instr_wr_D[63:32] <= 32'd0;
                 instr_wr_active <= 1;
+                qr_commit_valid_r <= 1;
+                qr_commit_lane_r <= eff_inst_word[55:48] % 13;
+                qr_commit_A_r <= {32'd0, {{24{eff_inst_word[39]}}, eff_inst_word[39:32]}};
+                qr_commit_B_r <= {32'd0, {{24{eff_inst_word[31]}}, eff_inst_word[31:24]}};
+                qr_commit_C_r <= {32'd0, {{24{eff_inst_word[23]}}, eff_inst_word[23:16]}};
+                qr_commit_D_r <= {32'd0, {{24{eff_inst_word[15]}}, eff_inst_word[15:8]}};
                 inst_done_r <= 1;
 
-            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h1E) begin
+            end else if (inst_accept && eff_inst_word[63:56] == 8'h1E) begin
                 // DELTA QRd, Q1, Q2, steps.
                 // VM parity endpoint: QRd.A=Q1+Q2, QRd.B=0, QRd.C=steps, QRd.D=0.
                 qrf_wr_en   <= 1;
@@ -770,7 +844,7 @@ module spu13_core #(
                 instr_wr_active <= 1;
                 inst_done_r <= 1;
 
-            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h1C) begin
+            end else if (inst_accept && eff_inst_word[63:56] == 8'h1C) begin
                 rote_src_lane  <= eff_inst_word[47:40] % 13;
                 rote_dest_lane <= eff_inst_word[55:48] % 13;
                 rote_angle     <= eff_inst_word[29:24];
@@ -785,14 +859,14 @@ module spu13_core #(
                 qrf_wr_lane <= rote_dest_lane;
                 rote_en     <= 0;
                 inst_done_r <= 1;
-            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h1B) begin
+            end else if (inst_accept && eff_inst_word[63:56] == 8'h1B) begin
                 // QSUB QRd, QRa, QRb: QR[d] = QR[a] - QR[b].
                 qsub_dest_lane <= eff_inst_word[55:48] % 13;
                 qsub_rhs_lane <= eff_inst_word[11:8] % 13;
                 rote_src_lane <= eff_inst_word[47:40] % 13;
                 qsub_active <= 1;
                 qsub_stage <= 0;
-            end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h16) begin
+            end else if (inst_accept && eff_inst_word[63:56] == 8'h16) begin
                 // ── HEX handler: project QRn → (q,r) hex coordinates ──
                 // HEX Rd, QRn — read QR[n], compute A-D, B-D, output hex
                 rote_src_lane <= eff_inst_word[47:40] % 13;  // QRs
@@ -801,7 +875,21 @@ module spu13_core #(
                 hex_r   <= qrf_rd_A[15:0] - qrf_rd_D[15:0];
                 hex_valid <= 1;
                 inst_done_r <= 1;
-            end else if (eff_inst_valid && eff_inst_word[63:56] != 8'h1D && eff_inst_word[63:56] != 8'h1C && eff_inst_word[63:56] != 8'h16 && eff_inst_word[63:56] != 8'h1B && eff_inst_word[63:56] != 8'h1E) begin
+            end else if (som_classify_valid) begin
+                hex_q <= som_label;
+                hex_r <= {15'd0, som_ambiguous};
+                hex_valid <= 1;
+                inst_done_r <= 1;
+            end else if (som_train_done) begin
+                inst_done_r <= 1;
+            end else if (inst_accept &&
+                         eff_inst_word[63:56] != 8'h1D &&
+                         eff_inst_word[63:56] != 8'h1C &&
+                         eff_inst_word[63:56] != 8'h16 &&
+                         eff_inst_word[63:56] != 8'h1B &&
+                         eff_inst_word[63:56] != 8'h1E &&
+                         !(ENABLE_CORE_SOM && (eff_inst_word[63:56] == 8'h2A ||
+                                                eff_inst_word[63:56] == 8'h2B))) begin
                 // Unknown/QLOG — consume immediately
                 inst_done_r <= 1;
             end
@@ -811,13 +899,10 @@ module spu13_core #(
     // Stage 3: Stability Check & Commit (Pulse 21)
     wire [63:0] rotated_axis;
     assign rotated_axis = q_prime_ab;
-    wire [`MANIFOLD_WIDTH-1:0] manifold_commit_reg;
     assign manifold_commit_reg = manifold_with_axis(manifold_reg, axis_ptr, rotated_axis);
     wire [31:0] quadrance;
     wire [31:0] ivm_quadrance;
     wire [15:0] gasket_sum;
-    wire signed [31:0] audio_p;
-    wire signed [31:0] audio_q;
     
     generate
         if (ENABLE_MATH) begin : gen_davis_gate
@@ -841,14 +926,6 @@ module spu13_core #(
             assign audio_q = 32'sd0;
         end
     endgenerate
-
-    wire rplu_dissoc;
-    wire rplu_done;
-    wire [9:0] rplu_addr_dbg;
-    wire        som_classify_valid;
-    wire [15:0] som_label;
-    wire [63:0] som_gap;
-    wire        som_ambiguous;
 
     // ── Material ID: SOM-driven when both SOM and RPLU are enabled ────
     // SOM cluster labels (0-3) map to material classes:
@@ -929,8 +1006,6 @@ module spu13_core #(
     assign axis_stable = (quadrance > 32'h0000_0000) && !rplu_dissoc;
 
 
-    reg [12:0] stability_bits;
-
     // Toroidal emitter index (wraps naturally at 10 bits)
     reg [9:0] torus_idx;
     reg        torus_emit_enable;
@@ -1003,6 +1078,14 @@ module spu13_core #(
                 torus_emit_enable <= dec_fast_cfg_data[10];
             end
 
+            // fast-domain config writes: quadray target kappa (sel==6)
+            // Allows firmware to write the target M31 quadrance invariant
+            // that the BTU variety sidecar closes against.
+            if (dec_fast_cfg_wr_en && dec_fast_cfg_sel == 3'd6) begin
+                quadray_target_kappa <= dec_fast_cfg_data[31:0];
+                quadray_target_valid <= 1'b1;
+            end
+
 `ifdef DEBUG_VOICE
             // Chord 0xB5 Handler: Audio Control
             if (dec_fast_cfg_wr_en && dec_fast_cfg_sel == 3'd5) begin
@@ -1013,10 +1096,10 @@ module spu13_core #(
             // Instruction-level POLY_STEP handler (optional): emit a direct RPLU config write
             // Encoding: Lithic-L [63:56]=0xE0 — POLY_STEP
             // Use p1_a[9:0] (inst_word[33:24]) as the RPLU address index.
-            if (inst_valid) begin
-                if (inst_word[63:56] == 8'hE0) begin
+            if (inst_accept) begin
+                if (eff_inst_word[63:56] == 8'hE0) begin
                     artery_wr_en <= 1'b1;
-                    artery_wr_data <= {8'hA5, 8'd7, 1'b0, inst_word[33:24], 1'b1, 36'd0};
+                    artery_wr_data <= {8'hA5, 8'd7, 1'b0, eff_inst_word[33:24], 1'b1, 36'd0};
                 end
             end
 
@@ -1116,32 +1199,40 @@ module spu13_core #(
             wire [15:0] som_best_id, som_sec_id, som_label_in;
             wire [63:0] som_best_q, som_sec_q, som_gap_in;
             wire        som_has_sec;
+            wire [3:0]  som_fault_type;
+            wire [31:0] som_fault_count;
             wire        som_train_we;
             wire [2:0]  som_train_addr;
             wire [143:0] som_train_wdata;
             wire [143:0] som_train_rdata;
             wire        som_train_start;
-            wire        som_train_done;
-            wire [3:0]  som_train_shift;
+            reg  [3:0]  som_train_shift;
 
-            // Feature vector: 4 features, truncated to SOM_SURD_W (WIDTH=18)
-            localparam SOM_SURD_W = 2 * 18;
+            // Feature vector: 4 features, narrowed from core RationalSurd
+            // {q[31:0], p[31:0]} into SOM {q[17:0], p[17:0]}.
+            localparam SOM_COEFF_W = 18;
+            localparam SOM_SURD_W = 2 * SOM_COEFF_W;
+            function [SOM_SURD_W-1:0] som_narrow_rs;
+                input [63:0] rs;
+                begin
+                    som_narrow_rs = {rs[32 +: SOM_COEFF_W], rs[0 +: SOM_COEFF_W]};
+                end
+            endfunction
             wire [4*SOM_SURD_W-1:0] som_features;
             assign som_features = {
-                qrf_rd_D[SOM_SURD_W-1:0],
-                qrf_rd_C[SOM_SURD_W-1:0],
-                qrf_rd_B[SOM_SURD_W-1:0],
-                qrf_rd_A[SOM_SURD_W-1:0]
+                som_narrow_rs(qrf_rd_D),
+                som_narrow_rs(qrf_rd_C),
+                som_narrow_rs(qrf_rd_B),
+                som_narrow_rs(qrf_rd_A)
             };
 
             wire [4*SOM_SURD_W-1:0] som_fw;
             assign som_fw = {{(SOM_SURD_W-1){1'b0}}, 1'b1,
                              {(SOM_SURD_W-1){1'b0}}, 1'b1,
-                             {(SOM_SURD_W-1){1'b0}}, 1'b1,
+                             {(SOM_SURD_W-2){1'b0}}, 2'd2,
                              {(SOM_SURD_W-1){1'b0}}, 1'b1};
 
             wire som_start;
-            wire som_done;
 
             spu_som_bmu #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(18)) u_som_bmu (
                 .clk(clk), .rst_n(rst_n),
@@ -1156,15 +1247,18 @@ module spu13_core #(
                 .second_q(som_sec_q),
                 .confidence_gap(som_gap_in),
                 .has_second(som_has_sec),
-                .axiomatic_level(2'b11),
-                .axiomatic_fault(),
-                .fault_type(),
-                .fault_count(),
+                .axiomatic_level(phinary_cfg[3:2]),
+                .axiomatic_fault(axiomatic_fault),
+                .fault_type(som_fault_type),
+                .fault_count(som_fault_count),
                 .train_we(som_train_we),
                 .train_addr(som_train_addr),
                 .train_wdata(som_train_wdata),
                 .train_rdata(som_train_rdata)
             );
+
+            assign fault_type = som_fault_type[1:0];
+            assign fault_count = som_fault_count[15:0];
 
             spu_som_train #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(18)) u_som_train (
                 .clk(clk), .rst_n(rst_n),
@@ -1197,39 +1291,207 @@ module spu13_core #(
             );
 
             // ── SOM opcode FSM (0x2A = SOM_CLASSIFY) ─────────────────
-            reg som_active;
-            reg som_train_active;
-            assign som_start = som_active;
-            assign som_train_start = som_train_active;
+            reg som_busy;
+            reg som_start_r;
+            reg som_launch_pending;
+            reg som_train_busy;
+            reg som_train_start_r;
+            assign som_start = som_start_r;
+            assign som_train_start = som_train_start_r;
 
             always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
-                    som_active <= 0;
-                    som_train_active <= 0;
+                    som_busy <= 0;
+                    som_start_r <= 0;
+                    som_launch_pending <= 0;
+                    som_train_busy <= 0;
+                    som_train_start_r <= 0;
+                    som_train_shift <= 4'd0;
                 end else begin
-                    if (eff_inst_valid && eff_inst_word[63:56] == 8'h2A) begin
+                    som_start_r <= 0;
+                    som_train_start_r <= 0;
+
+                    if (som_classify_valid) begin
+                        som_busy <= 0;
+                        som_launch_pending <= 0;
+                    end else if (som_launch_pending) begin
+                        som_start_r <= 1;
+                        som_launch_pending <= 0;
+                    end else if (inst_accept && eff_inst_word[63:56] == 8'h2A && !som_busy) begin
                         rote_src_lane <= eff_inst_word[47:40] % 13;
-                        som_active <= 1;
-                    end else if (eff_inst_valid && eff_inst_word[63:56] == 8'h2B) begin
+                        som_busy <= 1;
+                        som_launch_pending <= 1;
+                    end
+
+                    if (som_train_done) begin
+                        som_train_busy <= 0;
+                    end else if (inst_accept && eff_inst_word[63:56] == 8'h2B && !som_train_busy) begin
                         som_train_shift <= eff_inst_word[27:24];
-                        som_train_active <= 1;
-                    end else if (som_done) begin
-                        som_active <= 0;
-                        hex_q <= som_label;
-                        hex_r <= {15'd0, som_ambiguous};
-                        hex_valid <= 1;
-                        inst_done_r <= 1;
-                    end else if (som_train_done) begin
-                        som_train_active <= 0;
-                        inst_done_r <= 1;
+                        som_train_busy <= 1;
+                        som_train_start_r <= 1;
                     end
                 end
             end
         end else begin : gen_no_som
+            assign som_done = 1'b0;
+            assign som_train_done = 1'b0;
             assign som_classify_valid = 1'b0;
             assign som_label = 16'd0;
             assign som_gap = 64'd0;
             assign som_ambiguous = 1'b0;
+            assign axiomatic_fault = 1'b0;
+            assign fault_type = 2'b00;
+            assign fault_count = 16'd0;
+        end
+    endgenerate
+
+    // ── RPLU v2: Thimble-Padé A31/Quadray Pipeline ──────────────────
+    // Gated behind ENABLE_CORE_RPLU_V2.  Replaces the legacy davis_to_rplu
+    // chain with parallel SOM classification → BTU A31/Quadray routing →
+    // [4/4] Padé rational approximant evaluation over M31.
+    //
+    // When enabled, rplu_dissoc is driven from the v2 pipeline's
+    // singularity exception (FLAGS.V) rather than the legacy Morse table.
+    generate
+        if (ENABLE_CORE_RPLU_V2) begin : gen_rplu_v2
+            wire        rplu2_som_done;
+            wire [15:0] rplu2_som_best_id, rplu2_som_label;
+            wire [63:0] rplu2_som_best_q;
+            wire [31:0] rplu2_thimble_c0, rplu2_thimble_c1,
+                        rplu2_thimble_c2, rplu2_thimble_c3;
+            wire        rplu2_thimble_valid;
+            wire        rplu2_busy, rplu2_stall;
+            wire [31:0] rplu2_quadray_delta;
+            wire        rplu2_quadray_coherent;
+            wire        rplu2_quadray_valid;
+            reg         rplu2_som_start;
+            reg         rplu2_som_pending;
+
+            rplu_pipeline u_rplu_v2 (
+                .clk(clk), .rst_n(rst_n),
+                .som_features(rplu2_features),
+                .som_start(rplu2_som_start),
+                .som_done(rplu2_som_done),
+                .som_best_id(rplu2_som_best_id),
+                .som_cluster_label(rplu2_som_label),
+                .som_best_q(rplu2_som_best_q),
+                .pade_coeff_we(1'b0),      // Coeffs loaded at boot via SPI
+                .pade_coeff_is_den(1'b0),
+                .pade_coeff_addr(3'd0),
+                .pade_c0(32'd0), .pade_c1(32'd0),
+                .pade_c2(32'd0), .pade_c3(32'd0),
+                .quadray_target_kappa(quadray_target_kappa),
+                .thimble_c0(rplu2_thimble_c0),
+                .thimble_c1(rplu2_thimble_c1),
+                .thimble_c2(rplu2_thimble_c2),
+                .thimble_c3(rplu2_thimble_c3),
+                .thimble_valid(rplu2_thimble_valid),
+                .quadray_delta(rplu2_quadray_delta),
+                .quadray_coherent(rplu2_quadray_coherent),
+                .quadray_valid(rplu2_quadray_valid),
+                .pipeline_busy(rplu2_busy),
+                .pipeline_stall(rplu2_stall)
+            );
+
+            wire rplu2_quadray_fault;
+            wire rplu2_dissoc;
+            assign rplu2_quadray_fault = quadray_target_valid &&
+                                          rplu2_quadray_valid &&
+                                          !rplu2_quadray_coherent;
+            assign rplu2_dissoc = rplu2_stall || rplu2_quadray_fault;
+
+            // Map v2 pipeline outputs to core telemetry
+            // Dissociation triggers on BTU collision or configured Quadray
+            // variety mismatch.  This stays ring-native: equality to zero is
+            // meaningful over M31, while magnitude/order comparisons are not.
+            assign rplu_dissoc = rplu2_dissoc;
+            assign rplu_dissoc_out = rplu2_dissoc;
+            assign rplu_dissoc_mask_out = {13{rplu2_dissoc}};
+
+            // SOM classification start — triggered by SOM opcode (0x2A)
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    rplu2_som_start <= 0;
+                    rplu2_som_pending <= 0;
+                end else begin
+                    rplu2_som_start <= 0;
+                    if (rplu2_som_pending && !rplu2_busy) begin
+                        rplu2_som_start <= 1;
+                        rplu2_som_pending <= 0;
+                    end else if (inst_accept && eff_inst_word[63:56] == 8'h2A && !rplu2_busy) begin
+                        rplu2_som_pending <= 1;
+                    end
+                end
+            end
+
+        end else begin : gen_no_rplu_v2
+            // v2 pipeline disabled — no-op (handled by legacy gen_rplu block)
+        end
+    endgenerate
+
+    // ── NSA Dual-Number Core (inside RPLU v2 block) ──────────────────
+    // Provides dual arithmetic over A_SPU = F_{p^4}[epsilon]/(epsilon^2).
+    // Instantiated when ENABLE_CORE_RPLU_V2=1 alongside the main pipeline.
+    generate
+        if (ENABLE_CORE_RPLU_V2) begin : gen_nsa_core
+            wire        nsa_start;
+            wire [1:0]  nsa_op;
+            wire [3:0]  nsa_dest, nsa_srcA, nsa_srcB;
+            wire        nsa_done, nsa_busy;
+            wire [31:0] nsa_real_z0, nsa_real_z1, nsa_real_z2, nsa_real_z3;
+            wire [31:0] nsa_eps_z0,  nsa_eps_z1,  nsa_eps_z2,  nsa_eps_z3;
+            wire        nsa_result_valid;
+            wire [143:0] nsa_features_out;
+            wire        nsa_wr_en;
+            wire [3:0]  nsa_wr_addr;
+
+            // ── NSA opcode decode (trigger on 0x46-0x49) ────────────
+            reg nsa_pending;
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    nsa_pending <= 0;
+                end else if (inst_accept && (eff_inst_word[63:56] == 8'h46 ||
+                                              eff_inst_word[63:56] == 8'h47 ||
+                                              eff_inst_word[63:56] == 8'h48 ||
+                                              eff_inst_word[63:56] == 8'h49)) begin
+                    nsa_pending <= 1;
+                end else if (nsa_done)
+                    nsa_pending <= 0;
+            end
+
+            assign nsa_start = nsa_pending && !nsa_busy;
+            assign nsa_op    = eff_inst_word[57:56];          // low 2 bits of opcode
+            assign nsa_dest  = eff_inst_word[55:52];
+            assign nsa_srcA  = eff_inst_word[51:48];
+            assign nsa_srcB  = eff_inst_word[47:44];
+
+            spu13_nsa_core u_nsa_core (
+                .clk(clk), .rst_n(rst_n),
+                .nsa_start(nsa_start),
+                .nsa_op(nsa_op),
+                .nsa_dest(nsa_dest),
+                .nsa_srcA(nsa_srcA),
+                .nsa_srcB(nsa_srcB),
+                .nsa_done(nsa_done),
+                .nsa_busy(nsa_busy),
+                .qr_features_in(rplu2_features),
+                .nsa_features_out(nsa_features_out),
+                .nsa_wr_en(nsa_wr_en),
+                .nsa_wr_addr(nsa_wr_addr),
+                .nsa_real_z0(nsa_real_z0),
+                .nsa_real_z1(nsa_real_z1),
+                .nsa_real_z2(nsa_real_z2),
+                .nsa_real_z3(nsa_real_z3),
+                .nsa_eps_z0(nsa_eps_z0),
+                .nsa_eps_z1(nsa_eps_z1),
+                .nsa_eps_z2(nsa_eps_z2),
+                .nsa_eps_z3(nsa_eps_z3),
+                .nsa_result_valid(nsa_result_valid)
+            );
+
+            // NSA results feed into the main RPLU pipeline as additional
+            // feature channels — velocity-aware classification.
+            // (Wired but not yet consumed by the pipeline — future integration.)
         end
     endgenerate
 
