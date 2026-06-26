@@ -3,7 +3,7 @@
 // Architecture: Phi-Gated TDM Manifold (v1.7)
 
 module spu13_tang25k_top #(
-    parameter ENABLE_SDRAM = 0,
+    parameter ENABLE_SDRAM = 1,
     parameter SDRAM_COL_BITS = 9,
     parameter SDRAM_ROW_BITS = 13,
     parameter SDRAM_RANK_BITS = 1,
@@ -13,9 +13,10 @@ module spu13_tang25k_top #(
     parameter ENABLE_CORE_LATTICE = 0,
     parameter ENABLE_CORE_MATH = 0,
     parameter ENABLE_CORE_SOM  = 0,
+    parameter ENABLE_CORE_RPLU_V2 = 0,
     parameter ENABLE_RPLU_TELEMETRY = 0,
-    parameter ENABLE_SDRAM_SELFTEST = 0,
-    parameter ENABLE_CORE_SDRAM_VERIFY = 0,
+    parameter ENABLE_SDRAM_SELFTEST = 1,
+    parameter ENABLE_CORE_SDRAM_VERIFY = 1,
     parameter SDRAM_READ_CAPTURE_OFFSET = 3,
     parameter SDRAM_INVERT_CLK = 1,
     parameter [15:0] DQ_STUCK_MASK = 16'h0000  // bits forced high on stuck DQ lines (0x0402 = bits 1,10)
@@ -64,9 +65,55 @@ module spu13_tang25k_top #(
     wire rst_n = (rst_cnt == 8'hFF);
     always @(posedge clk_core) if (rst_cnt != 8'hFF) rst_cnt <= rst_cnt + 1;
 
+    // UART is split across two domains:
+    // - Host RX stays in the divided core domain.
+    // - Telemetry TX runs from the raw 50 MHz crystal to remove baud ambiguity.
+    localparam integer HOST_CLK_FREQ         = 6250000;
+    localparam integer HOST_BAUD_RATE        = 115200;
+    localparam integer HOST_CLKS_PER_BIT     = HOST_CLK_FREQ / HOST_BAUD_RATE;
+    localparam integer UART_TX_CLK_FREQ      = 50000000;
+    localparam integer UART_TX_BAUD_RATE     = 115200;
+    localparam integer UART_TX_CLKS_PER_BIT  = 434;
+    localparam integer UART_TX_MSG_PERIOD    = UART_TX_CLK_FREQ / 10;
+    localparam integer UART_TX_BOOT_PERIOD   = UART_TX_CLK_FREQ;
+    localparam integer UART_TX_START_DELAY   = UART_TX_CLK_FREQ / 2;
+
+    // --- Telemetry UART for debug output (on sys_clk domain) ---
+    reg [7:0]  telemetry_data = 8'h00;
+    reg        telemetry_tx_start = 1'b0;
+    reg [23:0] telemetry_timer = 0;
+    localparam integer TELEMETRY_INTERVAL = 500000; // ~10ms at 50MHz
+
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) begin
+            telemetry_data <= 8'h00;
+            telemetry_tx_start <= 1'b0;
+            telemetry_timer <= 0;
+        end else begin
+            telemetry_tx_start <= 1'b0; // Pulse for one cycle
+            if (telemetry_timer >= TELEMETRY_INTERVAL) begin
+                telemetry_timer <= 0;
+                telemetry_data <= telemetry_data + 8'h01;
+                telemetry_tx_start <= 1'b1;
+            end else begin
+                telemetry_timer <= telemetry_timer + 1;
+            end
+        end
+    end
+
+    surd_uart_tx #(.CLK_HZ(UART_TX_CLK_FREQ), .BAUD(UART_TX_BAUD_RATE)) u_telemetry_uart (
+        .clk(clk_50m),
+        .reset(!rst_n),
+        .data_in({56'd0, telemetry_data}),
+        .start(telemetry_tx_start),
+        .tx(uart_tx_telemetry),
+        .ready()
+    );
+
     // 2. Fibonacci Timing Sequencer (Phi 8, 13, 21)
     // SPU-13 core requires specific pulses to drive its pipeline stages.
     reg [8:0] phi_cnt = 0; // Increased width for 273-cycle burst
+    wire pulse_p_trigger;
     always @(posedge clk_core) begin
         if (!rst_n) phi_cnt <= 273; // Idle at end
         else if (pulse_p_trigger) phi_cnt <= 0; // Start 13-axis burst
@@ -87,19 +134,6 @@ module spu13_tang25k_top #(
     wire        pell_we;
     wire        boot_done;
     wire [23:0] boot_jedec_id;
-
-    // UART is split across two domains:
-    // - Host RX stays in the divided core domain.
-    // - Telemetry TX runs from the raw 50 MHz crystal to remove baud ambiguity.
-    localparam integer HOST_CLK_FREQ         = 6250000;
-    localparam integer HOST_BAUD_RATE        = 115200;
-    localparam integer HOST_CLKS_PER_BIT     = HOST_CLK_FREQ / HOST_BAUD_RATE;
-    localparam integer UART_TX_CLK_FREQ      = 50000000;
-    localparam integer UART_TX_BAUD_RATE     = 115200;
-    localparam integer UART_TX_CLKS_PER_BIT  = 434;
-    localparam integer UART_TX_MSG_PERIOD    = UART_TX_CLK_FREQ / 10;
-    localparam integer UART_TX_BOOT_PERIOD   = UART_TX_CLK_FREQ;
-    localparam integer UART_TX_START_DELAY   = UART_TX_CLK_FREQ / 2;
 
     // 4. Host Input Receiver (RP2350 Bridge) - Flattened into Top
     reg [7:0] host_input;
@@ -187,6 +221,8 @@ module spu13_tang25k_top #(
     wire [63:0] boot_rplu_cfg_data;
     wire [15:0] boot_rplu_cfg_loaded;
     wire [31:0] boot_rplu_cfg_checksum;
+    wire [5:0]  boot_state;
+    wire        sdram_burst_done;
 
     spu_laminar_boot #(
         .ENABLE_RPLU_BOOT(ENABLE_CORE_RPLU),
@@ -217,7 +253,8 @@ module spu13_tang25k_top #(
         .rplu_cfg_data(boot_rplu_cfg_data),
         .rplu_cfg_loaded(boot_rplu_cfg_loaded),
         .rplu_cfg_checksum(boot_rplu_cfg_checksum),
-        .boot_done(boot_done)
+        .boot_done(boot_done),
+        .boot_state(boot_state)
     );
 
     // 4. The Memory: SDRAM Bridge
@@ -227,7 +264,6 @@ module spu13_tang25k_top #(
     wire [24:0] sdram_mem_addr;
     wire [831:0] sdram_rd_manifold;
     wire [831:0] sdram_wr_manifold;
-    wire        sdram_burst_done;
 
     // Mask stuck DQ bits in every 16-bit word of the read manifold.
     // Word i gets: rd_manifold[i*16 +: 16] | DQ_STUCK_MASK
@@ -253,7 +289,7 @@ module spu13_tang25k_top #(
 
     reg         sdram_selftest_burst_rd;
     reg         sdram_selftest_burst_wr;
-    reg [831:0] sdram_selftest_wr_manifold;
+    wire [831:0] sdram_selftest_wr_manifold;
     reg [2:0]   sdram_selftest_state;
     reg [11:0]  sdram_selftest_wait;
     reg [3:0]   sdram_selftest_retries;
@@ -283,13 +319,13 @@ module spu13_tang25k_top #(
         end
     endfunction
 
-    integer sdram_pattern_i;
-    always @(*) begin
-        sdram_selftest_wr_manifold = 832'd0;
-        for (sdram_pattern_i = 0; sdram_pattern_i < 52; sdram_pattern_i = sdram_pattern_i + 1) begin
-            sdram_selftest_wr_manifold[sdram_pattern_i*16 +: 16] = sdram_selftest_pattern(sdram_pattern_i[5:0]);
+    genvar gen_selftest_pattern_i;
+    generate
+        for (gen_selftest_pattern_i = 0; gen_selftest_pattern_i < 52; gen_selftest_pattern_i = gen_selftest_pattern_i + 1) begin : gen_sdram_selftest_pattern
+            assign sdram_selftest_wr_manifold[gen_selftest_pattern_i*16 +: 16] =
+                sdram_selftest_pattern(gen_selftest_pattern_i[5:0]);
         end
-    end
+    endgenerate
 
     reg        sdram_selftest_match_calc;
     reg [5:0]  sdram_selftest_mismatch_calc;
@@ -451,6 +487,15 @@ module spu13_tang25k_top #(
         sdram_selftest_exp1_obs0_mask,
         sdram_selftest_exp0_obs1_mask
     };
+
+    wire        core_mem_rd;
+    wire        core_mem_wr;
+    wire [23:0] core_mem_addr;
+    wire [831:0] core_mem_wr_data;
+    reg         core_mem_rd_d;
+    reg         core_mem_wr_d;
+    reg         core_mem_rd_pending;
+    reg         core_mem_wr_pending;
 
     reg [2:0]   core_sdram_verify_state;
     reg [11:0]  core_sdram_verify_wait;
@@ -689,10 +734,6 @@ module spu13_tang25k_top #(
     wire artery_wr_en;
     wire [63:0] artery_data;
 
-    wire        core_mem_rd;
-    wire        core_mem_wr;
-    wire [23:0] core_mem_addr;
-    wire [831:0] core_mem_wr_data;
     wire         cycle_wrap;
     wire [3:0]   current_axis_ptr;
     wire [63:0]  current_axis_data;
@@ -702,10 +743,6 @@ module spu13_tang25k_top #(
     wire         core_rplu_dissoc;
     wire [12:0] core_rplu_dissoc_mask;
     wire [9:0]  core_rplu_addr;
-    reg          core_mem_rd_d;
-    reg          core_mem_wr_d;
-    reg          core_mem_rd_pending;
-    reg          core_mem_wr_pending;
     reg          sdram_ready_seen_core;
     reg          sdram_wr_seen_core;
     reg          sdram_done_seen_core;
@@ -795,7 +832,8 @@ module spu13_tang25k_top #(
         .ENABLE_LATTICE(ENABLE_CORE_LATTICE),
         .ENABLE_MATH(ENABLE_CORE_MATH),
         .ENABLE_SEQUENCER(1'b0),
-        .ENABLE_CORE_SOM(ENABLE_CORE_SOM)
+        .ENABLE_CORE_SOM(ENABLE_CORE_SOM),
+        .ENABLE_CORE_RPLU_V2(ENABLE_CORE_RPLU_V2)
     ) u_core (
         .clk(clk_core),
         .rst_n(rst_n),
@@ -874,7 +912,7 @@ module spu13_tang25k_top #(
         heartbeat <= heartbeat + 1;
         pulse_p_last <= heartbeat[14];
     end
-    wire pulse_p_trigger = (heartbeat[14] && !pulse_p_last);
+    assign pulse_p_trigger = (heartbeat[14] && !pulse_p_last);
 
     // Latch host input for display (already handled in flattened logic)
     // LED Assignment:
@@ -974,6 +1012,10 @@ module spu13_tang25k_top #(
     // When hex_valid pulses, override the message type
     reg        hex_msg_pending;
     reg [15:0] hex_q_latch, hex_r_latch;
+    reg [3:0] msg_idx;
+    reg [27:0] msg_timer;
+    reg [27:0] telemetry_start_cnt;
+    reg        telemetry_start_ready;
 
     always @(posedge clk_core or negedge rst_n) begin
         if (!rst_n) begin
@@ -1030,10 +1072,6 @@ module spu13_tang25k_top #(
         endcase
     end
 
-    reg [3:0] msg_idx;
-    reg [27:0] msg_timer;
-    reg [27:0] telemetry_start_cnt;
-    reg        telemetry_start_ready;
     localparam RPLU_TELEMETRY_BURST = ENABLE_CORE_RPLU && (!ENABLE_CORE_LATTICE || ENABLE_RPLU_TELEMETRY);
     localparam SDRAM_SELFTEST_TELEMETRY = ENABLE_SDRAM && ENABLE_SDRAM_SELFTEST;
     localparam CORE_SDRAM_VERIFY_TELEMETRY = ENABLE_SDRAM && ENABLE_CORE_SDRAM_VERIFY;
@@ -1161,7 +1199,7 @@ module spu13_tang25k_top #(
                         telemetry_overflow_snap_core <= core_scale_overflow;
                         telemetry_rplu_snap_core <= core_rplu_dissoc_mask;
                         telemetry_rplu_addr_snap_core <= (core_rplu_addr > telemetry_rplu_addr_max_core) ? core_rplu_addr : telemetry_rplu_addr_max_core;
-                        boot_state_snap_core <= boot_unit.boot_state;
+                        boot_state_snap_core <= boot_state;
                         seq_pc_snap_core <= seq_pc_raw;
                         seq_halted_snap_core <= seq_halted_raw;
                         telemetry_seq_core <= ~telemetry_seq_core;

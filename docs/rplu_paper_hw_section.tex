@@ -1,0 +1,120 @@
+## Section III: Hardware Implementation
+
+### 3.1 Target Platforms
+
+The jet pipeline is characterized on two FPGA targets:
+
+| Metric | Artix-7 100T (primary) | GW5A-25A (prototyping) |
+|:-------|:----------------------|:----------------------|
+| Device | XC7A100T | GW5A-25A |
+| Board | Wukong | Tang Primer 25K |
+| LUTs | 63,400 (6-LUT) | 8,256 (4-LUT) |
+| DSP slices | 240 (DSP48E1) | 54 (Gowin DSP) |
+| Block RAM | 486 KB | 648 Kb |
+| Status | Incoming, Q3 2026 | Proven, 67% utilized |
+| Role | Full concurrent system | Subsystem proof, probe ladder |
+
+The Artix-7's DSP48E1 cascade ports (PCIN/PCOUT) enable a systolic
+multiplier array with zero routing overhead; the GW5A-25A lacks DSP
+cascade ports, requiring fabric routing for M31 reduction. All RTL is
+toolchain-agnostic Verilog-2001, synthesizable on both targets.
+
+### 3.2 Systolic Lane Organization (Artix-7 DSP48E1)
+
+The jet MAC lane for order $n=2$ computes the Cauchy product:
+
+$$R_k = \sum_{i=0}^{k} J_i \cdot K_{k-i} \quad \text{for } k \in \{0, 1, 2\}$$
+
+Each term $J_i \cdot K_{k-i}$ is a full $\mathbb{F}_{p^4}$ multiplication requiring 16
+parallel 32$\times$32 integer products (4 components $\times$ 4 basis cross-terms per
+component). For $n=2$, the total multiply count is 6, requiring 96 DSP slices if
+fully unrolled, or 16 DSP slices with time-division multiplexing through a single
+shared M31 multiplier.
+
+**Time-Multiplexed (TDM) configuration** (Artix-7 100T, 240 DSP48E1):
+- 16 DSP slices for the shared M31 multiplier
+- 6 sequential multiply-accumulate passes through the Cauchy product FSM
+- 12-cycle latency (2 cycles per multiply $\times$ 6 multiplies)
+- 64 LUTs for the FSM controller + 32 LUTs for partial-sum accumulation
+
+**Fully unrolled configuration** (Artix-7 200T, 740 DSP48E1):
+- 96 DSP slices (6 parallel multipliers $\times$ 16 DSPs each)
+- Single-cycle latency for the full Cauchy product
+- PHSLK fast path: 1 cycle (multiply) + 1 cycle (compare) + 1 cycle (branch) = 3 cycles
+- No FSM controller overhead
+
+### 3.2 M31 Reduction via DSP48E1 Pattern Detect
+
+The DSP48E1 pattern detect feature enables single-cycle modular reduction for
+the Mersenne prime $p = 2^{31} - 1$. After each 32$\times$32 multiplication producing
+a 64-bit product $P$:
+
+$$P \bmod p = (P_{\text{hi}} + P_{\text{lo}}) \;\text{with}\; \text{conditional}\; -p$$
+
+Standard implementation requires a comparator + subtractor after the adder, adding
+a LUT-level delay. With DSP48E1 cascade routing:
+
+1. **Adder stage:** $P_{\text{hi}} + P_{\text{lo}}$ in the DSP accumulator
+2. **Pattern detect:** The DSP compares the result against `32'h7FFFFFFF`
+3. **Conditional subtract:** Fed back through the CARRYCASCIN port in the next cycle
+
+This eliminates the separate comparator LUT entirely, saving $\sim$4 LUTs per
+multiply lane (64 LUTs saved across 16 parallel DSPs) and removing a routing
+hop from the critical path.
+
+### 3.3 Routing Congestion Comparison
+
+We compare the jet MAC lane against an equivalent IEEE-754 single-precision
+floating-point implementation computing the same Cauchy product:
+
+| Metric | FP32 Mult-Add (6 lanes) | M31 Jet MAC (TDM) | M31 Jet MAC (unrolled) |
+|:-------|:------------------------|:------------------|:-----------------------|
+| DSP slices | 24 (6 $\times$ 4 FP mult) | 16 | 96 |
+| LUTs | $\sim$480 (normalization + mux) | $\sim$96 (FSM + sum) | $\sim$0 (DSP-only) |
+| Critical path | FP mult (3 DSP stages) + FP add (2 DSP) + normalization (LUT) | 2 DSP stages + M31 reduction | 2 DSP stages + M31 reduction (parallel) |
+| Routing hops per multiply | 6-8 (DSP→LUT→DSP→LUT) | 2 (DSP→DSP cascade) | 2 (DSP→DSP cascade) |
+| Latency | 18 cycles (pipelined) | 12 cycles (serial TDM) | 3 cycles (PHSLK path) |
+| Determinism | Rounding-mode dependent | Exact, bit-identical | Exact, bit-identical |
+
+The M31 jet MAC eliminates the normalization/denormalization LUT stages entirely,
+reducing inter-DSP routing hops from 6-8 to 2. The DSP48E1 cascade ports
+(`PCIN`/`PCOUT`) carry the 48-bit accumulator between adjacent DSP slices without
+touching general fabric routing, so the 16-DSP multiplier cluster forms a local
+systolic array with zero external routing overhead for intra-multiplier
+connections.
+
+### 3.4 Fermat Scalar Core Scheduling
+
+The conjugate reduction tower (Section 2.3) produces $c_0^{-1}$ in $\sim$76 cycles.
+During tower operation, the shared M31 multiplier is fully occupied with
+$\mathbb{F}_{p^2}$ intermediate products. The jet inverse shadow chain (6
+sequential multiplies) begins after tower completion, adding $\sim$12 cycles.
+
+For the SOM classification fast path, the PHSLK coherence check (3-4 cycles)
+completes before the tower even starts, allowing the pipeline to bypass the
+full Padé + inversion path entirely when the Offer/Confirmation pair is coherent.
+This gives:
+
+- **PHSLK fast path:** 3 cycles (dedicated DSPs) or 12 cycles (TDM)
+- **Full classification:** $\sim$94 cycles (tower + inverse shadow chain)
+- **Throughput under load:** 1 classification per $\sim$94 cycles sustained,
+  with PHSLK bursts at 1 per 12 cycles
+
+### 3.5 Resource Budget (Artix-7 100T)
+
+| Component | DSP48E1 | Block RAM | LUTs |
+|:----------|:--------|:----------|:-----|
+| M31 multiplier (TDM) | 16 | 0 | 64 |
+| Jet MAC FSM | 0 | 0 | 96 |
+| Conjugate reduction tower | 0 | 2 | $\sim$800 |
+| Fermat scalar core | 0 | 0 | $\sim$180 |
+| Jet inverse shadow chain | 0 | 0 | 32 |
+| **RPLU 2.0 subtotal** | **16** | **2** | **$\sim$1,172** |
+| Rotor core + Davis gate | 4 | 0 | $\sim$4,300 |
+| SPI slave + UART | 0 | 0 | $\sim$200 |
+| **Total** | **20** | **2** | **$\sim$5,672** |
+
+The XC7A100T provides 240 DSP48E1 and 63,400 LUTs. Total utilization:
+$\sim$8\% of DSPs, $\sim$9\% of LUTs — leaving substantial headroom for
+the fully unrolled 96-DSP configuration on the 200T variant, or for
+additional SOM fabric nodes (64-node parallel array at $\sim$200 LUTs/node).

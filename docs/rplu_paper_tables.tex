@@ -1,0 +1,243 @@
+% ── RPLU v2 Publication Data — Auto-generated ──
+
+% Table 1: A31 Conjugate Reduction Tower — Unit Inversion Vectors
+\begin{table}[ht]
+\centering
+\caption{$A_{31}$ conjugate reduction tower unit-inversion vectors. All
+results are verified bit-exact against RTL simulation (iverilog) and Python
+oracle. Input $Z = (z_0, z_1, z_2, z_3) \in A_{31}$ over $p = 2^{31}-1$
+(M31). Non-units, including nonzero zero-divisors, trap via FLAGS.V.
+$\sim$76 cycle deterministic latency.}
+\label{tab:fp4-inverter}
+\begin{tabular}{llll}
+\toprule
+Test Case & Input $Z$ & Oracle $Z^{-1}$ & Match \\
+\midrule
+  Identity & (00000001,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & ✓ \\
+  Scalar inv(2) & (00000002,00000000,00000000,00000000) & (40000000,00000000,00000000,00000000) & ✓ \\
+  Pure √3 inv & (00000000,00000001,00000000,00000000) & (00000000,55555555,00000000,00000000) & ✓ \\
+  Pure √5 inv & (00000000,00000000,00000001,00000000) & (00000000,00000000,33333333,00000000) & ✓ \\
+  Zero-norm & (00000000,00000000,00000000,00000000) & SINGULARITY & FLAGS.V \\
+  Nonzero zero-divisor & (2CEE24B2,00000000,00000000,00000001) & SINGULARITY & FLAGS.V \\
+  Random self-consistency & (00003039,00010932,00002B67,000056CE) & (7122397B,1212AF65,4D457009,1D8AB3FE) & N/A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 2: A31 Multiplication — M31 Mersenne Reduction
+\begin{table}[ht]
+\centering
+\caption{$A_{31}$ multiplication over M31. 16 parallel DSP slices, 2-stage
+pipeline, fast Mersenne reduction via 72-bit chunk split.}
+\label{tab:m31-mult}
+\begin{tabular}{lllll}
+\toprule
+Test Case & $A$ & $B$ & $A \cdot B \bmod p$ & Match \\
+\midrule
+  Identity & (00000001,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & ✓ \\
+  Scalar 5×3 & (00000005,00000000,00000000,00000000) & (00000003,00000000,00000000,00000000) & (0000000F,00000000,00000000,00000000) & ✓ \\
+  √3 × √3 = 3 & (00000000,00000001,00000000,00000000) & (00000000,00000001,00000000,00000000) & (00000003,00000000,00000000,00000000) & ✓ \\
+  √5 × √5 = 5 & (00000000,00000000,00000001,00000000) & (00000000,00000000,00000001,00000000) & (00000005,00000000,00000000,00000000) & ✓ \\
+  √15 × √15 = 15 & (00000000,00000000,00000000,00000001) & (00000000,00000000,00000000,00000001) & (0000000F,00000000,00000000,00000000) & ✓ \\
+  √3 × √5 = √15 & (00000000,00000001,00000000,00000000) & (00000000,00000000,00000001,00000000) & (00000000,00000000,00000000,00000001) & ✓ \\
+  M31 edge: (P-1)×2 & (7FFFFFFE,00000000,00000000,00000000) & (00000002,00000000,00000000,00000000) & (7FFFFFFD,00000000,00000000,00000000) & ✓ \\
+  Mixed: (10,2,0,4)×(5,0,1,2) & (0000000A,00000002,00000000,00000004) & (00000005,00000000,00000001,00000002) & (000000AA,0000001E,00000016,0000002A) & ✓ \\
+  Zero multiply & (00000000,00000000,00000000,00000000) & (0000007B,000001C8,00000315,00018AF8) & (00000000,00000000,00000000,00000000) & ✓ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 3: M31 Scalar Inverter — BEEA Test Vectors
+\begin{table}[ht]
+\centering
+\caption{M31 scalar modular inversion via binary extended Euclidean algorithm.
+Zero divisions, shifts + conditional P-add. \textasciitilde180 LUTs.}
+\label{tab:m31-inv}
+\begin{tabular}{llll}
+\toprule
+Test Case & $x$ & $x^{-1} \bmod p$ & Match \\
+\midrule
+  inv(1) & 1 & 00000001 & ✓ \\
+  inv(2) & 2 & 40000000 & ✓ \\
+  inv(P-1) & 2147483646 & 7FFFFFFE & ✓ \\
+  inv(3) & 3 & 55555555 & ✓ \\
+  inv(1234567) & 1234567 & 37B9E691 & ✓ \\
+  inv(65537) & 65537 & 0000FFFF & ✓ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 4: Singular Absorber — Zero-Norm Exception Path
+\begin{table}[ht]
+\centering
+\caption{Singular absorber stress tests verifying FLAGS.V assertion on
+zero-norm geometric singularities and clean re-arm after exception.
+5 scenarios, all verified bit-exact.}
+\label{tab:singular-absorber}
+\begin{tabular}{lllll}
+\toprule
+Scenario & Input $Z$ & Result & FLAGS.V & Match \\
+\midrule
+  Valid inv(5) & (00000005,00000000,00000000,00000000) & (33333333,00000000,00000000,00000000) & 0 & ✓ \\
+  Zero → singularity & (00000000,00000000,00000000,00000000) & TRAP & 1 & ✓ \\
+  Unity (false positive guard) & (00000001,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & 0 & ✓ \\
+  Re-arm zero & (00000000,00000000,00000000,00000000) & TRAP & 1 & ✓ \\
+  Post-exception inv(3) & (00000003,00000000,00000000,00000000) & (55555555,00000000,00000000,00000000) & 0 & ✓ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 5: BTU Collision Resolver — Multi-Hot Wave Dispatch
+\begin{table}[ht]
+\centering
+\caption{BTU collision resolver (64→6 priority encoder + backlog queue)
+serializing multi-hot wave interference into deterministic dispatch.
+Fixed O(n) latency where n = number of simultaneous activations.}
+\label{tab:btu-collision}
+\begin{tabular}{llll}
+\toprule
+Scenario & Activation bits & Cycles & Dispatch sequence \\
+\midrule
+  Single node (bit 3) & 3 & 1 & k=3 \\
+  Two nodes (bits 7,15) & 7, 15 & 2 & k=7 (stall) → k=15 \\
+  Three nodes (bits 0,33,63) & 0, 33, 63 & 3 & k=0 (stall) → k=33 (stall) → k=63 \\
+  Zero activation &  & 0 & idle, no stall \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 6: SOM BMU Classification — Rational Quadrance Results
+\begin{table}[ht]
+\centering
+\caption{BMU classification using weighted rational quadrance metric
+(no square roots, no floating-point). 7-node parallel array with
+combinational winner-take-all tree. 3-stage per-node pipeline:
+subtract→square→accumulate.}
+\label{tab:som-bmu}
+\begin{tabular}{llllll}
+\toprule
+Benchmark & Best node & Cluster & Confidence gap & Ambiguous & Match \\
+\midrule
+  Integer BMU & 1 & 1 & 4+0$\sqrt{3}$ & no & ✓/✓/✓ \\
+  Surd BMU & 6 & 3 & 10+4$\sqrt{3}$ & no & ✓/✓/✓ \\
+  Stable tie-breaking & 1 & 7 & 0+0$\sqrt{3}$ & yes & ✓/✓/✓ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 7: RPLU Resource Profile — v2 A31 vs Legacy Morse
+\begin{table}[ht]
+\centering
+\caption{Resource comparison between legacy Morse-potential RPLU and
+RPLU v2 Thimble-Pad\'{e} pipeline over $A_{31}$. 3$\times$ LUT / 4$\times$ DSP increase
+replaces 4 separate subsystems with one unified exact-rational pipeline.}
+\label{tab:resource}
+\begin{tabular}{lrrr}
+\toprule
+Resource & Legacy (Morse) & RPLU v2 ($A_{31}$) & Trade \\
+\midrule
+LUTs        & $\sim$1,100 & $\sim$3,300 & +3$\times$ for 4$\times$ coverage \\
+BRAMs       & 6--8        & 8           & Parity \\
+DSPs        & 4           & 16          & +4$\times$ for exact arithmetic \\
+\midrule
+\multicolumn{4}{l}{\footnotesize Primary target: Xilinx Artix-7 100T (Wukong), 240 DSP48E1, $\sim$100\,K LUTs.} \\
+\multicolumn{4}{l}{\footnotesize Prototyping target: Gowin GW5A-25A (Tang Primer 25K), 8,256 LUT4s. Total with rotor/sequencer: $\sim$5,500 LUTs (67\%).} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 7: Dual-Number Arithmetic — A31[epsilon]/(epsilon^2)
+\begin{table}[ht]
+\centering
+\caption{Dual-number arithmetic over $\mathbb{A}_{\text{SPU}} =
+A_{31}[\epsilon]/(\epsilon^2)$. Here $\epsilon$ is a nilpotent formal symbol
+in a finite quotient ring, not an analytic infinitesimal. 9 test vectors
+verified bit-exact against RTL simulation (iverilog) and Python oracle.}
+\label{tab:nsa-dual}
+\begin{tabular}{llllllll}
+\toprule
+Test & $\circ$ & Re($A$) & $\epsilon$($A$) & Re($B$) & $\epsilon$($B$) & Re($R$) & $\epsilon$($R$) \\
+\midrule
+  Add identity & + & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
+  Add scalar (5+e7)+(3+e2) & + & (00000005,00000000,00000000,00000000) & (00000007,00000000,00000000,00000000) & (00000003,00000000,00000000,00000000) & (00000002,00000000,00000000,00000000) & (00000008,00000000,00000000,00000000) & (00000009,00000000,00000000,00000000) \\
+  Add surd & + & (00000001,00000002,00000000,00000000) & (00000003,00000004,00000000,00000000) & (00000005,00000006,00000000,00000000) & (00000007,00000008,00000000,00000000) & (00000006,00000008,00000000,00000000) & (0000000A,0000000C,00000000,00000000) \\
+  Mul identity & \times & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
+  Mul scalar (3+e0)(5+e0) & \times & (00000003,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000005,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (0000000F,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
+  Mul with deriv (2+e3)(4+e5) & \times & (00000002,00000000,00000000,00000000) & (00000003,00000000,00000000,00000000) & (00000004,00000000,00000000,00000000) & (00000005,00000000,00000000,00000000) & (00000008,00000000,00000000,00000000) & (00000016,00000000,00000000,00000000) \\
+  Mul e^2=0: (0+e)(0+e)=0 & \times & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
+  Mul surd & \times & (00000001,00000002,00000000,00000000) & (00000003,00000004,00000000,00000000) & (00000005,00000006,00000000,00000000) & (00000007,00000008,00000000,00000000) & (00000029,00000010,00000000,00000000) & (0000008E,0000003C,00000000,00000000) \\
+  Mul M31 edge (P-2)(2) & \times & (7FFFFFFD,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000002,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (7FFFFFFB,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 9: RPLU v2 Pipeline Stage Latencies
+\begin{table}[ht]
+\centering
+\caption{Deterministic pipeline stage latencies. No runtime-dynamic
+resolution — all paths are fixed-cycle, zero-division.}
+\label{tab:latency}
+\begin{tabular}{lll}
+\toprule
+Pipeline Stage & Module & Latency \\
+\midrule
+$\Phi_1$ & Kohonen SOM BMU (7-node WTA) & 5 cycles \\
+$\Phi_2$ & BTU spatial router (4-lane BRAM) & 3 cycles \\
+--- & Jet MAC (Cauchy product, N=2, TDM) & 12 cycles \\
+--- & Jet MAC (Cauchy product, N=2, unrolled) & 3 cycles \\
+--- & Jet INV (shadow chain) & $\sim$12 cycles (after tower) \\
+$\Phi_3$ & [4/4] Pad\'{e} Horner evaluator & 12 cycles \\
+$\Phi_3$ & $A_{31}$ conjugate reduction tower & $\sim$76 cycles \\
+--- & PHSLK coherence check (TDM) & 12 cycles \\
+--- & PHSLK coherence check (unrolled) & 3 cycles \\
+$\Phi_4$ & Output latch & 1 cycle \\
+\midrule
+BTU collision queue & 64$\rightarrow$6 priority encoder & O(n) bubble stall \\
+M31 scalar inverter & BEEA shift-subtract & $\sim$30 cycles \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 8: Multi-Layer Verification Stack
+\begin{table}[ht]
+\centering
+\caption{Current verification stack: Python oracle, C++ oracle, and focused
+RTL simulation (iverilog). Test vectors cover jet algebra, $A_{31}$
+arithmetic, unit/non-unit trapping, collision resolution, and SOM BMU
+classification; integrated place-and-route remains future work.}
+\label{tab:verification}
+\begin{tabular}{llll}
+\toprule
+Layer & Language & Tests & Role \\
+\midrule
+Behavioral oracle & Python (spu13\_arch\_sim.py) & 24 & Jet MAC/BTU/Pad\'{e}/SOM \\
+C++ oracle & C++17 (spu13\_arch.h) & 51 & Cycle-accurate parity \\
+RTL simulation & Verilog (iverilog) & focused & Jet MAC, jet INV, PHSLK, \\
+& & & $A_{31}$ arith, BTU, SOM, Pad\'{e} \\
+\midrule
+\multicolumn{4}{l}{\footnotesize Cross-validation: Python \textleftrightarrow\ C++ \textleftrightarrow\ Verilog.} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% ── End auto-generated data ──
