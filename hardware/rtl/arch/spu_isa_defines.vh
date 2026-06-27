@@ -101,8 +101,9 @@
 `define SPU_OP_INVJ          8'h43       // Invert through Janus point
 `define SPU_OP_PHSTA         8'h44       // Read phase-lock status
 `define SPU_OP_PHCLR         8'h45       // Clear phase-lock status
-`define SPU_OP_NSA_DQADD      8'h46       // NSA dual quadrance add over F_{p^4}[epsilon]
-`define SPU_OP_NSA_DQMUL      8'h47       // NSA dual quadrance multiply over F_{p^4}[epsilon]
+`define SPU_OP_JSCR          8'h48       // Janus screw: tetrahedral edge topology permutation
+`define SPU_OP_NSA_DQADD      8'h4C       // NSA dual quadrance add over A31[epsilon]
+`define SPU_OP_NSA_DQMUL      8'h4D       // NSA dual quadrance multiply over A31[epsilon]
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RPLU Configuration (0x50–0x5F)

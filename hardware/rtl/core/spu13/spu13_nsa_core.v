@@ -5,15 +5,17 @@
 // Dedicated NSA arithmetic unit instantiated inside the ENABLE_CORE_RPLU_V2
 // generate block. Contains:
 //   - 2-slot NSA register bank (each slot = 1 dual number = real + eps, 8 × 32-bit)
-//   - NSA dual ALU (add + multiply over A_SPU = F_{p^4}[epsilon]/(epsilon^2))
+//   - NSA dual ALU (add + multiply over A_SPU = A31[epsilon]/(epsilon^2))
 //   - Own M31 multiplier instance
 //   - Load/store/compute control FSM
 //
 // Opcodes:
-//   NSA_DQADD (0x46): R[dest] = R[srcA] + R[srcB]  — dual addition
-//   NSA_DQMUL (0x47): R[dest] = R[srcA] * R[srcB]  — dual multiplication
-//   NSA_LOAD  (0x48): Load F_{p^4} dual from QR regfile into NSA bank
-//   NSA_STORE (0x49): Store NSA result back to QR regfile
+// External ISA opcodes:
+//   NSA_DQADD (0x4C): R[dest] = R[srcA] + R[srcB]  — dual addition
+//   NSA_DQMUL (0x4D): R[dest] = R[srcA] * R[srcB]  — dual multiplication
+//
+// Internal nsa_op modes 2'b10 and 2'b11 are load/store micro-ops for local
+// tests and future decode glue; they are not assigned external ISA opcodes.
 //
 // Register layout (2 dual-number slots, 16 × 32-bit registers):
 //   Slot 0 real: reg[0..3], Slot 0 eps: reg[4..7]
@@ -171,7 +173,7 @@ module spu13_nsa_core #(
                                 nsa_state <= NSA_COMPUTE;
                             end
                             2'b10: begin  // LOAD: QR regfile → NSA bank
-                                // Map 4 × 36-bit RationalSurd → 8 × 32-bit F_{p^4} coefficients
+                                // Map 4 × 36-bit RationalSurd → 8 × 32-bit A31 coefficients
                                 // QR format: {P[17:0], Q[17:0]} per lane
                                 // For now, load scalar-only (Q=0) into real part, zero eps
                                 nsa_regs[{nsa_srcA[0], 3'b000} + 4'd0] <= {14'd0, qr_features_in[17:0]};
