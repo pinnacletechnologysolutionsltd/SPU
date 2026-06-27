@@ -6,6 +6,7 @@
 hardware/               FPGA RTL (Verilog)
   common/rtl/           Shared cores — ALU, sequencer, mem, protocols, GPU
   spu13/rtl/            SPU-13 Cortex (13-axis manifold engine)
+    core/spu13/         SPU-13 pipeline: M31/A31 arithmetic, unit inverter, SOM, BTU, register file
   spu4/rtl/             SPU-4 Sentinel (Quadray satellite)
   boards/               Per-target synthesis scripts & board tops
   tests/                Verilog testbenches (*_tb.v)
@@ -15,6 +16,7 @@ software/               Host-side tooling
   programs/             .sas demonstration programs
   lib/                  Sovereign Geometry Library (Q(√3,√5,√15))
 tools/                  ROM generators, RPLU loaders, visualizer
+hardware/rp2040/        RP2040 bench utilities, including SPI flash PMOD programmer
 knowledge/              Architecture specs, ISA reference, math foundations
 docs/                   Design guides and bring-up runbooks
 ```
@@ -32,6 +34,10 @@ docs/                   Design guides and bring-up runbooks
 | `openFPGALoader -b tangprimer25k -f build/tang_primer_25k_spu13_math_probe.fs` | Flash bitstream to Tang Primer 25K |
 | `python3 tools/flash_layout.py` | Generate SPI flash image from .bin files (Wildberger library) |
 | `minipro -p W25Q128JV -r build/flash_backup.bin` | Read SPI flash backup (preserve bootloader) |
+| `cmake --build build/rp2040_flash_pmod --target rp2040_flash_pmod -j` | Build RP2040 USB-to-SPI flash PMOD programmer |
+| `picotool load -f build/rp2040_flash_pmod/rp2040_flash_pmod.uf2 && picotool reboot` | Load RP2040 flash PMOD programmer |
+| `tools/rp2040_flash_pmod.py --port /dev/ttyACM3 id` | Read PMOD SPI flash JEDEC through RP2040; must report `EF4018` before writes |
+| `tools/rp2040_flash_pmod.py --port /dev/ttyACM3 write tools/build/rplu2_boot_tables.bin --offset 0x110000` | Program RPLU2 table blob to PMOD SPI flash at the bootloader offset |
 | `python3 software/tests/test_rational_robotics.py` | Run rational robotics oracle tests (56 checks) |
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
 | `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 6 ROTC angles |
@@ -51,10 +57,13 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - **QLDI opcode** — immediate Quadray load → writes correctly to QR regfile
 - Hex coordinate projection → UART output (H: FFFE 0002)
 - Instruction sequencer with inter-instruction delay
+- RP2040 USB-to-SPI flash PMOD programmer (`hardware/rp2040/rp2040_flash_pmod.c`, `tools/rp2040_flash_pmod.py`) — JEDEC, pin diagnostics, sector erase, page program, verify; used to program `tools/build/rplu2_boot_tables.bin` at flash offset `0x110000`
+- RPLU v2 PMOD J4 flash boot-table proof — Tang Primer 25K reads external W25Q128-class flash over `J4[0]=CS#`, `J4[1]=SCK`, `J4[2]=MOSI/D1`, `J4[3]=MISO/DO`; boot probe confirms `JEDEC EF4018`, 81 records, checksum `0x35DE2068`
 
 **RTL testbench-verified (awaiting silicon test):**
 - **ROTC opcode** — all 5 ROTC cases pass (TDM rotor core, `spu13_rotc_tdm_tb`)
-- **SOM/BMU pipeline** — 7-node fixture trace-verified against software oracle (`spu_som_bmu_tb`). Integrated into `spu13_core.v` behind `ENABLE_CORE_SOM` parameter (+39 LUTs).
+- **SOM/BMU pipeline** — 7-node parallel array with WTA comparator; individual node 3-stage quadrance pipeline; training port with 36-bit widened multiply. (`spu_som_node_tb`, `btu_collision_tb`)
+- **RPLU v2 — Thimble-Padé Engine** — A31 split-biquadratic arithmetic over Mersenne prime M31; conjugate-reduction unit/non-unit detection (~76 cycles); Horner-evaluated [4/4] Padé rational approximant; BTU collision resolver (64→6 priority encoder + backlog queue); 4R2W multi-port register file with write-forwarding bypass. (`spu13_m31_multiplier_tb`, `spu13_m31_inverter_tb`, `spu13_fp4_inverter_tb`, `singular_absorber_tb`)
 - QSUB, DELTA opcodes (VM-handlers ready, RTL FSM pending)
 - CALL/RET/JMP (sequencer return stack designed)
 - GPU rasterizer + fragment pipe (testbench passes)
@@ -75,6 +84,14 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - Hex telemetry: hex_valid must be cleared each cycle (one-pulse pattern)
 - USB 3.0 port on BL616 bridge unreliable — use USB 2.0 only
 - Place-and-route near 96% LUT utilization with full rotor core
+
+**RP2040 SPI Flash PMOD Programmer (bench-proven):**
+- Purpose: reliable replacement for bad SOIC clips / ambiguous XGECU ICSP wiring. Use it to program and verify W25Q-style PMOD flash before FPGA-side J4 probes.
+- Default wiring: `PMOD SLK -> Pico GP2`, `PMOD D1 -> Pico GP3`, `PMOD DO -> Pico GP4`, `PMOD CS -> Pico GP5`, `PMOD VCC -> Pico 3V3 OUT`, `PMOD GND -> Pico GND`.
+- Safety rule: never erase or program unless repeated `id` reads return `JEDEC: EF4018`. `000000` means no valid flash response; `171717` usually indicates bad CS framing.
+- Useful diagnostics: `tools/rp2040_flash_pmod.py --port <tty> diag`, `... drive --cs 1 --sck 0 --mosi 0`, and `... wren`. `WREN` should report `RDSR=02` before program/erase.
+- Common wiring failure found in bring-up: cracked `/CS` solder joint. Meter W25Q pin 1 while using the `drive` command; it must switch between 0 V and 3.3 V. Add pullups on `/CS`, `/WP`, and `/HOLD` for custom PCBs.
+- RPLU2 table programming command: `tools/rp2040_flash_pmod.py --port <tty> write tools/build/rplu2_boot_tables.bin --offset 0x110000`. Current RPLU2 boot blob is 81 records / 1296 bytes, expected boot-probe count `0x51`, checksum `0x35DE2068`.
 
 **Wildberger Rational Trigonometry Library (7 files, 30+ primitives):**
 - `wildberger_spread.lith` — spread + collinearity via Delta opcode

@@ -290,6 +290,20 @@ The SOM opcodes use the temporal pipeline for classification. Instead of scannin
 all nodes serially, SOM loads the input as Offer and the cluster centroid from
 RPLU as Confirmation, then PHSLK checks coherence in one cycle.
 
+**RTL Implementation:** The SOM layer is implemented as a parallel 7-node array
+(`spu_som_node_array.v`) with a combinational winner-take-all comparator tree.
+Each node (`spu_som_node.v`) runs a 3-stage parallel quadrance pipeline
+(subtract → square → accumulate) over A31. The BTU (`spu13_btu_core_top.v`)
+routes Kohonen activation lines through a 4-lane BRAM lookup into A31
+coordinates. Multi-saddle collisions are resolved by the priority encoder in
+`spu_btu_collision_resolver.v` which serializes overlapping activations via
+pipeline bubble insertion.
+
+**Thimble-Padé Integration:** The SOM classification feeds saddle-point
+coordinates into `rplu_thimble_pade.v` which evaluates the [4/4] Padé rational
+approximant over A31 using Horner evaluation + conjugate reduction tower
+inversion (`spu13_fp4_inverter.v`). Zero-norm singularities assert FLAGS.V.
+
 ```
 SOM   R2, R1, R3    ; Classify R1.O against RPLU material[R3] → label in R2
                      ; FLAGS.C=1 if classified, 0 if unknown
@@ -386,6 +400,93 @@ Fetch → Decode → RAU → WriteReg
 ```
 
 No PhaseLock stage; temporal opcodes (PHSLK, INVJ) are reduced to register moves. SPU-4 acts as a rational geometry co-processor without retrocausal handshake.
+
+### 6.3 SOM to BTU to Padé Pipeline: Worked Example
+
+This example walks a 4-feature vector through the RPLU v2 pipeline
+($\Phi_1 \to \Phi_2 \to \Phi_3 \to \Phi_4$) with concrete values.
+
+#### Input
+
+4-feature vector in Q(16.2) surd format (P = rational, Q = surd):
+
+```
+Features:  F0=(P=48, Q=32),  F1=(P=-16, Q=16),
+           F2=(P=0,  Q=64),  F3=(P=96, Q=-32)
+```
+
+#### $\Phi_1$ — Kohonen SOM BMU (7-node WTA)
+
+Each node computes weighted rational quadrance $Q = (x-w)^2$ in 3 pipeline stages:
+
+1. **Subtract:**  feature - weight per axis
+2. **Square:**   $(\Delta P)^2 + 3(\Delta Q)^2$ for P-component, $2 \cdot \Delta P \cdot \Delta Q$ for Q-component
+3. **Accumulate:**  Sum across features, scaled by per-feature weights
+
+A combinational WTA tree selects the minimum-quadrance node:
+
+```
+BMU result:  best_node=3,  quadrance=(P=524, Q=128),
+             second_best=5, gap=(P=89, Q=32)
+```
+
+Latency: 5 cycles from start pulse.
+
+#### $\Phi_2$ — BTU Spatial Router
+
+The BMU node ID (3) indexes 4 BRAM lanes holding pre-computed $A_{31}$ saddle constants:
+
+```
+lane_c0 = 0x3A1B2C3D    (rational part)
+lane_c1 = 0x4F5E6D7C    (sqrt(3) coefficient)
+lane_c2 = 0x1A2B3C4D    (sqrt(5) coefficient)
+lane_c3 = 0x5E6D7C8F    (sqrt(15) coefficient)
+```
+
+If multiple nodes have near-equal quadrance (multi-saddle), the BTU collision
+resolver serializes up to 64 simultaneous activations with O(n) bubble stall.
+
+Latency: 3 cycles (1 for resolver, 2 for BRAM read + valid delay).
+
+#### $\Phi_3$ — [4/4] Padé Rational Approximant
+
+The saddle $A_{31}$ element is evaluated as $P(x)/Q(x)$ where $P$ and $Q$ are
+degree-4 polynomials with configurable coefficients. Evaluation proceeds:
+
+1. **Horner numerator:**  $P(x) = c_4 \cdot x^4 + c_3 \cdot x^3 + c_2 \cdot x^2 + c_1 \cdot x + c_0$
+   evaluated left-to-right via the shared M31 multiplier (2 cycles per multiply).
+2. **Horner denominator:**  Same for $Q(x)$ (12 cycles total).
+3. **Conjugate reduction tower:**  $Q(x)^{-1}$ computed via nested quadratic
+   collapse (Stage A/B), Fermat chain (62 cycles), and reconstruction
+   (Stage D1/D2). Total: $\sim$76 cycles.
+4. **Multiply:**  $P(x) \cdot Q(x)^{-1}$ via shared multiplier (2 cycles).
+
+If the denominator is a zero-divisor or zero-norm element in $A_{31}$,
+FLAGS.V is asserted and the pipeline traps cleanly.
+
+Latency: $\sim$90 cycles (Horner + tower + final multiply).
+
+#### $\Phi_4$ — Output
+
+The resolved $A_{31}$ thimble contribution is latched as 4 x 32-bit lanes:
+
+```
+thimble_c0 = 0x7A1B2C3D   (result rational part)
+thimble_c1 = 0x00000000   (sqrt(3) coefficient = 0)
+thimble_c2 = 0x00000000   (sqrt(5) coefficient = 0)
+thimble_c3 = 0x00000000   (sqrt(15) coefficient = 0)
+thimble_valid = 1         (single-cycle pulse)
+```
+
+Output is written to the destination register or streamed via the SPI bus
+for host-visible telemetry.
+
+Latency: 1 cycle.
+
+**Total pipeline latency (deterministic):**
+- Fast path (PHSLK bypass): 12 cycles (TDM) or 3 cycles (unrolled)
+- Full classification: $\sim$99 cycles (SOM + BTU + Padé + output)
+- Multi-saddle stall: O(n) additional cycles where n = number of simultaneous BMU activations
 
 ---
 

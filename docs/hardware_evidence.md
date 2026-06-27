@@ -31,9 +31,9 @@ unproven.  No speculation — only commands, conditions, and results.
 
 ### Second FPGA
 
-A replacement / second Tang Primer 25K has not yet been acquired. The damaged
-board is actively used for risky IO bring-up; a new board would repeat the
-RPLU/SDRAM/core probe ladder with no pin mask.
+A replacement / second Tang Primer 25K is in transit. The damaged board remains
+the risky IO and regression target; the replacement board should repeat the
+RPLU/SDRAM/core probe ladder with no SDRAM pin mask.
 
 ---
 
@@ -185,9 +185,15 @@ C++ parity: `software/common/tests/spu_rational_som_test.cpp`
 
 ## 3. What Passed — Hardware Probes
 
+The build commands in this section record the commands used for the original
+captures. In the current tree, the wider RPLU/SDRAM rebuild scripts and
+matching synthesis files are archived under `hardware/boards/archive/`. Use the
+existing `build/*.fs` artifacts for replay, or restore/modernize the archived
+scripts before claiming a fresh rebuild.
+
 ### 3.1 RPLU Flash-Load Proof (board present)
 
-**Build command:**
+**Historical build command:**
 
 ```
 ./build_25k_spu13_rplu_probe.sh
@@ -216,7 +222,7 @@ R:1D971036 A:F     # RPLU checksum matches generated payload
 
 ### 3.2 RPLU + Math Path Proof
 
-**Build command:**
+**Historical build command:**
 
 ```
 ./build_25k_spu13_rplu_math_probe.sh
@@ -226,9 +232,41 @@ R:1D971036 A:F     # RPLU checksum matches generated payload
 SPU-13 axis data through the RPLU lookup path. Confirms the math datapath
 (Surd ALU → rotor vault → Davis Gate → RPLU address) is functional.
 
+### 3.2a RPLU v2 PMOD Flash Boot-Table Proof
+
+**Probe command:**
+
+```
+tools/probe_tang25k_rplu_flash.py \
+  --bitstream build/tang_primer_25k_spu13_rplu2_boot_probe.fs \
+  --expected-jedec 0xEF4018 \
+  --expected-rplu-marker 0x1A5 \
+  --expected-rplu-mask 0x0000 \
+  --expected-rplu-addr 0x3FF \
+  --expected-rplu-loaded 0x51 \
+  --expected-rplu-checksum 0x35DE2068
+```
+
+**Proof lines captured on UART:**
+
+```
+SPI JEDEC: B:10EF4018 A:C
+RPLU: R:D28003FF A:D marker=0x1A5 mask=0x0000 addr=0x3FF
+RPLU loaded: R:00000051 A:E count=81
+RPLU checksum: R:35DE2068 A:F checksum=0x35DE2068
+RPLU hardware probe PASS
+```
+
+**Interpretation:**
+- Tang Primer 25K PMOD J4 mapping is proven: `J4[0]=CS#`, `J4[1]=SCK`,
+  `J4[2]=MOSI/D1`, `J4[3]=MISO/DO`
+- External W25Q128-class PMOD flash responds from FPGA logic (`JEDEC EF4018`)
+- RPLU v2 boot table at flash offset `0x110000` is parsed and hydrated
+- Current boot table image is 81 records with checksum `0x35DE2068`
+
 ### 3.3 RPLU + Math + SDRAM Proof
 
-**Build command:**
+**Historical build command:**
 
 ```
 ./build_25k_spu13_rplu_math_sdram_probe.sh
@@ -240,7 +278,7 @@ stage.
 
 ### 3.4 Full Probe (RPLU + Math + SDRAM + Lattice)
 
-**Build command:**
+**Historical build command:**
 
 ```
 ./build_25k_spu13_rplu_full_probe.sh
@@ -318,7 +356,7 @@ yosys synth_gowin resource report:
 | Item | Status |
 |---|---|
 | SDRAM DQ[10] repair | Physical fault — permanent mask or board replacement required |
-| Second FPGA board | Not acquired — needed for unmasked full-bandwidth SDRAM probe |
+| Second FPGA board | In transit — needed for unmasked full-bandwidth SDRAM probe |
 | RP2350 southbridge (USB/HID/sensors/timing) | Not wired, not tested |
 | RP2040 visualization/debug bridge | Not wired, not tested |
 | PMOD peripheral modules | Not connected, not tested |
