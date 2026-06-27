@@ -37,7 +37,9 @@ docs/                   Design guides and bring-up runbooks
 | `cmake --build build/rp2040_flash_pmod --target rp2040_flash_pmod -j` | Build RP2040 USB-to-SPI flash PMOD programmer |
 | `picotool load -f build/rp2040_flash_pmod/rp2040_flash_pmod.uf2 && picotool reboot` | Load RP2040 flash PMOD programmer |
 | `tools/rp2040_flash_pmod.py --port /dev/ttyACM3 id` | Read PMOD SPI flash JEDEC through RP2040; must report `EF4018` before writes |
-| `tools/rp2040_flash_pmod.py --port /dev/ttyACM3 write tools/build/rplu2_boot_tables.bin --offset 0x110000` | Program RPLU2 table blob to PMOD SPI flash at the bootloader offset |
+| `python3 tools/gen_rplu2_tables.py --profile default --output tools/build/rplu2_boot_tables.bin` | Generate corrected 149-record RPLU2 default table blob |
+| `tools/rp2040_flash_pmod.py --port /dev/ttyACM3 write tools/build/rplu2_boot_tables.bin --offset 0x110000` | Program corrected RPLU2 table blob to PMOD SPI flash at the bootloader offset |
+| `bash build_25k_spu13_rplu2_consume_probe.sh` | Build Tang 25K RPLU2 flash consume-probe bitstream and corrected consume-profile table |
 | `python3 software/tests/test_rational_robotics.py` | Run rational robotics oracle tests (56 checks) |
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
 | `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 6 ROTC angles |
@@ -58,12 +60,13 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - Hex coordinate projection → UART output (H: FFFE 0002)
 - Instruction sequencer with inter-instruction delay
 - RP2040 USB-to-SPI flash PMOD programmer (`hardware/rp2040/rp2040_flash_pmod.c`, `tools/rp2040_flash_pmod.py`) — JEDEC, pin diagnostics, sector erase, page program, verify; used to program `tools/build/rplu2_boot_tables.bin` at flash offset `0x110000`
-- RPLU v2 PMOD J4 flash boot-table proof — Tang Primer 25K reads external W25Q128-class flash over `J4[0]=CS#`, `J4[1]=SCK`, `J4[2]=MOSI/D1`, `J4[3]=MISO/DO`; boot probe confirms `JEDEC EF4018`, 81 records, checksum `0x35DE2068`
+- RPLU v2 PMOD J4 flash boot-table hydration proof — Tang Primer 25K reads external W25Q128-class flash over `J4[0]=CS#`, `J4[1]=SCK`, `J4[2]=MOSI/D1`, `J4[3]=MISO/DO`; legacy boot probe confirms `JEDEC EF4018`, 81 records, checksum `0x35DE2068`
 
 **RTL testbench-verified (awaiting silicon test):**
 - **ROTC opcode** — all 5 ROTC cases pass (TDM rotor core, `spu13_rotc_tdm_tb`)
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator; individual node 3-stage quadrance pipeline; training port with 36-bit widened multiply. (`spu_som_node_tb`, `btu_collision_tb`)
 - **RPLU v2 — Thimble-Padé Engine** — A31 split-biquadratic arithmetic over Mersenne prime M31; conjugate-reduction unit/non-unit detection (~76 cycles); Horner-evaluated [4/4] Padé rational approximant; BTU collision resolver (64→6 priority encoder + backlog queue); 4R2W multi-port register file with write-forwarding bypass. (`spu13_m31_multiplier_tb`, `spu13_m31_inverter_tb`, `spu13_fp4_inverter_tb`, `singular_absorber_tb`)
+- **RPLU v2 corrected flash table consumption probe** — `tools/gen_rplu2_tables.py` now emits 149 records: 5 Padé numerator coeffs, 5 denominator coeffs, 64 BTU rows as two lane-pair records each, and one Quadray kappa record. `build_25k_spu13_rplu2_consume_probe.sh` routes/packs a Tang 25K decode probe; pending PMOD hardware capture with `--expect-rplu2-consume`.
 - QSUB, DELTA opcodes (VM-handlers ready, RTL FSM pending)
 - CALL/RET/JMP (sequencer return stack designed)
 - GPU rasterizer + fragment pipe (testbench passes)
@@ -91,7 +94,8 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - Safety rule: never erase or program unless repeated `id` reads return `JEDEC: EF4018`. `000000` means no valid flash response; `171717` usually indicates bad CS framing.
 - Useful diagnostics: `tools/rp2040_flash_pmod.py --port <tty> diag`, `... drive --cs 1 --sck 0 --mosi 0`, and `... wren`. `WREN` should report `RDSR=02` before program/erase.
 - Common wiring failure found in bring-up: cracked `/CS` solder joint. Meter W25Q pin 1 while using the `drive` command; it must switch between 0 V and 3.3 V. Add pullups on `/CS`, `/WP`, and `/HOLD` for custom PCBs.
-- RPLU2 table programming command: `tools/rp2040_flash_pmod.py --port <tty> write tools/build/rplu2_boot_tables.bin --offset 0x110000`. Current RPLU2 boot blob is 81 records / 1296 bytes, expected boot-probe count `0x51`, checksum `0x35DE2068`.
+- Corrected RPLU2 table programming command: generate with `python3 tools/gen_rplu2_tables.py --profile default --output tools/build/rplu2_boot_tables.bin`, then program with `tools/rp2040_flash_pmod.py --port <tty> write tools/build/rplu2_boot_tables.bin --offset 0x110000`. Corrected default/consume-profile blobs are 149 records / 2384 bytes.
+- Legacy note: the first J4 hydration proof used an obsolete 81-record blob (`count=0x51`, checksum `0x35DE2068`) before the Padé high-lane and BTU row packing bugs were fixed. Do not use that blob for RPLU2 consumption tests.
 
 **Wildberger Rational Trigonometry Library (7 files, 30+ primitives):**
 - `wildberger_spread.lith` — spread + collinearity via Delta opcode

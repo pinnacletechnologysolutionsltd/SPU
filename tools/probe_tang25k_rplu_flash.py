@@ -299,6 +299,9 @@ def find_capture_matches(
     expected_addr,
     expected_loaded,
     expected_checksum,
+    expected_rplu2_thimble_c0=None,
+    expected_rplu2_quadray_delta=None,
+    expected_rplu2_consume_status=None,
     sdram_stuck_high_mask=0,
 ):
     jedec_match = None
@@ -312,9 +315,36 @@ def find_capture_matches(
     rplu_decoded = None
     loaded_match = None
     checksum_match = None
+    thimble_match = None
+    thimble_observed = None
+    thimble_value = None
+    quadray_delta_match = None
+    quadray_delta_observed = None
+    quadray_delta_value = None
+    consume_status_match = None
+    consume_status_observed = None
+    consume_status_value = None
     for match in RPLU_RE.finditer(text):
         value = int(match.group(1), 16)
         axis = int(match.group(2), 16)
+        if axis == 0x8:
+            thimble_observed = match.group(0)
+            thimble_value = value
+            if expected_rplu2_thimble_c0 is not None and value == expected_rplu2_thimble_c0:
+                thimble_match = match.group(0)
+            continue
+        if axis == 0x9:
+            quadray_delta_observed = match.group(0)
+            quadray_delta_value = value
+            if expected_rplu2_quadray_delta is not None and value == expected_rplu2_quadray_delta:
+                quadray_delta_match = match.group(0)
+            continue
+        if axis == 0xA:
+            consume_status_observed = match.group(0)
+            consume_status_value = value
+            if expected_rplu2_consume_status is not None and value == expected_rplu2_consume_status:
+                consume_status_match = match.group(0)
+            continue
         if axis == 0xE and expected_loaded is not None and (value & 0xFFFF) == expected_loaded:
             loaded_match = match.group(0)
             continue
@@ -332,6 +362,25 @@ def find_capture_matches(
 
     loaded_ok = expected_loaded is None or loaded_match is not None
     checksum_ok = expected_checksum is None or checksum_match is not None
+    rplu2_consume = {
+        "thimble_match": thimble_match,
+        "thimble_observed": thimble_observed,
+        "thimble_value": thimble_value,
+        "quadray_delta_match": quadray_delta_match,
+        "quadray_delta_observed": quadray_delta_observed,
+        "quadray_delta_value": quadray_delta_value,
+        "consume_status_match": consume_status_match,
+        "consume_status_observed": consume_status_observed,
+        "consume_status_value": consume_status_value,
+        "expected_thimble_c0": expected_rplu2_thimble_c0,
+        "expected_quadray_delta": expected_rplu2_quadray_delta,
+        "expected_consume_status": expected_rplu2_consume_status,
+        "ok": (
+            (expected_rplu2_thimble_c0 is None or thimble_match is not None) and
+            (expected_rplu2_quadray_delta is None or quadray_delta_match is not None) and
+            (expected_rplu2_consume_status is None or consume_status_match is not None)
+        ),
+    }
 
     return {
         "jedec_match": jedec_match,
@@ -341,6 +390,7 @@ def find_capture_matches(
         "checksum_match": checksum_match,
         "loaded_ok": loaded_ok,
         "checksum_ok": checksum_ok,
+        "rplu2_consume": rplu2_consume,
         "sdram": find_sdram_selftest_matches(text, sdram_stuck_high_mask),
         "core_sdram": find_core_sdram_matches(text),
     }
@@ -477,6 +527,7 @@ def capture_matches_ok(
     expect_sdram_selftest=False,
     sdram_only=False,
     expect_core_sdram=False,
+    expect_rplu2_consume=False,
 ):
     rplu_ok = (
         matches["jedec_match"] is not None and
@@ -487,6 +538,8 @@ def capture_matches_ok(
     if sdram_only:
         return matches["sdram"]["ok"] if expect_sdram_selftest else True
     if expect_core_sdram and not matches["core_sdram"]["ok"]:
+        return False
+    if expect_rplu2_consume and not matches["rplu2_consume"]["ok"]:
         return False
     if expect_sdram_selftest:
         return rplu_ok and matches["sdram"]["ok"]
@@ -501,8 +554,12 @@ def capture_satisfies(
     expected_addr,
     expected_loaded,
     expected_checksum,
+    expected_rplu2_thimble_c0,
+    expected_rplu2_quadray_delta,
+    expected_rplu2_consume_status,
     expect_sdram_selftest,
     expect_core_sdram,
+    expect_rplu2_consume,
     sdram_only,
     sdram_stuck_high_mask,
 ):
@@ -514,8 +571,11 @@ def capture_satisfies(
         expected_addr,
         expected_loaded,
         expected_checksum,
+        expected_rplu2_thimble_c0 if expect_rplu2_consume else None,
+        expected_rplu2_quadray_delta if expect_rplu2_consume else None,
+        expected_rplu2_consume_status if expect_rplu2_consume else None,
         sdram_stuck_high_mask,
-    ), expect_sdram_selftest, sdram_only, expect_core_sdram)
+    ), expect_sdram_selftest, sdram_only, expect_core_sdram, expect_rplu2_consume)
 
 
 def check_capture(
@@ -526,8 +586,12 @@ def check_capture(
     expected_addr,
     expected_loaded,
     expected_checksum,
+    expected_rplu2_thimble_c0,
+    expected_rplu2_quadray_delta,
+    expected_rplu2_consume_status,
     expect_sdram_selftest,
     expect_core_sdram,
+    expect_rplu2_consume,
     sdram_only,
     sdram_stuck_high_mask,
 ):
@@ -539,10 +603,18 @@ def check_capture(
         expected_addr,
         expected_loaded,
         expected_checksum,
+        expected_rplu2_thimble_c0 if expect_rplu2_consume else None,
+        expected_rplu2_quadray_delta if expect_rplu2_consume else None,
+        expected_rplu2_consume_status if expect_rplu2_consume else None,
         sdram_stuck_high_mask,
     )
 
-    if capture_matches_ok(matches, expect_sdram_selftest, sdram_only, expect_core_sdram):
+    if capture_matches_ok(
+            matches,
+            expect_sdram_selftest,
+            sdram_only,
+            expect_core_sdram,
+            expect_rplu2_consume):
         if not sdram_only:
             rplu_decoded = matches["rplu_decoded"]
             print(f"SPI JEDEC: {matches['jedec_match']}")
@@ -557,6 +629,23 @@ def check_capture(
                 print(f"RPLU loaded: {matches['loaded_match']} count={expected_loaded}")
             if matches["checksum_match"]:
                 print(f"RPLU checksum: {matches['checksum_match']} checksum=0x{expected_checksum:08X}")
+            if expect_rplu2_consume:
+                consume = matches["rplu2_consume"]
+                print(
+                    "RPLU2 consume result: "
+                    f"{consume['thimble_match']} "
+                    f"value=0x{consume['expected_thimble_c0']:08X}"
+                )
+                print(
+                    "RPLU2 consume quadray: "
+                    f"{consume['quadray_delta_match']} "
+                    f"delta=0x{consume['expected_quadray_delta']:08X}"
+                )
+                print(
+                    "RPLU2 consume status: "
+                    f"{consume['consume_status_match']} "
+                    f"status=0x{consume['expected_consume_status']:08X}"
+                )
         if expect_sdram_selftest:
             sdram = matches["sdram"]
             status = sdram["status_decoded"]
@@ -614,6 +703,20 @@ def check_capture(
             print(f"Missing RPLU loaded count {expected_loaded}")
         if not matches["checksum_ok"]:
             print(f"Missing RPLU checksum 0x{expected_checksum:08X}")
+        if expect_rplu2_consume:
+            consume = matches["rplu2_consume"]
+            if not consume["thimble_match"]:
+                print(f"Missing RPLU2 consume result 0x{consume['expected_thimble_c0']:08X} on R axis 8")
+                if consume["thimble_observed"]:
+                    print(f"Observed RPLU2 consume result: {consume['thimble_observed']}")
+            if not consume["quadray_delta_match"]:
+                print(f"Missing RPLU2 quadray delta 0x{consume['expected_quadray_delta']:08X} on R axis 9")
+                if consume["quadray_delta_observed"]:
+                    print(f"Observed RPLU2 quadray delta: {consume['quadray_delta_observed']}")
+            if not consume["consume_status_match"]:
+                print(f"Missing RPLU2 consume status 0x{consume['expected_consume_status']:08X} on R axis A")
+                if consume["consume_status_observed"]:
+                    print(f"Observed RPLU2 consume status: {consume['consume_status_observed']}")
     if expect_sdram_selftest:
         sdram = matches["sdram"]
         if not sdram["status_match"]:
@@ -707,6 +810,10 @@ def main():
     parser.add_argument("--expected-rplu-addr", type=parse_u32, default=0x3FF)
     parser.add_argument("--expected-rplu-loaded", default="auto")
     parser.add_argument("--expected-rplu-checksum", default="auto")
+    parser.add_argument("--expect-rplu2-consume", action="store_true")
+    parser.add_argument("--expected-rplu2-thimble-c0", type=parse_u32, default=0x00000002)
+    parser.add_argument("--expected-rplu2-quadray-delta", type=parse_u32, default=0x00000000)
+    parser.add_argument("--expected-rplu2-consume-status", type=parse_u32, default=0xC02E0001)
     parser.add_argument("--expect-sdram-selftest", action="store_true")
     parser.add_argument("--expect-core-sdram", action="store_true")
     parser.add_argument("--sdram-stuck-high-mask", type=parse_u32, default=0x0000)
@@ -729,8 +836,12 @@ def main():
         args.expected_rplu_addr,
         expected_loaded,
         expected_checksum,
+        args.expected_rplu2_thimble_c0,
+        args.expected_rplu2_quadray_delta,
+        args.expected_rplu2_consume_status,
         expect_sdram_selftest,
         args.expect_core_sdram,
+        args.expect_rplu2_consume,
         args.sdram_only,
         args.sdram_stuck_high_mask,
     )
@@ -748,8 +859,12 @@ def main():
         args.expected_rplu_addr,
         expected_loaded,
         expected_checksum,
+        args.expected_rplu2_thimble_c0,
+        args.expected_rplu2_quadray_delta,
+        args.expected_rplu2_consume_status,
         expect_sdram_selftest,
         args.expect_core_sdram,
+        args.expect_rplu2_consume,
         args.sdram_only,
         args.sdram_stuck_high_mask,
     )

@@ -11,7 +11,7 @@ module spu13_core #(
     parameter ENABLE_MATH = 1,
     parameter ENABLE_SEQUENCER = 1,
     parameter ENABLE_CORE_SOM  = 0,   // SOM/BMU classifier pipeline (legacy serial scan)
-    parameter ENABLE_CORE_RPLU_V2 = 0, // RPLU v2: F_{p^4} Thimble-Padé pipeline (parallel SOM + BTU + Padé + M31)
+    parameter ENABLE_CORE_RPLU_V2 = 0, // RPLU v2: A31 Thimble-Padé pipeline (parallel SOM + BTU + Padé + M31)
     parameter [255:0] MEM_FILE = "hardware/rtl/arch/hw_test.mem"
 )(
     input  wire         clk,            // Fast Clock (e.g. 12-24MHz)
@@ -577,6 +577,10 @@ module spu13_core #(
     assign eff_inst_valid = ENABLE_SEQUENCER ? seq_inst_valid : inst_valid;
     assign eff_inst_word  = ENABLE_SEQUENCER ? seq_inst_word  : inst_word;
     assign inst_accept    = eff_inst_valid && !inst_seen;
+    wire core_jscr_opcode = (eff_inst_word[63:56] == 8'h48);
+    wire core_nsa_opcode  = (eff_inst_word[63:56] == 8'h4C) ||
+                            (eff_inst_word[63:56] == 8'h4D);
+    wire core_nsa_done;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
@@ -936,12 +940,20 @@ module spu13_core #(
                 inst_done_r <= 1;
             end else if (som_train_done) begin
                 inst_done_r <= 1;
+            end else if (core_nsa_done) begin
+                inst_done_r <= 1;
+            end else if (inst_accept && core_jscr_opcode) begin
+                // JSCR commits through the topology6 state block below.  Keep
+                // it explicit here so opcode 0x48 is not hidden by the
+                // unknown-instruction catch-all path.
+                inst_done_r <= 1;
             end else if (inst_accept &&
                          eff_inst_word[63:56] != 8'h1D &&
                          eff_inst_word[63:56] != 8'h1C &&
                          eff_inst_word[63:56] != 8'h16 &&
                          eff_inst_word[63:56] != 8'h1B &&
                          eff_inst_word[63:56] != 8'h1E &&
+                         !(ENABLE_CORE_RPLU_V2 && core_nsa_opcode) &&
                          !(ENABLE_CORE_SOM && (eff_inst_word[63:56] == 8'h2A ||
                                                 eff_inst_word[63:56] == 8'h2B))) begin
                 // Unknown/QLOG — consume immediately
@@ -1500,10 +1512,84 @@ module spu13_core #(
     endgenerate
 
     // ── NSA Dual-Number Core (inside RPLU v2 block) ──────────────────
-    // Provides dual arithmetic over A_SPU = F_{p^4}[epsilon]/(epsilon^2).
+    // Provides dual arithmetic over A_SPU = A31[epsilon]/(epsilon^2).
     // Instantiated when ENABLE_CORE_RPLU_V2=1 alongside the main pipeline.
     generate
         if (ENABLE_CORE_RPLU_V2) begin : gen_nsa_core
+            // ── JSCR: Janus screw topology permutation (0x48) ─────────
+            // Single-cycle: reads source lane, applies screw/dual permutation,
+            // writes to destination lane.
+            // Format R: Dest[55:51]=dst_lane, SrcA[50:46]=src_lane,
+            // SrcB[45:44]=dual_mode, SrcB[43:42]=screw_mode,
+            // SrcB[41]=pos_boundary, SrcB[40]=neg_boundary
+            wire        jscr_en;
+            wire [4:0]  jscr_dst_lane = eff_inst_word[55:51];
+            wire [4:0]  jscr_src_lane = eff_inst_word[50:46];
+            wire [1:0]  jscr_dual_mode  = eff_inst_word[45:44];
+            wire [1:0]  jscr_screw_mode = eff_inst_word[43:42];
+            wire        jscr_pos_boundary = eff_inst_word[41];
+            wire        jscr_neg_boundary = eff_inst_word[40];
+            wire [10:0] jscr_phase_offset = eff_inst_word[10:0];
+
+            wire        topology_load_en;
+            wire [4:0]  topology_load_lane;
+            wire [63:0] topology_load_A;
+            wire [63:0] topology_load_B;
+            wire [63:0] topology_load_C;
+            wire [63:0] topology_load_D;
+
+            assign jscr_en = inst_accept && (eff_inst_word[63:56] == 8'h48);
+            assign topology_load_en = inst_accept && (eff_inst_word[63:56] == 8'h1D);
+            assign topology_load_lane = eff_inst_word[55:48] % 13;
+            assign topology_load_A = {32'd0, {{24{eff_inst_word[39]}}, eff_inst_word[39:32]}};
+            assign topology_load_B = {32'd0, {{24{eff_inst_word[31]}}, eff_inst_word[31:24]}};
+            assign topology_load_C = {32'd0, {{24{eff_inst_word[23]}}, eff_inst_word[23:16]}};
+            assign topology_load_D = {32'd0, {{24{eff_inst_word[15]}}, eff_inst_word[15:8]}};
+
+            spu13_topology6_state #(
+                .WIDTH(64),
+                .LANES(13),
+                .LANE_WIDTH(5),
+                .OFFSET_WIDTH(11)
+            ) u_topology6 (
+                .clk(clk), .rst_n(rst_n),
+                // Read port (unused for instruction — data read via QR projection)
+                .rd_lane(5'd0),
+                .rd_pos_ab(), .rd_pos_ac(), .rd_pos_ad(),
+                .rd_pos_bc(), .rd_pos_bd(), .rd_pos_cd(),
+                .rd_neg_ab(), .rd_neg_ac(), .rd_neg_ad(),
+                .rd_neg_bc(), .rd_neg_bd(), .rd_neg_cd(),
+                // QLDI hydrates the six-line topology shadow state.
+                // Positive lines are pairwise A-B style edges; negative lines
+                // are the reverse directed dual copy.
+                .load_en(topology_load_en), .load_lane(topology_load_lane),
+                .load_pos_ab(rs_sub64(topology_load_A, topology_load_B)),
+                .load_pos_ac(rs_sub64(topology_load_A, topology_load_C)),
+                .load_pos_ad(rs_sub64(topology_load_A, topology_load_D)),
+                .load_pos_bc(rs_sub64(topology_load_B, topology_load_C)),
+                .load_pos_bd(rs_sub64(topology_load_B, topology_load_D)),
+                .load_pos_cd(rs_sub64(topology_load_C, topology_load_D)),
+                .load_neg_ab(rs_sub64(topology_load_B, topology_load_A)),
+                .load_neg_ac(rs_sub64(topology_load_C, topology_load_A)),
+                .load_neg_ad(rs_sub64(topology_load_D, topology_load_A)),
+                .load_neg_bc(rs_sub64(topology_load_C, topology_load_B)),
+                .load_neg_bd(rs_sub64(topology_load_D, topology_load_B)),
+                .load_neg_cd(rs_sub64(topology_load_D, topology_load_C)),
+                // Janus transform port
+                .janus_en(jscr_en),
+                .janus_src_lane(jscr_src_lane),
+                .janus_dst_lane(jscr_dst_lane),
+                .dual_mode(jscr_dual_mode),
+                .screw_mode(jscr_screw_mode),
+                .phase_offset(jscr_phase_offset),
+                .pos_boundary(jscr_pos_boundary),
+                .neg_boundary(jscr_neg_boundary),
+                .janus_done(),
+                .fire_pos(), .fire_neg(),
+                .phase_match(), .phase_mismatch()
+            );
+
+            // ── NSA opcode decode (trigger on 0x4C-0x4D) ────────────
             wire        nsa_start;
             wire [1:0]  nsa_op;
             wire [3:0]  nsa_dest, nsa_srcA, nsa_srcB;
@@ -1515,25 +1601,24 @@ module spu13_core #(
             wire        nsa_wr_en;
             wire [3:0]  nsa_wr_addr;
 
-            // ── NSA opcode decode (trigger on 0x46-0x49) ────────────
+            // ── NSA opcode decode (trigger on 0x4C-0x4D) ────────────
             reg nsa_pending;
             always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
                     nsa_pending <= 0;
-                end else if (inst_accept && (eff_inst_word[63:56] == 8'h46 ||
-                                              eff_inst_word[63:56] == 8'h47 ||
-                                              eff_inst_word[63:56] == 8'h48 ||
-                                              eff_inst_word[63:56] == 8'h49)) begin
+                end else if (inst_accept && (eff_inst_word[63:56] == 8'h4C ||
+                                              eff_inst_word[63:56] == 8'h4D)) begin
                     nsa_pending <= 1;
                 end else if (nsa_done)
                     nsa_pending <= 0;
             end
 
-            assign nsa_start = nsa_pending && !nsa_busy;
+            assign nsa_start = nsa_pending && !nsa_busy && !nsa_done;
             assign nsa_op    = eff_inst_word[57:56];          // low 2 bits of opcode
             assign nsa_dest  = eff_inst_word[55:52];
             assign nsa_srcA  = eff_inst_word[51:48];
             assign nsa_srcB  = eff_inst_word[47:44];
+            assign core_nsa_done = nsa_done;
 
             spu13_nsa_core u_nsa_core (
                 .clk(clk), .rst_n(rst_n),
@@ -1562,6 +1647,8 @@ module spu13_core #(
             // NSA results feed into the main RPLU pipeline as additional
             // feature channels — velocity-aware classification.
             // (Wired but not yet consumed by the pipeline — future integration.)
+        end else begin : gen_no_nsa_core
+            assign core_nsa_done = 1'b0;
         end
     endgenerate
 

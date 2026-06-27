@@ -299,9 +299,18 @@ The RPLU is accessed through the SPU-13 ISA:
 | 0x2B | SOM_TRAIN | SOM weight training update |
 | 0x42 | PHSLK | Phase-lock via $A_{31}$ unit checks |
 | 0x43 | INVJ | $A_{31}$ unit inverse |
+| 0x48 | JSCR | Janus screw / inverted tetra edge topology |
 | 0x20 | QADD | Quadrance addition (single-cycle) |
 | 0x21 | QSUB | Quadrance subtraction |
 | 0x22 | QMUL | Quadrance multiply ($A_{31}$ multiplier) |
+
+`JSCR` targets the six-line topology state (`spu13_topology6_state.v`), not the
+Quadray coordinate register file.  This preserves inverse-path edge connectivity
+for piston, seesaw, and independent Janus boundary modes.  Projection back into
+`A,B,C,D` coordinates is an explicit later conversion.  The current core
+integration hydrates topology shadow lanes from `QLDI` by deriving the six
+pairwise edges from loaded Quadray coordinates and storing the reverse edges as
+the negative dual copy.
 
 ## 9. References
 
@@ -394,7 +403,7 @@ $\delta$-$\epsilon$ arguments, no approximations.
 
 ### A.5 Dual QADD Opcode (Proposed)
 
-**Opcode:** NSA_DQADD (0x46) — Dual quadrance addition over $\mathbb{A}_{\text{SPU}}$.
+**Opcode:** NSA_DQADD (0x4C) — Dual quadrance addition over $\mathbb{A}_{\text{SPU}}$.
 
 **Semantics:** Given dual numbers $R_A = A + \epsilon B$ (slot `ra`) and
 $R_C = C + \epsilon D$ (slot `rb`), compute $R_A + R_C$ and store in
@@ -411,7 +420,7 @@ Total: ~14 cycles, fully pipelined.
 
 ### A.6 Dual QMUL Opcode (Proposed)
 
-**Opcode:** NSA_DQMUL (0x47) — Dual quadrance multiply over $\mathbb{A}_{\text{SPU}}$.
+**Opcode:** NSA_DQMUL (0x4D) — Dual quadrance multiply over $\mathbb{A}_{\text{SPU}}$.
 
 **Semantics:** $(A + \epsilon B)(C + \epsilon D) = AC + \epsilon(AD + BC)$.
 

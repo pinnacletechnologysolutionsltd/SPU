@@ -242,7 +242,12 @@ Used by: NOP, HALT, SYNC, RET, MFOLD, STAT, SCALE, QR, HEX
 | 0x43 | INVJ | U | Invert through Janus point: negate all quadray components of R[Src] → R[Dest] |
 | 0x44 | PHSTA | U | Read PHSLK status: 0=pending, 1=locked, 2=failed → R[Dest].O |
 | 0x45 | PHCLR | U | Clear phase-lock status for R[Src] |
-| 0x46–0x4F | — | — | Reserved |
+| 0x46–0x47 | — | — | Reserved |
+| 0x48 | JSCR | R | Janus screw: tetrahedral six-edge topology permutation |
+| 0x49–0x4B | — | — | Reserved |
+| 0x4C | NSA_DQADD | R | Dual-number add over $A_{31}[\epsilon]$ |
+| 0x4D | NSA_DQMUL | R | Dual-number multiply over $A_{31}[\epsilon]$ |
+| 0x4E–0x4F | — | — | Reserved |
 
 #### 5.5.1 PHSLK Hardware Mechanics
 
@@ -253,6 +258,42 @@ When PHSLK executes:
 3. If yes: result is written to `R[Dest].O`, hardware sets FLAGS.C=1
 4. If no: FLAGS.C=0, optional hardware branch correction is triggered
 5. The operation completes in a single cycle when coherent; multiple cycles if boundary conditions need refinement
+
+#### 5.5.2 JSCR Edge-Topology Mechanics
+
+`JSCR` is a topology operation, not a spread rotor or matrix multiply.  It
+acts on the six tetrahedral line buses in edge order `AB, AC, AD, BC, BD, CD`.
+The low mode bits select straight pass-through, clockwise screw,
+counter-clockwise screw, or opposite-edge dual inversion.
+
+The standalone RTL primitive is `spu13_janus_screw_lines.v`.  It is
+combinational and does not consume DSPs.  The architectural state target is the
+six-line topology register path implemented by `spu13_topology6_state.v`.
+Projection back into Quadray `A,B,C,D` coordinates is a separate conversion
+step and is not part of the inverse pathway.
+
+`spu13_janus_dual_mode.v` wraps this primitive for paired positive/negative
+tetrahedra.  It exposes three tested boundary modes:
+
+| Mode | Hardware behavior |
+|------|-------------------|
+| PISTON | Positive tetrahedron passes through unchanged; negative boundary strobe applies the screw permutation one-sided. |
+| SEESAW | Positive and negative boundary strobes must arrive on the same cycle; outputs are cross-coupled after screw permutation. A one-sided strobe reports phase mismatch. |
+| INDEPENDENT | Each side may screw on its own boundary strobe. `phase_offset` checks the expected cycle separation between the two boundary events. |
+
+Boundary arrival is an explicit algebraic predicate from PHSLK/RPLU logic
+(`pos_boundary`, `neg_boundary`).  The hardware does not infer a boundary from
+real-valued sign, volume, or continuous zero-crossing language.
+
+`spu13_topology6_state.v` stores paired positive/negative tetrahedra as thirteen
+lanes of six-line state.  `JSCR` dispatch should read a source topology lane,
+apply the selected PISTON/SEESAW/INDEPENDENT mode through the Janus dual-mode
+wrapper, and commit the result into a destination topology lane.  This preserves
+the inverse edge-connectivity path across Janus transitions.
+
+In the current `spu13_core.v` integration, `QLDI` also hydrates the matching
+topology shadow lane by deriving pairwise positive edges from the loaded
+`A,B,C,D` coordinates and reverse edges for the negative dual copy.
 
 ### 5.6 RPLU Configuration (0x50–0x5F)
 
