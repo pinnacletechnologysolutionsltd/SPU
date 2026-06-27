@@ -73,6 +73,60 @@ module btu_collision_tb;
         check(!bus_valid && !pipeline_stall, "D: zero activation idle");
         #10;
 
+        // ═══════════════════════════════════════════════════════════
+        // Scenario E: 5-way collision — verify serial dispatch and
+        //             stall clears only on last element
+        // ═══════════════════════════════════════════════════════════
+        activation = (64'd1 << 3) | (64'd1 << 12) | (64'd1 << 25) | (64'd1 << 40) | (64'd1 << 63);
+        #10;
+        check(bus_valid && selected_k == 6'd3 && pipeline_stall, "E1: 5-way cycle1 bit3");
+        #10;
+        check(bus_valid && selected_k == 6'd12 && pipeline_stall, "E2: 5-way cycle2 bit12");
+        #10;
+        check(bus_valid && selected_k == 6'd25 && pipeline_stall, "E3: 5-way cycle3 bit25");
+        #10;
+        check(bus_valid && selected_k == 6'd40 && pipeline_stall, "E4: 5-way cycle4 bit40");
+        #10;
+        check(bus_valid && selected_k == 6'd63 && !pipeline_stall, "E5: 5-way cycle5 bit63 done");
+        activation = 64'd0; #20;
+
+        // ═══════════════════════════════════════════════════════════
+        // Scenario F: Single node at boundaries (bit 0, bit 63)
+        // ═══════════════════════════════════════════════════════════
+        activation = 64'd1;  // bit 0
+        #10;
+        check(bus_valid && selected_k == 6'd0 && !pipeline_stall, "F1: boundary bit0");
+        activation = 64'd0; #20;
+
+        activation = (64'd1 << 63);  // bit 63
+        #10;
+        check(bus_valid && selected_k == 6'd63 && !pipeline_stall, "F2: boundary bit63");
+        activation = 64'd0; #20;
+
+        // ═══════════════════════════════════════════════════════════
+        // Scenario G: Back-to-back collisions — rapid-fire dispatch
+        // Dispatch a collision, drain, then immediately dispatch another
+        // ═══════════════════════════════════════════════════════════
+        // Burst 1: 2-way
+        activation = (64'd1 << 5) | (64'd1 << 17);
+        #10;
+        check(bus_valid && selected_k == 6'd5 && pipeline_stall, "G1: burst1 cycle1 bit5");
+        #10;
+        check(bus_valid && selected_k == 6'd17 && !pipeline_stall, "G2: burst1 cycle2 bit17 done");
+        activation = 64'd0; #10;
+
+        // Burst 2: 4-way immediately after
+        activation = (64'd1 << 1) | (64'd1 << 8) | (64'd1 << 22) | (64'd1 << 44);
+        #10;
+        check(bus_valid && selected_k == 6'd1 && pipeline_stall, "G3: burst2 cycle1 bit1");
+        #10;
+        check(bus_valid && selected_k == 6'd8 && pipeline_stall, "G4: burst2 cycle2 bit8");
+        #10;
+        check(bus_valid && selected_k == 6'd22 && pipeline_stall, "G5: burst2 cycle3 bit22");
+        #10;
+        check(bus_valid && selected_k == 6'd44 && !pipeline_stall, "G6: burst2 cycle4 bit44 done");
+        activation = 64'd0; #20;
+
         if (test_pass == test_total)
             $display("PASS: btu_collision_tb (%0d/%0d)", test_pass, test_total);
         else

@@ -53,10 +53,15 @@ module rplu_pipeline #(
     wire [15:0] bmu_best_id;
     wire [63:0] bmu_best_q;
     wire [15:0] bmu_cluster_label;
+    wire        som_start_accept;
 
-    // Convert BMU best_id to 64-bit one-hot for BTU
+    // ── Φ₁ latch: hold BMU result through BTU stall ──────────────
+    reg         phi1_valid;
+    reg  [5:0]  phi1_best_id;
+
+    // Convert latched BMU best_id to 64-bit one-hot for BTU
     wire [63:0] btu_activation;
-    assign btu_activation = (bmu_valid) ? (64'd1 << bmu_best_id[5:0]) : 64'd0;
+    assign btu_activation = (phi1_valid) ? (64'd1 << phi1_best_id) : 64'd0;
 
     // ── Φ₂ → Φ₃ interconnect ──────────────────────────────────────
     wire [31:0] btu_c0, btu_c1, btu_c2, btu_c3;
@@ -78,7 +83,7 @@ module rplu_pipeline #(
     wire [31:0] mult_r0_w, mult_r1_w, mult_r2_w, mult_r3_w;
     wire        mult_done_w, mult_busy_w;
 
-    // ── F_{p^4} inverter (shared) ──────────────────────────────────
+    // ── A31 inverter interface ─────────────────────────────────────
     wire        inv_start_w;
     wire [31:0] inv_z0_w, inv_z1_w, inv_z2_w, inv_z3_w;
     wire [31:0] inv_r0_w, inv_r1_w, inv_r2_w, inv_r3_w;
@@ -86,13 +91,41 @@ module rplu_pipeline #(
     wire        pade_flags_v;
 
     // ── Pipeline stage latches ─────────────────────────────────────
-    reg         phi1_valid, phi2_valid, phi3_valid, phi4_valid;
+    reg         phi3_valid, phi4_valid;
     reg         som_active;
     reg         pade_inflight;
-    reg [1:0]  quadray_pending;
-    reg [31:0]  phi2_c0, phi2_c1, phi2_c2, phi2_c3;
+    reg [3:0]  quadray_pending;
     reg [31:0]  phi3_c0, phi3_c1, phi3_c2, phi3_c3;
     reg [31:0]  phi4_c0, phi4_c1, phi4_c2, phi4_c3;
+
+    // BTU can serialize up to 64 simultaneous collision rows. Padé is much
+    // slower, so the handoff needs a real queue, not a single Φ₂ latch.
+    localparam BTU_FIFO_DEPTH = 64;
+    localparam BTU_FIFO_PTR_W = 6;
+    localparam BTU_FIFO_CNT_W = 7;
+    localparam [BTU_FIFO_CNT_W-1:0] BTU_FIFO_DEPTH_COUNT = BTU_FIFO_DEPTH;
+
+    reg [31:0] btu_fifo_c0 [0:BTU_FIFO_DEPTH-1];
+    reg [31:0] btu_fifo_c1 [0:BTU_FIFO_DEPTH-1];
+    reg [31:0] btu_fifo_c2 [0:BTU_FIFO_DEPTH-1];
+    reg [31:0] btu_fifo_c3 [0:BTU_FIFO_DEPTH-1];
+    reg [BTU_FIFO_PTR_W-1:0] btu_fifo_wr_ptr;
+    reg [BTU_FIFO_PTR_W-1:0] btu_fifo_rd_ptr;
+    reg [BTU_FIFO_CNT_W-1:0] btu_fifo_count;
+    reg                      btu_fifo_overflow;
+
+    wire pade_launch;
+    wire btu_fifo_push;
+    wire btu_fifo_empty = (btu_fifo_count == {BTU_FIFO_CNT_W{1'b0}});
+    wire btu_fifo_full  = (btu_fifo_count == BTU_FIFO_DEPTH_COUNT);
+    wire [31:0] btu_fifo_head_c0 = btu_fifo_c0[btu_fifo_rd_ptr];
+    wire [31:0] btu_fifo_head_c1 = btu_fifo_c1[btu_fifo_rd_ptr];
+    wire [31:0] btu_fifo_head_c2 = btu_fifo_c2[btu_fifo_rd_ptr];
+    wire [31:0] btu_fifo_head_c3 = btu_fifo_c3[btu_fifo_rd_ptr];
+    wire [31:0] pade_saddle_c0 = pade_launch ? btu_fifo_head_c0 : phi3_c0;
+    wire [31:0] pade_saddle_c1 = pade_launch ? btu_fifo_head_c1 : phi3_c1;
+    wire [31:0] pade_saddle_c2 = pade_launch ? btu_fifo_head_c2 : phi3_c2;
+    wire [31:0] pade_saddle_c3 = pade_launch ? btu_fifo_head_c3 : phi3_c3;
 
     // ── Φ₁: Kohonen SOM BMU ───────────────────────────────────────
     spu_som_bmu #(
@@ -101,7 +134,7 @@ module rplu_pipeline #(
         .WIDTH(WIDTH)
     ) u_som (
         .clk(clk), .rst_n(rst_n),
-        .start(som_start),
+        .start(som_start_accept),
         .done(som_done),
         .features(som_features),
         .feature_weights({NUM_FEATURES * 2 * WIDTH{1'b0}}),  // default uniform
@@ -160,8 +193,8 @@ module rplu_pipeline #(
     rplu_thimble_pade u_pade (
         .clk(clk), .rst_n(rst_n),
         .start(pade_start),
-        .saddle_c0(phi2_c0), .saddle_c1(phi2_c1),
-        .saddle_c2(phi2_c2), .saddle_c3(phi2_c3),
+        .saddle_c0(pade_saddle_c0), .saddle_c1(pade_saddle_c1),
+        .saddle_c2(pade_saddle_c2), .saddle_c3(pade_saddle_c3),
         .coeff_we(pade_coeff_we),
         .coeff_is_den(pade_coeff_is_den),
         .coeff_addr(pade_coeff_addr),
@@ -198,7 +231,7 @@ module rplu_pipeline #(
         .done(mult_done_w), .busy(mult_busy_w)
     );
 
-    // ── Dedicated multiplier for F_{p^4} inverter ──────────────────
+    // ── Dedicated multiplier for A31 inverter ──────────────────────
     wire        inv_mult_start;
     wire [31:0] inv_mult_a0, inv_mult_a1, inv_mult_a2, inv_mult_a3;
     wire [31:0] inv_mult_b0, inv_mult_b1, inv_mult_b2, inv_mult_b3;
@@ -214,7 +247,7 @@ module rplu_pipeline #(
         .done(inv_mult_done), .busy(inv_mult_busy)
     );
 
-    // ── F_{p^4} Conjugate Reduction Tower Inverter ─────────────────
+    // ── A31 Conjugate Reduction Tower Inverter ─────────────────────
     spu13_fp4_inverter u_inverter (
         .clk(clk), .rst_n(rst_n),
         .start(inv_start_w),
@@ -232,64 +265,88 @@ module rplu_pipeline #(
         .mult_done(inv_mult_done), .mult_busy(inv_mult_busy)
     );
 
-    wire pade_launch = phi2_valid && !pade_inflight && !pade_busy && !pade_done;
+    assign pade_launch = !btu_fifo_empty && !pade_inflight && !pade_busy && !pade_done;
+    assign btu_fifo_push = btu_valid && (!btu_fifo_full || pade_launch);
+    assign som_start_accept = som_start && !pipeline_busy;
 
     // ── Pipeline stage advancement ─────────────────────────────────
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             phi1_valid <= 1'b0;
-            phi2_valid <= 1'b0;
+            phi1_best_id <= 6'd0;
             phi3_valid <= 1'b0;
             phi4_valid <= 1'b0;
             som_active <= 1'b0;
             pade_inflight <= 1'b0;
-            quadray_pending <= 2'b00;
-            phi2_c0 <= 32'd0; phi2_c1 <= 32'd0;
-            phi2_c2 <= 32'd0; phi2_c3 <= 32'd0;
+            quadray_pending <= 4'b0000;
             phi3_c0 <= 32'd0; phi3_c1 <= 32'd0;
             phi3_c2 <= 32'd0; phi3_c3 <= 32'd0;
             phi4_c0 <= 32'd0; phi4_c1 <= 32'd0;
             phi4_c2 <= 32'd0; phi4_c3 <= 32'd0;
+            btu_fifo_wr_ptr <= {BTU_FIFO_PTR_W{1'b0}};
+            btu_fifo_rd_ptr <= {BTU_FIFO_PTR_W{1'b0}};
+            btu_fifo_count <= {BTU_FIFO_CNT_W{1'b0}};
+            btu_fifo_overflow <= 1'b0;
         end else begin
-            if (som_start)
+            phi4_valid <= 1'b0;
+
+            if (som_start_accept)
                 som_active <= 1'b1;
             else if (som_done)
                 som_active <= 1'b0;
 
-            quadray_pending <= {quadray_pending[0], btu_valid};
-
-            // Default: advance pipeline if not stalled
-            if (!btu_stall && !pade_busy) begin
-                // Φ₁ → Φ₂: latch BTU output when valid
-                phi2_valid <= btu_valid;
-                if (btu_valid) begin
-                    phi2_c0 <= btu_c0; phi2_c1 <= btu_c1;
-                    phi2_c2 <= btu_c2; phi2_c3 <= btu_c3;
-                end
-
-                // Φ₂ → Φ₃: launch Padé once per latched saddle point.
-                if (pade_launch) begin
-                    phi2_valid <= 1'b0;
-                    phi3_valid <= 1'b1;
-                    phi3_c0 <= phi2_c0; phi3_c1 <= phi2_c1;
-                    phi3_c2 <= phi2_c2; phi3_c3 <= phi2_c3;
-                    pade_inflight <= 1'b1;
-                end
-
-                // Φ₃ → Φ₄: latch Padé result
-                phi4_valid <= pade_done;
-                if (pade_done) begin
-                    phi4_c0 <= pade_result_c0; phi4_c1 <= pade_result_c1;
-                    phi4_c2 <= pade_result_c2; phi4_c3 <= pade_result_c3;
-                    pade_inflight <= 1'b0;
-                end
+            // ── Φ₁: Capture BMU result ───────────────────────────
+            if (bmu_valid) begin
+                phi1_valid <= 1'b1;
+                phi1_best_id <= bmu_best_id[5:0];
             end
 
-            // Clear valids on consumption
-            if (btu_valid)  phi1_valid <= 1'b0;
-            if (btu_stall)  phi1_valid <= phi1_valid;  // hold
+            // ── Φ₂: Capture BTU output into the Padé input FIFO ───
+            if (btu_valid) begin
+                if (btu_fifo_push) begin
+                    btu_fifo_c0[btu_fifo_wr_ptr] <= btu_c0;
+                    btu_fifo_c1[btu_fifo_wr_ptr] <= btu_c1;
+                    btu_fifo_c2[btu_fifo_wr_ptr] <= btu_c2;
+                    btu_fifo_c3[btu_fifo_wr_ptr] <= btu_c3;
+                    btu_fifo_wr_ptr <= btu_fifo_wr_ptr + 1'b1;
+                    // Clear sticky overflow on successful push
+                    btu_fifo_overflow <= 1'b0;
+                end else begin
+                    // FIFO full and no launch: sticky overflow
+                    btu_fifo_overflow <= 1'b1;
+                end
+            end else begin
+                // If no incoming valid this cycle and FIFO not full, clear overflow
+                if (btu_fifo_count != BTU_FIFO_DEPTH_COUNT)
+                    btu_fifo_overflow <= 1'b0;
+            end
+
+            // ── quadray_pending: shift register for pending ────────────
+            quadray_pending <= {quadray_pending[2:0], btu_valid};
+
+            if (phi1_valid && !btu_stall)
+                phi1_valid <= 1'b0;
+
+            // Φ₂ FIFO → Φ₃: launch Padé exactly when a FIFO element is popped.
+            if (pade_launch) begin
+                btu_fifo_rd_ptr <= btu_fifo_rd_ptr + 1'b1;
+                phi3_valid <= 1'b1;
+                phi3_c0 <= btu_fifo_head_c0; phi3_c1 <= btu_fifo_head_c1;
+                phi3_c2 <= btu_fifo_head_c2; phi3_c3 <= btu_fifo_head_c3;
+                pade_inflight <= 1'b1;
+            end
+
+            case ({btu_fifo_push, pade_launch})
+                2'b10: btu_fifo_count <= btu_fifo_count + 1'b1;
+                2'b01: btu_fifo_count <= btu_fifo_count - 1'b1;
+                default: btu_fifo_count <= btu_fifo_count;
+            endcase
+
+            // Φ₃ → Φ₄: latch Padé result independently of BTU stall state.
             if (pade_done) begin
-                phi2_valid <= 1'b0;
+                phi4_valid <= 1'b1;
+                phi4_c0 <= pade_result_c0; phi4_c1 <= pade_result_c1;
+                phi4_c2 <= pade_result_c2; phi4_c3 <= pade_result_c3;
                 phi3_valid <= 1'b0;
                 pade_inflight <= 1'b0;
             end
@@ -308,8 +365,10 @@ module rplu_pipeline #(
     assign quadray_delta = quadray_delta_w;
     assign quadray_coherent = quadray_coherent_w;
     assign quadray_valid = quadray_valid_w;
-    assign pipeline_busy = som_active || bmu_valid || btu_valid ||
-                           pade_inflight || pade_busy || inv_busy_w ||
+    assign pipeline_busy = som_active || phi1_valid || btu_valid || btu_stall ||
+                           (btu_fifo_count != {BTU_FIFO_CNT_W{1'b0}}) ||
+                           phi3_valid || pade_inflight || pade_busy ||
+                           mult_busy_w || inv_busy_w || btu_fifo_overflow ||
                            (|quadray_pending) || quadray_valid_w;
     assign pipeline_stall = btu_stall;
 

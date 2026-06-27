@@ -1,0 +1,7 @@
+read_verilog \
+    hardware/boards/tang_primer_25k/spu13_tang25k_rplu2_boot_probe.v \
+    hardware/rtl/top/spu_laminar_boot.v
+
+hierarchy -check -top spu13_tang25k_rplu2_boot_probe
+synth_gowin -family gw5a -top spu13_tang25k_rplu2_boot_probe -json build/spu13_rplu2_boot_probe.json
+stat

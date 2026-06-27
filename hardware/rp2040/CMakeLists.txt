@@ -35,3 +35,18 @@ pico_enable_stdio_usb(rp2040_visualiser 1)
 pico_enable_stdio_uart(rp2040_visualiser 0)
 
 pico_add_extra_outputs(rp2040_visualiser)
+
+add_executable(rp2040_flash_pmod
+    rp2040_flash_pmod.c
+)
+
+target_link_libraries(rp2040_flash_pmod
+    pico_stdlib
+    hardware_spi
+)
+
+# USB CDC command channel; SPI pins are wired to the flash PMOD.
+pico_enable_stdio_usb(rp2040_flash_pmod 1)
+pico_enable_stdio_uart(rp2040_flash_pmod 0)
+
+pico_add_extra_outputs(rp2040_flash_pmod)

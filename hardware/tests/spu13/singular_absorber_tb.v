@@ -2,10 +2,12 @@
 
 // singular_absorber_tb.v — Stress-test the zero-norm singularity exception path
 //
-// Exercises three scenarios through the F_{p^4} inverter:
+// Exercises five scenarios through the F_{p^4} inverter:
 //   A) Valid inversion of a known element → verify correct result
 //   B) Zero element → verify FLAGS.V assertion and clean trap
 //   C) Small-norm element near zero → verify graceful handling
+//   D) Alternating valid → zero-divisor → valid stress pattern
+//   E) Rapid-fire zero-divisor burst (3+ consecutive)
 //
 // This directly validates the Lefschetz thimble absorber boundary condition
 // where the Padé denominator approaches zero (geometric singularity).
@@ -107,6 +109,48 @@ module singular_absorber_tb;
         wait(done); #2;
         if (flags_v || inv0 == 32'd0) begin
             $display("FAIL E: post-exception inv(3), flags_v=%b inv0=%h", flags_v, inv0);
+        end else test_pass = test_pass + 1;
+
+        // ── Scenario F: Alternating valid → zero-divisor burst ────
+        // Stress-test the state machine with rapid oscillation between
+        // valid and singular inputs. 5 rapid alternations.
+        for (int alt = 0; alt < 5; alt = alt + 1) begin
+            // Valid
+            test_total = test_total + 1;
+            z0 = 32'd7; z1 = 32'd0; z2 = 32'd0; z3 = 32'd0;
+            start = 1; #10; start = 0;
+            wait(done); #2;
+            if (flags_v || inv0 == 32'd0) begin
+                $display("FAIL F%0d: valid alt, flags_v=%b inv0=%h", alt, flags_v, inv0);
+            end else test_pass = test_pass + 1;
+
+            // Zero divisor (nonzero zero-divisor in A31: sqrt(15) - uv)
+            test_total = test_total + 1;
+            z0 = 32'h2CEE24B2; z1 = 32'd0; z2 = 32'd0; z3 = 32'd1;
+            start = 1; #10; start = 0;
+            wait(done); #2;
+            if (flags_v !== 1'b1) begin
+                $display("FAIL F%0d: zero-divisor alt, flags_v=%b", alt, flags_v);
+            end else test_pass = test_pass + 1;
+        end
+
+        // ── Scenario G: Long idle → zero → valid ──────────────────
+        // Prove the state machine doesn't drift after extended inactivity
+        #500;  // idle for 50 clock cycles
+        test_total = test_total + 1;
+        z0 = 32'd0; z1 = 32'd0; z2 = 32'd0; z3 = 32'd0;
+        start = 1; #10; start = 0;
+        wait(done); #2;
+        if (flags_v !== 1'b1) begin
+            $display("FAIL G1: post-idle zero, flags_v=%b", flags_v);
+        end else test_pass = test_pass + 1;
+
+        test_total = test_total + 1;
+        z0 = 32'd5; z1 = 32'd0; z2 = 32'd0; z3 = 32'd0;
+        start = 1; #10; start = 0;
+        wait(done); #2;
+        if (flags_v || inv0 == 32'd0) begin
+            $display("FAIL G2: post-idle valid, flags_v=%b inv0=%h", flags_v, inv0);
         end else test_pass = test_pass + 1;
 
         if (test_pass == test_total)
