@@ -14,6 +14,13 @@ module spu_spi_slave_tb;
     wire [7:0] rplu_cfg_material;
     wire [9:0] rplu_cfg_addr;
     wire [63:0] rplu_cfg_data;
+    wire        inst_valid;
+    wire [63:0] inst_word;
+    reg         qr_commit_valid;
+    reg  [3:0]  qr_commit_lane;
+    reg  [63:0] qr_commit_A, qr_commit_B, qr_commit_C, qr_commit_D;
+    reg         hex_valid;
+    reg  [15:0] hex_q, hex_r;
 
     // Drive a known manifold: axis0 P=16'h1234 Q=16'h0056,
     //                         axis1 P=16'hABCD Q=16'h0078, rest 0
@@ -34,12 +41,19 @@ module spu_spi_slave_tb;
         .is_janus_point(is_janus_point),
         .dissonance(dissonance),
         .scale_table(52'd0), .scale_overflow(13'd0),
+        .qr_commit_valid(qr_commit_valid),
+        .qr_commit_lane(qr_commit_lane),
+        .qr_commit_A(qr_commit_A), .qr_commit_B(qr_commit_B),
+        .qr_commit_C(qr_commit_C), .qr_commit_D(qr_commit_D),
+        .hex_valid(hex_valid), .hex_q(hex_q), .hex_r(hex_r),
         .rplu_ratio_res(tb_rplu_ratio_res), .rplu_ratio_valid(tb_rplu_ratio_valid),
         .rplu_cfg_wr_en(rplu_cfg_wr_en),
         .rplu_cfg_sel(rplu_cfg_sel),
         .rplu_cfg_material(rplu_cfg_material),
         .rplu_cfg_addr(rplu_cfg_addr),
         .rplu_cfg_data(rplu_cfg_data),
+        .inst_valid(inst_valid),
+        .inst_word(inst_word),
         .fifo_full(1'b0),
         .laminar_index(dissonance),
         .turbulence(1'b0),
@@ -70,13 +84,15 @@ module spu_spi_slave_tb;
     endtask
 
     // SPI transaction: assert CS, send cmd, receive n_bytes
-    reg [7:0] rx_buf [0:31];
+    reg [7:0] rx_buf [0:63];
     integer   pass_count, fail_count;
     reg        seen_cfg_wr;
     reg [2:0]  seen_cfg_sel;
     reg [7:0]  seen_cfg_material;
     reg [9:0]  seen_cfg_addr;
     reg [63:0] seen_cfg_data;
+    reg        seen_inst_valid;
+    reg [63:0] seen_inst_word;
 
     task spi_transaction;
         input [7:0]  cmd;
@@ -121,6 +137,20 @@ module spu_spi_slave_tb;
         end
     endtask
 
+    task spi_inst_write;
+        input [63:0] word;
+        reg [7:0] dummy;
+        begin
+            spi_cs_n = 0;
+            #500;
+            spi_byte_send(8'hB1, dummy);
+            spi_u64_send(word);
+            #500;
+            spi_cs_n = 1;
+            #2000;
+        end
+    endtask
+
     function [63:0] rplu_header;
         input [2:0] sel;
         input [3:0] material;
@@ -141,12 +171,20 @@ module spu_spi_slave_tb;
             seen_cfg_material <= 8'd0;
             seen_cfg_addr <= 10'd0;
             seen_cfg_data <= 64'd0;
-        end else if (rplu_cfg_wr_en) begin
-            seen_cfg_wr <= 1'b1;
-            seen_cfg_sel <= rplu_cfg_sel;
-            seen_cfg_material <= rplu_cfg_material;
-            seen_cfg_addr <= rplu_cfg_addr;
-            seen_cfg_data <= rplu_cfg_data;
+            seen_inst_valid <= 1'b0;
+            seen_inst_word <= 64'd0;
+        end else begin
+            if (rplu_cfg_wr_en) begin
+                seen_cfg_wr <= 1'b1;
+                seen_cfg_sel <= rplu_cfg_sel;
+                seen_cfg_material <= rplu_cfg_material;
+                seen_cfg_addr <= rplu_cfg_addr;
+                seen_cfg_data <= rplu_cfg_data;
+            end
+            if (inst_valid) begin
+                seen_inst_valid <= 1'b1;
+                seen_inst_word <= inst_word;
+            end
         end
     end
 
@@ -165,6 +203,15 @@ module spu_spi_slave_tb;
         satellite_snaps  = 4'b1010;
         is_janus_point   = 1'b1;
         dissonance       = 16'hBEEF;
+        qr_commit_valid = 1'b0;
+        qr_commit_lane = 4'd5;
+        qr_commit_A = 64'h0123_4567_89AB_CDEF;
+        qr_commit_B = 64'h1122_3344_5566_7788;
+        qr_commit_C = 64'hFEDC_BA98_7654_3210;
+        qr_commit_D = 64'h8000_0000_0000_0001;
+        hex_valid = 1'b0;
+        hex_q = 16'hFFFE;
+        hex_r = 16'hFFFD;
 
         #200;
         rst_n = 1;
@@ -234,6 +281,59 @@ module spu_spi_slave_tb;
         end else begin
             $display("T4 FAIL: wr=%b sel=%0d material=%0d addr=%h data=%h",
                 seen_cfg_wr, seen_cfg_sel, seen_cfg_material, seen_cfg_addr, seen_cfg_data);
+            fail_count = fail_count + 1;
+        end
+
+        // --- T5: CMD 0xB1 instruction write ---
+        seen_inst_valid = 1'b0;
+        seen_inst_word = 64'd0;
+        spi_inst_write(64'h1D00_0001_0203_0400);
+        if (seen_inst_valid && seen_inst_word === 64'h1D00_0001_0203_0400) begin
+            $display("T5 PASS: B1 instruction chord received exactly");
+            pass_count = pass_count + 1;
+        end else begin
+            $display("T5 FAIL: valid=%b word=%h", seen_inst_valid, seen_inst_word);
+            fail_count = fail_count + 1;
+        end
+
+        // --- T6: CMD 0xAE last QR commit readback ---
+        @(posedge clk);
+        qr_commit_valid = 1'b1;
+        repeat (2) @(posedge clk);
+        qr_commit_valid = 1'b0;
+        spi_transaction(8'hAE, 34);
+        if (rx_buf[0] === 8'h01 && rx_buf[1] === 8'h05 &&
+            {rx_buf[2], rx_buf[3], rx_buf[4], rx_buf[5],
+             rx_buf[6], rx_buf[7], rx_buf[8], rx_buf[9]} === qr_commit_A &&
+            {rx_buf[10], rx_buf[11], rx_buf[12], rx_buf[13],
+             rx_buf[14], rx_buf[15], rx_buf[16], rx_buf[17]} === qr_commit_B &&
+            {rx_buf[18], rx_buf[19], rx_buf[20], rx_buf[21],
+             rx_buf[22], rx_buf[23], rx_buf[24], rx_buf[25]} === qr_commit_C &&
+            {rx_buf[26], rx_buf[27], rx_buf[28], rx_buf[29],
+             rx_buf[30], rx_buf[31], rx_buf[32], rx_buf[33]} === qr_commit_D) begin
+            $display("T6 PASS: last QR5 commit readback is exact");
+            pass_count = pass_count + 1;
+        end else begin
+            $display("T6 FAIL: valid=%02h lane=%02h A=%02h%02h%02h%02h%02h%02h%02h%02h",
+                rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3], rx_buf[4],
+                rx_buf[5], rx_buf[6], rx_buf[7], rx_buf[8], rx_buf[9]);
+            fail_count = fail_count + 1;
+        end
+
+        // --- T7: CMD 0xAF sticky HEX readback ---
+        @(posedge clk);
+        hex_valid = 1'b1;
+        repeat (2) @(posedge clk);
+        hex_valid = 1'b0;
+        spi_transaction(8'hAF, 5);
+        if (rx_buf[0] === 8'h01 && rx_buf[1] === 8'hFF &&
+            rx_buf[2] === 8'hFE && rx_buf[3] === 8'hFF &&
+            rx_buf[4] === 8'hFD) begin
+            $display("T7 PASS: sticky HEX readback is exact");
+            pass_count = pass_count + 1;
+        end else begin
+            $display("T7 FAIL: [%02h,%02h,%02h,%02h,%02h]",
+                rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3], rx_buf[4]);
             fail_count = fail_count + 1;
         end
 
