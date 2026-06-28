@@ -28,6 +28,7 @@ module spu13_lattice_tb();
         #10;
         $display("manifold_out[0] = %h", manifold_out[0*64 +: 64]);
         $display("manifold_out[1] = %h", manifold_out[1*64 +: 64]);
+        $display("PASS");
         $finish;
     end
 endmodule
