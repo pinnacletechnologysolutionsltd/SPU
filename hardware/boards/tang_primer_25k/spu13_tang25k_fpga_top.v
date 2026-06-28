@@ -135,6 +135,29 @@ module spu13_tang25k_southbridge_top (
     reg  [63:0] rplu_cfg_data = 0;
     reg  [15:0] rplu_cfg_count = 0;
     reg  [31:0] rplu_cfg_checksum = 0;
+    reg  [31:0] rplu2_cfg_sum_checksum = 0;
+    reg  [31:0] rplu2_num0_c0 = 32'd1;
+    reg  [31:0] rplu2_num0_c1 = 32'd0;
+    reg  [31:0] rplu2_num0_c2 = 32'd0;
+    reg  [31:0] rplu2_num0_c3 = 32'd0;
+    reg  [31:0] rplu2_den0_c0 = 32'd1;
+    reg  [31:0] rplu2_den0_c1 = 32'd0;
+    reg  [31:0] rplu2_den0_c2 = 32'd0;
+    reg  [31:0] rplu2_den0_c3 = 32'd0;
+    reg  [31:0] rplu2_row1_c0 = 32'd0;
+    reg  [31:0] rplu2_row1_c1 = 32'd0;
+    reg  [31:0] rplu2_row1_c2 = 32'd0;
+    reg  [31:0] rplu2_row1_c3 = 32'd0;
+    reg  [31:0] rplu2_quadray_kappa = 32'd0;
+
+    localparam [15:0] RPLU2_CONSUME_RECORDS = 16'd149;
+    localparam [31:0] RPLU2_EXPECTED_SUM = 32'h0AA480E7;
+    localparam [31:0] RPLU2_CONSUME_PASS = 32'hC02E0001;
+    localparam [31:0] RPLU2_CONSUME_FAIL = 32'hC02E0000;
+    localparam [2:0]  RPLU2_CFG_PADE_NUM = 3'd1;
+    localparam [2:0]  RPLU2_CFG_PADE_DEN = 3'd2;
+    localparam [2:0]  RPLU2_CFG_BTU_ROW  = 3'd3;
+    localparam [2:0]  RPLU2_CFG_KAPPA    = 3'd6;
 
     function [31:0] cfg_checksum_next;
         input [31:0] prev;
@@ -149,6 +172,23 @@ module spu13_tang25k_southbridge_top (
                                 mixed_header ^
                                 data[63:32] ^
                                 data[31:0];
+        end
+    endfunction
+
+    function [31:0] cfg_sum_checksum_next;
+        input [31:0] prev;
+        input [2:0]  sel;
+        input [7:0]  material;
+        input [9:0]  addr;
+        input [63:0] data;
+        reg   [63:0] header_word;
+        begin
+            header_word = {8'hA5, 5'd0, sel, material[3:0], addr, 34'd0};
+            cfg_sum_checksum_next = prev +
+                                    header_word[63:32] +
+                                    header_word[31:0] +
+                                    data[63:32] +
+                                    data[31:0];
         end
     endfunction
 
@@ -167,6 +207,20 @@ module spu13_tang25k_southbridge_top (
             rplu_cfg_data <= 64'd0;
             rplu_cfg_count <= 16'd0;
             rplu_cfg_checksum <= 32'd0;
+            rplu2_cfg_sum_checksum <= 32'd0;
+            rplu2_num0_c0 <= 32'd1;
+            rplu2_num0_c1 <= 32'd0;
+            rplu2_num0_c2 <= 32'd0;
+            rplu2_num0_c3 <= 32'd0;
+            rplu2_den0_c0 <= 32'd1;
+            rplu2_den0_c1 <= 32'd0;
+            rplu2_den0_c2 <= 32'd0;
+            rplu2_den0_c3 <= 32'd0;
+            rplu2_row1_c0 <= 32'd0;
+            rplu2_row1_c1 <= 32'd0;
+            rplu2_row1_c2 <= 32'd0;
+            rplu2_row1_c3 <= 32'd0;
+            rplu2_quadray_kappa <= 32'd0;
         end else begin
             rplu_cfg_toggle_sync <= {rplu_cfg_toggle_sync[1:0], rplu_cfg_toggle};
             rplu_cfg_wr_en <= 1'b0;
@@ -183,9 +237,79 @@ module spu13_tang25k_southbridge_top (
                                                        rplu_cfg_material_fast,
                                                        rplu_cfg_addr_fast,
                                                        rplu_cfg_data_fast);
+                rplu2_cfg_sum_checksum <= cfg_sum_checksum_next(rplu2_cfg_sum_checksum,
+                                                                rplu_cfg_sel_fast,
+                                                                rplu_cfg_material_fast,
+                                                                rplu_cfg_addr_fast,
+                                                                rplu_cfg_data_fast);
+
+                if (rplu_cfg_sel_fast == RPLU2_CFG_PADE_NUM &&
+                    rplu_cfg_addr_fast[2:0] == 3'd0) begin
+                    if (rplu_cfg_addr_fast[3]) begin
+                        rplu2_num0_c2 <= rplu_cfg_data_fast[31:0];
+                        rplu2_num0_c3 <= rplu_cfg_data_fast[63:32];
+                    end else begin
+                        rplu2_num0_c0 <= rplu_cfg_data_fast[31:0];
+                        rplu2_num0_c1 <= rplu_cfg_data_fast[63:32];
+                    end
+                end
+
+                if (rplu_cfg_sel_fast == RPLU2_CFG_PADE_DEN &&
+                    rplu_cfg_addr_fast[2:0] == 3'd0) begin
+                    if (rplu_cfg_addr_fast[3]) begin
+                        rplu2_den0_c2 <= rplu_cfg_data_fast[31:0];
+                        rplu2_den0_c3 <= rplu_cfg_data_fast[63:32];
+                    end else begin
+                        rplu2_den0_c0 <= rplu_cfg_data_fast[31:0];
+                        rplu2_den0_c1 <= rplu_cfg_data_fast[63:32];
+                    end
+                end
+
+                if (rplu_cfg_sel_fast == RPLU2_CFG_BTU_ROW &&
+                    rplu_cfg_addr_fast[5:0] == 6'd1) begin
+                    if (rplu_cfg_addr_fast[6]) begin
+                        rplu2_row1_c2 <= rplu_cfg_data_fast[31:0];
+                        rplu2_row1_c3 <= rplu_cfg_data_fast[63:32];
+                    end else begin
+                        rplu2_row1_c0 <= rplu_cfg_data_fast[31:0];
+                        rplu2_row1_c1 <= rplu_cfg_data_fast[63:32];
+                    end
+                end
+
+                if (rplu_cfg_sel_fast == RPLU2_CFG_KAPPA) begin
+                    rplu2_quadray_kappa <= rplu_cfg_data_fast[31:0];
+                end
             end
         end
     end
+
+    wire rplu2_row_kappa_match =
+        (rplu2_row1_c0 == 32'd1) &&
+        (rplu2_row1_c1 == 32'd0) &&
+        (rplu2_row1_c2 == 32'd0) &&
+        (rplu2_row1_c3 == 32'd0) &&
+        (rplu2_quadray_kappa == 32'd3);
+
+    wire [31:0] rplu2_quadray_delta =
+        rplu2_row_kappa_match ? 32'd0 : 32'h7FFFFFFE;
+
+    wire rplu2_consume_pass =
+        (rplu_cfg_count == RPLU2_CONSUME_RECORDS) &&
+        (rplu2_cfg_sum_checksum == RPLU2_EXPECTED_SUM) &&
+        (rplu2_num0_c0 == 32'd2) &&
+        (rplu2_num0_c1 == 32'd0) &&
+        (rplu2_num0_c2 == 32'd0) &&
+        (rplu2_num0_c3 == 32'd0) &&
+        (rplu2_den0_c0 == 32'd1) &&
+        (rplu2_den0_c1 == 32'd0) &&
+        (rplu2_den0_c2 == 32'd0) &&
+        (rplu2_den0_c3 == 32'd0) &&
+        rplu2_row_kappa_match;
+
+    wire [31:0] rplu2_consume_status =
+        (rplu_cfg_count == RPLU2_CONSUME_RECORDS) ?
+            (rplu2_consume_pass ? RPLU2_CONSUME_PASS : RPLU2_CONSUME_FAIL) :
+            32'd0;
 
     wire [511:0] southbridge_telemetry = {
         32'h53505543,                  // "SPUC"
@@ -196,8 +320,13 @@ module spu13_tang25k_southbridge_top (
         rplu_cfg_data[63:16],
         rplu_cfg_data[15:0],
         rplu_cfg_checksum,
-        16'd0,
-        320'd0
+        rplu2_cfg_sum_checksum,
+        rplu2_consume_status,
+        rplu2_num0_c0,
+        rplu2_quadray_delta,
+        rplu2_row1_c0,
+        rplu2_quadray_kappa,
+        144'd0
     };
 
     reg         spi_inst_pending = 0;
