@@ -15,6 +15,11 @@ nextpnr-himbaechel --device GW5A-LV25MG121NES \
     --vopt cst=hardware/boards/tang_primer_25k/tang_primer_25k_southbridge.cst \
     --json build/spu13_southbridge.json \
     --write build/spu13_southbridge_pnr.json \
+    --log build/spu13_southbridge_nextpnr.log \
+    --report build/spu13_southbridge_timing_report.json \
+    --detailed-timing-report \
+    --placed-svg build/spu13_southbridge_placed.svg \
+    --routed-svg build/spu13_southbridge_routed.svg \
     --freq 12
 
 echo "--- 3. Package Bitstream ---"
