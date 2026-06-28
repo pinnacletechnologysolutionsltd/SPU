@@ -1,9 +1,27 @@
 # RPLU Bring-Up Guard
 
-This guard keeps the Tang Primer 25K RPLU flash-loaded path repeatable after
-the first hardware proof.
+This guard covers both the **legacy RPLU (Morse potential)** and the **RPLU v2
+(Thimble-Padé F_{p^4} pipeline)**. Run the appropriate regression for the build
+target.
 
-## Software Regression
+## RPLU v2 (Thimble-Padé) Regression
+
+The F_{p^4} pipeline is verified with dedicated Verilog testbenches:
+
+```sh
+TB_FILTER=spu13_m31 python3 run_all_tests.py     # M31 multiplier + scalar inverter
+TB_FILTER=spu13_fp4 python3 run_all_tests.py     # F_{p^4} conjugate reduction tower
+TB_FILTER=spu_som_node python3 run_all_tests.py  # SOM node quadrance + training
+TB_FILTER=singular_absorber python3 run_all_tests.py  # Zero-norm exception stress
+TB_FILTER=btu_collision python3 run_all_tests.py # BTU multi-saddle collision
+```
+
+Key proof lines for the F_{p^4} inverter:
+- `inv(1) = 1` — identity preserves
+- `inv(0)` → `FLAGS.V=1` — zero-norm singularity trap
+- `inv(x)` for non-zero x → `Z * Z_inv = 1` — field axiom closure
+
+## Legacy RPLU (Morse Potential) Regression
 
 Run the focused regression before changing the RPLU loader, RPLU tables, or
 SPU-13 axis normalization:
@@ -108,7 +126,6 @@ and lattice disabled but enables both flash-loaded RPLU and the SPU-13
 rotor/Davis math path:
 
 ```sh
-./build_25k_spu13_rplu_math_probe.sh
 tools/probe_tang25k_rplu_flash.py \
   --bitstream build/tang_primer_25k_spu13_rplu_math_probe.fs
 ```
@@ -120,7 +137,6 @@ The next composition step keeps lattice disabled but adds the external SDRAM
 bridge and manifold writeback:
 
 ```sh
-./build_25k_spu13_rplu_math_sdram_probe.sh
 tools/probe_tang25k_rplu_flash.py \
   --bitstream build/tang_primer_25k_spu13_rplu_math_sdram_probe.fs
 ```
@@ -132,11 +148,17 @@ W9825G6KH module on the Dock's 40-pin header and reports the memory proof on
 UART axes `A:A` through `A:C`:
 
 ```sh
-./build_25k_spu13_rplu_full_probe.sh
 tools/probe_tang25k_rplu_flash.py \
   --bitstream build/tang_primer_25k_spu13_rplu_full_probe.fs \
   --expect-sdram-selftest
 ```
+
+Current tree note: the active root-level 25K rebuild script is
+`build_25k_spu13_math_probe.sh`. Several older RPLU/SDRAM rebuild scripts and
+matching synthesis files live under `hardware/boards/archive/`; restore or
+modernize those before claiming a fresh rebuild of the wider RPLU/SDRAM probe
+artifacts. Existing `build/*.fs` artifacts are still valid for first-pass
+replacement-board capture.
 
 On the Tang Primer 25K Dock with the 40-pin W9825G6KH SDRAM module installed,
 the proven board timing is `INVERT_SDRAM_CLK=1` and

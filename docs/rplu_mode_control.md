@@ -2,7 +2,16 @@
 
 ## Overview
 
-The SPU Sovereign Cluster now supports a software-triggered **Adaptive Precision Mode** for all 8 SPU-4 satellite RPLU units. The RP2350 acts as the "Strategist Observer" — polling the cluster's stress state and issuing mode switches when sustained turbulence is detected.
+The SPU Sovereign Cluster supports configurable RPLU modes across two architectures:
+
+| Architecture | Module | Field | Mode Control |
+|:---|:---|:---|:---|
+| **Legacy** (Morse) | `rplu_exp.v` + `rplu_skel.v` | Q(√3) rational surd | SPI CMD 0xAC → `rplu_mode` bit |
+| **v2** (Thimble-Padé) | `rplu_thimble_pade.v` + `spu13_fp4_inverter.v` | F_{p^4} over M31 | PHSLK (0x42) pipeline, FLAGS.V for singularity |
+
+### Legacy RPLU Mode Control
+
+The original Adaptive Precision Mode for SPU-4 satellite RPLU units with Morse potential ROM banks.
 
 ---
 
@@ -49,8 +58,9 @@ RX: [laminar_hi] [laminar_lo] [flags] [mode]
 Send the standard two-chord packet with `sel=6`:
 
 ```
-Header chord: [0xA5][0x00][0x06][0x00][0x00][0x00][0x00][0x00]
-              magic  pad   sel=6 ...
+Command:      [0xA5]
+Header chord: [0xA5][0x06][0x00][0x00][0x00][0x00][0x00][0x00]
+              magic  sel=6 ...
 Data chord:   [0x00][0x00][0x00][0x00][0x00][0x00][0x00][mode]
                                                            ^0=Smooth 1=Turbulent
 ```
@@ -64,7 +74,7 @@ Data chord:   [0x00][0x00][0x00][0x00][0x00][0x00][0x00][mode]
 ## RP2350 Reference Implementation
 
 ```c
-// rplu_observer.c — RPLU Adaptive Mode Controller
+// rplu_southbridge.c — RPLU Adaptive Mode Controller
 // Runs on RP2350 Hazard3 core. Poll rate: ~1kHz.
 
 #include "pico/stdlib.h"
@@ -97,16 +107,18 @@ static uint8_t read_status(uint16_t *laminar, uint8_t *flags, uint8_t *mode) {
 static void set_rplu_mode(rplu_mode_t m) {
     // Header: magic=0xA5, sel=6 at bits[50:48] of 64-bit header
     // Header byte layout (big-endian 8 bytes):
-    //   byte0=0xA5, byte1=0x00, byte2=0x06 (sel in [2:0] of this byte)
-    uint8_t hdr[8] = {0xA5, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00};
+    //   byte0=0xA5, byte1=0x06 (sel in low 3 bits of this byte)
+    uint8_t cmd = 0xA5;
+    uint8_t hdr[8] = {0xA5, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     uint8_t dat[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (uint8_t)m};
     gpio_put(PIN_CS, 0);
+    spi_write_blocking(SPI_PORT, &cmd, 1);
     spi_write_blocking(SPI_PORT, hdr, 8);
     spi_write_blocking(SPI_PORT, dat, 8);
     gpio_put(PIN_CS, 1);
 }
 
-void rplu_observer_task(void) {
+void rplu_southbridge_task(void) {
     static rplu_mode_t current_mode = MODE_SMOOTH;
     static int turbulent_count = 0;
     static int laminar_count   = 0;
@@ -184,3 +196,36 @@ higher-precision manifold anchoring.
 | 5 | `3'd5` | `global_sentinel_mode` (PLC scan) |
 | **6** | **`3'd6`** | **`rplu_mode`** (RPLU bank select) |
 | 7 | `3'd7` | Broadcast to all nodes |
+
+---
+
+## RPLU v2 — Thimble-Padé Mode Control (F_{p^4})
+
+The v2 RPLU operates over the Mersenne prime field F_{p^4} (p = 2^31−1) and
+does not use ROM banks. Mode selection is handled via the PHSLK (0x42) opcode
+pipeline rather than SPI config channels.
+
+### Singularity Exception (FLAGS.V)
+
+When the SOM classifier routes an input vector near a geometric singularity
+(norm → 0), the F_{p^4} conjugate reduction tower asserts **FLAGS.V** before
+the zero-norm reaches the Fermat exponentiation chain. The RP2350 Southbridge
+should monitor this flag via CMD 0xAC byte 2 bit 0 and re-route the path
+integral when asserted.
+
+### Padé Coefficient Loading
+
+Coefficients are loaded via the RCFG (0x50) opcode at boot:
+
+```
+RCFG R1, #COEFF_WORD    ; Load {sel=num/den, addr[2:0], c0, c1, c2, c3}
+```
+
+where each coefficient is a 4-tuple (c0, c1, c2, c3) in F_{p^4} over M31.
+
+### Pipeline Stall Handling
+
+The BTU collision resolver inserts pipeline bubbles when multiple Kohonen
+saddle points activate simultaneously. The Southbridge should poll the
+`pipeline_stall` line (CMD 0xAC byte 2 bit 2) and buffer incoming wave
+vectors during stall windows.

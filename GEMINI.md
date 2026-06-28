@@ -6,7 +6,7 @@
 - **Bridge/Console:** BL616 MCU (USB-C port) providing JTAG programming and verified serial UART telemetry at 115,200 baud on Pin B11.
 - **Clocking:** Raw 50 MHz crystal (PLLA bypassed in open-source synthesis flow).
 - **Storage:** Tang_sdram_xsds v1.3 dual-chip SDRAM module (2x W9825G6KH-6, 64 MB total); SD card (optional) for asset streaming via `spu_sd_inhaler`.
-- **Status:** **Core Math Verified.** SPU-13 ISA (ROTC, QSUB, DELTA) is bit-exact. ROTC TDM core testbench passes all 5 cases. Boot telemetry is active. Rational robotics and SOM/BMU oracles are software-verified with C++ parity.
+- **Status:** **Core Math Verified.** SPU-13 ISA (ROTC, QSUB, DELTA) is bit-exact. ROTC TDM core testbench passes all 5 cases. Boot telemetry is active. Rational robotics and SOM/BMU oracles are software-verified with C++ parity. RPLU v2 Thimble-Padé pipeline with F_{p^4} arithmetic testbench-verified (17 new tests).
 
 ## Hardware/Toolchain Known Issues
 - **CPU/SSPI Config Pins (GW5A-25A):** The Tang Primer 25K raw 50 MHz clock on `E2` sits on special configuration-pin territory.
@@ -50,9 +50,41 @@ for trace equivalence.
 - **Host UART (`uart_tx`):** Pin `C3`.
 - **SPI Flash (PMOD J4 Bottom Row):** Pins `G10` (CS), `D10` (SCK), `C10` (MOSI/D1), `B10` (MISO/DO).
 
+## RPLU v2 — Thimble-Padé Pipeline (June 2026)
+
+The RPLU has been redesigned from Morse-potential lookup tables to a full F_{p^4} rational arithmetic pipeline over the Mersenne prime M31 (p = 2^31 − 1).
+
+### Arithmetic Foundation
+- **Base field:** F_{p^4} over M31 with basis [1, √3, √5, √15].
+- **Multiplier:** 2-stage pipelined, 16 parallel 32×32 products, fast Mersenne reduction via 72-bit chunk split + conditional subtract. (`spu13_m31_multiplier.v`)
+- **Scalar inverter:** Binary Extended Euclidean Algorithm over M31 — zero divisions, shifts + subtracts + conditional P-add. ~180 LUTs. (`spu13_m31_inverter.v`)
+- **F_{p^4} inverter (Conjugate Reduction Tower):** Nested quadratic collapse — Z·Z_conj → F_{p^2}(√3) → scalar norm N → Fermat N^(p-2) → reconstruct. ~76-cycle deterministic latency. Zero-norm detection asserts FLAGS.V. (`spu13_fp4_inverter.v`)
+
+### RPLU Pipeline (4 stages)
+| Stage | Module | Function |
+|:---|:---|:---|
+| Φ₁ | `spu_som_bmu.v` | Kohonen SOM → saddle point BMU |
+| Φ₂ | `spu13_btu_core_top.v` | BTU spatial→F_{p^4} transmutation (4-lane BRAM) |
+| Φ₃ | `rplu_thimble_pade.v` | [4/4] Padé rational approximant via Horner + F_{p^4} inverter |
+| Φ₄ | output latch | Final thimble contribution |
+
+### SOM Layer
+- **Node:** Parallel 3-stage quadrance pipeline (subtract → square → accumulate). 36-bit widened training multiply. (`spu_som_node.v`)
+- **Array:** 7-node parallel instantiation with combinational winner-take-all tree. BMU + second-best + confidence gap in fixed latency. (`spu_som_node_array.v`)
+
+### Resource Estimate (vs. old RPLU)
+| Resource | Old (Morse) | New (F_{p^4}) | Delta |
+|:---|:---|:---|:---|
+| LUTs | ~1,100 | ~3,300 | +3× |
+| BRAMs | 6–8 | 8 | ~same |
+| DSPs | 4 | 16 | +4× |
+| Functional coverage | Morse approx only | Full SOM + BTU + Padé + field arithmetic | |
+
+The 3× LUT / 4× DSP increase replaces 4 separate subsystems with one unified exact-rational pipeline.
+
 ## Upcoming Development Goals
-1. **ROTC Trace Equivalence:** VM-vs-RTL bit-exact verification for all 6 corrected ROTC angles.
-2. **SOM BMU RTL:** Implement `spu_som_bmu.v` — weighted quadrance best-matching-unit stage, then `spu_cluster_reduce.v`.
-3. **Peripheral Bridge:** Integrate RP2350 firmware for USB-A Host functionality.
-4. **I2S Audio:** Move I2S output from RTL-complete to silicon testing.
-5. **GPU Rasterizer:** Validate fragment pipeline in silicon.
+1. **Synthesis target:** Tang 25K place-and-route for F_{p^4} pipeline (+2,200 LUTs over baseline).
+2. **PHSLK opcode integration:** PHSLK core (`spu13_phslk_core.v`) uses jet MAC + shared M31 multiplier for 3-lane coherence check (~12 cycles). PHSLK testbench PASS (spu13_phslk_core_tb). Full-stack PHSLK verified in `spu_full_stack_tb`.
+3. **SOM opcode integration:** Wire `spu_som_node_array` behind SOM (0x2A) and SOM_TRAIN (0x2B) opcodes.
+4. **Peripheral Bridge:** Integrate RP2350 firmware for USB-A Host functionality.
+5. **I2S Audio:** Move I2S output from RTL-complete to silicon testing.

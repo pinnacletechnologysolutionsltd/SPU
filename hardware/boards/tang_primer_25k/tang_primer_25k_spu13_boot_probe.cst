@@ -18,8 +18,8 @@ IO_PORT "uart_tx_telemetry" IO_TYPE=LVCMOS33 DRIVE=8;
 
 IO_LOC "flash_cs"   G10;
 IO_LOC "flash_sck"  D10;
-IO_LOC "flash_mosi" C10;
-IO_LOC "flash_miso" B10;
+IO_LOC "flash_mosi" B10;
+IO_LOC "flash_miso" C10;
 IO_PORT "flash_cs"   IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "flash_sck"  IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "flash_mosi" IO_TYPE=LVCMOS33 DRIVE=8;

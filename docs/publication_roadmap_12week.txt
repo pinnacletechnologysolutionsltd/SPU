@@ -1,0 +1,365 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║         SPU-13 RPLU 2.0 — 12-WEEK PUBLICATION & PROMOTION ROADMAP           ║
+║                     (July – September 2026)                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+VISION:
+  ✅ IEEE paper submitted (Micro / ASPLOS / FCCM target)
+  ✅ ArXiv preprint live + community feedback incorporated
+  ✅ OSHWA certified + GitHub trending
+  ✅ 500+ GitHub stars + 50+ forks
+  ✅ Research collaboration inquiries (5+)
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+WEEK 1–3: METRICS COLLECTION & MEASUREMENT (July)
+────────────────────────────────────────────────────
+
+PARALLEL TRACK A: Power Profiling (2 weeks)
+
+  Week 1–2: Power Measurement Setup
+    [ ] Order INA226 current-sense module (if not available)
+    [ ] Connect to Tang 25K 3.3V rail
+    [ ] Write Python script: read_ina226.py
+    [ ] Test: Idle current measurement @ 0 MHz
+    [ ] Test: Active current measurement @ 12 MHz
+    
+  Deliverable: power_measurements.json (5+ data points, 3 frequency points)
+    - 12 MHz: idle_ma, active_ma, peak_ma
+    - 24 MHz: idle_ma, active_ma, peak_ma
+    - 50 MHz: idle_ma, active_ma, peak_ma
+
+PARALLEL TRACK B: Area & Timing Extraction (1 week)
+
+  Week 1: NextPNR Analysis
+    [ ] Parse build/spu13_rplu2_consume_probe_pnr.json
+    [ ] Extract: LUT4 count, DSP count, BRAM count, critical path
+    [ ] Write: extract_nextpnr_metrics.py
+    [ ] Populate: area_breakdown.json (per-module resource usage)
+    
+  Deliverable: area_breakdown.json (complete resource inventory)
+    - M31 multiplier: LUT, DSP, BRAM, max_freq
+    - F_p^4 inverter: LUT, DSP, BRAM, max_freq
+    - SOM BMU: LUT, DSP, BRAM, max_freq
+    - BTU: LUT, DSP, BRAM, max_freq
+    - Padé: LUT, DSP, BRAM, max_freq
+    - Total utilization percentages
+
+PARALLEL TRACK C: Waveform Capture (2 weeks)
+
+  Week 1–2: GTKWave Export
+    [ ] Run: iverilog + vvp on all RTL testbenches
+    [ ] Generate: M31_multiplier.vcd, FP4_inverter.vcd, SOM_BMU.vcd, RPLU_pipeline.vcd
+    [ ] Export to PNG via gtkwave:
+        gtkwave trace.vcd --png --width 1200 --height 800
+    [ ] Create timing diagram captions (for paper figures)
+    
+  Deliverable: figures/waveforms/ (4 publication-ready PNGs)
+    - spu13_m31_multiplier_waveform.png (20 cycles)
+    - spu13_fp4_inverter_waveform.png (100 cycles, 4 stage sections)
+    - spu13_som_bmu_waveform.png (30 cycles)
+    - spu13_rplu_pipeline_waveform.png (150 cycles, full trace)
+
+SERIAL TRACK: Test Coverage Finalization (1 week)
+
+  Week 3: Coverage Audit
+    [ ] Run: python3 run_all_tests.py (full suite)
+    [ ] Capture: stdout → test_results.log
+    [ ] Parse: PASS/FAIL counts per testbench
+    [ ] Populate: test_coverage.json
+    [ ] Target: 95+ testbenches, 100% PASS
+    
+  Deliverable: test_coverage.json (complete test inventory)
+    - Test count: 95+
+    - Pass count: 95+
+    - Pass rate: 100%
+    - Oracle validation: Python vs RTL (bit-exact)
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+WEEK 4–6: PAPER FINALIZATION & IEEE SUBMISSION (August)
+──────────────────────────────────────────────────────────
+
+TRACK A: Content Completion (2 weeks)
+
+  Week 4: Main Paper Sections
+    [ ] Section 1 (Introduction): Add quantitative findings from Week 1–3
+      - "At 12 MHz, SPU-13 dissipates 25 mW active power, delivering ..."
+      - "Compared to floating-point CPU baseline at same latency: 100× energy savings"
+    
+    [ ] Section 2 (Related Work): Literature review (1.5 pages)
+      - Jet algebra hardware (cite theoretical papers)
+      - Exact rational arithmetic accelerators
+      - FPGA SOM implementations (Himavathi et al., recent)
+      - Deterministic computing (safety-critical systems)
+    
+    [ ] Section 3 (Architecture): Refine from rplu_paper_hw_section.tex
+      - Stage 1–4 pipeline diagrams (use waveforms from Week 1–3)
+      - Algorithm boxes (Padé [4/4], BTU collision resolver, F_p^4 inverter)
+    
+    [ ] Section 4 (Implementation):
+      - Resource table (from area_breakdown.json)
+      - Two target platforms (Artix-7 reference, GW5A-25A prototype)
+      - Synthesis flow (Yosys + NextPNR + Gowin)
+    
+    [ ] Section 5 (Results):
+      - Power vs frequency graph (matplotlib, from power_measurements.json)
+      - Latency breakdown chart (per-stage pipeline profiling)
+      - Comparative table (SPU-13 vs CPU/GPU/prior FPGA)
+      - Case study: Rational robotics (inverse kinematics via SOM)
+    
+    [ ] Section 6 (Discussion & Conclusion): 2 pages
+      - Determinism guarantees (no subnormal, no rounding drift)
+      - Trade-offs (exact arithmetic → lower throughput than FP32)
+      - Future work: Henosis stability mechanism, distributed clusters
+
+  Week 5–6: Proofing & Submission
+    [ ] Final proofread (grammar, notation consistency, figure captions)
+    [ ] Verify all figures are vector PDFs (not raster)
+    [ ] Complete reference list + DOI cross-check
+    [ ] Author affiliations & contact info finalized
+    [ ] Supplementary materials:
+        - Appendix A: A₃₁ algebra axioms & properties
+        - Appendix B: Verilog instantiation diagram (block diagram)
+        - Appendix C: Testbench methodology (24 test classes, coverage)
+        - Appendix D: Git commit hash (for reproducibility)
+        - Appendix E: Power measurement raw data (CSV)
+    
+    [ ] Create supplementary code artifact:
+        - Tag GitHub release: v1.0-paper-submission
+        - Include: all RTL, testbenches, Python oracles, measurement scripts
+        - Upload: Zenodo DOI for archival
+    
+    [ ] Submit to primary venue:
+        Option 1: IEEE Micro (rolling submissions)
+        Option 2: ASPLOS (if deadline not passed, typically August)
+        Option 3: FCCM (check rolling deadline)
+
+  Deliverable: rplu_paper_2026_v1.pdf (final, 13 pages + refs + appendix)
+
+TRACK B: Comparative Baselines (1 week, parallel)
+
+  Week 4: Benchmark Collection
+    [ ] Find published CPU benchmarks (floating-point Jacobian computation)
+    [ ] Find published GPU benchmarks (tensor evaluation)
+    [ ] Extract numbers: latency (µs), power (W), area (if available)
+    [ ] Contact researchers if needed (cite preprints)
+    [ ] Populate: comparative_baselines.json
+    
+  Deliverable: comparative_baselines.json (5–8 systems)
+    - SPU-13 (exact, 12 MHz)
+    - SPU-13 (exact, 24 MHz)
+    - SPU-13 (exact, 50 MHz)
+    - Intel Core i9 (FP32, 5 GHz)
+    - NVIDIA A100 (TF32)
+    - Prior FPGA work (if found)
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+WEEK 7–9: ARXIV & OSHWA CERTIFICATION (August–September)
+──────────────────────────────────────────────────────────
+
+TRACK A: ArXiv Submission (1 week, Week 7)
+
+  Week 7: Preprint Preparation
+    [ ] Convert IEEE .tex to ArXiv-compatible LaTeX (no proprietary packages)
+    [ ] Create arXiv-specific README:
+        ```
+        # SPU-13 RPLU 2.0: A Hardware Jet Algebra Coprocessor
+        
+        Paper: https://arxiv.org/abs/2406.xxxxx
+        Code: https://github.com/spu13/spu13 (see tag v1.0-paper-submission)
+        DOI: https://doi.org/10.5281/zenodo.xxxxxxx
+        
+        To reproduce:
+          1. Clone repo: git clone https://github.com/spu13/spu13.git
+          2. Build tests: python3 run_all_tests.py
+          3. Collect metrics: python3 tools/metrics_collection_plan.py --collect-all
+        ```
+    
+    [ ] Prepare supplementary video (YouTube link)
+        - 5–10 min demo: Tang 25K + RP2350 + telemetry output
+        - Title: "RPLU 2.0 Hardware Demo: Exact Rational Arithmetic on FPGA"
+        - Include: block diagram overlay, timing waveforms, telemetry stream
+    
+    [ ] Register ArXiv account (if not done)
+    [ ] Submit to:
+        - Primary: cs.AR (Computer Architecture)
+        - Secondary: eess.SP (Signal Processing) or q-bio.QM (Quantitative Methods)
+    
+  Deliverable: arXiv paper published + indexed within 24 hours
+
+TRACK B: OSHWA Certification (2 weeks, Week 7–8)
+
+  Week 7: Documentation Assembly
+    [ ] Create HARDWARE.md:
+        - Bill of Materials (Tang 25K, RP2040, RP2350, PMOD J4 flash)
+        - Schematic (reference Tang 25K open-source design, link to PJRC)
+        - Assembly procedure (step-by-step)
+        - Test procedure (run RTL testbenches, describe expected output)
+    
+    [ ] Create TESTING.md:
+        - Functional test procedure (run_all_tests.py)
+        - Hardware bring-up checklist (power, SRAM load, UART communication)
+        - Expected results (all testbenches PASS)
+        - Troubleshooting (if test fails, what to check)
+    
+    [ ] Create MAINTENANCE.md:
+        - Known issues (if any)
+        - Errata / patches
+        - Community contributions process (GitHub issues, PRs)
+        - Roadmap (Q1–Q2 2027 multi-platform support)
+    
+    [ ] Add SPDX license headers to all source files:
+        // SPDX-License-Identifier: CC0-1.0
+        // SPU-13 RPLU v2.0 — Public Domain
+    
+    [ ] Verify no GPL/MIT/Apache license conflicts
+    
+  Week 8: OSHWA Application
+    [ ] Visit https://certification.oshwa.org/
+    [ ] Fill out certification form:
+        - Hardware category: FPGA + MCU + Sensors
+        - Design description (500 words)
+        - GitHub URL (public repository)
+        - License: CC0 1.0 Universal (public domain)
+        - Upload documentation PDFs: HARDWARE.md, TESTING.md, MAINTENANCE.md
+    
+    [ ] Pay $50 certification fee (Stripe)
+    [ ] Receive OSHWA # within 7 business days
+    [ ] Add OSHWA badge to GitHub README
+    
+  Deliverable: OSHWA certified (#RX000001 example)
+
+TRACK C: GitHub Preparation (parallel, Week 7–8)
+
+  Week 7–8: Repository Optimization
+    [ ] Update README.md:
+        - Add power graph (matplotlib PNG from power_measurements.json)
+        - Add block diagram (SVG or PDF)
+        - Add OSHWA badge + links
+        - Add GitHub topics: fpga, hardware, rational-arithmetic, open-source
+    
+    [ ] Create GitHub discussion board:
+        - Welcome post
+        - Research collaboration inquiry form
+        - Bug report template
+        - Feature request template
+    
+    [ ] Create GitHub release: v1.0-paper-submitted
+        - Attach: bitstreams (Tang 25K, Artix-7)
+        - Attach: supplementary data (power JSON, area JSON, test results)
+        - Link to: ArXiv paper + OSHWA certificate
+    
+    [ ] Setup GitHub Pages:
+        - Deploy: docs/_config.yml (Jekyll theme)
+        - Host: Paper summary + quick-start guide
+        - Link to: ArXiv, GitHub releases, OSHWA
+    
+  Deliverable: GitHub repo optimized for discoverability + collaboration
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+WEEK 10–12: COMMUNITY PROMOTION (September)
+──────────────────────────────────────────────
+
+WEEK 10: RESEARCH & MAKER COMMUNITY (September 1–7)
+
+  [ ] Email outreach (day 1–2):
+      - Delft QuTech (quantum error correction researchers)
+      - Jiuzhang lab (quantum photonics)
+      - Wildberger rational geometry community
+      - IEEE Micro editorial board
+      - ASPLOS organizing committee
+  
+  [ ] Hacker News submission (day 3):
+      Headline: "RPLU 2.0: Open-Source Hardware for Deterministic Rational Arithmetic (No Floating-Point)"
+      Time: 9 AM Eastern (optimal engagement)
+      Link: ArXiv paper
+      Target: 200+ upvotes, 100+ comments
+  
+  [ ] Reddit posts (day 3–4):
+      - r/FPGA: "Show & Tell" thread
+      - r/electronics: Architecture thread
+      - r/math: Rational geometry + Wildberger methods thread
+      - r/RaspberryPi: Southbridge ecosystem thread
+
+WEEK 11: ACADEMIC NETWORKS & BLOGS (September 8–14)
+
+  [ ] Mailing lists (day 1):
+      - FPGA-L list
+      - OpenHW Group
+      - ACM SIGARCH
+  
+  [ ] Blog post series (day 2–7):
+      Post 1: "Why Exact Rational Arithmetic Matters" (Medium)
+      Post 2: "Jet Algebra: Computing Derivatives without Floating-Point" (Medium)
+      Post 3: "Building RPLU on FPGA: Synthesis to Silicon" (Dev.to)
+      Post 4: "Benchmarking Determinism: FPGA vs CPU vs GPU" (Personal blog)
+  
+  [ ] YouTube video (day 5–6):
+      - Screen record: Tang 25K + RP2350 + telemetry demo
+      - Narration: 5–10 minutes
+      - Graphics: Block diagram overlay, timing waveforms
+      - Upload to YouTube + link in ArXiv
+
+WEEK 12: INDUSTRY & LONG-TAIL VISIBILITY (September 15–21)
+
+  [ ] Industry partnerships (day 1):
+      - Contact Xilinx/AMD (FPGA innovation program)
+      - Contact Gowin (academic board donations)
+      - Contact SparkFun (featured product outreach)
+  
+  [ ] Podcast / Interview (day 2–3):
+      - Target: Embedded.fm, FPGA Design Mag, local tech meetup
+      - Duration: 30–60 minutes
+      - Focus: Determinism, open-source hardware, research applications
+  
+  [ ] Press release (optional, day 4):
+      - Distribute to: tech news aggregators, maker media
+      - Include: OSHWA certification, ArXiv link, code availability
+  
+  [ ] Community feedback integration (day 5–7):
+      - Monitor: Hacker News, Reddit, ArXiv comments
+      - Respond: Questions, feature requests, bug reports
+      - Plan: Minor updates based on feedback
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+EXPECTED OUTCOMES (end of Week 12)
+──────────────────────────────────
+
+SUCCESS METRICS:
+  ✅ IEEE paper: Submitted to Micro / ASPLOS / FCCM
+  ✅ ArXiv: 1,000+ downloads in first month
+  ✅ OSHWA: Certified + badge visible on GitHub
+  ✅ GitHub: 500+ stars, 50+ forks
+  ✅ Visibility: Hacker News 200+ votes, Reddit 500+ comments
+  ✅ Outreach: 5+ research collaboration inquiries
+  ✅ Community: 10+ custom builds reported (GitHub issues)
+
+NEXT PHASE (Post-Week 12):
+  → IEEE review cycle (3–4 months)
+  → Community-driven improvements (Issues, PRs)
+  → RPLU2 silicon proof (FPGA validation)
+  → Multi-platform expansion (Q1 2027, if demand emerges)
+  → Research collaborations (Delft QuTech, Jiuzhang, etc.)
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+RESOURCE CHECKLIST:
+
+  ✅ Existing: RTL code, testbenches, Python/C++ oracles
+  ✅ Existing: LaTeX paper template + sections
+  ✅ Existing: GitHub repository (public)
+  ✅ TODO: Power measurement equipment (INA226, $10)
+  ✅ TODO: YouTube account (free)
+  ✅ TODO: Medium / Dev.to accounts (free)
+  ✅ TODO: 50 hours of labor (measurement + paper + promotion)
+  ✅ Waiverable: IEEE publication fee ($2k, open-access waiver available)
+  ✅ OSHWA fee: $50 (one-time, non-refundable)
+
+TOTAL EFFORT: 50–60 person-hours over 12 weeks (4–5 hours/week)
+TOTAL COST: $60–2,060 depending on publication fees & equipment availability
+
+═══════════════════════════════════════════════════════════════════════════════════

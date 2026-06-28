@@ -36,7 +36,8 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/core/spu13/spu_som_bmu.v \
     hardware/rtl/core/spu13/spu_cluster_reduce.v \
     hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v \
-    hardware/rtl/arch/spu_bio_stubs.v
+    hardware/rtl/arch/spu_bio_stubs.v \
+    hardware/rtl/peripherals/io/surd_uart_tx.v
 
 chparam -set ENABLE_SDRAM 0 \
         -set ENABLE_CORE_RPLU 0 \

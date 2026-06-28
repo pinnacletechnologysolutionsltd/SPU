@@ -1,12 +1,11 @@
 # SOM/BMU Classifier Bring-Up Plan
 
-Date: 2026-06-17
+Date: 2026-06-24 (updated for RPLU v2 parallel array)
 
 This plan covers bringing the Self-Organizing Map / Best-Matching-Unit classifier
-from RTL simulation through to silicon on the Tang Primer 25K. The SOM pipeline is
-the best near-term development path because it is RTL-verified, has a complete
-software oracle, and can advance in simulation while waiting for the replacement
-FPGA board.
+from RTL simulation through to silicon on the Tang Primer 25K. The SOM pipeline
+has been upgraded from serial scan (`spu_som_bmu.v`) to a parallel 7-node array
+(`spu_som_node_array.v`) with combinational winner-take-all.
 
 ## What's Already Proven
 
@@ -14,31 +13,45 @@ FPGA board.
 |---|---|---|
 | Rational SOM oracle (Python) | PASS — 24 checks | `software/tests/test_rational_som.py` |
 | Rational SOM oracle (C++) | PASS — parity with Python | `software/common/tests/spu_rational_som_test.cpp` |
-| RTL BMU scan (`spu_som_bmu.v`) | PASS — 7-node fixture | `test_som_bmu_rtl_trace.py` |
-| RTL cluster reduce (`spu_cluster_reduce.v`) | PASS — label + ambiguity | `test_som_bmu_rtl_trace.py` |
+| Serial BMU scan (`spu_som_bmu.v`) | PASS — 7-node fixture | `test_som_bmu_rtl_trace.py` |
+| **Parallel SOM node** (`spu_som_node.v`) | PASS — 4 checks (quadrance + training) | `spu_som_node_tb.v` |
+| **Parallel SOM array** (`spu_som_node_array.v`) | Compiles — WTA tree verified | `spu_som_node_array.v` |
+| **BTU collision resolver** | PASS — 7 scenarios (single/dual/triple/zero) | `btu_collision_tb.v` |
 | VM-vs-RTL trace equivalence | PASS — bit-exact on all BMU scenarios | `test_som_bmu_rtl_trace.py` |
 | Core integration (`spu13_core.v`) | Synthesises behind `ENABLE_CORE_SOM=1` | `spu13_core.v:1114-1198` |
-| Opcode 0x2A `SOM_CLASSIFY` | Wired into sequencer FSM | `spu13_core.v:1178-1192` |
-| Resource cost with SOM | +39 LUTs (TDM path) | `ENABLE_CORE_SOM` parameter |
+| Opcode 0x2A `SOM` / 0x2B `SOM_TRAIN` | Wired into sequencer FSM | `spu13_core.v:1178-1192` |
 
-## Architecture Recap
+## Architecture — RPLU v2 Parallel Array
 
 ```
 QR regfile lane[s]
     │
-    │ 4 RationalSurd features (256 bits)
+    │ 4 RationalSurd features (288 bits, 4×{P18,Q18})
     ▼
-spu_som_bmu (MAX_NODES=7, NUM_FEATURES=4)
-    │  serial scan: weighted quadrance per node
-    │  stable tie-breaking (lower node_id wins)
-    ▼
-spu_cluster_reduce
-    │  cluster label, confidence_gap, ambiguity flag
-    ▼
-material_id gating (SOM label → RPLU material index)
-    │
-    ▼
-hex_q/hex_r → UART telemetry
+┌─────────────────────────────────────────────────────┐
+│  spu_som_node_array (MAX_NODES=7, NUM_FEATURES=4)  │
+│  ┌──────────┐ ┌──────────┐       ┌──────────┐      │
+│  │ node[0]  │ │ node[1]  │  ...  │ node[6]  │      │
+│  │ 3-stage  │ │ 3-stage  │       │ 3-stage  │      │
+│  │ quadrance│ │ quadrance│       │ quadrance│      │
+│  └────┬─────┘ └────┬─────┘       └────┬─────┘      │
+│       └─────────────┴─────────────────┘             │
+│                     │                               │
+│          Winner-Take-All Comparator Tree             │
+│          BMU + 2nd-best + confidence gap             │
+└──────────────────────┬──────────────────────────────┘
+                       │
+                       ▼
+              cluster_label, ambiguity flag
+                       │
+                       ▼
+              BTU → F_{p^4} coordinates
+                       │
+                       ▼
+              rplu_thimble_pade (Padé approximant)
+                       │
+                       ▼
+              hex_q/hex_r → UART telemetry
 ```
 
 ### Seven-Node Hex Fixture (Hardcoded in `spu_som_bmu.v`)

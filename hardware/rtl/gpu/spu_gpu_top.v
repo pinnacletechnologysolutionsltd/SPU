@@ -4,7 +4,9 @@
 // No framebuffer: pixels stream out synchronously with display timing.
 // CC0 1.0 Universal.
 
-module spu_gpu_top (
+module spu_gpu_top #(
+    parameter DEVICE = "GW5A"
+) (
     input  wire        clk_pixel,    // 25 MHz
     input  wire        clk_tmds,     // 250 MHz
     input  wire        rst_n,
@@ -83,7 +85,7 @@ module spu_gpu_top (
         .vga_hsync(vga_hsync), .vga_vsync(vga_vsync));
 
     // ── hal_hdmi ─────────────────────────────────────────────────────────
-    hal_hdmi u_hdmi (.clk_pixel(clk_pixel), .clk_tmds(clk_tmds), .rst_n(rst_n),
+    hal_hdmi #(.DEVICE(DEVICE)) u_hdmi (.clk_pixel(clk_pixel), .clk_tmds(clk_tmds), .rst_n(rst_n),
         .r({rast_r, 4'h0}), .g({rast_g, 4'h0}), .b({rast_b, 4'h0}),
         .hsync(hsync), .vsync(vsync), .active(active),
         .tmds_clk_p(tmds_clk_p), .tmds_clk_n(tmds_clk_n),

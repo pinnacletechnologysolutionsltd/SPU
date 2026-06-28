@@ -48,14 +48,17 @@ Operation:
   5. If not coherent: Rd = nearest mismatch, FLAGS.C=0
 ```
 
-### HW Integration (Minimal Delta)
+### HW Integration (Updated for RPLU v2)
 
 | Component | Change |
 |-----------|--------|
 | `spu_rau.v` | Add PHSLK path (already exists) |
-| `spu_rplu_exp.v` | Route `ratio_cmp` to RAU for SOM coherence check |
-| `spu_isa_decoder.v` | SOM_CLASSIFY → RAU start + RPLU read (already maps 0x2A) |
-| `spu_som_bmu.v` | Keep for training (SOM_TRAIN); classify via temporal path |
+| `spu13_fp4_inverter.v` | Conjugate reduction tower for F_{p^4} denominator inversion |
+| `rplu_thimble_pade.v` | [4/4] Padé rational approximant over F_{p^4} via Horner + inverter |
+| `spu_som_node_array.v` | Parallel 7-node array with WTA tree (replaces serial scan) |
+| `spu13_btu_core_top.v` | BTU spatial→F_{p^4} transmutation (4-lane BRAM) |
+| `spu_btu_collision_resolver.v` | Multi-saddle collision priority encoder + bubble insertion |
+| `spu_isa_decoder.v` | SOM (0x2A) → node array start; SOM_TRAIN (0x2B) → weight update |
 
 ### Assembler Syntax
 
@@ -64,12 +67,14 @@ Operation:
 LOAD    R1, [R0, #input_addr]
 
 ; Classify against cluster 3 (stored in RPLU material 3)
-SOM_CLASSIFY R2, R1, 3
+; Uses parallel 7-node array → WTA → BTU → Padé pipeline
+SOM     R2, R1, 3
 JC      #match
 ; Not classified → handle unknown
 JMP     #done
 match:
 ; R2 contains cluster label
+; FLAGS.V=1 if singularity encountered (zero-norm in Padé denominator)
 done:
 ```
 
@@ -78,10 +83,18 @@ done:
 | Approach | Cycles | Type |
 |----------|--------|------|
 | Current BMU scan (7 nodes) | 35+ | Serial search |
+| **New parallel node array** | **5** | Parallel quadrance + WTA (3-stage pipeline) |
+| Full Thimble-Padé pipeline | ~120 | SOM + BTU + Padé evaluate + F_{p^4} invert + multiply |
 | Temporal PHSLK classify | 3-4 | Boundary resolve |
-| Speedup | ~10× | — |
+| Speedup (vs serial scan) | ~10× | — |
 
 The temporal path doesn't replace SOM_TRAIN — the existing training engine still
-updates RPLU material entries. The innovation is in how classification is done:
-not by scanning all nodes, but by checking phase coherence against the target
-cluster in a single cycle.
+updates weights. The innovation is in how classification is done: not by scanning
+all nodes, but by evaluating all 7 nodes in parallel through the 3-stage quadrance
+pipeline, then selecting the winner via combinational WTA tree in a single cycle.
+
+For applications requiring field inversion (Padé denominator evaluation), the
+full Thimble-Padé pipeline adds the conjugate reduction tower (~76 cycles) plus
+the final F_{p^4} multiply, for ~120 cycles total. The zero-norm singularity
+guard (FLAGS.V) prevents silent corruption when the classification lands on a
+geometric boundary.

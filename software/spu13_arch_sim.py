@@ -22,6 +22,10 @@ import sys
 import os
 sys.dont_write_bytecode = True
 
+# Import audio sink for OP_SENT telemetry
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
+from audio_sink import AudioSink, AudioToken
+
 # ═════════════════════════════════════════════════════════════════════════════
 # SPU-13 ISA Constants (matching spu_isa_defines.vh)
 # ═════════════════════════════════════════════════════════════════════════════
@@ -505,6 +509,9 @@ class SPU13Core:
             'hex': (0, 0),
         }
 
+        # ── Audio sink (decoupled, no back-pressure on pipeline) ──
+        self.audio_sink = AudioSink(sample_rate=48000, fifo_depth=64)
+
     def _flag(self, bit, set_to=True):
         if set_to:
             self.FLAGS |= (1 << bit)
@@ -818,6 +825,28 @@ class SPU13Core:
 
         elif opcode == OP_HEX:
             self.telemetry['hex'] = (0x1234, 0x5678)
+
+        # ── Audio event token ──
+        elif opcode == OP_SENT:
+            # Format X: resv[55:0] encodes which twin-register to emit.
+            # Bit 55 = use C (Confirmation) instead of O (Offer)
+            # Bits 54:50 = register index (0..31)
+            op, resv = decode_X(word)
+            use_conf = bool((resv >> 55) & 1)
+            reg_idx = (resv >> 50) & 0x1F
+            q = self.R[reg_idx]['C' if use_conf else 'O']
+            token = AudioToken(
+                c0=self._quad_to_int(q),
+                c1=q.b.p.num if isinstance(q.b, RationalSurd) else 0,
+                c2=q.c.p.num if isinstance(q.c, RationalSurd) else 0,
+                c3=q.d.p.num if isinstance(q.d, RationalSurd) else 0,
+            )
+            self.audio_sink.write_token(token)
+            if self.trace:
+                name = self._reg_name(reg_idx)
+                wave = 'C' if use_conf else 'O'
+                print(f"  SENT  → R[{name}].{wave}  "
+                      f"(c0={token.c0}, c1={token.c1}, fifo={len(self.audio_sink._fifo)})")
 
         else:
             if self.verbose:

@@ -13,9 +13,20 @@ Uses `iverilog` to compile every `*_tb.v` / `testbench*.v` file found recursivel
 iverilog -y hardware/common/rtl -I hardware/common/rtl \
          -y hardware/spu13/rtl  -I hardware/spu13/rtl  \
          -y hardware/spu4/rtl   -I hardware/spu4/rtl   \
+         -y hardware/rtl/core/spu13 -I hardware/rtl/core/spu13 \
+         -y hardware/rtl/gpu    -I hardware/rtl/gpu    \
          -y reference/synergeticrenderer/Laminar-Core/hardware/archive \
          -o test.vvp hardware/common/tests/spu_whisper_tb.v
 vvp test.vvp
+```
+
+### Run RPLU v2 tests
+```bash
+TB_FILTER=spu13_m31 python3 run_all_tests.py     # M31 multiplier + inverter
+TB_FILTER=spu13_fp4 python3 run_all_tests.py     # F_{p^4} conjugate reduction tower
+TB_FILTER=spu_som_node python3 run_all_tests.py  # SOM node classification + training
+TB_FILTER=singular_absorber python3 run_all_tests.py  # Zero-norm exception stress test
+TB_FILTER=btu_collision python3 run_all_tests.py # BTU multi-saddle collision stress
 ```
 
 ### Run a pre-compiled simulator
@@ -33,9 +44,9 @@ gtkwave spu13_deep_spin.vcd &    # Most detailed trace (11 MB)
 gtkwave artery_trace.vcd &
 ```
 
-### Synthesise for iCE40
+### Synthesise for Artix-7
 ```bash
-yosys -m ghdl synth_ice40.ys     # Produces spu13.json netlist
+bash hardware/boards/artix7/build_a7.sh    # Primary target (100T, 240 DSP48E1)
 ```
 
 ### Regenerate BRAM initialisation
@@ -82,6 +93,20 @@ hardware/spu13/rtl/
   spu_janus_mirror.v  — Janus-bit reflection (dual-polarity geometry)
   spu_permute_13.v    — 13-axis permutation network
   davis_gate_dsp.v    — DSP-optimised Davis Law stability checker (Quadrance)
+
+hardware/rtl/core/spu13/   — RPLU v2 Thimble-Padé Pipeline
+  spu13_m31_multiplier.v   — F_{p^4} multiplier over M31 (16 parallel DSPs, Mersenne reduction)
+  spu13_m31_inverter.v     — BEEA scalar modular inverter (~180 LUTs, zero divisions)
+  spu13_fp4_inverter.v     — Conjugate Reduction Tower (F_{p^4} inversion, ~76 cycles)
+  spu13_btu_core_top.v     — BTU core: Kohonen→F_{p^4} spatial router (4-lane BRAM)
+  spu_btu_collision_resolver.v — Priority encoder + bubble stall (64→6, backlog queue)
+  spu13_multi_port_regfile.v   — 4R2W register file with write-forwarding bypass
+  spu_som_node.v           — Individual SOM node (3-stage parallel quadrance pipeline)
+  spu_som_node_array.v     — Parallel SOM array with combinational WTA tree
+  rplu_pipeline.v          — 4-stage top: Φ₁(Kohonen)→Φ₂(BTU)→Φ₃(Padé)→Φ₄(Output)
+
+hardware/rtl/gpu/
+  rplu_thimble_pade.v      — [4/4] Padé rational approximant over F_{p^4} (Horner + inverter)
 ```
 
 ### Stability mechanism — Davis Law Gasket
@@ -135,7 +160,7 @@ Modules must be **single-purpose** ("Lithic") and **zero-drift** ("Laminar"). Sp
 ### Adding a new Verilog module
 1. Place RTL in the appropriate `hardware/*/rtl/` subdirectory.
 2. Add a corresponding `*_tb.v` testbench in `hardware/*/tests/`.
-3. If needed, add the new RTL path to `synth_ice40.ys`.
+3. If needed, add the new RTL path to the board-specific synth script (e.g., `synth_gowin_25k_spu13_rplu_v2.ys`).
 4. Run `python3 run_all_tests.py` before committing — 100 % PASS required.
 
 ### Surd encoding reference

@@ -234,4 +234,33 @@ SPREAD R4, QR0, QR1     ; R4=numer, R5=denom
 
 ---
 
+## Next-Gen ISA v1.0 — RPLU v2 & SOM Opcodes
+
+The Wheeler-Feynman Next-Gen ISA (`docs/spu13_isa_spec.md`) adds temporal
+classification and Thimble-Padé rational approximation:
+
+| Opcode | Mnemonic | Description |
+|:---|:---|:---|
+| 0x2A | SOM | Classify via parallel 7-node array + WTA tree over F_{p^4} |
+| 0x2B | SOM_TRAIN | Update node weights via 36-bit widened multiply |
+| 0x40 | OFFR | Load Offer wave (past boundary constraint) |
+| 0x41 | CNFM | Load Confirmation wave (future boundary constraint) |
+| 0x42 | PHSLK | Phase-lock: solve bidirectional boundary-value problem |
+| 0x43 | INVJ | Invert through Janus point |
+| 0x50 | RCFG | Write RPLU v2 Padé coefficient (F_{p^4} 4-tuple) |
+
+RTL modules (`hardware/rtl/core/spu13/`):
+- `spu13_m31_multiplier.v` — F_{p^4} multiplier (16 DSP, 2-stage, Mersenne reduction)
+- `spu13_fp4_inverter.v` — Conjugate reduction tower (~76-cycle F_{p^4} inversion)
+- `spu_som_node_array.v` — Parallel 7-node SOM with WTA comparator
+- `rplu_thimble_pade.v` — [4/4] Padé rational approximant
+
+Assemble for next-gen ISA:
+```bash
+python3 software/tools/spu13_asm.py --arch wf --hex program.sas
+```
+
+---
+
+*See [`docs/spu13_isa_spec.md`](../docs/spu13_isa_spec.md) for the full v1.0 ISA specification.*
 *See [`knowledge/MATHEMATICAL_FOUNDATIONS.md`](MATHEMATICAL_FOUNDATIONS.md) for the full theoretical derivation.*

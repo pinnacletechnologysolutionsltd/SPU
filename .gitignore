@@ -13,6 +13,8 @@ tmp_*.vvp
 
 # Compiled C++ test binaries (source is *_test.cpp)
 software/common/tests/*_test
+# Generated test binary (produced by test runner)
+software/common/tests/spu13_arch_test
 
 # Root-level test logs
 *.log
