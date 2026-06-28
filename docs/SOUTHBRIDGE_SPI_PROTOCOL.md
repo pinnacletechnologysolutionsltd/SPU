@@ -1,10 +1,10 @@
-# Sovereign Processor Unit — Southbridge SPI Protocol v1.0
+# Sovereign Processor Unit — Southbridge SPI Protocol v1.1
 
-**Document:** SPU Southbridge Serial Protocol  
-**Version:** 1.0 (2026-06-28)  
-**Hardware:** Tang Primer 25K (GW5A-25A FPGA, `spu_spi_slave.v`)  
-**Master:** RP2350 Microcontroller (SPI0 @ 2 MHz, Mode 0)  
-**Status:** Verified in RTL testbench (spu_spi_slave_tb.v PASS)
+**Document:** SPU Southbridge Serial Protocol
+**Version:** 1.1 (2026-06-28)
+**Hardware:** Tang Primer 25K (GW5A-25A FPGA, `spu_spi_slave.v`)
+**Master:** RP2350 Microcontroller (SPI0 @ 2 MHz, Mode 0)
+**Status:** RTL testbench PASS; Tang 25K/RP2350 `0xAC` status read verified
 
 ---
 
@@ -16,29 +16,127 @@ The **Southbridge** is the compute engine side of the RP2350↔FPGA bridge. It i
 - **Synchronous:** All edges are sampled on the rising edge of the system clock (50 MHz)
 - **Big-endian:** All multi-byte values streamed MSB first
 - **Latched:** Entire manifold snapshot captured atomically at CS assertion
-- **Sticky state:** QR, HEX, and RPLU ratio results held until next read
+- **Sticky state:** HEX and RPLU ratio valid bits clear on read; QR commit remains latched until overwritten or reset
 - **SPI Mode 0:** CPOL=0, CPHA=0 (sample on leading edge, shift on trailing edge)
 
-### Pinout (PMOD J4 Bottom Row → RP2350 SPI0)
+### Southbridge Pinout (PMOD J4 Bottom Row -> RP2350 SPI0)
 
-| PMOD J4 Pin | Signal | RP2350 Pin | Direction |
-|:---:|:---|:---:|:---|
-| 1 (G10) | CS# | GP5 | Input (slave) |
-| 2 (D10) | SCK | GP2 | Input (slave) |
-| 3 (B10) | MOSI/D1 | GP3 | Input (slave) |
-| 4 (C10) | MISO/DO | GP4 | Output (slave) |
-| 5 | GND | GND | — |
-| 6 | VCC (3.3V) | 3V3 | — |
+This is the header-friendly RP2350-Zero wiring used by
+`hardware/boards/tang_primer_25k/tang_primer_25k_southbridge.cst` and the
+current `rp2350_spu_interface.c` build.
+
+| Tang PMOD J4 / FPGA pin | FPGA signal | RP2350-Zero pin | RP2350 signal | Wire direction |
+|:---:|:---|:---:|:---|:---|
+| J4-1 / G10 | `spi_cs_n` | GP1 | CS# (software GPIO) | RP2350 -> FPGA |
+| J4-2 / D10 | `spi_sck` | GP2 | SPI0 SCK | RP2350 -> FPGA |
+| J4-3 / B10 | `spi_mosi` | GP3 | SPI0 MOSI/TX | RP2350 -> FPGA |
+| J4-4 / C10 | `spi_miso` | GP0 | SPI0 MISO/RX | FPGA -> RP2350 |
+| J4-5 | GND | GND | GND | common ground |
+| J4-6 | 3V3 | 3V3 | 3.3 V rail | optional; see note below |
+
+If the Tang and RP2350 are both USB-powered, do not jumper J4-6 to RP2350 3V3.
+Use J4-5/GND as the common reference and leave the 3.3 V rails separate. Jumper
+J4-6 only when one side is intentionally powering the other and back-powering
+through USB or regulators has been ruled out.
+
+For `rp2350_spu_diag` and `spu_link_test`, build with
+`-DSPU_RP2350_ZERO_HEADER_SPI=ON` to match the GP0-3 wiring above. If that
+option is not set, those diagnostic targets default to GP16 MISO, GP17 CS,
+GP18 SCK, GP19 MOSI. `-DSPU_RP2350_ZERO_G25_SPI=ON` selects the alternate
+RP2350-Zero edge mapping GP20 MISO, GP21 CS, GP22 SCK, GP23 MOSI.
 
 **RP2350 SPI0 Configuration:**
 ```c
-// Suggested (from rp2350_spu_interface.c)
+#define SPU_SPI_MISO_PIN 0
+#define SPU_SPI_CS_PIN   1
+#define SPU_SPI_SCK_PIN  2
+#define SPU_SPI_MOSI_PIN 3
+
 spi_init(spi0, 2 * 1000 * 1000);    // 2 MHz (conservative)
-gpio_set_function(2, GPIO_FUNC_SPI); // CLK (GP2)
-gpio_set_function(3, GPIO_FUNC_SPI); // MOSI (GP3)
-gpio_set_function(4, GPIO_FUNC_SPI); // MISO (GP4)
-gpio_set_function(5, GPIO_FUNC_SIO); // CS (GP5, software-controlled)
+spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+gpio_set_function(SPU_SPI_SCK_PIN,  GPIO_FUNC_SPI);
+gpio_set_function(SPU_SPI_MOSI_PIN, GPIO_FUNC_SPI);
+gpio_set_function(SPU_SPI_MISO_PIN, GPIO_FUNC_SPI);
+gpio_init(SPU_SPI_CS_PIN);
+gpio_set_dir(SPU_SPI_CS_PIN, GPIO_OUT);
+gpio_put(SPU_SPI_CS_PIN, 1);         // CS idle-high
 ```
+
+### microSD PMOD Pinout (RP2350 SPI-mode)
+
+The current SD bring-up path is SPI-mode microSD on the RP2350, independent of
+the FPGA J4 southbridge link. Defaults come from `hardware/rp_common/spu_sd.c`
+and `hardware/rp2350/CMakeLists.txt`.
+
+| microSD PMOD signal | RP2350 pin | Firmware define |
+|:---|:---:|:---|
+| SCK / CLK | GP10 | `SPU_SD_SCK_PIN` |
+| MOSI / CMD | GP11 | `SPU_SD_MOSI_PIN` |
+| MISO / DAT0 | GP12 | `SPU_SD_MISO_PIN` |
+| CS# / DAT3 | GP13 | `SPU_SD_CS_PIN` |
+| VCC | 3V3 | 3.3 V only |
+| GND | GND | common ground |
+
+The SD SPI instance is `spi1` by default and the post-init rate is 8 MHz. If a
+PMOD adapter routes different pins, override `SPU_SD_*` at CMake configure
+time. Keep pull-ups on CMD/DAT lines; at minimum ensure CS# idles high.
+
+### SD PMOD Bring-up Status (2026-06-28)
+
+The RP2350-Zero southbridge wiring to Tang J4 is proven with
+`rp2350_spu_diag status`: the FPGA replies `raw=13 A5 00 00`, so the GP0-GP3
+SPI0 link and Tang southbridge bitstream are alive.
+
+After SD-side solder rework, the default SPI-mode SD map is also proven:
+`sdprobe` reports `cs=GP13 sck=GP10 mosi=GP11 miso=GP12`, raw CMD0/CMD8 at
+400 kHz return `cmd0_r1=0x01 cmd8_r1=0x01 r7=00 00 01 AA`, and `sdinit`
+mounts the card successfully. The standalone `spu_sd_test.uf2` filesystem
+smoke also passes: create/write `test.txt`, readback match, delete, halt code
+0. With `/manifest.txt` selecting `/carbon_rplu.tbl`, `sdhydrate` loads 16
+records with 0 skipped. The SPI-only FPGA telemetry probe
+`build/tang_primer_25k_southbridge_spi_probe.fs` confirms the FPGA receives
+those writes: `cfgtele` changes from count 0 to count 16, with last record
+`sel=0 material=1 addr=2 data=0x0000000000010000`.
+
+The telemetry path is also proven on the full SPU-13 southbridge image. On
+2026-06-29 NZT, `build_25k_spu13_southbridge.sh` completed synthesis,
+place-and-route, and packaging for `build/tang_primer_25k_spu13_southbridge.fs`.
+The routed design passes the 12 MHz constraint (`clk_core` 72.28 MHz max,
+`clk_50m` 125.16 MHz max). After SRAM load, RP2350 diagnostics report
+`status raw=13 A5 00 00`; `cfgtele` reports `magic=SPUC` with count 0 before
+hydration; `sdhydrate` loads 16 records with 0 skipped; and final `cfgtele`
+reports count 16, last record `sel=0 material=1 addr=2
+data=0x0000000000010000`, checksum `0x3A0AB5E9`.
+
+The pre-rework raw diagnostics were:
+
+| CS# | SCK | MOSI/CMD | MISO/DAT0 | `sdprobe` MISO observation | `sdcmd` result |
+|:---:|:---:|:---:|:---:|:---|:---|
+| GP13 | GP10 | GP11 | GP12 | externally high/pulled up | CMD0/CMD8 `0xFF` |
+| GP6 | GP10 | GP11 | GP9 | externally low/no pull-up | CMD0/CMD8 `0x00` |
+| GP6 | GP10 | GP11 | GP12 | externally high/pulled up | CMD0/CMD8 `0xFF` |
+| GP13 | GP10 | GP11 | GP9 | externally low/no pull-up | CMD0/CMD8 `0x00` |
+
+Keep the default map (`GP13/GP10/GP11/GP12`) as the active wiring. If failures
+return, check the physical SD pins first: VCC at the socket, common ground,
+CLK continuity from GP10, CMD/MOSI from GP11, DAT3/CS from GP13, and DAT0/MISO
+to GP12.
+
+### Bench Electrical Checks
+
+Before powering both boards together:
+
+1. Confirm continuity: RP2350 GP1/GP2/GP3/GP0 reach J4-1/J4-2/J4-3/J4-4
+   respectively, and RP2350 GND reaches J4-5.
+2. Confirm no shorts between adjacent signal pins, signal-to-3V3, or
+   signal-to-GND.
+3. Confirm both logic domains are 3.3 V LVCMOS. Do not connect 5 V to any
+   FPGA or RP2350 GPIO.
+4. With firmware idle, CS# should be high, SCK low, and MOSI not fighting any
+   other driver. MISO may be low when the FPGA bitstream is running because the
+   slave drives idle low.
+5. Add or enable a CS# pull-up if the FPGA can be configured while the RP2350 is
+   reset or disconnected; the SPI slave should see CS# high unless selected.
 
 ---
 
@@ -191,7 +289,7 @@ Byte  Content
 26–33 Component D (64-bit big-endian RationalSurd)
 ```
 
-- **Valid:** Set if a QR commit has occurred since last read (sticky until next read)
+- **Valid:** Set after a QR commit and remains set until another commit overwrites the latched value or reset clears it
 - **Lane:** Which QR lane was written (0–13 for spu13_core, 0–3 for spu4_core)
 - **A/B/C/D:** Four 64-bit components of the committed Quadray
 
@@ -280,7 +378,8 @@ RP2350 sends: 0xB1 0x0A ... (64 bits total)
 Bits   Field
 ────   ───────────────────────────────────
 63:56  Magic (0xA5 = valid header marker)
-55:53  RPLU selector (sel = material/profile ID, 0–7)
+55:51  Reserved (must be 0)
+50:48  RPLU selector (sel = table/profile ID, 0–7)
 47:44  Material type (4-bit, 0–15)
 43:34  Address within material (10-bit, 0–1023)
 33:0   Reserved (must be 0)
@@ -295,7 +394,7 @@ Bits   Field
 
 **Output Signals (asserted for 1 cycle after DATA received):**
 - `rplu_cfg_wr_en` ← 1
-- `rplu_cfg_sel` ← HEADER[55:53]
+- `rplu_cfg_sel` ← HEADER[50:48]
 - `rplu_cfg_material` ← {4'b0, HEADER[47:44]}
 - `rplu_cfg_addr` ← HEADER[43:34]
 - `rplu_cfg_data` ← DATA[63:0]
@@ -304,12 +403,12 @@ Bits   Field
 ```
 RP2350 sends:
   0xA5                           # RPLU config command
-  0xA5_03_05_0F_00000000         # HEADER: sel=3, material=5, addr=15
+  0xA5_03_50_3C_00000000         # HEADER: sel=3, material=5, addr=15
   0xDEADBEEFCAFEBABE             # DATA: Padé coefficient or BTU entry
 
 FPGA responds:
   (MISO held low during receive phase)
-  
+
 After DATA received:
   rplu_cfg_wr_en   ← 1 (1-cycle pulse)
   rplu_cfg_sel     ← 3'd3
@@ -348,7 +447,9 @@ After DATA received:
 7. **Continue until resp_len bytes sent** → MISO = 0
 8. **CS# deasserts** (rises from 0 → 1) → state → S_IDLE
 
-**Total latency (worst case):** ~1 µs @ 2 MHz SPI + 20 ns synchronizer delay
+At 2 MHz, the 8-bit command phase takes 4 us. After the command byte, the first
+response bit is available on the next command-trailing SCK fall plus the FPGA
+synchronizer latency.
 
 ---
 
@@ -362,40 +463,40 @@ After DATA received:
 
 void read_manifold_and_status(void) {
     // Set CS# low
-    gpio_put(5, 0);
-    
+    gpio_put(SPU_SPI_CS_PIN, 0);
+
     // Send 0xA0 command
     uint8_t cmd = 0xA0;
     spi_write_blocking(spi0, &cmd, 1);
-    
+
     // Read 32 bytes (4 axes × 8 bytes)
     uint8_t manifold[32];
     spi_read_blocking(spi0, 0x00, manifold, 32);
-    
+
     // Parse: Axis 0 = {manifold[0:1] (P), manifold[4:5] (Q)}
     int16_t p0 = (manifold[0] << 8) | manifold[1];
     int16_t q0 = (manifold[4] << 8) | manifold[5];
     printf("Axis 0: P=%d, Q=%d\n", p0, q0);
-    
+
     // Set CS# high (transaction complete)
-    gpio_put(5, 1);
-    
+    gpio_put(SPU_SPI_CS_PIN, 1);
+
     // Wait ~100 ns before next transaction
     busy_wait_us(1);
-    
+
     // Next transaction: read status
-    gpio_put(5, 0);
+    gpio_put(SPU_SPI_CS_PIN, 0);
     cmd = 0xAC;
     spi_write_blocking(spi0, &cmd, 1);
-    
+
     uint8_t status[4];
     spi_read_blocking(spi0, 0x00, status, 4);
-    
+
     uint16_t laminar = (status[0] << 8) | status[1];
     uint8_t flags = status[2];
     printf("Laminar: %u, Flags: 0x%02X\n", laminar, flags);
-    
-    gpio_put(5, 1);
+
+    gpio_put(SPU_SPI_CS_PIN, 1);
 }
 ```
 
@@ -403,31 +504,30 @@ void read_manifold_and_status(void) {
 
 ```c
 void write_rplu_config(uint8_t sel, uint8_t material, uint16_t addr, uint64_t data) {
-    gpio_put(5, 0);  // CS# low
-    
+    gpio_put(SPU_SPI_CS_PIN, 0);  // CS# low
+
     // Command
     uint8_t cmd = 0xA5;
     spi_write_blocking(spi0, &cmd, 1);
-    
-    // HEADER: 0xA5 | sel | material | addr
-    uint8_t header[8] = {
-        0xA5,
-        sel << 0,              // bits 55:53
-        (material << 4) | 0,   // bits 47:44
-        (addr >> 2) & 0xFF,    // bits 43:40
-        (addr << 6) & 0xC0,    // bits 39:38
-        0, 0, 0
-    };
+
+    uint64_t header_word = ((uint64_t)0xA5 << 56) |
+                           ((uint64_t)(sel & 0x7) << 48) |
+                           ((uint64_t)(material & 0xF) << 44) |
+                           ((uint64_t)(addr & 0x3FF) << 34);
+    uint8_t header[8];
+    for (int i = 0; i < 8; i++) {
+        header[i] = (header_word >> (56 - i*8)) & 0xFF;
+    }
     spi_write_blocking(spi0, header, 8);
-    
+
     // DATA: 64-bit config value
     uint8_t data_bytes[8];
     for (int i = 0; i < 8; i++) {
         data_bytes[i] = (data >> (56 - i*8)) & 0xFF;
     }
     spi_write_blocking(spi0, data_bytes, 8);
-    
-    gpio_put(5, 1);  // CS# high
+
+    gpio_put(SPU_SPI_CS_PIN, 1);  // CS# high
     busy_wait_us(1);
 }
 ```
@@ -477,11 +577,12 @@ All protocol paths verified in `hardware/tests/common/spu_spi_slave_tb.v`:
 
 ### Hardware Validation (Tang Primer 25K)
 When southbridge bitstream is tested with RP2350:
-1. Program RP2040 PMOD flash with RPLU v2 tables (0x110000)
-2. Flash Tang 25K southbridge bitstream
-3. Test 0xA0 read → verify manifold values from RTL simulation
-4. Test 0xAC read → verify telemetry flags
-5. Test 0xA5 write → verify RPLU config signals pulse
+1. Build and SRAM-load the Tang 25K southbridge bitstream.
+2. Flash `rp2350_spu_diag.uf2` built for the selected SPI pin profile.
+3. Test `0xAC` status and `0xA0` manifold reads before enabling writes.
+4. Test `0xB1` instruction writes, then `0xA5` RPLU config writes.
+5. Prove SD separately with `spu_sd_test.uf2`; only then use SD-backed
+   hydration commands from the RP2350 diagnostic console.
 
 ---
 
@@ -515,5 +616,5 @@ If P=0x1234, Q=0x5678:
 
 ---
 
-**Document End**  
+**Document End**
 CC0 1.0 Universal — Public Domain

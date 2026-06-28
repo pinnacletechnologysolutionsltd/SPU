@@ -22,9 +22,13 @@ module spu13_tang25k_southbridge_top (
     inout  wire [15:0] sdram_dq,
     output wire [1:0]  sdram_dm
 );
-    // ── Tie off unused outputs ──────────────────────────────────
-    assign uart_tx = 1'b1;
-    assign uart_tx_telemetry = 1'b1;
+    // ── Bring-up UART ──────────────────────────────────────────
+    wire diag_uart_tx;
+    assign uart_tx = diag_uart_tx;
+    assign uart_tx_telemetry = diag_uart_tx;
+
+    reg [15:0] southbridge_status_fast_0 = 16'h13A5;
+    reg [15:0] southbridge_status_fast_1 = 16'h13A5;
     assign sdram_clk = 1'b0;
     assign sdram_cs_n = 1'b1;
     assign sdram_ras_n = 1'b1;
@@ -129,6 +133,24 @@ module spu13_tang25k_southbridge_top (
     reg  [7:0]  rplu_cfg_material = 0;
     reg  [9:0]  rplu_cfg_addr = 0;
     reg  [63:0] rplu_cfg_data = 0;
+    reg  [15:0] rplu_cfg_count = 0;
+    reg  [31:0] rplu_cfg_checksum = 0;
+
+    function [31:0] cfg_checksum_next;
+        input [31:0] prev;
+        input [2:0]  sel;
+        input [7:0]  material;
+        input [9:0]  addr;
+        input [63:0] data;
+        reg   [31:0] mixed_header;
+        begin
+            mixed_header = {8'hA5, 5'd0, sel, material, 6'd0, addr};
+            cfg_checksum_next = {prev[30:0], prev[31]} ^
+                                mixed_header ^
+                                data[63:32] ^
+                                data[31:0];
+        end
+    endfunction
 
     always @(posedge clk_50m or negedge rst_n) begin
         if (!rst_n) rplu_cfg_toggle <= 1'b0;
@@ -143,6 +165,8 @@ module spu13_tang25k_southbridge_top (
             rplu_cfg_material <= 8'd0;
             rplu_cfg_addr <= 10'd0;
             rplu_cfg_data <= 64'd0;
+            rplu_cfg_count <= 16'd0;
+            rplu_cfg_checksum <= 32'd0;
         end else begin
             rplu_cfg_toggle_sync <= {rplu_cfg_toggle_sync[1:0], rplu_cfg_toggle};
             rplu_cfg_wr_en <= 1'b0;
@@ -153,9 +177,28 @@ module spu13_tang25k_southbridge_top (
                 rplu_cfg_addr <= rplu_cfg_addr_fast;
                 rplu_cfg_data <= rplu_cfg_data_fast;
                 rplu_cfg_wr_en <= 1'b1;
+                rplu_cfg_count <= rplu_cfg_count + 16'd1;
+                rplu_cfg_checksum <= cfg_checksum_next(rplu_cfg_checksum,
+                                                       rplu_cfg_sel_fast,
+                                                       rplu_cfg_material_fast,
+                                                       rplu_cfg_addr_fast,
+                                                       rplu_cfg_data_fast);
             end
         end
     end
+
+    wire [511:0] southbridge_telemetry = {
+        32'h53505543,                  // "SPUC"
+        rplu_cfg_count,
+        {5'd0, rplu_cfg_sel},
+        rplu_cfg_material,
+        {6'd0, rplu_cfg_addr},
+        rplu_cfg_data[63:16],
+        rplu_cfg_data[15:0],
+        rplu_cfg_checksum,
+        16'd0,
+        320'd0
+    };
 
     reg         spi_inst_pending = 0;
     reg         spi_inst_done_seen = 0;
@@ -185,6 +228,26 @@ module spu13_tang25k_southbridge_top (
                                       (spi_inst_pending ?
                                        {8'hB1, last_spi_opcode} : 16'h13A5);
 
+    always @(posedge clk_50m or negedge rst_n) begin
+        if (!rst_n) begin
+            southbridge_status_fast_0 <= 16'h13A5;
+            southbridge_status_fast_1 <= 16'h13A5;
+        end else begin
+            southbridge_status_fast_0 <= southbridge_status;
+            southbridge_status_fast_1 <= southbridge_status_fast_0;
+        end
+    end
+
+    southbridge_uart_diag #(
+        .CLK_HZ(50000000),
+        .BAUD(115200)
+    ) u_uart_diag (
+        .clk(clk_50m),
+        .rst_n(rst_n),
+        .status(southbridge_status_fast_1),
+        .tx(diag_uart_tx)
+    );
+
     spu_spi_slave u_spi (
         .clk(clk_50m), .rst_n(rst_n),
         .spi_cs_n(spi_cs_n), .spi_sck(spi_sck),
@@ -212,7 +275,7 @@ module spu13_tang25k_southbridge_top (
         .fifo_full(1'b0),
         .laminar_index(southbridge_status),
         .turbulence(1'b0), .rplu_mode(1'b0),
-        .sentinel_telemetry(512'd0)
+        .sentinel_telemetry(southbridge_telemetry)
     );
 
     // ── ISA Decoder ────────────────────────────────────────────
@@ -314,11 +377,104 @@ module spu13_tang25k_southbridge_top (
     assign led[1] = ~led1_q;
     reg [19:0] spi_led_stretch = 0;
     always @(posedge clk_core)
-        if (inst_valid)       spi_led_stretch <= 20'hFFFFF;
+        if (inst_valid || rplu_cfg_wr_en) spi_led_stretch <= 20'hFFFFF;
         else if (|spi_led_stretch) spi_led_stretch <= spi_led_stretch - 1;
     assign led[2] = ~(|spi_led_stretch);
 endmodule
 
 (* blackbox *)
 module BUFG (input wire I, output wire O);
+endmodule
+
+module southbridge_uart_diag #(
+    parameter CLK_HZ = 50000000,
+    parameter BAUD = 115200
+) (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire [15:0] status,
+    output wire        tx
+);
+    localparam integer BAUD_DIV = CLK_HZ / BAUD;
+    localparam integer INTERVAL_CYCLES = CLK_HZ / 2;
+
+    reg [9:0]  tx_shift = 10'h3FF;
+    reg [15:0] baud_cnt = 16'd0;
+    reg [25:0] interval_cnt = 26'd0;
+    reg [3:0]  bit_idx = 4'd0;
+    reg [3:0]  char_idx = 4'd0;
+    reg [15:0] status_latched = 16'h13A5;
+    reg        active = 1'b0;
+
+    assign tx = tx_shift[0];
+
+    function [7:0] hex_ascii;
+        input [3:0] nibble;
+        begin
+            hex_ascii = (nibble < 4'd10) ? (8'h30 + nibble) : (8'h41 + nibble - 4'd10);
+        end
+    endfunction
+
+    function [7:0] msg_char;
+        input [3:0] index;
+        input [15:0] value;
+        begin
+            case (index)
+                4'd0: msg_char = 8'h53; // S
+                4'd1: msg_char = 8'h42; // B
+                4'd2: msg_char = 8'h20; // space
+                4'd3: msg_char = hex_ascii(value[15:12]);
+                4'd4: msg_char = hex_ascii(value[11:8]);
+                4'd5: msg_char = hex_ascii(value[7:4]);
+                4'd6: msg_char = hex_ascii(value[3:0]);
+                4'd7: msg_char = 8'h0D;
+                4'd8: msg_char = 8'h0A;
+                default: msg_char = 8'h20;
+            endcase
+        end
+    endfunction
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            tx_shift <= 10'h3FF;
+            baud_cnt <= 16'd0;
+            interval_cnt <= 26'd0;
+            bit_idx <= 4'd0;
+            char_idx <= 4'd0;
+            status_latched <= 16'h13A5;
+            active <= 1'b0;
+        end else if (active) begin
+            if (baud_cnt == BAUD_DIV - 1) begin
+                baud_cnt <= 16'd0;
+                tx_shift <= {1'b1, tx_shift[9:1]};
+                if (bit_idx == 4'd9) begin
+                    bit_idx <= 4'd0;
+                    if (char_idx == 4'd8) begin
+                        active <= 1'b0;
+                        interval_cnt <= INTERVAL_CYCLES[25:0];
+                        tx_shift <= 10'h3FF;
+                    end else begin
+                        char_idx <= char_idx + 4'd1;
+                        tx_shift <= {1'b1, msg_char(char_idx + 4'd1, status_latched), 1'b0};
+                    end
+                end else begin
+                    bit_idx <= bit_idx + 4'd1;
+                end
+            end else begin
+                baud_cnt <= baud_cnt + 16'd1;
+            end
+        end else begin
+            tx_shift <= 10'h3FF;
+            if (interval_cnt == 26'd0) begin
+                status_latched <= status;
+                active <= 1'b1;
+                baud_cnt <= 16'd0;
+                bit_idx <= 4'd0;
+                char_idx <= 4'd0;
+                tx_shift <= {1'b1, msg_char(4'd0, status), 1'b0};
+            end else begin
+                interval_cnt <= interval_cnt - 26'd1;
+            end
+        end
+    end
 endmodule
