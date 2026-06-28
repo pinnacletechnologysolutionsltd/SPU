@@ -263,11 +263,28 @@ static void cmd_cfgtele(spu_diag_t *diag) {
     uint16_t addr = read_be16(&tele[8]) & 0x03FFu;
     uint64_t data = read_be64(&tele[10]);
     uint32_t checksum = read_be32(&tele[18]);
+    uint32_t rplu2_sum = read_be32(&tele[22]);
+    uint32_t rplu2_status = read_be32(&tele[26]);
+    uint32_t rplu2_num0 = read_be32(&tele[30]);
+    uint32_t rplu2_delta = read_be32(&tele[34]);
+    uint32_t rplu2_row1 = read_be32(&tele[38]);
+    uint32_t rplu2_kappa = read_be32(&tele[42]);
 
     printf("OK cfgtele magic=SPUC count=%u last_sel=%u last_material=%u"
            " last_addr=%u last_data=0x%016" PRIX64
-           " checksum=0x%08" PRIX32 "\r\n",
+           " checksum=0x%08" PRIX32,
            count, sel, material, addr, data, checksum);
+    if (count == 149u || rplu2_status != 0u) {
+        printf(" rplu2_sum=0x%08" PRIX32
+               " rplu2_status=0x%08" PRIX32
+               " rplu2_num0=0x%08" PRIX32
+               " rplu2_delta=0x%08" PRIX32
+               " rplu2_row1=0x%08" PRIX32
+               " rplu2_kappa=0x%08" PRIX32,
+               rplu2_sum, rplu2_status, rplu2_num0, rplu2_delta,
+               rplu2_row1, rplu2_kappa);
+    }
+    printf("\r\n");
 }
 
 static void cmd_chord(spu_diag_t *diag, char *args) {

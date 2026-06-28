@@ -28,6 +28,7 @@ module spu_spi_slave_tb;
     reg [3:0]   satellite_snaps;
     reg         is_janus_point;
     reg [15:0]  dissonance;
+    reg [511:0] sentinel_telemetry;
     // Testbench hooks for RPLU comparator (tie-off)
     reg signed [2:0] tb_rplu_ratio_res = 3'sd0;
     reg              tb_rplu_ratio_valid = 1'b0;
@@ -58,7 +59,7 @@ module spu_spi_slave_tb;
         .laminar_index(dissonance),
         .turbulence(1'b0),
         .rplu_mode(1'b0),
-        .sentinel_telemetry(512'd0)
+        .sentinel_telemetry(sentinel_telemetry)
     );
 
     // 24 MHz system clock
@@ -93,6 +94,7 @@ module spu_spi_slave_tb;
     reg [63:0] seen_cfg_data;
     reg        seen_inst_valid;
     reg [63:0] seen_inst_word;
+    integer burst_i;
 
     task spi_transaction;
         input [7:0]  cmd;
@@ -203,6 +205,17 @@ module spu_spi_slave_tb;
         satellite_snaps  = 4'b1010;
         is_janus_point   = 1'b1;
         dissonance       = 16'hBEEF;
+        sentinel_telemetry = {
+            32'h53505543,
+            16'h0095,
+            8'h06,
+            8'h00,
+            16'h0000,
+            64'h0000_0000_0000_0003,
+            32'h0AA4_80E7,
+            32'hC02E_0001,
+            304'd0
+        };
         qr_commit_valid = 1'b0;
         qr_commit_lane = 4'd5;
         qr_commit_A = 64'h0123_4567_89AB_CDEF;
@@ -337,6 +350,41 @@ module spu_spi_slave_tb;
             fail_count = fail_count + 1;
         end
 
+        // --- T8: long RPLU burst does not wedge later status/sentinel reads ---
+        for (burst_i = 0; burst_i < 149; burst_i = burst_i + 1) begin
+            spi_rplu_write(rplu_header(3'd1, 4'd0, burst_i[9:0]),
+                           {32'd0, burst_i[31:0]});
+        end
+
+        spi_transaction(8'hAC, 4);
+        if (rx_buf[0] === 8'hBE && rx_buf[1] === 8'hEF &&
+            rx_buf[2] === 8'h02 && rx_buf[3] === 8'h00) begin
+            $display("T8a PASS: status survives long RPLU burst");
+            pass_count = pass_count + 1;
+        end else begin
+            $display("T8a FAIL: status after burst [%02h,%02h,%02h,%02h]",
+                rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3]);
+            fail_count = fail_count + 1;
+        end
+
+        spi_transaction(8'hB0, 64);
+        if (rx_buf[0] === 8'h53 && rx_buf[1] === 8'h50 &&
+            rx_buf[2] === 8'h55 && rx_buf[3] === 8'h43 &&
+            rx_buf[4] === 8'h00 && rx_buf[5] === 8'h95 &&
+            rx_buf[18] === 8'h0A && rx_buf[19] === 8'hA4 &&
+            rx_buf[20] === 8'h80 && rx_buf[21] === 8'hE7 &&
+            rx_buf[22] === 8'hC0 && rx_buf[23] === 8'h2E &&
+            rx_buf[24] === 8'h00 && rx_buf[25] === 8'h01) begin
+            $display("T8b PASS: sentinel survives long RPLU burst");
+            pass_count = pass_count + 1;
+        end else begin
+            $display("T8b FAIL: sentinel magic=%02h%02h%02h%02h sum/status=%02h%02h%02h%02h/%02h%02h%02h%02h",
+                rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3],
+                rx_buf[18], rx_buf[19], rx_buf[20], rx_buf[21],
+                rx_buf[22], rx_buf[23], rx_buf[24], rx_buf[25]);
+            fail_count = fail_count + 1;
+        end
+
         if (fail_count == 0)
             $display("PASS");
         else
@@ -346,6 +394,6 @@ module spu_spi_slave_tb;
     end
 
     // Timeout
-    initial #5000000 begin $display("FAIL (timeout)"); $finish; end
+    initial #20000000 begin $display("FAIL (timeout)"); $finish; end
 
 endmodule

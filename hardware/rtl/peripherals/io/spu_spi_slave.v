@@ -269,6 +269,10 @@ module spu_spi_slave (
                 end
 
                 S_FILL: begin
+                    if (!cs_active) begin
+                        state    <= S_IDLE;
+                        spi_miso <= 1'b0;
+                    end else
                     // Wait for the trailing CMD SCK fall before loading resp_buf.
                     // The last CMD clock's fall must be consumed here so S_RESP
                     // never sees it as a response clock edge.

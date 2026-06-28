@@ -108,6 +108,17 @@ hydration; `sdhydrate` loads 16 records with 0 skipped; and final `cfgtele`
 reports count 16, last record `sel=0 material=1 addr=2
 data=0x0000000000010000`, checksum `0x3A0AB5E9`.
 
+RPLU v2 consume-profile hydration is also proven over the RP2350 southbridge
+path on the full SPU-13 image. The corrected 149-record profile from
+`tools/gen_rplu2_tables.py --profile consume_probe` streams over command
+`0xA5`; final `cfgtele` reports count 149, last record `sel=6 material=0
+addr=0 data=0x0000000000000003`, legacy checksum `0xBA708FD4`,
+`rplu2_sum=0x0AA480E7`, `rplu2_status=0xC02E0001`, `rplu2_num0=0x00000002`,
+`rplu2_delta=0x00000000`, `rplu2_row1=0x00000001`, and
+`rplu2_kappa=0x00000003`. The rebuilt image, including SPI `S_FILL` CS-abort
+recovery, routes at `clk_50m` 133.55 MHz and `clk_core` 67.76 MHz against the
+12 MHz target.
+
 The pre-rework raw diagnostics were:
 
 | CS# | SCK | MOSI/CMD | MISO/DAT0 | `sdprobe` MISO observation | `sdcmd` result |
@@ -186,7 +197,7 @@ The FPGA implements a 7-state machine to handle command parsing and response del
 |:---:|:---|:---|
 | `S_IDLE` | Idle, waiting for CS | CS asserted (cs_active ← CS#) |
 | `S_CMD` | Receive 8-bit command byte | 8 bits received + sck_rise |
-| `S_FILL` | Prepare response buffer | sck_fall (consume trailing cmd clock) |
+| `S_FILL` | Prepare response buffer | sck_fall (consume trailing cmd clock) or CS abort |
 | `S_RESP` | Transmit response bytes | CS deasserted or all bytes sent |
 | `S_RECV_HDR` | Receive 64-bit RPLU header | 64 bits received on sck_rise |
 | `S_RECV_DATA` | Receive 64-bit RPLU data | 64 bits received + hdr check |
@@ -569,6 +580,7 @@ All protocol paths verified in `hardware/tests/common/spu_spi_slave_tb.v`:
 - ✓ Read commands: 0xA0, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0
 - ✓ Write commands: 0xB1, 0xA5
 - ✓ CS# deassert during transaction (rollback)
+- ✓ 149-record RPLU write burst followed by status and sentinel reads
 - ✓ Manifold snapshot latching
 - ✓ Sticky state (QR/HEX valid bits)
 - ✓ Timing margins at 2 MHz
