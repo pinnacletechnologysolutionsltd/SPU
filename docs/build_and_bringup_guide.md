@@ -4,6 +4,8 @@ Date: 2026-06-18.  Covers all four active board targets and the unified build fl
 
 ## 1. Toolchain Setup
 
+Detailed OS-specific setup lives in [`docs/toolchain_setup.md`](toolchain_setup.md).
+
 ### 1.1 OSS CAD Suite (Gowin, ECP5, iCE40)
 Install the pre-built suite from https://github.com/YosysHQ/oss-cad-suite-build.
 On Arch, extract to `/opt/oss-cad-suite/` and add to PATH:
@@ -14,36 +16,60 @@ export PATH="/opt/oss-cad-suite/bin:$PATH"
 Provides: `yosys`, `nextpnr-ecp5`, `nextpnr-ice40`, `nextpnr-himbaechel` (Gowin),
 `gowin_pack`, `ecppack`, `icepack`, `verilator`, `iverilog`.
 
-### 1.2 Artix-7 Open-Source Toolchain (Manual Build)
-Requires `boost`, `boost-libs`, `eigen`, `cmake`, `gcc`.
-
+### 1.2 Artix-7 OpenXC7 Toolchain
+Canonical local install prefix:
 ```bash
-# Dependencies
-sudo pacman -S boost boost-libs eigen cmake
+$HOME/.local/openxc7
+```
 
-# Clone and build nextpnr-xilinx
-git clone https://github.com/openXC7/nextpnr-xilinx.git
-cd nextpnr-xilinx
-mkdir build && cd build
-cmake -DARCH=xilinx -DCMAKE_CXX_FLAGS="-I/usr/include/eigen3" ..
-make -j$(nproc)
-sudo make install  # or set CMAKE_INSTALL_PREFIX
+The repo expects this prefix to contain:
+- `bin/nextpnr-xilinx`
+- `bin/bbasm`
+- `bin/xc7frames2bit`
+- `lib/python/bbaexport.py`
+- `share/nextpnr/prjxray-db`
+- `lib/external/nextpnr-xilinx-meta`
+- `lib/constids.inc`
 
-# Clone and build Project X-Ray
-git clone https://github.com/f4pga/prjxray.git
-cd prjxray && mkdir build && cd build && cmake .. && make
+Use the repo environment helpers instead of setting global `PYTHONPATH`:
+```bash
+# bash/zsh, current session only
+source tools/env_openxc7.sh
 
-# Generate chip database for xc7a100t
-cd nextpnr-xilinx
-XRAY_DIR=/path/to/prjxray PRJXRAY_DB_DIR=/path/to/prjxray-db \
-  python3 xilinx/python/bbaexport.py --device xc7a100tcsg324-1 --bba xilinx/xc7a100t.bba
-bbasm --l xilinx/xc7a100t.bba xilinx/xc7a100t.bin
-# Result: ~152 MB xc7a100t.bin chip database
+# fish, current session only
+source tools/env_openxc7.fish
+```
+
+For a non-default install prefix:
+```bash
+OPENXC7_ROOT=/opt/openxc7 source tools/env_openxc7.sh
+```
+
+Fish equivalent:
+```fish
+set -gx OPENXC7_ROOT /opt/openxc7
+source tools/env_openxc7.fish
+```
+
+Generate the Artix-7 100T chip database once:
+```bash
+tools/generate_a7_chipdb.sh 100t
+# Output: build/chipdb/xc7a100tfgg676.bin (~152 MB)
+```
+
+The Artix-7 build script also auto-loads `tools/env_openxc7.sh` or
+`$OPENXC7_ROOT/export.sh` if the tools are not already on `PATH`.
+
+Do not make `PYTHONPATH` universal in fish. If a permanent setup is desired,
+make only `OPENXC7_ROOT` and the executable path permanent:
+```fish
+set -Ux OPENXC7_ROOT $HOME/.local/openxc7
+fish_add_path $HOME/.local/openxc7/bin
 ```
 
 **Artix-7 pipeline:**
 ```
-yosys synth_xilinx → JSON → nextpnr-xilinx --chipdb xc7a100t.bin → routed JSON → xc7frames2bit → .bit
+yosys synth_xilinx → JSON → nextpnr-xilinx --chipdb xc7a100tfgg676.bin → FASM → fasm2frames → xc7frames2bit → .bit
 ```
 
 ### 1.3 RP2040/RP2350 Toolchain
@@ -54,11 +80,16 @@ Arch: `sudo pacman -S arm-none-eabi-gcc arm-none-eabi-newlib cmake`
 
 ## 2. Board Targets
 
+Current hardware priority: the replacement Tang Primer 25K is the first
+incoming FPGA board. Use `docs/tang25k_replacement_bringup_plan.md` as the
+execution checklist. The Wukong Artix-7 flow is prepared, but hardware bring-up
+is parked until that board arrives.
+
 | Board | Chip | LUTs | DSP | Build Command | Status |
 |---|---|---|---|---|---|
 | Tang Primer 25K | GW5A-25K | 23K | 56 | `bash build_25k_spu13_math_probe.sh` | Bitstream ready ✅ |
 | ECP5 25F (Colorlight) | LFE5U-25F | 24K | 56 | `yosys hardware/boards/ecp5_25f/synth_ecp5_math.ys` | Synthesized ✅ |
-| QMTech A7-100T Wukong | XC7A100T | 101K | 240 | `yosys hardware/boards/artix7/synth_a7_math.ys` | Synthesized ✅ |
+| QMTech A7-100T Wukong | XC7A100T FGG676 | 101K | 240 | `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t robotics all` | Pinned P&R + bitstream ✅ at 2 MHz; 4 MHz misses timing |
 | iCESugar Pro | iCE40UP5K | 5K | 0 | TBD (sensor spin) | Target defined |
 
 ### 2.1 Spins (Artix-7 family)
@@ -102,10 +133,15 @@ yosys hardware/boards/ecp5_25f/synth_ecp5_math.ys
 
 ### 3.3 Artix-7 100T — Math Probe
 ```bash
-yosys hardware/boards/artix7/synth_a7_math.ys
-# JSON: build/a7_math.json
-# P&R: nextpnr-xilinx --chipdb xc7a100t.bin --xdc board.xdc --json build/a7_math.json ...
-# Bitstream: xc7frames2bit ...
+source tools/env_openxc7.sh
+tools/generate_a7_chipdb.sh 100t
+bash hardware/boards/artix7/build_a7.sh 100t robotics synth
+
+# Schematic-derived Wukong pins; board-usable bitstream.
+A7_FREQ=2 \
+  bash hardware/boards/artix7/build_a7.sh 100t robotics pnr
+A7_FREQ=2 \
+  bash hardware/boards/artix7/build_a7.sh 100t robotics pack
 ```
 
 ### 3.4 Artix-7 — Full Spin
@@ -113,7 +149,7 @@ yosys hardware/boards/artix7/synth_a7_math.ys
 bash hardware/boards/artix7/build_a7.sh 100t full
 ```
 
-## 4. RP2040 Southbridge
+## 4. RP2040/RP2350 Southbridge
 
 ### 4.1 Build Firmware
 ```bash
@@ -121,12 +157,12 @@ cd hardware/rp2350
 mkdir -p build && cd build
 cmake -DPICO_SDK_PATH=$HOME/.pico/pico-sdk -DPICO_BOARD=pico ..
 make
-# Output: rp2350_spu_interface.uf2 (~40 KB), rp2350_uart_injector.uf2 (~61 KB)
+# Output: rp2350_spu_interface.uf2, rp2350_uart_injector.uf2, rp2350_spu_diag.uf2
 ```
 
 ### 4.2 Wiring (6 dupont wires)
 ```
-QMTech 100T PMOD          RP2040 Pico
+QMTech 100T PMOD          RP2040/RP2350 Pico
 ─────────────────         ────────────
 SPI CS           ───────  GP17 (SPI0 CS)
 SPI SCK          ───────  GP18 (SPI0 SCK)
@@ -140,18 +176,25 @@ GND              ───────  GND
 | CMD | Direction | Function |
 |---|---|---|
 | 0xA0 | Read | 32-byte manifold snapshot |
-| 0xAC | Read | Status: label, ambiguous, fault_type, fault_count |
-| 0xB0 | Write | 8-byte instruction word (inst_valid pulsed) |
-| 0xC0 | Write | Save manifold to SDRAM |
-| 0xC1 | Write | Load manifold from SDRAM |
+| 0xAC | Read | 4-byte status: laminar index, flags, RPLU mode |
+| 0xAD | Read | 9-byte scale table and overflow flags |
+| 0xAE | Read | 34-byte last-QLDI commit: valid, lane, then A/B/C/D as four big-endian 64-bit words |
+| 0xAF | Read | 5-byte sticky HEX result: valid, signed q16, signed r16; read clears valid |
+| 0xB0 | Read | 64-byte sentinel telemetry burst |
+| 0xA5 | Write | RPLU config record: 8-byte HEADER + 8-byte DATA |
+| 0xB1 | Write | 8-byte instruction word (inst_valid pulsed) |
 
 ## 5. FPGA Bring-Up Sequence
 
 ### 5.1 Tang Primer 25K (Math Probe)
-1. Flash bitstream: `openFPGALoader -b tangprimer25k -f build/tang_primer_25k_spu13_math_probe.fs`
-2. Connect UART at 115200 baud
-3. Reset board → robotics FK closure program runs
-4. Verify 5 closure proofs on UART output:
+Use `docs/tang25k_replacement_bringup_plan.md` for the full replacement-board
+sequence. First load SRAM only, without `-f`:
+
+1. Build: `bash build_25k_spu13_math_probe.sh`
+2. SRAM-load bitstream: `openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_math_probe.fs`
+3. Connect UART at 115200 baud
+4. Reset board → robotics FK closure program runs
+5. Verify 5 closure proofs on UART output:
    ```
    H: FFFE 0002  → cross check
    H: 0001 0003  → self-inverse
@@ -165,16 +208,21 @@ GND              ───────  GND
 4. RP2040 streams instructions to FPGA
 5. FPGA UART TX → RP2040 UART RX → host terminal
 
-### 5.3 QMTech XC7A100T Wukong (Full Stack)
-1. Build bitstream: `bash hardware/boards/artix7/build_a7.sh 100t full`
-2. Flash via JTAG: `openFPGALoader -b arty_a7 build/spu_a7_100t_FULL.bit`
-3. Flash `rp2350_spu_interface.uf2` to RP2040 Pico
-4. Wire RP2040 → FPGA SPI pins (see §4.2)
-5. Insert SD card with `.sas` programs and CSV tables
-6. Power on — FPGA auto-configures from SPI flash
-7. RP2040 boots, mounts SD, loads RPLU tables, hydrates manifold
+### 5.3 QMTech XC7A100T Wukong (Robotics First)
+Prepared but parked until Wukong hardware arrives.
+
+1. Verify JTAG chain: `openFPGALoader -c dirtyJtag --detect`
+2. Build the pinned robotics bitstream: `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t robotics all`
+3. SRAM-load via DirtyJTAG: `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t robotics flash`
+4. Flash `rp2350_spu_interface.uf2` to the RP2040/RP2350 southbridge
+5. Wire RP2040/RP2350 → FPGA SPI pins (see §4.2)
+6. Insert SD card with `.sas` programs, manifests, configs, and table packs
+7. RP2040/RP2350 boots, mounts SD, loads RPLU tables, hydrates manifold
 8. Send `QLDI QR0, 0x0201, 0x0000` over SPI
 9. Watch UART: `H: 0001 0000` → Davis Gate confirms laminar
+
+Only write the Wukong configuration flash after the SRAM-loaded bitstream has
+passed JTAG, reset, UART, and southbridge smoke tests.
 
 ## 6. Verification Matrix
 

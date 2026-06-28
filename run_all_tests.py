@@ -411,6 +411,7 @@ def main():
 
     # Cross-validation: spu_vm.py vs C++ reference
     cv_pass = cv_fail = 0
+    audio_pass = audio_fail = 0
     cv_script = os.path.join(root_dir, "software", "cross_validate.py")
     if os.path.exists(cv_script):
         result_cv = subprocess.run(
@@ -424,12 +425,32 @@ def main():
             cv_fail = 1
             print(f"\n  cross_validate.py FAILED:\n{result_cv.stdout[-800:]}")
 
+    # Audio sink tests
+    audio_test = os.path.join(root_dir, "software", "tests", "test_rplu2_audio.py")
+    if os.path.exists(audio_test):
+        result_audio = subprocess.run(
+            [sys.executable, audio_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_audio.returncode == 0:
+            audio_pass = 1
+        else:
+            audio_pass = 0
+            audio_fail = 1
+            print(f"\n  test_rplu2_audio.py FAILED:\n{result_audio.stdout[-500:]}")
+    else:
+        audio_pass = audio_fail = 0
+
     print(f"\nPython Tests: {py_pass + py_fail + cv_pass + cv_fail}")
     print(f"Passed:      {py_pass + cv_pass}")
     print(f"Failed:      {py_fail + cv_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
+    print(f"\nAudio Sink Tests: {audio_pass + audio_fail}")
+    print(f"Passed:           {audio_pass}")
+    print(f"Failed:           {audio_fail}")
+
+    total_pass = passed + cpp_p + py_pass + cv_pass + audio_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")

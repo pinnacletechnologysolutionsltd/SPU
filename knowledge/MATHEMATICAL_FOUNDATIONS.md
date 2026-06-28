@@ -276,6 +276,66 @@ wrong choice of basis. The SPU-13 removes the workaround.
 
 ---
 
+## 7. RPLU v2: Finite Field Extension F_{p^4} over M31 (2026)
+
+The RPLU v2 pipeline extends the arithmetic field from Q(√3) rational surds to
+the finite field F_{p^4} over the Mersenne prime M31 (p = 2^31−1 = 2,147,483,647).
+
+### 7.1 Why a finite field?
+
+Rational surds in Q(√3) provide exact arithmetic at the cost of unbounded
+bit-width growth with successive operations (denominator explosion). Finite
+fields bound all values to fixed 31-bit registers, eliminating bit-width growth
+while preserving exact closure. The trade is that values are taken modulo p,
+requiring algebraic reconstruction (Chinese Remainder Theorem) to recover
+real-world quantities at pipeline boundaries.
+
+### 7.2 Why M31?
+
+p = 2^31−1 is a Mersenne prime with the Crandall property: 2^31 ≡ 1 (mod p).
+This enables **division-free modular reduction**:
+```
+x mod p = (x_lo + x_hi) mod p   (split at bit 31, add, conditional subtract)
+```
+No division circuit, no lookup table — pure shift, mask, add, compare.
+
+### 7.3 The biquadratic extension F_{p^4}
+
+The base field F_p is extended to F_{p^4} with basis [1, √3, √5, √15].
+This preserves the SPU-13's geometric primitives (quadrance, spread, Pell rotor)
+while adding full field inversion (necessary for Padé denominator evaluation).
+
+Euler's criterion confirms both √3 and √5 are quadratic non-residues in M31:
+```
+3^(p-1)/2 ≡ -1 (mod p)   → no √3 in F_p
+5^(p-1)/2 ≡ -1 (mod p)   → no √5 in F_p
+```
+The extension is structurally non-degenerate — the field never collapses.
+
+### 7.4 Conjugate reduction tower
+
+Inversion in F_{p^4} avoids O(p^4) exponentiation via nested quadratic collapse:
+```
+Z ∈ F_{p^4}  →  Z·Z̄ (conjugate w.r.t. √5, √15)  →  W ∈ F_{p^2}(√3)
+W           →  W·W̄ (conjugate w.r.t. √3)        →  N ∈ F_p
+N_inv       =  N^(p-2) mod p                    (30-bit Fermat chain)
+Z_inv       =  Z̄·W̄·N_inv                        (reconstruct in F_{p^4})
+```
+76-cycle deterministic latency. Zero-norm detection (N=0) asserts FLAGS.V.
+
+### 7.5 Lefschetz thimble connection
+
+The Thimble-Padé pipeline evaluates path integrals over Lefschetz thimbles:
+- Kohonen SOM identifies saddle points (∇S = 0) in the complexified action
+- BTU transmutes spatial coordinates into F_{p^4} field elements
+- [4/4] Padé rational approximant evaluates the thimble contribution
+- Invariant phase (Im(S) = constant) factors out of the numeric evaluation
+
+This replaces numerical integration with exact algebraic reduction —
+no floating-point, no oscillatory sign problem, no truncation drift.
+
+---
+
 ## References
 
 ### Foundational

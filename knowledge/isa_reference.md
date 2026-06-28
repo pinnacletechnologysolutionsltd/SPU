@@ -7,6 +7,8 @@
 >
 > **Migration path:**
 > - New development should target `docs/spu13_isa_spec.md` (Wheeler-Feynman v1.0)
+> - RPLU v2 Thimble-Padé pipeline (`rplu_thimble_pade.v` + `spu13_fp4_inverter.v`) targets v1.0
+> - SOM classification uses parallel 7-node array (`spu_som_node_array.v`) with v1.0 opcodes 0x2A/0x2B
 > - Use `spu13_asm.py --arch linear` to assemble programs for this legacy ISA
 > - Use `spu13_asm.py --arch wf` (default) for the next-gen ISA
 > - The `spu_vm.py` emulator supports v3.2; `spu13_arch_sim.py` supports v1.0
@@ -84,10 +86,23 @@
 
 ### RPLU / Polynomial Extensions
 
+> **RPLU v2 (Next-Gen ISA v1.0):** The legacy POLY_STEP/RATIO_CMP opcodes are
+> superseded by the Thimble-Padé pipeline (`rplu_thimble_pade.v`) which evaluates
+> [4/4] Padé rational approximants over F_{p^4} (M31) using Horner + conjugate
+> reduction tower inversion. See `docs/spu13_isa_spec.md` §5.5–5.8 for the
+> OFFR/CNFM/PHSLK/SOM opcode chain.
+
 | Opcode | Mnemonic | Operands | Description |
 |--------|----------|----------|-------------|
-| 0x60 | POLY_STEP | Rd,Rx | Horner step via RPLU |
-| 0x61 | RATIO_CMP | Rd,Rs | Rational comparison |
+| 0x60 | POLY_STEP | Rd,Rx | Horner step via RPLU (legacy Morse potential) |
+| 0x61 | RATIO_CMP | Rd,Rs | Rational comparison (legacy) |
+
+### Classification / SOM (v1.0 ISA only)
+
+| Opcode | Mnemonic | Format | Description |
+|--------|----------|--------|-------------|
+| 0x2A | SOM | R | Classify via parallel 7-node array + WTA tree |
+| 0x2B | SOM_TRAIN | R | Update node weights via 36-bit widened multiply |
 
 ## Wildberger Library (SPI Flash Primitives)
 

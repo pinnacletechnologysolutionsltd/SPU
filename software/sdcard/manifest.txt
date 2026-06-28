@@ -1,0 +1,4 @@
+# SPU RPLU Table Pack Manifest
+# Lines starting with # are comments.
+# First non-comment line is the default pack loaded by `sdhydrate`.
+carbon_rplu.tbl

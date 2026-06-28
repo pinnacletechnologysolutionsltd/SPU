@@ -1,0 +1,28 @@
+# synth_gowin_25k_sdram_min_probe.ys
+# Minimal SDRAM write/readback test for Tang Primer 25K replacement board.
+# Writes test pattern to SDRAM, reads back, verifies, reports over UART.
+
+read_verilog -lib +/gowin/cells_xtra_gw5a.v
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/tang_primer_25k/spu_tang25k_sdram_min_probe.v \
+    hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
+
+chparam -set SDRAM_COL_BITS 9 \
+        -set SDRAM_ROW_BITS 13 \
+        -set SDRAM_RANK_BITS 1 \
+        -set SDRAM_XSDS_INVERTED_RANK_CS 1 \
+        -set SDRAM_REFRESH_CYCLES 49 \
+        spu_tang25k_sdram_min_probe
+
+hierarchy -check -top spu_tang25k_sdram_min_probe
+synth_gowin -family gw5a -top spu_tang25k_sdram_min_probe \
+    -json build/sdram_min_probe.json -run begin:map_cells
+techmap -map +/gowin/cells_map.v
+opt_lut_ins -tech gowin
+hilomap -singleton -hicell VCC V -locell GND G
+clean
+hierarchy -check
+check -noinit
+blackbox =A:whitebox
+write_json build/sdram_min_probe.json

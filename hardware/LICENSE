@@ -1,17 +1,10 @@
-# CERN Open Hardware Licence Version 2 - Permissive
+Title: Live Content
 
-This is a permissive licence which allows you to use the hardware description
-files (Verilog RTL, constraints, synthesis scripts) in any way you wish,
-including for commercial purposes, as long as you preserve the copyright notice.
+Description: Fetched live
 
-Full terms: https://ohwr.org/project/cernohl/wikis/Documents/CERN-OHL-version-2
+Source: https://ohwr.org/cern_ohl_p_v2.txt
 
-In summary:
-- You may redistribute the hardware descriptions in any form
-- You may modify them and distribute modified versions
-- You may use them in commercial products
-- You must preserve the copyright notice and this licence text
-- No warranty or liability is provided
+---
 
-This licence covers all files in this directory and its subdirectories
-unless another licence is explicitly stated.
+<!doctype html><html><head><meta http-equiv=refresh content="0; url=https://gitlab.com/ohwr/project/cernohl/-/wikis/uploads/3eff4154d05e7a0459f3ddbf0674cae4/cern_ohl_p_v2.txt"><link rel=canon
+

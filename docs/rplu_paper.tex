@@ -663,6 +663,17 @@ A future \textbf{RP2350B} southbridge with PSRAM will provide memory
 hydration for BRAM-resident coefficient tables, eliminating the SPI flash
 read bottleneck for dynamically reconfigurable material classification.
 
+\subsection{Edge Classification and Control Primitives}
+
+The pipeline's deterministic latency and exact arithmetic make it a natural fit
+for safety-critical edge applications where floating-point rounding or timing
+jitter is unacceptable. Potential directions include exact control-barrier
+function kernels for real-time robotic safety filters, and geometric
+classifiers for sensor fusion in aerospace guidance. The architecture is not
+designed for---nor should it be evaluated against---general-purpose AI
+accelerators; its value lies in the niche where reproducibility, bounded
+latency, and fraction-free arithmetic are non-negotiable.
+
 % ── SECTION VI: Conclusion ─────────────────────────────────────────
 
 \section{Conclusion}
@@ -692,7 +703,11 @@ from a software heuristic to a first-class architectural primitive.
 The current evidence base is leaf-RTL simulation plus independent Python and
 C++$\,$17 oracles; integrated place-and-route and power/timing measurement
 remain future work. Two hardware targets are presented: a Xilinx Artix-7 100T
-implementation target and a Gowin GW5A-25A prototype path. All RTL, software
+implementation target and a Gowin GW5A-25A prototype path. The pipeline is best
+understood as a hardware substrate for reproducible spatial reasoning and
+safety-critical control primitives; applications in edge-classification and
+deterministic control-barrier kernels are natural future directions, while
+general-purpose AI acceleration lies outside its scope. All RTL, software
 oracles, and documentation are open-source (CC0 1.0).
 
 \section*{Acknowledgment}

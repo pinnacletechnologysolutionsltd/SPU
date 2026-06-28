@@ -131,11 +131,11 @@ IO_LOC  "uart_tx"            C3;    // Host-bound TX
 IO_PORT "uart_tx"            IO_TYPE=LVCMOS33 DRIVE=8;
 
 // ─── PMOD J4 SPI Flash ───────────────────────────────────────────────────
-// Verified by J4 sweep mapping M01: G10=CS#, D10=SCK, C10=MOSI/D1, B10=MISO/DO.
+// Verified by J4 sweep mapping M00: G10=CS#, D10=SCK, B10=MOSI/D1, C10=MISO/DO.
 IO_LOC  "flash_cs"           G10;
 IO_LOC  "flash_sck"          D10;
-IO_LOC  "flash_mosi"         C10;
-IO_LOC  "flash_miso"         B10;
+IO_LOC  "flash_mosi"         B10;
+IO_LOC  "flash_miso"         C10;
 IO_PORT "flash_cs"           IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "flash_sck"          IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "flash_mosi"         IO_TYPE=LVCMOS33 DRIVE=8;

@@ -124,4 +124,4 @@ https://dl.sipeed.com/shareURL/TANG/Primer_25K
 
 Known issue to check:
 - `sdram_cke` is hardwired on the board; it should not be constrained as an FPGA pin.
-- PMOD J4 SPI flash bring-up uses `G10` CS#, `D10` SCK, `C10` MOSI, `B10` MISO, verified by sweep `M01:EF4018`.
+- PMOD J4 SPI flash bring-up uses `G10` CS#, `D10` SCK, `B10` MOSI, `C10` MISO, verified by sweep `M00:EF4018`.

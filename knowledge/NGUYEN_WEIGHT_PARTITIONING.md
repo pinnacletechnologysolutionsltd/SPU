@@ -153,4 +153,15 @@ This is the "Heartbeat" function — it tells the 25K how to breathe the 13D dat
 - Wildberger, N.J. — Rational Trigonometry: Spread replaces angle
 - Fuller, R.B. — Synergetics: IVM as zero-energy ground state
 - Arlinghaus, S.L. — Hex hierarchies as natural scale-invariant partitioning
+
+## RPLU v2 Integration (June 2026)
+
+The RPLU v2 pipeline maps Nguyen weights into the F_{p^4} biquadratic extension
+field over M31. Weight vectors are stored as F_{p^4} 4-tuples (c0, c1, c2, c3)
+in the BTU BRAM lanes (`spu13_btu_core_top.v`). The SOM node array
+(`spu_som_node_array.v`) computes weighted quadrance directly in F_{p^4},
+replacing the legacy Q(√3) rational surd format with bounded 31-bit field
+elements. The BRAM tiering logic (BRAM18/SDRAM/PSRAM) remains valid for the
+legacy RPLU; the RPLU v2 pipeline uses flat BRAM storage for coeffs and BTU
+lanes.
 - Davis Law: ΣABCD == 0 is the global laminar stability predicate

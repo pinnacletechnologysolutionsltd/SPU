@@ -1,6 +1,10 @@
 # SPU-13 Sovereign Processing Unit
 
-**A bit-exact, division-free, rational-field processor for geometric manifold arithmetic.**
+**An experimental FPGA coprocessor for exact, deterministic geometric computation.
+Its RPLU2 pipeline combines SOM classification, collision routing, rational Padé
+evaluation, and quadray variety checks over finite algebraic rings.
+A hardware substrate for reproducible spatial reasoning and safety-critical
+control primitives, not a replacement for conventional AI accelerators.**
 
 [![License: CC0](https://img.shields.io/badge/License-CC0_1.0-lightgrey)](LICENSE)
 [![Hardware: CERN-OHL-P](https://img.shields.io/badge/Hardware-CERN--OHL--P-blue)](hardware/LICENSE)

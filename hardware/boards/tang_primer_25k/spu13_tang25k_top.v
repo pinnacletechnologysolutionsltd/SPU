@@ -223,10 +223,13 @@ module spu13_tang25k_top #(
     wire [31:0] boot_rplu_cfg_checksum;
     wire [5:0]  boot_state;
     wire        sdram_burst_done;
+    localparam RPLU_BOOT_ENABLED = ENABLE_CORE_RPLU || ENABLE_CORE_RPLU_V2;
+    localparam [15:0] RPLU_BOOT_RECORDS =
+        ENABLE_CORE_RPLU_V2 ? 16'd81 : 16'd2051;
 
     spu_laminar_boot #(
-        .ENABLE_RPLU_BOOT(ENABLE_CORE_RPLU),
-        .RPLU_CFG_RECORDS(16'd2051),
+        .ENABLE_RPLU_BOOT(RPLU_BOOT_ENABLED),
+        .RPLU_CFG_RECORDS(RPLU_BOOT_RECORDS),
         .SPI_SCK_HALF_CYCLES(2)
     ) boot_unit (
         .clk(clk_core),
@@ -1072,7 +1075,9 @@ module spu13_tang25k_top #(
         endcase
     end
 
-    localparam RPLU_TELEMETRY_BURST = ENABLE_CORE_RPLU && (!ENABLE_CORE_LATTICE || ENABLE_RPLU_TELEMETRY);
+    localparam RPLU_TELEMETRY_BURST =
+        (ENABLE_CORE_RPLU || ENABLE_CORE_RPLU_V2) &&
+        (!ENABLE_CORE_LATTICE || ENABLE_RPLU_TELEMETRY);
     localparam SDRAM_SELFTEST_TELEMETRY = ENABLE_SDRAM && ENABLE_SDRAM_SELFTEST;
     localparam CORE_SDRAM_VERIFY_TELEMETRY = ENABLE_SDRAM && ENABLE_CORE_SDRAM_VERIFY;
 

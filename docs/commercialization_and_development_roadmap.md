@@ -241,8 +241,9 @@ products.
 4. Define the dev-kit v0.1 BOM and display/debug bridge.
 5. Draft the OSHWA checklist and license layout.
 6. Prepare a one-page project brief for early collaborators and beta buyers.
-7. When the replacement Tang 25K arrives, run SDRAM hydration first, then ROTC,
-   SOM, and RPLU periodic-pack proof.
+7. When the replacement Tang 25K arrives, follow
+   `docs/tang25k_replacement_bringup_plan.md`: math/UART smoke, RPLU proof,
+   SDRAM proof, then ROTC, SOM, and RPLU periodic-pack proof.
 
 ## References
 

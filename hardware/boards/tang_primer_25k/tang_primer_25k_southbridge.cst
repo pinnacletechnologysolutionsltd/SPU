@@ -128,10 +128,12 @@ IO_LOC  "uart_tx"            C3;    // Host-bound TX
 IO_PORT "uart_tx"            IO_TYPE=LVCMOS33 DRIVE=8;
 
 // ─── SPI southbridge (PMOD J4 pins, to RP2350-Zero header) ───────────────
+// Proven J4 flash-compatible mapping:
+//   G10 = CS#, D10 = SCK, B10 = MOSI/D1, C10 = MISO/DO.
 IO_LOC  "spi_cs_n"       G10;
 IO_LOC  "spi_sck"        D10;
-IO_LOC  "spi_mosi"       C10;
-IO_LOC  "spi_miso"       B10;
+IO_LOC  "spi_mosi"       B10;
+IO_LOC  "spi_miso"       C10;
 IO_PORT "spi_cs_n"       IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "spi_sck"        IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "spi_mosi"       IO_TYPE=LVCMOS33 DRIVE=8;
