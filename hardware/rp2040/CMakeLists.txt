@@ -50,3 +50,18 @@ pico_enable_stdio_usb(rp2040_flash_pmod 1)
 pico_enable_stdio_uart(rp2040_flash_pmod 0)
 
 pico_add_extra_outputs(rp2040_flash_pmod)
+
+# Wukong UART bridge — forwards FPGA UART TX to USB CDC
+add_executable(rp2040_uart_bridge
+    rp2040_uart_bridge.c
+)
+
+target_link_libraries(rp2040_uart_bridge
+    pico_stdlib
+    hardware_uart
+)
+
+pico_enable_stdio_usb(rp2040_uart_bridge 1)
+pico_enable_stdio_uart(rp2040_uart_bridge 0)
+
+pico_add_extra_outputs(rp2040_uart_bridge)

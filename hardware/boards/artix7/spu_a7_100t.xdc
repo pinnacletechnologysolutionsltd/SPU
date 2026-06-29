@@ -17,9 +17,11 @@ set_property PACKAGE_PIN AB1 [get_ports spi_mosi]
 set_property PACKAGE_PIN AA1 [get_ports spi_miso]
 set_property IOSTANDARD LVCMOS33 [get_ports {spi_cs_n spi_sck spi_mosi spi_miso}]
 
-# ── UART TX ──────────────────────────────────────────────
-set_property PACKAGE_PIN V4  [get_ports uart_tx]
-set_property IOSTANDARD LVCMOS33 [get_ports uart_tx]
+# ── Onboard CH340N USB-UART ────────────────────────────
+# Wukong V02: FPGA M25 → CH340N RX, FPGA L25 ← CH340N TX
+set_property PACKAGE_PIN M25 [get_ports uart_tx]
+set_property PACKAGE_PIN L25 [get_ports uart_rx]
+set_property IOSTANDARD LVCMOS33 [get_ports {uart_tx uart_rx}]
 
 # ── Status LEDs ───────────────────────────────────────────
 set_property PACKAGE_PIN L1  [get_ports {led_out[0]}]
