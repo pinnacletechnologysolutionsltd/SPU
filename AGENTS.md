@@ -31,6 +31,11 @@ docs/                   Design guides and bring-up runbooks
 | `bash build_gw1n1.sh` | Full bitstream for Tang Nano 1K |
 | `python3 software/spu_forge.py simulate <program.sas>` | Simulate a .sas program on the Python VM |
 | `bash build_25k_spu13_math_probe.sh` | Synthesise, P&R, bitstream for SPU-13 math probe on Tang 25K |
+| `bash build_25k_spu13_southbridge.sh` | Full southbridge build (MATH=1 + RPLU_V2=1 — too large for 25K at 89% LUT) |
+| `bash build_25k_spu13_southbridge_link.sh` | SPI link-only probe (~350 LUTs) — validates RP2350↔FPGA SPI |
+| `bash build_25k_spu13_rplu2_arith_probe.sh` | RPLU2 arithmetic probe (6,282 LUTs, 27%) — QLDI/QSUB/RPLU2 config |
+| `bash build_25k_spu13_lucas_mac_probe.sh` | Lucas Phinary MAC standalone probe (~200 LUTs) — zero-drift proof |
+| `bash build_25k_spu13_rplu2_consume_probe.sh` | RPLU2 flash consume-probe (149-record table verification) |
 | `openFPGALoader -b tangprimer25k -f build/tang_primer_25k_spu13_math_probe.fs` | Flash bitstream to Tang Primer 25K |
 | `python3 tools/flash_layout.py` | Generate SPI flash image from .bin files (Wildberger library) |
 | `minipro -p W25Q128JV -r build/flash_backup.bin` | Read SPI flash backup (preserve bootloader) |
@@ -44,6 +49,9 @@ docs/                   Design guides and bring-up runbooks
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
 | `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 6 ROTC angles |
 | `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` | Set up Python environment |
+| `bash hardware/boards/artix7/build_a7.sh 100t full` | Synthesise, P&R, bitstream for Wukong Artix-7 100T (full spin) |
+| `python3 software/tests/test_lucas_mac_oracle.py` | Run Lucas Phinary MAC oracle (PSCALE/PCHIRAL/PMUL/PINV + 1M-step zero-drift) |
+| `iverilog -I hardware/rtl/arch -o build/lucas_mac_tb.vvp hardware/rtl/core/spu13/spu13_lucas_mac.v hardware/tests/spu13/spu13_lucas_mac_tb.v && vvp build/lucas_mac_tb.vvp` | Run Lucas MAC RTL testbench (11 ops + 100-period zero-drift) |
 
 Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
 
@@ -57,36 +65,36 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - VE (Vector Equilibrium) QR init hydration (12 vertices)
 - QR register file read path (6 distinct hex values verified)
 - **QLDI opcode** — immediate Quadray load → writes correctly to QR regfile
+- **QSUB opcode** — QR subtraction (QLDI operands → QSUB → QR commit readback)
 - Hex coordinate projection → UART output (H: FFFE 0002)
 - Instruction sequencer with inter-instruction delay
-- RP2040 USB-to-SPI flash PMOD programmer (`hardware/rp2040/rp2040_flash_pmod.c`, `tools/rp2040_flash_pmod.py`) — JEDEC, pin diagnostics, sector erase, page program, verify; used to program `tools/build/rplu2_boot_tables.bin` at flash offset `0x110000`
-- RPLU v2 PMOD J4 flash boot-table hydration proof — Tang Primer 25K reads external W25Q128-class flash over `J4[0]=CS#`, `J4[1]=SCK`, `J4[2]=MOSI/D1`, `J4[3]=MISO/DO`; legacy boot probe confirms `JEDEC EF4018`, 81 records, checksum `0x35DE2068`
+- RP2040 USB-to-SPI flash PMOD programmer — JEDEC, pin diagnostics, sector erase, page program, verify
+- RPLU v2 PMOD J4 flash boot-table hydration proof — Tang Primer 25K reads external W25Q128-class flash over J4
+- **RPLU2 consume proof over southbridge** — 149 records consumed via RP2350 SPI, count verified, checksum 0x0AA480E7
+- **Southbridge SPI protocol** — 0xAC status, 0xA0 manifold, 0xAE QR commit, 0xB1 instruction write, 0xA5 config write
+- RP2350 southbridge diag firmware — USB CDC console for SPI bring-up
+- **RP2350 arithmetic test driver** — QLDI+QSUB 6-test suite via SPI, byte-swap fix applied
 
 **RTL testbench-verified (awaiting silicon test):**
-- **ROTC opcode** — all 5 ROTC cases pass (TDM rotor core, `spu13_rotc_tdm_tb`)
-- **SOM/BMU pipeline** — 7-node parallel array with WTA comparator; individual node 3-stage quadrance pipeline; training port with 36-bit widened multiply. (`spu_som_node_tb`, `btu_collision_tb`)
-- **RPLU v2 — Thimble-Padé Engine** — A31 split-biquadratic arithmetic over Mersenne prime M31; conjugate-reduction unit/non-unit detection (~76 cycles); Horner-evaluated [4/4] Padé rational approximant; BTU collision resolver (64→6 priority encoder + backlog queue); 4R2W multi-port register file with write-forwarding bypass. (`spu13_m31_multiplier_tb`, `spu13_m31_inverter_tb`, `spu13_fp4_inverter_tb`, `singular_absorber_tb`)
-- **RPLU v2 corrected flash table consumption probe** — `tools/gen_rplu2_tables.py` now emits 149 records: 5 Padé numerator coeffs, 5 denominator coeffs, 64 BTU rows as two lane-pair records each, and one Quadray kappa record. `build_25k_spu13_rplu2_consume_probe.sh` routes/packs a Tang 25K decode probe; pending PMOD hardware capture with `--expect-rplu2-consume`.
-- QSUB, DELTA opcodes (VM-handlers ready, RTL FSM pending)
-- CALL/RET/JMP (sequencer return stack designed)
+- **ROTC opcode** — all 6 corrected ROTC angles pass (TDM rotor core)
+- **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
+- **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
+- **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
 - GPU rasterizer + fragment pipe (testbench passes)
 - Bio stack (annealer, active inference, soul metabolism, proprioception)
-- I2S audio output, toroidal regfile, quadray permuter
 
 **Rational Robotics & SOM Oracles (software-verified):**
-- Rational robotics oracle (`software/lib/rational_robotics.py`) — Pell inverse closure, F/G/H circulant inverse, FK chains, arc closure, 56 checks
-- Rational SOM/BMU oracle (`software/lib/rational_som.py`) — weighted quadrance BMU, surd-field path, stable tie-breaking, hex neighbor deltas, 24 checks
-- C++ parity for both oracles (`software/common/include/spu_rational_robotics.h`, `spu_rational_som.h`)
-- Nguyen weight partitioning knowledge (`knowledge/NGUYEN_WEIGHT_PARTITIONING.md`)
-- Rational SOM Nguyen cluster notes (`knowledge/RATIONAL_SOM_NGUYEN_CLUSTER_NOTES.md`)
+- Rational robotics oracle — 56 checks
+- Rational SOM/BMU oracle — 24 checks
+- C++ parity for both oracles
+- Lucas Phinary MAC oracle — 1M-step zero-drift, all 4 ops verified
 
-**Known limitations on damaged 25K:**
-- SDRAM non-functional — manifold state resets each power cycle
-- Bio modules stubbed (zero-LUT) to fit 25K logic budget
-- SPI flash program loader bypassed (sequencer uses hardcoded ROM)
-- Hex telemetry: hex_valid must be cleared each cycle (one-pulse pattern)
+**Known board limitations:**
+- SDRAM module (W9825G6KH) retired — DQ[10] fault confirmed, not an FPGA issue
+- Tang 25K FPGA board is healthy; SDRAM fault was on the external module
+- RPLU2 full pipeline (MATH=1 + RPLU_V2=1) too large for 25K (89% LUT) — needs Wukong Artix-7
+- Split-build strategy: 4 independent probes fit on 25K (southbridge_link, math_probe, rplu2_arith_probe, lucas_mac_probe)
 - USB 3.0 port on BL616 bridge unreliable — use USB 2.0 only
-- Place-and-route near 96% LUT utilization with full rotor core
 
 **RP2040 SPI Flash PMOD Programmer (bench-proven):**
 - Purpose: reliable replacement for bad SOIC clips / ambiguous XGECU ICSP wiring. Use it to program and verify W25Q-style PMOD flash before FPGA-side J4 probes.
@@ -148,6 +156,9 @@ Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit p
 | Rational curves spec | `knowledge/RATIONAL_CURVES_SPEC.md` | Type 1–6 curve primitives, kinematics, correction |
 | Nguyen weight partitioning | `knowledge/NGUYEN_WEIGHT_PARTITIONING.md` | Laminar weight → IVM wedge allocation → BRAM tiering |
 | SOM Nguyen cluster notes | `knowledge/RATIONAL_SOM_NGUYEN_CLUSTER_NOTES.md` | Kohonen/SOM direction, BMU RTL staging, hex topology |
+| Lucas Phinary MAC oracle | `software/tests/test_lucas_mac_oracle.py` | PSCALE/PCHIRAL/PMUL/PINV, 1M-step zero-drift over L_521 |
+| Lucas MAC architecture | `knowledge/LUCAS_PHINARY_MAC.md` | Ring separation, Barrett bridge, BTU integration, opcode map |
+| Lucas MAC paper | `docs/LUCAS_MAC_PAPER.md` | 7-section paper draft with empirical results |
 
 ## Coding Style & Naming Conventions
 
