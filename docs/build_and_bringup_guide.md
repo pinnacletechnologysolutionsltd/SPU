@@ -80,19 +80,29 @@ Arch: `sudo pacman -S arm-none-eabi-gcc arm-none-eabi-newlib cmake`
 
 ## 2. Board Targets
 
-Current hardware priority: the replacement Tang Primer 25K is the first
-incoming FPGA board. Use `docs/tang25k_replacement_bringup_plan.md` as the
-execution checklist. The Wukong Artix-7 flow is prepared, but hardware bring-up
-is parked until that board arrives.
+Current hardware priority: the Tang Primer 25K is active for subsystem regression via split-build probes. The Wukong Artix-7 is the target for full RPLU2 + Lucas MAC integration. Use the bring-up checklists in `docs/` for execution.
 
 | Board | Chip | LUTs | DSP | Build Command | Status |
 |---|---|---|---|---|---|
-| Tang Primer 25K | GW5A-25K | 23K | 56 | `bash build_25k_spu13_math_probe.sh` | Bitstream ready ✅ |
+| Tang Primer 25K | GW5A-25K | 23K | 56 | See split-build table below | 4 probes ready ✅ |
 | ECP5 25F (Colorlight) | LFE5U-25F | 24K | 56 | `yosys hardware/boards/ecp5_25f/synth_ecp5_math.ys` | Synthesized ✅ |
 | QMTech A7-100T Wukong | XC7A100T FGG676 | 101K | 240 | `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t robotics all` | Pinned P&R + bitstream ✅ at 2 MHz; 4 MHz misses timing |
 | iCESugar Pro | iCE40UP5K | 5K | 0 | TBD (sensor spin) | Target defined |
 
-### 2.1 Spins (Artix-7 family)
+### 2.1 Tang 25K Split Builds
+
+The full SPU-13 core (MATH=1 + RPLU_V2=1) exceeds the 25K's 23K LUT budget
+at 89% utilization. Four independent probes split the architecture into
+testable subsystems:
+
+| Probe | MATH | RPLU_V2 | LUTs | Build Command | Proves |
+|---|---|---|---|---|---|
+| `southbridge_link` | 0 | 0 | ~350 | `bash build_25k_spu13_southbridge_link.sh` | SPI link validation |
+| `math_probe` | 1 | 0 | ~4,000 | `bash build_25k_spu13_math_probe.sh` | ROTC, Davis, rotor |
+| `rplu2_arith_probe` | 0 | 1 | ~6,282 | `bash build_25k_spu13_rplu2_arith_probe.sh` | QLDI, QSUB, RPLU2 config |
+| `lucas_mac_probe` | 0 | 0 | ~200 | `bash build_25k_spu13_lucas_mac_probe.sh` | PSCALE zero-drift |
+
+### 2.2 Spins (Artix-7 family)
 
 | Spin | Modules | Min Board | Command |
 |---|---|---|---|
@@ -186,22 +196,23 @@ GND              ───────  GND
 
 ## 5. FPGA Bring-Up Sequence
 
-### 5.1 Tang Primer 25K (Math Probe)
-Use `docs/tang25k_replacement_bringup_plan.md` for the full replacement-board
-sequence. First load SRAM only, without `-f`:
+### 5.1 Tang Primer 25K (Split-Build Subsystem Probes)
 
-1. Build: `bash build_25k_spu13_math_probe.sh`
-2. SRAM-load bitstream: `openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_math_probe.fs`
-3. Connect UART at 115200 baud
-4. Reset board → robotics FK closure program runs
-5. Verify 5 closure proofs on UART output:
-   ```
-   H: FFFE 0002  → cross check
-   H: 0001 0003  → self-inverse
-   ...
-   ```
+The 25K uses four independent probes (see Section 2.1). Test in this order:
 
-### 5.2 Tang Primer 25K (RP2040 Southbridge)
+1. **SPI link:** `bash build_25k_spu13_southbridge_link.sh` → load → verify RP2350↔FPGA SPI
+2. **Math probe:** `bash build_25k_spu13_math_probe.sh` → load → verify ROTC/Davis/rotor
+3. **RPLU2 arithmetic:** `bash build_25k_spu13_rplu2_arith_probe.sh` → load → verify QLDI/QSUB/RPLU2 config
+4. **Lucas MAC:** `bash build_25k_spu13_lucas_mac_probe.sh` → load → verify PSCALE zero-drift
+
+First load SRAM only, without `-f`:
+```sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_<probe>.fs
+```
+
+See `docs/tang25k_replacement_bringup_plan.md` for detailed sequences.
+
+### 5.2 Tang Primer 25K (RP2350 Southbridge)
 1. Flash `rp2350_uart_injector.uf2` to RP2040
 2. Wire RP2040 UART → FPGA UART RX (Pin B3)
 3. Insert SD card with `.sas` programs
@@ -209,7 +220,7 @@ sequence. First load SRAM only, without `-f`:
 5. FPGA UART TX → RP2040 UART RX → host terminal
 
 ### 5.3 QMTech XC7A100T Wukong (Robotics First)
-Prepared but parked until Wukong hardware arrives.
+Active on the bench for silicon proofs.
 
 1. Verify JTAG chain: `openFPGALoader -c dirtyJtag --detect`
 2. Build the pinned robotics bitstream: `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t robotics all`
