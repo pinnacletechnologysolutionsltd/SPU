@@ -1,0 +1,223 @@
+#!/usr/bin/env python3
+"""RPLU2 Arithmetic Oracle — computes expected QLDI + QSUB results for comparison
+against RP2350-driven SPI hardware tests.
+
+Usage:
+  python3 software/tests/test_rplu2_arithmetic_oracle.py
+  python3 software/tests/test_rplu2_arithmetic_oracle.py --emit-c
+
+The --emit-c flag prints C array initializers for use in the RP2350 firmware.
+"""
+
+
+def qldi_encode(lane: int, a: int, b: int, c: int, d: int) -> int:
+    """Encode QLDI instruction (opcode 0x1D) as a 64-bit word.
+
+    RTL field layout (spu13_core.v:873-891):
+      [63:56] = 0x1D          opcode
+      [55:48] = lane          8-bit QR lane
+      [39:32] = A             8-bit signed → sign-extended to 32-bit
+      [31:24] = B
+      [23:16] = C
+      [15:8]  = D
+    """
+    word = 0
+    word |= (0x1D & 0xFF) << 56
+    word |= (lane & 0xFF) << 48
+    word |= (a & 0xFF) << 32
+    word |= (b & 0xFF) << 24
+    word |= (c & 0xFF) << 16
+    word |= (d & 0xFF) << 8
+    return word
+
+
+def qsub_encode(dest: int, lhs: int, rhs: int) -> int:
+    """Encode QSUB instruction (opcode 0x1B) as a 64-bit word.
+
+    RTL field layout (spu13_core.v:920-926):
+      [63:56] = 0x1B          opcode
+      [55:48] = dest          8-bit QR lane
+      [47:40] = lhs           8-bit QR lane (via rotor read)
+      [11:8]  = rhs           4-bit QR lane
+    """
+    word = 0
+    word |= (0x1B & 0xFF) << 56
+    word |= (dest & 0xFF) << 48
+    word |= (lhs & 0xFF) << 40
+    word |= (rhs & 0xF) << 8
+    return word
+
+
+def surd_sub(la: int, lb: int, ra: int, rb: int) -> tuple[int, int]:
+    """Subtract two RationalSurd values (a + b√3)."""
+    return (la - ra, lb - rb)
+
+
+def sign_extend_8(x: int) -> int:
+    """Sign-extend an 8-bit signed value to Python int."""
+    x = x & 0xFF
+    if x >= 0x80:
+        x -= 0x100
+    return x
+
+
+def qldi_expected(a: int, b: int, c: int, d: int) -> tuple[int, int, int, int,
+                                                             int, int, int, int]:
+    """Expected QR component values from QLDI with 8-bit signed inputs.
+
+    The RTL sign-extends each 8-bit value to 32-bit and places it in the
+    real part of the corresponding Quadray component.  Surd coefficients
+    are always zero.
+    """
+    return (
+        sign_extend_8(a), 0,  # comp A = (real, surd)
+        sign_extend_8(b), 0,  # comp B
+        sign_extend_8(c), 0,  # comp C
+        sign_extend_8(d), 0,  # comp D
+    )
+
+
+def run_oracle():
+    """Run the oracle and return a list of test cases with expected results."""
+    tests = []
+
+    # ── Test 1: QLDI QR0, 3,0,0,0 → QR0 = (3+0√3, 0+0√3, 0+0√3, 0+0√3)
+    tests.append({
+        'name': 'QLDI QR0 = (3,0,0,0)',
+        'words': [qldi_encode(0, 3, 0, 0, 0)],
+        'expected_lane': 0,
+        'expected_qr': qldi_expected(3, 0, 0, 0),
+    })
+
+    # ── Test 2: QLDI QR1, 1,0,0,0 → QR1 = (1+0√3, 0+0√3, 0+0√3, 0+0√3)
+    tests.append({
+        'name': 'QLDI QR1 = (1,0,0,0)',
+        'words': [qldi_encode(1, 1, 0, 0, 0)],
+        'expected_lane': 1,
+        'expected_qr': qldi_expected(1, 0, 0, 0),
+    })
+
+    # ── Test 3: QSUB QR2, QR0, QR1 → QR2 = (2+0√3, 0, 0, 0)
+    tests.append({
+        'name': 'QSUB QR2 = QR0 - QR1 = (2,0,0,0)',
+        'words': [
+            qldi_encode(0, 3, 0, 0, 0),
+            qldi_encode(1, 1, 0, 0, 0),
+            qsub_encode(2, 0, 1),
+        ],
+        'expected_lane': 2,
+        'expected_qr': qldi_expected(2, 0, 0, 0),
+    })
+
+    # ── Test 4: QSUB with negative result QR3 = QR1 - QR0 = (-2,0,0,0)
+    tests.append({
+        'name': 'QSUB QR3 = QR1 - QR0 = (-2,0,0,0)',
+        'words': [
+            qldi_encode(0, 3, 0, 0, 0),
+            qldi_encode(1, 1, 0, 0, 0),
+            qsub_encode(3, 1, 0),
+        ],
+        'expected_lane': 3,
+        'expected_qr': qldi_expected(-2, 0, 0, 0),
+    })
+
+    # ── Test 5: QLDI with negative values QR4, -5, -3, 7, -1
+    tests.append({
+        'name': 'QLDI QR4 = (-5,-3,7,-1)',
+        'words': [qldi_encode(4, -5, -3, 7, -1)],
+        'expected_lane': 4,
+        'expected_qr': qldi_expected(-5, -3, 7, -1),
+    })
+
+    # ── Test 6: QSUB QR5 = QR4 - QR4 = (0,0,0,0)
+    tests.append({
+        'name': 'QSUB QR5 = QR4 - QR4 = (0,0,0,0)',
+        'words': [
+            qldi_encode(4, -5, -3, 7, -1),
+            qsub_encode(5, 4, 4),
+        ],
+        'expected_lane': 5,
+        'expected_qr': qldi_expected(0, 0, 0, 0),
+    })
+
+    return tests
+
+
+def format_qr(lane: int, comps: tuple) -> str:
+    """Format Quadray result as hex string."""
+    ar, ac = comps[0], comps[1]
+    br, bc = comps[2], comps[3]
+    cr, cc = comps[4], comps[5]
+    dr, dc = comps[6], comps[7]
+    return (f"lane={lane} "
+            f"A=({ar:#x},{ac:#x}) B=({br:#x},{bc:#x}) "
+            f"C=({cr:#x},{cc:#x}) D=({dr:#x},{dc:#x})")
+
+
+def emit_c_header(tests):
+    """Emit C code with instruction words and expected values."""
+    print("// Auto-generated by test_rplu2_arithmetic_oracle.py --emit-c")
+    print("// Instruction words and expected QR commit values for SPI test driver.")
+    print()
+    print('#include <stdint.h>')
+    print()
+    print("typedef struct {")
+    print("    const char *name;")
+    print("    uint8_t     num_words;")
+    print("    uint64_t    words[4];")
+    print("    uint8_t     expected_lane;")
+    print("    int32_t     expected_A_real, expected_A_surd;")
+    print("    int32_t     expected_B_real, expected_B_surd;")
+    print("    int32_t     expected_C_real, expected_C_surd;")
+    print("    int32_t     expected_D_real, expected_D_surd;")
+    print("} arithmetic_test_case_t;")
+    print()
+    print("static const arithmetic_test_case_t arithmetic_tests[] = {")
+    for i, t in enumerate(tests):
+        comps = t['expected_qr']
+        words_str = ", ".join(f"0x{w:016X}ULL" for w in t['words'])
+        num = len(t['words'])
+        pad = ", ".join("0" for _ in range(4 - num))
+        if pad:
+            words_str += ", " + pad
+            # Actually we need 0ULL for the pad
+        words_str = ", ".join(f"0x{w:016X}ULL" for w in t['words'])
+        wpad = [f"0ULL" for _ in range(4 - num)]
+        all_words = [f"0x{w:016X}ULL" for w in t['words']] + wpad
+        words_str = ", ".join(all_words)
+        print(f"    {{ /* [{i}] {t['name']} */")
+        print(f"        .name = \"{t['name']}\",")
+        print(f"        .num_words = {num},")
+        print(f"        .words = {{ {words_str} }},")
+        print(f"        .expected_lane = {t['expected_lane']},")
+        print(f"        .expected_A_real = {comps[0]}, .expected_A_surd = {comps[1]},")
+        print(f"        .expected_B_real = {comps[2]}, .expected_B_surd = {comps[3]},")
+        print(f"        .expected_C_real = {comps[4]}, .expected_C_surd = {comps[5]},")
+        print(f"        .expected_D_real = {comps[6]}, .expected_D_surd = {comps[7]},")
+        print(f"    }},")
+    print("};")
+    print(f"#define ARITHMETIC_TEST_COUNT {len(tests)}")
+
+
+def main():
+    import sys
+    tests = run_oracle()
+
+    if '--emit-c' in sys.argv:
+        emit_c_header(tests)
+        return
+
+    print("=== RPLU2 Arithmetic Oracle ===")
+    print()
+    for i, t in enumerate(tests):
+        print(f"[{i}] {t['name']}")
+        for j, w in enumerate(t['words']):
+            print(f"    word[{j}] = 0x{w:016X}")
+        print(f"    expected: {format_qr(t['expected_lane'], t['expected_qr'])}")
+        print()
+
+    print("All oracle values computed. Run with --emit-c for C header.")
+
+
+if __name__ == '__main__':
+    main()

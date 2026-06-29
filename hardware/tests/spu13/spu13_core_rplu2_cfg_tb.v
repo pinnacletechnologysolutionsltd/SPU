@@ -44,7 +44,9 @@ module spu13_core_rplu2_cfg_tb;
         .ENABLE_MATH(0),
         .ENABLE_SEQUENCER(0),
         .ENABLE_CORE_SOM(0),
-        .ENABLE_CORE_RPLU_V2(1)
+        .ENABLE_CORE_RPLU_V2(1),
+        .ENABLE_CORE_RPLU_V2_PIPELINE(1),
+        .ENABLE_CORE_RPLU_V2_EXTENSIONS(0)
     ) uut (
         .clk(clk),
         .rst_n(rst_n),

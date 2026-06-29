@@ -1,7 +1,16 @@
 // spu13_tang25k_fpga_top.v — SPU-13 Southbridge (full port list for CST compat)
 // Full CST pinout for PnR compatibility; unused ports tied off internally.
 
-module spu13_tang25k_southbridge_top (
+module spu13_tang25k_southbridge_top #(
+    parameter CORE_ENABLE_RPLU = 0,
+    parameter CORE_ENABLE_LATTICE = 0,
+    parameter CORE_ENABLE_MATH = 1,
+    parameter CORE_ENABLE_SEQUENCER = 0,
+    parameter CORE_ENABLE_SOM = 0,
+    parameter CORE_ENABLE_RPLU_V2 = 0,
+    parameter CORE_ENABLE_RPLU_V2_PIPELINE = CORE_ENABLE_RPLU_V2,
+    parameter CORE_ENABLE_RPLU_V2_EXTENSIONS = 0
+) (
     input  wire        sys_clk,
     output wire [2:0]  led,
     // SPI southbridge (PMOD J4 pins, to RP2350)
@@ -403,7 +412,7 @@ module spu13_tang25k_southbridge_top (
         .inst_word(spi_inst_word_fast),
         .fifo_full(1'b0),
         .laminar_index(southbridge_status),
-        .turbulence(1'b0), .rplu_mode(1'b0),
+        .turbulence(1'b0), .rplu_mode(CORE_ENABLE_RPLU_V2 ? 1'b1 : 1'b0),
         .sentinel_telemetry(southbridge_telemetry)
     );
 
@@ -459,8 +468,14 @@ module spu13_tang25k_southbridge_top (
     // ── SPU-13 Core ────────────────────────────────────────────
     spu13_core #(
         .DEVICE("GW5A"),
-        .ENABLE_RPLU(0), .ENABLE_LATTICE(0),
-        .ENABLE_MATH(1), .ENABLE_SEQUENCER(0), .ENABLE_CORE_SOM(0)
+        .ENABLE_RPLU(CORE_ENABLE_RPLU),
+        .ENABLE_LATTICE(CORE_ENABLE_LATTICE),
+        .ENABLE_MATH(CORE_ENABLE_MATH),
+        .ENABLE_SEQUENCER(CORE_ENABLE_SEQUENCER),
+        .ENABLE_CORE_SOM(CORE_ENABLE_SOM),
+        .ENABLE_CORE_RPLU_V2(CORE_ENABLE_RPLU_V2),
+        .ENABLE_CORE_RPLU_V2_PIPELINE(CORE_ENABLE_RPLU_V2_PIPELINE),
+        .ENABLE_CORE_RPLU_V2_EXTENSIONS(CORE_ENABLE_RPLU_V2_EXTENSIONS)
     ) u_core (
         .clk(clk_core), .rst_n(rst_n),
         .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),
