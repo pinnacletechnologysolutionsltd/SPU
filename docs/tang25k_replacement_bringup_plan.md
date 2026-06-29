@@ -1,28 +1,33 @@
-# Tang Primer 25K Replacement Bring-Up Plan
+# Tang Primer 25K Bring-Up Plan
 
-Date: 2026-06-20
+Date: 2026-06-29 (updated)
 
-Current priority: the replacement Tang Primer 25K is the first incoming FPGA
-board, so it is the primary hardware bring-up target. The Wukong Artix-7 path
-is pinned and prepared, but parked until the board arrives. The damaged Tang
-25K, dock, RP2040, and RP2350 remain useful bench hardware for firmware,
-UART/JTAG, and risky IO experiments.
+The Tang Primer 25K FPGA board is healthy and is the primary bring-up and
+subsystem-regression target. The original SDRAM module (W9825G6KH) has a
+DQ[10] fault and has been retired — this was an external module fault, not
+an FPGA or dock issue. The Wukong Artix-7 path is prepared for full RPLU2 +
+Lucas MAC integration when the board is on the bench. The RP2040 and RP2350
+remain active bench hardware for firmware, UART/JTAG, and SPI southbridge.
 
 ## Current Bench Work
 
-Use the damaged Tang 25K as a regression and module target, not as the final
-SDRAM proof target.
+The 25K serves as a subsystem regression target. Each probe is a
+self-contained bitstream proving one aspect of the architecture:
 
-1. Keep the RPLU software/RTL guard passing:
+| Probe | MATH | RPLU_V2 | LUTs | Proves |
+|---|---|---|---|---|
+| `southbridge_link` | 0 | 0 | ~350 | SPI protocol validation |
+| `math_probe` | 1 | 0 | ~4,000 | ROTC, Davis, rotor |
+| `rplu2_arith_probe` | 0 | 1 | ~6,282 | QLDI, QSUB, RPLU2 config |
+| `lucas_mac_probe` | 0 | 0 | ~200 | PSCALE zero-drift |
 
-   ```sh
-   tools/run_rplu_bringup_regression.sh
-   ```
-
-2. Keep the active 25K math probe buildable:
+1. Keep all split-build probes buildable:
 
    ```sh
    bash build_25k_spu13_math_probe.sh
+   bash build_25k_spu13_southbridge_link.sh
+   bash build_25k_spu13_rplu2_arith_probe.sh
+   bash build_25k_spu13_lucas_mac_probe.sh
    ```
 
 3. Keep the RP firmware images buildable:
@@ -151,9 +156,9 @@ Only after the FPGA-side 25K baseline is stable:
    defaults in `hardware/rp_common/rplu_default_tables.h` are the only
    implemented RP-side table source.
 
-## Damaged Board Role
+## Board Role
 
-Keep the damaged board useful:
+The Tang 25K board is healthy. The retired SDRAM module means SDRAM-dependent tests are deferred to Wukong. The 25K remains useful for:
 
 - RPLU flash image/probe regression.
 - RP2350 UART injector testing against the known `B3` input path.
