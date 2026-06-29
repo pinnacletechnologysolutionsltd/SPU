@@ -12,6 +12,8 @@ module spu13_core #(
     parameter ENABLE_SEQUENCER = 1,
     parameter ENABLE_CORE_SOM  = 0,   // SOM/BMU classifier pipeline (legacy serial scan)
     parameter ENABLE_CORE_RPLU_V2 = 0, // RPLU v2: A31 Thimble-Padé pipeline (parallel SOM + BTU + Padé + M31)
+    parameter ENABLE_CORE_RPLU_V2_PIPELINE = ENABLE_CORE_RPLU_V2, // live SOM/BTU/Padé/inverter evaluator
+    parameter ENABLE_CORE_RPLU_V2_EXTENSIONS = ENABLE_CORE_RPLU_V2, // NSA/topology6 extension bundle
     parameter [255:0] MEM_FILE = "hardware/rtl/arch/hw_test.mem"
 )(
     input  wire         clk,            // Fast Clock (e.g. 12-24MHz)
@@ -796,6 +798,11 @@ module spu13_core #(
     reg [3:0] qsub_dest_lane;
     reg [3:0] qsub_rhs_lane;
     reg [63:0] qsub_lhs_A, qsub_lhs_B, qsub_lhs_C, qsub_lhs_D;
+    wire [63:0] qsub_res_A, qsub_res_B, qsub_res_C, qsub_res_D;
+    assign qsub_res_A = rs_sub64(qsub_lhs_A, qrf_rd_A);
+    assign qsub_res_B = rs_sub64(qsub_lhs_B, qrf_rd_B);
+    assign qsub_res_C = rs_sub64(qsub_lhs_C, qrf_rd_C);
+    assign qsub_res_D = rs_sub64(qsub_lhs_D, qrf_rd_D);
 
     assign inst_done = inst_done_r;
 
@@ -859,11 +866,17 @@ module spu13_core #(
                 end else begin
                     qrf_wr_en   <= 1;
                     qrf_wr_lane <= qsub_dest_lane;
-                    instr_wr_A <= rs_sub64(qsub_lhs_A, qrf_rd_A);
-                    instr_wr_B <= rs_sub64(qsub_lhs_B, qrf_rd_B);
-                    instr_wr_C <= rs_sub64(qsub_lhs_C, qrf_rd_C);
-                    instr_wr_D <= rs_sub64(qsub_lhs_D, qrf_rd_D);
+                    instr_wr_A <= qsub_res_A;
+                    instr_wr_B <= qsub_res_B;
+                    instr_wr_C <= qsub_res_C;
+                    instr_wr_D <= qsub_res_D;
                     instr_wr_active <= 1;
+                    qr_commit_valid_r <= 1;
+                    qr_commit_lane_r <= qsub_dest_lane;
+                    qr_commit_A_r <= qsub_res_A;
+                    qr_commit_B_r <= qsub_res_B;
+                    qr_commit_C_r <= qsub_res_C;
+                    qr_commit_D_r <= qsub_res_D;
                     qsub_active <= 0;
                     qsub_stage <= 0;
                     inst_done_r <= 1;
@@ -953,7 +966,7 @@ module spu13_core #(
                          eff_inst_word[63:56] != 8'h16 &&
                          eff_inst_word[63:56] != 8'h1B &&
                          eff_inst_word[63:56] != 8'h1E &&
-                         !(ENABLE_CORE_RPLU_V2 && core_nsa_opcode) &&
+                         !(ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_EXTENSIONS && core_nsa_opcode) &&
                          !(ENABLE_CORE_SOM && (eff_inst_word[63:56] == 8'h2A ||
                                                 eff_inst_word[63:56] == 8'h2B))) begin
                 // Unknown/QLOG — consume immediately
@@ -1011,7 +1024,12 @@ module spu13_core #(
     assign rplu_material_id = (ENABLE_CORE_SOM && ENABLE_RPLU) ? som_material_id : phinary_chirality;
 
     generate
-        if (ENABLE_RPLU) begin : gen_rplu
+        if (ENABLE_CORE_RPLU_V2) begin : gen_rplu_v2_mode_tieoffs
+            assign rplu_done = phi_21;
+            assign ratio_cmp_res = 3'sd0;
+            assign ratio_cmp_valid = 1'b0;
+            assign rplu_addr_dbg = 10'd0;
+        end else if (ENABLE_RPLU) begin : gen_rplu
             davis_to_rplu u_davis_rplu (
                 .clk(clk), .rst_n(rst_n), .start(phi_21), .q_vector(rotated_axis), .material_id(rplu_material_id),
                 .cfg_wr_en(dec_fast_cfg_wr_en), .cfg_wr_sel(dec_fast_cfg_sel), .cfg_wr_material(dec_fast_cfg_material), .cfg_wr_addr(dec_fast_cfg_addr), .cfg_wr_data(dec_fast_cfg_data),
@@ -1431,7 +1449,7 @@ module spu13_core #(
     // When enabled, rplu_dissoc is driven from the v2 pipeline's
     // singularity exception (FLAGS.V) rather than the legacy Morse table.
     generate
-        if (ENABLE_CORE_RPLU_V2) begin : gen_rplu_v2
+        if (ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_PIPELINE) begin : gen_rplu_v2
             wire        rplu2_som_done;
             wire [15:0] rplu2_som_best_id, rplu2_som_label;
             wire [63:0] rplu2_som_best_q;
@@ -1487,8 +1505,6 @@ module spu13_core #(
             // variety mismatch.  This stays ring-native: equality to zero is
             // meaningful over M31, while magnitude/order comparisons are not.
             assign rplu_dissoc = rplu2_dissoc;
-            assign rplu_dissoc_out = rplu2_dissoc;
-            assign rplu_dissoc_mask_out = {13{rplu2_dissoc}};
 
             // SOM classification start — triggered by SOM opcode (0x2A)
             always @(posedge clk or negedge rst_n) begin
@@ -1506,16 +1522,21 @@ module spu13_core #(
                 end
             end
 
+        end else if (ENABLE_CORE_RPLU_V2) begin : gen_rplu_v2_cfg_only
+            // RPLU2 config/QR mode: keep the config receive path and QR ISA,
+            // but omit the full SOM/BTU/Padé/inverter evaluator.
+            assign rplu_dissoc = 1'b0;
         end else begin : gen_no_rplu_v2
-            // v2 pipeline disabled — no-op (handled by legacy gen_rplu block)
+            // v2 disabled — no-op (handled by legacy gen_rplu block)
         end
     endgenerate
 
-    // ── NSA Dual-Number Core (inside RPLU v2 block) ──────────────────
+    // ── NSA/topology6 extension bundle (inside RPLU v2 block) ────────
     // Provides dual arithmetic over A_SPU = A31[epsilon]/(epsilon^2).
-    // Instantiated when ENABLE_CORE_RPLU_V2=1 alongside the main pipeline.
+    // Kept separately gateable so constrained board targets can carry the
+    // RPLU2 pipeline without the wider Janus/NSA shadow state.
     generate
-        if (ENABLE_CORE_RPLU_V2) begin : gen_nsa_core
+        if (ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_EXTENSIONS) begin : gen_nsa_core
             // ── JSCR: Janus screw topology permutation (0x48) ─────────
             // Single-cycle: reads source lane, applies screw/dual permutation,
             // writes to destination lane.

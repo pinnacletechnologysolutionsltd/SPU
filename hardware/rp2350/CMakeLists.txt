@@ -187,3 +187,22 @@ target_compile_definitions(spu_link_test PRIVATE
 pico_enable_stdio_usb(spu_link_test 1)
 pico_enable_stdio_uart(spu_link_test 0)
 pico_add_extra_outputs(spu_link_test)
+
+# RPLU2 arithmetic test driver — QLDI + QSUB via SPI
+add_executable(rp2350_spu_arithmetic_test
+    rp2350_spu_arithmetic_test.c
+)
+
+target_link_libraries(rp2350_spu_arithmetic_test
+    pico_stdlib
+    hardware_spi
+    spu_rp_common
+)
+
+target_compile_definitions(rp2350_spu_arithmetic_test PRIVATE
+    ${SPU_SPI_PIN_DEFS}
+)
+
+pico_enable_stdio_usb(rp2350_spu_arithmetic_test 1)
+pico_enable_stdio_uart(rp2350_spu_arithmetic_test 0)
+pico_add_extra_outputs(rp2350_spu_arithmetic_test)

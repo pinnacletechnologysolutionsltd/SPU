@@ -24,7 +24,8 @@ module spu13_core_nsa_handshake_tb;
         .ENABLE_MATH(1),
         .ENABLE_SEQUENCER(0),
         .ENABLE_CORE_SOM(0),
-        .ENABLE_CORE_RPLU_V2(1)
+        .ENABLE_CORE_RPLU_V2(1),
+        .ENABLE_CORE_RPLU_V2_EXTENSIONS(1)
     ) uut (
         .clk(clk), .rst_n(rst_n),
         .phi_8(1'b0), .phi_13(1'b0), .phi_21(1'b0),
