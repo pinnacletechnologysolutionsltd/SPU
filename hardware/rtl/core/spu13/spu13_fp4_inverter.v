@@ -34,7 +34,9 @@ module spu13_fp4_inverter (
     output reg  [31:0]  mult_b0, mult_b1, mult_b2, mult_b3,
     input  wire [31:0]  mult_r0, mult_r1, mult_r2, mult_r3,
     input  wire         mult_done,
-    input  wire         mult_busy
+    input  wire         mult_busy,
+    output wire [3:0]   debug_state,
+    output wire         debug_start_accept
 );
 
     localparam [31:0] P      = 32'h7FFFFFFF;
@@ -52,7 +54,7 @@ module spu13_fp4_inverter (
     localparam S_DONE        = 4'd8;
     localparam S_EXCEPTION   = 4'd9;   // Zero-norm trap
 
-    reg [3:0]  state;
+    (* keep, fsm_encoding = "none" *) reg [3:0] state;
     reg [31:0] zc0, zc1, zc2, zc3;     // Z_conjugate storage
     reg [31:0] w0, w1, w2, w3;         // W = Z * Z_conj
     reg [31:0] wc0, wc1, wc2, wc3;     // W_conj
@@ -62,6 +64,9 @@ module spu13_fp4_inverter (
     reg [31:0] fermat_res;             // Running result in Fermat chain
     reg [4:0]  fermat_bit;             // Current bit index (30 down to 0)
     reg [3:0]  stage_d2_idx;           // 0-3 for scalar multiply lanes
+
+    assign debug_state = state;
+    assign debug_start_accept = (state == S_IDLE) && start;
 
     // ── Fast M31 reduction for scalar ───────────────────────────────
     function [31:0] m31_reduce;
@@ -73,6 +78,13 @@ module spu13_fp4_inverter (
             sum = lo + hi;
             if (sum >= P) sum = sum - P;
             m31_reduce = sum;
+        end
+    endfunction
+
+    function [31:0] m31_neg;
+        input [31:0] x;
+        begin
+            m31_neg = (x == 32'd0) ? 32'd0 : (P - x);
         end
     endfunction
 
@@ -97,8 +109,8 @@ module spu13_fp4_inverter (
                         // Latch Z and compute Z_conj: flip √5, √15 signs
                         zc0 <= z0;
                         zc1 <= z1;
-                        zc2 <= (P - z2) % P;   // -z2 mod P
-                        zc3 <= (P - z3) % P;   // -z3 mod P
+                        zc2 <= m31_neg(z2);   // -z2 mod P
+                        zc3 <= m31_neg(z3);   // -z3 mod P
                         // Start multiply: Z * Z_conj
                         mult_a0    <= z0;
                         mult_a1    <= z1;
@@ -106,8 +118,8 @@ module spu13_fp4_inverter (
                         mult_a3    <= z3;
                         mult_b0    <= z0;
                         mult_b1    <= z1;
-                        mult_b2    <= (P - z2) % P;
-                        mult_b3    <= (P - z3) % P;
+                        mult_b2    <= m31_neg(z2);
+                        mult_b3    <= m31_neg(z3);
                         mult_start <= 1'b1;
                         state      <= S_STAGE_A;
                     end
@@ -123,7 +135,7 @@ module spu13_fp4_inverter (
                         w3 <= mult_r3;
                         // Compute W_conj: flip √3 sign → (w0, -w1, 0, 0)
                         wc0 <= mult_r0;
-                        wc1 <= (P - mult_r1) % P;
+                        wc1 <= m31_neg(mult_r1);
                         wc2 <= 32'd0;
                         wc3 <= 32'd0;
                         // Start Stage B: W * W_conj
@@ -132,7 +144,7 @@ module spu13_fp4_inverter (
                         mult_a2    <= mult_r2;
                         mult_a3    <= mult_r3;
                         mult_b0    <= mult_r0;
-                        mult_b1    <= (P - mult_r1) % P;
+                        mult_b1    <= m31_neg(mult_r1);
                         mult_b2    <= 32'd0;
                         mult_b3    <= 32'd0;
                         mult_start <= 1'b1;

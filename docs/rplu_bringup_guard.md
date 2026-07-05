@@ -1,22 +1,22 @@
 # RPLU Bring-Up Guard
 
 This guard covers both the **legacy RPLU (Morse potential)** and the **RPLU v2
-(Thimble-Padé F_{p^4} pipeline)**. Run the appropriate regression for the build
+(Thimble-Padé A₃₁ pipeline)**. Run the appropriate regression for the build
 target.
 
 ## RPLU v2 (Thimble-Padé) Regression
 
-The F_{p^4} pipeline is verified with dedicated Verilog testbenches:
+The A₃₁ pipeline is verified with dedicated Verilog testbenches:
 
 ```sh
 TB_FILTER=spu13_m31 python3 run_all_tests.py     # M31 multiplier + scalar inverter
-TB_FILTER=spu13_fp4 python3 run_all_tests.py     # F_{p^4} conjugate reduction tower
+TB_FILTER=spu13_fp4 python3 run_all_tests.py     # A₃₁ conjugate reduction tower
 TB_FILTER=spu_som_node python3 run_all_tests.py  # SOM node quadrance + training
 TB_FILTER=singular_absorber python3 run_all_tests.py  # Zero-norm exception stress
 TB_FILTER=btu_collision python3 run_all_tests.py # BTU multi-saddle collision
 ```
 
-Key proof lines for the F_{p^4} inverter:
+Key proof lines for the A₃₁ inverter:
 - `inv(1) = 1` — identity preserves
 - `inv(0)` → `FLAGS.V=1` — zero-norm singularity trap
 - `inv(x)` for non-zero x → `Z * Z_inv = 1` — field axiom closure

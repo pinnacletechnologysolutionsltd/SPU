@@ -44,6 +44,7 @@ module spu_som_bmu #(
     // Training port (SOM_TRAIN: update node weights)
     input  wire         train_we,
     input  wire [2:0]   train_addr,
+    input  wire [3:0]   train_be,      // byte-enable: one bit per feature
     input  wire [NUM_FEATURES * 2 * WIDTH - 1 : 0] train_wdata,
     output wire [NUM_FEATURES * 2 * WIDTH - 1 : 0] train_rdata
 );
@@ -75,13 +76,14 @@ module spu_som_bmu #(
     endgenerate
     assign train_rdata = node_rdata_packed;
 
-    // Training write (combinational)
+    // Training write with per-feature byte-enable
     integer tf;
     always @(posedge clk) begin
         if (train_we) begin
             for (tf = 0; tf < NUM_FEATURES; tf = tf + 1) begin
-                node_weights[train_addr][NUM_FEATURES-1-tf]
-                    <= train_wdata[tf*FEATURE_W +: FEATURE_W];
+                if (train_be[NUM_FEATURES-1-tf])
+                    node_weights[train_addr][NUM_FEATURES-1-tf]
+                        <= train_wdata[tf*FEATURE_W +: FEATURE_W];
             end
         end
     end
@@ -134,18 +136,24 @@ module spu_som_bmu #(
         end
     endfunction
 
-    function [4*WIDTH-1:0] rs_quadrance;
+    function [4*WIDTH-1:0] rs_weighted_quadrance;
         input signed [WIDTH-1:0] dp, dq;
+        input signed [WIDTH-1:0] wp, wq;
         reg signed [2*WIDTH-1:0] dp_sq, dq_sq, pq;
-        reg signed [2*WIDTH-1:0] qp, qq;
+        reg signed [2*WIDTH-1:0] sq_p, sq_q;
+        reg signed [2*WIDTH-1:0] w_p, w_q;
         begin
             dp_sq = dp * dp;
             dq_sq = dq * dq;
             pq    = dp * dq;
-            // quadrance = P^2 + 3*Q^2 = (p^2 + 3*q^2, 2*p*q)
-            qp = dp_sq + (dq_sq <<< 1) + dq_sq;
-            qq = pq <<< 1;
-            rs_quadrance = {qp, qq};
+            // (dp + dq*sqrt(3))^2 = sq_p + sq_q*sqrt(3).
+            sq_p = dp_sq + (dq_sq <<< 1) + dq_sq;
+            sq_q = pq <<< 1;
+
+            // Apply feature weight (wp + wq*sqrt(3)).
+            w_p = (sq_p * wp) + (((sq_q * wq) <<< 1) + (sq_q * wq));
+            w_q = (sq_p * wq) + (sq_q * wp);
+            rs_weighted_quadrance = {w_p, w_q};
         end
     endfunction
 
@@ -169,6 +177,7 @@ module spu_som_bmu #(
 
     // Pipeline registers for quadrance computation
     reg [FEATURE_W-1:0] f_reg [0:NUM_FEATURES-1];
+    reg [FEATURE_W-1:0] fw_reg [0:NUM_FEATURES-1];
     reg [FEATURE_W-1:0] w_reg [0:NUM_FEATURES-1];
     reg [4*WIDTH-1:0]   q_reg [0:NUM_FEATURES-1];  // Per-feature quadrance
     reg [31:0]           q_accum_p;
@@ -211,9 +220,10 @@ module spu_som_bmu #(
                         q_accum_q      <= 0;
                         scan_state     <= SCAN_COMPUTE;
 
-                        // Latch features into pipeline register
+                        // Latch features and feature weights into pipeline registers.
                         for (fi = 0; fi < NUM_FEATURES; fi = fi + 1) begin
                             f_reg[fi] <= features[fi*FEATURE_W +: FEATURE_W];
+                            fw_reg[fi] <= feature_weights[fi*FEATURE_W +: FEATURE_W];
                         end
                     end
                 end
@@ -229,9 +239,11 @@ module spu_som_bmu #(
                     // Stage 1-2: compute per-feature quadrances (pipeline)
                     else if (pipe_stage == 1) begin
                         for (fi = 0; fi < NUM_FEATURES; fi = fi + 1) begin
-                            q_reg[fi] <= rs_quadrance(
+                            q_reg[fi] <= rs_weighted_quadrance(
                                 f_reg[fi][WIDTH-1:0]    - w_reg[fi][WIDTH-1:0],
-                                f_reg[fi][2*WIDTH-1:WIDTH] - w_reg[fi][2*WIDTH-1:WIDTH]
+                                f_reg[fi][2*WIDTH-1:WIDTH] - w_reg[fi][2*WIDTH-1:WIDTH],
+                                fw_reg[fi][WIDTH-1:0],
+                                fw_reg[fi][2*WIDTH-1:WIDTH]
                             );
                         end
                         pipe_stage <= 2;

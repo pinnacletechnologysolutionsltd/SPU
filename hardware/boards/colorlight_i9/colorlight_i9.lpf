@@ -1,0 +1,149 @@
+// Colorlight i9-v7.2 Constraint File (Lattice Preference Format)
+// LFE5U-45F (caBGA-381 package, Colorlight reverse-engineered pinout)
+//
+// Source: colorlight_i9_v7.2.md (community documentation)
+// FPGA: LFE5U-45F-6BG381C
+// Flash: W25Q64JVSIQ (8 MB)
+// Clock: 25 MHz on-board oscillator (pin P3)
+// LED: D2 on FPGA ball L2 (exposed on SODIMM pin 41)
+
+// ============================================================================
+// CRITICAL: System Clock (25 MHz → 50 MHz via PLL or ext buffer)
+// ============================================================================
+// Colorlight i9 has a 25 MHz oscillator on pin P3 (not SODIMM).
+// Strategy: Use FPGA internal PLL (if needed for 50 MHz) or work at 25 MHz.
+// Note: SPU-13 divides this down to 12 MHz internally (no PLL inversion).
+
+LOCATE COMP "clk_25m" SITE "P3";        // 25 MHz input from on-board oscillator
+IOBUF PORT "clk_25m" PULLMODE=NONE;
+
+// ============================================================================
+// STATUS LED (Single LED on Colorlight i9)
+// ============================================================================
+// SODIMM Pin 41: D2 LED (Active Low)
+// Bank 4, LVCMOS33
+
+LOCATE COMP "led" SITE "L2";            // D2 / SODIMM pin 41
+IOBUF PORT "led" DRIVE=8;
+
+// Optional: If multiple LEDs needed, use other available SODIMM pins:
+// LOCATE COMP "led[1]" SITE "R1";      // SODIMM pin 42
+// LOCATE COMP "led[2]" SITE "K18";     // SODIMM pin 49
+
+// ============================================================================
+// RESET SIGNAL (Optional: External Button or RP2350 Control)
+// ============================================================================
+// Colorlight i9 has internal reset management. If external reset needed:
+// Use one of the available SODIMM pins (e.g., R1, W1, C18, V1).
+// For now, tie off (optional).
+
+// LOCATE COMP "rst_n" SITE "R1";       // Optional: SODIMM pin 42
+// IOBUF PORT "rst_n" PULLMODE=UP;
+
+// ============================================================================
+// UART TX (Serial Telemetry @ 115.2 kbaud)
+// ============================================================================
+// Route to available SODIMM pin for external serial console.
+// Choose from: R1 (42), W1 (50), C18 (51), V1 (52), etc.
+
+LOCATE COMP "uart_tx" SITE "W1";       // SODIMM pin 50 (example)
+IOBUF PORT "uart_tx" IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ============================================================================
+// ON-BOARD SPI FLASH (W25Q64JVSIQ)
+// ============================================================================
+// Colorlight i9 has on-board flash directly connected to FPGA (not SODIMM).
+// Used for bitstream persistence at power-up.
+// Note: Can be left to bootloader or accessed by SPU-13 for asset streaming.
+
+LOCATE COMP "flash_cs_n"  SITE "R2";    // CS#
+// CCLK/U3 is a dedicated configuration clock in Trellis and is not exposed as
+// a normal user IO site by nextpnr for CABGA381. Leave flash_clk unconstrained
+// for the resource/timing probe; revisit before hardware flash access.
+// LOCATE COMP "flash_clk" SITE "U3";    // SCK
+LOCATE COMP "flash_mosi"  SITE "W2";    // MOSI (DATA OUT)
+LOCATE COMP "flash_miso"  SITE "V2";    // MISO (DATA IN)
+
+IOBUF PORT "flash_cs_n"  DRIVE=8;
+IOBUF PORT "flash_clk"   DRIVE=8;
+IOBUF PORT "flash_mosi"  DRIVE=8;
+IOBUF PORT "flash_miso"  PULLMODE=UP;
+
+// ============================================================================
+// JTAG (For Programming / Debugging)
+// ============================================================================
+// Colorlight i9 exposes JTAG via header (J27, J30, J31, J32):
+// Can be used for openFPGALoader bitstream flashing.
+// Typically pre-routed; no constraint needed if using on-board connector.
+
+// LOCATE COMP "jtag_tck"  SITE "J27";
+// LOCATE COMP "jtag_tdi"  SITE "J32";
+// LOCATE COMP "jtag_tdo"  SITE "J30";
+// LOCATE COMP "jtag_tms"  SITE "J31";
+
+// ============================================================================
+// AVAILABLE SODIMM PINS (For Southbridge / Expansion)
+// ============================================================================
+// The following SODIMM pins are available for future I/O:
+//   SODIMM  41 → L2  (currently used for LED D2)
+//   SODIMM  42 → R1  (available)
+//   SODIMM  49 → K18 (available)
+//   SODIMM  50 → W1  (currently used for UART TX)
+//   SODIMM  51 → C18 (available)
+//   SODIMM  52 → V1  (available)
+//
+// Example: Add SPI southbridge on these pins
+LOCATE COMP "spi_cs"    SITE "C18";     // SODIMM pin 51
+LOCATE COMP "spi_sck"   SITE "V1";      // SODIMM pin 52
+LOCATE COMP "spi_mosi"  SITE "K18";     // SODIMM pin 49
+LOCATE COMP "spi_miso"  SITE "R1";      // SODIMM pin 42
+
+IOBUF PORT "spi_cs"    IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "spi_sck"   IO_TYPE=LVCMOS33 PULLMODE=DOWN;
+IOBUF PORT "spi_mosi"  IO_TYPE=LVCMOS33 PULLMODE=DOWN;
+IOBUF PORT "spi_miso"  IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ============================================================================
+// TIMING CONSTRAINTS
+// ============================================================================
+// System clock: 25 MHz (on-board oscillator)
+// Internal clock: 25 MHz (no PLL for now)
+// SPU-13 core: Divides to 12 MHz internally
+
+FREQUENCY NET "clk_25m" 25.0 MHZ;
+
+// ============================================================================
+// I/O BANK CONFIGURATION
+// ============================================================================
+// Colorlight i9 I/O banks (from LFE5U-45F):
+//   Bank 0: Not used (reserved)
+//   Bank 1: Not used (reserved)
+//   Bank 2: Ethernet PHY #0 (internal use)
+//   Bank 3: Ethernet PHY #1 (internal use)
+//   Bank 4: General I/O (where LED D2 is located)
+//   Bank 5–7: Additional I/O banks (SODIMM pins)
+//
+// All VCCIO banks tied to 3.3V (standard Colorlight i9 configuration).
+// VCC (core) = 1.1V, VCCAUX = 2.5V (internally managed on module).
+
+// ============================================================================
+// NOTES FOR VERIFICATION
+// ============================================================================
+// 1. This constraint file is based on Colorlight i9-v7.2 community pinout
+//    (source: colorlight_i9_v7.2.md)
+// 2. On-board oscillator: 25 MHz (not 50 MHz as in ECP5-85K design)
+// 3. Single LED (L2) available for status; no RGB LED on this board
+// 4. SODIMM primarily routed to Ethernet PHY; limited GPIO available
+// 5. On-board SPI flash (W25Q64) used for bitstream persistence
+// 6. For full southbridge integration, use available SODIMM pins
+//    (or add external header to FPGA)
+
+// ============================================================================
+// CLOCK PLL OPTION (if 50 MHz needed internally)
+// ============================================================================
+// Uncomment to enable 25 MHz → 50 MHz PLL:
+// LOCATE COMP "pll_clk_in" SITE "P3";
+// LOCATE COMP "pll_clk_out" SITE "GR_PCLK_XX";  // (to be determined based on PLL bank)
+//
+// For SPU-13: Internal 25 MHz may be sufficient; verify with timing analysis.
+// Fibonacci sequencer operates at 8, 13, 21 cycle intervals relative to clk_25m.

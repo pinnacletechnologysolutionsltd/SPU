@@ -88,7 +88,7 @@
 
 > **RPLU v2 (Next-Gen ISA v1.0):** The legacy POLY_STEP/RATIO_CMP opcodes are
 > superseded by the Thimble-Padé pipeline (`rplu_thimble_pade.v`) which evaluates
-> [4/4] Padé rational approximants over F_{p^4} (M31) using Horner + conjugate
+> [4/4] Padé rational approximants over A₃₁ (M31) using Horner + conjugate
 > reduction tower inversion. See `docs/spu13_isa_spec.md` §5.5–5.8 for the
 > OFFR/CNFM/PHSLK/SOM opcode chain.
 

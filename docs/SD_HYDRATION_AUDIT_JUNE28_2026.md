@@ -1,8 +1,8 @@
 # SD→RP2350→FPGA SPI Hydration Audit (June 28, 2026)
 
-**Date:** 2026-06-28 22:47 NZST  
-**Status:** ✅ **END-TO-END RECEIPT PROVEN**  
-**Test Results:** 16/16 records read, parsed, transmitted, received, latched, checksummed  
+**Date:** 2026-06-28 22:47 NZST
+**Status:** ✅ **END-TO-END RECEIPT PROVEN**
+**Test Results:** 16/16 records read, parsed, transmitted, received, latched, checksummed
 **Confidence:** High — full architectural chain validated
 
 ---
@@ -168,23 +168,23 @@ wire [511:0] southbridge_telemetry = {
 ```c
 static void cmd_cfgtele(spu_diag_t *diag) {
     uint8_t tele[SPU_LINK_SENTINEL_BYTES] = {0};
-    
+
     spu_link_read_sentinel(diag->link, tele);
-    
+
     uint32_t magic = read_be32(&tele[0]);
     if (magic != 0x53505543u) {
         printf("OK cfgtele raw ");
         print_bytes(tele, sizeof(tele));
         return;
     }
-    
+
     uint16_t count = read_be16(&tele[4]);
     uint8_t sel = tele[6] & 0x7u;
     uint8_t material = tele[7];
     uint16_t addr = read_be16(&tele[8]) & 0x03FFu;
     uint64_t data = read_be64(&tele[10]);
     uint32_t checksum = read_be32(&tele[18]);
-    
+
     printf("OK cfgtele magic=SPUC count=%u last_sel=%u last_material=%u"
            " last_addr=%u last_data=0x%016" PRIX64
            " checksum=0x%08" PRIX32 "\r\n",
@@ -231,12 +231,12 @@ cfgtele count=16 last_sel=0 last_material=1 last_addr=2 last_data=0x000000000001
 
 ### Verification Criteria
 
-✅ **Count matches:** 16 records loaded, 16 received, 16 latched  
-✅ **State preservation:** last_sel, material, addr, data all latched correctly  
-✅ **Checksum accumulation:** XOR of all 16 records produces 0x3A0AB5E9  
-✅ **No timeouts:** sdhydrate completed without stall  
-✅ **No data corruption:** all values round-tripped through SPI losslessly  
-✅ **No packet loss:** 0 records skipped  
+✅ **Count matches:** 16 records loaded, 16 received, 16 latched
+✅ **State preservation:** last_sel, material, addr, data all latched correctly
+✅ **Checksum accumulation:** XOR of all 16 records produces 0x3A0AB5E9
+✅ **No timeouts:** sdhydrate completed without stall
+✅ **No data corruption:** all values round-tripped through SPI losslessly
+✅ **No packet loss:** 0 records skipped
 
 ---
 
@@ -363,7 +363,7 @@ The SD card → RP2350 → FPGA SPI reception pipeline is **fully operational** 
 - Round-trip readback: ✅
 - Diagnostics display: ✅
 
-The architecture is **production-ready** for the next phase: RPLU v2 table consumption and F_{p^4} arithmetic validation on silicon.
+The architecture is **production-ready** for the next phase: RPLU v2 table consumption and A₃₁ arithmetic validation on silicon.
 
 **Next milestone:** Prove that RPLU v2 (BTU + Padé) correctly interprets the hydrated records and produces deterministic output on hardware.
 
@@ -371,8 +371,8 @@ The architecture is **production-ready** for the next phase: RPLU v2 table consu
 
 ## Audit Sign-Off
 
-**Auditor:** Copilot CLI  
-**Date:** 2026-06-28 22:47 NZST  
-**Confidence Level:** High (all paths proven, no anomalies detected)  
+**Auditor:** Copilot CLI
+**Date:** 2026-06-28 22:47 NZST
+**Confidence Level:** High (all paths proven, no anomalies detected)
 **Recommendation:** Proceed to Phase 1 (full core synthesis + RPLU consumption proof)
 

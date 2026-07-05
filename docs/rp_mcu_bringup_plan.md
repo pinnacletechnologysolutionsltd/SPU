@@ -3,27 +3,27 @@
 For the display and deterministic SOM map direction, see
 `docs/visual_som_devboard_plan.md`.
 
-Status anchor: the replacement Tang Primer 25K is now the first incoming FPGA
-board and is the primary bring-up target. Until it arrives, keep using the
-damaged-board RPLU full probe with SDRAM mask `0x0402` as the stable FPGA
-regression target while bringing up the RP2040/RP2350 side.
+Status anchor: Tang Primer 25K is now the stable regression/probe target, while
+Wukong Artix-7 100T is the Artix silicon-evidence and constrained integration
+target. Full concurrent integration is reserved for an Artix-7 200T /
+Kintex-class board. Use the Tang 25K split probes for low-risk RP2040/RP2350
+firmware regression before moving new control paths onto Wukong.
 
-Near-term sequencing lives in `docs/tang25k_replacement_bringup_plan.md`.
+Board-role sequencing lives in `docs/CURRENT_STATUS.md` and
+`docs/build_and_bringup_guide.md`.
 
 ## Current Boundary
 
-The proven Tang 25K full-probe top currently exposes the RP2350 path as a UART
-byte input:
+The legacy Tang 25K full-probe top exposes the RP2350 path as a UART byte input:
 
 - FPGA `periph_rx` on pin `B3`
 - 115200 baud host receiver in `spu13_tang25k_top.v`
 - accepted control bytes: `w`, `a`, `s`, `d`, and space
 
-The older RP2350 firmware in `hardware/rp2350/rp2350_spu_interface.c` expects a
-broader FPGA SPI slave protocol. That SPI slave exists in
-`hardware/rtl/peripherals/io/spu_spi_slave.v` and is wired in
-`hardware/rtl/top/spu_system.v`, but it is not yet wired into the proven Tang 25K
-RPLU full-probe top.
+The current RP2350 diagnostic path and Tang 25K southbridge probes have proven
+the broader SPI slave protocol, including SD-backed RPLU2 hydration. Keep the
+UART byte path as a legacy fallback and use SPI southbridge probes for current
+regression work.
 
 ## Firmware Module Direction
 
@@ -54,10 +54,9 @@ Hydration source priority should be:
 2. Valid RP-side SPI flash fallback/cache, when present on a later board.
 3. Compiled minimal defaults from `hardware/rp_common/rplu_default_tables.h`.
 
-Tier 1 now has a SPI-mode SD/FAT32 implementation and standalone smoke-test
-firmware, but it still needs physical SD PMOD validation. Tier 2 remains
-planned. The firmware is structured so each table source can feed the same FPGA
-SPI command layer.
+Tier 1 has a SPI-mode SD/FAT32 implementation, standalone smoke-test firmware,
+and physical SD PMOD validation. Tier 2 remains planned. The firmware is
+structured so each table source can feed the same FPGA SPI command layer.
 
 ## Phase 0: Toolchain Sanity
 
@@ -148,6 +147,23 @@ records with 0 skipped. SRAM-loading the SPI-only FPGA telemetry probe
 probe reports `status raw=25 A5 00 00`; `cfgtele` reports count 0 before
 hydration, then count 16 with last record
 `sel=0 material=1 addr=2 data=0x0000000000010000`.
+
+Updated hardware result (2026-06-30 NZT): the RP2350 and FPGA southbridge write
+path was hardened and re-tested. Two bugs were fixed: the C CRC helper compared
+`crc & 0x80` against a 0/1 data bit, and the FPGA SPI slave write state machine
+could abandon or misalign `0xA5` payloads across firmware inter-byte gaps. With
+`rp2350_spu_diag.uf2` rebuilt for the RP2350-Zero GP0-GP3 map, the SPI-only
+probe now routes at 1,861 LUT4 / 840 DFF. Manual `rplu 0 1 2
+0x0000000000010000` advances `cfgtele` from count 0 to count 1; clean
+`sdhydrate` advances count 0 to 16 with checksum `0x3A0AB5E9` and
+`status raw=25 A5 00 00`.
+
+Core-attached split-probe result (2026-06-30 NZT): the rebuilt
+`build/tang_primer_25k_spu13_southbridge_link.fs` routes at 4,054 LUT4 /
+3,091 DFF and passes timing (`clk_50m` 55.48 MHz, `clk_core` 102.46 MHz
+against 12 MHz). After SRAM load, diagnostics report `status raw=13 A5 00 00`;
+manual `rplu` advances `cfgtele` to count 1; and clean `sdhydrate` advances
+count 0 to 16 with checksum `0x3A0AB5E9`.
 
 Full-core southbridge result (2026-06-29 NZT): `build_25k_spu13_southbridge.sh`
 successfully synthesizes, places, routes, and packages

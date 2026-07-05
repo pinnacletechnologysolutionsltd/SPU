@@ -1,5 +1,18 @@
 # Repository Guidelines
 
+## Strategic Context
+
+The SPU-13 is a **deterministic rational-field processor** — its architecture is exact arithmetic over Q(√3) and Z[φ]/L_p, zero floating-point, zero branches in hot paths, deterministic cycle counts. This makes it a general-purpose geometry engine suitable for any application that demands bit-exact results and predictable timing:
+
+- **Rational robotics and kinematics** — Pell forward/inverse chains, exact FK/IK without transcendental approximation
+- **Rational SOM/BMU clustering** — field-squared quadrance BMU, no floating-point distance metrics
+- **RPLU v2 rational approximants** — [4/4] Padé evaluation over A₃₁ with Mersenne prime arithmetic
+- **Lucas Phinary MAC** — exact Z[φ]/L_p arithmetic for Fibonacci-phase systems
+
+The quantum classical-control application (Fibonacci anyon braid-word compilation, syndrome decoding) is a natural downstream use of the same deterministic Z[φ]/L_p arithmetic — the architecture does not change whether the target is robotics, clustering, or quantum control.
+
+Development strategy: Tang Primer 25K for probe/bring-up, Wukong Artix-7 100T for safety-critical full builds with ECC SECDED, RNS parity, and CRC-8 integrity layers. Funding strategy: dual-track NLnet (open-infrastructure) + MBIE (NZ deployment). ArXiv papers first, then grant applications, then Kintex-7 full-stack, then OSHWA ECP5-85K reference design.
+
 ## Project Structure & Module Organization
 
 ```
@@ -49,13 +62,15 @@ docs/                   Design guides and bring-up runbooks
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
 | `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 6 ROTC angles |
 | `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` | Set up Python environment |
-| `bash hardware/boards/artix7/build_a7.sh 100t full` | Synthesise, P&R, bitstream for Wukong Artix-7 100T (full spin) |
-| `python3 software/tests/test_lucas_mac_oracle.py` | Run Lucas Phinary MAC oracle (PSCALE/PCHIRAL/PMUL/PINV + 1M-step zero-drift) |
+| `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Synthesise RPLU2PADE pipeline for Wukong Artix-7 |
+|| `openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_RPLU2PADE.bit` | SRAM-load RPLU2PADE bitstream via DirtyJTAG |
+| `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Build RPLU2PADE Padé pipeline for Wukong Artix-7 (72 DSP, 34% LUT) |
+|| `python3 software/tests/test_lucas_mac_oracle.py` | Run Lucas Phinary MAC oracle (PSCALE/PCHIRAL/PMUL/PINV + 1M-step zero-drift) |
 | `iverilog -I hardware/rtl/arch -o build/lucas_mac_tb.vvp hardware/rtl/core/spu13/spu13_lucas_mac.v hardware/tests/spu13/spu13_lucas_mac_tb.v && vvp build/lucas_mac_tb.vvp` | Run Lucas MAC RTL testbench (11 ops + 100-period zero-drift) |
 
 Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
 
-## Hardware Test Status (June 2026)
+## Hardware Test Status (July 2026)
 
 **Proven in silicon on Tang Primer 25K:**
 - FPGA configuration via openFPGALoader
@@ -75,7 +90,17 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - RP2350 southbridge diag firmware — USB CDC console for SPI bring-up
 - **RP2350 arithmetic test driver** — QLDI+QSUB 6-test suite via SPI, byte-swap fix applied
 
-**RTL testbench-verified (awaiting silicon test):**
+**Proven in silicon on Wukong Artix-7 100T:**
+- JTAG detection via RP2040 DirtyJTAG (IDCODE `0x03631093`)
+- J11 SPI southbridge via RP2350 — LUCAS, SU3, ROBOTICS, SU3SHARE all PASS
+- **ROBOTICS main core** — QLDI/QSUB/ROTC 0-5/six-step closure (`13/13 PASSED`, `ARITHMETIC_BLAZE: PASS`)
+- **SU3SHARE shared multiplier** — one M31 multiplier shared between SU3 sidecar and RPLU2 config/QR path, both passing on same bitstream
+- **RPLU2PADE Thimble-Padé pipeline** — full A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] over J11 SPI. 72 DSP, 34% LUT, route closed iteration 5 (`RPLU2PADE_J11: PASS`)
+- **LUCAS sidecar** — PSCALE/PCHIRAL/PMUL/PINV all verified over J11
+
+**No longer "awaiting silicon test":** ROTC, SOM/BMU, RPLU2 Padé, and Lucas MAC are all silicon-verified on either Tang 25K or Artix-7.
+
+**RTL testbench-verified (remaining):**
 - **ROTC opcode** — all 6 corrected ROTC angles pass (TDM rotor core)
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver

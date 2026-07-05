@@ -1,0 +1,374 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10}
+}
+
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{Zero-Drift Lucas-Prime Phinary Arithmetic for Exact Quantum Phase Coherence on FPGA}
+
+\author{
+\IEEEauthorblockN{John Curley}
+\IEEEauthorblockA{Independent Researcher, SPU-13 Project\\
+Email: \href{mailto:john@spu13.org}{john@spu13.org}}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Traditional spatial transformations rely on transcendental approximations (sin/cos, $\pi$, $\sqrt{5}$) that introduce floating-point drift, destroying structural exactness over long runtimes. We present a hardware co-processor operating over the golden ring $\mathbb{Z}[\phi]$ modulo a Lucas prime $L_p$ that performs chiral transformations and $\phi$-scaling through integer shift-and-add operations --- zero floating-point, bit-exact closure. The PSCALE/PCHIRAL fast paths remain zero-DSP shift-add transforms, while the current PMUL/PINV proof maps to Artix-7 DSP48E1 slices through a bounded Barrett reducer. PSCALE achieves single-cycle $\phi$-multiplication via $\phi\cdot(a+b\phi)=b+(a+b)\phi$. The software oracle verifies exact period closure for PSCALE and a mixed PSCALE/PMUL/PINV identity sequence over 166,666 identity macros (999,996 primitive operations), with exact return at closure boundaries. The PHSLK predicate checks rational phase coherence by cross multiplication and reports zero-divisor denominators without invoking inversion. Designed as a companion to the SPU-13 Mersenne-ring core, this work targets deterministic exact arithmetic for geometric algebra. The quantum-control scope is intentionally narrow: we discuss exact $\mathbb{Z}[\phi]$ phase comparison (PHSLK) as a potential preprocessing kernel for reduced rational templates in Fibonacci-anyon and $\phi$-weighted syndrome-matching applications. The current Wukong image is a low-MHz bring-up build pending timing closure; this paper does not claim sub-100ns full-sidecar latency on current hardware.
+\end{abstract}
+
+\section{Introduction}
+
+\subsection{The Transcendental Drift Problem}
+
+Any computation involving irrational constants --- $\pi$, $\sqrt{2}$, $\sqrt{5}$, the golden ratio $\phi$ --- must either approximate them as finite-precision floats or work in an algebraic extension where they are native. The former accumulates error; the latter preserves exactness. For applications requiring millions of sequential geometric operations (robotics forward kinematics, photonic quantum error correction, Jitterbug transformations), sub-ULP drift compounds into structural collapse.
+
+\subsection{The Phinary Solution}
+
+The golden ratio $\phi = (1+\sqrt{5})/2$ satisfies $\phi^2 = \phi + 1$. In the ring $\mathbb{Z}[\phi] = \{a + b\phi \mid a,b \in \mathbb{Z}\}$, multiplication by $\phi$ is a single shift-and-add: no multiplier, no divider, no DSP. Choosing a Lucas prime $L_p$ as modulus provides the phinary analogue of the Mersenne prime's fast bit-wrap reduction: $\phi^p \equiv \pm 1 \pmod{L_p}$ enables deterministic period closure.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item A Verilog RTL implementation of PSCALE/PCHIRAL/PMUL/PINV over $\mathbb{Z}[\phi]/L_{521}$, exposed as an Artix-7 sidecar.
+    \item Empirical proof of the zero-drift invariant: 38,461 PSCALE period boundaries and 166,666 mixed PSCALE/PMUL/PINV identity macros return to the exact starting bit pattern. Each identity macro is PSCALE, PINV($\phi$), PMUL by $\phi^{-1}$, PMUL by $g$, PINV($g$), and PMUL by $g^{-1}$, verifying $\phi\cdot\phi^{-1}\cdot g\cdot g^{-1} = 1$.
+    \item A PHSLK coherence predicate that checks rational phase equality by cross multiplication, avoiding direct denominator inversion.
+    \item A physically mapped PMUL/PINV path using compile-time Barrett reduction, synthesized, routed, and packed in the Artix-7 LUCAS spin.
+\end{enumerate}
+
+\section{Mathematical Foundation}
+
+\subsection{The Golden Ring $\mathbb{Z}[\phi]$}
+
+$\phi$ is a root of $x^2 - x - 1 = 0$, giving $\phi^2 = \phi + 1$. Elements are $a + b\phi$ with $a,b \in \mathbb{Z}$. Arithmetic:
+
+\begin{align*}
+\text{Addition:}&\quad (a+b\phi) + (c+d\phi) = (a+c) + (b+d)\phi \\
+\text{PSCALE:}&\quad \phi\cdot(a+b\phi) = b + (a+b)\phi \quad \text{(0 multiplies)} \\
+\text{PCHIRAL:}&\quad \overline{a+b\phi} = (a+b) - b\phi \quad \text{(0 multiplies)} \\
+\text{PMUL:}&\quad (a+b\phi)(c+d\phi) = (ac+bd) + (ad+bc+bd)\phi \\
+\text{Norm:}&\quad N(a+b\phi) = a^2 + ab - b^2 \\
+\text{PINV:}&\quad (a+b\phi)^{-1} = \overline{a+b\phi} \cdot N(a+b\phi)^{-1}
+\end{align*}
+
+\subsection{Lucas Primes as Moduli}
+
+The Lucas sequence $L_n = \phi^n + (-1)^n\phi^{-n}$. When $p$ is prime and $L_p$ is prime:
+
+\begin{table}[ht]
+\centering
+\caption{Lucas primes and $\phi$ periods.}
+\label{tab:lucas}
+\begin{tabular}{ccc}
+\toprule
+$p$ & $L_p$ & $\phi$ period mod $L_p$ \\
+\midrule
+5  & 11   & 10 \\
+7  & 29   & 14 \\
+11 & 199  & 22 \\
+13 & 521  & 26 \\
+17 & 3571 & 34 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This co-processor uses $L_{13}=521$ with $\phi$ period 26. The period guarantees $\phi^{26} \equiv 1 \pmod{521}$, providing the zero-drift invariant (defined as exact bit-match return to seed after a full orbit).
+
+The period is also a real application constraint. $L_{13}$ is appropriate for a small proof target and for validating the datapath, but it is not by itself a claim that a 100- to 1000-node syndrome graph can be embedded without aliasing. Larger Lucas moduli or residue-number tiling are required when the topology being encoded needs a phase horizon longer than 26 $\phi$-steps.
+
+For PHSLK, the relevant constraint is whether reduced numerator/denominator pairs alias inside this finite residue domain; the 26-step $\phi$-period is a warning sign for long braid, fusion, or syndrome histories.
+
+\subsection{PHSLK Without Denominator Inversion}
+
+Given two rational phase encodings over $\mathbb{Z}[\phi]/L_{521}$,
+
+\[
+A = n_1 / d_1,\quad B = n_2 / d_2
+\]
+
+PHSLK checks coherence with the cross product
+
+\[
+n_1 d_2 = n_2 d_1
+\]
+
+instead of computing $d_1^{-1}$ or $d_2^{-1}$. This matters because $521 \equiv 1 \pmod{5}$, so $x^2 - x - 1$ splits modulo 521 and $\mathbb{Z}[\phi]/L_{521}$ contains zero-divisors. Denominators with norm zero do not have a defined multiplicative inverse. The RTL therefore reports a denominator zero-divisor status bit alongside the coherence predicate rather than treating it as a PINV failure.
+
+Consider a concrete Fibonacci anyon fusion amplitude involving $\phi$: the F-symbol for the Fibonacci braid group is proportional to $\phi^{-1} \approx 0.618$. Over $\mathbb{Z}[\phi]/L_{521}$, this becomes a rational pair $(1,\phi)^{-1}$. A template-matching PHSLK check comparing
+
+\begin{align*}
+A &= (3+5\phi) / (2+3\phi) \quad \text{(observed template)} \\
+B &= (1+0\phi) / (1+0\phi) \quad \text{(target identity)}
+\end{align*}
+
+computes $n_1 d_2 = (3+5\phi)\cdot1 = 3+5\phi$ and $n_2 d_1 = (1+0\phi)\cdot(2+3\phi) = 2+3\phi$. These are equal only if $(3+5\phi) = (2+3\phi)$, which over $\mathbb{Z}[\phi]/L_{521}$ fails unless $3\equiv2$ and $5\equiv3 \pmod{521}$ --- a contradiction. The non-match correctly reports $\texttt{coherent}=0$. If instead the template genuinely matches, $n_1 d_2 = n_2 d_1$ exactly and the cross product returns $\texttt{coherent}=1$ without ever needing $\phi^{-1}$.
+
+\subsection{Why Not Merge with Mersenne Rings}
+
+Primes in $\mathbb{Z}$ do not stay prime in $\mathbb{Z}[\phi]$. For example, $11 = (3+\phi)(4-\phi)$ in $\mathbb{Z}[\phi]$. Merging the Mersenne binary ring with $\mathbb{Z}[\phi]$ would introduce zero-divisors. The primary architectural driver for isolating the rings is representation stability and pipeline execution semantics: preventing data-type pollution in the deterministic M31 execution lanes. While both rings are algebraically sound in isolation, their operational semantics benefit from clean separation at the BTU boundary.
+
+\section{Hardware Architecture}
+
+\subsection{The Barycentric Transmutation Unit (BTU) Bridge}
+
+Data traversing the boundary from the M31 binary core ($p = 2^{31}-1$) to the $\mathbb{Z}[\phi]/L_p$ co-processor must undergo an immediate dimensional and bit-width down-sampling. Elements exiting the primary core are bounded by the Mersenne modulus ($x \leq 2^{31}-2$), whereas the Phinary execution path requires inputs natively reduced to a chosen Lucas prime modulus $L_p$ (e.g., $L_{13}=521$).
+
+In the SPU-13 pipeline, the BTU is a general-purpose router handling multiple lanes: the same unit routes SOM/BMU spatial indices to the $A_{31}$ Pad\'{e} evaluator in the RPLU v2 pipeline, and M31 coefficients to the $\mathbb{Z}[\phi]$ MAC here. The routing topology is configurable per lane at synthesis time.
+
+\subsubsection{DSP-Shared Barrett Reduction Execution}
+
+The BTU implements a fixed-latency, 3-cycle pipelined Barrett Reduction engine. For a runtime-configured Lucas prime $L_p$, a constant scaling multiplier $\mu$ is precomputed:
+
+\[
+\mu = \left\lfloor \frac{2^{k}}{L_p} \right\rfloor,\quad k = 31
+\]
+
+For $L_{13} = 521$, $\mu = 4,121,849$. The reduction executes in three pipelined stages:
+
+\begin{enumerate}
+    \item \textbf{Quotient Estimation:} $q = (x \cdot \mu) \gg 31$
+    \item \textbf{Remainder Evaluation:} $r = x - (q \cdot L_p)$
+    \item \textbf{Boundary Correction:} if $r \ge L_p$, then $r := r - L_p$
+\end{enumerate}
+
+This consumes exactly two $31\times31$-bit multiplications, one shift, and a maximum of two subtractors, all within the existing DSP fabric.
+
+\subsection{RTL Layout}
+
+The Phinary MAC co-processor (\texttt{spu13\_lucas\_mac.v}) is a self-contained Verilog module operating over $\mathbb{Z}[\phi]/L_{521}$.
+
+\begin{lstlisting}[language=Verilog]
+module spu13_lucas_mac #(L_P=521, L_P_BITS=10) (
+    input clk, rst_n, start,
+    input [2:0] opcode,     // 0=PSCALE 1=PCHIRAL 2=PMUL 3=PINV 4=PHSLK
+    input [9:0] op_a, op_b, // operand a + b*phi
+    input [9:0] op_c, op_d, // second operand or PHSLK d1
+    input [9:0] phslk_n2_a, phslk_n2_b, phslk_d2_a, phslk_d2_b,
+    output busy, done, error,
+    output phslk_coherent, phslk_zero_divisor,
+    output [9:0] result_a, result_b
+);
+\end{lstlisting}
+
+PSCALE implements $\phi$-multiplication in a single clock cycle with zero DSP slices:
+
+\begin{lstlisting}[language=Verilog]
+// phi*(a + b*phi) = b + (a+b)*phi -- 1 cycle, 0 DSP
+wire ps_b = (op_a + op_b >= L_P) ? (op_a + op_b - L_P) : (op_a + op_b);
+\end{lstlisting}
+
+PCHIRAL implements $\phi$-conjugation with equal simplicity:
+
+\begin{lstlisting}[language=Verilog]
+// conj(a + b*phi) = (a+b) - b*phi -- 1 cycle, 0 DSP
+wire pc_a = (op_a + op_b >= L_P) ? (op_a + op_b - L_P) : (op_a + op_b);
+wire pc_b = (op_b == 0) ? 0 : (L_P - op_b);
+\end{lstlisting}
+
+\begin{table}[ht]
+\centering
+\caption{Operation timing.}
+\label{tab:timing}
+\begin{tabular}{lccc}
+\toprule
+Opcode & Operation & Cycles & DSP \\
+\midrule
+PSCALE & $\phi$-multiply & 1 & 0 \\
+PCHIRAL & $\phi$-conjugation & 1 & 0 \\
+PMUL & Full multiply & 3 & 40 \\
+PINV & Lucas inverse & $O(\log L_p)$ & 40 \\
+PHSLK & Phase coherence & 1 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{PINV: Algebraic Inverse}
+
+The inverse uses the norm-conjugation formula:
+\begin{enumerate}
+    \item Compute norm $N = a^2 + ab - b^2 \bmod L_p$ (combinational)
+    \item Find $N^{-1}$ via extended binary GCD over the prime field
+    \item Compute conjugate $C = (a+b) - b\phi$ (combinational)
+    \item Multiply: result $= C \cdot N^{-1} \bmod L_p$
+\end{enumerate}
+
+A watchdog counter bounds the GCD loop to 64 iterations, asserting error on timeout (the worst-case path for $L_{13}=521$ completes in 23 cycles). The post-inverse multiplication is split across two pipeline stages.
+
+\section{Empirical Results}
+
+\subsection{Zero-Drift Proof}
+
+In this paper, ``zero drift'' has a narrow empirical meaning: at a declared algebraic closure boundary, the bit pattern returns to the exact seed. It does not mean arbitrary sequences are periodic, nor does it claim every possible workload has a short orbit.
+
+The PSCALE-only marathon (2,600 consecutive operations from seed $(3+5\phi)$ over 100 periods, $\phi^{26}\equiv1\pmod{521}$) confirms exact period closure.
+
+The mixed identity macro:
+
+\begin{align*}
+x &\leftarrow \texttt{PSCALE}(x) \\
+x &\leftarrow x \cdot \texttt{PINV}(\phi) \\
+x &\leftarrow x \cdot g \\
+x &\leftarrow x \cdot \texttt{PINV}(g)
+\end{align*}
+
+completed 166,666 macros (999,996 primitive operations) with exact return to seed after every macro.
+
+\subsection{Operation Verification}
+
+\begin{table}[ht]
+\centering
+\caption{Single-operation and composite test vectors.}
+\label{tab:ops}
+\begin{tabular}{lcc}
+\toprule
+Test & Expected & Pass \\
+\midrule
+$\phi\cdot(3+5\phi)$ & $(5+8\phi)$ & $\checkmark$ \\
+$\phi\cdot\phi$ & $(1+1\phi)$ & $\checkmark$ \\
+$\overline{3+5\phi}$ & $(8+516\phi)$ & $\checkmark$ \\
+$(3+5\phi)(2+7\phi)$ & $(41+66\phi)$ & $\checkmark$ \\
+$1^{-1}$ & $(1+0\phi)$ & $\checkmark$ \\
+$(3+5\phi)^{-1}$ & $(513+5\phi)$ & $\checkmark$ \\
+$(3+5\phi)\cdot(3+5\phi)^{-1}$ & $(1+0\phi)$ & $\checkmark$ \\
+Mixed identity macros & 166,666/166,666 closed & $\checkmark$ \\
+PHSLK coherent fraction & $\texttt{coherent}=1$, $\texttt{zd}=0$ & $\checkmark$ \\
+PHSLK singular denominator & $\texttt{coherent}=0$, $\texttt{zd}=1$ & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Resource and Timing Evidence}
+
+\begin{table}[ht]
+\centering
+\caption{Resource utilisation.}
+\label{tab:resources}
+\begin{tabular}{lc}
+\toprule
+Configuration & Resource \\
+\midrule
+PSCALE/PCHIRAL fast paths & 0 DSP \\
+Tang 25K \texttt{FAST\_ONLY=1} probe & 696 LUT4, 216 DFF, 0 DSP \\
+Tang 25K PHSLK microprobe & 293 LUT4, 146 DFF, 0 DSP; 200.40 MHz \\
+Lucas MAC & 588 LCs, 40 DSP48E1 \\
+SPI sidecar + MAC & 641 LCs, 40 DSP48E1 \\
+Whole Wukong LUCAS spin & 4,521 LCs, 40 DSP48E1 \\
+Routed frequency & 4.11 MHz max (2 MHz bench) \\
+SPI transport & 32 $\mu$s per 64-bit cmd at 2 MHz \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The current Artix-7 bitstream is a functional bring-up artifact. A credible sub-100ns transform claim needs the full sidecar clocked above 30 MHz. The PHSLK Tang microprobe already exceeds that frequency target; the integrated Wukong sidecar does not yet.
+
+\section{Discussion}
+
+\subsection{Quantum Control Relevance}
+
+The quantum-control relevance of this block is narrow: it is not a complete QEC decoder, and the current SPI sidecar is not a feedback-loop transport. The useful kernel is PHSLK, which checks equality of two rational phase encodings without denominator inversion:
+
+\[
+\texttt{valid\_template\_match} = \texttt{coherent} \mathrel{\&\&} \texttt{!zero\_divisor}
+\]
+
+Recent preprints report sub-microsecond decode-feedback latencies: 550 ns closed-loop including 124 ns NN decoding for a distance-3 surface code~\cite{yang2026}; 446 ns decode-feedback for distance-3~\cite{liu2026}; and 596 ns average latency per round for a $[\![144,12,12]\!]$ bivariate-bicycle code~\cite{bascones2026}. This paper should be read as a candidate exact-arithmetic kernel study, not as a claim that the current Wukong/SPI image is competitive with integrated QEC controllers.
+
+For bosonic QEC, relevant prior art includes cat-code real-time feedback~\cite{ofek2016, putterman2024}, binomial oscillator codes~\cite{michael2016}, and GKP codes~\cite{gottesman2001}. The $\phi$-specific case is strongest where the upstream model is genuinely Fibonacci/topological: braid or fusion templates whose amplitudes, F-symbols, or phase ratios naturally contain $\phi$~\cite{freedman2002}.
+
+\subsection{Non-Quantum Exact Geometry Baseline}
+
+The Jitterbug transformation (VE $\to$ octahedron collapse) requires non-linear interpolation that, in Cartesian coordinates, demands transcendental function evaluation. In $\mathbb{Z}[\phi]$ this reduces to exact rational interpolation --- a linear combination of $\phi$-weighted endpoints. This is the non-quantum baseline use case for the same MAC, with evidence at the kernel level as presented above.
+
+\subsection{Limitations}
+
+\begin{itemize}
+    \item \textbf{Modulus configurability:} Parameterized for any Lucas prime up to $L_{19}=9349$ (14-bit operands) with zero RTL changes. Runtime configurability requires a configurable Barrett $\mu$ register.
+    \item \textbf{PINV complexity:} The oracle model reports 3--23 busy-phase cycles for $L_{13}=521$ over all non-zero-norm elements. A Verilog latency histogram should be added before citing this as measured RTL latency.
+    \item \textbf{Finite $\phi$-period:} $L_{13}$ gives a period of 26, sufficient for datapath validation but not for arbitrary long braid words without phase-domain tiling.
+    \item \textbf{Interface latency:} 64-bit SPI payload at 2 MHz takes 32 $\mu$s before framing. Real-time variants require parallel GPIO, PIO/DMA, LVDS, or direct RFSoC coupling.
+    \item \textbf{PMUL integer multiplication:} Uses four integer multiplies per product; optimal for $\le14$-bit operands. Zeckendorf-encoded positional multiplication is noted as future work.
+\end{itemize}
+
+\section{Conclusion}
+
+We have demonstrated a Lucas-prime phinary co-processor performing chiral transformations, $\phi$-scaling, and spatial inversion in $\mathbb{Z}[\phi]/L_{521}$ with zero floating-point and bit-exact closure. PSCALE/PCHIRAL are zero-multiplier fast paths; PMUL/PINV use 40 Artix-7 DSP48E1 slices. The PSCALE operation is the phinary analogue of the Mersenne prime's $2^{31}\equiv1$ bit-wrap: structural efficiency from algebraic structure. The co-processor is verified with 100-period PSCALE closure and a mixed PSCALE/PMUL/PINV identity run of 166,666 macros. It is synthesized, routed, and packed in the Wukong Artix-7 LUCAS profile, with PHSLK separately proven at 200.40 MHz on Tang 25K.
+
+\begin{thebibliography}{18}
+\bibitem{lucas} E. Lucas, ``Th\'eorie des Fonctions Num\'eriques Simplement P\'eriodiques,'' 1878.
+\bibitem{nguyen} H.S. Nguyen, ``Tolerance Rough Sets,'' \textit{Fundamenta Informaticae}, 1999.
+\bibitem{kohonen} T. Kohonen, \textit{Self-Organizing Maps}. Springer, 1995.
+\bibitem{wheeler} J.A. Wheeler and R.P. Feynman, ``Interaction with the Absorber as the Mechanism of Radiation,'' \textit{Rev. Mod. Phys.} 17, 1945.
+\bibitem{crandall} R.E. Crandall and C. Pomerance, \textit{Prime Numbers: A Computational Perspective}, 2nd ed. Springer, 2005.
+\bibitem{ofek2016} N. Ofek et al., ``Extending the lifetime of a quantum bit with error correction in superconducting circuits,'' \textit{Nature}, 2016. \texttt{arXiv:1602.04768}
+\bibitem{michael2016} M.H. Michael et al., ``New class of quantum error-correcting codes for a bosonic mode,'' \textit{Phys. Rev. X}, 2016. \texttt{arXiv:1602.00008}
+\bibitem{gottesman2001} D. Gottesman, A. Kitaev, and J. Preskill, ``Encoding a qubit in an oscillator,'' \textit{Phys. Rev. A}, 2001. \texttt{arXiv:quant-ph/0008040}
+\bibitem{putterman2024} H. Putterman et al., ``Hardware-efficient quantum error correction using concatenated bosonic qubits,'' \textit{Nature}, 2025. \texttt{arXiv:2409.13025}
+\bibitem{freedman2002} M. Freedman, M. Larsen, and Z. Wang, ``A modular functor which is universal for quantum computation,'' \textit{Commun. Math. Phys.} 227, 605--622, 2002. \texttt{arXiv:quant-ph/0001108}
+\bibitem{yang2026} X. Yang et al., ``Real-time Surface-Code Error Correction Using an FPGA-based Neural-Network Decoder,'' 2026. \texttt{arXiv:2605.04892}
+\bibitem{liu2026} J. Liu et al., ``A Scalable Open-Source QEC System with Sub-Microsecond Decoding-Feedback Latency,'' 2026. \texttt{arXiv:2603.16203}
+\bibitem{bascones2026} D. B\'{a}scones et al., ``A Scalable FPGA Architecture for Real-Time Decoding of Quantum LDPC Codes Using GARI,'' 2026. \texttt{arXiv:2605.01035}
+\bibitem{knill2001} E. Knill, R. Laflamme, and G.J. Milburn, ``A scheme for efficient quantum computation with linear optics,'' \textit{Nature} 409, 46--52, 2001.
+\bibitem{bartolucci2021} S. Bartolucci et al., ``Fusion-based quantum computation,'' 2021. \texttt{arXiv:2101.09310}
+\bibitem{kok2007} P. Kok et al., ``Linear optical quantum computing with photonic qubits,'' \textit{Rev. Mod. Phys.} 79, 135--174, 2007. \texttt{arXiv:quant-ph/0512071}
+\bibitem{bourassa2021} J.E. Bourassa et al., ``Blueprint for a Scalable Photonic Fault-Tolerant Quantum Computer,'' \textit{Quantum}, 2021. \texttt{arXiv:2010.02905}
+\bibitem{tzitrin2021} I. Tzitrin et al., ``Fault-tolerant quantum computation with static linear optics,'' 2021. \texttt{arXiv:2104.03241}
+\end{thebibliography}
+
+\appendix
+\section{Python Oracle}
+
+\begin{lstlisting}[language=Python]
+def phi_mul(a, b, mod=521):
+    return (b % mod, (a + b) % mod)
+
+def phi_mul_full(a1, b1, a2, b2, mod=521):
+    return ((a1*a2 + b1*b2) % mod,
+            (a1*b2 + a2*b1 + b1*b2) % mod)
+
+def zero_drift_test(mod=521, seed=(3,5), steps=1000000):
+    period = 26  # phi^26 mod 521
+    a, b = seed
+    for step in range(1, steps + 1):
+        a, b = phi_mul(a, b, mod)
+        if step % period == 0:
+            assert (a,b) == seed
+    print(f"ZERO-DRIFT: PASS")
+
+def composite_zero_drift_macro(x, g, mod=521):
+    a, b = phi_mul(x[0], x[1], mod)
+    ia, ib = phi_inv(0, 1, mod)
+    a, b = phi_mul_full(a, b, ia, ib, mod)
+    a, b = phi_mul_full(a, b, g[0], g[1], mod)
+    ga, gb = phi_inv(g[0], g[1], mod)
+    a, b = phi_mul_full(a, b, ga, gb, mod)
+    return (a, b)  # should equal x
+\end{lstlisting}
+
+\section{Verilog PSCALE Core}
+
+\begin{lstlisting}[language=Verilog]
+// phi*(a + b*phi) = b + (a+b)*phi -- 1 cycle, 0 DSP
+wire [L_P_BITS-1:0] ps_b =
+    (op_a + op_b >= L_P) ? (op_a + op_b - L_P) : (op_a + op_b);
+always @(posedge clk)
+    if (start && opcode == OP_PSCALE) begin
+        result_a <= op_b; result_b <= ps_b; done <= 1;
+    end
+\end{lstlisting}
+
+\end{document}

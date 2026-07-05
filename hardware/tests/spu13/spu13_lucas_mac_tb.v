@@ -23,8 +23,18 @@ module spu13_lucas_mac_tb;
     reg         start;
     reg  [2:0]  opcode;
     reg  [9:0]  op_a, op_b, op_c, op_d;
+    reg  [9:0]  phslk_n2_a, phslk_n2_b, phslk_d2_a, phslk_d2_b;
     wire        busy, done, error;
     wire [9:0]  result_a, result_b;
+    wire        phslk_coherent, phslk_zero_divisor;
+    wire        norm_violation;
+    reg         wd_start;
+    reg  [2:0]  wd_opcode;
+    reg  [9:0]  wd_op_a, wd_op_b, wd_op_c, wd_op_d;
+    wire        wd_busy, wd_done, wd_error;
+    wire [9:0]  wd_result_a, wd_result_b;
+    wire        wd_phslk_coherent, wd_phslk_zero_divisor;
+    wire        wd_norm_violation;
 
     // ── Test state ────────────────────────────────────────────────────
     reg [9:0]   seed_a, seed_b;       // starting value
@@ -43,17 +53,53 @@ module spu13_lucas_mac_tb;
     ) uut (
         .clk(clk),
         .rst_n(rst_n),
+        .ce(1'b1),
         .start(start),
         .opcode(opcode),
         .op_a(op_a),
         .op_b(op_b),
         .op_c(op_c),
         .op_d(op_d),
+        .phslk_n2_a(phslk_n2_a),
+        .phslk_n2_b(phslk_n2_b),
+        .phslk_d2_a(phslk_d2_a),
+        .phslk_d2_b(phslk_d2_b),
         .busy(busy),
         .done(done),
         .result_a(result_a),
         .result_b(result_b),
-        .error(error)
+        .phslk_coherent(phslk_coherent),
+        .phslk_zero_divisor(phslk_zero_divisor),
+        .error(error),
+        .norm_violation(norm_violation)
+    );
+
+    spu13_lucas_mac #(
+        .L_P(L_P),
+        .L_P_BITS(L_P_BITS),
+        .PINV_MAX_ITERS(1)
+    ) uut_watchdog (
+        .clk(clk),
+        .rst_n(rst_n),
+        .ce(1'b1),
+        .start(wd_start),
+        .opcode(wd_opcode),
+        .op_a(wd_op_a),
+        .op_b(wd_op_b),
+        .op_c(wd_op_c),
+        .op_d(wd_op_d),
+        .phslk_n2_a(10'd0),
+        .phslk_n2_b(10'd0),
+        .phslk_d2_a(10'd0),
+        .phslk_d2_b(10'd0),
+        .busy(wd_busy),
+        .done(wd_done),
+        .result_a(wd_result_a),
+        .result_b(wd_result_b),
+        .phslk_coherent(wd_phslk_coherent),
+        .phslk_zero_divisor(wd_phslk_zero_divisor),
+        .error(wd_error),
+        .norm_violation(wd_norm_violation)
     );
 
     // ── Clock ─────────────────────────────────────────────────────────
@@ -71,6 +117,10 @@ module spu13_lucas_mac_tb;
         start = 1'b0;
         opcode = 3'd0;
         op_a = 0; op_b = 0; op_c = 0; op_d = 0;
+        phslk_n2_a = 0; phslk_n2_b = 0; phslk_d2_a = 0; phslk_d2_b = 0;
+        wd_start = 1'b0;
+        wd_opcode = 3'd0;
+        wd_op_a = 0; wd_op_b = 0; wd_op_c = 0; wd_op_d = 0;
         errors = 0;
         test_active = 0;
         phi_order_verified = 0;
@@ -101,6 +151,24 @@ module spu13_lucas_mac_tb;
         // PINV: 1^-1 = 1, and (3+5φ)^-1 = (513+5φ)
         run_pinv(10'd1, 10'd0, 10'd1, 10'd0, "PINV 1^-1");
         run_pinv(10'd3, 10'd5, 10'd513, 10'd5, "PINV (3+5φ)^-1");
+        run_pinv_error(10'd0, 10'd0, "PINV zero");
+        run_pinv_error(10'd1, 10'd100, "PINV zero divisor");
+        run_pinv_watchdog();
+
+        // PHSLK: (3+5φ)/(2+7φ) == (6+10φ)/(4+14φ)
+        run_phslk(10'd3, 10'd5, 10'd2, 10'd7,
+                  10'd6, 10'd10, 10'd4, 10'd14,
+                  1'b1, 1'b0, "PHSLK coherent scaled fraction");
+
+        // PHSLK mismatch: perturb n2 only.
+        run_phslk(10'd3, 10'd5, 10'd2, 10'd7,
+                  10'd6, 10'd11, 10'd4, 10'd14,
+                  1'b0, 1'b0, "PHSLK mismatch");
+
+        // PHSLK flags denominator zero divisors without invoking PINV.
+        run_phslk(10'd3, 10'd5, 10'd1, 10'd100,
+                  10'd6, 10'd10, 10'd4, 10'd14,
+                  1'b0, 1'b1, "PHSLK zero-divisor denominator");
 
         // ─── Phase 2: Phi-order verification ──────────────────────
         $display();
@@ -200,11 +268,11 @@ module spu13_lucas_mac_tb;
             start = 0;
             wait(done);
             @(negedge clk);
-            if (result_a == exp_a && result_b == exp_b) begin
+            if (result_a == exp_a && result_b == exp_b && !norm_violation) begin
                 $display("  PASS: %0s → (%0d+%0dφ)", desc, result_a, result_b);
             end else begin
-                $display("  FAIL: %0s  exp (%0d+%0dφ)  got (%0d+%0dφ)",
-                         desc, exp_a, exp_b, result_a, result_b);
+                $display("  FAIL: %0s  exp (%0d+%0dφ)  got (%0d+%0dφ), norm_violation=%0d",
+                         desc, exp_a, exp_b, result_a, result_b, norm_violation);
                 errors = errors + 1;
             end
         end
@@ -224,11 +292,11 @@ module spu13_lucas_mac_tb;
             start = 0;
             wait(done);
             @(negedge clk);
-            if (result_a == exp_a && result_b == exp_b) begin
+            if (result_a == exp_a && result_b == exp_b && !norm_violation) begin
                 $display("  PASS: %0s → (%0d+%0dφ)", desc, result_a, result_b);
             end else begin
-                $display("  FAIL: %0s  exp (%0d+%0dφ)  got (%0d+%0dφ)",
-                         desc, exp_a, exp_b, result_a, result_b);
+                $display("  FAIL: %0s  exp (%0d+%0dφ)  got (%0d+%0dφ), norm_violation=%0d",
+                         desc, exp_a, exp_b, result_a, result_b, norm_violation);
                 errors = errors + 1;
             end
         end
@@ -248,13 +316,15 @@ module spu13_lucas_mac_tb;
             op_d = d_in;
             @(negedge clk);
             start = 0;
+            opcode = 3'd0;
+            op_a = 0; op_b = 0; op_c = 0; op_d = 0;
             wait(done || error);
             @(negedge clk);
-            if (!error && result_a == exp_a && result_b == exp_b) begin
+            if (!error && result_a == exp_a && result_b == exp_b && !norm_violation) begin
                 $display("  PASS: %0s → (%0d+%0dφ)", desc, result_a, result_b);
             end else begin
-                $display("  FAIL: %0s  exp (%0d+%0dφ)  got (%0d+%0dφ), error=%0d",
-                         desc, exp_a, exp_b, result_a, result_b, error);
+                $display("  FAIL: %0s  exp (%0d+%0dφ)  got (%0d+%0dφ), error=%0d norm_violation=%0d",
+                         desc, exp_a, exp_b, result_a, result_b, error, norm_violation);
                 errors = errors + 1;
             end
         end
@@ -274,13 +344,110 @@ module spu13_lucas_mac_tb;
             op_d = 0;
             @(negedge clk);
             start = 0;
+            opcode = 3'd0;
+            op_a = 0; op_b = 0; op_c = 0; op_d = 0;
             wait(done || error);
             @(negedge clk);
-            if (!error && result_a == exp_a && result_b == exp_b) begin
+            if (!error && result_a == exp_a && result_b == exp_b && !norm_violation) begin
                 $display("  PASS: %0s → (%0d+%0dφ)", desc, result_a, result_b);
             end else begin
-                $display("  FAIL: %0s  exp (%0d+%0dφ)  got (%0d+%0dφ), error=%0d",
-                         desc, exp_a, exp_b, result_a, result_b, error);
+                $display("  FAIL: %0s  exp (%0d+%0dφ)  got (%0d+%0dφ), error=%0d norm_violation=%0d",
+                         desc, exp_a, exp_b, result_a, result_b, error, norm_violation);
+                errors = errors + 1;
+            end
+        end
+    endtask
+
+    task run_pinv_error;
+        input [9:0] a_in, b_in;
+        input [8*40:0] desc;
+        begin
+            @(negedge clk);
+            start = 1;
+            opcode = 3'd3;
+            op_a = a_in;
+            op_b = b_in;
+            op_c = 0;
+            op_d = 0;
+            @(negedge clk);
+            start = 0;
+            wait(done || error);
+            @(negedge clk);
+            if (error && !done && !busy && !norm_violation) begin
+                $display("  PASS: %0s → error", desc);
+            end else begin
+                $display("  FAIL: %0s expected error, got done=%0d busy=%0d error=%0d norm_violation=%0d",
+                         desc, done, busy, error, norm_violation);
+                errors = errors + 1;
+            end
+        end
+    endtask
+
+    task run_pinv_watchdog;
+        integer guard;
+        begin
+            @(negedge clk);
+            wd_start = 1'b1;
+            wd_opcode = 3'd3;
+            wd_op_a = 10'd3;
+            wd_op_b = 10'd5;
+            wd_op_c = 10'd0;
+            wd_op_d = 10'd0;
+            @(negedge clk);
+            wd_start = 1'b0;
+            wd_opcode = 3'd0;
+            wd_op_a = 10'd0;
+            wd_op_b = 10'd0;
+
+            guard = 0;
+            while (!wd_done && !wd_error && guard < 32) begin
+                @(negedge clk);
+                guard = guard + 1;
+            end
+            if (wd_error && !wd_done && !wd_busy && !wd_norm_violation) begin
+                $display("  PASS: PINV watchdog trips on bounded low-limit core");
+            end else begin
+                $display("  FAIL: PINV watchdog expected error, got done=%0d busy=%0d error=%0d norm_violation=%0d",
+                         wd_done, wd_busy, wd_error, wd_norm_violation);
+                errors = errors + 1;
+            end
+        end
+    endtask
+
+    task run_phslk;
+        input [9:0] n1_a, n1_b, d1_a, d1_b;
+        input [9:0] n2_a, n2_b, d2_a, d2_b;
+        input exp_coherent;
+        input exp_zero_divisor;
+        input [8*48:0] desc;
+        begin
+            @(negedge clk);
+            start = 1;
+            opcode = 3'd4;
+            op_a = n1_a;
+            op_b = n1_b;
+            op_c = d1_a;
+            op_d = d1_b;
+            phslk_n2_a = n2_a;
+            phslk_n2_b = n2_b;
+            phslk_d2_a = d2_a;
+            phslk_d2_b = d2_b;
+            @(negedge clk);
+            start = 0;
+            wait(done || error);
+            @(negedge clk);
+            if (!error && !norm_violation &&
+                phslk_coherent == exp_coherent &&
+                phslk_zero_divisor == exp_zero_divisor &&
+                result_a == {9'd0, exp_coherent} &&
+                result_b == {9'd0, exp_zero_divisor}) begin
+                $display("  PASS: %0s → coherent=%0d zero_divisor=%0d",
+                         desc, phslk_coherent, phslk_zero_divisor);
+            end else begin
+                $display("  FAIL: %0s exp coherent=%0d zero_divisor=%0d got coherent=%0d zero_divisor=%0d result=(%0d,%0d) error=%0d norm_violation=%0d",
+                         desc, exp_coherent, exp_zero_divisor,
+                         phslk_coherent, phslk_zero_divisor,
+                         result_a, result_b, error, norm_violation);
                 errors = errors + 1;
             end
         end
@@ -303,8 +470,9 @@ module spu13_lucas_mac_tb;
             a_out = result_a;
             b_out = result_b;
             @(negedge clk);
-            if (error) begin
-                $display("  FAIL: PSCALE step produced error for (%0d+%0dφ)", a_in, b_in);
+            if (error || norm_violation) begin
+                $display("  FAIL: PSCALE step error=%0d norm_violation=%0d for (%0d+%0dφ)",
+                         error, norm_violation, a_in, b_in);
                 errors = errors + 1;
             end
         end

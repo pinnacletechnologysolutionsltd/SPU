@@ -1,5 +1,18 @@
 // spu_rational_robotics.h — exact rational robotics simulation oracle
 //
+// Copyright 2026 John Curley
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 // Reconstructs the first public-facing rational robotics layer:
 // Pell forward/inverse closure, F/G/H circulant joint inverse closure,
 // FK chains, and topological balance checks.

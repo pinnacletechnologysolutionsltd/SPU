@@ -35,15 +35,24 @@ typedef enum {
 typedef struct {
     spi_inst_t *spi;
     uint cs_pin;
+    uint32_t cs_setup_us;
+    uint32_t cmd_turnaround_us;
+    uint32_t crc_hold_us;
+    uint32_t cs_recovery_us;
 } spu_link_t;
 
 void spu_link_init(spu_link_t *link, spi_inst_t *spi, uint cs_pin);
+void spu_link_set_timing(spu_link_t *link, uint32_t cs_setup_us,
+                         uint32_t cmd_turnaround_us, uint32_t crc_hold_us,
+                         uint32_t cs_recovery_us);
 
 void spu_link_read_manifold(spu_link_t *link,
                             uint8_t out[SPU_LINK_MANIFOLD_BYTES]);
 void spu_link_read_status_raw(spu_link_t *link, uint8_t out[4]);
 void spu_link_read_status(spu_link_t *link, uint16_t *dissonance,
                           uint8_t *flags);
+void spu_link_read_status_full(spu_link_t *link, uint16_t *dissonance,
+                               uint8_t *flags, bool *crc_error);
 void spu_link_read_scale_table(spu_link_t *link,
                                uint8_t out[SPU_LINK_SCALE_BYTES]);
 void spu_link_read_qr(spu_link_t *link,
@@ -57,11 +66,17 @@ bool spu_link_fifo_full(spu_link_t *link);
 void spu_link_wait_artery_ready(spu_link_t *link);
 void spu_link_write_chord(spu_link_t *link,
                           const uint8_t chord[SPU_LINK_CHORD_BYTES]);
+void spu_link_write_chord_nowait(spu_link_t *link,
+                                 const uint8_t chord[SPU_LINK_CHORD_BYTES]);
 
 void spu_u64_to_be(uint64_t v, uint8_t out[8]);
 uint64_t spu_rplu_header(uint8_t sel, uint8_t material, uint16_t addr);
 void spu_link_write_rplu_cfg(spu_link_t *link, uint64_t header,
                              uint64_t data);
+
+// CRC-8-CCITT: x⁸ + x² + x + 1 (polynomial 0x07)
+uint8_t spu_crc8_byte(uint8_t crc, uint8_t byte);
+uint8_t spu_crc8_bytes(uint8_t crc, const uint8_t *data, uint len);
 
 #ifdef __cplusplus
 }

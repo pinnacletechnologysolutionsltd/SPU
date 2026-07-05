@@ -86,7 +86,7 @@ def main():
             if '/reference/' in str(f):
                 continue
             test_files.add(f)
-            
+
     test_files = list(test_files)
     # Optional: limit to a single test file prefix for quicker triage
     tb_filter = os.getenv('TB_FILTER')
@@ -126,7 +126,7 @@ def main():
         "hardware/archive/legacy_rtl",
         "hardware/archive/legacy_rtl/common/rtl",
     ]
-    
+
     iverilog_args = ["iverilog", "-g2012"]
     for d in inc_dirs:
         iverilog_args.extend(["-y", d, "-I", d])
@@ -141,7 +141,7 @@ def main():
     for tb in test_files:
         print(f"\n--- Running Test: {tb.name} ---")
         out_vvp = root_dir / f"tmp_{tb.stem}.vvp"
-        
+
         # Compile
         # Gather all source files from include directories so iverilog sees every module
         # Gather source files from a curated set of directories to avoid duplicates
@@ -258,7 +258,7 @@ def main():
 
         cmd = iverilog_args + (["-s", top_mod] if top_mod else []) + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
-        
+
         if compile_result.returncode != 0:
             # If GPU sources are in the source set, attempt a Verilator simulation fallback
             gpu_present = any('/hardware/rtl/gpu/' in s for s in src_unique)
@@ -377,7 +377,7 @@ def main():
             timeouts += 1
             # Fails in simulation logic
             failed += 1
-                
+
         if out_vvp.exists():
             out_vvp.unlink()
 
@@ -425,6 +425,32 @@ def main():
             cv_fail = 1
             print(f"\n  cross_validate.py FAILED:\n{result_cv.stdout[-800:]}")
 
+    # Lucas MAC oracle
+    lucas_pass = 0
+    lucas_test = os.path.join(root_dir, "software", "tests", "test_lucas_mac_oracle.py")
+    if os.path.exists(lucas_test):
+        result_lucas = subprocess.run(
+            [sys.executable, lucas_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "PASS" in result_lucas.stdout:
+            lucas_pass = 1
+        else:
+            print(f"\n  test_lucas_mac_oracle.py FAILED:\n{result_lucas.stdout[-500:]}")
+
+    # SU(3) oracle
+    su3_pass = 0
+    su3_test = os.path.join(root_dir, "software", "tests", "test_su3_oracle.py")
+    if os.path.exists(su3_test):
+        result_su3 = subprocess.run(
+            [sys.executable, su3_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "PASS" in result_su3.stdout:
+            su3_pass = 1
+        else:
+            print(f"\n  test_su3_oracle.py FAILED:\n{result_su3.stdout[-500:]}")
+
     # Audio sink tests
     audio_test = os.path.join(root_dir, "software", "tests", "test_rplu2_audio.py")
     if os.path.exists(audio_test):
@@ -449,7 +475,7 @@ def main():
     print(f"Passed:           {audio_pass}")
     print(f"Failed:           {audio_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + audio_pass
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + audio_pass
     total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")

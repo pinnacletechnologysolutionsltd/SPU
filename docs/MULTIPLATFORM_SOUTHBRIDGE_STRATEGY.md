@@ -1,9 +1,15 @@
 # Multi-Platform Southbridge Architecture
 ## Expanding SPU-13 Support Beyond RP2350
 
-**Date:** 2026-06-29  
-**Status:** Strategic Analysis  
+**Date:** 2026-06-29
+**Status:** Historical strategic analysis. Current reference southbridge remains
+RP2350/Raspberry Pi Pico 2; use `docs/CURRENT_STATUS.md` and
+`docs/fpga_board_scaling_strategy.md` for active hardware priorities.
 **Scope:** Technology compatibility matrix and phased rollout roadmap
+
+Audit note, 2026-07-05: platform resource, power, and bandwidth numbers below
+are planning estimates unless backed by a current implementation and measurement
+log.
 
 ---
 
@@ -465,7 +471,7 @@ TESTING:
 **FlexIO equivalent (pseudo-C):**
 ```c
 // Timer 0: frequency divider → 61.44 kHz
-FLEXIO_TIMCFG[0] = (FLEXIO_TIMCFG_TIMDIS_ENABLE | 
+FLEXIO_TIMCFG[0] = (FLEXIO_TIMCFG_TIMDIS_ENABLE |
                     FLEXIO_TIMCFG_TIMRST_ON_TIMER_COMPARE |
                     FLEXIO_TIMCFG_TIMDEC_CLK_DIV_BY_16);
 FLEXIO_TIMCMP[0] = 16383;  // 2 kHz timer (divides 125 MHz)
@@ -493,4 +499,3 @@ Expanding Southbridge support to Teensy 4.1 (and later LPC55S69 and ESP32-S3) is
 
 **Document History:**
 - **2026-06-29:** Initial strategic analysis created
-

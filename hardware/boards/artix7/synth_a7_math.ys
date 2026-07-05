@@ -12,8 +12,12 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/core/shared/spu_rotor_vault.v \
     hardware/rtl/core/shared/spu_cross_rotor.v \
     hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/core/shared/toroidal_regfile.v \
+    hardware/rtl/core/shared/toroidal_regfile_ecc.v \
     hardware/rtl/core/shared/spu_quadray_permute.v \
     hardware/rtl/core/shared/spu_quadray_regfile.v \
+    hardware/rtl/common/prim/spu_hamming_72_64.v \
+    hardware/rtl/core/shared/spu_quadray_regfile_ecc.v \
     hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
     hardware/rtl/common/prim/surd_multiplier.v \
     hardware/rtl/common/prim/spu_xilinx_prim.v \
@@ -32,7 +36,7 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/math/rational_surd5_mul64.v \
     hardware/rtl/math/rational_surd5_norm.v \
     hardware/rtl/math/rational_surd5_scale_manager.v \
-    hardware/rtl/arch/spu_bio_stubs.v
+    hardware/rtl/arch/spu_optional_stubs.v
 
 synth_xilinx -family xc7 -top spu_a7_math_top -json build/a7_math.json
 stat -top spu_a7_math_top

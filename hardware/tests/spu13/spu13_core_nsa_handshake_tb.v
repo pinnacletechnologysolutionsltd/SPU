@@ -52,7 +52,10 @@ module spu13_core_nsa_handshake_tb;
         .i2s_bclk(), .i2s_lrclk(), .i2s_dout(),
         .laminar_flow_index_out(), .thermal_pressure_out(),
         .hex_valid(), .hex_q(), .hex_r(), .audio_p_out(), .audio_q_out(),
-        .axiomatic_fault(), .fault_type(), .fault_count()
+        .axiomatic_fault(), .fault_type(), .fault_count(),
+        .rns_error(),
+        .ecc_single_err(),
+        .ecc_double_err()
     );
 
     initial begin

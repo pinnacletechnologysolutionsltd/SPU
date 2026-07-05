@@ -34,19 +34,18 @@ $A_{31}=\mathbb{F}_p[u,v]/(u^2-3,v^2-5)$ is the split biquadratic algebra
 implemented by the RTL.  A parameterized jet multiply-accumulate
 (MAC) pipeline computes $R_k = \sum_{i=0}^{k} J_i \cdot K_{k-i}$ for $k \in
 \{0,1,2\}$ in 12 cycles (time-division multiplexed) or 3 cycles (fully
-unrolled), with bit-identical replay across simulation runs. A conjugate
-reduction tower inverts unit elements in
-$\sim$76 deterministic cycles, and a lookahead hazard unit (LHU) schedules
+unrolled), with bit-identical replay across simulation runs. A conjugate reduction tower and shadow chain invert unit elements in
+$\sim$88 deterministic cycles total ($\sim$76 for the tower, 12 for the chain), and a lookahead hazard unit (LHU) schedules
 concurrent single-cycle arithmetic alongside tower operations.
 
 The leaf RTL for the 4-stage pipeline---jet MAC, jet inverse, [4/4] Pad\'{e} rational
 approximant, and Kohonen SOM classifier---is under active integration, with
 focused Verilog benches and Python/C++$\,$17 oracles covering the arithmetic
 and control primitives. Two hardware targets are presented:
-a Xilinx Artix-7 100T implementation (240 DSP48E1, $\sim$100\,K LUTs)
-using DSP cascade routing for zero-routing-overhead systolic multipliers,
-and a Gowin GW5A-25A prototype (8,256 LUT4s) demonstrating subsystem
-feasibility at 67\% device utilization. The architecture eliminates
+a Xilinx Artix-7 100T implementation (240 DSP48E1, 63,400 6-input LUTs)
+currently routed at a 4.11 MHz bring-up frequency, and a Gowin GW5A-25A
+silicon-proven prototype (8,256 LUT4s) demonstrating subsystem feasibility
+at 67\% device utilization. The architecture eliminates
 floating-point non-determinism, square roots, and runtime dynamic
 address resolution from the topological classification hot path.
 All RTL, software oracles, and documentation are open-source (CC0 1.0).
@@ -270,7 +269,7 @@ The RPLU v2 is a 4-stage pipeline:
 
 \subsection{Stage $\Phi_1$ — Ingestion Layer: The Bus Transmutation Unit}
 
-The BTU (Bus Transmutation Unit) is a Direct Combinational Demultiplexer
+The BTU (Barycentric Transmutation Unit) is a Direct Combinational Demultiplexer
 Grid that executes $O(1)$ spatial-to-bus mapping. A 64-bit activation
 vector arrives from the upstream SOM classification stage. Each bit
 represents a neutron in the Kohonen mesh. The BTU performs a 64-to-6
@@ -396,17 +395,17 @@ not as a single arithmetic operation.
 
 \subsection{Jet Pipeline Verification}
 
-The jet MAC testbench (	exttt{spu13\_jet\_mac\_tb}) validates 3 scenarios:
+The jet MAC testbench (\texttt{spu13\_jet\_mac\_tb}) validates 3 scenarios:
 unit propagation ($J = (1,0,0)$, $K = (1,0,0)$), zero-divisor guard
 ($j_0 = 0$), and full Cauchy product with random coefficients. The jet
-inverse testbench (	exttt{spu13\_jet\_inv\_tb}) validates 6 scenarios:
+inverse testbench (\texttt{spu13\_jet\_inv\_tb}) validates 6 scenarios:
 scalar identity $J^{-1}$ where $J = (5,0,0)$, inversion with velocity
 $J = (5,3,2)$, zero-divisor trap $J = (0,1,0)$, post-trap recovery,
 and random self-consistency $J \cdot J^{-1} = (1,0,0)$. The PHSLK core
-testbench (	exttt{spu13\_phslk\_core\_tb}) validates 6 coherence
+testbench (\texttt{spu13\_phslk\_core\_tb}) validates 6 coherence
 predicate scenarios: matching base, mismatched base, zero-divisor,
 post-trap valid lock, velocity cancellation, and acceleration
-cancellation. The full-stack PHSLK testbench (	exttt{spu\_full\_stack\_tb})
+cancellation. The full-stack PHSLK testbench (\texttt{spu\_full\_stack\_tb})
 validates 13 additional scenarios including concurrent LDO/LDC/PHSLK
 sequences, write-forwarding bypass, and RAW hazard resolution.
 
@@ -550,14 +549,15 @@ separate approximation subsystems (Morse potential, linear interpolation,
 clipping, saturation) with one unified exact-rational pipeline.
 
 Two hardware targets are characterized. On the \textbf{Xilinx Artix-7 100T}
-(primary target, 240 DSP48E1, $\sim$100\,K LUTs), the full pipeline
-consumes $\sim$1,172 LUTs and 16 DSP slices---8\% of DSP capacity and
-9\% of LUTs, leaving substantial headroom for the fully unrolled jet MAC
-(96 DSPs) or additional SOM nodes. On the \textbf{Gowin GW5A-25A}
+(silicon-evidence target, 240 DSP48E1, $\sim$100\,K LUTs), the standalone
+pipeline consumes $\sim$1,172 LUTs and 16 DSP slices---8\% of DSP capacity and
+9\% of LUTs. Whole-image integration with live RPLU2, sidecars, and safety
+layers is now treated as an Artix-7 200T / Kintex-class target because the
+100T placement margin is tight for concurrent builds. On the \textbf{Gowin GW5A-25A}
 (Tang Primer 25K, prototyping target), the full pipeline including rotor
 core, sequencer, and VE initialization totals $\sim$5,500 LUTs (67\% of
 the 8,256 LUT4s), confirming subsystem feasibility on the smaller device
-but motivating the Artix-7 as the target for full concurrent operation.
+but motivating larger Artix/Kintex-class devices for full concurrent operation.
 
 \subsection{Pipeline Latency}
 
@@ -654,7 +654,7 @@ linear scaling in tower height.
 The current RTL has focused leaf-module testbenches and an actively repaired
 integrated pipeline path. Two
 hardware targets are in progress: a \textbf{Xilinx Artix-7 100T} (Wukong
-board, 240 DSP48E1, $\sim$100\,K LUTs) as the primary target for full
+board, 240 DSP48E1, 63,400 6-input LUTs) as the primary target for full
 system concurrent operation, and a \textbf{Gowin GW5A-25A} (Tang Primer
 25K, 8,256 LUT4s) as the existing component-proving board. On the 25K,
 the pipeline including rotor core, sequencer, and VE initialization occupies
@@ -688,7 +688,7 @@ across simulation runs. The architecture supports:
 
 \begin{itemize}
 \item A parameterized jet MAC computing $R_k = \sum_{i=0}^{k} J_i \cdot
-K_{k-i}$ for $k \in \{0,1,2\}$, verified against 28 test vectors across
+K_{k-i}$ for $k \in \{0,1,2\}$, verified against 139 tests across
 three independent implementation layers,
 \item A 76-cycle Conjugate Reduction Tower with zero-norm singularity
 detection, enabling jet inversion via a 12-cycle shadow chain,

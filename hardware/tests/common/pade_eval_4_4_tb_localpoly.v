@@ -28,8 +28,8 @@ module pade_eval_4_4_tb_localpoly;
     reg signed [63:0] num[0:4];
     reg signed [63:0] den[0:4];
     initial begin
-        $readmemh("hardware/common/rtl/gpu/pade_num_4_4_q32.mem", num);
-        $readmemh("hardware/common/rtl/gpu/pade_den_4_4_q32.mem", den);
+        $readmemh("hardware/rtl/arch/pade_num_4_4_q32.mem", num);
+        $readmemh("hardware/rtl/arch/pade_den_4_4_q32.mem", den);
     end
 
     // reference Horner in testbench (high precision)

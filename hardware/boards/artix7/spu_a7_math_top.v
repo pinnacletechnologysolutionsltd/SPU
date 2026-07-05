@@ -49,7 +49,10 @@ module spu_a7_math_top (
         .hex_valid(hex_valid), .hex_q(hex_q), .hex_r(hex_r),
         .audio_p_out(), .audio_q_out(),
         .axiomatic_fault(axiomatic_fault), .fault_type(fault_type),
-        .fault_count(fault_count)
+        .fault_count(fault_count),
+        .rns_error(),
+        .ecc_single_err(),
+        .ecc_double_err()
     );
 
     assign led = {axiomatic_fault, inst_done};

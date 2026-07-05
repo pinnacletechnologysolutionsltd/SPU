@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+#
+# Copyright 2026 John Curley
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 """
 SPU-13 Sovereign Virtual Machine (spu_vm.py) — Legacy Linear Architecture v3.2
 Pure Python interpreter for the Legacy Sovereign Assembly (SAS) ISA.
@@ -208,9 +223,9 @@ def triple_quadrance(Q1: int, Q2: int, spread_s3: 'RationalSurd') -> tuple:
     """
     Compute Q₃ from Q₁, Q₂ and spread s₃ using the Triple Quadrance Formula.
     Returns (Q3_acute, Q3_obtuse) — the two possible Q₃ values.
-    
+
     (Q₃ − Q₁ − Q₂)² = 4·Q₁·Q₂·(1−s₃)
-    
+
     For right triangles (s₃=1): Q₃ = Q₁ + Q₂  (both values equal).
     For parallel lines (s₃=0): Q₃ = |Q₁−Q₂| or Q₁+Q₂.
     """
@@ -234,7 +249,7 @@ def spread_from_quadrances(Q1: int, Q2: int, Q3: int) -> tuple:
     """
     Compute spread s₃ from three quadrances (inverse of triple_quadrance).
     Returns (numer, denom) as integer pair.
-    
+
     s₃ = 1 − (Q₃ − Q₁ − Q₂)² / (4·Q₁·Q₂)
     numer = 4·Q₁·Q₂ − (Q₃ − Q₁ − Q₂)²
     denom = 4·Q₁·Q₂

@@ -77,7 +77,8 @@ module spu13_jet_inv_tb;
         .mult_b2(tower_mult_b2), .mult_b3(tower_mult_b3),
         .mult_r0(tower_mult_r0), .mult_r1(tower_mult_r1),
         .mult_r2(tower_mult_r2), .mult_r3(tower_mult_r3),
-        .mult_done(tower_mult_done), .mult_busy(tower_mult_busy)
+        .mult_done(tower_mult_done), .mult_busy(tower_mult_busy),
+        .debug_state(), .debug_start_accept()
     );
 
     // ── M31 multiplier (shared between tower and jet shadow chain) ───

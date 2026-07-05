@@ -60,7 +60,10 @@ module spu13_core_som_opcode_tb;
         .audio_p_out(), .audio_q_out(),
         .axiomatic_fault(axiomatic_fault),
         .fault_type(fault_type),
-        .fault_count(fault_count)
+        .fault_count(fault_count),
+        .rns_error(),
+        .ecc_single_err(),
+        .ecc_double_err()
     );
 
     function [63:0] pack;
@@ -110,15 +113,15 @@ module spu13_core_som_opcode_tb;
         issue(pack(8'h1D, 8'd0, 8'd0, 16'h0201, 16'h0000), 40);
         #1;
 
-        if (uut.gen_qrf.u_qrf.reg_A[0][31:0] !== 32'sd2 ||
-            uut.gen_qrf.u_qrf.reg_B[0][31:0] !== 32'sd1 ||
-            uut.gen_qrf.u_qrf.reg_C[0][31:0] !== 32'sd0 ||
-            uut.gen_qrf.u_qrf.reg_D[0][31:0] !== 32'sd0) begin
+        if (uut.gen_qrf.u_qrf.u_regfile.reg_A[0][31:0] !== 32'sd2 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_B[0][31:0] !== 32'sd1 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_C[0][31:0] !== 32'sd0 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_D[0][31:0] !== 32'sd0) begin
             $display("FAIL: QLDI source QR0 A=%0d B=%0d C=%0d D=%0d",
-                     uut.gen_qrf.u_qrf.reg_A[0][31:0],
-                     uut.gen_qrf.u_qrf.reg_B[0][31:0],
-                     uut.gen_qrf.u_qrf.reg_C[0][31:0],
-                     uut.gen_qrf.u_qrf.reg_D[0][31:0]);
+                     uut.gen_qrf.u_qrf.u_regfile.reg_A[0][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_B[0][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_C[0][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_D[0][31:0]);
             errors = errors + 1;
         end else begin
             $display("PASS: QLDI loaded SOM feature vector");

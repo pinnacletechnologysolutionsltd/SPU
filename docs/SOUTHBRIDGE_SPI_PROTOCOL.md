@@ -98,6 +98,15 @@ records with 0 skipped. The SPI-only FPGA telemetry probe
 those writes: `cfgtele` changes from count 0 to count 16, with last record
 `sel=0 material=1 addr=2 data=0x0000000000010000`.
 
+Southbridge write-path hardening was re-tested on 2026-06-30 NZT after two
+firmware/RTL timing bugs were fixed: the RP CRC helper now compares the CRC MSB
+as a bit, and `spu_spi_slave` no longer lets RP firmware inter-byte gaps or a
+missed command trailing edge corrupt `0xA5` payload reception. The SPI-only
+probe now routes at 1,861 LUT4 / 840 DFF and reports `status raw=25 A5 00 00`.
+A manual `rplu 0 1 2 0x0000000000010000` advances `cfgtele` from count 0 to
+count 1, and a clean SD hydration advances count 0 to 16 with checksum
+`0x3A0AB5E9`.
+
 The telemetry path is also proven on the full SPU-13 southbridge image. On
 2026-06-29 NZT, `build_25k_spu13_southbridge.sh` completed synthesis,
 place-and-route, and packaging for `build/tang_primer_25k_spu13_southbridge.fs`.
@@ -107,6 +116,14 @@ The routed design passes the 12 MHz constraint (`clk_core` 72.28 MHz max,
 hydration; `sdhydrate` loads 16 records with 0 skipped; and final `cfgtele`
 reports count 16, last record `sel=0 material=1 addr=2
 data=0x0000000000010000`, checksum `0x3A0AB5E9`.
+
+The split core-attached southbridge probe was rebuilt with the same write-path
+fixes on 2026-06-30 NZT. `build_25k_spu13_southbridge_link.sh` routes at
+4,054 LUT4 / 3,091 DFF and passes timing (`clk_50m` 55.48 MHz,
+`clk_core` 102.46 MHz against the 12 MHz target). After SRAM load,
+`rp2350_spu_diag` reports `status raw=13 A5 00 00`; manual `rplu` advances
+`cfgtele` to count 1; and SD hydration advances count 0 to 16 with checksum
+`0x3A0AB5E9`.
 
 RPLU v2 consume-profile hydration is also proven over the RP2350 southbridge
 path on the full SPU-13 image. The corrected 149-record profile from
@@ -265,7 +282,8 @@ Byte  Bits        Content
 - **Turbulence:** Set if Davis Gate detected manifold leak (Cubic Leak)
 - **Janus Point:** Set when manifold crosses dual-polarity boundary
 - **Satellite Snap:** SPU-4 Sentinel lock indicator
-- **RPLU Mode:** Current active RPLU bank (0 = default, 1 = alternate)
+- **RPLU Mode:** Current active RPLU bank (0 = default, 1 = alternate) — byte 3 bit 0
+- **CRC Error:** Set if last write (0xB1 or 0xA5) had CRC-8 mismatch — byte 3 bit 1, clears on 0xAC read
 
 ---
 
@@ -345,7 +363,7 @@ Byte Range  Content
 
 ### Write Commands (0xB1, 0xA5)
 
-#### **0xB1 — Instruction Write** (Recv: 64 bits)
+#### **0xB1 — Instruction Write** (Recv: 64 bits + 8 CRC)
 **Role:** Stream a single 64-bit SPU instruction/chord
 
 **Sequence:**
@@ -353,7 +371,8 @@ Byte Range  Content
 2. FPGA latches command
 3. RP2350 sends: 64-bit instruction (MSB first)
 4. FPGA asserts `inst_valid` for one cycle, loads `inst_word`
-5. Instruction fed into sequencer for execution
+5. RP2350 sends: 8-bit CRC-8-CCITT (polynomial 0x07) over command byte + payload
+6. FPGA transitions to S_RECV_CRC, compares CRC, sets `crc_error_sticky` on mismatch
 
 **Instruction Format (64-bit):**
 ```
@@ -373,7 +392,7 @@ RP2350 sends: 0xB1 0x0A ... (64 bits total)
 
 ---
 
-#### **0xA5 — RPLU Config Write** (Recv: 128 bits)
+#### **0xA5 — RPLU Config Write** (Recv: 128 bits + 8 CRC)
 **Role:** Program RPLU runtime configuration table
 
 **Sequence:**
@@ -383,6 +402,8 @@ RP2350 sends: 0xB1 0x0A ... (64 bits total)
 4. FPGA switches to S_RECV_DATA
 5. RP2350 sends: 64-bit DATA
 6. FPGA decodes HEADER, asserts `rplu_cfg_wr_en` (1 cycle)
+7. RP2350 sends: 8-bit CRC-8-CCITT over command byte + payload
+8. FPGA transitions to S_RECV_CRC, compares CRC, sets `crc_error_sticky` on mismatch
 
 **HEADER Format (64-bit big-endian):**
 ```
@@ -400,7 +421,7 @@ Bits   Field
 ```
 Bits   Field
 ────   ─────────────────────────────────────────
-63:0   Configuration data (F_{p^4} coefficients, routing table, etc.)
+63:0   Configuration data (A₃₁ coefficients, routing table, etc.)
 ```
 
 **Output Signals (asserted for 1 cycle after DATA received):**
@@ -565,8 +586,8 @@ If FPGA receives unrecognized opcode:
 
 ### Hung Transactions
 If RP2350 stops clocking SCK while CS# is active:
-- FPGA state machine remains in active state (S_CMD, S_RESP, S_RECV_*)
-- **No timeout mechanism** (would require additional logic)
+- FPGA state machine remains in active state (S_CMD, S_RESP, S_RECV_*, S_RECV_CRC)
+- **Deadman timer:** 128-cycle timeout (≈2.6 µs at 50 MHz) resets to S_IDLE if no SCK edge arrives
 - RP2350 must assert CS# if transaction times out
 
 **Recommended:** RP2350 firmware should implement SCK watchdog (~10 ms timeout).

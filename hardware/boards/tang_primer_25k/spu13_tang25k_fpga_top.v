@@ -9,7 +9,8 @@ module spu13_tang25k_southbridge_top #(
     parameter CORE_ENABLE_SOM = 0,
     parameter CORE_ENABLE_RPLU_V2 = 0,
     parameter CORE_ENABLE_RPLU_V2_PIPELINE = CORE_ENABLE_RPLU_V2,
-    parameter CORE_ENABLE_RPLU_V2_EXTENSIONS = 0
+    parameter CORE_ENABLE_RPLU_V2_EXTENSIONS = 0,
+    parameter CORE_ENABLE_TORUS = 0
 ) (
     input  wire        sys_clk,
     output wire [2:0]  led,
@@ -475,7 +476,8 @@ module spu13_tang25k_southbridge_top #(
         .ENABLE_CORE_SOM(CORE_ENABLE_SOM),
         .ENABLE_CORE_RPLU_V2(CORE_ENABLE_RPLU_V2),
         .ENABLE_CORE_RPLU_V2_PIPELINE(CORE_ENABLE_RPLU_V2_PIPELINE),
-        .ENABLE_CORE_RPLU_V2_EXTENSIONS(CORE_ENABLE_RPLU_V2_EXTENSIONS)
+        .ENABLE_CORE_RPLU_V2_EXTENSIONS(CORE_ENABLE_RPLU_V2_EXTENSIONS),
+        .ENABLE_TORUS(CORE_ENABLE_TORUS)
     ) u_core (
         .clk(clk_core), .rst_n(rst_n),
         .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),
@@ -509,7 +511,10 @@ module spu13_tang25k_southbridge_top #(
         .i2s_bclk(), .i2s_lrclk(), .i2s_dout(),
         .laminar_flow_index_out(), .thermal_pressure_out(),
         .audio_p_out(), .audio_q_out(),
-        .axiomatic_fault(), .fault_type(), .fault_count()
+        .axiomatic_fault(), .fault_type(), .fault_count(),
+        .rns_error(),
+        .ecc_single_err(),
+        .ecc_double_err()
     );
 
     // ── LEDs ───────────────────────────────────────────────────

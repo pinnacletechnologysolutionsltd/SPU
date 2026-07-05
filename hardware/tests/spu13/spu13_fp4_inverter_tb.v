@@ -27,7 +27,8 @@ module spu13_fp4_inverter_tb;
         .mult_b2(mult_b2), .mult_b3(mult_b3),
         .mult_r0(mult_r0), .mult_r1(mult_r1),
         .mult_r2(mult_r2), .mult_r3(mult_r3),
-        .mult_done(mult_done), .mult_busy(mult_busy)
+        .mult_done(mult_done), .mult_busy(mult_busy),
+        .debug_state(), .debug_start_accept()
     );
 
     spu13_m31_multiplier u_mult (

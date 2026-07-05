@@ -89,7 +89,8 @@ module rplu_thimble_pade_tb;
         .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
         .mult_r0(inv_mult_r0), .mult_r1(inv_mult_r1),
         .mult_r2(inv_mult_r2), .mult_r3(inv_mult_r3),
-        .mult_done(inv_mult_done), .mult_busy(inv_mult_busy)
+        .mult_done(inv_mult_done), .mult_busy(inv_mult_busy),
+        .debug_state(), .debug_start_accept()
     );
 
     always #5 clk = ~clk;

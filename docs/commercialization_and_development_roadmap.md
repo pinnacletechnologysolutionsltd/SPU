@@ -1,6 +1,6 @@
 # Commercialization and Development Roadmap
 
-Date: 2026-06-17
+Date: 2026-07-05
 
 This roadmap keeps SPU-13 fully open while giving the project a practical path
 to money, users, certification evidence, and industrial credibility.
@@ -8,16 +8,21 @@ to money, users, certification evidence, and industrial credibility.
 For the FPGA board ladder behind the dev-kit strategy, see
 `docs/fpga_board_scaling_strategy.md`.
 
+For grant and high-margin market positioning, see
+`docs/SPU13_MARKET_AND_GRANT_POSITIONING.md`.
+
 ## Core Positioning
 
-SPU-13 is an open deterministic rational coprocessor for:
+SPU-13 is an open deterministic exact-arithmetic geometric field processor for:
 
 - exact geometric computation
-- inspectable SOM classification
+- deterministic graphics and visual telemetry
+- bounded control and robotics kinematics
+- deterministic lattice simulation
+- inspectable rational SOM/BMU classification
 - RPLU lookup/correction surfaces
-- rational robotics kinematics
-- deterministic visual and audio proof surfaces
 - industrial telemetry and control
+- guarded interfaces to future non-von-Neumann coprocessors
 
 The public claim should avoid competing with GPUs, NPUs, or tensor accelerators
 on throughput. The defensible claim is determinism:
@@ -25,19 +30,19 @@ on throughput. The defensible claim is determinism:
 > Same inputs, same rational state, same trace, same output, across simulation,
 > RTL, FPGA, and future board revisions.
 
+Do not position SPU-13 as a general CPU/GPU replacement, LLM accelerator,
+stochastic neuromorphic processor, quantum computer, or certified safety
+controller. The canonical boundary is `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
+
 ## Open Project Policy
 
 The project should be completely open, but the brand should remain controlled.
 Open hardware allows others to make, modify, distribute, and use the design; it
 does not require clones to be treated as official SPU-13 products.
 
-Recommended licensing:
+Licensing:
 
-- RTL, PCB, schematics, mechanical design: `CERN-OHL-S-2.0` if reciprocal
-  openness is desired, or `CERN-OHL-P-2.0` if maximum commercial reuse is more
-  important.
-- Software, firmware, tools: `Apache-2.0` or `MIT`.
-- Documentation: `CC BY-SA 4.0`.
+- SPU-13 is committed to maximum open-source impact. All RTL, PCB designs, schematics, software, firmware, tools, and documentation are released under the `CC0 1.0 Universal` (Public Domain) license.
 - Trademarks, board names, certification marks, logos: reserved.
 
 Open licenses should not try to restrict fields of use. The control surfaces are
@@ -134,6 +139,33 @@ Possible narrow angle:
 
 Treat this as private consulting only if it funds the open work without pulling
 the roadmap away from robotics and industrial control.
+
+## Grant / Research Positioning
+
+The project should pitch against research themes rather than stale program
+names until an active solicitation is verified. Strong themes are deterministic
+hardware, open microelectronics IP, low-SWaP control, quantum classical-control
+interfaces, rational edge classification, and reproducible lattice simulation.
+
+The grant story should lead with evidence:
+
+> the same exact computation replayed in Python, C++, RTL, and FPGA silicon.
+
+Current grant/pitch source of truth:
+`docs/SPU13_MARKET_AND_GRANT_POSITIONING.md`.
+
+Current audit note:
+
+- NLnet remains relevant, but the exact open call must be checked before
+  submission. On 2026-07-05 its general NGI Zero Commons Fund page says the
+  final Commons call closed on 2026-06-01, while the apply page temporarily
+  lists only NGI Taler and NGI Fediversity.
+- MBIE remains relevant as a New Zealand research pathway, but the 2026
+  Endeavour Fund round is contract-extension only and does not invite new
+  applications. Treat MBIE as a partner-led track through universities, CRIs,
+  or other current MBIE opportunities.
+- Commercial and academic outreach should start after the arXiv papers are
+  live, using the evidence pack rather than speculative performance claims.
 
 ## Aerospace, Drones, Guidance, and Space
 
@@ -234,16 +266,18 @@ products.
 
 ## Immediate Next Steps
 
-1. Implement the Phase 0 visual renderer.
-2. Create a robotics trace pack: commanded path, injected error, RPLU correction,
-   corrected path.
-3. Add QSUB and DELTA RTL FSMs.
-4. Define the dev-kit v0.1 BOM and display/debug bridge.
-5. Draft the OSHWA checklist and license layout.
-6. Prepare a one-page project brief for early collaborators and beta buyers.
-7. When the replacement Tang 25K arrives, follow
-   `docs/tang25k_replacement_bringup_plan.md`: math/UART smoke, RPLU proof,
-   SDRAM proof, then ROTC, SOM, and RPLU periodic-pack proof.
+1. Finish the SPU-13 foundation paper and companion RPLU v2, Lucas MAC, and SU3
+   papers.
+2. Freeze a paper evidence tag with the current 107/107 regression result and
+   Wukong/Tang silicon evidence.
+3. Prepare a one-page project brief for academic, grant, and commercial
+   outreach.
+4. Prepare partner-led MBIE/university and NLnet/open-hardware proposal drafts.
+5. Keep the Pico 2 and Colorlight i9 acquisition path small and non-blocking.
+6. Keep the custom ECP5 board as an EE/funding-dependent evaluator, not a
+   fabrication-ready design.
+7. Resume synthesis bring-up after the docs/papers have a stable evidence
+   baseline.
 
 ## References
 

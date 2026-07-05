@@ -67,9 +67,9 @@ module spu_spi_slave_tb;
     always #20.833 clk = ~clk;  // ~24 MHz
 
     // SPI clock ~2 MHz — period 500 ns → half 250 ns
-    task spi_byte_send;
-        input [7:0] cmd;
-        output [7:0] recv;
+	    task spi_byte_send;
+	        input [7:0] cmd;
+	        output [7:0] recv;
         integer i;
         begin
             recv = 8'h00;
@@ -81,8 +81,38 @@ module spu_spi_slave_tb;
                 #250;
                 spi_sck = 0;
             end
-        end
-    endtask
+	        end
+	    endtask
+
+	    function [7:0] crc8_byte;
+	        input [7:0] crc;
+	        input [7:0] byte_data;
+	        reg [7:0] s;
+	        integer i;
+	        begin
+	            s = crc;
+	            for (i = 0; i < 8; i = i + 1) begin
+	                if (s[7] != byte_data[7-i])
+	                    s = {s[6:0], 1'b0} ^ 8'h07;
+	                else
+	                    s = {s[6:0], 1'b0};
+	            end
+	            crc8_byte = s;
+	        end
+	    endfunction
+
+	    function [7:0] crc8_word64;
+	        input [7:0] crc;
+	        input [63:0] word_data;
+	        reg [7:0] s;
+	        integer i;
+	        begin
+	            s = crc;
+	            for (i = 0; i < 8; i = i + 1)
+	                s = crc8_byte(s, word_data[63 - i*8 -: 8]);
+	            crc8_word64 = s;
+	        end
+	    endfunction
 
     // SPI transaction: assert CS, send cmd, receive n_bytes
     reg [7:0] rx_buf [0:63];
@@ -123,33 +153,62 @@ module spu_spi_slave_tb;
         end
     endtask
 
-    task spi_rplu_write;
-        input [63:0] header;
-        input [63:0] data;
-        reg [7:0] dummy;
-        begin
-            spi_cs_n = 0;
-            #500;
-            spi_byte_send(8'hA5, dummy);
-            spi_u64_send(header);
-            spi_u64_send(data);
-            #500;
-            spi_cs_n = 1;
-            #2000;
+	    task spi_rplu_write;
+	        input [63:0] header;
+	        input [63:0] data;
+	        reg [7:0] dummy;
+	        reg [7:0] crc;
+	        begin
+	            crc = crc8_word64(crc8_word64(crc8_byte(8'h00, 8'hA5), header), data);
+	            spi_cs_n = 0;
+	            #500;
+	            spi_byte_send(8'hA5, dummy);
+	            spi_u64_send(header);
+	            spi_u64_send(data);
+	            spi_byte_send(crc, dummy);
+	            #500;
+	            spi_cs_n = 1;
+	            #2000;
         end
     endtask
 
-    task spi_inst_write;
-        input [63:0] word;
-        reg [7:0] dummy;
-        begin
-            spi_cs_n = 0;
-            #500;
-            spi_byte_send(8'hB1, dummy);
-            spi_u64_send(word);
-            #500;
-            spi_cs_n = 1;
-            #2000;
+	    task spi_rplu_write_with_gaps;
+	        input [63:0] header;
+	        input [63:0] data;
+	        input integer gap_ns;
+	        reg [7:0] dummy;
+	        reg [7:0] crc;
+	        begin
+	            crc = crc8_word64(crc8_word64(crc8_byte(8'h00, 8'hA5), header), data);
+	            spi_cs_n = 0;
+	            #500;
+	            spi_byte_send(8'hA5, dummy);
+	            #(gap_ns);
+	            spi_u64_send(header);
+	            #(gap_ns);
+	            spi_u64_send(data);
+	            #(gap_ns);
+	            spi_byte_send(crc, dummy);
+	            #500;
+	            spi_cs_n = 1;
+	            #2000;
+        end
+    endtask
+
+	    task spi_inst_write;
+	        input [63:0] word;
+	        reg [7:0] dummy;
+	        reg [7:0] crc;
+	        begin
+	            crc = crc8_word64(crc8_byte(8'h00, 8'hB1), word);
+	            spi_cs_n = 0;
+	            #500;
+	            spi_byte_send(8'hB1, dummy);
+	            spi_u64_send(word);
+	            spi_byte_send(crc, dummy);
+	            #500;
+	            spi_cs_n = 1;
+	            #2000;
         end
     endtask
 
@@ -271,7 +330,7 @@ module spu_spi_slave_tb;
             fail_count = fail_count + 1;
         end
 
-        // --- T3: unknown command --- 
+        // --- T3: unknown command ---
         spi_transaction(8'hFF, 1);
         if (rx_buf[0] === 8'h00) begin
             $display("T3 PASS: unknown cmd returns 0x00");
@@ -293,6 +352,24 @@ module spu_spi_slave_tb;
             pass_count = pass_count + 1;
         end else begin
             $display("T4 FAIL: wr=%b sel=%0d material=%0d addr=%h data=%h",
+                seen_cfg_wr, seen_cfg_sel, seen_cfg_material, seen_cfg_addr, seen_cfg_data);
+            fail_count = fail_count + 1;
+        end
+
+        // --- T4b: CMD 0xA5 survives firmware-style gaps inside held CS ---
+        seen_cfg_wr = 1'b0;
+        spi_rplu_write_with_gaps(rplu_header(3'd2, 4'd9, 10'h055),
+                                 64'hCAFE_BABE_1234_5678,
+                                 10000);
+        if (seen_cfg_wr &&
+            seen_cfg_sel === 3'd2 &&
+            seen_cfg_material === 8'd9 &&
+            seen_cfg_addr === 10'h055 &&
+            seen_cfg_data === 64'hCAFE_BABE_1234_5678) begin
+            $display("T4b PASS: RPLU config decoded with firmware-style gaps");
+            pass_count = pass_count + 1;
+        end else begin
+            $display("T4b FAIL: wr=%b sel=%0d material=%0d addr=%h data=%h",
                 seen_cfg_wr, seen_cfg_sel, seen_cfg_material, seen_cfg_addr, seen_cfg_data);
             fail_count = fail_count + 1;
         end

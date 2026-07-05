@@ -7,14 +7,15 @@ module spu13_m31_multiplier_tb;
     reg [31:0] a0, a1, a2, a3;
     reg [31:0] b0, b1, b2, b3;
     wire [31:0] r0, r1, r2, r3;
-    wire done, busy;
+    wire done, busy, rns_error;
 
     spu13_m31_multiplier uut (
         .clk(clk), .rst_n(rst_n), .start(start),
         .a0(a0), .a1(a1), .a2(a2), .a3(a3),
         .b0(b0), .b1(b1), .b2(b2), .b3(b3),
         .r0(r0), .r1(r1), .r2(r2), .r3(r3),
-        .done(done), .busy(busy)
+        .done(done), .busy(busy),
+        .rns_error(rns_error)
     );
 
     localparam P = 32'h7FFFFFFF;
@@ -36,7 +37,10 @@ module spu13_m31_multiplier_tb;
             start = 1; #10; start = 0;
             wait(done);
             #2;  // Let NBAs settle
-            if (r0 !== exp0 || r1 !== exp1 || r2 !== exp2 || r3 !== exp3) begin
+            if (rns_error) begin
+                $display("FAIL: rns_error asserted for A=(%h,%h,%h,%h) * B=(%h,%h,%h,%h)",
+                         ea0, ea1, ea2, ea3, eb0, eb1, eb2, eb3);
+            end else if (r0 !== exp0 || r1 !== exp1 || r2 !== exp2 || r3 !== exp3) begin
                 $display("FAIL: A=(%h,%h,%h,%h) * B=(%h,%h,%h,%h)", ea0,ea1,ea2,ea3, eb0,eb1,eb2,eb3);
                 $display("  expected (%h,%h,%h,%h)", exp0, exp1, exp2, exp3);
                 $display("  got      (%h,%h,%h,%h)", r0, r1, r2, r3);

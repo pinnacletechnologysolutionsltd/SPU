@@ -6,6 +6,13 @@
 // synth_xilinx maps behavioral dual-port RAM to RAMB18E1.
 // Behavioral approach lets Yosys optimize across device families.
 
+(* blackbox *)
+module BUFG (
+    input  wire I,
+    output wire O
+);
+endmodule
+
 module spu_gowin_mult32 #(
     parameter DEVICE = "A7_100T"
 ) (

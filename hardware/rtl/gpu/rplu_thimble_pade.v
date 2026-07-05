@@ -49,7 +49,9 @@ module rplu_thimble_pade #(
     input  wire [31:0]  inv_r0, inv_r1, inv_r2, inv_r3,
     input  wire         inv_done,
     input  wire         inv_busy,
-    input  wire         inv_flags_v
+    input  wire         inv_flags_v,
+
+    output wire [2:0]   debug_state
 );
 
     // ── Coefficient storage ─────────────────────────────────────────
@@ -100,13 +102,16 @@ module rplu_thimble_pade #(
     localparam S_MULTIPLY   = 3'd3;
     localparam S_DONE       = 3'd4;
 
-    reg [2:0] state;
+    (* keep, fsm_encoding = "none" *) reg [2:0] state;
     reg [COEFF_ADDR_W:0] horner_idx;
     reg        horner_is_den;
     reg [31:0] horner_c0, horner_c1, horner_c2, horner_c3;
     reg [31:0] num_c0, num_c1, num_c2, num_c3;
     reg [31:0] den_c0, den_c1, den_c2, den_c3;
     reg [31:0] inv_c0, inv_c1, inv_c2, inv_c3;
+    reg        inv_start_pending;
+
+    assign debug_state = state;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -117,6 +122,7 @@ module rplu_thimble_pade #(
             horner_idx   <= 0;
             mult_start   <= 1'b0;
             inv_start    <= 1'b0;
+            inv_start_pending <= 1'b0;
         end else begin
             done       <= 1'b0;
             inv_start  <= 1'b0;
@@ -128,6 +134,7 @@ module rplu_thimble_pade #(
                     if (start) begin
                         busy         <= 1'b1;
                         flags_v      <= 1'b0;
+                        inv_start_pending <= 1'b0;
                         horner_idx   <= NUM_COEFF - 2;
                         horner_c0    <= num_coeff[NUM_COEFF-1][0];
                         horner_c1    <= num_coeff[NUM_COEFF-1][1];
@@ -202,6 +209,7 @@ module rplu_thimble_pade #(
                                 inv_z2 <= m31_add(mult_r2, den_coeff[0][2]);
                                 inv_z3 <= m31_add(mult_r3, den_coeff[0][3]);
                                 inv_start <= 1'b1;
+                                inv_start_pending <= 1'b1;
                                 state <= S_INVERT;
                             end else begin
                                 // Continue denominator: acc = acc*x + q[idx]
@@ -225,7 +233,12 @@ module rplu_thimble_pade #(
                 end
 
                 S_INVERT: begin
+                    if (inv_start_pending && !inv_busy)
+                        inv_start <= 1'b1;
+                    if (inv_start_pending && inv_busy)
+                        inv_start_pending <= 1'b0;
                     if (inv_done) begin
+                        inv_start_pending <= 1'b0;
                         if (inv_flags_v) begin
                             // Zero-norm singularity — propagate exception
                             flags_v <= 1'b1;

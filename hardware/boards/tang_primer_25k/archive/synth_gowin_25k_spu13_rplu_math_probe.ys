@@ -14,7 +14,7 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/core/spu13/spu13_lattice.v \
     hardware/rtl/core/spu13/laminar_node.v \
     hardware/rtl/top/spu_laminar_boot.v \
-    hardware/rtl/arch/spu_bio_stubs.v \
+    hardware/rtl/arch/spu_optional_stubs.v \
     hardware/rtl/core/shared/spu_rotor_vault.v \
     hardware/rtl/core/shared/spu_cross_rotor.v \
     hardware/rtl/core/shared/spu_quadray_permute.v \

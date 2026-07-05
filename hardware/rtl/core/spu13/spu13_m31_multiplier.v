@@ -23,7 +23,8 @@ module spu13_m31_multiplier (
     input  wire [31:0]  b0, b1, b2, b3,
     output wire [31:0]  r0, r1, r2, r3,
     output wire         done,
-    output wire         busy
+    output wire         busy,
+    output wire         rns_error        // mod-3 residue parity violation
 );
 
     localparam [31:0] P = 32'h7FFFFFFF;
@@ -64,7 +65,7 @@ module spu13_m31_multiplier (
     function [31:0] m31_reduce_72;
         input [71:0] z;
         reg [31:0] chunk0, chunk1, chunk2;
-        reg [31:0] sum01, sum_all;
+        reg [32:0] sum01, sum_all;
         begin
             chunk0  = z[30:0];
             chunk1  = z[61:31];
@@ -73,7 +74,7 @@ module spu13_m31_multiplier (
             sum_all = sum01 + chunk2;
             if (sum_all >= P) sum_all = sum_all - P;
             if (sum_all >= P) sum_all = sum_all - P;
-            m31_reduce_72 = sum_all;
+            m31_reduce_72 = sum_all[31:0];
         end
     endfunction
 
@@ -126,5 +127,90 @@ module spu13_m31_multiplier (
     assign r3   = s1_r3;
     assign done = s1_valid;
     assign busy = s0_valid || s1_valid;
+
+    // ── RNS mod-3 residue parity checker ───────────────────────────
+    // Checks the reduced output against an independently reduced mod-3 shadow
+    // of the 72-bit accumulator. The correction term matters because
+    // P = 2^31-1 is 1 mod 3, so raw product residues cannot be compared
+    // directly with field-reduced outputs.
+    function [1:0] mod3_32;
+        input [31:0] x;
+        reg [5:0] even, odd;
+        reg signed [6:0] d;
+        integer i;
+        begin
+            even = 0; odd = 0;
+            for (i = 0; i < 16; i = i + 1) begin
+                even = even + x[2*i];
+                odd  = odd  + x[2*i+1];
+            end
+            d = even - odd;           // -16..+16
+            if (d < 0) d = d + 18;    // shift to 2..34
+            // reduce mod 3 by conditional subtract
+            if (d >= 18) d = d - 18;
+            if (d >= 12) d = d - 12;
+            if (d >= 9)  d = d - 9;
+            if (d >= 6)  d = d - 6;
+            if (d >= 3)  d = d - 3;
+            mod3_32 = d[1:0];
+        end
+    endfunction
+
+    function [1:0] m31_reduce_72_mod3;
+        input [71:0] z;
+        reg [31:0] chunk0, chunk1, chunk2;
+        reg [32:0] sum01, sum_all;
+        reg [31:0] reduced;
+        begin
+            chunk0  = z[30:0];
+            chunk1  = z[61:31];
+            chunk2  = {21'd0, z[71:62]};
+            sum01   = chunk0 + chunk1;
+            sum_all = sum01 + chunk2;
+            if (sum_all >= P) sum_all = sum_all - P;
+            if (sum_all >= P) sum_all = sum_all - P;
+            reduced = sum_all[31:0];
+            m31_reduce_72_mod3 = mod3_32(reduced);
+        end
+    endfunction
+
+    reg [1:0] s0_res0, s0_res1, s0_res2, s0_res3;
+    reg [1:0] s1_res0, s1_res1, s1_res2, s1_res3;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            s0_res0 <= 2'd0; s0_res1 <= 2'd0;
+            s0_res2 <= 2'd0; s0_res3 <= 2'd0;
+            s1_res0 <= 2'd0; s1_res1 <= 2'd0;
+            s1_res2 <= 2'd0; s1_res3 <= 2'd0;
+        end else begin
+            if (start) begin
+                s0_res0 <= m31_reduce_72_mod3(acc0_comb);
+                s0_res1 <= m31_reduce_72_mod3(acc1_comb);
+                s0_res2 <= m31_reduce_72_mod3(acc2_comb);
+                s0_res3 <= m31_reduce_72_mod3(acc3_comb);
+            end
+            if (s0_valid) begin
+                s1_res0 <= s0_res0;
+                s1_res1 <= s0_res1;
+                s1_res2 <= s0_res2;
+                s1_res3 <= s0_res3;
+            end
+        end
+    end
+
+    // Actual output residues
+    wire [1:0] r0_act = mod3_32(s1_r0);
+    wire [1:0] r1_act = mod3_32(s1_r1);
+    wire [1:0] r2_act = mod3_32(s1_r2);
+    wire [1:0] r3_act = mod3_32(s1_r3);
+
+    // Assert on valid output, any lane mismatch
+    assign rns_error = s1_valid && (
+        (r0_act != s1_res0) ||
+        (r1_act != s1_res1) ||
+        (r2_act != s1_res2) ||
+        (r3_act != s1_res3)
+    );
 
 endmodule

@@ -11,6 +11,8 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/core/shared/spu_rotor_vault.v \
     hardware/rtl/core/shared/spu_cross_rotor.v \
     hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/core/shared/toroidal_regfile.v \
+    hardware/rtl/core/shared/toroidal_regfile_ecc.v \
     hardware/rtl/gpu/davis_to_rplu.v \
     hardware/rtl/gpu/rplu_exp.v \
     hardware/rtl/gpu/pade_eval_4_4.v \
@@ -25,6 +27,8 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
     hardware/rtl/core/shared/spu_quadray_permute.v \
     hardware/rtl/core/shared/spu_quadray_regfile.v \
+    hardware/rtl/common/prim/spu_hamming_72_64.v \
+    hardware/rtl/core/shared/spu_quadray_regfile_ecc.v \
     hardware/rtl/top/spu_ve_qr_init.v \
     hardware/rtl/core/spu13/spu_sequencer.v \
     hardware/rtl/common/prim/surd_multiplier.v \
@@ -33,7 +37,7 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/core/spu13/spu_som_train.v \
     hardware/rtl/core/spu13/spu_cluster_reduce.v \
     hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v \
-    hardware/rtl/arch/spu_bio_stubs.v
+    hardware/rtl/arch/spu_optional_stubs.v
 
 synth_gowin -family gw5a -top spu13_tang25k_som_top -json build/spu13_som_probe.json -run begin:map_cells
 techmap -map +/gowin/cells_map.v

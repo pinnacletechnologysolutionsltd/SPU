@@ -46,6 +46,7 @@ module spu_som_train #(
     // Port A: read/write weights for training
     output reg  [$clog2(MAX_NODES)-1:0] bram_addr,
     output reg                          bram_we,
+    output reg  [3:0]                   bram_be,     // per-feature byte-enable
     output reg  [(2*WIDTH*NUM_FEATURES)-1:0] bram_wdata,
     input  wire [(2*WIDTH*NUM_FEATURES)-1:0] bram_rdata
 );
@@ -95,6 +96,7 @@ module spu_som_train #(
             train_done <= 0;
             bram_addr  <= 0;
             bram_we    <= 0;
+            bram_be    <= 4'b0000;
             bram_wdata <= 0;
             for (i = 0; i < NUM_FEATURES; i = i + 1) begin
                 w_a[i] <= 0; w_b[i] <= 0;
@@ -134,6 +136,7 @@ module spu_som_train #(
                 S_SHIFT: begin
                     // Write updated weight = w + update
                     bram_we   <= 1;
+                    bram_be   <= 4'b1111;
                     bram_addr <= bmu_node_id[$clog2(MAX_NODES)-1:0];
                     for (i = 0; i < NUM_FEATURES; i = i + 1) begin
                         bram_wdata[i*SURD_W +: WIDTH]            <= w_a[i] + update_a[i];

@@ -8,16 +8,16 @@ module spu13_rotc_feedback_tb;
 
     reg start = 0;
     wire done;
-    
+
     // Feedback registers
     reg [63:0] A_reg, B_reg, C_reg, D_reg;
-    
+
     reg [63:0] F, G, H;
     reg [1:0] field_sel = 0;
     reg bypass_p5 = 0;
     reg bypass_p5_inv = 0;
     reg apply_div3 = 0;
-    
+
     wire [63:0] A_out, B_out, C_out, D_out;
 
     spu13_rotor_core_tdm u_dut (
@@ -25,7 +25,7 @@ module spu13_rotc_feedback_tb;
         .start(start), .done(done),
         .A_in(A_reg), .B_in(B_reg), .C_in(C_reg), .D_in(D_reg),
         .F(F), .G(G), .H(H),
-        .field_sel(field_sel), 
+        .field_sel(field_sel),
         .bypass_p5(bypass_p5),
         .bypass_p5_inv(bypass_p5_inv),
         .apply_div3(apply_div3),
@@ -50,11 +50,13 @@ module spu13_rotc_feedback_tb;
     // A = 1 + 1*sqrt(3)
     // B = 2 - 3*sqrt(3)
     // C = 5 + 4*sqrt(3)
-    // D = -4 + 7*sqrt(3)
+    // D = -4 + 5*sqrt(3)
+    // The thirds rotors require B+C+D to be divisible by 3 component-wise
+    // so repeated feedback remains in the integer RTL lattice.
     localparam [63:0] A_INIT = {32'sd1,  32'sd1};
     localparam [63:0] B_INIT = {-32'sd3, 32'sd2};
     localparam [63:0] C_INIT = {32'sd4,  32'sd5};
-    localparam [63:0] D_INIT = {32'sd7, -32'sd4};
+    localparam [63:0] D_INIT = {32'sd5, -32'sd4};
 
     integer i, step;
     reg failed = 0;
@@ -68,10 +70,10 @@ module spu13_rotc_feedback_tb;
             wait(done);
             @(posedge clk);
             #1; // Wait for propagation to registers
-            A_reg <= A_out;
-            B_reg <= B_out;
-            C_reg <= C_out;
-            D_reg <= D_out;
+            A_reg = A_out;
+            B_reg = B_out;
+            C_reg = C_out;
+            D_reg = D_out;
         end
     endtask
 
@@ -92,7 +94,7 @@ module spu13_rotc_feedback_tb;
         B_reg = B_INIT;
         C_reg = C_INIT;
         D_reg = D_INIT;
-        
+
         bypass_p5 = 0;
         bypass_p5_inv = 0;
         apply_div3 = 1;

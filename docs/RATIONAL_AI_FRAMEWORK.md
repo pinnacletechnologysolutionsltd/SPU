@@ -1,8 +1,8 @@
 # Rational AI Framework — SOM/Nguyen Weighted Topological Classification
 
-**Date:** 2026-06-28  
-**Status:** Stage 1 complete (software oracles verified), Stage 2 in RTL (BMU testbenches passing)  
-**Test Status:** Python SOM 24/24 PASS, C++ SOM PASS, RTL BMU/BTU/RPLU v2 PASS
+**Date:** 2026-06-30
+**Status:** Stage 1 complete; Stage 2 BMU classifier proven on Tang 25K for the seven-node fixture
+**Test Status:** Python SOM 24/24 PASS, C++ SOM PASS, RTL BMU trace PASS, Tang BMU probe `SOM:P T:2 B:6 E:00`
 
 ---
 
@@ -10,18 +10,44 @@
 
 The SPU-13 architecture combines **rational topological classification** (Kohonen self-organizing maps) with **Nguyen-weighted partitioning** to create a deterministic, exact AI framework that competes not on FLOPS or parallelism, but on **explainability, determinism, and bit-exact reproducibility**.
 
+This is the native AI boundary for SPU-13: deterministic topological
+classification, not LLM inference, tensor training, stochastic deep learning, or
+general-purpose AI acceleration. The architecture identity and claim boundaries
+are maintained in `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
+
 Instead of floating-point neural networks with opaque learned weights, rational AI uses:
 - **Quadrance-based distance** (no √ operator, no transcendentals)
 - **Integer/surd field arithmetic** (exact in Q(√3,√5,√15))
 - **Rational Nguyen weights** (deterministic axis importance allocation)
 - **Topological memory** (information organized as discrete lattice cells, not dense embeddings)
 
-The result is the first hardware-accelerated classifier where:
+The target result is a hardware-accelerated classifier where:
 1. The same input produces the **exact same classification output** on every platform
-2. **No training randomness**—deterministic topological organization
+2. **No randomness in the BMU hot path**; initialization and training must be
+   seeded, scripted, or table-driven to be deterministic
 3. **Transparent decisions**—every node, weight, and edge is inspectable
 4. **Safe inference**—bounded arithmetic, no NaN/Inf, no silent underflow
 5. **Low power**—integer pipelines consume ~5–15W vs 50–200W for generic ML accelerators
+
+## Boundary Statement
+
+SPU-13's native AI substrate is deterministic rational classification:
+
+```text
+input vector
+  -> rational weighted quadrance
+  -> BMU / second-best / confidence gap
+  -> cluster label and ambiguity flag
+  -> optional RPLU2/Lucas/Quadray guard projection
+```
+
+Nguyen weighting in this repository primarily means laminar, tolerance, and
+metric-space priority for exact classification and memory partitioning.
+Nguyen-Widrow-style initialization may become a deterministic boot-time seeding
+method, but it is not the foundation claim until implemented and tested.
+
+Lucas MAC is a guard/projection layer for `Z[phi]/L_p` invariants. Do not claim
+SOM weights live in the Lucas ring unless that encoding is explicitly built.
 
 ---
 
@@ -58,7 +84,9 @@ Deterministic classification + explanation graph
   ↓ [human-readable: "This input is 95% class A, 5% ambiguous at boundary"]
 ```
 
-Every step is **integer arithmetic or exact surd field operations**. No randomness, no approximation, no opaque matrix multiplies.
+Every inference step is **integer arithmetic or exact surd field operations**.
+There is no randomness in the BMU hot path, no hidden floating-point rounding,
+and no opaque matrix multiply.
 
 ---
 
@@ -68,7 +96,7 @@ Every step is **integer arithmetic or exact surd field operations**. No randomne
 
 **Source:** Hung Son Nguyen's recursive metric-space subdivision (rough set theory, information granules)
 
-**Principle:** 
+**Principle:**
 - Partition an information space into granular regions
 - Allocate attention/memory/resources proportional to information density
 - Use exact rational weights to avoid floating-point distortion
@@ -205,9 +233,10 @@ Example:
 | Candidate | Implemented As | File | Status |
 |:---|:---|:---|:---|
 | `spu_som_node` | `spu_som_node.v` | Core quad+SOM node | ✅ 3-stage parallel quadrance pipeline + training port |
-| `spu_som_bmu` | `spu_som_node_array.v` | 7-node parallel array | ✅ Parallel 7-node with WTA tree; stable tie-breaking |
+| `spu_som_bmu` | `spu_som_bmu.v` | 7-node serial BMU scan | ✅ Weighted BMU + cluster reduce; Tang 25K UART `SOM:P T:2 B:6 E:00` |
+| `spu_som_node_array` | `spu_som_node_array.v` | 7-node parallel array | ✅ RTL path for later RPLU2 integration |
 | Node storage | `spu13_multi_port_regfile.v` | Multi-port register file | ✅ 4R2W with write-forwarding bypass |
-| BMU→RPLU | `spu13_btu_core_top.v` | BTU spatial router | ✅ 4-lane BRAM, spatial→F_{p^4} transmutation |
+| BMU→RPLU | `spu13_btu_core_top.v` | BTU spatial router | ✅ 4-lane BRAM, spatial→A₃₁ transmutation |
 | Collision | `spu_btu_collision_resolver.v` | Priority encoder | ✅ 64→6 encoder + bubble queue |
 | Field arithmetic | `spu13_m31_multiplier.v` | M31 multiplier | ✅ 16 parallel DSPs, 2-stage pipelined |
 | Field division | `spu13_fp4_inverter.v` | Conjugate reduction tower | ✅ ~76 cycles deterministic |
@@ -246,8 +275,8 @@ Confidence gap = second_Q - best_Q
 Output: best_node_id, best_Q, gap, cluster_label
 ```
 
-**Latency:** ~4–6 cycles (register-to-register)  
-**Throughput:** 1 classification per cycle (after initial fill)  
+**Latency:** ~4–6 cycles (register-to-register)
+**Throughput:** 1 classification per cycle (after initial fill)
 **Power:** ~1–2W for SOM BMU kernel alone
 
 ---
@@ -264,9 +293,9 @@ For cluster label L = best_node.cluster_label:
   For each axis i in QR:
     W(axis_i) = quadrance(QR[i])
   W_total = Σ W(axis_i)
-  
+
   cluster_weight[L] = (W_total for nodes in cluster L) / W_total
-  
+
   Emit: {L, cluster_weight[L], ambiguity_flag}
 ```
 
@@ -301,7 +330,7 @@ This allows downstream firmware to:
 ## Rational AI Benchmarks (Planned)
 
 ### Benchmark 1: Deterministic Replay
-**Claim:** Same input → same output, every platform, every time  
+**Claim:** Same input → same output, every platform, every time
 **Test:**
 - Generate 1000 random features in Q(√3)
 - Run on Python oracle, C++ reference, RTL simulator, FPGA hardware
@@ -309,13 +338,13 @@ This allows downstream firmware to:
 - Measure latency variance (deterministic should be zero ±1 cycle)
 
 ### Benchmark 2: Explainability vs Neural Net
-**Scenario:** 7-node hex map classifier trained on synthetic data  
-**Question 1:** Why did node X win?  
-**Rational AI answer:** "Distance to node X is Q_x = 42+5√3; distance to node Y is Q_y = 50+2√3; Q_x < Q_y, so X wins"  
+**Scenario:** 7-node hex map classifier trained on synthetic data
+**Question 1:** Why did node X win?
+**Rational AI answer:** "Distance to node X is Q_x = 42+5√3; distance to node Y is Q_y = 50+2√3; Q_x < Q_y, so X wins"
 **Neural net answer:** "Internal layer 3 neuron 15 had highest activation"
 
-**Question 2:** What if I misclassify?  
-**Rational AI answer:** "Retrain: shift node X weights by (da, db, dc, dd); confidence improves by δ"  
+**Question 2:** What if I misclassify?
+**Rational AI answer:** "Retrain: shift node X weights by (da, db, dc, dd); confidence improves by δ"
 **Neural net answer:** "Backprop; rerun full training pipeline"
 
 ### Benchmark 3: Power / Area / Latency
@@ -342,7 +371,7 @@ Train a rational SOM model on diagnostic features → real-time classification w
 - No NaN/Inf corner cases
 
 ### 2. **Quantum Error Correction (QEC) Front-End**
-Use rational SOM to pre-classify syndrome patterns before passing to BTU for detailed F_{p^4} reduction.
+Use rational SOM to pre-classify syndrome patterns before passing to BTU for detailed A₃₁ reduction.
 - Fast, deterministic node selection
 - Confidence gap indicates uncertainty (feed to error handling)
 - Topological neighbors suggest correction neighbors
@@ -402,7 +431,7 @@ Classify geometric primitives (polygons, curves, solids) using rational distance
 ## Implementation Roadmap
 
 ### Q3 2026 (Parallel with RP2350/SD bringup)
-- [ ] Validate SOM BMU on Tang 25K hardware (prove latency claims)
+- [x] Validate SOM BMU on Tang 25K hardware for the seven-node fixture
 - [ ] Measure actual power consumption (SOM kernel only)
 - [ ] Test end-to-end inference latency on real FPGA
 - [ ] Create simple demo dataset (IRIS or synthetic quadrant data)
@@ -447,4 +476,3 @@ The theoretical foundation is sound, the software oracles are verified, and the 
 - `hardware/rtl/core/spu13/spu_som_node_array.v` — 7-node parallel BMU selection
 - `hardware/rtl/core/spu13/spu13_btu_core_top.v` — BTU spatial routing
 - `hardware/rtl/core/spu13/rplu_thimble_pade.v` — [4/4] Padé approximant kernel
-

@@ -22,15 +22,27 @@ module spu13_core_rplu2_cfg_tb;
     wire mem_burst_wr;
     wire [23:0] mem_addr;
     wire [831:0] mem_wr_manifold;
+    wire qr_commit_valid;
+    wire [3:0] qr_commit_lane;
+    wire [63:0] qr_commit_A;
+    wire [63:0] qr_commit_B;
+    wire [63:0] qr_commit_C;
+    wire [63:0] qr_commit_D;
 
     integer errors = 0;
     integer wait_i;
     reg seen_quad;
     reg seen_thimble;
+    reg seen_qr_commit;
     reg quad_coherent_seen;
     reg quad_dissoc_seen;
     reg [31:0] quad_delta_seen;
     reg [31:0] thimble_c0_seen;
+    reg [3:0] qr_lane_seen;
+    reg [63:0] qr_A_seen;
+    reg [63:0] qr_B_seen;
+    reg [63:0] qr_C_seen;
+    reg [63:0] qr_D_seen;
 
     localparam [2:0] CFG_PADE_NUM = 3'd1;
     localparam [2:0] CFG_PADE_DEN = 3'd2;
@@ -46,7 +58,8 @@ module spu13_core_rplu2_cfg_tb;
         .ENABLE_CORE_SOM(0),
         .ENABLE_CORE_RPLU_V2(1),
         .ENABLE_CORE_RPLU_V2_PIPELINE(1),
-        .ENABLE_CORE_RPLU_V2_EXTENSIONS(0)
+        .ENABLE_CORE_RPLU_V2_EXTENSIONS(0),
+        .SHARE_RPLU_PADE_INV_MULT(1)
     ) uut (
         .clk(clk),
         .rst_n(rst_n),
@@ -79,12 +92,12 @@ module spu13_core_rplu2_cfg_tb;
         .artery_wr_data(),
         .current_axis_ptr(),
         .current_axis_data(),
-        .qr_commit_valid(),
-        .qr_commit_lane(),
-        .qr_commit_A(),
-        .qr_commit_B(),
-        .qr_commit_C(),
-        .qr_commit_D(),
+        .qr_commit_valid(qr_commit_valid),
+        .qr_commit_lane(qr_commit_lane),
+        .qr_commit_A(qr_commit_A),
+        .qr_commit_B(qr_commit_B),
+        .qr_commit_C(qr_commit_C),
+        .qr_commit_D(qr_commit_D),
         .inst_valid(inst_valid),
         .inst_word(inst_word),
         .inst_done(inst_done),
@@ -114,7 +127,10 @@ module spu13_core_rplu2_cfg_tb;
         .audio_q_out(),
         .axiomatic_fault(),
         .fault_type(),
-        .fault_count()
+        .fault_count(),
+        .rns_error(),
+        .ecc_single_err(),
+        .ecc_double_err()
     );
 
     function [63:0] pack;
@@ -168,16 +184,34 @@ module spu13_core_rplu2_cfg_tb;
         end
     endtask
 
+    task issue_pulse;
+        input [63:0] word;
+        begin
+            @(negedge clk);
+            inst_word = word;
+            inst_valid = 1'b1;
+            @(negedge clk);
+            inst_valid = 1'b0;
+            inst_word = 64'd0;
+        end
+    endtask
+
     task run_rplu2;
         begin
             seen_quad = 1'b0;
             seen_thimble = 1'b0;
+            seen_qr_commit = 1'b0;
             quad_coherent_seen = 1'b0;
             quad_dissoc_seen = 1'b0;
             quad_delta_seen = 32'd0;
             thimble_c0_seen = 32'd0;
+            qr_lane_seen = 4'd0;
+            qr_A_seen = 64'd0;
+            qr_B_seen = 64'd0;
+            qr_C_seen = 64'd0;
+            qr_D_seen = 64'd0;
 
-            issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0));
+            issue_pulse(pack(8'h2A, 8'd4, 8'd0, 16'd0, 16'd0));
 
             for (wait_i = 0; wait_i < 1500; wait_i = wait_i + 1) begin
                 @(posedge clk);
@@ -190,6 +224,14 @@ module spu13_core_rplu2_cfg_tb;
                 if (uut.gen_rplu_v2.rplu2_thimble_valid) begin
                     seen_thimble = 1'b1;
                     thimble_c0_seen = uut.gen_rplu_v2.rplu2_thimble_c0;
+                end
+                if (qr_commit_valid) begin
+                    seen_qr_commit = 1'b1;
+                    qr_lane_seen = qr_commit_lane;
+                    qr_A_seen = qr_commit_A;
+                    qr_B_seen = qr_commit_B;
+                    qr_C_seen = qr_commit_C;
+                    qr_D_seen = qr_commit_D;
                 end
             end
         end
@@ -229,6 +271,14 @@ module spu13_core_rplu2_cfg_tb;
         end
         if (!seen_thimble || thimble_c0_seen !== 32'd2) begin
             $display("FAIL: Padé hydrated result seen=%b c0=%h", seen_thimble, thimble_c0_seen);
+            errors = errors + 1;
+        end
+        if (!seen_qr_commit || qr_lane_seen !== 4'd4 ||
+            qr_A_seen !== 64'd2 || qr_B_seen !== 64'd0 ||
+            qr_C_seen !== 64'd0 || qr_D_seen !== 64'd0) begin
+            $display("FAIL: Padé public commit seen=%b lane=%0d A=%h B=%h C=%h D=%h",
+                     seen_qr_commit, qr_lane_seen,
+                     qr_A_seen, qr_B_seen, qr_C_seen, qr_D_seen);
             errors = errors + 1;
         end
 

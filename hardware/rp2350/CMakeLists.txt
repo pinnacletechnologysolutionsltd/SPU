@@ -206,3 +206,84 @@ target_compile_definitions(rp2350_spu_arithmetic_test PRIVATE
 pico_enable_stdio_usb(rp2350_spu_arithmetic_test 1)
 pico_enable_stdio_uart(rp2350_spu_arithmetic_test 0)
 pico_add_extra_outputs(rp2350_spu_arithmetic_test)
+
+# Repeating Wukong J11 Lucas sidecar smoke test. This avoids the interactive
+# CDC write path while proving PSCALE/PCHIRAL/PMUL/PINV over SPI.
+add_executable(rp2350_lucas_j11_smoke
+    rp2350_lucas_j11_smoke.c
+)
+
+target_link_libraries(rp2350_lucas_j11_smoke
+    pico_stdlib
+    hardware_spi
+    spu_rp_common
+)
+
+target_compile_definitions(rp2350_lucas_j11_smoke PRIVATE
+    ${SPU_SPI_PIN_DEFS}
+)
+
+pico_enable_stdio_usb(rp2350_lucas_j11_smoke 1)
+pico_enable_stdio_uart(rp2350_lucas_j11_smoke 0)
+pico_add_extra_outputs(rp2350_lucas_j11_smoke)
+
+# Repeating Wukong J11 SU3 sidecar smoke test. The FPGA SU3 bring-up spin
+# uses a divided clk_fast, so the smoke test keeps SPI conservative by default.
+add_executable(rp2350_su3_j11_smoke
+    rp2350_su3_j11_smoke.c
+)
+
+target_link_libraries(rp2350_su3_j11_smoke
+    pico_stdlib
+    hardware_spi
+    spu_rp_common
+)
+
+target_compile_definitions(rp2350_su3_j11_smoke PRIVATE
+    ${SPU_SPI_PIN_DEFS}
+)
+
+pico_enable_stdio_usb(rp2350_su3_j11_smoke 1)
+pico_enable_stdio_uart(rp2350_su3_j11_smoke 0)
+pico_add_extra_outputs(rp2350_su3_j11_smoke)
+
+# Wukong J11 RPLU2 config-transport smoke test. Hydrates the 149-record
+# consume-probe profile and verifies the Artix SPUC telemetry frame.
+add_executable(rp2350_rplu2_j11_smoke
+    rp2350_rplu2_j11_smoke.c
+)
+
+target_link_libraries(rp2350_rplu2_j11_smoke
+    pico_stdlib
+    hardware_spi
+    spu_rp_common
+)
+
+target_compile_definitions(rp2350_rplu2_j11_smoke PRIVATE
+    ${SPU_SPI_PIN_DEFS}
+)
+
+pico_enable_stdio_usb(rp2350_rplu2_j11_smoke 1)
+pico_enable_stdio_uart(rp2350_rplu2_j11_smoke 0)
+pico_add_extra_outputs(rp2350_rplu2_j11_smoke)
+
+# Wukong J11 RPLU2 Padé sidecar smoke test. This is the low-route-pressure
+# Artix-7 proof spin: hydrate a direct Padé fixture, start opcode 0x2A,
+# and verify QR commit lane 4 reports A31 value (2,0,0,0).
+add_executable(rp2350_rplu2_pade_j11_smoke
+    rp2350_rplu2_pade_j11_smoke.c
+)
+
+target_link_libraries(rp2350_rplu2_pade_j11_smoke
+    pico_stdlib
+    hardware_spi
+    spu_rp_common
+)
+
+target_compile_definitions(rp2350_rplu2_pade_j11_smoke PRIVATE
+    ${SPU_SPI_PIN_DEFS}
+)
+
+pico_enable_stdio_usb(rp2350_rplu2_pade_j11_smoke 1)
+pico_enable_stdio_uart(rp2350_rplu2_pade_j11_smoke 0)
+pico_add_extra_outputs(rp2350_rplu2_pade_j11_smoke)

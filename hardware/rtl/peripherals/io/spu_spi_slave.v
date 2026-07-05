@@ -155,7 +155,7 @@ module spu_spi_slave (
     // Filled after command byte is received.
     reg [7:0] resp_buf [0:63];
     reg [6:0] resp_len;   // 0–64; must be 7-bit so 64 doesn't truncate
- 
+
     // --- State machine ---
     localparam S_IDLE      = 3'd0;  // waiting for CS
     localparam S_CMD       = 3'd1;  // receiving 8-bit command
@@ -164,7 +164,8 @@ module spu_spi_slave (
     localparam S_RECV_HDR  = 3'd4;  // receive 64-bit HEADER
     localparam S_RECV_DATA = 3'd5;  // receive 64-bit DATA
     localparam S_RECV_INST = 3'd6;  // receive 64-bit instruction chord
- 
+    localparam S_RECV_CRC  = 3'd7;  // receive 8-bit CRC-8 after write
+
     reg [2:0]  state;
     reg [2:0]  bit_cnt;    // bits received in CMD phase
     reg [7:0]  cmd_byte;
@@ -176,12 +177,73 @@ module spu_spi_slave (
     reg [5:0]  recv_bits;  // 0..63
     reg [63:0] hdr_shift;
     reg [63:0] data_shift;
+    reg [2:0]  crc_bit_cnt;  // 0..7 for CRC byte receive
     reg        qr_valid_lat;
     reg [3:0]  qr_lane_lat;
     reg [63:0] qr_A_lat, qr_B_lat, qr_C_lat, qr_D_lat;
     reg        hex_valid_lat;
     reg [15:0] hex_q_lat;
     reg [15:0] hex_r_lat;
+
+    // Deadman timer: reset to IDLE if SCK stalls mid-receive.
+    // RP SDK blocking writes can leave CS low with multi-us gaps between
+    // command/header/data/CRC calls, so keep this comfortably above firmware
+    // inter-byte jitter while still recovering from an abandoned write.
+    localparam [15:0] DEADMAN_RELOAD = 16'd50000;  // ~1 ms at 50 MHz
+    reg [15:0] deadman;
+    wire       deadman_timeout = (deadman == 16'd0);
+    wire       deadman_active = (state == S_RECV_HDR ||
+                                 state == S_RECV_DATA ||
+                                 state == S_RECV_INST ||
+                                 state == S_RECV_CRC);
+
+    // ── CRC-8-CCITT accumulator (x⁸ + x² + x + 1) ──────────────
+    // Computed over command + payload bytes for write transactions.
+    // Sticky error flag readable through status register.
+    reg [7:0]  crc_accum;
+    reg        crc_error_sticky;
+
+    // CRC-8-CCITT: x⁸ + x² + x + 1 (polynomial 0x07)
+    function [7:0] crc8_byte;
+        input [7:0] crc;
+        input [7:0] byte_data;
+        reg [7:0] s;
+        integer b;
+        begin
+            s = crc;
+            for (b = 0; b < 8; b = b + 1) begin
+                if (s[7] != byte_data[7-b]) begin
+                    s = {s[6:0], 1'b0} ^ 8'h07;
+                end else begin
+                    s = {s[6:0], 1'b0};
+                end
+            end
+            crc8_byte = s;
+        end
+    endfunction
+
+    function [7:0] crc8_word64;
+        input [7:0] crc;
+        input [63:0] word_data;
+        reg [7:0] s;
+        integer n;
+        begin
+            s = crc;
+            for (n = 0; n < 8; n = n + 1)
+                s = crc8_byte(s, word_data[63 - n*8 -: 8]);
+            crc8_word64 = s;
+        end
+    endfunction
+
+    localparam [1:0] CRC_NONE = 2'd0;
+    localparam [1:0] CRC_RPLU = 2'd1;
+    localparam [1:0] CRC_INST = 2'd2;
+
+    reg [7:0]  crc_expected;
+    reg [7:0]  crc_recv;
+    reg [1:0]  crc_pending;
+    reg [63:0] pending_hdr;
+    reg [63:0] pending_data;
 
     integer b, k;
     always @(posedge clk or negedge rst_n) begin
@@ -219,10 +281,38 @@ module spu_spi_slave (
             qr_D_lat <= 64'd0;
 
             for (b = 0; b < 64; b = b + 1) resp_buf[b] <= 8'h0;
+            deadman <= DEADMAN_RELOAD;
+            crc_accum <= 8'h00;
+            crc_expected <= 8'h00;
+            crc_recv <= 8'h00;
+            crc_pending <= CRC_NONE;
+            pending_hdr <= 64'd0;
+            pending_data <= 64'd0;
+            crc_error_sticky <= 1'b0;
+            crc_bit_cnt <= 3'd0;
         end else begin
             // default: clear the one-cycle strobe
             rplu_cfg_wr_en <= 1'b0;
             inst_valid <= 1'b0;
+
+            // Reset CRC at the start of a fresh transaction
+            if (cs_fall) begin
+                crc_accum <= 8'h00;
+                crc_expected <= 8'h00;
+                crc_recv <= 8'h00;
+                crc_pending <= CRC_NONE;
+            end
+
+            // Deadman timer: reset on any SCK edge or CS deassertion;
+            // if it expires while in a receive state, return to IDLE.
+            if (!cs_active || sck_rise || sck_fall) begin
+                deadman <= DEADMAN_RELOAD;
+            end else if (deadman_active && deadman != 16'd0) begin
+                deadman <= deadman - 1'b1;
+            end
+            if (deadman_active && deadman_timeout) begin
+                state <= S_IDLE;
+            end
 
             // Sample incoming RPLU comparator pulses (sticky latch)
             if (rplu_ratio_valid) begin
@@ -260,8 +350,25 @@ module spu_spi_slave (
                     end else if (sck_rise) begin
                         cmd_byte <= {cmd_byte[6:0], mosi_d};
                         if (bit_cnt == 3'd7) begin
-                            state   <= S_FILL;
                             bit_cnt <= 3'd0;
+                            if ({cmd_byte[6:0], mosi_d} == 8'hA5) begin
+                                // Write commands sample on SCK rises only; enter
+                                // receive immediately so the first payload bit is
+                                // not lost if the command trailing fall is missed
+                                // by the system-clock synchronizer.
+                                recv_bits <= 6'd0;
+                                hdr_shift <= 64'd0;
+                                data_shift <= 64'd0;
+                                spi_miso <= 1'b0;
+                                state <= S_RECV_HDR;
+                            end else if ({cmd_byte[6:0], mosi_d} == 8'hB1) begin
+                                recv_bits <= 6'd0;
+                                data_shift <= 64'd0;
+                                spi_miso <= 1'b0;
+                                state <= S_RECV_INST;
+                            end else begin
+                                state <= S_FILL;
+                            end
                         end else begin
                             bit_cnt <= bit_cnt + 3'd1;
                         end
@@ -328,13 +435,14 @@ module spu_spi_slave (
                             resp_buf[0] <= laminar_index[15:8];
                             resp_buf[1] <= laminar_index[7:0];
                             resp_buf[2] <= {ratio_lat[2:0], ratio_valid_lat, fifo_full, turbulence, janus_lat, snaps_lat[0]};
-                            resp_buf[3] <= {7'h0, rplu_mode};
+                            resp_buf[3] <= {6'h0, crc_error_sticky, rplu_mode};
                             resp_len    <= 6'd4;
                             shift_out <= laminar_index[15:8];
                             byte_idx  <= 6'd0;
                             resp_bit  <= 3'd7;
                             spi_miso  <= laminar_index[15];
                             ratio_valid_lat <= 1'b0;
+                            crc_error_sticky <= 1'b0;  // clear-on-read
                             state     <= S_RESP;
 
                         end else if (cmd_byte == 8'hAD) begin
@@ -450,19 +558,22 @@ module spu_spi_slave (
                         state <= S_IDLE; // CS dropped unexpectedly
                     end else if (sck_rise) begin
                         data_shift <= {data_shift[62:0], mosi_d};
-                        if (recv_bits == 6'd63) begin
-                            recv_bits <= 6'd0;
-                            // Decode HEADER and emit single-cycle cfg pulse
-                            if (hdr_shift[63:56] == 8'hA5) begin
-                                rplu_cfg_sel      <= hdr_shift[50:48];
-                                rplu_cfg_material <= {4'd0, hdr_shift[47:44]};
-                                rplu_cfg_addr     <= hdr_shift[43:34];
-                                rplu_cfg_data     <= {data_shift[62:0], mosi_d};
-                                rplu_cfg_wr_en    <= 1'b1; // single-cycle pulse (cleared by default at next tick)
-                            end
-                            // Return to idle and wait for CS to be deasserted
-                            state <= S_IDLE;
-                        end else begin
+	                        if (recv_bits == 6'd63) begin
+	                            recv_bits <= 6'd0;
+	                            pending_hdr <= hdr_shift;
+	                            pending_data <= {data_shift[62:0], mosi_d};
+	                            crc_expected <= crc8_word64(
+	                                crc8_word64(crc8_byte(8'h00, cmd_byte), hdr_shift),
+	                                {data_shift[62:0], mosi_d});
+	                            crc_accum <= crc8_word64(
+	                                crc8_word64(crc8_byte(8'h00, cmd_byte), hdr_shift),
+	                                {data_shift[62:0], mosi_d});
+	                            crc_pending <= CRC_RPLU;
+	                            // Expect CRC byte after payload
+	                            crc_bit_cnt <= 3'd0;
+	                            crc_recv <= 8'h00;
+	                            state <= S_RECV_CRC;
+	                        end else begin
                             recv_bits <= recv_bits + 6'd1;
                         end
                     end
@@ -473,12 +584,21 @@ module spu_spi_slave (
                         state <= S_IDLE; // CS dropped unexpectedly
                     end else if (sck_rise) begin
                         data_shift <= {data_shift[62:0], mosi_d};
-                        if (recv_bits == 6'd63) begin
-                            recv_bits <= 6'd0;
-                            inst_word <= {data_shift[62:0], mosi_d};
-                            inst_valid <= 1'b1;
-                            state <= S_IDLE;
-                        end else begin
+	                        if (recv_bits == 6'd63) begin
+	                            recv_bits <= 6'd0;
+	                            pending_data <= {data_shift[62:0], mosi_d};
+	                            crc_expected <= crc8_word64(
+	                                crc8_byte(8'h00, cmd_byte),
+	                                {data_shift[62:0], mosi_d});
+	                            crc_accum <= crc8_word64(
+	                                crc8_byte(8'h00, cmd_byte),
+	                                {data_shift[62:0], mosi_d});
+	                            crc_pending <= CRC_INST;
+	                            // Expect CRC byte after payload
+	                            crc_bit_cnt <= 3'd0;
+	                            crc_recv <= 8'h00;
+	                            state <= S_RECV_CRC;
+	                        end else begin
                             recv_bits <= recv_bits + 6'd1;
                         end
                     end
@@ -504,6 +624,38 @@ module spu_spi_slave (
                             spi_miso <= shift_out[resp_bit - 3'd1];
                         end
                     end
+                end
+
+	                S_RECV_CRC: begin
+	                    if (!cs_active) begin
+	                        state <= S_IDLE; // CS dropped — skip CRC check
+	                    end else if (sck_rise) begin
+	                        if (crc_bit_cnt == 3'd7) begin
+	                            // 8th SCK: compare received CRC with computed CRC
+	                            // The CRC byte arrives MSB-first.
+	                            if (crc_expected != {crc_recv[6:0], mosi_d}) begin
+	                                crc_error_sticky <= 1'b1;
+	                            end else if (crc_pending == CRC_RPLU) begin
+	                                if (pending_hdr[63:56] == 8'hA5) begin
+	                                    rplu_cfg_sel      <= pending_hdr[50:48];
+	                                    rplu_cfg_material <= {4'd0, pending_hdr[47:44]};
+	                                    rplu_cfg_addr     <= pending_hdr[43:34];
+	                                    rplu_cfg_data     <= pending_data;
+	                                    rplu_cfg_wr_en    <= 1'b1;
+	                                end else begin
+	                                    crc_error_sticky <= 1'b1;
+	                                end
+	                            end else if (crc_pending == CRC_INST) begin
+	                                inst_word <= pending_data;
+	                                inst_valid <= 1'b1;
+	                            end
+	                            crc_pending <= CRC_NONE;
+	                            state <= S_IDLE;
+	                        end else begin
+	                            crc_recv <= {crc_recv[6:0], mosi_d};
+	                            crc_bit_cnt <= crc_bit_cnt + 3'd1;
+	                        end
+	                    end
                 end
 
                 default: state <= S_IDLE;

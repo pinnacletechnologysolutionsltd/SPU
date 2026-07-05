@@ -6,20 +6,25 @@ evaluation, and quadray variety checks over finite algebraic rings.
 A hardware substrate for reproducible spatial reasoning and safety-critical
 control primitives, not a replacement for conventional AI accelerators.**
 
-[![License: CC0](https://img.shields.io/badge/License-CC0_1.0-lightgrey)](LICENSE)
-[![Hardware: CERN-OHL-P](https://img.shields.io/badge/Hardware-CERN--OHL--P-blue)](hardware/LICENSE)
-[![Software: MIT](https://img.shields.io/badge/Software-MIT-green)](software/LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-## Architecture
+## Current Hardware Direction
 
-The SPU-13 is split across two chips connected by SPI:
+The SPU-13 bench stack is split across a microcontroller southbridge and an
+FPGA target connected by SPI:
 
 ```
-SD Card → RP2350 (RISC-V Southbridge) → SPI @ 2 MHz → Tang 25K FPGA (SPU-13 Core)
+SD Card → RP2350 (RISC-V southbridge) → SPI @ 2 MHz → FPGA SPU-13 core
 ```
 
 - **RP2350** does: boot, filesystem, chord streaming, USB CDC telemetry
-- **FPGA** does: Rational Arithmetic Unit, twine-register file, pipeline control
+- **FPGA** does: rational arithmetic, QR register file, RPLU2 pipeline control
+
+The Tang Primer 25K remains the proven regression/probe board. The Wukong
+Artix-7 100T is the primary Artix silicon-evidence and constrained integration
+board. Full concurrent integration with live RPLU2, sidecars, and safety layers
+is an Artix-7 200T / Kintex-class funding target. See
+[`docs/CURRENT_STATUS.md`](docs/CURRENT_STATUS.md).
 
 ## Next-Gen ISA Status (Wheeler-Feynman v1.0)
 
@@ -32,18 +37,30 @@ SD Card → RP2350 (RISC-V Southbridge) → SPI @ 2 MHz → Tang 25K FPGA (SPU-1
 | Yosys synthesis | ✅ 11,125 LUTs (46%) | 0 errors |
 | Python simulator | ✅ 35 PASS | cross-validated C++ |
 | C++ simulator | ✅ 40 PASS | cross-validated Python |
-| RP2350 SPI firmware | ✅ Ready | waiting on cables |
-| SD card hydration | ✅ Ready | waiting on SD reader |
+| RP2350 SPI firmware | ✅ Silicon-verified | Tang 25K southbridge |
+| SD card hydration | ✅ Silicon-verified | SD→RP2350→FPGA RPLU2 receipt |
 
 ## Licensing
 
 | Layer | License | Directory |
 |-------|---------|-----------|
-| Hardware (RTL, board files) | [CERN-OHL-P](hardware/LICENSE) | `hardware/` |
+| Hardware (RTL, board files) | [CERN-OHL-W-2.0](hardware/LICENSE) | `hardware/` |
 | Software (VM, tools, firmware) | [MIT](software/LICENSE) | `software/` |
 | Documentation | [CC0 1.0](LICENSE) | `docs/`, `knowledge/` |
 
 ---
+
+## Patent Shield & Defensive Prior Art Declaration
+
+The SPU-13 architecture, including the dual-ring arithmetic framework, the Barycentric Transmutation Unit (BTU) bridge, the $\mathbb{Z}/M_{31}$ Mersenne-ring core, and the $\mathbb{Z}[\phi]/L_p$ Lucas Phinary co-processor, is publicly disclosed in this repository and associated publications as **defensive prior art**.
+
+Under global patent law (including USPTO, EPO, and JPO guidelines), this public, timestamped disclosure legally bars any third party from obtaining patents on:
+1. **Dual-Ring Execution Topology:** The co-processor coupling of a $\mathbb{Z}/M_{31}$ binary ring with a $\mathbb{Z}[\phi]/L_p$ phinary ring, connected via a spatial routing bridge (BTU).
+2. **Lucas Barrett Reduction in Hardware:** The hardware-native remainder calculation for Lucas prime moduli ($q = (x \cdot \mu) \gg 31$, $r = x - q \cdot L_p$) using elaboration-time precalculated scale constants ($\mu = \lfloor 2^k / L_p \rfloor$).
+3. **Chirality & Scaling Intercepts:** The instruction intercept (`lucas_inst_claimed`) and register commit override path mapped in [spu_a7_top.v](file:///home/john/Projects/hardware/SPU/hardware/boards/artix7/spu_a7_top.v) for `0xD0` (PSCALE) and `0xD1` (PCHIRAL).
+
+All contributions to this project require signing off on the [Developer Certificate of Origin (DCO)](CONTRIBUTING.md) to certify that they are free of patent encumbrances.
+
 
 ## Quick Start (30 seconds to proof)
 
@@ -102,10 +119,12 @@ The `spu13_rotor_core.v` module implements Thomson's Spread-Quadray Rotor circul
 B' = F·B + H·C + G·D (cyclic). At {60°, 120°, 240°, 300°} every matrix entry is
 rational in {−1/3, 2/3}. At 120° the hardware uses a pure bit-permutation bypass.
 
-### RPLU — Rational Polynomial Look-Up
+### RPLU2 — Rational Polynomial Look-Up
 
-2051-entry flash-loaded response surface. Maps axis state to correction vectors.
-Proven on hardware: address walk covers full table (0x000–0x3FF), checksum `0x1D971036`.
+RPLU2 uses corrected 149-record boot/config profiles for Padé coefficients, BTU
+rows, and Quadray constants. SD/RP2350/FPGA table hydration is proven in
+silicon; lean live-evaluator proofs target Artix-7 while full concurrent
+integration is reserved for a larger FPGA.
 
 ---
 
@@ -117,8 +136,21 @@ Proven on hardware: address walk covers full table (0x000–0x3FF), checksum `0x
 | 2 Small | iCESugar v1.5 | iCE40UP5K | ✅ Bitstream |
 | 3 Mid | Tang Nano 9K | GW1N-9C | ✅ Synthesis |
 | 4 Mid | Tang Primer 20K | GW2A-18 | ✅ Synthesis |
-| 5 Large | **Tang Primer 25K** | GW5A-25A | ✅ Bitstream + probe |
-| 6 Mega | Gowin Mega | GW5AST-138C | Planned |
+| 5 Regression | **Tang Primer 25K** | GW5A-25A | ✅ Split probes + southbridge |
+| 6 Evidence / Constrained Integration | **Wukong Artix-7 100T** | XC7A100T | J11 silicon proofs, sidecars, shared-multiplier baseline |
+| 7 Open HW | **SPU-13 ECP5 Evaluator** | LFE5U-85F / LFE5U-44F | Draft OSHWA concept; KiCad ERC/DRC audit pending |
+| 8 Full Integration | Artix-7 200T / Kintex-class | TBD | Funding-dependent full concurrent target |
+
+---
+
+## ECP5 OSHWA Physical Layout & Verification (Symmetry-Informed Heuristic)
+
+To secure open-source toolchain portability and move toward official OSHWA self-certification, the SPU-13 architecture includes a draft custom physical evaluator concept with point-symmetric layout constraints. The current KiCad package is not yet fab-ready; see `hardware/docs/ecp5_oshwa_deliverable_audit.md`.
+
+* **Symmetric Hexagonal Board Outline:** The PCB profile utilizes a mathematically generated $60^\circ$ isotropic bounding polygon in KiCad to align trace propagation paths with the triangular symmetry of the Isotropic Vector Matrix (IVM).
+* **Point-Symmetric Radial Node Placement:** High-speed control lines and register file macros are routed radially from a fixed central coordinate origin $(X_0, Y_0)$ on the ECP5-85F to 12 point-symmetric ring nodes at exact $30^\circ$ increments, establishing an identical nominal path length of $25.0\text{ mm}$ without serpentine tuning.
+* **Simulation-Estimated Skew Verification:** Wavefront propagation is verified programmatically via `tools/simulate_synergetic_routing.py` using an idealized microstrip model ($v = 150\text{ mm/ns}$, $\varepsilon_r \approx 4.0$), demonstrating a nominal time-of-flight of $166.67\text{ ps}$ with $0.0\text{ ps}$ of geometric path-length skew.
+* **Physical Validation Pending Verification:** These layout parameters remain structural simulation models until subjected to post-layout parasitic extraction (OpenEMS/SIwave), high-speed Time-Domain Reflectometry (TDR) measurement of test coupons, and physical active-probing capture of live silicon skew.
 
 ---
 

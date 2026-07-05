@@ -1,5 +1,12 @@
 # SPU-13 Strategic Roadmap
 
+> Historical note, 2026-07-05: this was an early bring-up roadmap and contains
+> stale board, funding, and measurement assumptions. Keep it for project
+> history, but use `docs/CURRENT_STATUS.md`,
+> `docs/fpga_board_scaling_strategy.md`,
+> `docs/SPU13_MARKET_AND_GRANT_POSITIONING.md`, and
+> `docs/hardware_evidence.md` as the current source of truth.
+
 ## Current Status (June 22, 2026)
 
 ### Phase 2 Complete — Next-Gen ISA RTL All Written

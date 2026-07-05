@@ -1,13 +1,35 @@
 # SPU-13 Publication & Promotion Strategy — Complete Index
 
-**Created:** 2026-06-29 10:22 UTC+12:00  
-**Status:** Ready for execution (12-week roadmap)
+**Created:** 2026-06-29 10:22 UTC+12:00
+**Last audited:** 2026-07-05
+**Status:** Active strategy index. Older tactical estimates remain in the
+linked documents, but current claims must be checked against
+`CURRENT_STATUS.md`, `hardware_evidence.md`, and
+`SPU13_MARKET_AND_GRANT_POSITIONING.md`.
 
 ## Master Documents (Session Artifacts)
 
+### 0. Architecture Identity And Boundaries
+**File:** `SPU13_IDENTITY_AND_BOUNDARIES.md`
+**Scope:** Canonical statement of what SPU-13 is and is not
+**Key Sections:**
+- One-sentence architecture identity
+- What SPU-13 is / is not
+- Application pillars
+- Native rational AI boundary
+- Guarded non-von-Neumann interface boundary
+- Claim ladder from software oracle to certified product
+
+**Use This For:**
+- Keeping publication language precise
+- Avoiding GPU/LLM/quantum/neuromorphic overclaims
+- Separating proven hardware, RTL proof, and future research directions
+
+---
+
 ### 1. Publication & Promotion Strategy (21.8 KB)
-**File:** `publication_and_promotion_strategy.md`  
-**Scope:** Comprehensive strategic framework for academic publication + community launch  
+**File:** `publication_and_promotion_strategy.md`
+**Scope:** Comprehensive strategic framework for academic publication + community launch
 **Key Sections:**
 - Current status assessment (gaps to close)
 - IEEE publication track (venues, paper completion checklist)
@@ -26,9 +48,44 @@
 
 ---
 
+### 1.5 Market And Grant Positioning
+**File:** `SPU13_MARKET_AND_GRANT_POSITIONING.md`
+**Scope:** High-margin market thesis and cautious grant-language guide
+**Key Sections:**
+- One-line market pitch
+- Best initial markets and required evidence
+- Grant/research alignment themes
+- Outreach evidence pack
+- Safe and unsafe pitch language
+
+**Use This For:**
+- Grant draft preparation
+- Pitch-deck language
+- Deciding which Wukong/Tang evidence to collect next
+- Avoiding stale program-name overclaims
+
+---
+
+### 1.6 Public Site And Outreach Plan
+**File:** `public_site_and_outreach_plan.md`
+**Scope:** Lightweight website, blog, and social-channel plan
+**Key Sections:**
+- Site structure
+- First five posts
+- Channel strategy
+- Writing rules
+- Implementation checklist
+
+**Use This For:**
+- Building the public documentation site
+- Planning LinkedIn/X updates
+- Keeping public promotion evidence-bound
+
+---
+
 ### 2. Metrics Collection Plan (10.7 KB)
-**File:** `metrics_collection_plan.py` (executable Python script)  
-**Scope:** Turnkey templates for measurement data collection  
+**File:** `metrics_collection_plan.py` (executable Python script)
+**Scope:** Turnkey templates for measurement data collection
 **Key Components:**
 - Power measurement data structures (JSON template)
 - Latency measurement templates
@@ -55,45 +112,47 @@ tools/build/
 ---
 
 ### 3. 12-Week Publication Roadmap (15 KB)
-**File:** `publication_roadmap_12week.txt`  
-**Scope:** Week-by-week tactical execution plan  
+**File:** `publication_roadmap_12week.txt`
+**Scope:** Historical week-by-week tactical execution plan. Treat as planning
+context; the current sequence is paper-first, evidence-freeze, then outreach.
 **Key Timeline:**
-- **Week 1–3:** Measurements (power, area, waveforms, coverage)
-- **Week 4–6:** Paper finalization + IEEE submission
-- **Week 7–9:** ArXiv + OSHWA certification
-- **Week 10–12:** Community promotion (HN, Reddit, blogs, video)
+- **Current:** SPU-13/RPLU/Lucas/SU3 arXiv papers first
+- **Then:** evidence tag and resource/timing tables
+- **Then:** grant, academic, commercial, and public outreach
+- **Later:** IEEE/FCCM/FPL once measurements are strong enough
 
 **Use This For:**
-- Daily/weekly task tracking
-- Understanding dependencies between phases
-- Resource allocation (50–60 person-hours, $60–2k)
-- Success metrics (500+ stars, 1,000+ downloads, 5+ collaborations)
+- Understanding earlier planning assumptions
+- Mining checklist items for current plans
+- Avoiding copy/paste of stale numeric targets
 
 ---
 
 ## Critical Path Dependencies
 
 ```
-Week 1–3: MEASUREMENTS FOUNDATION
-  ├─ Power profiling (2 weeks)
-  ├─ Area & timing extraction (1 week)
-  ├─ Waveform capture (2 weeks)
-  └─ Test coverage finalization (1 week)
+Week 0–2: PAPER FOUNDATION
+  ├─ SPU-13 central paper
+  ├─ RPLU v2 paper
+  ├─ Lucas MAC paper
+  └─ SU3 coprocessor paper
        ↓
-Week 4–6: PAPER FINALIZATION
-  ├─ Main paper sections
-  ├─ Comparative baselines
-  └─ Supplementary materials
+Week 2–3: EVIDENCE FREEZE
+  ├─ Git tag
+  ├─ Full regression log
+  ├─ Wukong/Tang resource and timing tables
+  └─ Hardware evidence summary
        ↓
-Week 6: IEEE SUBMISSION (PRIMARY VENUE)
+Week 3–4: ARXIV SUBMISSION
        ↓
-Week 7: ArXIV SUBMISSION (PARALLEL)
+Week 4+: GRANT / ACADEMIC / COMMERCIAL OUTREACH
+  ├─ NLnet/open-hardware draft after current-call verification
+  ├─ MBIE/university partner-led draft
+  ├─ NZ robotics/agritech evaluation outreach
+  └─ Quantum/photonic research note with narrow Lucas/PHSLK scope
        ↓
-Week 7–8: OSHWA CERTIFICATION (PARALLEL)
-       ↓
-Week 10–12: COMMUNITY PROMOTION (SEQUENTIAL)
-       ↓
-Month 4+: IEEE REVIEW CYCLE (WAITING)
+IEEE/FCCM/FPL submission follows once measurement tables and references are
+strong enough for peer review.
 ```
 
 ---
@@ -128,6 +187,10 @@ Month 4+: IEEE REVIEW CYCLE (WAITING)
 
 ## Measurement Targets
 
+Audit note: the numeric targets below are historical planning estimates. Do not
+quote them in papers, grants, or outreach unless regenerated from current
+Artix/Tang/ECP5 builds and measured power data.
+
 ### Power Consumption
 - **12 MHz:** Idle 5 mA, Active 15 mA, Peak 25 mA
   - Active: 49.5 mW @ 3.3V
@@ -137,7 +200,7 @@ Month 4+: IEEE REVIEW CYCLE (WAITING)
 
 ### Latency
 - **M31 multiplier:** 2 cycles = 0.17 µs @ 12 MHz
-- **F_p^4 inverter:** 76 cycles = 6.3 µs @ 12 MHz
+- **A₃₁ inverter:** 76 cycles = 6.3 µs @ 12 MHz
 - **SOM BMU:** 7 cycles = 0.58 µs @ 12 MHz
 - **Full RPLU pipeline:** ~150 cycles = 12.5 µs @ 12 MHz
 
@@ -148,13 +211,17 @@ Month 4+: IEEE REVIEW CYCLE (WAITING)
 - **Max frequency:** ~70 MHz (5.8× headroom over 12 MHz spec)
 
 ### Comparative Advantage
-- **vs Intel Core i9 (FP32):** 100× energy savings @ similar latency
-- **vs NVIDIA A100 (TF32):** 50× energy savings, 7× better latency
-- **Determinism:** ±0 ns (exact rational, no rounding drift)
+- Quote only measured comparisons.
+- The defensible current advantage is deterministic exact replay, not unmeasured
+  speed or energy superiority.
 
 ---
 
 ## OSHWA Certification Checklist
+
+Audit note: OSHWA is not ready as a completed custom ECP5 board claim. The
+current ECP5 package is a concept/pre-certification package; see
+`hardware/docs/ecp5_oshwa_deliverable_audit.md`.
 
 **Timeline:** Week 7–8 (2-week process)
 
@@ -173,7 +240,7 @@ Month 4+: IEEE REVIEW CYCLE (WAITING)
 2. Fill form (hardware category, description, GitHub URL)
 3. Upload documentation PDFs
 4. Pay $50 (Stripe)
-5. Receive OSHWA # within 7 business days
+5. Receive OSHWA # only after the hardware package is actually accepted
 6. Add badge to GitHub README
 
 ---
@@ -220,23 +287,21 @@ Month 4+: IEEE REVIEW CYCLE (WAITING)
 - [ ] 5–10 citations (Year 1 baseline)
 
 ### Open-Source Track
-- [ ] OSHWA certified (Week 8)
-- [ ] 500+ GitHub stars
-- [ ] 50+ GitHub forks
-- [ ] 10+ community contributions (issues, PRs)
-- [ ] 10+ custom builds reported
+- [ ] OSHWA concept package audited without claiming certification
+- [ ] Public source release/tag tied to arXiv papers
+- [ ] Community issues/discussions opened after papers are live
+- [ ] Independent build reports or reproduction attempts tracked
 
 ### Promotion Track
-- [ ] Hacker News: 200+ upvotes, 100+ comments
-- [ ] Reddit: 500+ comments (across 4 subreddits)
-- [ ] YouTube: 1,000+ views (Month 1)
-- [ ] Blog posts: 2,000+ total reads
+- [ ] Targeted academic/industry outreach sent with paper links
+- [ ] One technical blog post published after arXiv
+- [ ] Demo video recorded if the current bench setup is stable
+- [ ] Public feedback captured as issues or discussion threads
 
 ### Overall Impact
 - [ ] Tier-1 journal publication path established
-- [ ] Community adoption accelerated (500+ stars = top 5% of GitHub)
 - [ ] Research interest validated
-- [ ] Enterprise credibility (OSHWA + IEEE)
+- [ ] Grant/partner conversations grounded in evidence, not projection
 
 ---
 
@@ -244,10 +309,11 @@ Month 4+: IEEE REVIEW CYCLE (WAITING)
 
 ### Existing Assets
 - ✅ RTL code (10 verified modules)
-- ✅ Testbenches (95+ Verilog + C++ oracles)
+- ✅ Full regression baseline is tracked in `docs/CURRENT_STATUS.md`
 - ✅ LaTeX paper template + sections
 - ✅ GitHub repository (public)
-- ✅ Python/C++17 oracles (24–56 test checks, 100% PASS)
+- ✅ Python/C++17 oracles and hardware evidence are tracked in
+  `docs/hardware_evidence.md`
 
 ### To Acquire / Set Up
 - 📦 INA226 current-sense module ($10, AliExpress)
@@ -270,12 +336,13 @@ Month 4+: IEEE REVIEW CYCLE (WAITING)
 
 ## Immediate Next Steps (Next 48 Hours)
 
-1. **Review** `publication_and_promotion_strategy.md` (30 min)
-2. **Order** INA226 current-sense module ($10, AliExpress)
-3. **Generate** templates: `python3 metrics_collection_plan.py --generate-templates`
-4. **Schedule** first power measurement session
-5. **Review** existing paper files (`rplu_paper.tex`, `rplu_paper_hw_section.tex`)
-6. **Create** GitHub discussion board for community feedback
+1. **Review** `docs/spu13_central_paper.tex` as the foundation paper.
+2. **Review** companion drafts: RPLU v2, Lucas MAC, and SU3.
+3. **Keep** `docs/CURRENT_STATUS.md` and `docs/hardware_evidence.md` aligned
+   with paper claims.
+4. **Prepare** the evidence-pack checklist in
+   `SPU13_MARKET_AND_GRANT_POSITIONING.md`.
+5. **Defer** new synthesis work until the paper/grant source of truth is clean.
 
 ---
 
@@ -304,7 +371,7 @@ Month 4+: IEEE REVIEW CYCLE (WAITING)
 
 | Term | Definition |
 |------|-----------|
-| **RPLU v2** | Rational Process Logic Unit version 2 (F_p^4 pipeline) |
+| **RPLU v2** | Rational Process Logic Unit version 2 (A31 pipeline) |
 | **Jet Algebra** | Algebraic structure for higher-order derivatives without floating-point |
 | **M31** | Mersenne prime p = 2^31 − 1 (basis field) |
 | **A_31** | Split biquadratic algebra F_p[u,v]/(u²−3, v²−5) |
@@ -328,10 +395,10 @@ A: Partially. Measurements (Week 1–3) are the critical path and cannot be skip
 A: Fallback plan is FCCM/FPL (Tier 2 venues). Both have good acceptance rates for FPGA work. Expected timeline: 2–3 month resubmission cycle.
 
 **Q: Should we do OSHWA before or after IEEE?**
-A: OSHWA certification (Week 7–8) is independent of IEEE review, so do in parallel. It takes ~2 weeks and adds credibility to code artifacts.
+A: Keep the OSHWA documentation audit moving in parallel, but do not submit or claim certification for the custom ECP5 board until the KiCad/ERC/DRC blockers are closed.
 
-**Q: What about GitHub stars — is 500+ realistic?**
-A: Yes. Projects with ArXiv papers + OSHWA certification + open-source code typically get 200–1,000 stars within 3 months if promoted actively. Our determinism angle + exact arithmetic appeal niche (safety-critical + research) = high engagement.
+**Q: What about GitHub stars and other public metrics?**
+A: Treat stars as a byproduct, not an operating metric. The useful signal is serious reproduction attempts, technical feedback, research contacts, and evaluator interest.
 
 ---
 
@@ -340,10 +407,10 @@ A: Yes. Projects with ArXiv papers + OSHWA certification + open-source code typi
 | Date | Version | Changes |
 |------|---------|---------|
 | 2026-06-29 | 1.0 | Initial publication strategy + 3 supporting documents |
+| 2026-07-05 | 1.1 | Added grant/market source of truth, corrected critical path toward arXiv-first outreach, and marked stale estimates |
 
 ---
 
-**Last Updated:** 2026-06-29 10:22 UTC+12:00  
-**Owner:** Core team (user)  
-**Status:** Ready for execution
-
+**Last Updated:** 2026-07-05
+**Owner:** Core team (user)
+**Status:** Active, audited

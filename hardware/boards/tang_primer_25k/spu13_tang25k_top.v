@@ -14,6 +14,7 @@ module spu13_tang25k_top #(
     parameter ENABLE_CORE_MATH = 0,
     parameter ENABLE_CORE_SOM  = 0,
     parameter ENABLE_CORE_RPLU_V2 = 0,
+    parameter ENABLE_CORE_TORUS = 0,
     parameter ENABLE_RPLU_TELEMETRY = 0,
     parameter ENABLE_SDRAM_SELFTEST = 1,
     parameter ENABLE_CORE_SDRAM_VERIFY = 1,
@@ -225,7 +226,7 @@ module spu13_tang25k_top #(
     wire        sdram_burst_done;
     localparam RPLU_BOOT_ENABLED = ENABLE_CORE_RPLU || ENABLE_CORE_RPLU_V2;
     localparam [15:0] RPLU_BOOT_RECORDS =
-        ENABLE_CORE_RPLU_V2 ? 16'd81 : 16'd2051;
+        ENABLE_CORE_RPLU_V2 ? 16'd149 : 16'd2051;
 
     spu_laminar_boot #(
         .ENABLE_RPLU_BOOT(RPLU_BOOT_ENABLED),
@@ -836,7 +837,8 @@ module spu13_tang25k_top #(
         .ENABLE_MATH(ENABLE_CORE_MATH),
         .ENABLE_SEQUENCER(1'b0),
         .ENABLE_CORE_SOM(ENABLE_CORE_SOM),
-        .ENABLE_CORE_RPLU_V2(ENABLE_CORE_RPLU_V2)
+        .ENABLE_CORE_RPLU_V2(ENABLE_CORE_RPLU_V2),
+        .ENABLE_TORUS(ENABLE_CORE_TORUS)
     ) u_core (
         .clk(clk_core),
         .rst_n(rst_n),

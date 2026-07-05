@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # build_25k_spu13_rplu2_arith_probe.sh — Tang 25K southbridge + RPLU2 QR/config probe
+#
+# Tests QLDI/QSUB instruction path and RPLU2 config receive over SPI.
+# The full SOM/BTU/Padé/inverter pipeline (PIPELINE=1) is too large for 25K
+# and requires the Artix-7 build. This probe uses PIPELINE=0 (config only).
+
 set -e
 
 mkdir -p build
 
-echo "--- 1. Generate corrected RPLU2 consume-probe flash table ---"
-python3 tools/gen_rplu2_tables.py \
-    --profile consume_probe \
-    --output tools/build/rplu2_consume_probe_tables.bin
-
-echo "--- 2. Yosys Synthesis (SPU-13 RPLU2 QR/config probe) ---"
+echo "--- 1. Yosys Synthesis (SPU-13 RPLU2 QR/config probe) ---"
 yosys hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_rplu2_arith_probe.ys
 
-echo "--- 3. NextPNR (Place & Route) ---"
+echo "--- 2. NextPNR (Place & Route) ---"
 nextpnr-himbaechel --device GW5A-LV25MG121NES \
     --vopt family=GW5A-25A \
     --vopt sspi_as_gpio \
@@ -26,7 +26,7 @@ nextpnr-himbaechel --device GW5A-LV25MG121NES \
     --routed-svg build/spu13_rplu2_arith_probe_routed.svg \
     --freq 12
 
-echo "--- 4. Package Bitstream ---"
+echo "--- 3. Package Bitstream ---"
 gowin_pack -d GW5A-25A \
     --sspi_as_gpio \
     --mspi_as_gpio \
@@ -36,5 +36,5 @@ gowin_pack -d GW5A-25A \
 
 echo ""
 echo "=== SPU-13 RPLU2 QR/Config Probe Build Complete ==="
-echo "Flash image: tools/build/rplu2_consume_probe_tables.bin"
 echo "Bitstream:   build/tang_primer_25k_spu13_rplu2_arith_probe.fs"
+echo "Load: openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_rplu2_arith_probe.fs"

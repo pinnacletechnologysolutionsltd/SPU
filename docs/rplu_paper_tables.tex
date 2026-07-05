@@ -162,7 +162,7 @@ LUTs        & $\sim$1,100 & $\sim$3,300 & +3$\times$ for 4$\times$ coverage \\
 BRAMs       & 6--8        & 8           & Parity \\
 DSPs        & 4           & 16          & +4$\times$ for exact arithmetic \\
 \midrule
-\multicolumn{4}{l}{\footnotesize Primary target: Xilinx Artix-7 100T (Wukong), 240 DSP48E1, $\sim$100\,K LUTs.} \\
+\multicolumn{4}{l}{\footnotesize Primary target: Xilinx Artix-7 100T (Wukong), 240 DSP48E1, 63,400 6-input LUTs.} \\
 \multicolumn{4}{l}{\footnotesize Prototyping target: Gowin GW5A-25A (Tang Primer 25K), 8,256 LUT4s. Total with rotor/sequencer: $\sim$5,500 LUTs (67\%).} \\
 \bottomrule
 \end{tabular}
@@ -234,7 +234,7 @@ M31 scalar inverter & BEEA shift-subtract & $\sim$30 cycles \\
 RTL simulation (iverilog). Test vectors cover jet algebra, $A_{31}$
 arithmetic, unit/non-unit trapping, collision resolution, and SOM BMU
 classification; integrated place-and-route remains future work.
-(78 total tests, 64 Verilog + 12 C++ + 2 Python, all passing, 5x deterministic).}
+(139 total tests: 64 Verilog, 51 C++, 24 Python, all passing, 5x deterministic).}
 \label{tab:verification}
 \begin{tabular}{llll}
 \toprule

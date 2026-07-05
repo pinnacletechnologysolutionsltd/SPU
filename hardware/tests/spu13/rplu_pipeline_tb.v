@@ -21,7 +21,9 @@ module rplu_pipeline_tb;
     wire pipeline_busy;
     wire pipeline_stall;
 
-    rplu_pipeline uut (
+    rplu_pipeline #(
+        .SHARE_PADE_INV_MULT(1)
+    ) uut (
         .clk(clk),
         .rst_n(rst_n),
         .som_features(som_features),

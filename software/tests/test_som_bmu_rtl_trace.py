@@ -2,10 +2,10 @@
 """
 Trace equivalence test for SPU-13 SOM BMU RTL against the software oracle.
 
-Replays all BMU scenarios from test_rational_som.py through the Verilog
-spu_som_bmu + spu_cluster_reduce pipeline and asserts bit-exact match
-on best_node_id, second_node_id, cluster_label, best_q, second_q,
-confidence_gap, has_second, and ambiguity flag.
+Replays the two built-in seven-node fixture scenarios from test_rational_som.py
+through the Verilog spu_som_bmu + spu_cluster_reduce pipeline and asserts
+bit-exact match on best_node_id, second_node_id, cluster_label, best_q,
+second_q, confidence_gap, has_second, and ambiguity flag.
 
 Usage:
   python3 software/tests/test_som_bmu_rtl_trace.py
@@ -41,10 +41,10 @@ NUM_FEATURES = 4
 # ── RTL hex encoding ──────────────────────────────────────────────────
 
 def surd_to_hex(r: Rs) -> str:
-    """Encode RationalSurd as {b[31:0], a[31:0]}."""
+    """Encode a BMU output RationalSurd as {p[31:0], q[31:0]}."""
     a32 = r.p & 0xFFFFFFFF
     b32 = r.q & 0xFFFFFFFF
-    return f"64'h{b32:08X}{a32:08X}"
+    return f"64'h{a32:08X}{b32:08X}"
 
 
 def features_to_hex(feats: list[Rs]) -> str:
@@ -157,7 +157,6 @@ module spu_som_bmu_trace_tb;
             @(posedge clk);
             start <= 0;
             wait(done);
-            @(posedge clk);
             #1;
 
             $display("--- Test %0d ---", test_idx);

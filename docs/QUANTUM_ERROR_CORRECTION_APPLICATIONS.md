@@ -106,7 +106,7 @@ SPU-13 approach:
   Problem: O(n) symbolic operations, deterministic latency
 ```
 
-The **RPLU 2.0's F_{p^4} arithmetic** (M31 multiplier, conjugate-reduction inverter) is precisely what you need to:
+The **RPLU 2.0's A₃₁ arithmetic** (M31 multiplier, conjugate-reduction inverter) is precisely what you need to:
 - Collapse high-dimensional error spaces
 - Evaluate parity constraints in non-binary fields (bosonic codes)
 - Explore deterministic syndrome-equation transforms without large lookup-table
@@ -129,6 +129,44 @@ easier to certify than learned or heavily heuristic decoders.
 
 ## Technical Fit: Syndrome Decoding as RPLU Operation
 
+### PHSLK and Anyon Capture
+
+The useful bridge from PHSLK to anyon-style control is not that the FPGA
+directly detects physical anyons. It is that a braid compiler, fusion tracker,
+or syndrome reducer can encode an observed topological phase and a candidate
+template as rational phase elements in ℤ[φ]/L₅₂₁. PHSLK then answers the
+capture question as a bounded algebraic predicate:
+
+```
+observed = observed_n / observed_d
+template = template_n / template_d
+
+coherent, zero_divisor = PHSLK(observed_n, observed_d,
+                              template_n, template_d)
+valid_capture = coherent && !zero_divisor
+```
+
+This matches the intuition behind anyon capture: a candidate braid/fusion
+state is accepted only when its rational phase encoding coheres with the
+observed encoding. The denominator zero-divisor flag is important. It prevents
+the control stack from silently treating a singular phase representation as a
+valid capture.
+
+Evidence status:
+- Oracle: `anyon_capture_predicate()` in `software/tests/test_lucas_mac_oracle.py`
+  is a direct wrapper around PHSLK plus the `coherent && !zero_divisor` validity
+  rule.
+- RTL: PHSLK opcode `4` is implemented in the Lucas MAC and exposed through the
+  sidecar as `D4` load / `D5` exec.
+- Timing: the Tang 25K dynamic PHSLK microprobe routes at 200.40 MHz
+  post-route, with a 4.99 ns critical path and zero Gowin DSP/multiplier
+  primitives.
+- FPGA bench: the Tang 25K PHSLK microprobe SRAM-loads and reports `PHSLK:P`
+  over UART.
+- Quantum-controller bench: the anyon-capture interpretation has not been
+  validated against physical quantum-controller data. That remains a future
+  collaboration/benchmark step.
+
 ### Bosonic Code Example (Cat Code)
 
 In a **cat code**, qubits are encoded in photon-number parity:
@@ -146,7 +184,7 @@ Error syndromes include:
 2. **DMA stream:** Syndromes → PSRAM via Southbridge
 3. **RPLU operation:**
    - BTU layer (spatial routing) → group syndrome bits by error class
-   - F_{p^4} arithmetic → evaluate parity polynomials over bosonic basis
+   - A₃₁ arithmetic → evaluate parity polynomials over bosonic basis
    - Thimble-Padé approximant → solve for most-likely error
 4. **Output:** Correction pulse parameters → RP2350B feedback loop
 
@@ -164,7 +202,7 @@ For **surface codes** on superconducting qubits:
 **SPU-13 Advantage:**
 - Treat 2D syndrome grid as a **symbolic graph reduction problem**
 - Use BTU spatial routing to map lattice neighbors directly
-- F_{p^4} field operations handle graph weights naturally
+- A₃₁ field operations handle graph weights naturally
 - Target deterministic latency after a dedicated QEC ingress/egress path exists
 
 ---
@@ -175,7 +213,7 @@ For **surface codes** on superconducting qubits:
 | Component | Current | QEC Variant | Delta |
 |---|---|---|---|
 | M31 multiplier | 16 DSP48E1 | 16 DSP48E1 | — |
-| F_{p^4} inverter | 76 cycles | 40 cycles (optimized) | –52% latency |
+| A₃₁ inverter | 76 cycles | 40 cycles (optimized) | –52% latency |
 | Syndrome input FIFO | — | 128 × 32-bit | +2 BRAM |
 | Correction output latch | — | 64-bit pulse params | +0.5 BRAM |
 | Total LUT overhead | — | ~500 LUTs | — |
@@ -210,7 +248,7 @@ on a larger FPGA or controller platform after the core architecture is validated
 ### Phase 3: Scalability Study
 - [ ] Extend to 5-qubit and 7-qubit codes
 - [ ] Benchmark against Blossom algorithm (MWPM)
-- [ ] Characterize F_{p^4} field collapse efficiency
+- [ ] Characterize A₃₁ field collapse efficiency
 - [ ] Write research note for quantum computing community
 
 ### Phase 4: Hardware Integration (Contingent on external collaboration)
@@ -238,7 +276,7 @@ RPLU/BTU mapping proves real.
 
 ## Open Questions for Research
 
-1. **Can F_{p^4} field collapse handle all modern codes?**
+1. **Can A₃₁ field collapse handle all modern codes?**
    - Bosonic codes: Yes (photon parity is inherently mod-2 algebra)
    - Surface codes: Likely (MWPM is graph-theory, fits symbolic reduction)
    - Stabilizer codes (general): Needs investigation

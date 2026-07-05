@@ -356,11 +356,11 @@ RPLU v2 Thimble-Padé pipeline:
 | `spu_som_node.v` | `hardware/rtl/core/spu13/spu_som_node.v` | ✅ 3-stage parallel quadrance pipeline + training |
 | `spu_som_bmu.v` | `hardware/rtl/core/spu13/spu_som_node_array.v` | ✅ Parallel 7-node array with WTA comparator tree |
 | Node storage | `spu13_multi_port_regfile.v` | ✅ 4R2W register file with write-forwarding bypass |
-| BMU→RPLU routing | `spu13_btu_core_top.v` | ✅ BTU spatial→F_{p^4} 4-lane BRAM router |
+| BMU→RPLU routing | `spu13_btu_core_top.v` | ✅ BTU spatial→A₃₁ 4-lane BRAM router |
 | Collision safety | `spu_btu_collision_resolver.v` | ✅ 64→6 priority encoder + bubble insertion |
-| Rational arithmetic | `spu13_m31_multiplier.v` | ✅ F_{p^4} multiplier over M31 |
+| Rational arithmetic | `spu13_m31_multiplier.v` | ✅ A₃₁ multiplier over M31 |
 | Rational division | `spu13_fp4_inverter.v` | ✅ Conjugate reduction tower (~76 cycles) |
-| Polynomial eval | `rplu_thimble_pade.v` | ✅ [4/4] Padé Horner + F_{p^4} inverter |
+| Polynomial eval | `rplu_thimble_pade.v` | ✅ [4/4] Padé Horner + A₃₁ inverter |
 
 Remaining candidates (`spu_nguyen_cluster.v`, `spu_quadrant_router.v`,
 `spu_class_emit.v`) are deferred to the next RTL phase.

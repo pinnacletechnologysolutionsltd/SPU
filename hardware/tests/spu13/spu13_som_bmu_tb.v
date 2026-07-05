@@ -46,6 +46,7 @@ module spu13_som_bmu_tb;
         .fault_count(fault_count),
         .train_we(1'b0),
         .train_addr(3'd0),
+        .train_be(4'b0000),
         .train_wdata({NUM_FEATURES * FEATURE_W{1'b0}}),
         .train_rdata()
     );

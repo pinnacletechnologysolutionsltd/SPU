@@ -1,5 +1,8 @@
-// spu_bio_stubs.v — Empty stubs for bio/I2S/torus modules
-// Used when building minimal configs that don't need these modules.
+// spu_optional_stubs.v -- no-op compatibility shims for optional modules.
+//
+// Probe and Artix bring-up builds include this file when the real bio and
+// audio modules are intentionally out of scope. Full feature builds should
+// read the real RTL modules instead of these shims.
 
 module spu_annealer(input clk, reset, enable, input [831:0] reg_in, output [831:0] reg_out);
     assign reg_out = reg_in;
@@ -28,14 +31,6 @@ module spu_i2s_out(input clk, rst_n, input [1:0] mode, input [15:0] lfi,
     assign i2s_bclk = 0; assign i2s_lrclk = 0; assign i2s_dout = 0;
 endmodule
 
-module toroidal_regfile #(parameter WIDTH = 832, NUM = 8)
-   (input clk, rst_n, wr_en, input [2:0] wr_addr, input [831:0] wr_data,
-    input rd_en, input [2:0] rd_addr, output [831:0] rd_data,
-    input rotate_start, input [31:0] rotate_amount, input [2:0] rotate_idx,
-    input rotate_dir, method_sel, output rotate_done);
-    assign rd_data = 0; assign rotate_done = 0;
-endmodule
-
 module spu_soul_metabolism #(parameter CLK_HZ = 12000000)
    (input clk, reset, input [127:0] q_state, input fault_pulse, is_idle,
     output [31:0] adaptive_tau_q, output [31:0] tuck_count, cycle_count,
@@ -44,4 +39,3 @@ module spu_soul_metabolism #(parameter CLK_HZ = 12000000)
     assign tuck_count = 0; assign cycle_count = 0;
     assign flash_we = 0; assign flash_addr = 0; assign soul_page = 0;
 endmodule
-

@@ -17,7 +17,7 @@ module spu13_tang25k_rplu2_boot_probe (
     localparam integer CLKS_PER_BIT   = 434;
     localparam integer START_DELAY    = CLK_FREQ / 2;
     localparam integer LINE_PERIOD    = CLK_FREQ / 5;
-    localparam [15:0] RPLU2_RECORDS   = 16'd81;
+    localparam [15:0] RPLU2_RECORDS   = 16'd149;
     localparam [31:0] RPLU2_MARK_WORD = {9'h1A5, 13'd0, 10'h3FF};
 
     reg [7:0] rst_cnt = 8'd0;

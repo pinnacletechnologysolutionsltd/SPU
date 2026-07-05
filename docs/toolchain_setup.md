@@ -30,15 +30,21 @@ $HOME/.local/openxc7/lib/constids.inc
 ```
 
 Bitstream packing also needs Project X-Ray's `fasm2frames.py`. Keep its Python
-environment isolated from the system interpreter:
+environment isolated from the system interpreter and install the Project X-Ray
+requirements from the Project X-Ray checkout root:
 
 ```bash
 python3 -m venv $HOME/.local/openxc7/venv
-$HOME/.local/openxc7/venv/bin/python -m pip install textX PyYAML simplejson intervaltree
+git clone https://github.com/f4pga/prjxray.git $HOME/src/prjxray
+git -C $HOME/src/prjxray submodule update --init third_party/fasm third_party/python-sdf-timing
+cd $HOME/src/prjxray
+$HOME/.local/openxc7/venv/bin/python -m pip install -r requirements.txt
 ```
 
 If `fasm2frames` is not installed as an executable, point the build script at a
-stable Project X-Ray source checkout:
+stable Project X-Ray source checkout. Recent Project X-Ray trees place the
+script under `utils/fasm2frames.py`; older trees may use `tools/fasm2frames.py`.
+The Artix build script checks both locations.
 
 ```bash
 export PRJXRAY_ROOT=$HOME/src/prjxray
@@ -48,7 +54,7 @@ export OPENXC7_PYTHON=$HOME/.local/openxc7/venv/bin/python
 Override the prefix with `OPENXC7_ROOT`:
 
 ```bash
-OPENXC7_ROOT=/opt/openxc7 bash hardware/boards/artix7/build_a7.sh 100t robotics synth
+OPENXC7_ROOT=/opt/openxc7 bash hardware/boards/artix7/build_a7.sh 100t lucas synth
 ```
 
 ## Permanent Shell Setup
@@ -159,14 +165,21 @@ Do not rely on user shell startup files. Set `OPENXC7_ROOT`, add
 
 ```bash
 tools/generate_a7_chipdb.sh 100t
-bash hardware/boards/artix7/build_a7.sh 100t robotics synth
+bash hardware/boards/artix7/build_a7.sh 100t lucas synth
 ```
 
-For Wukong robotics place-and-route with schematic-derived pins:
+For the current Wukong LUCAS place-and-route with schematic-derived pins:
 
 ```bash
 A7_FREQ=2 \
-  bash hardware/boards/artix7/build_a7.sh 100t robotics pnr
+  bash hardware/boards/artix7/build_a7.sh 100t lucas pnr
 ```
 
-Use `pack` after P&R to emit `build/spu_a7_100t_ROBOTICS.bit`.
+Use `pack` after P&R to emit `build/spu_a7_100t_LUCAS.bit`:
+
+```bash
+PRJXRAY_ROOT=$HOME/src/prjxray \
+OPENXC7_PYTHON=$HOME/.local/openxc7/venv/bin/python \
+A7_FREQ=2 \
+  bash hardware/boards/artix7/build_a7.sh 100t lucas pack
+```

@@ -1,0 +1,97 @@
+# SPU-13 ECP5-85F Pin Constraints (CABGA381)
+# Ball coordinates from ECP5UM85Pinout.csv (revision 1.0, Nov 2 2015)
+# Package: CABGA381 (column H in CSV)
+
+# ─── Clock (50 MHz oscillator) ─────────────────────────────────
+# Bank 7, GPLL-capable input
+IO_LOC  "clk_50m"     A4;
+IO_PORT "clk_50m"     IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+
+# ─── Reset from RP2350 FPGA_PROGRAM# (active high) ─────────────
+IO_LOC  "rst"         A5;
+IO_PORT "rst"         IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+
+# ─── LEDs (active low) ─────────────────────────────────────────
+# Bank 2 (VCCIO2 = 3.3V)
+IO_LOC  "led[0]"      M20;
+IO_LOC  "led[1]"      K20;
+IO_LOC  "led[2]"      J19;
+IO_PORT "led[0]"      IO_TYPE=LVCMOS33 DRIVE=4;
+IO_PORT "led[1]"      IO_TYPE=LVCMOS33 DRIVE=4;
+IO_PORT "led[2]"      IO_TYPE=LVCMOS33 DRIVE=4;
+
+# ─── SPI Southbridge Bus (RP2350 -> ECP5) — Bank 3 ─────────────
+# VCCIO3 = 3.3V. SCK uses clock-capable pin (LRC_GPLL0T_IN).
+IO_LOC  "spi_cs"      U18;
+IO_LOC  "spi_sck"     U16;
+IO_LOC  "spi_mosi"    U19;
+IO_LOC  "spi_miso"    T18;
+IO_PORT "spi_cs"      IO_TYPE=LVCMOS33;
+IO_PORT "spi_sck"     IO_TYPE=LVCMOS33;
+IO_PORT "spi_mosi"    IO_TYPE=LVCMOS33;
+IO_PORT "spi_miso"    IO_TYPE=LVCMOS33;
+
+# ─── PIO Parallel Bus (RP2350 <-> ECP5) — Bank 6 ──────────────
+# VCCIO6 = 3.3V. Contiguous group from PL47-PL53.
+IO_LOC  "pio_d[0]"    G2;
+IO_LOC  "pio_d[1]"    H2;
+IO_LOC  "pio_d[2]"    F1;
+IO_LOC  "pio_d[3]"    G1;
+IO_LOC  "pio_d[4]"    J4;
+IO_LOC  "pio_d[5]"    J5;
+IO_LOC  "pio_d[6]"    J3;
+IO_LOC  "pio_d[7]"    K3;
+IO_LOC  "pio_strobe"  K2;
+IO_LOC  "pio_ready"   J1;
+IO_LOC  "pio_dir"     H1;
+IO_PORT "pio_d[0]"    IO_TYPE=LVCMOS33;
+IO_PORT "pio_d[1]"    IO_TYPE=LVCMOS33;
+IO_PORT "pio_d[2]"    IO_TYPE=LVCMOS33;
+IO_PORT "pio_d[3]"    IO_TYPE=LVCMOS33;
+IO_PORT "pio_d[4]"    IO_TYPE=LVCMOS33;
+IO_PORT "pio_d[5]"    IO_TYPE=LVCMOS33;
+IO_PORT "pio_d[6]"    IO_TYPE=LVCMOS33;
+IO_PORT "pio_d[7]"    IO_TYPE=LVCMOS33;
+IO_PORT "pio_strobe"  IO_TYPE=LVCMOS33;
+IO_PORT "pio_ready"   IO_TYPE=LVCMOS33;
+IO_PORT "pio_dir"     IO_TYPE=LVCMOS33;
+
+# ─── Configuration Flash (U3, W25Q128, master SPI) — Bank 8 ───
+# Dedicated config interface pins on Bank 8. NOT shared with SPI southbridge.
+# Ball assignments from ECP5UM85Pinout.csv:
+#   CCLK=U3, SN/CSN=PB13A(T2), D1/MISO=PB11A(V2), D0/MOSI=PB11B(W2)
+IO_LOC  "flash_cs_o"  T2;     # PB13A, SN/CSN -> U3 CS#
+IO_LOC  "flash_clk_o" U3;     # CCLK -> U3 CLK (ECP5 drives in master mode)
+IO_LOC  "flash_miso_i" V2;    # PB11A, D1/MISO/IO1 -> U3 DO
+IO_LOC  "flash_mosi_o" W2;    # PB11B, D0/MOSI/IO0 -> U3 DI
+IO_PORT "flash_cs_o"  IO_TYPE=LVCMOS33;
+IO_PORT "flash_clk_o" IO_TYPE=LVCMOS33 PULL_MODE=NONE;  # CCLK output, no pull
+IO_PORT "flash_miso_i" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "flash_mosi_o" IO_TYPE=LVCMOS33;
+
+# ─── JTAG (RP2350 PIO bit-bang) — Bank 40 (dedicated) ─────────
+IO_LOC  "jtag_tck"    T5;
+IO_LOC  "jtag_tdi"    R5;
+IO_LOC  "jtag_tdo"    V4;
+IO_LOC  "jtag_tms"    U5;
+IO_PORT "jtag_tck"    IO_TYPE=LVCMOS33;
+IO_PORT "jtag_tdi"    IO_TYPE=LVCMOS33;
+IO_PORT "jtag_tdo"    IO_TYPE=LVCMOS33;
+IO_PORT "jtag_tms"    IO_TYPE=LVCMOS33;
+
+# ─── Configuration Straps (Bank 8) ─────────────────────────────
+# MODE[2:0] = 001 for master SPI. Pull-ups/downs on PCB.
+IO_LOC  "mode0"       U4;     # CFG_0, pull-up to 3.3V
+IO_LOC  "mode1"       T4;     # CFG_1, pull-down to GND
+IO_LOC  "mode2"       R4;     # CFG_2, pull-down to GND
+IO_PORT "mode0"       IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "mode1"       IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_PORT "mode2"       IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+
+# ─── Configuration Status (Bank 8) ─────────────────────────────
+IO_LOC  "prog_n"      W3;     # PROGRAMN, pulled high by PCB
+IO_LOC  "done"        Y3;     # DONE, pulled high by PCB + LED
+IO_LOC  "init_n"      V3;     # INITN, pulled high by PCB
+IO_PORT "prog_n"      IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "done"        IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "init_n"      IO_TYPE=LVCMOS33 PULL_MODE=UP;

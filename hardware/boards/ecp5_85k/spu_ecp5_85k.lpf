@@ -1,0 +1,69 @@
+// SPU-13 ECP5-85F LPF constraints (CABGA381)
+//
+// Converted from the early .cst-style pin list for nextpnr-ecp5.
+// Only top-level ports in spu_ecp5_top are constrained here.
+
+// Clock and reset
+LOCATE COMP "clk_50m" SITE "A4";
+IOBUF PORT "clk_50m" IO_TYPE=LVCMOS33 PULLMODE=NONE;
+
+LOCATE COMP "rst" SITE "A5";
+IOBUF PORT "rst" IO_TYPE=LVCMOS33 PULLMODE=NONE;
+
+// LEDs, active low
+LOCATE COMP "led[0]" SITE "M20";
+LOCATE COMP "led[1]" SITE "K20";
+LOCATE COMP "led[2]" SITE "J19";
+IOBUF PORT "led[0]" IO_TYPE=LVCMOS33 DRIVE=4;
+IOBUF PORT "led[1]" IO_TYPE=LVCMOS33 DRIVE=4;
+IOBUF PORT "led[2]" IO_TYPE=LVCMOS33 DRIVE=4;
+
+// SPI southbridge bus
+LOCATE COMP "spi_cs" SITE "U18";
+LOCATE COMP "spi_sck" SITE "U16";
+LOCATE COMP "spi_mosi" SITE "U19";
+LOCATE COMP "spi_miso" SITE "T18";
+IOBUF PORT "spi_cs" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "spi_sck" IO_TYPE=LVCMOS33 PULLMODE=DOWN;
+IOBUF PORT "spi_mosi" IO_TYPE=LVCMOS33 PULLMODE=DOWN;
+IOBUF PORT "spi_miso" IO_TYPE=LVCMOS33 DRIVE=4;
+
+// RP2350 PIO parallel bus
+LOCATE COMP "pio_d[0]" SITE "G2";
+LOCATE COMP "pio_d[1]" SITE "H2";
+LOCATE COMP "pio_d[2]" SITE "F1";
+LOCATE COMP "pio_d[3]" SITE "G1";
+LOCATE COMP "pio_d[4]" SITE "J4";
+LOCATE COMP "pio_d[5]" SITE "J5";
+LOCATE COMP "pio_d[6]" SITE "J3";
+LOCATE COMP "pio_d[7]" SITE "K3";
+LOCATE COMP "pio_strobe" SITE "K2";
+LOCATE COMP "pio_ready" SITE "J1";
+LOCATE COMP "pio_dir" SITE "H1";
+IOBUF PORT "pio_d[0]" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_d[1]" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_d[2]" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_d[3]" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_d[4]" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_d[5]" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_d[6]" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_d[7]" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_strobe" IO_TYPE=LVCMOS33;
+IOBUF PORT "pio_ready" IO_TYPE=LVCMOS33 DRIVE=4;
+IOBUF PORT "pio_dir" IO_TYPE=LVCMOS33;
+
+// Configuration flash interface
+LOCATE COMP "flash_cs_o" SITE "T2";
+// CCLK/U3 is a dedicated configuration clock in Trellis and is not exposed as
+// a normal user IO site by nextpnr for CABGA381. Leave flash_clk_o
+// unconstrained for the resource/timing probe; revisit before hardware flash
+// access.
+// LOCATE COMP "flash_clk_o" SITE "U3";
+LOCATE COMP "flash_miso_i" SITE "V2";
+LOCATE COMP "flash_mosi_o" SITE "W2";
+IOBUF PORT "flash_cs_o" IO_TYPE=LVCMOS33 DRIVE=4;
+IOBUF PORT "flash_clk_o" IO_TYPE=LVCMOS33 DRIVE=4 PULLMODE=NONE;
+IOBUF PORT "flash_miso_i" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "flash_mosi_o" IO_TYPE=LVCMOS33 DRIVE=4;
+
+FREQUENCY NET "clk_50m" 50.0 MHZ;

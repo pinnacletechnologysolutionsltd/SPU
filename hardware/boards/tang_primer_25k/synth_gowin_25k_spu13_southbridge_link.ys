@@ -11,7 +11,10 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/core/shared/spu_rau.v \
     hardware/rtl/core/shared/spu_pipeline_ctrl.v \
     hardware/rtl/core/spu13/spu13_core.v \
-    hardware/rtl/arch/spu_bio_stubs.v
+    hardware/rtl/core/shared/toroidal_regfile.v \
+    hardware/rtl/core/shared/toroidal_regfile_ecc.v \
+    hardware/rtl/math/rational_surd5_scale_manager.v \
+    hardware/rtl/arch/spu_optional_stubs.v
 
 chparam -set CORE_ENABLE_RPLU 0 \
         -set CORE_ENABLE_LATTICE 0 \

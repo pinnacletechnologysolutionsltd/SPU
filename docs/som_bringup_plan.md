@@ -1,11 +1,12 @@
 # SOM/BMU Classifier Bring-Up Plan
 
-Date: 2026-06-24 (updated for RPLU v2 parallel array)
+Date: 2026-06-30
 
 This plan covers bringing the Self-Organizing Map / Best-Matching-Unit classifier
-from RTL simulation through to silicon on the Tang Primer 25K. The SOM pipeline
-has been upgraded from serial scan (`spu_som_bmu.v`) to a parallel 7-node array
-(`spu_som_node_array.v`) with combinational winner-take-all.
+from RTL simulation through to silicon on the Tang Primer 25K. The currently
+Tang-proven path is the serial seven-node `spu_som_bmu.v` classifier plus
+`spu_cluster_reduce.v`; the parallel `spu_som_node_array.v` path remains an RTL
+track for later RPLU2 integration.
 
 ## What's Already Proven
 
@@ -14,10 +15,11 @@ has been upgraded from serial scan (`spu_som_bmu.v`) to a parallel 7-node array
 | Rational SOM oracle (Python) | PASS — 24 checks | `software/tests/test_rational_som.py` |
 | Rational SOM oracle (C++) | PASS — parity with Python | `software/common/tests/spu_rational_som_test.cpp` |
 | Serial BMU scan (`spu_som_bmu.v`) | PASS — 7-node fixture | `test_som_bmu_rtl_trace.py` |
+| Tang 25K SOM/BMU silicon probe | PASS — UART `SOM:P T:2 B:6 E:00` | `build_25k_spu13_som_bmu_probe.sh` |
 | **Parallel SOM node** (`spu_som_node.v`) | PASS — 4 checks (quadrance + training) | `spu_som_node_tb.v` |
 | **Parallel SOM array** (`spu_som_node_array.v`) | Compiles — WTA tree verified | `spu_som_node_array.v` |
 | **BTU collision resolver** | PASS — 7 scenarios (single/dual/triple/zero) | `btu_collision_tb.v` |
-| VM-vs-RTL trace equivalence | PASS — bit-exact on all BMU scenarios | `test_som_bmu_rtl_trace.py` |
+| VM-vs-RTL trace equivalence | PASS — bit-exact on 2 built-in fixture scenarios | `test_som_bmu_rtl_trace.py` |
 | Core integration (`spu13_core.v`) | Synthesises behind `ENABLE_CORE_SOM=1` | `spu13_core.v:1114-1198` |
 | Opcode 0x2A `SOM` / 0x2B `SOM_TRAIN` | Wired into sequencer FSM | `spu13_core.v:1178-1192` |
 
@@ -45,7 +47,7 @@ QR regfile lane[s]
               cluster_label, ambiguity flag
                        │
                        ▼
-              BTU → F_{p^4} coordinates
+              BTU → A₃₁ coordinates
                        │
                        ▼
               rplu_thimble_pade (Padé approximant)
@@ -80,7 +82,7 @@ python3 software/tests/test_rational_som.py
 # Expected: 24 passed, 0 failed
 
 python3 software/tests/test_som_bmu_rtl_trace.py
-# Expected: PASS — all BMU scenarios bit-exact between VM and RTL
+# Expected: SOM BMU RTL TRACE: PASS
 ```
 
 ### 0.2 Generate Golden Trace Files
@@ -91,8 +93,9 @@ Run the RTL trace test with dump enabled to produce a VCD under `build/`:
 python3 software/tests/test_som_bmu_rtl_trace.py --dump build/som_bmu_golden.vcd
 ```
 
-This trace exercises all 12 canonical BMU scenarios from the oracle test suite
-and can be used later as the regression reference against silicon.
+This trace exercises the two built-in seven-node fixture scenarios shared with
+the silicon probe. Additional edge cases, including tie-breaking and skipped
+invalid nodes, remain covered by the software oracle tests.
 
 ### 0.3 Host Visual Renderer (Phase 0 of `visual_som_devboard_plan.md`)
 
@@ -215,17 +218,29 @@ chparam -set ENABLE_SDRAM 0 \
 ```
 
 This image proves the SOM pipeline, UART telemetry, and hex output without the
-rotor/ALU datapath. Once the replacement 25K arrives, re-enable the math path.
+rotor/ALU datapath. Re-enable the math path only when that combined image is
+the explicit target.
 
-## Phase 2: SOM Silicon Blaze (Replacement Tang 25K Arrives)
+## Phase 2: SOM Silicon Blaze
 
 Goal: run `SOM_CLASSIFY` on hardware and capture deterministic UART telemetry.
+
+2026-06-30 status: complete for the dedicated Tang SOM/BMU probe. The route
+reports 13,189 LUT4 / 959 DFF / 1,130 ALU, 0 BRAM, 0 DSP, and 84.75 MHz
+post-route max frequency at the 12 MHz target. SRAM load repeatedly reports:
+
+```text
+SOM:P T:2 B:6 E:00
+```
+
+This is a primitive BMU/classifier proof. SOM training, larger BRAM-backed
+maps, material-bank gating, and visual telemetry frames remain future phases.
 
 ### 2.1 Load the Bitstream
 
 ```sh
 openFPGALoader -b tangprimer25k \
-    build/tang_primer_25k_spu13_som_probe.fs
+    build/tang_primer_25k_spu13_som_bmu_probe.fs
 ```
 
 ### 2.2 Boot Sequence
@@ -242,15 +257,15 @@ SOM_CLASSIFY  R0, R0         ; classify QR[0] through SOM map
 
 ### 2.3 UART Telemetry Proof Lines
 
-Expected UART output from the SOM probe:
+Expected UART output from the dedicated SOM/BMU probe:
 
 ```
-H:0003 0000    # hex_q=3 (titanium cluster), hex_r=0 (not ambiguous)
+SOM:P T:2 B:6 E:00
 ```
 
-The hex pair appears through the existing `H:QQQQ RRRR` telemetry path used by
-the RPLU full probe. The SOM FSM drives `hex_q` and `hex_r` directly on classify
-done (`spu13_core.v:1186-1188`).
+`T:2` means both built-in fixture oracle scenarios were checked. `B:6` means
+the final scenario selected node 6, the surd/titanium fixture. `E:00` means no
+BMU or cluster-reduce mismatch was detected.
 
 ### 2.4 Per-Scenario Silicon Check
 
@@ -266,8 +281,10 @@ done (`spu13_core.v:1186-1188`).
 | (1, 1, 1, 1) | Node 1 | 1 (iron) | 0 |
 | (0, 0, 0, 2) | (tie-break) | deterministic | check tie-breaking |
 
-The VM-vs-RTL trace test already covers these scenarios. The silicon check
-confirms the same results appear on UART.
+The dedicated silicon probe covers the two scenarios used by
+`test_som_bmu_rtl_trace.py`: `(2,1,0,0)` and `(0,0,-2,2+1√3)`. The broader
+table remains the next expansion target for a BRAM-backed or sequencer-driven
+probe.
 
 ### 2.5 Known Limitations on Damaged 25K
 
@@ -376,14 +393,14 @@ hex map.
 
 ## Proof Checklist
 
-- [ ] Phase 0.1: Oracle tests pass (24 + RTL trace)
+- [x] Phase 0.1: Oracle tests pass (24 + RTL trace)
 - [ ] Phase 0.2: Golden VCD trace generated
 - [ ] Phase 0.3: Host visual renderer renders hex map from trace
-- [ ] Phase 1.1: SOM synthesis script created
-- [ ] Phase 1.2: Dry-run synthesis passes with resource report
-- [ ] Phase 2.1: Bitstream loads on replacement 25K
-- [ ] Phase 2.3: UART telemetry shows SOM label
-- [ ] Phase 2.4: All 9 canonical scenarios match golden trace
+- [x] Phase 1.1: SOM/BMU synthesis script created
+- [x] Phase 1.2: Dry-run synthesis passes with resource report
+- [x] Phase 2.1: Bitstream loads on Tang 25K
+- [x] Phase 2.3: UART telemetry shows `SOM:P T:2 B:6 E:00`
+- [x] Phase 2.4: Two built-in fixture scenarios match golden trace in silicon
 - [ ] Phase 3.2: SOM label gates correct RPLU material bank
 - [ ] Phase 3.3: Four-material sweep passes
 - [ ] Phase 5.1: SOM BMU frame emitted over UART

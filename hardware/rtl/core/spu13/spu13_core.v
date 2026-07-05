@@ -14,6 +14,9 @@ module spu13_core #(
     parameter ENABLE_CORE_RPLU_V2 = 0, // RPLU v2: A31 Thimble-Padé pipeline (parallel SOM + BTU + Padé + M31)
     parameter ENABLE_CORE_RPLU_V2_PIPELINE = ENABLE_CORE_RPLU_V2, // live SOM/BTU/Padé/inverter evaluator
     parameter ENABLE_CORE_RPLU_V2_EXTENSIONS = ENABLE_CORE_RPLU_V2, // NSA/topology6 extension bundle
+    parameter EXTERNAL_RPLU_PADE_MULT = 0,
+    parameter SHARE_RPLU_PADE_INV_MULT = 0,
+    parameter ENABLE_TORUS = 0, // optional 832-bit manifold snapshot ring buffer
     parameter [255:0] MEM_FILE = "hardware/rtl/arch/hw_test.mem"
 )(
     input  wire         clk,            // Fast Clock (e.g. 12-24MHz)
@@ -106,7 +109,30 @@ module spu13_core #(
     // ── SOM / gatekeeper fault telemetry ───────────────────────
     output wire                      axiomatic_fault,
     output wire [1:0]                fault_type,
-    output wire [15:0]               fault_count
+    output wire [15:0]               fault_count,
+    output wire                      rns_error,        // M31 multiplier residue parity
+    output wire                      ecc_single_err,   // QR regfile single-bit error corrected
+    output wire                      ecc_double_err,   // QR regfile double-bit error detected
+    output wire [15:0]               rotc_debug_status, // bring-up: flags/state/angle
+
+    // Optional external RPLU v2 Padé multiplier. Active only when
+    // EXTERNAL_RPLU_PADE_MULT=1 and ENABLE_CORE_RPLU_V2_PIPELINE=1.
+    output wire                      rplu_pade_mult_start,
+    output wire [31:0]               rplu_pade_mult_a0,
+    output wire [31:0]               rplu_pade_mult_a1,
+    output wire [31:0]               rplu_pade_mult_a2,
+    output wire [31:0]               rplu_pade_mult_a3,
+    output wire [31:0]               rplu_pade_mult_b0,
+    output wire [31:0]               rplu_pade_mult_b1,
+    output wire [31:0]               rplu_pade_mult_b2,
+    output wire [31:0]               rplu_pade_mult_b3,
+    input  wire [31:0]               rplu_pade_mult_r0,
+    input  wire [31:0]               rplu_pade_mult_r1,
+    input  wire [31:0]               rplu_pade_mult_r2,
+    input  wire [31:0]               rplu_pade_mult_r3,
+    input  wire                      rplu_pade_mult_done,
+    input  wire                      rplu_pade_mult_busy,
+    input  wire                      rplu_pade_mult_rns_error
 );
 
     // 1. Manifold State Buffering
@@ -130,6 +156,13 @@ module spu13_core #(
     wire [15:0] som_label;
     wire [63:0] som_gap;
     wire        som_ambiguous;
+    wire        som_rns_error;
+    wire        rplu2_core_rns_error;
+    wire        rplu2_result_valid;
+    wire [31:0] rplu2_result_c0;
+    wire [31:0] rplu2_result_c1;
+    wire [31:0] rplu2_result_c2;
+    wire [31:0] rplu2_result_c3;
     reg  [31:0] quadray_target_kappa;
     reg         quadray_target_valid;
     reg [12:0] stability_bits;
@@ -142,6 +175,7 @@ module spu13_core #(
     localparam [2:0] RPLU2_CFG_PADE_NUM = 3'd1;
     localparam [2:0] RPLU2_CFG_PADE_DEN = 3'd2;
     localparam [2:0] RPLU2_CFG_BTU_ROW  = 3'd3;
+    localparam [2:0] SOM_CFG_WEIGHT      = 3'd4;
     localparam [2:0] RPLU2_CFG_KAPPA    = 3'd6;
     reg [31:0] rplu2_pade_num_c0 [0:4];
     reg [31:0] rplu2_pade_num_c1 [0:4];
@@ -276,41 +310,46 @@ module spu13_core #(
     );
 
     // ── Toroidal Register File (Manifold Frame Buffer) ────────────
-    // 832-bit × 8-entry rotating buffer. Stores manifold snapshots
-    // on each axis-wrap for history comparison and Artery distribution.
-    wire [831:0] torus_rd_data;
-    reg          torus_wr_en;
-    reg  [2:0]   torus_wr_addr;
+    // Optional 832-bit × 8-entry rotating buffer. The read port is not yet
+    // consumed by the core, so probe spins keep this disabled to avoid pulling
+    // a wide history buffer through synthesis.
+    generate
+        if (ENABLE_TORUS) begin : gen_torus
+            wire [831:0] torus_rd_data;
+            reg          torus_wr_en;
+            reg  [2:0]   torus_wr_addr;
 
-    toroidal_regfile #(.WIDTH(832), .NUM(8)) u_torus (
-        .clk(clk), .rst_n(rst_n),
-        .wr_en(torus_wr_en),
-        .wr_addr(torus_wr_addr),
-        .wr_data(manifold_commit_reg),
-        .rd_en(1'b0),        // read port unused for now
-        .rd_addr(3'd0),
-        .rd_data(torus_rd_data),
-        .rotate_start(1'b0), // rotate on demand
-        .rotate_amount(32'd0),
-        .rotate_idx(3'd0),
-        .rotate_dir(1'b0),
-        .method_sel(1'b0),
-        .rotate_done()
-    );
+            toroidal_regfile_ecc #(.WIDTH(832), .NUM(8)) u_torus (
+                .clk(clk), .rst_n(rst_n),
+                .wr_en(torus_wr_en),
+                .wr_addr(torus_wr_addr),
+                .wr_data(manifold_commit_reg),
+                .rd_en(1'b0),
+                .rd_addr(3'd0),
+                .rd_data(torus_rd_data),
+                .rotate_start(1'b0),
+                .rotate_amount(32'd0),
+                .rotate_idx(3'd0),
+                .rotate_dir(1'b0),
+                .method_sel(1'b0),
+                .rotate_done(),
+                .integrity_error()
+            );
 
-    // Write manifold frame on each axis-wrap
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            torus_wr_en <= 0;
-            torus_wr_addr <= 0;
-        end else begin
-            torus_wr_en <= 0;
-            if (cycle_wrap) begin
-                torus_wr_en <= 1;
-                torus_wr_addr <= torus_wr_addr + 1;  // ring buffer
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    torus_wr_en <= 1'b0;
+                    torus_wr_addr <= 3'd0;
+                end else begin
+                    torus_wr_en <= 1'b0;
+                    if (cycle_wrap) begin
+                        torus_wr_en <= 1'b1;
+                        torus_wr_addr <= torus_wr_addr + 3'd1;
+                    end
+                end
             end
         end
-    end
+    endgenerate
 
     // Combined fault: RPLU dissociation OR proprioceptive damping
     wire combined_fault;
@@ -512,6 +551,8 @@ module spu13_core #(
     // Rotated output after inverse permute (final writeback values)
     wire [63:0] rote_B_out, rote_C_out, rote_D_out;
     wire rote_done_tdm;
+    wire rote_denom_3;
+    wire [3:0] rote_debug_state;
     localparam RPLU2_SOM_COEFF_W = 18;
     localparam RPLU2_SOM_SURD_W = 2 * RPLU2_SOM_COEFF_W;
     function [RPLU2_SOM_SURD_W-1:0] rplu2_narrow_rs;
@@ -534,6 +575,7 @@ module spu13_core #(
     reg       qr_commit_valid_r;
     reg [3:0] qr_commit_lane_r;
     reg [63:0] qr_commit_A_r, qr_commit_B_r, qr_commit_C_r, qr_commit_D_r;
+    reg [3:0] rplu2_result_lane;
     assign qr_commit_valid = qr_commit_valid_r;
     assign qr_commit_lane = qr_commit_lane_r;
     assign qr_commit_A = qr_commit_A_r;
@@ -600,6 +642,8 @@ module spu13_core #(
 
     generate
         if (ENABLE_MATH || ENABLE_CORE_SOM || ENABLE_CORE_RPLU_V2) begin : gen_qrf
+
+            wire ecc_qr_single, ecc_qr_double;
             // ── VE QR Hydration ──────────────────────────────────
             wire ve_qr_init_en;
             wire [3:0] ve_qr_init_lane;
@@ -620,7 +664,7 @@ module spu13_core #(
                 .init_done(ve_qr_init_done)
             );
 
-            spu_quadray_regfile u_qrf (
+            spu_quadray_regfile_ecc u_qrf (
                 .clk(clk), .rst_n(rst_n),
                 .rd_lane(rote_src_lane),
                 .rd_A(qrf_rd_A), .rd_B(qrf_rd_B),
@@ -632,7 +676,8 @@ module spu13_core #(
                 .init_en(ve_qr_init_en), .init_lane(ve_qr_init_lane),
                 .init_A(ve_qr_init_A), .init_B(ve_qr_init_B),
                 .init_C(ve_qr_init_C), .init_D(ve_qr_init_D),
-                .dbg_A(), .dbg_B(), .dbg_C(), .dbg_D()
+                .dbg_A(), .dbg_B(), .dbg_C(), .dbg_D(),
+                .ecc_single_err(ecc_qr_single), .ecc_double_err(ecc_qr_double)
             );
 
             if (ENABLE_MATH) begin : gen_rotc_datapath
@@ -657,7 +702,9 @@ module spu13_core #(
                 );
 
                 // TDM rotor core — 11-cycle pipeline, shared multiplier
-                spu13_rotor_core_tdm u_rotc (
+                spu13_rotor_core_tdm #(
+                    .ENABLE_TDM_FALLBACK(0)
+                ) u_rotc (
                     .clk(clk), .rst_n(rst_n),
                     .start(rote_en),
                     .done(rote_done_tdm),
@@ -670,10 +717,12 @@ module spu13_core #(
                     .bypass_p5(rote_angle == 6'd2),      // P5 forward pure permutation
                     .bypass_p5_inv(rote_angle == 6'd5),  // P5 inverse reverse permutation
                     .apply_div3(rote_denom_3),
+                    .angle(rote_angle),
                     .A_out(rote_A_out_raw),
                     .B_out(rote_B_out_raw),
                     .C_out(rote_C_out_raw),
-                    .D_out(rote_D_out_raw)
+                    .D_out(rote_D_out_raw),
+                    .debug_state(rote_debug_state)
                 );
 
                 // ── Inverse Permuter ───────────────────────────────────
@@ -700,6 +749,8 @@ module spu13_core #(
                 assign qrf_wr_B = rote_B_out;
                 assign qrf_wr_C = rote_C_out;
                 assign qrf_wr_D = rote_D_out;
+            assign ecc_single_err = ecc_qr_single;
+            assign ecc_double_err = ecc_qr_double;
             end else begin : gen_qrf_only
                 assign regfile_wr_A_mux = instr_wr_A;
                 assign regfile_wr_B_mux = instr_wr_B;
@@ -713,6 +764,9 @@ module spu13_core #(
                 assign rote_C_out = 64'd0;
                 assign rote_D_out = 64'd0;
                 assign rote_done_tdm = 1'b0;
+                assign rote_debug_state = 4'd0;
+            assign ecc_single_err = 1'b0;
+            assign ecc_double_err = 1'b0;
             end
         end else begin : gen_no_qrf
             assign qrf_rd_A = 64'd0; assign qrf_rd_B = 64'd0;
@@ -723,13 +777,16 @@ module spu13_core #(
             assign rote_D_out = 64'd0;
             assign rote_F = 64'd0; assign rote_G = 64'd0; assign rote_H = 64'd0;
             assign rote_done_tdm = 1'b0;
+            assign rote_debug_state = 4'd0;
+            assign ecc_single_err = 1'b0;
+            assign ecc_double_err = 1'b0;
         end
     endgenerate
 
     // ── F,G,H lookup table (combinational) ─────────────────────────────
     // Identical to VM _ROTC_TABLE.
     // Negative values are explicitly bit-packed to avoid sign-extension across components.
-    
+
     localparam [63:0] RS_1 = {32'd0, 32'd1};
     localparam [63:0] RS_2 = {32'd0, 32'd2};
     localparam [63:0] RS_N1 = {32'd0, 32'hFFFFFFFF};
@@ -779,7 +836,6 @@ module spu13_core #(
                     (rote_angle == 6'd11) ? RS_2  :
                     64'd0;
 
-    wire rote_denom_3;
     assign rote_denom_3 = (rote_angle == 6'd1) ||
                           (rote_angle == 6'd3) ||
                           (rote_angle == 6'd4) ||
@@ -791,6 +847,9 @@ module spu13_core #(
     // the rotor core computes the circulant, and we write back on the
     // next cycle.
     reg rote_active;
+    reg [5:0] rotc_debug_angle;
+    reg [7:0] rotc_debug_flags;
+    reg       rotc_debug_busy;
     reg       hex_active;
     reg [3:0] rote_dest_lane;
     reg       qsub_active;
@@ -805,6 +864,13 @@ module spu13_core #(
     assign qsub_res_D = rs_sub64(qsub_lhs_D, qrf_rd_D);
 
     assign inst_done = inst_done_r;
+    assign rotc_debug_status = {
+        rotc_debug_flags[7],
+        rotc_debug_busy,
+        rotc_debug_flags[5:0],
+        rote_debug_state,
+        rotc_debug_angle[3:0]
+    };
 
     function [63:0] rs_sub64;
         input [63:0] left;
@@ -826,6 +892,9 @@ module spu13_core #(
             rote_dest_lane <= 0;
             rote_angle <= 6'd0;
             rote_field <= 2'b00;
+            rotc_debug_angle <= 6'd0;
+            rotc_debug_flags <= 8'd0;
+            rotc_debug_busy <= 1'b0;
             qrf_wr_en <= 0;
             qrf_wr_lane <= 0;
             inst_done_r <= 0;
@@ -836,8 +905,7 @@ module spu13_core #(
             qr_commit_B_r <= 0;
             qr_commit_C_r <= 0;
             qr_commit_D_r <= 0;
-            quadray_target_kappa <= 32'd0;
-            quadray_target_valid <= 1'b0;
+            rplu2_result_lane <= 0;
             qsub_active <= 0;
             qsub_stage <= 0;
             qsub_dest_lane <= 0;
@@ -853,9 +921,24 @@ module spu13_core #(
             instr_wr_active <= 0;
             qr_commit_valid_r <= 0;
             hex_valid <= 0;   // default: one-cycle pulse
+            rote_en <= 0;     // default: one-cycle rotor start pulse
+            if (rote_done_tdm)
+                rotc_debug_flags[3] <= 1'b1;
+
+            // RPLU2 Padé result bridge: expose the four A31 limbs through the
+            // existing QR commit telemetry so the southbridge can read them via
+            // command 0xAE without adding a second SPI result frame.
+            if (rplu2_result_valid) begin
+                qr_commit_valid_r <= 1;
+                qr_commit_lane_r <= rplu2_result_lane;
+                qr_commit_A_r <= {32'd0, rplu2_result_c0};
+                qr_commit_B_r <= {32'd0, rplu2_result_c1};
+                qr_commit_C_r <= {32'd0, rplu2_result_c2};
+                qr_commit_D_r <= {32'd0, rplu2_result_c3};
+                inst_done_r <= 1;
 
             // ── QSUB Handler (0x1B): two-cycle single-read-port FSM ──
-            if (qsub_active) begin
+            end else if (qsub_active) begin
                 if (qsub_stage == 1'b0) begin
                     qsub_lhs_A <= qrf_rd_A;
                     qsub_lhs_B <= qrf_rd_B;
@@ -921,15 +1004,29 @@ module spu13_core #(
                 rote_angle     <= eff_inst_word[29:24];
                 rote_field     <= eff_inst_word[31:30];
                 rote_active    <= 1;
+                rotc_debug_angle <= eff_inst_word[29:24];
+                rotc_debug_flags <= 8'b0000_0001;
+                rotc_debug_busy <= 1'b1;
             end else if (rote_active) begin
                 rote_en    <= 1;  // assert TDM start
                 rote_active <= 0;
+                rotc_debug_flags[1] <= 1'b1;
+                rotc_debug_flags[2] <= 1'b1;
             end else if (rote_done_tdm) begin
                 // TDM rotor core done — writeback
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= rote_dest_lane;
-                rote_en     <= 0;
+                qr_commit_valid_r <= 1;
+                qr_commit_lane_r <= rote_dest_lane;
+                qr_commit_A_r <= qrf_wr_A;
+                qr_commit_B_r <= rote_B_out;
+                qr_commit_C_r <= rote_C_out;
+                qr_commit_D_r <= rote_D_out;
                 inst_done_r <= 1;
+                rotc_debug_flags[3] <= 1'b1;
+                rotc_debug_flags[4] <= 1'b1;
+                rotc_debug_flags[5] <= 1'b1;
+                rotc_debug_busy <= 1'b0;
             end else if (inst_accept && eff_inst_word[63:56] == 8'h1B) begin
                 // QSUB QRd, QRa, QRb: QR[d] = QR[a] - QR[b].
                 qsub_dest_lane <= eff_inst_word[55:48] % 13;
@@ -946,6 +1043,17 @@ module spu13_core #(
                 hex_r   <= qrf_rd_A[15:0] - qrf_rd_D[15:0];
                 hex_valid <= 1;
                 inst_done_r <= 1;
+            end else if (ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_PIPELINE &&
+                         inst_accept && eff_inst_word[63:56] == 8'h2A) begin
+                // Live RPLU2 owns its own SOM -> BTU -> Padé pipeline.  Latch
+                // the QR source lane for the pipeline feature vector and the
+                // destination lane for the eventual public result commit.
+                rplu2_result_lane <= eff_inst_word[55:48] % 13;
+                rote_src_lane <= eff_inst_word[47:40] % 13;
+            end else if (ENABLE_CORE_SOM && inst_accept && eff_inst_word[63:56] == 8'h2A) begin
+                // SOM_CLASSIFY reads the QR source lane; the SOM FSM below owns
+                // the classify launch, while this FSM owns the shared QRF lane.
+                rote_src_lane <= eff_inst_word[47:40] % 13;
             end else if (som_classify_valid) begin
                 hex_q <= som_label;
                 hex_r <= {15'd0, som_ambiguous};
@@ -967,6 +1075,8 @@ module spu13_core #(
                          eff_inst_word[63:56] != 8'h1B &&
                          eff_inst_word[63:56] != 8'h1E &&
                          !(ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_EXTENSIONS && core_nsa_opcode) &&
+                         !(ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_PIPELINE &&
+                           eff_inst_word[63:56] == 8'h2A) &&
                          !(ENABLE_CORE_SOM && (eff_inst_word[63:56] == 8'h2A ||
                                                 eff_inst_word[63:56] == 8'h2B))) begin
                 // Unknown/QLOG — consume immediately
@@ -982,7 +1092,7 @@ module spu13_core #(
     wire [31:0] quadrance;
     wire [31:0] ivm_quadrance;
     wire [15:0] gasket_sum;
-    
+
     generate
         if (ENABLE_MATH) begin : gen_davis_gate
             davis_gate_dsp #(.DEVICE(DEVICE)) u_gate (
@@ -1115,6 +1225,8 @@ module spu13_core #(
             audio_mode <= 2'b00;
             torus_idx <= 10'd0;
             torus_emit_enable <= 1'b0;
+            quadray_target_kappa <= 32'd0;
+            quadray_target_valid <= 1'b0;
             // Seed the 13-axis manifold with a non-zero laminar value.
             // Explicit constant assignments are required for FPGA FF initialisation
             // (Yosys does not synthesise initial blocks with for-loops).
@@ -1249,7 +1361,7 @@ module spu13_core #(
                         scale_write_en <= 1'b1;
                         scale_write_shift <= lattice_axis_shift;
                         scale_write_overflow <= lattice_axis_overflow;
-                        
+
                         // If we just finished axis 12, move to Exhale
                         if (axis_ptr == 4'd12) begin
                             is_janus_point <= &stability_bits;
@@ -1299,6 +1411,7 @@ module spu13_core #(
             wire [31:0] som_fault_count;
             wire        som_train_we;
             wire [2:0]  som_train_addr;
+            wire [3:0]  som_train_be;
             wire [143:0] som_train_wdata;
             wire [143:0] som_train_rdata;
             wire        som_train_start;
@@ -1328,6 +1441,29 @@ module spu13_core #(
                              {(SOM_SURD_W-2){1'b0}}, 2'd2,
                              {(SOM_SURD_W-1){1'b0}}, 1'b1};
 
+            // ── SOM weight config path (host write via SPI 0xA5, sel=4) ─
+            // Config addr[4:0] = {node_id[2:0], feature_id[1:0]}
+            // Config data[35:0] = {Q[17:0], P[17:0]} for one feature
+            wire        host_som_we   = dec_fast_cfg_wr_en && dec_fast_cfg_sel == SOM_CFG_WEIGHT;
+            wire [2:0]  host_som_node = dec_fast_cfg_addr[4:2];
+            wire [1:0]  host_som_feat = dec_fast_cfg_addr[1:0];
+            wire [35:0] host_som_feat_data = dec_fast_cfg_data[35:0];
+            reg  [3:0]  host_som_be;
+            reg  [2:0]  host_som_addr;
+            reg  [143:0] host_som_wdata;
+            always @(*) begin
+                host_som_be = 4'b0001 << host_som_feat;
+                host_som_addr = host_som_node;
+                host_som_wdata = 144'd0;
+                host_som_wdata[host_som_feat * 36 +: 36] = host_som_feat_data;
+            end
+
+            // Mux: training FSM owns the bus during its write cycle; host owns it otherwise
+            assign som_train_we    = u_som_train.bram_we || host_som_we;
+            assign som_train_be    = host_som_we ? host_som_be : 4'b1111;
+            assign som_train_addr  = host_som_we ? host_som_addr : u_som_train.bram_addr;
+            assign som_train_wdata = host_som_we ? host_som_wdata : u_som_train.bram_wdata;
+
             wire som_start;
 
             spu_som_bmu #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(18)) u_som_bmu (
@@ -1349,12 +1485,14 @@ module spu13_core #(
                 .fault_count(som_fault_count),
                 .train_we(som_train_we),
                 .train_addr(som_train_addr),
+                .train_be(som_train_be),
                 .train_wdata(som_train_wdata),
                 .train_rdata(som_train_rdata)
             );
 
             assign fault_type = som_fault_type[1:0];
             assign fault_count = som_fault_count[15:0];
+            assign som_rns_error = 1'b0;  // SOM-only path, no M31 multiplier
 
             spu_som_train #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(18)) u_som_train (
                 .clk(clk), .rst_n(rst_n),
@@ -1366,6 +1504,7 @@ module spu13_core #(
                 .features(som_features),
                 .bram_addr(som_train_addr),
                 .bram_we(som_train_we),
+                .bram_be(som_train_be),
                 .bram_wdata(som_train_wdata),
                 .bram_rdata(som_train_rdata)
             );
@@ -1413,8 +1552,8 @@ module spu13_core #(
                     end else if (som_launch_pending) begin
                         som_start_r <= 1;
                         som_launch_pending <= 0;
-                    end else if (inst_accept && eff_inst_word[63:56] == 8'h2A && !som_busy) begin
-                        rote_src_lane <= eff_inst_word[47:40] % 13;
+                    end else if (!(ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_PIPELINE) &&
+                                 inst_accept && eff_inst_word[63:56] == 8'h2A && !som_busy) begin
                         som_busy <= 1;
                         som_launch_pending <= 1;
                     end
@@ -1438,6 +1577,7 @@ module spu13_core #(
             assign axiomatic_fault = 1'b0;
             assign fault_type = 2'b00;
             assign fault_count = 16'd0;
+            assign som_rns_error = 1'b0;
         end
     endgenerate
 
@@ -1456,14 +1596,17 @@ module spu13_core #(
             wire [31:0] rplu2_thimble_c0, rplu2_thimble_c1,
                         rplu2_thimble_c2, rplu2_thimble_c3;
             wire        rplu2_thimble_valid;
-            wire        rplu2_busy, rplu2_stall;
+            wire        rplu2_busy, rplu2_stall, rplu2_rns_error;
             wire [31:0] rplu2_quadray_delta;
             wire        rplu2_quadray_coherent;
             wire        rplu2_quadray_valid;
             reg         rplu2_som_start;
             reg         rplu2_som_pending;
 
-            rplu_pipeline u_rplu_v2 (
+            rplu_pipeline #(
+                .EXTERNAL_PADE_MULT(EXTERNAL_RPLU_PADE_MULT),
+                .SHARE_PADE_INV_MULT(SHARE_RPLU_PADE_INV_MULT)
+            ) u_rplu_v2 (
                 .clk(clk), .rst_n(rst_n),
                 .som_features(rplu2_features),
                 .som_start(rplu2_som_start),
@@ -1490,7 +1633,24 @@ module spu13_core #(
                 .quadray_coherent(rplu2_quadray_coherent),
                 .quadray_valid(rplu2_quadray_valid),
                 .pipeline_busy(rplu2_busy),
-                .pipeline_stall(rplu2_stall)
+                .pipeline_stall(rplu2_stall),
+                .rns_error(rplu2_rns_error),
+                .pade_mult_start(rplu_pade_mult_start),
+                .pade_mult_a0(rplu_pade_mult_a0),
+                .pade_mult_a1(rplu_pade_mult_a1),
+                .pade_mult_a2(rplu_pade_mult_a2),
+                .pade_mult_a3(rplu_pade_mult_a3),
+                .pade_mult_b0(rplu_pade_mult_b0),
+                .pade_mult_b1(rplu_pade_mult_b1),
+                .pade_mult_b2(rplu_pade_mult_b2),
+                .pade_mult_b3(rplu_pade_mult_b3),
+                .pade_mult_r0(rplu_pade_mult_r0),
+                .pade_mult_r1(rplu_pade_mult_r1),
+                .pade_mult_r2(rplu_pade_mult_r2),
+                .pade_mult_r3(rplu_pade_mult_r3),
+                .pade_mult_done(rplu_pade_mult_done),
+                .pade_mult_busy(rplu_pade_mult_busy),
+                .pade_mult_rns_error(rplu_pade_mult_rns_error)
             );
 
             wire rplu2_quadray_fault;
@@ -1505,6 +1665,12 @@ module spu13_core #(
             // variety mismatch.  This stays ring-native: equality to zero is
             // meaningful over M31, while magnitude/order comparisons are not.
             assign rplu_dissoc = rplu2_dissoc;
+            assign rplu2_core_rns_error = rplu2_rns_error;
+            assign rplu2_result_valid = rplu2_thimble_valid;
+            assign rplu2_result_c0 = rplu2_thimble_c0;
+            assign rplu2_result_c1 = rplu2_thimble_c1;
+            assign rplu2_result_c2 = rplu2_thimble_c2;
+            assign rplu2_result_c3 = rplu2_thimble_c3;
 
             // SOM classification start — triggered by SOM opcode (0x2A)
             always @(posedge clk or negedge rst_n) begin
@@ -1526,10 +1692,42 @@ module spu13_core #(
             // RPLU2 config/QR mode: keep the config receive path and QR ISA,
             // but omit the full SOM/BTU/Padé/inverter evaluator.
             assign rplu_dissoc = 1'b0;
+            assign rplu2_core_rns_error = 1'b0;
+            assign rplu2_result_valid = 1'b0;
+            assign rplu2_result_c0 = 32'd0;
+            assign rplu2_result_c1 = 32'd0;
+            assign rplu2_result_c2 = 32'd0;
+            assign rplu2_result_c3 = 32'd0;
+            assign rplu_pade_mult_start = 1'b0;
+            assign rplu_pade_mult_a0 = 32'd0;
+            assign rplu_pade_mult_a1 = 32'd0;
+            assign rplu_pade_mult_a2 = 32'd0;
+            assign rplu_pade_mult_a3 = 32'd0;
+            assign rplu_pade_mult_b0 = 32'd0;
+            assign rplu_pade_mult_b1 = 32'd0;
+            assign rplu_pade_mult_b2 = 32'd0;
+            assign rplu_pade_mult_b3 = 32'd0;
         end else begin : gen_no_rplu_v2
             // v2 disabled — no-op (handled by legacy gen_rplu block)
+            assign rplu2_core_rns_error = 1'b0;
+            assign rplu2_result_valid = 1'b0;
+            assign rplu2_result_c0 = 32'd0;
+            assign rplu2_result_c1 = 32'd0;
+            assign rplu2_result_c2 = 32'd0;
+            assign rplu2_result_c3 = 32'd0;
+            assign rplu_pade_mult_start = 1'b0;
+            assign rplu_pade_mult_a0 = 32'd0;
+            assign rplu_pade_mult_a1 = 32'd0;
+            assign rplu_pade_mult_a2 = 32'd0;
+            assign rplu_pade_mult_a3 = 32'd0;
+            assign rplu_pade_mult_b0 = 32'd0;
+            assign rplu_pade_mult_b1 = 32'd0;
+            assign rplu_pade_mult_b2 = 32'd0;
+            assign rplu_pade_mult_b3 = 32'd0;
         end
     endgenerate
+
+    assign rns_error = som_rns_error || rplu2_core_rns_error;
 
     // ── NSA/topology6 extension bundle (inside RPLU v2 block) ────────
     // Provides dual arithmetic over A_SPU = A31[epsilon]/(epsilon^2).

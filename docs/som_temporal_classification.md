@@ -53,10 +53,10 @@ Operation:
 | Component | Change |
 |-----------|--------|
 | `spu_rau.v` | Add PHSLK path (already exists) |
-| `spu13_fp4_inverter.v` | Conjugate reduction tower for F_{p^4} denominator inversion |
-| `rplu_thimble_pade.v` | [4/4] Padé rational approximant over F_{p^4} via Horner + inverter |
+| `spu13_fp4_inverter.v` | Conjugate reduction tower for A₃₁ denominator inversion |
+| `rplu_thimble_pade.v` | [4/4] Padé rational approximant over A₃₁ via Horner + inverter |
 | `spu_som_node_array.v` | Parallel 7-node array with WTA tree (replaces serial scan) |
-| `spu13_btu_core_top.v` | BTU spatial→F_{p^4} transmutation (4-lane BRAM) |
+| `spu13_btu_core_top.v` | BTU spatial→A₃₁ transmutation (4-lane BRAM) |
 | `spu_btu_collision_resolver.v` | Multi-saddle collision priority encoder + bubble insertion |
 | `spu_isa_decoder.v` | SOM (0x2A) → node array start; SOM_TRAIN (0x2B) → weight update |
 
@@ -84,7 +84,7 @@ done:
 |----------|--------|------|
 | Current BMU scan (7 nodes) | 35+ | Serial search |
 | **New parallel node array** | **5** | Parallel quadrance + WTA (3-stage pipeline) |
-| Full Thimble-Padé pipeline | ~120 | SOM + BTU + Padé evaluate + F_{p^4} invert + multiply |
+| Full Thimble-Padé pipeline | ~120 | SOM + BTU + Padé evaluate + A₃₁ invert + multiply |
 | Temporal PHSLK classify | 3-4 | Boundary resolve |
 | Speedup (vs serial scan) | ~10× | — |
 
@@ -95,6 +95,6 @@ pipeline, then selecting the winner via combinational WTA tree in a single cycle
 
 For applications requiring field inversion (Padé denominator evaluation), the
 full Thimble-Padé pipeline adds the conjugate reduction tower (~76 cycles) plus
-the final F_{p^4} multiply, for ~120 cycles total. The zero-norm singularity
+the final A₃₁ multiply, for ~120 cycles total. The zero-norm singularity
 guard (FLAGS.V) prevents silent corruption when the classification lands on a
 geometric boundary.

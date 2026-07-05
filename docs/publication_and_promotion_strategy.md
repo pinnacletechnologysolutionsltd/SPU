@@ -1,9 +1,17 @@
 # SPU-13 RPLU 2.0 — Publication & Promotion Strategy
-**Date:** 2026-06-29  
-**Status:** Strategic roadmap for academic + open-source publication  
-**Scope:** IEEE paper, ArXiv preprint, OSHWA certification, community promotion  
+**Date:** 2026-06-29
+**Last audited:** 2026-07-05
+**Status:** Historical tactical draft. Use
+`docs/PUBLICATION_STRATEGY_INDEX.md` and
+`docs/SPU13_MARKET_AND_GRANT_POSITIONING.md` for the current arXiv-first
+strategy and grant/outreach positioning.
+**Scope:** IEEE paper, ArXiv preprint, OSHWA certification, community promotion
 
 ---
+
+Audit note: numeric performance, energy, outreach, and OSHWA timelines in this
+file are planning estimates unless backed by current evidence in
+`docs/CURRENT_STATUS.md` and `docs/hardware_evidence.md`.
 
 ## Executive Summary
 
@@ -20,7 +28,7 @@ This requires completing measurements, finalizing papers, and establishing credi
 ## Current Status Assessment
 
 ### ✅ Existing Foundations
-- **RTL implementation:** 10 verified modules (M31 multiplier, F_p^4 inverter, SOM, BTU, Padé pipeline)
+- **RTL implementation:** 10 verified modules (M31 multiplier, A₃₁ inverter, SOM, BTU, Padé pipeline)
 - **Software oracles:** Python + C++17, 24–56 test checks PASS, zero float/sqrt audit complete
 - **LaTeX template:** IEEE format ready (`docs/rplu_paper.tex`, 746 lines)
 - **Data pipeline:** `tools/rplu_paper_data.py` generates publication-ready tables
@@ -76,12 +84,12 @@ This requires completing measurements, finalizing papers, and establishing credi
   - Or: INA226 current-sense breakout on 3.3V rail
   - Record: Idle current, manifold calculation current, peak current
   - Sample at 10 kHz over 1 second, extract min/max/avg
-  
+
 - [ ] Measure at different clock frequencies:
   - 12 MHz (current spec)
   - 24 MHz (achieved headroom)
   - 50 MHz (crystal limit)
-  
+
 - [ ] Document:
   - Static power (configuration, clock off): mW
   - Dynamic power vs clock: mW @ f MHz
@@ -92,57 +100,46 @@ This requires completing measurements, finalizing papers, and establishing credi
   - Longest combinational delay
   - Register-to-register timing
   - Clock-to-Q + setup margins
-  
+
 - [ ] Measure RTL simulation latencies:
   - M31 multiply: cycles
-  - F_p^4 inverse: cycles
+  - A₃₁ inverse: cycles
   - BTU routing: cycles
   - Padé evaluation: cycles
   - Full pipeline: cycles
-  
+
 - [ ] Measure silicon latency (if RPLU2 proof complete):
   - SD read → FPGA SPI → RPLU output: µs
   - Jitter: ns (oscilloscope capture)
 
 **Area & Resource Breakdown (1 week):**
-- [ ] Parse nextpnr JSON for GW5A-25A:
-  - Total LUTs used: 96% × 8,256 = 7,925
-  - Per-module LUT estimate:
-    - M31 multiplier: ~600 LUTs
-    - F_p^4 inverter: ~800 LUTs
-    - SOM array: ~400 LUTs
-    - BTU core: ~900 LUTs
-    - Register file: ~350 LUTs
-    - Padé evaluator: ~450 LUTs
-    - Other (datapath, mux): ~3,025 LUTs
-  
+- [ ] Parse current build reports rather than relying on old estimates:
+  - Tang 25K split probes
+  - Wukong Artix-7 `SU3SHARE`
+  - Wukong Artix-7 `RPLU2PADE`
+  - Colorlight i9 after ECP5 synthesis/P&R succeeds
+
 - [ ] DSP utilization:
-  - M31: 16 DSP48E1 (100% of available? or scaled for GW5A)
-  - BTU: 4 DSP (memory read ports)
-  - Total: ~20 DSP (Gowin equivalent)
-  
+  - Quote only values from current synthesis/P&R logs
+
 - [ ] BRAM:
-  - BTU spatial rows: 4 lane × 64 rows × 2 copies = 8 BRAMs
-  - Register file: 2 BRAMs (4R2W dual-port)
-  - Rotor cache: 1 BRAM
-  - Total: ~11 BRAMs
+  - Quote only values from current synthesis/P&R logs
 
 **Comparative Baselines (2–3 weeks):**
 - [ ] Benchmark against:
-  - Intel Core i9 (Skylake): FP32 Jacobian @ 1 kHz (cycles to compute)
-  - NVIDIA A100: Tensor throughput for equivalent computation
+  - CPU baseline using the same exact workload and documented methodology
+  - GPU/FPGA baselines only when the workload comparison is defensible
   - ARM Cortex-M7 (600 MHz): Integer approximation runtime
   - Research: Find published rational arithmetic baselines
-  
+
 - [ ] Create comparison table:
-  
+
   | System | Bits | Latency (µs) | Power (mW) | Energy/Op (µJ) | Area (mm²) |
   |--------|------|--------------|-----------|-----------------|-----------|
-  | SPU-13 (GW5A) | exact | 0.12 | 25 | 3.0 | ~12 (LUT4 equiv) |
-  | Artix-7 | exact | 0.10 | 80 | 8.0 | ~30 |
-  | CPU (Core i9) | FP32 | 2.5 | 150 | 375 | — |
-  | A100 (Tensor) | FP32 | 0.8 | 400 | 320 | — |
-  
+  | SPU-13 Tang/Wukong/i9 | exact | measured | measured | measured | board/resource table |
+  | CPU baseline | chosen method | measured | measured | measured | — |
+  | GPU/other FPGA baseline | chosen method | measured/published | measured/published | measured/published | — |
+
   **Note:** Frame comparison as determinism + exactness vs speed.
 
 #### Phase 2: Paper Finalization (Weeks 4–6)
@@ -155,30 +152,30 @@ This requires completing measurements, finalizing papers, and establishing credi
   - Exact rational arithmetic accelerators (e.g., CUPY, FieldComputable)
   - SOM hardware (classic: Takeda, Himavathi; recent: FPGA variants)
   - Deterministic computing (safety-critical systems)
-  
+
 - [ ] Architecture Section (refine `docs/rplu_paper_hw_section.tex`)
   - Stage 1: SOM Kohonen (7-node parallel array, 3-stage quadrance pipeline)
   - Stage 2: BTU (64-row spatial routing, 4-lane BRAM)
-  - Stage 3: Padé (Horner evaluation, F_p^4 inverter)
+  - Stage 3: Padé (Horner evaluation, A₃₁ inverter)
   - Stage 4: Output latch
   - Timing diagrams (Verilog testbench → GTKWave PNG export)
-  
+
 - [ ] Implementation Section
   - Synthesis flow (Yosys + NextPNR + Gowin)
   - Resource tables (LUT, DSP, BRAM, MHz)
   - Two targets: Artix-7 (reference) + GW5A-25A (embedded proof)
-  
+
 - [ ] Results Section
   - Power vs frequency graph (plot power_data.json)
   - Latency breakdown (per-stage pipeline profiling)
   - Comparative table (vs CPU/GPU/prior FPGA work)
   - Case study: Rational robotics (inverse kinematics via SOM)
-  
+
 - [ ] Discussion
   - Determinism guarantees (no subnormal, no rounding drift)
   - Trade-offs (exact arithmetic → lower throughput than FP32)
   - Future: clustered deployment, Henosis stability mechanism
-  
+
 - [ ] Conclusion (1/2 page)
 
 **Supplementary Materials:**
@@ -244,14 +241,14 @@ This requires completing measurements, finalizing papers, and establishing credi
    - [x] Verilog RTL (source code) — all in hardware/*/rtl/
    - [x] Assembly instructions — docs/build_and_bringup_guide.md
    - [ ] Test/validation procedure — expand build_and_bringup_guide.md
-   
+
 2. **Documentation**
    - [x] Usage guide — `knowledge/isa_reference.md`
    - [x] Design rationale — `docs/rplu_formal_spec.md`
    - [x] License — CC0 1.0 Universal (public domain)
    - [ ] Troubleshooting guide (new)
    - [ ] Maintenance notes (new)
-   
+
 3. **License**
    - [x] CC0 1.0 is OSHWA-compatible
    - [x] All RTL, firmware, tooling under CC0
@@ -262,7 +259,7 @@ This requires completing measurements, finalizing papers, and establishing credi
    - [x] All design files on GitHub (public)
    - [x] No proprietary closed-source blocks
    - [x] No patent licensing issues
-   
+
 5. **Technical Certification**
    - [ ] Fill OSHWA certification form (online)
    - [ ] Pay $50 certification fee
@@ -275,19 +272,19 @@ This requires completing measurements, finalizing papers, and establishing credi
   - Schematic/diagram (Fritzing or PDF)
   - PCB layout (KiCad or reference)
   - Assembly procedure (step-by-step photos optional)
-  
+
 - [ ] Create `TESTING.md` documenting:
   - Functional test procedure (run `run_all_tests.py`)
   - Hardware bring-up checklist
   - Expected test results
   - Troubleshooting (if test fails, what to check)
-  
+
 - [ ] Create `MAINTENANCE.md` documenting:
   - Known issues
   - Patches / errata
   - Community contributions process
   - Roadmap for future versions
-  
+
 - [ ] Fill out OSHWA form at https://certification.oshwa.org/
   - Select category: FPGA + MCU + Sensors
   - Describe hardware architecture (500 words)
@@ -305,7 +302,7 @@ This requires completing measurements, finalizing papers, and establishing credi
   - Email research contacts (professors, grad students in FPGAs, rational geometry)
   - Subject: "RPLU 2.0: Hardware Jet Algebra over M31"
   - Include: ArXiv link + GitHub + brief summary
-  
+
 - [ ] **Conference Presentations** (if accepting talks)
   - FPGA 2027 (deadline ~Sept 2026)
   - FPL 2026 (deadline ~March, conference ~Sept)
@@ -316,13 +313,13 @@ This requires completing measurements, finalizing papers, and establishing credi
   - Submit at 9 AM Eastern (peak engagement)
   - Headline: "RPLU 2.0: Open-Source Deterministic Hardware for Rational Arithmetic"
   - Or: "Running Exact Rational Math on FPGA (No Floating-Point Drift)"
-  
+
 - [ ] **Reddit Communities**
   - r/FPGA: "Show & Tell" weekly thread
   - r/electronics: Hardware architecture thread
   - r/math: Rational geometry / Wildberger methods
   - r/RaspberryPi: Southbridge architecture + RP2350 ecosystem
-  
+
 - [ ] **GitHub Trending**
   - Craft a compelling README (include power graph, block diagram)
   - Add GitHub topics: `fpga`, `hardware`, `rational-arithmetic`, `exact-computation`, `open-source`
@@ -335,13 +332,13 @@ This requires completing measurements, finalizing papers, and establishing credi
   - OpenHW Group (https://www.openhwgroup.org/)
   - OMG Systems Modeling Language (rational geometry sub-group)
   - LLM/ML for Science communities (rational geometry angle)
-  
+
 - [ ] **Research Collaboration Outreach**
   - Delft QuTech (quantum error correction interest)
   - Jiuzhang quantum photonics lab (bosonic code applications)
   - Wildberger rationalist geometry community
   - Safety-critical systems researchers
-  
+
 - [ ] **Industry Partnerships**
   - Xilinx/AMD: FPGA innovation program
   - Gowin Semiconductor: Academic board donations
@@ -353,12 +350,12 @@ This requires completing measurements, finalizing papers, and establishing credi
   2. "Jet Algebra: Computing Derivatives without Floating-Point" (theory)
   3. "Building RPLU on GW5A: Synthesis to Silicon" (process)
   4. "Benchmarking Determinism: FPGA vs CPU vs GPU" (results)
-  
+
 - [ ] **Podcast / Interview** (optional but high impact)
   - Embedded.fm (hardware + firmware podcast)
   - FPGA Design Mag (monthly podcast)
   - Local tech meetup talk
-  
+
 - [ ] **YouTube Demonstration Video** (5–10 minutes)
   - Capture: Tang 25K + RP2350 + telemetry output
   - Demo: Load SD card → RPLU computation → telemetry stream
@@ -392,15 +389,15 @@ This requires completing measurements, finalizing papers, and establishing credi
 - [ ] Estimated area for Artix-7: mm² (from LUT density)
 
 ### Functional Coverage
-- [ ] Testbench count: 95+ Verilog
+- [ ] Testbench count and pass/fail from current `python3 run_all_tests.py`
 - [ ] Test vectors: 1,000+
 - [ ] Coverage: line + branch + assertion
 - [ ] Bit-exact match (Python/C++ oracle vs RTL): 100%
 
 ### Comparison Metrics
-- [ ] Latency speedup vs CPU @ same operation: 10–100×
-- [ ] Energy efficiency vs floating-point (mJ/op): 10–100× better
-- [ ] Determinism guarantee: ±0 ns (exact, no rounding)
+- [ ] Latency comparison vs CPU baseline using the same exact workload
+- [ ] Energy comparison using measured board power and documented methodology
+- [ ] Determinism guarantee: exact replay at declared algebraic closure points
 
 ---
 
@@ -416,8 +413,8 @@ This requires completing measurements, finalizing papers, and establishing credi
    - Signals: `clk`, `valid_in`, `a[31:0]`, `b[31:0]`, `result[63:0]`, `valid_out`
    - Export: PNG (800×600, timeline overlay)
 
-2. **F_p^4 Inverter Trace** (100 cycles, interesting points)
-   - Input: Non-unit element in F_p^4
+2. **A₃₁ Inverter Trace** (100 cycles, interesting points)
+   - Input: Non-unit element in A₃₁
    - Output: Inverse (76 cycles)
    - Key signals: `stage[1:0]`, `denominator`, `gcd_state`, `valid_in/out`
    - Export: Zoomed sections (1 per stage, 25 cycles each)
@@ -462,10 +459,13 @@ WEEK 4–6:   Paper finalization + ArXiv + OSHWA docs
 WEEK 6–8:   ArXiv submission + IEEE submission
 WEEK 8–10:  Community outreach (HN, Reddit, research lists)
 WEEK 10–14: Blog post series + video + podcast prep
-MONTH 3–4:  OSHWA certification approval + GitHub trending
+MONTH 3–4:  OSHWA package review + community promotion
 MONTH 4–6:  IEEE review cycle + community feedback
 MONTH 6+:   IEEE publication + expanded roadmap
 ```
+
+Current audit: treat OSHWA certification and broad community promotion as
+post-evidence steps, not calendar guarantees.
 
 ---
 
@@ -473,19 +473,18 @@ MONTH 6+:   IEEE publication + expanded roadmap
 
 ### For IEEE Paper
 - ✅ Accepted to Tier-1 venue (IEEE Micro / ASPLOS / FCCM)
-- ✅ 50+ citations within 2 years (baseline for novel architecture)
-- ✅ Adoption by research labs (verified via GitHub stars + forks)
+- ✅ Current evidence pack accepted as reproducible and well-scoped
+- ✅ Follow-on peer review or collaboration path established
 
 ### For OSHWA Certification
-- ✅ Certified within 2 weeks of documentation completion
-- ✅ Adopted by hobbyists + maker community (50+ custom builds)
-- ✅ Contributions from community (issues, PRs, documentation)
+- ✅ Certification package submitted only after KiCad/ERC/DRC blockers are closed
+- ✅ Known limitations published clearly
+- ✅ Contributions from community tracked through issues, PRs, and documentation
 
 ### For Community Visibility
-- ✅ GitHub repo: 500+ stars, 50+ forks
-- ✅ ArXiv: 1,000+ downloads in first month
-- ✅ HN: 200+ upvotes, 100+ comments (top page)
-- ✅ Research outreach: 5+ collaboration inquiries
+- ✅ ArXiv papers live
+- ✅ Technical site or blog explains the architecture clearly
+- ✅ Research outreach produces serious technical feedback or collaboration leads
 
 ---
 
@@ -580,4 +579,3 @@ MONTH 6+:   IEEE publication + expanded roadmap
 The SPU-13 RPLU 2.0 architecture is ready for high-impact publication. By completing power/area measurements, finalizing the IEEE paper, and pursuing OSHWA certification in parallel, we can establish credibility across academia, industry, and maker communities within **3–4 months**.
 
 The combination of deterministic execution + exact rational arithmetic + open-source design positions RPLU 2.0 as a unique contribution to embedded computing and safety-critical systems.
-

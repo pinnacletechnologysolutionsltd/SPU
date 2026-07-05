@@ -83,7 +83,10 @@ module spu13_tang25k_som_top (
         .laminar_flow_index_out(), .thermal_pressure_out(),
         .hex_valid(hex_valid), .hex_q(hex_q), .hex_r(hex_r),
         .audio_p_out(), .audio_q_out(),
-        .axiomatic_fault(), .fault_type(), .fault_count()
+        .axiomatic_fault(), .fault_type(), .fault_count(),
+        .rns_error(),
+        .ecc_single_err(),
+        .ecc_double_err()
     );
 
     // Simple UART TX at 115200 baud from 50 MHz

@@ -65,3 +65,31 @@ pico_enable_stdio_usb(rp2040_uart_bridge 1)
 pico_enable_stdio_uart(rp2040_uart_bridge 0)
 
 pico_add_extra_outputs(rp2040_uart_bridge)
+
+# RP2040 GP0->GP3 electrical loopback checker for Wukong DirtyJTAG bring-up.
+add_executable(rp2040_gpio_loopback
+    rp2040_gpio_loopback.c
+)
+
+target_link_libraries(rp2040_gpio_loopback
+    pico_stdlib
+)
+
+pico_enable_stdio_usb(rp2040_gpio_loopback 1)
+pico_enable_stdio_uart(rp2040_gpio_loopback 0)
+
+pico_add_extra_outputs(rp2040_gpio_loopback)
+
+# Minimal JTAG TAP reset + DR/IDCODE reader for Wukong JTAG pinout debugging.
+add_executable(rp2040_jtag_idcode_probe
+    rp2040_jtag_idcode_probe.c
+)
+
+target_link_libraries(rp2040_jtag_idcode_probe
+    pico_stdlib
+)
+
+pico_enable_stdio_usb(rp2040_jtag_idcode_probe 1)
+pico_enable_stdio_uart(rp2040_jtag_idcode_probe 0)
+
+pico_add_extra_outputs(rp2040_jtag_idcode_probe)

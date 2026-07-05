@@ -1,0 +1,371 @@
+% SPU-13: A Deterministic Rational-Field Processor for Exact Geometric Computation
+% Central architecture paper — arXiv:cs.AR
+%
+% Build:  pdflatex spu13_central_paper.tex && bibtex spu13_central_paper && pdflatex spu13_central_paper.tex
+%
+% Status: Draft foundation paper. Keep silicon claims tied to evidence ledger.
+
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[hmargin=0.9in,vmargin=0.9in]{geometry}
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+\title{SPU-13: A Deterministic Rational-Field Processor \\
+       for Exact Geometric Computation}
+
+\author{John Curley \\
+        Independent Researcher \\
+        \texttt{github.com/johncurley/SPU}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present the SPU-13, an open-source FPGA coprocessor that performs all
+geometric computation in the exact rational field $\mathbb{Q}(\sqrt{3})$,
+eliminating floating-point drift entirely. The architecture combines a 13-axis
+manifold engine, a Thimble-Pad\'e rational approximant pipeline over the
+biquadratic extension field $A_{31}(\mathbb{M}_{31})$, and a
+$\mathbb{Z}[\phi]/L_p$ phinary arithmetic co-processor for phase-coherent
+operations. A compact SPI southbridge protocol from an RP2350-class
+microcontroller provides instruction injection, configuration writes, result
+readback, and USB telemetry. Current silicon evidence covers split subsystem
+probes on Gowin GW5A-25A and SPI-visible integration spins on Xilinx
+XC7A100T, including the live RPLU2 Pad\'e evaluator. Lattice ECP5 and larger
+7-series Kintex devices are treated as portability and full-integration
+targets rather than completed silicon proofs.
+\end{abstract}
+
+%==============================================================================
+\section{Introduction}
+\label{sec:introduction}
+%==============================================================================
+
+Any computation involving irrational constants -- $\pi$, $\sqrt{2}$, $\sqrt{5}$,
+the golden ratio $\phi$ -- must either approximate them as finite-precision
+floats or work in an algebraic extension where they are native. The former
+accumulates error; the latter preserves exactness.\cite{wildberger2005}
+
+The SPU-13 takes the latter approach entirely. Every register holds a pair
+$(P,Q)$ representing the exact value $P+Q\sqrt{3}$. Arithmetic is closed in
+this field: $\sqrt{3}\times\sqrt{3}=3$, a rational. No transcendental
+functions, no division in hot paths, no floating-point units anywhere in the
+core.
+
+% - why Q(sqrt3) is the minimal closed field for IVM geometry
+% - relationship to Buckminster Fuller's synergetics and Wildberger's rational trigonometry
+% - the zero-drift invariant: any sequence of operations returns to the exact
+%   starting bit pattern after a closed orbit
+
+%==============================================================================
+\section{Mathematical Foundation}
+\label{sec:math}
+%==============================================================================
+
+\subsection{Rational Surd Fields and the IVM}
+\label{sec:ivm}
+
+The isotropic vector matrix (IVM) lattice has 60$^\circ$ angles between basis
+vectors.\cite{fuller1975} The hexagonal cross-sections of this lattice involve
+$\cos 60^\circ = 1/2$ and $\sin 60^\circ = \sqrt{3}/2$. Therefore, any
+algebraic computation in the IVM encounters $\sqrt{3}$.
+
+The field $\mathbb{Q}(\sqrt{3})$ is closed under multiplication:
+\begin{equation}
+(a+b\sqrt{3}) \times (c+d\sqrt{3}) = (ac+3bd) + (ad+bc)\sqrt{3}
+\end{equation}
+
+This means all quadrances (squared distances), all spreads, and all geometric
+relationships in the IVM stay in $\mathbb{Q}(\sqrt{3})$ without ever escaping
+into higher irrationals or transcendentals.\cite{wildberger2005}
+
+\subsection{Pell Octave and the Rotor}
+\label{sec:pell}
+
+The Pell rotor $r = 2 + \sqrt{3}$ satisfies the Pell equation
+$P^2 - 3Q^2 = 1$ for all integer powers. After 8 rotations the mantissa
+resets and an octave counter increments, providing infinite rotor range in
+16-bit registers.\cite{thomson2026}
+
+\subsection{The Biquadratic Extension \texorpdfstring{$\mathbb{A}_{31}$}{A31}}
+\label{sec:a31}
+
+For the RPLU v2 pipeline, arithmetic is lifted to the biquadratic extension
+field $\mathbb{A}_{31} = \mathbb{F}_{p^4}$ over the Mersenne prime
+$p = 2^{31}-1$, with basis $[1, \sqrt{3}, \sqrt{5}, \sqrt{15}]$.
+Multiplication in this field uses sixteen parallel $32\times32$ products
+with Mersenne reduction via 72-bit chunk-split-and-add.
+
+%==============================================================================
+\section{System Architecture}
+\label{sec:arch}
+%==============================================================================
+
+\subsection{Core Topology}
+\label{sec:cores}
+
+The repository is organized around a primary SPU-13 manifold core and smaller
+satellite or sidecar cores used for targeted proofs:
+
+\begin{table}[h]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcc}
+\toprule
+Core & Axes & Role \\
+\midrule
+SPU-13 Cortex   & 13 & Manifold engine, RPLU pipeline, sidecar host \\
+SPU-4 Sentinel  & 4  & Quadray satellite and reduced probe target \\
+\bottomrule
+\end{tabular}
+}
+\caption{Processor cores.}
+\end{table}
+
+\subsection{SPI Southbridge Protocol}
+\label{sec:spi}
+
+The current hardware control plane uses a unified command set over SPI mode 0.
+Bench bring-up on Wukong Artix-7 uses conservative 25--100 kHz bit-banged
+transactions on J11; the protocol is designed to move to faster SPI and then
+PIO/DMA transport once the command semantics are frozen:
+
+\begin{table}[h]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{ccl}
+\toprule
+Command & Code & Function \\
+\midrule
+0xAC & Status    & Read FPGA status, telemetry \\
+0xA0 & Manifold  & Burst read 13-axis manifold state \\
+0xAE & QR Commit & Commit result to Quadray register file \\
+0xB1 & Instruction & Write instruction (QLDI, QSUB, ROTC, etc.) \\
+0xA5 & Config    & Write RPLU configuration record \\
+\bottomrule
+\end{tabular}
+}
+\caption{SPI southbridge command set.}
+\end{table}
+
+The protocol is transport-agnostic. Current hardware uses 4-wire SPI; a
+parallel PIO transport using the same command set is in development for
+higher throughput.
+
+%==============================================================================
+\section{Instruction Set}
+\label{sec:isa}
+%==============================================================================
+
+The SPU-13 implements 26 opcodes across six functional groups:
+
+\begin{table}[h]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{ll}
+\toprule
+Group & Opcodes \\
+\midrule
+Quadray load/store  & QLDI, QSUB, QDISP \\
+Rotors              & ROTC (6 corrected angles, period 2-6) \\
+SOM/BMU             & SOM\_CLASSIFY, SOM\_TRAIN \\
+RPLU config         & RPLU\_CFG, RPLU\_EVAL, RPLU\_CONSUME \\
+Lucas phinary       & PSCALE, PCHIRAL, PMUL, PINV, PHSLK \\
+Neuro sidecar       & NEURO\_CFG, NEURO\_START, NEURO\_SPIKE \\
+\bottomrule
+\end{tabular}
+}
+\caption{Opcode groups. See \cite{isa_reference} for full encoding.}
+\end{table}
+
+The arithmetic hot paths are branch-free and float-free. Multi-cycle sidecars
+such as inversion use bounded finite-state machines with explicit busy/done
+handshakes, so host-visible execution remains deterministic and auditable.
+
+%==============================================================================
+\section{RPLU v2 Thimble-Pad\'e Pipeline}
+\label{sec:rplu}
+%==============================================================================
+
+The RPLU v2 pipeline is a four-stage rational approximant engine:
+
+\begin{enumerate}
+\item[$\Phi_1$] \textbf{SOM BMU} -- 7-node parallel Kohonen self-organizing
+  map with weighted quadrance winner-take-all tree.
+\item[$\Phi_2$] \textbf{BTU} -- Barycentric Transmutation Unit, routes the
+  BMU saddle point into 4-lane BRAM for $\mathbb{A}_{31}$ evaluation.
+\item[$\Phi_3$] \textbf{Thimble-Pad\'e} -- $[4/4]$ rational Pad\'e approximant
+  evaluated via Horner's method, using the Conjugate Reduction Tower for
+  $\mathbb{A}_{31}$ denominator inversion ($\sim$76 cycles, deterministic).
+\item[$\Phi_4$] \textbf{Output latch} -- Final thimble contribution, quadray
+  variety check, and QR commit.
+\end{enumerate}
+
+The pipeline uses a shared $\mathbb{A}_{31}$ multiplier with Mersenne
+reduction. Detailed architecture and verification are in \cite{rplu2026}.
+
+%==============================================================================
+\section{Lucas Phinary Co-Processor}
+\label{sec:lucas}
+%==============================================================================
+
+The Lucas MAC operates over $\mathbb{Z}[\phi]/L_{521}$, where
+$\phi = (1+\sqrt{5})/2$ and $L_{13}=521$ is the 13th Lucas prime.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Operation & Cycles & DSP \\
+\midrule
+PSCALE  ($\phi\cdot x$)        & 1 & 0 \\
+PCHIRAL ($\overline{x}$)       & 1 & 0 \\
+PMUL    ($x\cdot y$)           & 3 & 16 \\
+PINV    ($x^{-1}$)             & $O(\log L_p)$ & 16 \\
+PHSLK   (coherence predicate)  & 1 & 0 \\
+\bottomrule
+\end{tabular}
+\caption{Lucas MAC opcodes.}
+\end{table}
+
+The PHSLK predicate checks rational phase coherence by cross-multiplication,
+avoiding denominator inversion entirely. The software oracle performs a
+million-step zero-drift marathon, Tang 25K silicon covers the PSCALE/PCHIRAL
+fast paths, and Wukong Artix-7 silicon covers the SPI-visible PMUL/PINV
+sidecar operations. Full details are in \cite{lucas2026}.
+
+%==============================================================================
+\section{Silicon Results}
+\label{sec:results}
+%==============================================================================
+
+\subsection{Resource Utilization}
+\label{sec:resources}
+
+\begin{table}[h]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+Spin & LUTs & FFs & DSP & BRAM \\
+\midrule
+Tang 25K: rplu2\_arith      & 9,211 & 7,926 & --- & --- \\
+Tang 25K: rotc\_probe       & 13,352 & 1,036 & 0 & 0 \\
+Tang 25K: lucas\_mac        & 696 & 216 & 0 & 0 \\
+Artix-7: LUCAS              & 5,073 & --- & 120 & --- \\
+Artix-7: SU3                & 21,092 & 9,488 & 64 & --- \\
+Artix-7: RPLU2PADE          & 20,277 & 6,678 & 72 & 0 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Representative routed build footprints. LUT counts are not directly
+comparable across FPGA families; see the hardware evidence ledger for commands
+and tool versions.}
+\end{table}
+
+\subsection{Zero-Drift Verification}
+\label{sec:drift}
+
+\begin{itemize}
+\item Lucas MAC: software oracle covers 999,996 primitive operations across
+  166,666 identity macros with exact bit-match return.\cite{lucas2026}
+\item Lucas fast path: Tang 25K SRAM-loaded probe covers PSCALE/PCHIRAL and a
+  100-period PSCALE zero-drift loop.
+\item ROTC: 6-angle period closure verified on VM, RTL, and FPGA trace.
+\item RPLU v2: 149-record consume profile with checksum verification
+  ($\sum = \mathtt{0x0AA480E7}$).
+\item RPLU2 Pad\'e: Wukong Artix-7 J11 smoke verifies five rational constant
+  Pad\'e cases through the SPI-visible evaluator with no CRC error and idle
+  busy status after each run.
+\end{itemize}
+
+\subsection{Power and Timing}
+\label{sec:power}
+
+The cleaned Wukong Artix-7 RPLU2PADE build routes with 72 DSP48E1 slices,
+20,277 slice LUTs, 6,678 flip-flops, and no block RAM. Router convergence
+occurs by iteration 9. Post-route timing reports \texttt{clk\_fast} at 36.54 MHz while
+the bench image targets 2 MHz. Power and transaction-throughput measurements
+remain open instrumentation tasks.
+
+%==============================================================================
+\section{Open Toolchain and OSHWA Path}
+\label{sec:toolchain}
+%==============================================================================
+
+The project uses Yosys\cite{yosys} and nextpnr\cite{nextpnr} family flows
+where possible:
+
+\begin{itemize}
+\item \textbf{Gowin GW5A-25A} via nextpnr-himbaechel; silicon probe target.
+\item \textbf{Xilinx Artix-7} via nextpnr-xilinx/OpenXC7 and Project X-Ray;
+  current Wukong integration target.
+\item \textbf{Lattice ECP5} via nextpnr-ecp5 and Project Trellis; portability
+  target under active bring-up.
+\item \textbf{Kintex-7} via the same 7-series flow; planned full-integration
+  and PCIe/DDR proof target.
+\end{itemize}
+
+Board design files (KiCad), firmware (C, Python), and tooling are released
+under CERN-OHL-W, MIT, and CC0 licenses respectively. An OSHWA
+self-certification package is in preparation, pending completion of the
+ECP5-85K evaluation carrier board schematic.
+
+%==============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%==============================================================================
+
+The SPU-13 demonstrates that exact rational arithmetic is not a theoretical
+curiosity but a practical FPGA architecture for exact geometric computation.
+The present evidence base combines software oracles, RTL testbenches, and
+targeted silicon proofs. With zero floating-point units, no division in the
+hot datapaths, and bounded host-visible sidecar protocols, SPU-13 provides a
+reproducible substrate for exact robotics, rational classification, and
+algebraic approximant experiments. The open toolchain and permissive licensing
+invite community contribution and independent verification.
+
+%==============================================================================
+% Bibliography
+%==============================================================================
+
+\begin{thebibliography}{9}
+
+\bibitem{fuller1975}
+R.~B. Fuller, \emph{Synergetics: Explorations in the Geometry of Thinking}.
+Macmillan, 1975.
+
+\bibitem{wildberger2005}
+N.~J. Wildberger, \emph{Divine Proportions: Rational Trigonometry to Universal
+Geometry}. WildEgg, 2005.
+
+\bibitem{thomson2026}
+A.~R. Thomson, ``Spread-Quadray Rotors,'' ResearchGate, May 2026.
+\url{https://www.researchgate.net/profile/Andy-Ross-Thomson}
+
+\bibitem{isa_reference}
+SPU-13 ISA Reference, \texttt{knowledge/isa\_reference.md}.
+
+\bibitem{rplu2026}
+J.~Curley, ``RPLU v2: Thimble-Pad\'e Rational Approximant Pipeline over
+$\mathbb{A}_{31}$,'' arXiv, 2026. \textit{(in preparation)}.
+
+\bibitem{lucas2026}
+J.~Curley, ``Zero-Drift Lucas-Prime Phinary Arithmetic for Exact Quantum
+Phase Coherence on FPGA,'' arXiv, 2026. \textit{(in preparation)}.
+
+\bibitem{yosys}
+Yosys Open SYnthesis Suite. \url{https://github.com/YosysHQ/yosys}
+
+\bibitem{nextpnr}
+nextpnr: a portable FPGA place and route tool.
+\url{https://github.com/YosysHQ/nextpnr}
+
+\end{thebibliography}
+
+\end{document}

@@ -84,3 +84,11 @@ hardware/rp2350/build/
 # Standalone compiled binaries in repo root
 vd_det
 nextpnr-xilinx-git
+
+# Local third-party RP2040 utility checkouts. Track manifests/docs, not vendored
+# repositories.
+tools/rp2040_tooling/repos/
+
+# KiCad local/editor state. Track .kicad_pro, .kicad_sch, .kicad_pcb, and BOMs.
+*.kicad_prl
+hardware/pcb/.history/

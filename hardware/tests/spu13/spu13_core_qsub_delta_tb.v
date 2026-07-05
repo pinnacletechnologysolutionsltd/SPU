@@ -126,15 +126,15 @@ module spu13_core_qsub_delta_tb;
         issue(pack(8'h1D, 8'd2, 8'd0, 16'h0102, 16'h0304)); // QR2=(1,2,3,4)
         issue(pack(8'h1B, 8'd3, 8'd1, 16'h0000, 16'h0002)); // QR3=QR1-QR2
 
-        if (uut.gen_qrf.u_qrf.reg_A[3][31:0] !== 32'sd9 ||
-            uut.gen_qrf.u_qrf.reg_B[3][31:0] !== 32'sd18 ||
-            uut.gen_qrf.u_qrf.reg_C[3][31:0] !== 32'sd27 ||
-            uut.gen_qrf.u_qrf.reg_D[3][31:0] !== 32'sd36) begin
+        if (uut.gen_qrf.u_qrf.u_regfile.reg_A[3][31:0] !== 32'sd9 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_B[3][31:0] !== 32'sd18 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_C[3][31:0] !== 32'sd27 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_D[3][31:0] !== 32'sd36) begin
             $display("FAIL: QSUB result A=%0d B=%0d C=%0d D=%0d",
-                     uut.gen_qrf.u_qrf.reg_A[3][31:0],
-                     uut.gen_qrf.u_qrf.reg_B[3][31:0],
-                     uut.gen_qrf.u_qrf.reg_C[3][31:0],
-                     uut.gen_qrf.u_qrf.reg_D[3][31:0]);
+                     uut.gen_qrf.u_qrf.u_regfile.reg_A[3][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_B[3][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_C[3][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_D[3][31:0]);
             errors = errors + 1;
         end else begin
             $display("PASS: QSUB QR3 = QR1 - QR2");
@@ -143,15 +143,15 @@ module spu13_core_qsub_delta_tb;
         $display("TEST 2: live-core DELTA");
         issue(pack(8'h1E, 8'd4, 8'd10, 16'd3, 16'd4));
 
-        if (uut.gen_qrf.u_qrf.reg_A[4][31:0] !== 32'sd7 ||
-            uut.gen_qrf.u_qrf.reg_B[4][31:0] !== 32'sd0 ||
-            uut.gen_qrf.u_qrf.reg_C[4][31:0] !== 32'sd10 ||
-            uut.gen_qrf.u_qrf.reg_D[4][31:0] !== 32'sd0) begin
+        if (uut.gen_qrf.u_qrf.u_regfile.reg_A[4][31:0] !== 32'sd7 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_B[4][31:0] !== 32'sd0 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_C[4][31:0] !== 32'sd10 ||
+            uut.gen_qrf.u_qrf.u_regfile.reg_D[4][31:0] !== 32'sd0) begin
             $display("FAIL: DELTA result A=%0d B=%0d C=%0d D=%0d",
-                     uut.gen_qrf.u_qrf.reg_A[4][31:0],
-                     uut.gen_qrf.u_qrf.reg_B[4][31:0],
-                     uut.gen_qrf.u_qrf.reg_C[4][31:0],
-                     uut.gen_qrf.u_qrf.reg_D[4][31:0]);
+                     uut.gen_qrf.u_qrf.u_regfile.reg_A[4][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_B[4][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_C[4][31:0],
+                     uut.gen_qrf.u_qrf.u_regfile.reg_D[4][31:0]);
             errors = errors + 1;
         end else begin
             $display("PASS: DELTA QR4 = (7,0,10,0)");

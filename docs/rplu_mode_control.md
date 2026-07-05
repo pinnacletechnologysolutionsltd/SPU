@@ -7,7 +7,7 @@ The SPU Sovereign Cluster supports configurable RPLU modes across two architectu
 | Architecture | Module | Field | Mode Control |
 |:---|:---|:---|:---|
 | **Legacy** (Morse) | `rplu_exp.v` + `rplu_skel.v` | Q(√3) rational surd | SPI CMD 0xAC → `rplu_mode` bit |
-| **v2** (Thimble-Padé) | `rplu_thimble_pade.v` + `spu13_fp4_inverter.v` | F_{p^4} over M31 | PHSLK (0x42) pipeline, FLAGS.V for singularity |
+| **v2** (Thimble-Padé) | `rplu_thimble_pade.v` + `spu13_fp4_inverter.v` | A₃₁ over M31 | PHSLK (0x42) pipeline, FLAGS.V for singularity |
 
 ### Legacy RPLU Mode Control
 
@@ -199,16 +199,16 @@ higher-precision manifold anchoring.
 
 ---
 
-## RPLU v2 — Thimble-Padé Mode Control (F_{p^4})
+## RPLU v2 — Thimble-Padé Mode Control (A₃₁)
 
-The v2 RPLU operates over the Mersenne prime field F_{p^4} (p = 2^31−1) and
+The v2 RPLU operates over the split biquadratic algebra A₃₁ over M31 (p = 2³¹−1) and
 does not use ROM banks. Mode selection is handled via the PHSLK (0x42) opcode
 pipeline rather than SPI config channels.
 
 ### Singularity Exception (FLAGS.V)
 
 When the SOM classifier routes an input vector near a geometric singularity
-(norm → 0), the F_{p^4} conjugate reduction tower asserts **FLAGS.V** before
+(norm → 0), the A₃₁ conjugate reduction tower asserts **FLAGS.V** before
 the zero-norm reaches the Fermat exponentiation chain. The RP2350 Southbridge
 should monitor this flag via CMD 0xAC byte 2 bit 0 and re-route the path
 integral when asserted.
@@ -221,7 +221,7 @@ Coefficients are loaded via the RCFG (0x50) opcode at boot:
 RCFG R1, #COEFF_WORD    ; Load {sel=num/den, addr[2:0], c0, c1, c2, c3}
 ```
 
-where each coefficient is a 4-tuple (c0, c1, c2, c3) in F_{p^4} over M31.
+where each coefficient is a 4-tuple (c0, c1, c2, c3) in A₃₁ over M31.
 
 ### Pipeline Stall Handling
 

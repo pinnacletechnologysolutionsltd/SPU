@@ -11,8 +11,8 @@ The jet pipeline is characterized on two FPGA targets:
 | LUTs | 63,400 (6-LUT) | 8,256 (4-LUT) |
 | DSP slices | 240 (DSP48E1) | 54 (Gowin DSP) |
 | Block RAM | 486 KB | 648 Kb |
-| Status | Incoming, Q3 2026 | Proven, 67% utilized |
-| Role | Full concurrent system | Subsystem proof, probe ladder |
+| Status | Wukong JTAG/J11 silicon proofs | Split-probe silicon regression |
+| Role | Silicon evidence and constrained integration | Subsystem proof, probe ladder |
 
 The Artix-7's DSP48E1 cascade ports (PCIN/PCOUT) enable a systolic
 multiplier array with zero routing overhead; the GW5A-25A lacks DSP
@@ -25,7 +25,7 @@ The jet MAC lane for order $n=2$ computes the Cauchy product:
 
 $$R_k = \sum_{i=0}^{k} J_i \cdot K_{k-i} \quad \text{for } k \in \{0, 1, 2\}$$
 
-Each term $J_i \cdot K_{k-i}$ is a full $\mathbb{F}_{p^4}$ multiplication requiring 16
+Each term $J_i \cdot K_{k-i}$ is a full $A_{31}$ multiplication requiring 16
 parallel 32$\times$32 integer products (4 components $\times$ 4 basis cross-terms per
 component). For $n=2$, the total multiply count is 6, requiring 96 DSP slices if
 fully unrolled, or 16 DSP slices with time-division multiplexing through a single
@@ -114,7 +114,12 @@ This gives:
 | SPI slave + UART | 0 | 0 | $\sim$200 |
 | **Total** | **20** | **2** | **$\sim$5,672** |
 
-The XC7A100T provides 240 DSP48E1 and 63,400 LUTs. Total utilization:
-$\sim$8\% of DSPs, $\sim$9\% of LUTs — leaving substantial headroom for
-the fully unrolled 96-DSP configuration on the 200T variant, or for
-additional SOM fabric nodes (64-node parallel array at $\sim$200 LUTs/node).
+The XC7A100T provides 240 DSP48E1 and 63,400 LUT6-class logic cells. The table
+above is a design budget for the local arithmetic lane, not a routed whole-image
+claim. Current routed Artix evidence should be taken from
+`docs/hardware_evidence.md`: the `RPLU2PADE` Wukong proof uses 72 DSP48E1 cells
+and passes the 2 MHz bring-up target, while `SU3SHARE` is the current shared
+multiplier integration baseline. Whole-image builds on the 100T have tight
+placement margin once live RPLU2, sidecars, and safety layers coexist. The fully
+concurrent integration target is therefore the 200T / Kintex-class path; the
+100T remains the silicon-evidence and constrained-integration target.

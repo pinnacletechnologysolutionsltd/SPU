@@ -20,7 +20,10 @@ read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_rotor_vault.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_cross_rotor.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/davis_gate_dsp.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/toroidal_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/toroidal_regfile_ecc.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile.v
+read_verilog -I hardware/rtl/arch hardware/rtl/common/prim/spu_hamming_72_64.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_regfile_ecc.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_quadray_permute.v
 read_verilog -I hardware/rtl/arch hardware/rtl/math/rational_surd5_scale_manager.v
 read_verilog -I hardware/rtl/arch hardware/rtl/top/spu_ve_qr_init.v

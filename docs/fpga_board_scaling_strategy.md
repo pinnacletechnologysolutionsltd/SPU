@@ -1,6 +1,6 @@
 # FPGA Board Scaling Strategy
 
-Date: 2026-06-17
+Date: 2026-07-05
 
 This document defines the practical FPGA ladder for SPU-13 development. The
 goal is to keep bring-up moving on available boards while reserving the larger
@@ -28,10 +28,29 @@ with fewer compile-time exclusions.
 
 | Board | Role | Use It For | Avoid Using It For |
 |---|---|---|---|
-| Tang Primer 25K | Primary current bring-up board | Component proofs, silicon traces, RPLU/SOM/ROTC validation, SDRAM hydration | Full all-subsystem suite at once |
-| Tang Primer 20K | Gowin DDR3 portability board | DDR3 bridge development, smaller SPU-13 profiles, memory experiments | Final integrated public kit |
-| iCESugar Pro / ECP5 | Portability and open-toolchain validation board | ECP5 portability, SDRAM/display/network experiments, GPU/RPLU/SOM slices | Assuming Gowin primitive parity or full SPU-13 suite |
-| Tang Mega 138K | Integrated suite board | Full visual SOM, RPLU, rotor, GPU, audio, memory, and multi-sector builds | Early bring-up risk reduction |
+| Tang Primer 25K | Primary closed-regression probe target | Component proofs, silicon traces, RPLU/SOM/ROTC/Lucas/neuro slice probes, RP2350 SPI southbridge | Full concurrent suite — LUT budget too tight |
+| Wukong Artix-7 100T | Artix silicon-evidence and constrained integration | LUCAS/SU3/ROBOTICS/RPLU2CORE/RPLU2PADE J11 proofs, shared-multiplier baseline, lean RPLU2 live-evaluator | Full concurrent live RPLU2 plus all sidecars/safety at once |
+| Colorlight i9 (ECP5-45F) | Open-toolchain ECP5 portability | Routed lean RPLU2 ECP5 proof, SDRAM/Ethernet experiments, cheap warm spare | Full concurrent core — current RPLU2 probe already uses 72/72 DSPs |
+| Kintex-7 K7-480T PCIe (YZCA-00338) | Full-integration + PCIe proof | Full concurrent SPU-13/RPLU2/sidecar/safety images, PCIe host interface, 4GB DDR3 SDRAM | Early bring-up — wait for closed Artix ladder and a suitable host PC |
+| Raspberry Pi Pico 2 | RP2350 transport reference | PIO transport, cleaner southbridge wiring, repeatable USB/SPI/JTAG experiments | Treating transport speed as a reason to disturb the current known-good Wukong J11 proof |
+
+## Acquisition Order
+
+The practical order is:
+
+1. **Raspberry Pi Pico 2 first.** It is the cheapest useful upgrade and reduces
+   wiring friction for RP2350 PIO transport without changing the FPGA evidence
+   path.
+2. **Colorlight i9 next.** It is the best low-cost open-toolchain portability
+   target while the custom ECP5-85K evaluator remains EE/funding dependent.
+   Use it to prove a lean ECP5 subset, not the full concurrent SPU-13 suite.
+3. **Kintex-7 last by default.** The used PCIe card is attractive for full
+   integration, but it also requires a suitable host PC, power budget, cooling,
+   constraint discovery, and higher bring-up risk. Move it earlier only if a
+   verified card appears cheaply enough to treat as a gamble.
+
+This order does not block the papers: current Tang and Wukong evidence is
+already sufficient for the central SPU-13, RPLU v2, Lucas, and SU3 preprints.
 
 ## Tang Primer 25K
 
@@ -74,6 +93,41 @@ Good first iCESugar Pro subsets:
 - RPLU lookup subset with flash-backed tables
 - UART/USB visual telemetry bridge
 - SDRAM smoke test and trace capture
+
+## Colorlight i9 / ECP5-45F
+
+The Colorlight i9 is now the preferred low-cost ECP5 portability board. It has
+enough capacity for a lean SPU-13/RPLU2 subset, and the current RPLU2 probe now
+synthesizes, routes, and packs with the open ECP5 flow. It is still not
+equivalent to the Artix tree:
+
+- `hardware/boards/ecp5_85k/spu_ecp5_top.v` is still an integration placeholder.
+- The southbridge parser/result path must be wired before J11-style smoke tests
+  can be repeated.
+- The current i9 RPLU2 probe consumes 72/72 `MULT18X18D` cells, so the i9 has
+  useful LUT headroom but no DSP headroom for Lucas/SU3/safety sidecars.
+- The flash-clock path is still a configuration-clock/USRMCLK issue, not a
+  normal unconstrained user-I/O problem.
+
+Measured i9 RPLU2 probe, 2026-07-06:
+
+| Metric | Result |
+|---|---:|
+| Total LUT4 before packing | 6,881 / 43,848 (15%) |
+| TRELLIS_COMB after packing | 7,271 / 43,848 (16%) |
+| TRELLIS_FF | 1,967 / 43,848 (4%) |
+| MULT18X18D | 72 / 72 (100%) |
+| DP16KD | 0 / 108 |
+| Timing | 44.05 MHz max core clock, PASS at 25 MHz |
+
+Recommended i9 milestone:
+
+1. Flash the current RPLU2 probe when physical hardware is available.
+2. Confirm clock/LED/programming smoke before adding more I/O.
+3. Add SPI status and QR commit readback.
+4. Compare ECP5 resource/timing against the cleaned Artix `RPLU2PADE` baseline:
+   20,277 Artix slice LUTs, 6,678 FFs, 72 DSP48E1, 0 BRAM, 36.54 MHz
+   post-route `clk_fast` in the 2 MHz bench image.
 
 ## Tang Mega 138K
 
