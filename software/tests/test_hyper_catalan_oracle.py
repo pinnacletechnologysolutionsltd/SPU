@@ -259,6 +259,14 @@ WIDE_TYPES = enumerate_types(4, 3, faces)  # includes many higher terms
 # V_m - 1 (the c0^(V-1) prefactor, c0 in (eps)), so only V - 1 <= 2 survives.
 MIN_TYPES = enumerate_types(4, 1, lambda m: vertices(m) - 2)
 
+# Regression (fixed 2026-07-08): affine weights like vertices(m)-1 carry a
+# +1 offset, so the per-axis range pre-bound must walk the weight, not
+# divide by it — otherwise (3,0,0,0) (weight 4) is silently dropped at eps^5
+# and the series root is wrong there while eps^3 still passes.
+AFFINE_TYPES = enumerate_types(4, 4, lambda m: vertices(m) - 1)
+check((3, 0, 0, 0) in AFFINE_TYPES and len(AFFINE_TYPES) == 7,
+      "eps^5 survivor set complete under affine weight (7 types incl. (3,0,0,0))")
+
 
 def make_perturbed_quintic():
     """Random quintic over A31 with a planted base root x0, then every

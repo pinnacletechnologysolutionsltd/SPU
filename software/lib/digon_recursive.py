@@ -12,7 +12,7 @@ Face coefficients (c₂, c₃, ...) are A31 scalars — order-0 sparse jets
 Run:  PYTHONPATH=software python3 software/lib/digon_recursive.py
 """
 
-from lib.a31_field import MULT_CYCLES, TOWER_CYCLES
+from lib.a31_field import A31_ZERO, MULT_CYCLES, TOWER_CYCLES, OpCount
 from lib.hyper_catalan import enumerate_types
 
 
@@ -67,8 +67,16 @@ def edges(m):
 
 
 def surviving_types(num_vars, N):
-    """Types with V-1 <= N (survive at nilpotency depth N)."""
-    return enumerate_types(num_vars, N, lambda m: vertices(m) - 1)
+    """Types with V-1 <= N (survive at nilpotency depth N).
+
+    Uses weight = V-2 = sum((i+1)*mi) with cap = N-1 so that
+    V-2 <= N-1  <->  V-1 <= N  <->  c0^(V-1) may be non-zero in J_N.
+    The weight must NOT include the constant offset (V has base 2)
+    or enumerate_types miscomputes per-variable ranges.
+    """
+    if N == 0:
+        return [tuple(0 for _ in range(num_vars))]
+    return enumerate_types(num_vars, N - 1, lambda m: vertices(m) - 2)
 
 
 # ── Cost models ───────────────────────────────────────────────────────────
@@ -332,5 +340,92 @@ def compare_depths(num_vars=4, max_depth=9, degree=5):
               f"{ssp_t}T {ssp_m}m  vs  {nt}T {nm}m")
 
 
+def validate_series_vs_newton(num_vars=4, max_N=4, degree=5, trials=20):
+    """Validate that series_root_N == newton_root_N for random quintics.
+
+    Returns True if all trials pass at all depths.
+    """
+    import random
+    from lib.a31_field import P, a31_mul, a31_norm, a31_sub
+    from lib.jet_ring_N import (
+        jet_add,
+        jet_eval_poly_N,
+        jet_from_a31,
+        newton_root_N,
+        series_root_N,
+    )
+    from lib.hyper_catalan import enumerate_types
+
+    random.seed(0xD160)
+
+    def rand_a31():
+        return tuple(random.randrange(P) for _ in range(4))
+
+    def rand_unit_a31():
+        while True:
+            z = rand_a31()
+            if a31_norm(z) != 0:
+                return z
+
+    all_ok = True
+    for N in [2, 4]:
+        types = surviving_types(num_vars, N)
+        ok = True
+        for trial in range(trials):
+            # Generate perturbed quintic with planted root
+            base = [rand_a31() for _ in range(degree + 1)]
+            x0 = rand_a31()
+            # Plant: adjust constant term so p_base(x0) = 0
+            acc, val = (1, 0, 0, 0), (0, 0, 0, 0)
+            for b in base:
+                val = tuple((v + m) % P for v, m in zip(val, a31_mul(b, acc)))
+                acc = a31_mul(acc, x0)
+            base[0] = a31_sub(base[0], val)
+            # Check derivative is a unit (simple root)
+            deriv = (0, 0, 0, 0)
+            acc = (1, 0, 0, 0)
+            for i in range(1, degree + 1):
+                term = a31_mul(base[i], acc)
+                deriv = tuple((d + i * t) % P for d, t in zip(deriv, term))
+                acc = a31_mul(acc, x0)
+            if a31_norm(deriv) == 0:
+                continue
+
+            # Jet-perturb all coefficients: c_k = base_k + rand*ε + rand*ε² + ...
+            coeffs = []
+            for b in base:
+                jet_c = [b]
+                for _ in range(N):
+                    jet_c.append(rand_a31())
+                coeffs.append(tuple(jet_c))
+
+            # Compute series root
+            s_ctr = OpCount()
+            y_s = series_root_N(coeffs, x0, types, N, s_ctr)
+            x_s = jet_add(jet_from_a31(x0, N), y_s)
+            s_zero = jet_eval_poly_N(coeffs, x_s, N, None)
+            s_ok = s_zero == tuple(A31_ZERO for _ in range(N + 1))
+
+            # Compute Newton root
+            n_ctr = OpCount()
+            x_n, n_err = newton_root_N(coeffs, x0, N, n_ctr)
+            n_ok = (not n_err) and x_n == x_s
+
+            if not (s_ok and n_ok):
+                print(f"  N={N} trial={trial}: series_ok={s_ok} newton_match={n_ok}")
+                ok = False
+                all_ok = False
+
+        status = "PASS" if ok else "FAIL"
+        print(f"  ε{N+1} {trials} trials: series=Newton {status}  "
+              f"(series: {s_ctr.towers}T {s_ctr.mults}m, "
+              f"newton: {n_ctr.towers}T {n_ctr.mults}m)")
+
+    return all_ok
+
+
 if __name__ == "__main__":
     compare_depths()
+    print()
+    print("── Correctness validation (series vs Newton, bit-exact) ──")
+    validate_series_vs_newton()

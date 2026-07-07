@@ -76,8 +76,15 @@ def enumerate_types(num_vars, cap, weight):
     """
     ranges = []
     for i in range(num_vars):
-        unit = weight(tuple(0 if j != i else 1 for j in range(num_vars)))
-        ranges.append(range(cap // max(unit, 1) + 1))
+        # Walk each axis until weight exceeds cap — weight may be affine
+        # (e.g. vertices(m)-1 = 1 + sum), so cap//weight(unit) under-counts.
+        k = 0
+        while True:
+            probe = tuple(0 if j != i else k + 1 for j in range(num_vars))
+            if weight(probe) > cap:
+                break
+            k += 1
+        ranges.append(range(k + 1))
     return [m for m in product(*ranges) if weight(m) <= cap]
 
 

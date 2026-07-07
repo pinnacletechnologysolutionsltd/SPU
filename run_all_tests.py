@@ -477,6 +477,25 @@ def main():
         else:
             print(f"\n  test_hyper_catalan_oracle.py FAILED:\n{result_hc.stdout[-500:]}")
 
+    # Digon-recursive cost model + series vs Newton validation
+    digon_pass = 0
+    digon_test = os.path.join(root_dir, "software", "lib", "digon_recursive.py")
+    if os.path.exists(digon_test):
+        result_digon = subprocess.run(
+            [sys.executable, digon_test],
+            capture_output=True, text=True, timeout=120,
+            env={**os.environ, "PYTHONPATH": os.path.join(root_dir, "software")}
+        )
+        # Both depths (eps^3 and eps^5) must PASS — a bare substring check
+        # would accept eps^3 PASS while eps^5 FAILs below it.
+        if (result_digon.stdout.count("series=Newton PASS") == 2
+                and "FAIL" not in result_digon.stdout):
+            digon_pass = 1
+        else:
+            print(f"\n  digon_recursive.py FAILED:\n{result_digon.stdout[-500:]}")
+    else:
+        digon_pass = 0
+
     # Audio sink tests
     audio_test = os.path.join(root_dir, "software", "tests", "test_rplu2_audio.py")
     if os.path.exists(audio_test):
@@ -501,7 +520,7 @@ def main():
     print(f"Passed:           {audio_pass}")
     print(f"Failed:           {audio_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + pade_batch_pass + hc_pass + audio_pass
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass
     total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
