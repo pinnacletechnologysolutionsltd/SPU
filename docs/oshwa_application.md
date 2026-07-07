@@ -15,7 +15,7 @@
 | **OSHWA UID** | (To be assigned upon submission) |
 | **Submitted By** | John Curley |
 | **Contact Email** | (Public repository contact) |
-| **Project Website** | https://github.com/johncurley/SPU |
+| **Project Website** | https://github.com/pinnacletechnologysolutionsltd/SPU |
 | **Date** | 2026-07-04 |
 
 ## 2. Hardware Description

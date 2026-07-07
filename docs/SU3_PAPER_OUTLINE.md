@@ -2,7 +2,7 @@
 
 **Target:** Short technical report / arXiv preprint (cs.AR, quant-ph)
 
-**Status:** Outline — RTL complete, oracle and testbenches verified, Wukong Artix-7 SU3 sidecar synthesis/routing/bitstream/JTAG configuration checked, and J11 SPI/QR silicon smoke passing for three dense-matrix result elements
+**Status:** Outline — RTL complete, oracle and testbenches verified, Wukong Artix-7 SU3 sidecar synthesis/routing/bitstream/JTAG configuration checked, and J11 SPI/QR silicon smoke passing for all nine dense-matrix result elements on the SU3SHARE spin
 
 ---
 
@@ -82,8 +82,9 @@
 - Bit-exact parity between Python oracle and RTL simulation
 - Wukong Artix-7 silicon smoke over RP2350 J11 SPI
   - Streams the dense A/B fixture at 100 kHz with 20 us per-link guards
-  - Checks elem 0/lane 2, elem 4/lane 5, and elem 8/lane 8 through QR readback
-  - All three exact 256-bit result commits match the oracle; firmware reports `SU3_J11: PASS`
+  - Initial standalone smoke checked elem 0/lane 2, elem 4/lane 5, and elem 8/lane 8 through QR readback
+  - Current SU3SHARE smoke checks all nine result elements through QR lanes 0 through 8
+  - All nine exact 256-bit result commits match the oracle; firmware reports `SU3_J11: PASS`
   - A 40-second capture showed thirteen complete three-case passes before timing out mid-run 13
   - A 5 us guard probe produced an intermittent invalid QR read, so 20 us is the current margin setting
 

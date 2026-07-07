@@ -265,10 +265,9 @@ Configuration & Resource \\
 PSCALE/PCHIRAL fast paths & 0 DSP \\
 Tang 25K \texttt{FAST\_ONLY=1} probe & 696 LUT4, 216 DFF, 0 DSP \\
 Tang 25K PHSLK microprobe & 293 LUT4, 146 DFF, 0 DSP; 200.40 MHz \\
-Lucas MAC & 588 LCs, 40 DSP48E1 \\
-SPI sidecar + MAC & 641 LCs, 40 DSP48E1 \\
-Whole Wukong LUCAS spin & 4,521 LCs, 40 DSP48E1 \\
-Routed frequency & 4.11 MHz max (2 MHz bench) \\
+Hardened Lucas MAC & 955 LCs, 92 DSP48E1 \\
+Whole Wukong LUCAS spin (incl.\ SPI sidecar) & 5,073 LCs, 120 DSP48E1 \\
+Routed frequency & 4.41 MHz max (2 MHz bench) \\
 SPI transport & 32 $\mu$s per 64-bit cmd at 2 MHz \\
 \bottomrule
 \end{tabular}
@@ -306,7 +305,7 @@ The Jitterbug transformation (VE $\to$ octahedron collapse) requires non-linear 
 
 \section{Conclusion}
 
-We have demonstrated a Lucas-prime phinary co-processor performing chiral transformations, $\phi$-scaling, and spatial inversion in $\mathbb{Z}[\phi]/L_{521}$ with zero floating-point and bit-exact closure. PSCALE/PCHIRAL are zero-multiplier fast paths; PMUL/PINV use 40 Artix-7 DSP48E1 slices. The PSCALE operation is the phinary analogue of the Mersenne prime's $2^{31}\equiv1$ bit-wrap: structural efficiency from algebraic structure. The co-processor is verified with 100-period PSCALE closure and a mixed PSCALE/PMUL/PINV identity run of 166,666 macros. It is synthesized, routed, and packed in the Wukong Artix-7 LUCAS profile, with PHSLK separately proven at 200.40 MHz on Tang 25K.
+We have demonstrated a Lucas-prime phinary co-processor performing chiral transformations, $\phi$-scaling, and spatial inversion in $\mathbb{Z}[\phi]/L_{521}$ with zero floating-point and bit-exact closure. PSCALE/PCHIRAL are zero-multiplier fast paths; the hardened MAC maps PMUL/PINV to 92 Artix-7 DSP48E1 slices (120 for the complete SPI-visible spin). The PSCALE operation is the phinary analogue of the Mersenne prime's $2^{31}\equiv1$ bit-wrap: structural efficiency from algebraic structure. The co-processor is verified with 100-period PSCALE closure and a mixed PSCALE/PMUL/PINV identity run of 166,666 macros. It is synthesized, routed, and packed in the Wukong Artix-7 LUCAS profile, with PHSLK separately proven at 200.40 MHz on Tang 25K.
 
 \begin{thebibliography}{18}
 \bibitem{lucas} E. Lucas, ``Th\'eorie des Fonctions Num\'eriques Simplement P\'eriodiques,'' 1878.

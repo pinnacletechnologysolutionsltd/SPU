@@ -10,8 +10,9 @@
 testbenches verified in simulation. Wukong Artix-7 SU3 and SU3SHARE spins
 `synth_xilinx` check clean, route at the 2 MHz bring-up target, emit bitstreams,
 and configure over DirtyJTAG. Functional SU3 SPI readback over Wukong J11 is now
-silicon-proven with three dense-matrix QR commit checks; the shared-multiplier
-SU3SHARE image also preserves the RPLU2 config/QR regression.
+silicon-proven with all nine dense-matrix QR commit checks on the
+shared-multiplier SU3SHARE image, which also preserves the RPLU2 config/QR
+regression.
 
 **Implementation state:** Standalone SU3 uses a dedicated M31 multiplier
 instance; integrated SU3SHARE uses a top-level shared instance. Artix-7
@@ -94,8 +95,10 @@ cases. The Wukong Artix-7 SU3 and SU3SHARE spins also synthesize cleanly with
 the streaming sidecar and have produced routed 2 MHz bring-up bitstreams that
 configure over DirtyJTAG. The SU3 SPI protocol has now been functionally tested
 on FPGA hardware: an RP2350 streamed the dense A/B fixture over Wukong J11 and
-read exact QR commits for three selected result elements. The SU3SHARE image
-then passed the RPLU2 config/QR regression on the same FPGA bitstream.
+read exact QR commits for three selected result elements on the standalone
+sidecar proof, then for all nine result elements on the SU3SHARE image. The
+SU3SHARE image then passed the RPLU2 config/QR regression on the same FPGA
+bitstream.
 
 ---
 
@@ -363,11 +366,15 @@ commit path:
 | 4 | 5 | `0x7FFD2A6B7FFA47FF` | `0x7FFF196B7FFE2E9F` | `0x00034B480006BAA8` | `0x00010678000218A8` |
 | 8 | 8 | `0x7FFBF6DF7FF7DE5F` | `0x7FFEB5277FFD653F` | `0x0004CAA00009C0F0` | `0x00018250000312E0` |
 
-The firmware reported exact matches for all three cases and ended with
+The initial firmware reported exact matches for all three cases and ended with
 `SU3_J11: PASS`. A 40-second capture at 100 kHz and 20 us guards showed
 thirteen complete three-case passes before timing out mid-run 13. A 5 us
 guard-delay probe produced an intermittent invalid QR read, so 20 us is the
 current practical margin setting.
+
+On 2026-07-06, the SU3SHARE smoke was expanded to all nine dense-product
+result elements, read through QR lanes 0 through 8. Two complete capture loops
+reported exact matches for every element and ended with `SU3_J11: PASS`.
 
 ---
 
@@ -459,7 +466,7 @@ field, without floating-point drift.
 6. [RPLU2] Curley, J. "A Hardware Jet Algebra Coprocessor over a
    Split M31 Biquadratic Algebra." 2026.
 7. SPU-13 Project. Open-source RTL and oracles. CC0 1.0 Universal.
-   https://github.com/spu13
+   https://github.com/pinnacletechnologysolutionsltd/SPU
 
 ---
 

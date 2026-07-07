@@ -98,6 +98,12 @@ The RP2350 checker uses per-chunk status polling and treats final `LOAD_B`
 completion as durable `SIDE_IDLE + result_ready`, because internal
 `SIDE_WAIT` can be too brief to observe from the host.
 
+2026-07-06 `SU3SHARE` expanded smoke: the RP2350 firmware now checks all nine
+dense-product result elements, commits them through QR lanes 0 through 8, and
+reports `SU3_J11: PASS` on the shared-multiplier Artix image. The expanded UF2
+SHA-256 is
+`a6d8f0541fd2cce3a930173b0ee43ba071c92826fc5dc81540674c1e0a9da87d`.
+
 ## Resource Estimate
 
 | Resource | Count | Notes |
@@ -116,7 +122,7 @@ completion as durable `SIDE_IDLE + result_ready`, because internal
 ## Next Steps
 
 1. Raise SPI beyond 100 kHz stepwise while preserving the 20 us guard setting
-   and the three-case dense-matrix smoke result
+   and the all-nine dense-matrix smoke result
 2. Pipeline or rework the remaining A/B storage if a higher clock target is needed
 3. Decide whether the next Artix spin should expose SU3 beside LUCAS or move
    directly toward the RPLU2 live evaluator

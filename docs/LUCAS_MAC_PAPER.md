@@ -8,7 +8,7 @@
 
 **Status:** Pre-release technical report; RTL/oracle verified, Tang 25K PHSLK microprobe measured, Artix-7 sidecar timing closure pending
 
-**Implementation state:** Wukong Artix-7 sidecar profile: 4,521 estimated LCs, 40 DSP48E1 slices, routed max 4.11 MHz in the current 2 MHz bench image. Tang 25K PHSLK microprobe: 200.40 MHz post-route, UART-verified.
+**Implementation state:** Wukong Artix-7 hardened sidecar profile (PINV watchdog, registered multiply stage, runtime norm checks): 5,073 estimated LCs, 120 DSP48E1 slices, routed max 4.41 MHz in the current 2 MHz bench image; PMUL/PINV silicon-verified over J11 SPI. Tang 25K PHSLK microprobe: 200.40 MHz post-route, UART-verified.
 
 ---
 
@@ -242,10 +242,10 @@ sequence:
        if (r >= L_p)  r := r - L_p
 
 This architecture consumes exactly two 31x31 bit multiplications, one
-shift, and a maximum of two subtractors. The current Artix-7 proof maps the
-full Lucas MAC, including PMUL/PINV reduction, to 40 DSP48E1 slices; a Tang
-25K profile should keep only the PSCALE/PCHIRAL slice unless those DSP/routing
-costs are explicitly acceptable.
+shift, and a maximum of two subtractors. The current hardened Artix-7 proof
+maps the full Lucas MAC, including PMUL/PINV reduction, to 92 DSP48E1 slices;
+a Tang 25K profile should keep only the PSCALE/PCHIRAL slice unless those
+DSP/routing costs are explicitly acceptable.
 
 By avoiding involvement of the Southbridge SPI bus for arithmetic casting,
 the data transmutates entirely within the lane-routing fabric.  The SPU-13
@@ -256,9 +256,9 @@ potentially devastating bottleneck into a clean, 3-cycle pipeline phase.
 
 The Phinary MAC co-processor (`spu13_lucas_mac.v`) is a self-contained
 Verilog module operating over ℤ[φ]/L₅₂₁. Its PSCALE/PCHIRAL fast paths
-occupy zero DSP slices; the full PMUL/PINV Artix-7 proof maps to 40 DSP48E1
-slices and interfaces with the BTU bridge through a simple request/done
-handshake.
+occupy zero DSP slices; the hardened full PMUL/PINV Artix-7 proof maps to
+92 DSP48E1 slices and interfaces with the BTU bridge through a simple
+request/done handshake.
 
     module spu13_lucas_mac #(L_P=521, L_P_BITS=10) (
         input clk, rst_n, start,
@@ -305,7 +305,8 @@ DSP blocks for an equivalent floating-point quaternion operation.
 | PINV | Lucas inverse | O(log Lₚ) | Shared full-MAC DSPs | Artix synth proof |
 | PHSLK | Rational phase coherence | 1 | 0 on Tang 25K microprobe | 293 LUT4, post-route |
 
-The current full MAC maps to 588 estimated LCs and 40 DSP48E1 slices inside
+The current hardened full MAC (PINV watchdog, registered multiply stage,
+runtime norm checks) maps to 955 estimated LCs and 92 DSP48E1 slices inside
 the Artix-7 LUCAS spin. PSCALE and PCHIRAL remain zero-multiplier paths inside
 that MAC; PMUL/PINV intentionally use Artix DSPs in this proof.
 
@@ -345,7 +346,7 @@ operator.
               BTU Spatial Router
                /                \
     M31 Binary Core        Lucas Phinary MAC
-    (A₃₁/M31, DSP path)      (ℤ[φ]/L₅₂₁, 40 DSP proof)
+    (A₃₁/M31, DSP path)      (ℤ[φ]/L₅₂₁, 92 DSP proof)
               \                /
        Barrett Reduction (M31 -> Lₚ, 3c)
                     |
@@ -460,10 +461,9 @@ by a Verilog latency histogram.
 | PSCALE/PCHIRAL fast paths | 0 DSP | Shift-add/conjugation paths inside the MAC |
 | Tang 25K `FAST_ONLY=1` probe | 696 LUT4, 216 DFF, 0 DSP | Silicon-verified with UART `LUCAS:P`; PSCALE/PCHIRAL plus 100-period zero-drift |
 | Tang 25K PHSLK microprobe | 293 LUT4, 146 DFF, 0 DSP | Post-route 200.40 MHz, 4.99 ns critical path; dynamic operands; SRAM UART `PHSLK:P` |
-| Lucas MAC | 588 estimated LCs, 40 DSP48E1 | Full PMUL/PINV proof with Barrett reducer |
-| SPI sidecar + MAC | 641 estimated LCs, 40 DSP48E1 | D0-D3 opcodes exposed through SPI `0xB1` |
-| Whole Wukong `LUCAS` spin | 4,521 estimated LCs, 40 DSP48E1 | Includes top-level SPI/UART/LED shell |
-| Current routed frequency | 4.11 MHz max | Packed at `A7_FREQ=2` for bench bring-up |
+| Hardened Lucas MAC | 955 estimated LCs, 92 DSP48E1 | Full PMUL/PINV proof with Barrett reducer, PINV watchdog, registered multiply, runtime norm checks |
+| Whole Wukong `LUCAS` spin | 5,073 estimated LCs, 120 DSP48E1 | Includes CE-paced SPI sidecar (D0-D3 opcodes via SPI `0xB1`) and top-level SPI/UART/LED shell |
+| Current routed frequency | 4.41 MHz max | Packed at `A7_FREQ=2` for bench bring-up (J11 PMOD remap) |
 | Current SPI sidecar transport | 2 MHz bench path | 32 µs to clock 64 bits at 2 MHz SCK, before SPI framing and handshake |
 
 The current Artix-7 bitstream is therefore a functional bring-up artifact, not
@@ -619,9 +619,9 @@ current Lucas MAC numbers.
 We have demonstrated a Lucas-prime phinary co-processor that performs
 chiral transformations, φ-scaling, and spatial inversion in the golden
 ring ℤ[φ]/L₅₂₁ with zero floating-point and bit-exact closure. The
-PSCALE/PCHIRAL transforms are zero-multiplier fast paths; the current full
-PMUL/PINV proof spends 40 Artix-7 DSP48E1 slices to preserve bounded,
-synthesizable reduction. The PSCALE operation (φ-multiplication in a single
+PSCALE/PCHIRAL transforms are zero-multiplier fast paths; the current hardened
+full PMUL/PINV proof spends 92 Artix-7 DSP48E1 slices (120 for the complete
+SPI-visible spin) to preserve bounded, synthesizable reduction. The PSCALE operation (φ-multiplication in a single
 clock cycle with zero multipliers) is the phinary analogue of the Mersenne
 prime's 2³¹≡1 bit-wrap: structural efficiency from algebraic structure.
 

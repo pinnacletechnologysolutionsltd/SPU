@@ -17,7 +17,7 @@ Deterministic Higher-Order Differentiation without Floating-Point}
 \author{
 \IEEEauthorblockN{John G.}
 \IEEEauthorblockA{SPU-13 Project\\
-github.com/spu13}
+github.com/pinnacletechnologysolutionsltd/SPU}
 }
 
 \maketitle
@@ -674,6 +674,47 @@ designed for---nor should it be evaluated against---general-purpose AI
 accelerators; its value lies in the niche where reproducibility, bounded
 latency, and fraction-free arithmetic are non-negotiable.
 
+\subsection{Adjacent Application: M31 Arithmetic for Cryptographic Proof Systems}
+\label{sec:zk}
+
+Although designed for exact geometric computation, the RPLU's base-field
+machinery intersects a current requirement in cryptographic proof systems.
+Circle STARKs~\cite{habock2024} enable STARK provers to operate natively
+over the Mersenne prime field $\mathbb{F}_{M31}$ ($p = 2^{31}-1$), chosen
+for precisely the property this pipeline exploits: modular reduction by
+shift-and-add within 32-bit datapaths. StarkWare's Stwo prover~\cite{stwo}
+performs its soundness-critical arithmetic in QM31, a degree-4 extension of
+M31, and Polygon's Plonky3 toolkit~\cite{plonky3} offers M31 among its
+supported fields.
+
+The structural alignment is at the datapath level, and one algebraic
+distinction must be stated precisely. $A_{31}$ is a \emph{split} quartic
+M31-algebra: because 15 is a quadratic residue modulo M31, the biquadratic
+basis admits zero divisors, which is why the inversion tower carries an
+explicit zero-norm detector (Section~\ref{sec:tower}). QM31, by contrast,
+is a true field built from an irreducible extension tower---the property a
+proof system's soundness requires. The multiplier hardware is indifferent
+to this distinction: in both algebras one product is sixteen parallel
+$32\times32$ base-field products with fast Mersenne reduction, followed by
+a fixed linear recombination determined by the structure constants
+(Section~\ref{sec:microarch}). Retargeting from $A_{31}$ to QM31 is a
+rewiring of that recombination stage to the irreducible tower's constants
+(rendering the zero-divisor detector vacuous), not an architectural
+redesign. The RPLU pipeline above the multiplier---SOM, BTU, jet algebra,
+Pad\'e evaluation---is control-loop machinery with no cryptographic role;
+the reusable asset is the leaf field unit alone.
+
+Two caveats scope the claim. First, production STARK provers demand
+throughput (Circle FFT and FRI phases) that is orders of magnitude beyond a
+single 16-DSP unit; this pipeline is a candidate \emph{verified building
+block} for FPGA-based edge-proving experiments, not a competitive prover.
+Second, the premium in this domain is correctness: proof-system soundness
+depends on exact field arithmetic, so a deterministic, formally verifiable,
+open-source M31 unit---with the SymbiYosys harness direction already
+established for sibling modules in this repository---is the relevant
+contribution, and extending bounded formal proofs to the multiplier and
+inverter is prioritized future work.
+
 % ── SECTION VI: Conclusion ─────────────────────────────────────────
 
 \section{Conclusion}
@@ -712,7 +753,7 @@ oracles, and documentation are open-source (CC0 1.0).
 
 \section*{Acknowledgment}
 All contributions are CC0 1.0 Universal (public domain).
-Open-source at: \url{github.com/spu13}.
+Open-source at: \url{github.com/pinnacletechnologysolutionsltd/SPU}.
 
 \begin{thebibliography}{00}
 \bibitem{nguyen1999}
@@ -740,6 +781,22 @@ Springer, 1995.
 H.~Pad\'{e},
 ``Sur la repr\'{e}sentation approch\'{e}e d'une fonction par des fractions rationnelles,''
 \emph{Ann. Sci. \'{E}c. Norm. Sup\'{e}r.}, vol.~9, pp.~3--93, 1892.
+
+\bibitem{habock2024}
+U.~Hab\"{o}ck, D.~Levit, and S.~Papini,
+``Circle STARKs,''
+Cryptology ePrint Archive, Paper 2024/278, 2024.
+\url{https://eprint.iacr.org/2024/278}
+
+\bibitem{stwo}
+StarkWare Industries,
+``Stwo: a Circle-STARK prover over M31,''
+\url{https://github.com/starkware-libs/stwo}
+
+\bibitem{plonky3}
+Polygon Zero,
+``Plonky3: a toolkit for polynomial IOPs,''
+\url{https://github.com/Plonky3/Plonky3}
 
 \end{thebibliography}
 
