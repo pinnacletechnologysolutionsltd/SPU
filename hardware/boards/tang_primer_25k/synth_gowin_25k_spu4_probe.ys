@@ -1,0 +1,23 @@
+read_verilog -lib +/gowin/cells_xtra_gw5a.v
+
+read_verilog -sv -I hardware/rtl/arch \
+    hardware/boards/tang_primer_25k/spu13_tang25k_spu4_probe.v \
+    hardware/rtl/core/spu4/spu4_standalone_top.v \
+    hardware/rtl/core/spu4/spu4_sequencer.v \
+    hardware/rtl/core/spu4/spu4_decoder.v \
+    hardware/rtl/core/spu4/spu4_regfile.v \
+    hardware/rtl/core/spu4/spu4_euclidean_alu.v \
+    hardware/rtl/common/prim/spu_multiplier_serial.v
+
+hierarchy -top spu13_tang25k_spu4_probe
+
+synth_gowin -family gw5a -top spu13_tang25k_spu4_probe \
+    -json build/spu4_probe.json -run begin:map_cells
+techmap -map +/gowin/cells_map.v
+opt_lut_ins -tech gowin
+hilomap -singleton -hicell VCC V -locell GND G
+clean
+hierarchy -check
+check -noinit
+blackbox =A:whitebox
+write_json build/spu4_probe.json
