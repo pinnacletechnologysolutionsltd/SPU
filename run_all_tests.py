@@ -464,6 +464,19 @@ def main():
         else:
             print(f"\n  test_pade_batch_inversion.py FAILED:\n{result_pade.stdout[-500:]}")
 
+    # Hyper-Catalan series oracle
+    hc_pass = 0
+    hc_test = os.path.join(root_dir, "software", "tests", "test_hyper_catalan_oracle.py")
+    if os.path.exists(hc_test):
+        result_hc = subprocess.run(
+            [sys.executable, hc_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if "ALL CHECKS PASS" in result_hc.stdout:
+            hc_pass = 1
+        else:
+            print(f"\n  test_hyper_catalan_oracle.py FAILED:\n{result_hc.stdout[-500:]}")
+
     # Audio sink tests
     audio_test = os.path.join(root_dir, "software", "tests", "test_rplu2_audio.py")
     if os.path.exists(audio_test):
@@ -488,7 +501,7 @@ def main():
     print(f"Passed:           {audio_pass}")
     print(f"Failed:           {audio_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + pade_batch_pass + audio_pass
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + pade_batch_pass + hc_pass + audio_pass
     total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
