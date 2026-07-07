@@ -133,9 +133,17 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
   Wildberger-Rubine tables (Bi-Tri array, Geode factorization, layerings);
   exact jet-perturbed root-tracking in A31[eps]/(eps^3) proven by
   back-substitution; gives `spu13_jet_mac`/`spu13_jet_inv` their Python
-  oracle. Measured verdict: at eps^3 depth Newton-Hensel (2 towers, 548 cyc)
-  beats the closed-form series stream (1 tower, 724 cyc) — do NOT build a
-  dedicated SRU streaming pipeline without revisiting those numbers
+  oracle. Cost verdict REVISED 2026-07-08 (`software/lib/digon_recursive.py`):
+  the earlier "Newton beats series at eps^3 (548c vs 724c), do NOT build an
+  SRU" conclusion came from the naive dense-jet cost model. With digon-lattice
+  traversal + mixed-sparsity jet arithmetic (c0 = O(eps), face coefficients
+  eps^0-only scalars, c1^-1 dense), the series stream wins at shallow depth:
+  eps^3 211c vs Newton 506c (0.42x), eps^5 793c vs 1569c (0.51x); crossover
+  at eps^7 (1.01x), Newton wins eps^9+ (1.28x). The residual bottleneck is
+  the one dense c1^-1 jet_mul per term — c1^-1 populates all eps channels,
+  so no sparsity to exploit there. RTL implication: a sparse `spu13_jet_mac`
+  variant with nilpotency-window operand tags is worth building for the
+  eps^3/eps^5 regime — contract in `docs/SPARSE_JET_MAC.md`
 
 **Known board limitations:**
 - SDRAM module (W9825G6KH) retired — DQ[10] fault confirmed, not an FPGA issue
@@ -213,6 +221,8 @@ Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit p
 | Hyper-Catalan oracle | `software/lib/hyper_catalan.py` | Exact C_m (Wildberger-Rubine Thm 5), ring-generic soft polynomial formula (Thm 4) |
 | Jet ring oracle | `software/lib/jet_ring.py` | A31[eps]/(eps^3) matching `spu13_jet_mac`/`spu13_jet_inv` multiply-for-multiply |
 | Hyper-Catalan tests | `software/tests/test_hyper_catalan_oracle.py` | 21 checks — paper tables, Geode factorization, exact jet root-tracking, Newton comparison |
+| Digon-recursive cost model | `software/lib/digon_recursive.py` | Series-vs-Newton cycle tables at eps^3..eps^9 (4 strategies + sparse-jet model); source of the revised SRU verdict |
+| Sparse jet MAC contract | `docs/SPARSE_JET_MAC.md` | Nilpotency-window-tagged Cauchy product: skip rule, tag algebra, interface, acceptance checklist |
 
 ## Coding Style & Naming Conventions
 
