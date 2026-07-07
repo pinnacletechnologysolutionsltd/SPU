@@ -451,6 +451,19 @@ def main():
         else:
             print(f"\n  test_su3_oracle.py FAILED:\n{result_su3.stdout[-500:]}")
 
+    # Padé batch inversion oracle
+    pade_batch_pass = 0
+    pade_batch_test = os.path.join(root_dir, "software", "tests", "test_pade_batch_inversion.py")
+    if os.path.exists(pade_batch_test):
+        result_pade = subprocess.run(
+            [sys.executable, pade_batch_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "ALL CHECKS PASS" in result_pade.stdout:
+            pade_batch_pass = 1
+        else:
+            print(f"\n  test_pade_batch_inversion.py FAILED:\n{result_pade.stdout[-500:]}")
+
     # Audio sink tests
     audio_test = os.path.join(root_dir, "software", "tests", "test_rplu2_audio.py")
     if os.path.exists(audio_test):
@@ -475,7 +488,7 @@ def main():
     print(f"Passed:           {audio_pass}")
     print(f"Failed:           {audio_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + audio_pass
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + pade_batch_pass + audio_pass
     total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
