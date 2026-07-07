@@ -35,8 +35,10 @@ implemented by the RTL.  A parameterized jet multiply-accumulate
 (MAC) pipeline computes $R_k = \sum_{i=0}^{k} J_i \cdot K_{k-i}$ for $k \in
 \{0,1,2\}$ in 12 cycles (time-division multiplexed) or 3 cycles (fully
 unrolled), with bit-identical replay across simulation runs. A conjugate reduction tower and shadow chain invert unit elements in
-$\sim$88 deterministic cycles total ($\sim$76 for the tower, 12 for the chain), and a lookahead hazard unit (LHU) schedules
-concurrent single-cycle arithmetic alongside tower operations.
+$\sim$88 deterministic cycles total ($\sim$76 for the tower, 12 for the chain). Issue control is deterministic and blocking:
+multi-cycle tower operations gate issue through busy/done clock-enable
+handshakes, while single-cycle arithmetic avoids read-after-write stalls
+through a write-forwarding register-file bypass.
 
 The leaf RTL for the 4-stage pipeline---jet MAC, jet inverse, [4/4] Pad\'{e} rational
 approximant, and Kohonen SOM classifier---is under active integration, with
@@ -327,19 +329,23 @@ d_1(-u)) \cdot N^{-1}$.
 Total latency: $\sim 76$ cycles, completely deterministic, zero division
 operations. Inversion test vectors are shown in Table~\ref{tab:fp4-inverter}.
 
-\subsection{The Execution Layer: LHU Scoreboarding}
+\subsection{The Execution Layer: Deterministic Issue Control}
 
 The 4R2W multi-port register file (\texttt{spu13\_multi\_port\_regfile.v})
-supports concurrent single-cycle integer arithmetic (QADD, QSUB, QMUL)
-alongside the 76-cycle Conjugate Inversion Tower. The Lookahead Hazard
-Unit (LHU) tracks register scoreboard bits for RAW and WAW hazards.
+supports single-cycle integer arithmetic (QADD, QSUB, QMUL) beside the
+76-cycle Conjugate Inversion Tower.
 
 \textbf{Key design choice:} Single-cycle ops may issue every cycle without
-stalling---they write through a write-forwarding bypass path. Tower ops
-(PHSLK, INVJ, Pad\'{e} eval) stall issue until the tower completes and
-writes back. Since the tower latency is fixed and the scoreboard depth
-is 2 (one tower + one single-cycle write), all hazard resolution is
-combinational---no dynamic arbitration or reorder buffers required.
+stalling---they write through the register file's combinational
+write-forwarding bypass. Tower ops (PHSLK, INVJ, Pad\'{e} eval) are
+\emph{blocking}: issue is gated by the tower's busy/done clock-enable
+handshake until writeback completes. Since the tower latency is fixed,
+all hazard resolution is combinational---no dynamic arbitration, reorder
+buffers, or register scoreboarding are required. A prototype scoreboard
+module for concurrent issue during tower runs exists in the repository
+but is not instantiated in any verified build; scoreboarded overlap of
+independent work with tower latency is future work
+(Section~\ref{sec:future}).
 
 The write-forwarding bypass means a result written on cycle $t$ is
 available to the instruction issuing on cycle $t+1$ via a mux-select path
@@ -526,9 +532,9 @@ index first) and the cycle latency scales linearly with activation count.
 
 The [4/4] Pad\'{e} evaluator computes $R(x)$ for 8 representative inputs
 ($x \in \{-1.0, -0.5, -0.25, 0, 0.25, 0.5, 1.0, 2.0\}$) within the fixed
-~88-cycle window. The LHU successfully manages RAW hazards when the Pad\'{e}
-output is immediately consumed by a downstream QADD---the write-forwarding
-path delivers the result on the same cycle as writeback.
+~88-cycle window. RAW hazards resolve correctly when the Pad\'{e}
+output is immediately consumed by a downstream QADD---the register file's
+write-forwarding path delivers the result on the same cycle as writeback.
 
 \subsection{Singular Path Absorber}
 
@@ -638,6 +644,18 @@ required denominators are units, $f(A + \epsilon B) =
 f(A) + \epsilon \cdot f'(A) \cdot B$ exactly, matching the tangent/spread
 construction through finite algebra alone.
 
+\subsection{Scoreboarded Tower Overlap}
+
+Issue control is currently blocking during tower operations: the fixed
+$\sim$88-cycle inversion window is idle time for the rest of the pipeline.
+A register scoreboard permitting independent single-cycle work to issue
+during tower runs would recover most of that window (e.g., evaluating
+numerator Horner steps while the denominator inverts). A prototype
+scoreboard module exists but requires variable-latency writeback tracking,
+a same-cycle set/clear resolution rule, and a dedicated testbench before
+it can be claimed; it is deliberately excluded from the verified baseline
+presented here.
+
 \subsection{Higher Algebraic Towers}
 
 The conjugate reduction tower generalizes to larger finite algebras by adding
@@ -735,8 +753,9 @@ three independent implementation layers,
 detection, enabling jet inversion via a 12-cycle shadow chain,
 \item A combinational BTU collision resolver with $O(n)$ priority-encoded
 serial dispatch,
-\item A Lookahead Hazard Unit enabling concurrent single-cycle arithmetic
-alongside multi-cycle tower operations,
+\item Deterministic issue control combining a write-forwarding 4R2W
+register file with blocking busy/done clock-enable gating for multi-cycle
+tower operations,
 \item A hardware-computed Confidence Gap that elevates cluster ambiguity
 from a software heuristic to a first-class architectural primitive.
 \end{itemize}
