@@ -180,6 +180,14 @@ module spu13_batch_inverter #(
     reg [31:0] probe_w0, probe_w1, probe_w2, probe_w3; // Stage A result
     reg        probe_zero;  // set when norm == 0
 
+    // Effective unit count including the lane being classified THIS cycle.
+    // The branch decision on the final probe must not read the stale
+    // n_units register — the last lane's classification lands via
+    // non-blocking assignment and would be invisible to a same-cycle read
+    // (unit-lane-last batches would fall into the all-singular path).
+    wire        probe_is_unit = (batch_mult_r0 != 32'd0);
+    wire [4:0]  n_units_eff   = n_units + (probe_is_unit ? 5'd1 : 5'd0);
+
     function [31:0] m31_neg;
         input [31:0] x;
         begin
@@ -407,22 +415,31 @@ module spu13_batch_inverter #(
                             n_units <= n_units + 1;
                         end
                         if (probe_idx == k - 1) begin
-                            // Done probing.
-                            if (n_units == 5'd0) begin
+                            // Done probing. Use n_units_eff: it includes
+                            // this final lane's classification, which the
+                            // n_units register does not yet reflect.
+                            if (n_units_eff == 5'd0) begin
                                 output_idx <= 4'd0;
                                 state <= S_OUTPUT;
-                            end else if (n_units == 5'd1) begin
-                                // Single unit: tower directly
-                                tower_z0 <= dens[unit_idx[0]][0];
-                                tower_z1 <= dens[unit_idx[0]][1];
-                                tower_z2 <= dens[unit_idx[0]][2];
-                                tower_z3 <= dens[unit_idx[0]][3];
+                            end else if (n_units_eff == 5'd1) begin
+                                // Single unit: tower directly. If the only
+                                // unit is this final lane, unit_idx[0] is
+                                // also a stale read — take dens[probe_idx].
+                                tower_z0 <= (n_units == 5'd0) ? dens[probe_idx][0] : dens[unit_idx[0]][0];
+                                tower_z1 <= (n_units == 5'd0) ? dens[probe_idx][1] : dens[unit_idx[0]][1];
+                                tower_z2 <= (n_units == 5'd0) ? dens[probe_idx][2] : dens[unit_idx[0]][2];
+                                tower_z3 <= (n_units == 5'd0) ? dens[probe_idx][3] : dens[unit_idx[0]][3];
                                 tower_start <= 1'b1;
                                 in_rebatch <= 1'b0;
                                 single_unit <= 1'b1;
                                 state <= S_TOWER_WAIT;
                             end else begin
-                                // Re-batch: compute prefix over unit subset
+                                // Re-batch: compute prefix over unit subset.
+                                // n_units_eff >= 2 implies n_units >= 1, so
+                                // unit_idx[0] is settled; later unit_idx
+                                // entries (possibly written this cycle) are
+                                // only read in S_REBATCH_* states, after the
+                                // non-blocking write has landed.
                                 in_rebatch <= 1'b1;
                                 single_unit <= 1'b0;
                                 rb_idx <= 5'd1;  // start at prefix[1]

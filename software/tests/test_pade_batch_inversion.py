@@ -258,7 +258,12 @@ if FAILURES == 0:
 
 # ── Golden-vector emitter for Verilog $readmemh ──────────────────────────
 
-def emit_golden_mem(path: str = "build/batch_inv_golden.mem"):
+GOLDEN_MEM_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "..",
+    "hardware", "tests", "spu13", "spu13_batch_inv_golden.mem")
+
+
+def emit_golden_mem(path: str = GOLDEN_MEM_PATH):
     """Emit a $readmemh-compatible golden-vector file for the batch inverter RTL.
 
     Format (flat 32-bit hex words, one per line):
@@ -336,6 +341,29 @@ def emit_golden_mem(path: str = "build/batch_inv_golden.mem"):
         inv, v = a31_tower_inv(d)
         lanes16.append((d, inv if not v else (0, 0, 0, 0), v))
     cases.append((16, lanes16))
+
+    # Ordering-adversarial cases: a unit in the LAST probed lane is
+    # classified in the same cycle the RTL decides the isolation branch —
+    # these orderings catch stale-read bugs that singular-last cases mask.
+
+    # Case 7: k=2, singular first, unit LAST (single unit = final lane)
+    u = rand_unit()
+    cases.append((2, [(zd, (0, 0, 0, 0), True),
+                      (u, a31_tower_inv(u)[0], False)]))
+
+    # Case 8: k=3, only unit is the final lane
+    u = rand_unit()
+    cases.append((3, [(zd, (0, 0, 0, 0), True),
+                      (rand_zero_divisor(), (0, 0, 0, 0), True),
+                      (u, a31_tower_inv(u)[0], False)]))
+
+    # Case 9: k=5, multi-unit re-batch ending with a unit lane
+    us = [rand_unit() for _ in range(3)]
+    cases.append((5, [(us[0], a31_tower_inv(us[0])[0], False),
+                      (rand_zero_divisor(), (0, 0, 0, 0), True),
+                      (us[1], a31_tower_inv(us[1])[0], False),
+                      (rand_zero_divisor(), (0, 0, 0, 0), True),
+                      (us[2], a31_tower_inv(us[2])[0], False)]))
 
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w") as f:

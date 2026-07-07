@@ -85,13 +85,22 @@ module spu13_batch_inverter_tb;
         errors = 0;
         total_lanes = 0;
 
-        $readmemh("build/batch_inv_golden.mem", golden);
+        // Committed golden vectors — regenerate with:
+        //   python3 software/tests/test_pade_batch_inversion.py --emit-mem
+        $readmemh("hardware/tests/spu13/spu13_batch_inv_golden.mem", golden);
         n_cases = golden[0];
         gptr = 1;
 
         $display("=== SPU-13 Batch Inverter — Golden Vector Test ===");
-        $display("  Golden file: build/batch_inv_golden.mem");
+        $display("  Golden file: hardware/tests/spu13/spu13_batch_inv_golden.mem");
         $display("  Test cases:  %0d", n_cases);
+
+        // Guard against a missing/empty golden file: without this, an
+        // all-X n_cases skips the loop and the bench passes vacuously.
+        if ((^golden[0]) === 1'bx || golden[0] == 0) begin
+            $display("FAIL: golden vector file missing or empty");
+            $finish;
+        end
 
         #20 rst_n = 1;
         #20;
