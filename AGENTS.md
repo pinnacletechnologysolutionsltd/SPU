@@ -17,10 +17,9 @@ Development strategy: Tang Primer 25K for probe/bring-up, Wukong Artix-7 100T fo
 
 ```
 hardware/               FPGA RTL (Verilog)
-  common/rtl/           Shared cores — ALU, sequencer, mem, protocols, GPU
-  spu13/rtl/            SPU-13 Cortex (13-axis manifold engine)
-    core/spu13/         SPU-13 pipeline: M31/A31 arithmetic, unit inverter, SOM, BTU, register file
-  spu4/rtl/             SPU-4 Sentinel (Quadray satellite)
+  rtl/core/shared/      Shared cores — ALU, sequencer, register files, Davis gate, ISA decoder
+  rtl/core/spu13/       SPU-13 Cortex: M31/A31 arithmetic, unit inverter, SOM, BTU, register file
+  rtl/core/spu4/        SPU-4 Sentinel (Quadray satellite): Euclidean ALU, boot master, sovereign bus
   boards/               Per-target synthesis scripts & board tops
   tests/                Verilog testbenches (*_tb.v)
 software/               Host-side tooling
@@ -110,6 +109,13 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - **Montgomery batch inverter** — 1 tower + 3(k-1) mults for k≤16, deferred
   zero-divisor check, singular-lane isolation + unit-subset re-batch; 52
   golden lanes verified against the Python oracle (committed .mem)
+- **A7 SOM/BMU probe** (`spu_a7_som_probe_top`) — port of the Tang-25K-proven
+  fixture to the Wukong Artix-7 100T; identical scenarios + golden UART line
+  (`SOM:P T:2 B:6 E:00`), tb decodes the UART stream bit-for-bit
+  (`spu_a7_som_probe_tb.v`). Synth clean via
+  `bash hardware/boards/artix7/build_a7.sh 100t somprobe synth`
+  (~2.6k LUT, 84 DSP, 4 BRAM). Awaiting board run — same line on both
+  boards is the cross-vendor determinism proof
 - GPU rasterizer + fragment pipe (testbench passes)
 - Bio stack (annealer, active inference, soul metabolism, proprioception)
 

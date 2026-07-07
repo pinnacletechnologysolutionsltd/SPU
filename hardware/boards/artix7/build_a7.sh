@@ -8,7 +8,11 @@
 #   bash build_a7.sh 100t intelligence           # INTELLIGENCE spin on 100T
 #   A7_FREQ=2 bash build_a7.sh 100t lucas all    # Wukong pinned low-speed bring-up
 #
-# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | som | custom
+# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | som | somprobe | custom
+#
+# somprobe is a standalone top (not a spu_a7_top spin): the Tang-25K-proven
+# SOM/BMU fixture on its own synthesis path + minimal XDC.  Golden UART line
+# at 115200: "SOM:P T:2 B:6 E:00".
 
 set -euo pipefail
 
@@ -44,6 +48,13 @@ case "$DEVICE_CHIP" in
 esac
 
 YS="hardware/boards/artix7/synth_a7.ys"
+TOP="spu_a7_top"
+
+if [ "$SPIN" = "SOMPROBE" ]; then
+    YS="hardware/boards/artix7/synth_a7_som_probe.ys"
+    XDC="hardware/boards/artix7/spu_a7_som_probe.xdc"
+    TOP="spu_a7_som_probe_top"
+fi
 
 echo "=== SPU-13 Artix-7 Build ==="
 echo "  Device: $DEVICE_CHIP ($PART)"
@@ -56,14 +67,20 @@ echo ""
 synth() {
     echo ">>> Yosys Synthesis <<<"
     mkdir -p build
-    yosys -p "script $YS; \
-        chparam -set DEVICE \"$DEVICE_PARAM\" \
-                -set SPIN \"$SPIN\" \
-                -set A7_CLK_DIV_LOG2 $A7_CLK_DIV_LOG2 \
-                spu_a7_top; \
-        hierarchy -check -top spu_a7_top; \
-        synth_xilinx -family xc7 -top spu_a7_top -json \"$JSON\"; \
-        stat -top spu_a7_top"
+    if [ "$SPIN" = "SOMPROBE" ]; then
+        yosys -p "script $YS; \
+            synth_xilinx -family xc7 -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    else
+        yosys -p "script $YS; \
+            chparam -set DEVICE \"$DEVICE_PARAM\" \
+                    -set SPIN \"$SPIN\" \
+                    -set A7_CLK_DIV_LOG2 $A7_CLK_DIV_LOG2 \
+                    spu_a7_top; \
+            hierarchy -check -top spu_a7_top; \
+            synth_xilinx -family xc7 -top spu_a7_top -json \"$JSON\"; \
+            stat -top spu_a7_top"
+    fi
 }
 
 pnr() {
@@ -97,7 +114,7 @@ pnr() {
             --board "QMTech Wukong Artix-7" \
             --device "$PART" \
             --toolchain "Yosys + nextpnr-xilinx + Project X-Ray" \
-            --top spu_a7_top \
+            --top "$TOP" \
             --report "${JSON}.timing_report.json" \
             --log "${JSON}.nextpnr.log" \
             --out-json "build/metrics/artix7_${DEVICE_CHIP}_${SPIN}.json" \

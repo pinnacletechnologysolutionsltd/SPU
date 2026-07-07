@@ -121,6 +121,7 @@ def main():
         "hardware/rtl/peripherals/storage",
         "hardware/rtl/peripherals/video",
         "hardware/boards/tang_primer_25k",
+        "hardware/boards/artix7",         # A7 probe tops (resolved on demand via -y)
         "hardware/vendor/gowin",          # Gowin DSP / BSRAM primitives
         "hardware/vendor/ice40",          # iCE40 simulation stubs
         "hardware/archive/legacy_rtl",
