@@ -12,7 +12,7 @@ module spu13_batch_inverter_tb;
     reg         rst_n;
 
     reg         start;
-    reg  [3:0]  batch_size;
+    reg  [4:0]  batch_size;
     reg  [31:0] d0, d1, d2, d3;
     reg         d_valid;
     reg         d_last;
@@ -24,7 +24,7 @@ module spu13_batch_inverter_tb;
     wire        busy;
     wire [3:0]  debug_state;
 
-    spu13_batch_inverter #(.MAX_BATCH(8)) u_dut (
+    spu13_batch_inverter #(.MAX_BATCH(16)) u_dut (
         .clk(clk), .rst_n(rst_n),
         .start(start), .batch_size(batch_size),
         .d0(d0), .d1(d1), .d2(d2), .d3(d3),
@@ -36,7 +36,7 @@ module spu13_batch_inverter_tb;
     );
 
     // ── Golden vector storage (flat $readmemh) ──────────────────────
-    reg [31:0] golden [0:127];
+    reg [31:0] golden [0:511];
     integer    gptr;
     integer    n_cases;
     integer    case_idx;
@@ -44,22 +44,24 @@ module spu13_batch_inverter_tb;
     integer    lane_idx;
 
     // Expected values for current case (stored during feed)
-    reg [31:0] exp_inv0 [0:7];
-    reg [31:0] exp_inv1 [0:7];
-    reg [31:0] exp_inv2 [0:7];
-    reg [31:0] exp_inv3 [0:7];
-    reg        exp_sing [0:7];
+    reg [31:0] exp_inv0 [0:15];
+    reg [31:0] exp_inv1 [0:15];
+    reg [31:0] exp_inv2 [0:15];
+    reg [31:0] exp_inv3 [0:15];
+    reg        exp_sing [0:15];
 
     // Captured DUT outputs
-    reg [31:0] cap_inv0 [0:7];
-    reg [31:0] cap_inv1 [0:7];
-    reg [31:0] cap_inv2 [0:7];
-    reg [31:0] cap_inv3 [0:7];
-    reg        cap_sing [0:7];
-    reg [3:0]  cap_cnt;
+    reg [31:0] cap_inv0 [0:15];
+    reg [31:0] cap_inv1 [0:15];
+    reg [31:0] cap_inv2 [0:15];
+    reg [31:0] cap_inv3 [0:15];
+    reg        cap_sing [0:15];
+    reg [4:0]  cap_cnt;
 
     integer    errors;
     integer    total_lanes;
+    integer    cycle;
+    integer    timeout;
 
     always #5 clk = ~clk;
 
@@ -101,7 +103,7 @@ module spu13_batch_inverter_tb;
             cap_cnt = 0;
 
             // Feed denominators and capture expected values
-            batch_size = k_golden[3:0];
+            batch_size = k_golden;
             start = 1; #10 start = 0;
 
             for (lane_idx = 0; lane_idx < k_golden; lane_idx = lane_idx + 1) begin
@@ -125,8 +127,18 @@ module spu13_batch_inverter_tb;
                 d_valid = 0; d_last = 0;
             end
 
-            // Wait for DUT to complete
-            wait(done);
+            // Wait for DUT to complete (with timeout)
+            timeout = 0;
+            while (!done && timeout < 50000) begin
+                @(posedge clk); timeout = timeout + 1;
+            end
+            if (timeout >= 50000) begin
+                $display("  TIMEOUT: case %0d stuck at state=%0d", case_idx, debug_state);
+                errors = errors + 1;
+                // Skip verification for this case
+                // Reset and continue
+                rst_n = 0; #20 rst_n = 1; #20;
+            end else begin
             repeat (3) @(posedge clk);
 
             // Verify
@@ -158,6 +170,7 @@ module spu13_batch_inverter_tb;
                 end
                 total_lanes = total_lanes + 1;
             end
+            end // else (no timeout)
         end
 
         $display("============================================");

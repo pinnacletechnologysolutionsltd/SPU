@@ -321,6 +321,22 @@ def emit_golden_mem(path: str = "build/batch_inv_golden.mem"):
         (zd3, (0, 0, 0, 0), True),
     ]))
 
+    # Case 5: k=13, manifold sweep (random units)
+    ds13 = [rand_unit() for _ in range(13)]
+    lanes13 = []
+    for d in ds13:
+        inv, v = a31_tower_inv(d)
+        lanes13.append((d, inv if not v else (0, 0, 0, 0), v))
+    cases.append((13, lanes13))
+
+    # Case 6: k=16, K_MAX boundary (random units)
+    ds16 = [rand_unit() for _ in range(16)]
+    lanes16 = []
+    for d in ds16:
+        inv, v = a31_tower_inv(d)
+        lanes16.append((d, inv if not v else (0, 0, 0, 0), v))
+    cases.append((16, lanes16))
+
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w") as f:
         f.write(f"// spu13_batch_inv_golden.mem — auto-generated golden vectors\n")

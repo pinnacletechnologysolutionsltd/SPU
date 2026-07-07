@@ -29,7 +29,7 @@ module spu13_batch_inverter #(
 
     // ── Input stream ────────────────────────────────────────────────
     input  wire         start,
-    input  wire [3:0]   batch_size,       // k (1..MAX_BATCH)
+    input  wire [4:0]   batch_size,       // k (1..MAX_BATCH)
     input  wire [31:0]  d0, d1, d2, d3,   // A31 denominator
     input  wire         d_valid,
     input  wire         d_last,
@@ -72,15 +72,15 @@ module spu13_batch_inverter #(
     reg [31:0] singular_mask [0:MAX_BATCH-1]; // 1 if lane is singular
     reg [31:0] invs [0:MAX_BATCH-1][0:3];     // result array
 
-    reg [3:0]  k;           // batch size
-    reg [3:0]  idx;         // current index (0..k-1)
-    reg [3:0]  load_idx;    // index during LOAD
-    reg [3:0]  output_idx;  // index during OUTPUT
-    reg [3:0]  probe_idx;   // index during NORM_PROBE
+    reg [4:0]  k;           // batch size
+    reg [4:0]  idx;         // current index (0..k-1)
+    reg [4:0]  load_idx;    // index during LOAD
+    reg [4:0]  output_idx;  // index during OUTPUT
+    reg [4:0]  probe_idx;   // index during NORM_PROBE
     reg        has_singular; // set if any lane is singular
-    reg [3:0]  n_units;     // count of unit lanes for re-batch
+    reg [4:0]  n_units;     // count of unit lanes for re-batch
     reg [3:0]  unit_idx [0:MAX_BATCH-1]; // indices of unit lanes
-    reg [3:0]  unit_tower_idx;  // index into unit_idx[] for per-element towers
+    reg [4:0]  unit_tower_idx;  // index into unit_idx[] for per-element towers
 
     // ── Multiplier for prefix/unwind (instance A) ───────────────────
     reg         mult_a_start;
