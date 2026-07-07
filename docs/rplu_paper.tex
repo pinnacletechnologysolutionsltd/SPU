@@ -329,6 +329,26 @@ d_1(-u)) \cdot N^{-1}$.
 Total latency: $\sim 76$ cycles, completely deterministic, zero division
 operations. Inversion test vectors are shown in Table~\ref{tab:fp4-inverter}.
 
+\paragraph{Montgomery batch inversion.}
+When the Pad\'{e} evaluator must invert $k$ denominators---as in a
+multi-lane manifold sweep or trajectory propagation---the per-element
+tower cost of $k \cdot 76$ cycles is dominated by the serial Fermat-chain
+latency. Montgomery's product-accumulate/unwind trick~\cite{montgomery1987}
+collapses $k$ inversions to \textbf{1 tower + $3(k-1)$ multiplies} by
+computing a single prefix-product chain over all denominators, inverting
+the accumulated product once, then unwinding the individual inverses via
+the recurrence $d_i^{-1} = (d_0\cdots d_{k-1})^{-1} \cdot (d_0\cdots
+d_{i-1}) \cdot (d_{i+1}\cdots d_{k-1})$. The zero-divisor check is
+deferred: the norm is multiplicative into $\mathbb{F}_p$, so the
+accumulated product's norm is zero iff at least one factor is singular.
+One tower-norm stage covers the whole batch; on a hit, a per-element norm
+probe ($2$ multiplies each, stages A+B only, no Fermat) isolates the
+offending lanes, which then receive per-lane FLAGS.V semantics while
+unit lanes emerge bit-exact. The crossover at which batch inversion
+breaks even is $k = 2$; the asymptote is $2.86\times$ speedup with a
+$+33\%$ MAC volume ceiling. Table~\ref{tab:batch-inv} quantifies the
+trade-off on representative RPLU2 workload mixes.
+
 \subsection{The Execution Layer: Deterministic Issue Control}
 
 The 4R2W multi-port register file (\texttt{spu13\_multi\_port\_regfile.v})
@@ -547,6 +567,45 @@ scenarios: valid inversion, zero-element trap, false-positive guard
 In all cases, the hardware completes within the fixed cycle budget---no
 hang, no watchdog timeout, no silent corruption.
 
+\subsection{Montgomery Batch Inversion Speedup}
+
+Table~\ref{tab:batch-inv} reports the cycle-model speedup of Montgomery
+batch inversion vs.\ per-element tower runs, using the RTL-documented
+costs of 76 cycles per tower and 3 cycles per shared multiply. The
+measured workloads span single Pad\'{e} evaluations through multi-lane
+manifold sweeps and trajectory propagation. At $k = 13$ (one 13-axis
+manifold sweep), the batch path saves $60.0\%$ of the per-element tower
+cycles at the cost of $+30.8\%$ additional MAC volume on the shared
+multiplier. The MAC-volume ceiling is $\sim 33\%$, and the multiplier
+is shared with the rest of the RPLU2 sidecar, so the win is real only
+where the tower actually serializes---exactly the batched Pad\'{e} use
+case described in Section~\ref{sec:tower}.
+
+\begin{table}[ht]
+\centering
+\caption{Montgomery batch inversion cycle model: tower = 76 cycles,
+shared multiply = 3 cycles. $k$ is the number of denominators inverted
+in one batch. MAC $\Delta$ is the increase in shared-multiplier
+operations vs.\ the per-element baseline. Values regenerated verbatim
+from the \texttt{test\_pade\_batch\_inversion.py} oracle output.}
+\label{tab:batch-inv}
+\begin{tabular}{lrrrr}
+\toprule
+$k$ & Baseline cycles & Batch cycles & Speedup & MAC $\Delta$ \\
+\midrule
+2 (crossover)    & 206   & 139   & 1.48$\times$ & $+16.7\%$ \\
+4 (quad step)    & 412   & 211   & 1.95$\times$ & $+25.0\%$ \\
+13 (manifold sweep) & 1,339 & 535   & 2.50$\times$ & $+30.8\%$ \\
+26 (2-step sweep)   & 2,678 & 1,003 & 2.67$\times$ & $+32.1\%$ \\
+104 (trajectory)    & 10,712 & 3,811 & 2.81$\times$ & $+33.0\%$ \\
+Asymptote       & ---   & ---   & 2.86$\times$ & $+33.3\%$ \\
+\bottomrule
+\multicolumn{5}{l}{\footnotesize Sensitivity at $k=13$: speedup is
+3.20$\times$/2.50$\times$/2.12$\times$ for multiply costs of
+2/3/4 cycles---the conclusion is robust to FSM handshake overhead.} \\
+\end{tabular}
+\end{table}
+
 \subsection{Resource Profile}
 
 Table~\ref{tab:resource} compares the RPLU v2 against the legacy
@@ -655,6 +714,19 @@ scoreboard module exists but requires variable-latency writeback tracking,
 a same-cycle set/clear resolution rule, and a dedicated testbench before
 it can be claimed; it is deliberately excluded from the verified baseline
 presented here.
+
+\subsection{Montgomery Batch Inversion RTL}
+
+The batch inversion algorithm described in Section~\ref{sec:tower} has
+been validated as a Python oracle and is under active RTL
+implementation as \texttt{spu13\_batch\_inverter.v}. The module wraps the
+existing conjugate reduction tower and shared M31 multiplier with a
+prefix-product accumulator, an unwind FSM, and a deferred zero-divisor
+isolator using the 2-multiply norm probe (stages A+B only, no Fermat).
+The variable batch latency ($\sim 76 + 9(k-1)$ cycles) integrates with
+the scoreboard v2's done-coupled busy bits already validated in the
+baseline pipeline. This module is anticipated for the RPLU v2.1 silicon
+spin on the Wukong Artix-7 100T target.
 
 \subsection{Higher Algebraic Towers}
 
@@ -800,6 +872,11 @@ Springer, 1995.
 H.~Pad\'{e},
 ``Sur la repr\'{e}sentation approch\'{e}e d'une fonction par des fractions rationnelles,''
 \emph{Ann. Sci. \'{E}c. Norm. Sup\'{e}r.}, vol.~9, pp.~3--93, 1892.
+
+\bibitem{montgomery1987}
+P.~L.~Montgomery,
+``Speeding the Pollard and elliptic curve methods of factorization,''
+\emph{Math. Comp.}, vol.~48, no.~177, pp.~243--264, 1987.
 
 \bibitem{habock2024}
 U.~Hab\"{o}ck, D.~Levit, and S.~Papini,
