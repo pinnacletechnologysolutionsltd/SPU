@@ -2,7 +2,7 @@
 
 Syntax highlighting, snippets, and build tasks for **Sovereign Assembly** (`.sas`)
 and **Laminar Lang** (`.lam`) files used in the
-[SPU-13 Sovereign Engine](../../README.md) project.
+[SPU-13 Synergetic Engine](../../README.md) project.
 
 ## What is SPU-13?
 

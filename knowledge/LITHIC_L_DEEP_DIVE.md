@@ -1,6 +1,6 @@
 # Lithic-L Deep Dive: Gestalt Programming in the 13th Dimension
 
-Lithic-L is the native high-level programming paradigm for the SPU-13 Sovereign Engine. It represents a radical departure from the "Instruction Stream" model of standard von Neumann computers.
+Lithic-L is the native high-level programming paradigm for the SPU-13 Synergetic Engine. It represents a radical departure from the "Instruction Stream" model of standard von Neumann computers.
 
 ## 1. The Core Philosophy: Gestalt vs. Procedural
 

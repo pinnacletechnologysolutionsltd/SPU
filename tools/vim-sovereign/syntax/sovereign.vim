@@ -1,4 +1,4 @@
-" SPU-13 Sovereign Engine — Vim/Neovim syntax highlighting
+" SPU-13 Synergetic Engine — Vim/Neovim syntax highlighting
 " File: syntax/sovereign.vim
 " Language: Sovereign Assembly (.sas) / Laminar Lang (.lam)
 " Maintainer: SPU-13 Project

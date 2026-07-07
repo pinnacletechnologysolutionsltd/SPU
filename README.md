@@ -1,4 +1,4 @@
-# SPU-13 Sovereign Processing Unit
+# SPU-13 Synergetic Processing Unit
 
 **An experimental FPGA coprocessor for exact, deterministic geometric computation.
 Its RPLU2 pipeline combines SOM classification, collision routing, rational Padé
@@ -92,7 +92,7 @@ python3 software/cross_validate.py       # 5/5 snaps matched (VM vs C++)
 | Core | Axes | Role |
 |------|------|------|
 | **SPU-4 Sentinel** | 4 (Quadray) | Euclidean satellite, sensory input |
-| **SPU-13 Cortex** | 13 (cuboctahedral) | Sovereign manifold engine |
+| **SPU-13 Cortex** | 13 (cuboctahedral) | Synergetic manifold engine |
 
 Both synthesized with [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
 For Artix-7 / Wukong, use the repo OpenXC7 setup in [`docs/toolchain_setup.md`](docs/toolchain_setup.md).

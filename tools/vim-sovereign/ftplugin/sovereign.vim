@@ -1,4 +1,4 @@
-" SPU-13 Sovereign Engine — Vim/Neovim file-type settings
+" SPU-13 Synergetic Engine — Vim/Neovim file-type settings
 " File: ftplugin/sovereign.vim
 
 setlocal commentstring=;\ %s

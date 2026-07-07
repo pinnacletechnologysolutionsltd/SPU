@@ -1,6 +1,6 @@
 # Lithic-L: A Formally Closed Programming Language for Q(√3) Geometry
 
-**Version 1.0 — SPU-13 Sovereign Engine Language Specification**
+**Version 1.0 — SPU-13 Synergetic Engine Language Specification**
 
 *Authors: SPU-13 Project / CC0 1.0 Universal*
 
@@ -8,7 +8,7 @@
 
 ## Abstract
 
-Lithic-L is the native programming language of the SPU-13 Sovereign Processing Unit.
+Lithic-L is the native programming language of the SPU-13 Synergetic Processing Unit.
 It is not an assembly language in the conventional sense, and it is not a high-level
 language in the C/Java sense. It occupies a new category: a **field-native language**
 whose atomic type is an element of the algebraic number field Q(√3), not a bit.

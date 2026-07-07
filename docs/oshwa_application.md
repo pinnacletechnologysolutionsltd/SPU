@@ -11,7 +11,7 @@
 
 | Field | Value |
 |:---|:---|
-| **Project Name** | SPU-13 Sovereign Processing Unit — ECP5 Carrier Board |
+| **Project Name** | SPU-13 Synergetic Processing Unit — ECP5 Carrier Board |
 | **OSHWA UID** | (To be assigned upon submission) |
 | **Submitted By** | John Curley |
 | **Contact Email** | (Public repository contact) |

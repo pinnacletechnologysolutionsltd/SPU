@@ -1,4 +1,4 @@
-// Davis Law Live Monitor — SPU-13 Sovereign Engine
+// Davis Law Live Monitor — SPU-13 Synergetic Engine
 // Demonstrates the complete physics stack end-to-end:
 //   Q(√3) → Quadray → IVM Manifold13 → Davis Gasket + Jitterbug
 //

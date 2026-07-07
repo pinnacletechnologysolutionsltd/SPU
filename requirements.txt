@@ -1,4 +1,4 @@
-# SPU-13 Sovereign Engine — Python dependencies
+# SPU-13 Synergetic Engine — Python dependencies
 # Install into the project venv:
 #   python3 -m venv venv
 #   source venv/bin/activate

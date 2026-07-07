@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language SYSTEM "language.dtd">
 <!--
-  SPU-13 Sovereign Engine — KSyntaxHighlighting grammar
+  SPU-13 Synergetic Engine — KSyntaxHighlighting grammar
   File: sovereign.xml
   Language: Sovereign Assembly (.sas) / Laminar Lang (.lam)
   Install: ~/.local/share/org.kde.syntax-highlighting/syntax/sovereign.xml

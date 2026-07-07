@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "Sovereign Assembly",
   "scopeName": "source.sovereign-asm",
-  "comment": "SPU-13 Sovereign Engine — TextMate grammar for .sas / .lam files",
+  "comment": "SPU-13 Synergetic Engine — TextMate grammar for .sas / .lam files",
   "patterns": [
     { "include": "#comments" },
     { "include": "#labels" },

@@ -1,5 +1,5 @@
 # Rational Shader & Bresenham Killer — Pipeline Integration
-# SPU-13 Sovereign Engine v4.1
+# SPU-13 Synergetic Engine v4.1
 
 ## Overview
 

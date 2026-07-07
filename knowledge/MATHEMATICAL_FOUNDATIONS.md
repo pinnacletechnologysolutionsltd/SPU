@@ -2,7 +2,7 @@
 
 ## Abstract
 
-The SPU-13 Sovereign Processing Unit is not an arbitrary design choice. It is the
+The SPU-13 Synergetic Processing Unit is not an arbitrary design choice. It is the
 logical conclusion of a 70-year chain of mathematical insight — from Buckminster
 Fuller's empirical discovery that tetrahedral geometry produces whole-number volumes,
 through Norman Wildberger's algebraic proof that trigonometry requires no division,

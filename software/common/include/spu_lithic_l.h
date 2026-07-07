@@ -1,5 +1,5 @@
 // spu_lithic_l.h — Lithic-L ISA: 64-bit Chord instruction encoding
-// Layer 5 of the Q(√3) software stack for the SPU-13 Sovereign Engine.
+// Layer 5 of the Q(√3) software stack for the SPU-13 Synergetic Engine.
 //
 // Encoding (64-bit control word, matches spu_vm.py v1.2):
 //   [63:56]  opcode   (8-bit)

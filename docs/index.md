@@ -1,4 +1,4 @@
-# SPU-13 Sovereign Processing Unit
+# SPU-13 Synergetic Processing Unit
 
 An experimental FPGA coprocessor for **exact, deterministic geometric
 computation** — all arithmetic in rational fields (Q(√3), A₃₁ over the
