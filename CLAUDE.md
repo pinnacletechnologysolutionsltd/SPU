@@ -50,6 +50,8 @@ python3 software/tests/test_rational_robotics.py     # 56 checks, Pell/FGH circu
 python3 software/tests/test_rational_som.py          # 24 checks, SOM/BMU oracle
 python3 software/tests/test_rotc_vm_rtl_trace.py     # VM-vs-RTL trace equivalence, all 6 ROTC angles
 python3 software/tests/test_lucas_mac_oracle.py      # Lucas Phinary MAC, 1M-step zero-drift
+python3 software/tests/test_pade_batch_inversion.py  # A31 Montgomery batch inversion, 25 checks + cost tables
+python3 software/tests/test_hyper_catalan_oracle.py  # hyper-Catalan series + jet ring, 21 checks vs published tables
 python3 software/spu_vm_test.py                      # VM correctness
 python3 software/cross_validate.py                   # VM vs C++ parity
 ```

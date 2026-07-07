@@ -67,6 +67,8 @@ docs/                   Design guides and bring-up runbooks
 | `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Build RPLU2PADE Padé pipeline for Wukong Artix-7 (72 DSP, 34% LUT) |
 || `python3 software/tests/test_lucas_mac_oracle.py` | Run Lucas Phinary MAC oracle (PSCALE/PCHIRAL/PMUL/PINV + 1M-step zero-drift) |
 | `iverilog -I hardware/rtl/arch -o build/lucas_mac_tb.vvp hardware/rtl/core/spu13/spu13_lucas_mac.v hardware/tests/spu13/spu13_lucas_mac_tb.v && vvp build/lucas_mac_tb.vvp` | Run Lucas MAC RTL testbench (11 ops + 100-period zero-drift) |
+| `python3 software/tests/test_pade_batch_inversion.py` | Run Montgomery batch inversion oracle (25 checks, tower/MAC cost tables) |
+| `python3 software/tests/test_hyper_catalan_oracle.py` | Run hyper-Catalan series + jet-ring oracle (21 checks vs Wildberger-Rubine 2025) |
 
 Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
 
@@ -113,6 +115,19 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - Rational SOM/BMU oracle — 24 checks
 - C++ parity for both oracles
 - Lucas Phinary MAC oracle — 1M-step zero-drift, all 4 ops verified
+- A31 field + Montgomery batch inversion oracle — 25 checks; bit-exact tower
+  model (`spu13_fp4_inverter` semantics incl. FLAGS.V), k inversions →
+  1 tower + 3(k-1) mults, 2.5x at k=13. RTL contract:
+  `docs/MONTGOMERY_BATCH_INVERSION.md` (RTL implementation in progress,
+  external contributor — oracle is the source of truth, RTL must match
+  bit-exact including singular-lane semantics)
+- Hyper-Catalan series + jet ring oracle — 21 checks vs the published
+  Wildberger-Rubine tables (Bi-Tri array, Geode factorization, layerings);
+  exact jet-perturbed root-tracking in A31[eps]/(eps^3) proven by
+  back-substitution; gives `spu13_jet_mac`/`spu13_jet_inv` their Python
+  oracle. Measured verdict: at eps^3 depth Newton-Hensel (2 towers, 548 cyc)
+  beats the closed-form series stream (1 tower, 724 cyc) — do NOT build a
+  dedicated SRU streaming pipeline without revisiting those numbers
 
 **Known board limitations:**
 - SDRAM module (W9825G6KH) retired — DQ[10] fault confirmed, not an FPGA issue
@@ -184,6 +199,12 @@ Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit p
 | Lucas Phinary MAC oracle | `software/tests/test_lucas_mac_oracle.py` | PSCALE/PCHIRAL/PMUL/PINV, 1M-step zero-drift over L_521 |
 | Lucas MAC architecture | `knowledge/LUCAS_PHINARY_MAC.md` | Ring separation, Barrett bridge, BTU integration, opcode map |
 | Lucas MAC paper | `docs/LUCAS_MAC_PAPER.md` | 7-section paper draft with empirical results |
+| A31 field oracle | `software/lib/a31_field.py` | A31 mult table, Conjugate Reduction Tower (FLAGS.V), Montgomery batch inversion, Padé eval, op counting |
+| Batch inversion tests | `software/tests/test_pade_batch_inversion.py` | 25 checks — bit-exact batch vs per-element towers, singular isolation, cycle/MAC tables |
+| Batch inversion RTL contract | `docs/MONTGOMERY_BATCH_INVERSION.md` | Semantics, interface, singular-lane tiers, acceptance checklist for the RTL block |
+| Hyper-Catalan oracle | `software/lib/hyper_catalan.py` | Exact C_m (Wildberger-Rubine Thm 5), ring-generic soft polynomial formula (Thm 4) |
+| Jet ring oracle | `software/lib/jet_ring.py` | A31[eps]/(eps^3) matching `spu13_jet_mac`/`spu13_jet_inv` multiply-for-multiply |
+| Hyper-Catalan tests | `software/tests/test_hyper_catalan_oracle.py` | 21 checks — paper tables, Geode factorization, exact jet root-tracking, Newton comparison |
 
 ## Coding Style & Naming Conventions
 
