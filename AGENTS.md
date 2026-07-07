@@ -107,6 +107,9 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
+- **Montgomery batch inverter** — 1 tower + 3(k-1) mults for k≤16, deferred
+  zero-divisor check, singular-lane isolation + unit-subset re-batch; 52
+  golden lanes verified against the Python oracle (committed .mem)
 - GPU rasterizer + fragment pipe (testbench passes)
 - Bio stack (annealer, active inference, soul metabolism, proprioception)
 
@@ -118,9 +121,14 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - A31 field + Montgomery batch inversion oracle — 25 checks; bit-exact tower
   model (`spu13_fp4_inverter` semantics incl. FLAGS.V), k inversions →
   1 tower + 3(k-1) mults, 2.5x at k=13. RTL contract:
-  `docs/MONTGOMERY_BATCH_INVERSION.md` (RTL implementation in progress,
-  external contributor — oracle is the source of truth, RTL must match
-  bit-exact including singular-lane semantics)
+  `docs/MONTGOMERY_BATCH_INVERSION.md`. RTL landed and testbench-verified:
+  `spu13_batch_inverter.v` (shared-multiplier mux, unit-subset re-batch,
+  done-coupled busy). Golden vectors are a COMMITTED file
+  (`hardware/tests/spu13/spu13_batch_inv_golden.mem`) regenerated via
+  `test_pade_batch_inversion.py --emit-mem` — includes ordering-adversarial
+  unit-LAST cases that caught a stale-read isolation bug (fixed 2d8658b);
+  keep those orderings when adding vectors. Remaining: board `.ys` wiring,
+  and external mult/tower handshake ports before sidecar integration
 - Hyper-Catalan series + jet ring oracle — 21 checks vs the published
   Wildberger-Rubine tables (Bi-Tri array, Geode factorization, layerings);
   exact jet-perturbed root-tracking in A31[eps]/(eps^3) proven by
