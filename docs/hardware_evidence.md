@@ -764,6 +764,52 @@ qsub lane=3 A=9 B=18 C=27 D=36
 RPLU2CORE_QSUB: PASS
 ```
 
+**Restart revalidation, 2026-07-06 NZT:**
+
+After a host reboot, the current local packed `SU3SHARE` bitstream SHA-256 was
+`0f886350d43966303aa1c74c38265dd8ee3b8554b71eb531589027db780681cf`. The
+same build artifacts still report 60,837 LUTX cells, 16,478 FFX cells, 64
+DSP48E1 cells, `iter=85 overused=0`, and `clk_fast` max 3.67 MHz. DirtyJTAG
+SRAM load completed with `Load SRAM 100%`, `isc_done 1`, `init 1`, and
+`done 1`.
+
+The RP2350 `rp2350_su3_j11_smoke.uf2` run reported:
+
+```text
+SU3_J11: PASS
+```
+
+The expanded RP2350 `rp2350_su3_j11_smoke.uf2` image, SHA-256
+`a6d8f0541fd2cce3a930173b0ee43ba071c92826fc5dc81540674c1e0a9da87d`,
+was then loaded against the same `SU3SHARE` FPGA image. It checks all nine
+dense-product result elements and tags them onto QR lanes 0 through 8. Two
+complete capture loops reported exact matches for every element and ended with:
+
+```text
+case elem=0 lane=0 ... PASS
+case elem=1 lane=1 ... PASS
+case elem=2 lane=2 ... PASS
+case elem=3 lane=3 ... PASS
+case elem=4 lane=4 ... PASS
+case elem=5 lane=5 ... PASS
+case elem=6 lane=6 ... PASS
+case elem=7 lane=7 ... PASS
+case elem=8 lane=8 ... PASS
+SU3_J11: PASS
+```
+
+The RP2350 `rp2350_rplu2_j11_smoke.uf2` run then reported, on the same FPGA
+image:
+
+```text
+after cfgtele count=149 last_sel=6 last_data=0x0000000000000003
+checksum=0xBA708FD4 rplu2_sum=0x0AA480E7 rplu2_status=0xC02E0001
+RPLU2_J11: PASS
+RPLU2CORE_QR: PASS
+qsub qr valid=1 lane=3 A=9 B=18 C=27 D=36
+RPLU2CORE_QSUB: PASS
+```
+
 **Interpretation:**
 - The shared multiplier plumbing is verified in RTL and silicon. SU3 no longer
   requires a private M31 multiplier in the integrated Artix image.
@@ -889,9 +935,19 @@ ROTC:P A:5 E:00
 
 ### 3.2g SOM/BMU Classifier Silicon Probe
 
-**Date:** 2026-06-30 NZT
+**Date:** 2026-06-30 NZT; BRAM-backed refresh verified 2026-07-06 NZT
 
 **Fixes under test:**
+- `hardware/rtl/core/spu13/spu_som_weight_bram.v` provides four synchronous
+  BRAM-backed feature slices for node weights, with the seven-node fixture
+  initialized in RTL and `.mem` files staged for later hydration.
+- The BRAM wrapper uses registered read data so Gowin maps the writeable store
+  to block RAM when `train_we`/`wr_en` is active.
+- `hardware/rtl/core/spu13/spu_som_bmu.v` primes the BRAM read address before
+  scanning node 0, exposes training readback from the BRAM read port, and uses
+  a scalable `train_addr` width tied to `MAX_NODES`.
+- `hardware/rtl/core/spu13/spu_som_train.v` latches the last valid BMU result
+  so training can start after the one-cycle `bmu_valid` pulse.
 - `hardware/rtl/core/spu13/spu_som_bmu.v` now latches and applies the
   `feature_weights` vector during weighted quadrance calculation. The previous
   RTL matched labels for the smoke cases but did not implement the documented
@@ -911,13 +967,14 @@ iverilog -g2012 -I hardware/rtl/arch \
   -o build/spu13_tang25k_som_bmu_probe_tb.vvp \
   hardware/tests/spu13/spu13_tang25k_som_bmu_probe_tb.v \
   hardware/boards/tang_primer_25k/spu13_tang25k_som_bmu_probe.v \
+  hardware/rtl/core/spu13/spu_som_weight_bram.v \
   hardware/rtl/core/spu13/spu_som_bmu.v \
   hardware/rtl/core/spu13/spu_cluster_reduce.v &&
 vvp build/spu13_tang25k_som_bmu_probe_tb.vvp
 ```
 
-**Result:** PASS for the Python oracle, VM-vs-RTL BMU trace, and Tang probe
-wrapper testbench.
+**Result:** PASS for the Python oracle, VM-vs-RTL BMU trace, Tang probe wrapper
+testbench, and full repository regression (`112/112 PASS` on 2026-07-06).
 
 **Tang probe build:**
 
@@ -926,8 +983,9 @@ bash build_25k_spu13_som_bmu_probe.sh
 openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_som_bmu_probe.fs
 ```
 
-**Routed footprint:** 13,189 LUT4, 959 DFF, 1,130 ALU, 0 BRAM, 0 DSP. Timing
-passes at 12 MHz (`u_bmu.clk` max 84.75 MHz).
+**Routed footprint:** 15,325 LUT4, 1,009 DFF, 1,268 ALU, 4 BSRAM, 0 DSP. Timing
+passes at 12 MHz (`u_bmu.clk` max 77.45 MHz). The 2026-07-06 bitstream SHA-256
+is `0385b641a86530696116c13e8b81676e74ec9da091617268808a503f186a9854`.
 
 **UART proof:**
 
@@ -941,8 +999,55 @@ SOM:P T:2 B:6 E:00
 - `E:00` means no mismatch was detected across BMU fields or cluster-reduce
   outputs.
 - This proves deterministic SOM/BMU classification in silicon for the
-  hardcoded 7-node fixture. It does not prove SOM training, BRAM-backed larger
+  BRAM-backed 7-node fixture. It does not prove external SPI hydration of larger
   maps, visual telemetry frames, or SOM→RPLU material-bank gating.
+
+### 3.2g.1 SOM BRAM Hydration Silicon Probe
+
+**Date:** 2026-07-06 NZT
+
+**Scope:** dedicated Tang 25K self-checking bitstream for the writeable SOM
+node-weight BRAM primitive. The probe instantiates `spu_som_weight_bram`
+directly, checks the initialized node-0 value, writes node 0 feature 0 through
+the BRAM write port, reads it back, then writes only feature 3 of node 6 and
+verifies that features 0-2 were preserved by the byte-enable mask.
+
+**Simulation/build commands:**
+
+```
+iverilog -g2012 -I hardware/rtl/arch \
+  -o build/spu13_tang25k_som_hydrate_probe_tb.vvp \
+  hardware/tests/spu13/spu13_tang25k_som_hydrate_probe_tb.v \
+  hardware/boards/tang_primer_25k/spu13_tang25k_som_hydrate_probe.v \
+  hardware/rtl/core/spu13/spu_som_weight_bram.v &&
+vvp build/spu13_tang25k_som_hydrate_probe_tb.vvp
+
+bash build_25k_spu13_som_hydrate_probe.sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_som_hydrate_probe.fs
+```
+
+**Result:** PASS for the hydration probe testbench, SOM-focused regression
+(`TB_FILTER=som python3 run_all_tests.py`, `24/24 PASS`), and full repository
+regression (`112/112 PASS`).
+
+**Routed footprint:** 583 LUT4, 165 DFF, 200 ALU, 8 BSRAM, 0 DSP. Timing passes
+at 12 MHz (`u_bram.clk` max 196.50 MHz). Bitstream SHA-256:
+`6177aa67722b3888e70b251959058357ca79e0bd0b4d52f5b41ae7e4aed5d891`.
+
+**UART proof:**
+
+```
+HYD:P T:3 B:6 E:00
+```
+
+**Interpretation:**
+- `T:3` means initial readback, node-0 write/readback, and node-6 byte-enable
+  preservation all passed.
+- `B:6` means the final checked node was node 6.
+- The full writeable-BMU Tang image was attempted first but did not legally
+  place at 20,304 LUT4 / 8 BSRAM (88% LUT). Tang therefore remains split into
+  a classifier proof (`SOM:P`) and a storage-hydration proof (`HYD:P`); the
+  next integration step is an RP2350-driven write path into this BRAM interface.
 
 ### 3.2h Six-Step Robotics Kinematics Silicon Probe
 

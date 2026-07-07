@@ -16,9 +16,6 @@ bring-up context.
 | `build_and_bringup_guide.md` | Commands, wiring, and board bring-up procedures |
 | `fpga_board_scaling_strategy.md` | Board acquisition and scaling ladder |
 | `SPU13_IDENTITY_AND_BOUNDARIES.md` | Claim boundaries and public language |
-| `SPU13_MARKET_AND_GRANT_POSITIONING.md` | Grant, research, outreach, and market positioning |
-| `PUBLICATION_STRATEGY_INDEX.md` | Paper/publication strategy index |
-| `public_site_and_outreach_plan.md` | Website, blog, and social outreach plan |
 
 ## Active Paper Drafts
 
@@ -52,7 +49,7 @@ These are useful but not current sources of truth:
 | `publication_and_promotion_strategy.md` | Historical publication tactics; use current index first |
 | `publication_roadmap_12week.txt` | Historical tactical plan; do not quote metrics without current evidence |
 | `SD_HYDRATION_AUDIT_JUNE28_2026.md` | Point-in-time SD/RP2350/Tang audit |
-| `tang25k_replacement_bringup_plan.md` | Closed-regression ladder; useful for retest order |
+| `archive/tang25k/tang25k_replacement_bringup_plan.md` | Closed-regression ladder; useful for retest order |
 | `rp_mcu_bringup_plan.md` | RP2040/RP2350 bring-up history |
 
 ## Update Rules

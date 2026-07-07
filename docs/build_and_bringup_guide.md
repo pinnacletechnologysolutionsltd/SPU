@@ -136,7 +136,8 @@ independent probes now split the architecture into testable subsystems:
 | `lucas_mac_probe` | 0 | 0 | 696 LUT4 | `bash build_25k_spu13_lucas_mac_probe.sh` | PSCALE/PCHIRAL fast paths, PSCALE zero-drift |
 | `rotc_probe` | 0 | 0 | 13,352 LUT4 | `bash build_25k_spu13_rotc_probe.sh` | Corrected ROTC 0-5 trace and period closure |
 | `six_step_probe` | 0 | 0 | 13,576 LUT4 | `bash build_25k_spu13_six_step_probe.sh` | Period-6 six-step robotics closure and inverse recovery |
-| `som_bmu_probe` | 0 | 0 | 13,189 LUT4 | `bash build_25k_spu13_som_bmu_probe.sh` | Weighted SOM/BMU classification and cluster reduction |
+| `som_bmu_probe` | 0 | 0 | 15,325 LUT4 + 4 BSRAM | `bash build_25k_spu13_som_bmu_probe.sh` | BRAM-backed weighted SOM/BMU classification and cluster reduction |
+| `som_hydrate_probe` | 0 | 0 | 583 LUT4 + 8 BSRAM | `bash build_25k_spu13_som_hydrate_probe.sh` | SOM BRAM write/readback and per-feature byte-enable hydration |
 | `neuro_guard_probe` | 0 | 0 | 5,016 LUT4 | `bash build_25k_spu13_neuro_guard_probe.sh` | Fixed-epoch neuro guard, Lucas norm admission, fallback |
 | `neuro_sidecar_probe` | 0 | 0 | 4,013 LUT4 | `bash build_25k_spu13_neuro_sidecar_probe.sh` | SPI-visible neuro adapter opcodes, readback, overflow fallback |
 
@@ -171,10 +172,15 @@ ROTC angle-1 phases, angle-4 inverse recovery after every phase, early-closure
 rejection, and exact closure on phase 5. Hardware-verified UART after SRAM load
 is `KIN:P P:5 E:00`.
 
-The `som_bmu_probe` routes at 13,189 LUT4 / 959 DFF / 1,130 ALU with no BRAM
+The `som_bmu_probe` routes at 15,325 LUT4 / 1,009 DFF / 1,268 ALU with 4 BSRAM
 and no DSP. It self-checks two weighted seven-node SOM/BMU oracle scenarios and
-the cluster-reduce label/ambiguity path. Hardware-verified UART after SRAM load
-is `SOM:P T:2 B:6 E:00`.
+the cluster-reduce label/ambiguity path using the BRAM-backed node-weight store.
+Hardware-verified UART after SRAM load is `SOM:P T:2 B:6 E:00`.
+
+The `som_hydrate_probe` routes at 583 LUT4 / 165 DFF / 200 ALU with 8 BSRAM
+and no DSP. It self-checks the writeable SOM node-weight store: initial node-0
+readback, node-0 feature hydration, and node-6 per-feature byte-enable
+preservation. Hardware-verified UART after SRAM load is `HYD:P T:3 B:6 E:00`.
 
 The `neuro_guard_probe` routes at 5,016 LUT4 / 358 DFF with
 `synth_gowin -noalu`, no BRAM, no DSP, and no ALU carry cells. It is a
@@ -397,10 +403,10 @@ A7_FREQ=2 A7_CLK_DIV_LOG2=6 bash hardware/boards/artix7/build_a7.sh 100t su3shar
 openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_SU3SHARE.bit
 ```
 
-Current 2026-07-05 bench result: the image routes at the 2 MHz bring-up target
+Current 2026-07-06 restart revalidation: the image routes at the 2 MHz bring-up target
 (`clk_fast` max 3.67 MHz), uses 64 DSP48E1 cells total for the shared M31 path,
 SRAM-loads with `done 1`, and has SHA-256
-`4dff1a6e5fbbfc2f10afca0afd5ff08846727a6b0b3571eb76deb755aafb80ed`.
+`0f886350d43966303aa1c74c38265dd8ee3b8554b71eb531589027db780681cf`.
 
 Run the SU3 smoke first:
 
@@ -413,6 +419,10 @@ Expected result:
 ```text
 SU3_J11: PASS
 ```
+
+Current 2026-07-06 SU3 smoke firmware SHA-256:
+`a6d8f0541fd2cce3a930173b0ee43ba071c92826fc5dc81540674c1e0a9da87d`.
+It checks all 9 dense-product result elements, using QR lanes 0 through 8.
 
 Then load the RPLU2 smoke firmware against the same FPGA image:
 
@@ -463,7 +473,7 @@ First load SRAM only, without `-f`:
 openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_<probe>.fs
 ```
 
-See `docs/tang25k_replacement_bringup_plan.md` for detailed sequences.
+See `docs/archive/tang25k/tang25k_replacement_bringup_plan.md` for detailed sequences.
 
 ### 5.2 Tang Primer 25K (RP2350 Southbridge)
 1. Flash `rp2350_uart_injector.uf2` to RP2040

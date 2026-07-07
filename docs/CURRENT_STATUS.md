@@ -44,7 +44,9 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
 - Tang 25K `rotc_probe` is SRAM-load/UART verified for corrected ROTC angles
   0-5, including canonical VM/RTL trace matching and period closure.
 - Tang 25K `som_bmu_probe` is SRAM-load/UART verified for deterministic
-  weighted SOM/BMU classification over the 7-node fixture.
+  weighted SOM/BMU classification over the BRAM-backed 7-node fixture.
+- Tang 25K `som_hydrate_probe` is SRAM-load/UART verified for SOM BRAM
+  write/readback and per-feature byte-enable preservation (`HYD:P T:3 B:6 E:00`).
 - Tang 25K `six_step_probe` is SRAM-load/UART verified for the period-6
   rational robotics kinematics harness (`KIN:P P:5 E:00`).
 - Tang 25K `neuro_guard_probe` is SRAM-load/UART verified as a standalone
@@ -280,12 +282,13 @@ Current Artix-7 SU3SHARE shared-multiplier proof:
   `overused=0`, and post-route timing reports `clk_fast` max 3.67 MHz, PASS at
   the 2 MHz bring-up target.
 - Packed bitstream: `build/spu_a7_100t_SU3SHARE.bit`, SHA-256
-  `4dff1a6e5fbbfc2f10afca0afd5ff08846727a6b0b3571eb76deb755aafb80ed`.
+  `0f886350d43966303aa1c74c38265dd8ee3b8554b71eb531589027db780681cf`.
 - SRAM load through DirtyJTAG completed with `Load SRAM 100%`, `isc_done 1`,
   `init 1`, and `done 1`.
 - With `rp2350_su3_j11_smoke.uf2`, the shared image repeatedly reports
-  `SU3_J11: PASS` for the same three dense-matrix oracle elements as the
-  standalone SU3 image.
+  `SU3_J11: PASS` for all nine dense-matrix oracle result elements, read back
+  through QR lanes 0 through 8. The current expanded smoke UF2 SHA-256 is
+  `a6d8f0541fd2cce3a930173b0ee43ba071c92826fc5dc81540674c1e0a9da87d`.
 - With `rp2350_rplu2_j11_smoke.uf2` loaded after the SU3 smoke, the same
   `SU3SHARE` bitstream reports `RPLU2_J11: PASS`, `RPLU2CORE_QR: PASS`, and
   `RPLU2CORE_QSUB: PASS`, with `rplu2_sum=0x0AA480E7` and
@@ -320,12 +323,11 @@ epoch control and guard telemetry over the existing SPI southbridge path.
 - Build and board commands: `docs/build_and_bringup_guide.md`
 - Architecture identity and claim boundaries:
   `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`
-- Market and grant positioning:
-  `docs/SPU13_MARKET_AND_GRANT_POSITIONING.md`
-- Neuro-safe sidecar plan: `docs/neuro_safe_sidecar_plan.md`
+- Market and grant positioning: `spu_strategy/` (private, untracked)
+- Neuro-safe sidecar plan: `docs/archive/legacy/neuro_safe_sidecar_plan.md`
 - SU3 coprocessor plan and paper:
   `docs/SU3_EXTENSION_PLAN.md`, `docs/SU3_COPROCESSOR_PAPER.md`
 - Wukong/OpenXC7 setup: `docs/toolchain_setup.md`
 - Southbridge protocol and SD/RPLU2 hydration evidence:
   `docs/SOUTHBRIDGE_SPI_PROTOCOL.md`
-- Tang 25K regression ladder: `docs/tang25k_replacement_bringup_plan.md`
+- Tang 25K regression ladder: `docs/archive/tang25k/tang25k_replacement_bringup_plan.md`
