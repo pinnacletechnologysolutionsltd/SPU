@@ -17,6 +17,13 @@
 //
 // Latency: ~12 cycles (6 multiplies cascaded through shared M31 multiplier).
 // With dedicated DSP banks (Wukong): 3-4 cycles achievable.
+//
+// Non-unit detection is a registered 3-stage pipeline (o₀ and c₀ fed on
+// consecutive cycles), overlapped with the jet MAC run — it settles by
+// cycle ~5, so it adds no latency; `done` is gated on its completion in
+// case a future MAC ever finishes first. Evaluating the norm's depth-3
+// multiply cascade combinationally would cap Fmax below the 50 MHz board
+// clocks; one multiply level per clocked stage keeps timing clean.
 
 module spu13_phslk_core (
     input  wire         clk,
@@ -99,34 +106,6 @@ module spu13_phslk_core (
         end
     endfunction
 
-    function is_nonunit_a31;
-        input [31:0] z0, z1, z2, z3;
-        reg [31:0] z0_sq, z1_sq, z2_sq, z3_sq;
-        reg [31:0] a2_0, a2_1, b2_0, b2_1;
-        reg [31:0] d0, d1;
-        reg [31:0] d0_sq, d1_sq3;
-        reg [31:0] norm_n;
-        begin
-            z0_sq = m31_mul(z0, z0);
-            z1_sq = m31_mul(z1, z1);
-            z2_sq = m31_mul(z2, z2);
-            z3_sq = m31_mul(z3, z3);
-
-            a2_0 = m31_add(z0_sq, m31_mul_small(z1_sq, 4'd3));
-            a2_1 = m31_mul_small(m31_mul(z0, z1), 4'd2);
-            b2_0 = m31_add(z2_sq, m31_mul_small(z3_sq, 4'd3));
-            b2_1 = m31_mul_small(m31_mul(z2, z3), 4'd2);
-
-            d0 = m31_sub(a2_0, m31_mul_small(b2_0, 4'd5));
-            d1 = m31_sub(a2_1, m31_mul_small(b2_1, 4'd5));
-
-            d0_sq = m31_mul(d0, d0);
-            d1_sq3 = m31_mul_small(m31_mul(d1, d1), 4'd3);
-            norm_n = m31_sub(d0_sq, d1_sq3);
-            is_nonunit_a31 = (norm_n == 32'd0);
-        end
-    endfunction
-
     // ── Jet MAC instance for O·C ────────────────────────────────────
     wire [31:0] r0_z0, r0_z1, r0_z2, r0_z3;
     wire [31:0] r1_z0, r1_z1, r1_z2, r1_z3;
@@ -153,9 +132,91 @@ module spu13_phslk_core (
         .mult_done(mult_done)
     );
 
-    // ── Non-unit detection (combinational, before MAC) ───────────────
-    assign err_zero_divisor = is_nonunit_a31(o0_z0, o0_z1, o0_z2, o0_z3) ||
-                              is_nonunit_a31(c0_z0, c0_z1, c0_z2, c0_z3);
+    // ── Non-unit detection — registered 3-stage norm pipeline ────────
+    // N(z) = (z0² + 3z1² − 5z2² − 15z3²)² − 3·(2·z0z1 − 5·2·z2z3)²
+    // Stage 1: six full 32×32 products of the muxed operand.
+    // Stage 2: fold to the F_p(√3) pair (d0, d1) — small scales only.
+    // Stage 3: two squaring products, final subtract, exact zero test.
+    // Operands are fed o₀ then c₀ on consecutive cycles; both verdicts
+    // are registered by cycle ~5 while the jet MAC is still running.
+
+    reg  [1:0]  feed;                        // feed[0]: o₀ this cycle, feed[1]: c₀
+    wire [31:0] f_z0 = feed[0] ? o0_z0 : c0_z0;
+    wire [31:0] f_z1 = feed[0] ? o0_z1 : c0_z1;
+    wire [31:0] f_z2 = feed[0] ? o0_z2 : c0_z2;
+    wire [31:0] f_z3 = feed[0] ? o0_z3 : c0_z3;
+
+    reg         s1_v, s1_sel;                // sel: 0 = o₀, 1 = c₀
+    reg  [31:0] s1_z0sq, s1_z1sq, s1_z2sq, s1_z3sq, s1_z0z1, s1_z2z3;
+    reg         s2_v, s2_sel;
+    reg  [31:0] s2_d0, s2_d1;
+    reg         ez_o, ez_c, ez_o_v, ez_c_v;
+    reg         mac_seen, fired, done_r;
+
+    wire [31:0] norm_w = m31_sub(m31_mul(s2_d0, s2_d0),
+                                 m31_mul_small(m31_mul(s2_d1, s2_d1), 4'd3));
+    wire        nonunit_w = (norm_w == 32'd0);
+    wire        ez_ready  = ez_o_v && ez_c_v;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            feed   <= 2'b00;
+            s1_v   <= 1'b0;  s1_sel <= 1'b0;
+            s2_v   <= 1'b0;  s2_sel <= 1'b0;
+            ez_o   <= 1'b0;  ez_c   <= 1'b0;
+            ez_o_v <= 1'b0;  ez_c_v <= 1'b0;
+            mac_seen <= 1'b0; fired <= 1'b0; done_r <= 1'b0;
+        end else begin
+            done_r <= 1'b0;
+
+            if (start) begin
+                feed   <= 2'b01;
+                ez_o_v <= 1'b0;  ez_c_v <= 1'b0;
+                mac_seen <= 1'b0; fired <= 1'b0;
+                s1_v <= 1'b0;    s2_v <= 1'b0;
+            end else begin
+                feed <= {feed[0], 1'b0};
+
+                // Stage 1
+                s1_v   <= |feed;
+                s1_sel <= feed[1];
+                if (|feed) begin
+                    s1_z0sq <= m31_mul(f_z0, f_z0);
+                    s1_z1sq <= m31_mul(f_z1, f_z1);
+                    s1_z2sq <= m31_mul(f_z2, f_z2);
+                    s1_z3sq <= m31_mul(f_z3, f_z3);
+                    s1_z0z1 <= m31_mul(f_z0, f_z1);
+                    s1_z2z3 <= m31_mul(f_z2, f_z3);
+                end
+
+                // Stage 2
+                s2_v   <= s1_v;
+                s2_sel <= s1_sel;
+                if (s1_v) begin
+                    s2_d0 <= m31_sub(m31_add(s1_z0sq, m31_mul_small(s1_z1sq, 4'd3)),
+                                     m31_mul_small(m31_add(s1_z2sq, m31_mul_small(s1_z3sq, 4'd3)), 4'd5));
+                    s2_d1 <= m31_sub(m31_mul_small(s1_z0z1, 4'd2),
+                                     m31_mul_small(m31_mul_small(s1_z2z3, 4'd2), 4'd5));
+                end
+
+                // Stage 3
+                if (s2_v) begin
+                    if (!s2_sel) begin ez_o <= nonunit_w; ez_o_v <= 1'b1; end
+                    else         begin ez_c <= nonunit_w; ez_c_v <= 1'b1; end
+                end
+            end
+
+            // Completion coupling: done fires once both the MAC and the
+            // norm pipeline have finished (the MAC is the long pole today).
+            if (mac_done) mac_seen <= 1'b1;
+            if ((mac_seen || mac_done) && ez_ready && !fired) begin
+                done_r <= 1'b1;
+                fired  <= 1'b1;
+            end
+        end
+    end
+
+    assign err_zero_divisor = ez_o || ez_c;
 
     // ── Identity comparison (combinational, after mac_done) ─────────
     // Lane 0: must equal (1, 0, 0, 0)
@@ -168,9 +229,9 @@ module spu13_phslk_core (
     wire lane2_ok = (r2_z0 == 32'd0) && (r2_z1 == 32'd0) &&
                     (r2_z2 == 32'd0) && (r2_z3 == 32'd0);
 
-    assign flag_c = mac_done && lane0_ok && lane1_ok && lane2_ok && !err_zero_divisor;
+    assign flag_c = done_r && lane0_ok && lane1_ok && lane2_ok && !err_zero_divisor;
     assign flag_v = !err_zero_divisor;
-    assign done   = mac_done;
-    assign busy   = mac_busy;
+    assign done   = done_r;
+    assign busy   = mac_busy || (feed != 2'b00) || s1_v || s2_v || (mac_seen && !fired);
 
 endmodule
