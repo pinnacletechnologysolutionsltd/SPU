@@ -11,7 +11,7 @@ verified multiply count — not just "results come out right."
 ## 1. Why it exists
 
 The digon-recursive series evaluator (revised verdict, AGENTS.md) beats
-Newton-Hensel at eps^3 (211c vs 506c) and eps^5 (793c vs 1569c) **only if**
+Newton-Hensel at eps^3 (211c vs 506c) and eps^5 (904c vs 1569c) **only if**
 the jet multiplies exploit operand sparsity. The dense `spu13_jet_mac` issues
 all (N+1)(N+2)/2 base products per multiply regardless of which channels are
 zero. In the series datapath the operands are highly structured:

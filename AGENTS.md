@@ -138,8 +138,8 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
   SRU" conclusion came from the naive dense-jet cost model. With digon-lattice
   traversal + mixed-sparsity jet arithmetic (c0 = O(eps), face coefficients
   eps^0-only scalars, c1^-1 dense), the series stream wins at shallow depth:
-  eps^3 211c vs Newton 506c (0.42x), eps^5 793c vs 1569c (0.51x); crossover
-  at eps^7 (1.01x), Newton wins eps^9+ (1.28x). The residual bottleneck is
+  eps^3 211c vs Newton 506c (0.42x), eps^5 904c vs 1569c (0.58x); Newton
+  wins eps^7 (1.12x) and eps^9 (1.50x). The residual bottleneck is
   the one dense c1^-1 jet_mul per term — c1^-1 populates all eps channels,
   so no sparsity to exploit there. RTL implication: a sparse `spu13_jet_mac`
   variant with nilpotency-window operand tags is worth building for the
