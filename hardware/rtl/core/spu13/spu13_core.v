@@ -1441,6 +1441,21 @@ module spu13_core #(
                              {(SOM_SURD_W-2){1'b0}}, 2'd2,
                              {(SOM_SURD_W-1){1'b0}}, 1'b1};
 
+            // SOM input range check: flag if any narrowed feature component
+            // exceeds 16-bit signed range (bits 17:16 must be same = sign-ext).
+            // This protects against the 18-bit subtraction truncation edge case
+            // identified in audit H1/H2 — sensor inputs are always <16 bits,
+            // so a flag here indicates a software bug, not hardware overflow.
+            wire som_input_ovf =
+                (som_features[ 17] != som_features[ 16]) ||  // feat0 P
+                (som_features[ 35] != som_features[ 34]) ||  // feat0 Q
+                (som_features[ 53] != som_features[ 52]) ||  // feat1 P
+                (som_features[ 71] != som_features[ 70]) ||  // feat1 Q
+                (som_features[ 89] != som_features[ 88]) ||  // feat2 P
+                (som_features[107] != som_features[106]) ||  // feat2 Q
+                (som_features[125] != som_features[124]) ||  // feat3 P
+                (som_features[143] != som_features[142]);    // feat3 Q
+
             // ── SOM weight config path (host write via SPI 0xA5, sel=4) ─
             // Config addr[4:0] = {node_id[2:0], feature_id[1:0]}
             // Config data[35:0] = {Q[17:0], P[17:0]} for one feature
@@ -1502,10 +1517,6 @@ module spu13_core #(
                 .bmu_valid(som_bmu_valid),
                 .bmu_node_id(som_best_id),
                 .features(som_features),
-                .bram_addr(som_train_addr),
-                .bram_we(som_train_we),
-                .bram_be(som_train_be),
-                .bram_wdata(som_train_wdata),
                 .bram_rdata(som_train_rdata)
             );
 

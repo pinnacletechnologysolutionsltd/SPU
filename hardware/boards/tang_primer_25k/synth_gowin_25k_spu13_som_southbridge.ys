@@ -1,22 +1,25 @@
-# synth_gowin_25k_spu13_som_probe.ys — 25K SOM Probe (MATH=0, SOM=1)
-# Tests SOM_CLASSIFY + SOM_TRAIN with 49-word training program in sequencer ROM.
+# synth_gowin_25k_spu13_som_southbridge.ys — SOM BMU + SPI southbridge
+#
+# Minimal build: SOM classifier behind SPI southbridge with sequencer
+# for SOM_CLASSIFY/SOM_TRAIN opcode dispatch.
+#
+# Based on rplu2_arith_probe.ys — keeps ISA decoder, QR regfile, SPI,
+# UART, and adds the SOM BMU + sequencer.
 
 read_verilog -lib +/gowin/cells_xtra_gw5a.v
 
 read_verilog -I hardware/rtl/arch \
-    hardware/boards/tang_primer_25k/spu13_tang25k_som_top.v \
+    hardware/boards/tang_primer_25k/spu13_tang25k_som_southbridge_top.v \
+    hardware/boards/tang_primer_25k/spu13_tang25k_fpga_top.v \
+    hardware/rtl/peripherals/io/spu_spi_slave.v \
+    hardware/rtl/core/shared/spu_isa_decoder.v \
+    hardware/rtl/core/shared/spu_twin_regfile.v \
+    hardware/rtl/core/shared/spu_rau.v \
+    hardware/rtl/core/shared/spu_pipeline_ctrl.v \
     hardware/rtl/core/spu13/spu13_core.v \
-    hardware/rtl/core/spu13/spu13_lattice.v \
-    hardware/rtl/core/spu13/laminar_node.v \
-    hardware/rtl/core/shared/spu_rotor_vault.v \
-    hardware/rtl/core/shared/spu_cross_rotor.v \
-    hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/core/spu13/spu_sequencer.v \
     hardware/rtl/core/shared/toroidal_regfile.v \
     hardware/rtl/core/shared/toroidal_regfile_ecc.v \
-    hardware/rtl/gpu/davis_to_rplu.v \
-    hardware/rtl/gpu/rplu_exp.v \
-    hardware/rtl/gpu/pade_eval_4_4.v \
-    hardware/rtl/gpu/rplu_poly_step.v \
     hardware/rtl/math/rational_surd5_add.v \
     hardware/rtl/math/rational_surd5_mul.v \
     hardware/rtl/math/rational_surd5_mul64.v \
@@ -24,23 +27,23 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/math/rational_surd5_scale_manager.v \
     hardware/rtl/common/prim/spu_gowin_prim.v \
     hardware/rtl/common/prim/gowin_mult18.v \
-    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
     hardware/rtl/core/shared/spu_quadray_permute.v \
     hardware/rtl/core/shared/spu_quadray_regfile.v \
     hardware/rtl/common/prim/spu_hamming_72_64.v \
     hardware/rtl/core/shared/spu_quadray_regfile_ecc.v \
     hardware/rtl/top/spu_ve_qr_init.v \
-    hardware/rtl/core/spu13/spu_sequencer.v \
     hardware/rtl/common/prim/surd_multiplier.v \
+    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
     hardware/rtl/core/spu13/spu_quadrance_accum.v \
     hardware/rtl/core/spu13/spu_som_weight_bram.v \
     hardware/rtl/core/spu13/spu_som_bmu.v \
     hardware/rtl/core/spu13/spu_som_train.v \
     hardware/rtl/core/spu13/spu_cluster_reduce.v \
-    hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v \
     hardware/rtl/arch/spu_optional_stubs.v
 
-synth_gowin -family gw5a -top spu13_tang25k_som_top -json build/spu13_som_probe.json -run begin:map_cells
+hierarchy -top spu13_tang25k_som_southbridge_top
+synth_gowin -family gw5a -top spu13_tang25k_som_southbridge_top \
+    -json build/spu13_som_southbridge.json -run begin:map_cells
 techmap -map +/gowin/cells_map.v
 opt_lut_ins -tech gowin
 hilomap -singleton -hicell VCC V -locell GND G
@@ -48,4 +51,4 @@ clean
 hierarchy -check
 check -noinit
 blackbox =A:whitebox
-write_json build/spu13_som_probe.json
+write_json build/spu13_som_southbridge.json

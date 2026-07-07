@@ -46,6 +46,7 @@ read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_fp4_inverter.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_bram_32x64_array.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_btu_collision_resolver.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_btu_core_top.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_som_weight_bram.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_som_bmu.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_som_train.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_cluster_reduce.v

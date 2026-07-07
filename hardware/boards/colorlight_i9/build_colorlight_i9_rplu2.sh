@@ -49,6 +49,7 @@ SOURCES=(
     # RPLU v2 Thimble-Padé pipeline
     "hardware/rtl/core/spu13/rplu_pipeline.v"
     "hardware/rtl/gpu/rplu_thimble_pade.v"
+    "hardware/rtl/core/spu13/spu_som_weight_bram.v"
     "hardware/rtl/core/spu13/spu_som_bmu.v"
     "hardware/rtl/core/spu13/spu13_btu_core_top.v"
     "hardware/rtl/core/spu13/spu_btu_collision_resolver.v"

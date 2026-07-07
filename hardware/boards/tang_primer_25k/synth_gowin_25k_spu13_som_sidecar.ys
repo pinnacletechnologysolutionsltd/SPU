@@ -1,0 +1,23 @@
+# synth_gowin_25k_spu13_som_sidecar.ys — Standalone SOM edge classifier
+# Minimal: SPI slave + SOM BMU + weight BRAM + UART. No processor core.
+
+read_verilog -lib +/gowin/cells_xtra_gw5a.v
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/tang_primer_25k/spu_som_sidecar_top.v \
+    hardware/rtl/peripherals/io/spu_spi_cfg.v \
+    hardware/rtl/core/spu13/spu_som_weight_bram.v \
+    hardware/rtl/core/spu13/spu_som_bmu.v \
+    hardware/rtl/core/spu13/spu_cluster_reduce.v
+
+hierarchy -top spu_som_sidecar_top
+synth_gowin -family gw5a -top spu_som_sidecar_top \
+    -json build/spu13_som_sidecar.json -run begin:map_cells
+techmap -map +/gowin/cells_map.v
+opt_lut_ins -tech gowin
+hilomap -singleton -hicell VCC V -locell GND G
+clean
+hierarchy -check
+check -noinit
+blackbox =A:whitebox
+write_json build/spu13_som_sidecar.json

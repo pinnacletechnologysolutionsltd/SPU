@@ -122,10 +122,22 @@ static const uint32_t dense_b[9][8] = {
 };
 
 static const su3_case_t su3_cases[] = {
-    {0, 2, 0x7ffe271f7ffc43efULL, 0x7fff6b677ffed36fULL,
+    {0, 0, 0x7ffe271f7ffc43efULL, 0x7fff6b677ffed36fULL,
      0x00021510000446a0ULL, 0x0000a30000014f30ULL},
-    {4, 5, 0x7ffd2a6b7ffa47ffULL, 0x7fff196b7ffe2e9fULL,
+    {1, 1, 0x7ffda5ef7ffb3fbbULL, 0x7fff41f77ffe7ff3ULL,
+     0x0002ae0400057e04ULL, 0x0000d3240001b14cULL},
+    {2, 2, 0x7ffd24bf7ffa3b87ULL, 0x7fff18877ffe2c77ULL,
+     0x000346f80006b568ULL, 0x0001034800021368ULL},
+    {3, 3, 0x7ffdc7077ffb830bULL, 0x7fff4bff7ffe9463ULL,
+     0x00028dc400053a24ULL, 0x0000ca2400019e2cULL},
+    {4, 4, 0x7ffd2a6b7ffa47ffULL, 0x7fff196b7ffe2e9fULL,
      0x00034b480006baa8ULL, 0x00010678000218a8ULL},
+    {5, 5, 0x7ffc8dcf7ff90cf3ULL, 0x7ffee6d77ffdc8dbULL,
+     0x000408cc00083b2cULL, 0x000142cc00029324ULL},
+    {6, 6, 0x7ffd66ef7ffac227ULL, 0x7fff2c977ffe5557ULL,
+     0x0003067800062da8ULL, 0x0000f1480001ed28ULL},
+    {7, 7, 0x7ffcaee77ff95043ULL, 0x7ffef0df7ffddd4bULL,
+     0x0003e88c0007f74cULL, 0x000139cc00028004ULL},
     {8, 8, 0x7ffbf6df7ff7de5fULL, 0x7ffeb5277ffd653fULL,
      0x0004caa00009c0f0ULL, 0x00018250000312e0ULL},
 };

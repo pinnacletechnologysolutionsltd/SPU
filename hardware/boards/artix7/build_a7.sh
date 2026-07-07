@@ -8,7 +8,7 @@
 #   bash build_a7.sh 100t intelligence           # INTELLIGENCE spin on 100T
 #   A7_FREQ=2 bash build_a7.sh 100t lucas all    # Wukong pinned low-speed bring-up
 #
-# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | custom
+# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | som | custom
 
 set -euo pipefail
 

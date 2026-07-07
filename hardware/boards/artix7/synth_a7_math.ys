@@ -23,6 +23,7 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/common/prim/spu_xilinx_prim.v \
     hardware/rtl/core/spu13/spu_sequencer.v \
     hardware/rtl/core/spu13/spu_quadrance_accum.v \
+    hardware/rtl/core/spu13/spu_som_weight_bram.v \
     hardware/rtl/core/spu13/spu_som_bmu.v \
     hardware/rtl/core/spu13/spu_cluster_reduce.v \
     hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v \

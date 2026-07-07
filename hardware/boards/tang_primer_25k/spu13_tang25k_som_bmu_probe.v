@@ -92,6 +92,7 @@ module spu13_tang25k_som_bmu_probe (
         .fault_count(fault_count),
         .train_we(1'b0),
         .train_addr(3'd0),
+        .train_be(4'b0000),
         .train_wdata({VEC_W{1'b0}}),
         .train_rdata()
     );
@@ -231,11 +232,10 @@ module spu13_tang25k_som_bmu_probe (
 
                 S_CHECK: begin
                     best_digit <= best_node_id[3:0];
-                    if (bmu_valid !== 1'b0) begin
-                        fail_code <= 8'hA0;
-                        all_pass <= 1'b0;
-                        test_state <= S_FAIL;
-                    end else if (best_node_id !== exp_best(test_idx)) begin
+                    // Note: bmu_valid may stay high until next start
+                    // (needed for training readback).  Skip the bmu_valid
+                    // check and proceed directly to value comparison.
+                    if (best_node_id !== exp_best(test_idx)) begin
                         fail_code <= 8'hB0 + {6'd0, test_idx};
                         all_pass <= 1'b0;
                         test_state <= S_FAIL;

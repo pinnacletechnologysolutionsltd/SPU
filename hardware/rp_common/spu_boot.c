@@ -28,6 +28,20 @@ void spu_boot_hydrate_defaults(spu_link_t *link) {
         spu_link_write_rplu_cfg(link, header, PADE_DEN_Q32[i]);
         sleep_us(50);
     }
+
+    // Hydrate SOM weights (7 nodes × 4 features via 0xA5 sel=4)
+    spu_boot_hydrate_som(link);
+}
+
+void spu_boot_hydrate_som(spu_link_t *link) {
+    for (int node = 0; node < 7; node++) {
+        for (int feat = 0; feat < 4; feat++) {
+            uint16_t addr = (uint16_t)(node << 2) | (uint16_t)feat;
+            uint64_t header = spu_rplu_header(4, 0, addr);
+            spu_link_write_rplu_cfg(link, header, SOM_WEIGHTS[node][feat]);
+            sleep_us(50);
+        }
+    }
 }
 
 void spu_boot_hydrate_defaults_cb(spu_link_t *link, void *ctx) {

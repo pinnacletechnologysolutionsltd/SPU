@@ -82,7 +82,7 @@ module spu_a7_top #(
          SPIN == "RPLU2CORE" || SPIN == "RPLU2" ||
          SPIN == "RPLU2LIVE" || SPIN == "RPLU2PADE") ? 0 : 1;
     localparam _S = (SPIN == "CUSTOM") ? ENABLE_SOM :
-        (SPIN == "INTELLIGENCE" || SPIN == "FULL") ? 1 : 0;
+        (SPIN == "INTELLIGENCE" || SPIN == "FULL" || SPIN == "SOM") ? 1 : 0;
     localparam _K = (SPIN == "CUSTOM") ? ENABLE_GATEKEEPER :
         (SPIN == "SENSOR" || SPIN == "LUCAS" ||
          SPIN == "SU3" || SPIN == "SU3SHARE" || SPIN == "RPLUCFG" ||

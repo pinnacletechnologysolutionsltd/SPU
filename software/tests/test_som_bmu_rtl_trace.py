@@ -99,6 +99,8 @@ module spu_som_bmu_trace_tb;
     wire [63:0] best_q, second_q, confidence_gap_in;
     wire has_second;
 
+    reg  [2:0] train_addr = 0;
+
     spu_som_bmu #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(32)) u_bmu (
         .clk(clk), .rst_n(rst_n),
         .start(start), .done(done),
@@ -111,7 +113,16 @@ module spu_som_bmu_trace_tb;
         .best_q(best_q),
         .second_q(second_q),
         .confidence_gap(confidence_gap_in),
-        .has_second(has_second)
+        .has_second(has_second),
+        .train_we(1'b0),
+        .train_addr(train_addr),
+        .train_be(4'b0000),
+        .train_wdata(256'b0),
+        .train_rdata(),
+        .axiomatic_level(2'b00),
+        .axiomatic_fault(),
+        .fault_type(),
+        .fault_count()
     );
 
     // --- Cluster reduce ---

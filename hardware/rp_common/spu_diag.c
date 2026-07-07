@@ -173,6 +173,10 @@ static void cmd_help(void) {
     printf("  cfgtele\r\n");
     printf("  chord <16 hex digits>\r\n");
     printf("  rplu <sel> <material> <addr> <data64>\r\n");
+    printf("  somwrite <node> <feat> <hex16>\r\n");
+    printf("  featwrite <feat> <hex16>\r\n");
+    printf("  classify\r\n");
+    printf("  result\r\n");
     printf("  hydrate\r\n");
     printf("  sdprobe\r\n");
     printf("  sdcmd\r\n");
@@ -319,6 +323,64 @@ static void cmd_rplu(spu_diag_t *diag, char *args) {
     spu_link_write_rplu_cfg(diag->link, header, data);
     printf("OK rplu header=0x%016" PRIX64 " data=0x%016" PRIX64 "\r\n",
            header, data);
+}
+
+static void cmd_somwrite(spu_diag_t *diag, char *args) {
+    uint32_t node, feat;
+    uint64_t data;
+    if (!parse_u32_token(&args, &node) ||
+        !parse_u32_token(&args, &feat) ||
+        !parse_u64_token(&args, &data)) {
+        printf("ERR usage: somwrite <node> <feat> <hex16>\r\n");
+        return;
+    }
+    if (node > 63 || feat > 3) {
+        printf("ERR node 0-63, feat 0-3\r\n");
+        return;
+    }
+    uint16_t addr = (uint16_t)((node << 2) | feat);
+    uint64_t header = spu_rplu_header(4, 0, addr);
+    spu_link_write_rplu_cfg(diag->link, header, data);
+    printf("OK somwrite node=%" PRIu32 " feat=%" PRIu32
+           " addr=0x%04X data=0x%016" PRIX64 "\r\n",
+           node, feat, addr, data);
+}
+
+static void cmd_featwrite(spu_diag_t *diag, char *args) {
+    uint32_t feat;
+    uint64_t data;
+    if (!parse_u32_token(&args, &feat) ||
+        !parse_u64_token(&args, &data)) {
+        printf("ERR usage: featwrite <feat> <hex16>\r\n");
+        return;
+    }
+    if (feat > 3) {
+        printf("ERR feat 0-3\r\n");
+        return;
+    }
+    // sel=5, addr[1:0]=feat, data[35:0]={Q[17:0], P[17:0]}
+    uint64_t header = spu_rplu_header(5, 0, (uint16_t)feat);
+    spu_link_write_rplu_cfg(diag->link, header, data);
+    printf("OK featwrite feat=%" PRIu32 " data=0x%016" PRIX64 "\r\n", feat, data);
+}
+
+static void cmd_classify(spu_diag_t *diag, char *args) {
+    (void)args;
+    // sel=6 triggers classification (data ignored)
+    uint64_t header = spu_rplu_header(6, 0, 0);
+    spu_link_write_rplu_cfg(diag->link, header, 0);
+    printf("OK classify\r\n");
+}
+
+static void cmd_result(spu_diag_t *diag, char *args) {
+    (void)args;
+    uint8_t resp = 0;
+    gpio_put(diag->link->cs_pin, 0);
+    spi_read_blocking(diag->link->spi, 0x01, &resp, 1);
+    sleep_us(10);
+    gpio_put(diag->link->cs_pin, 1);
+    printf("OK result done=%u busy=%u label=%u raw=0x%02X\r\n",
+           (resp >> 3) & 1, (resp >> 2) & 1, resp & 3, resp);
 }
 
 static void cmd_sdprobe(void) {
@@ -590,6 +652,14 @@ static void execute_line(spu_diag_t *diag) {
                 printf("OK sdhydrate %d records\r\n", n);
             }
         }
+    } else if (strcmp(cmd, "somwrite") == 0) {
+        cmd_somwrite(diag, cursor);
+    } else if (strcmp(cmd, "featwrite") == 0) {
+        cmd_featwrite(diag, cursor);
+    } else if (strcmp(cmd, "classify") == 0) {
+        cmd_classify(diag, cursor);
+    } else if (strcmp(cmd, "result") == 0) {
+        cmd_result(diag, cursor);
     } else {
         printf("ERR unknown command: %s\r\n", cmd);
     }

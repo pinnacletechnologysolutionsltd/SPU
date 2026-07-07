@@ -20,6 +20,7 @@ typedef struct {
 } spu_boot_options_t;
 
 void spu_boot_hydrate_defaults(spu_link_t *link);
+void spu_boot_hydrate_som(spu_link_t *link);
 void spu_boot_hydrate_defaults_cb(spu_link_t *link, void *ctx);
 bool spu_boot_symmetry_breath(spu_link_t *link,
                               const spu_boot_options_t *options);
