@@ -1,0 +1,62 @@
+site_name: SPU-13 Sovereign Processing Unit
+site_description: Exact deterministic geometric computation on FPGA
+site_url: https://pinnacletechnologysolutionsltd.github.io/SPU/
+repo_url: https://github.com/pinnacletechnologysolutionsltd/SPU
+repo_name: pinnacletechnologysolutionsltd/SPU
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      toggle:
+        icon: material/brightness-7
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      toggle:
+        icon: material/brightness-4
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - tables
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Status & Evidence:
+      - Current status: CURRENT_STATUS.md
+      - Hardware evidence ledger: hardware_evidence.md
+      - Identity & boundaries: SPU13_IDENTITY_AND_BOUNDARIES.md
+  - Build & Bring-Up:
+      - Build and bring-up guide: build_and_bringup_guide.md
+      - Toolchain setup: toolchain_setup.md
+      - Southbridge SPI protocol: SOUTHBRIDGE_SPI_PROTOCOL.md
+      - Board scaling strategy: fpga_board_scaling_strategy.md
+  - Architecture & Math:
+      - Mathematical foundations: knowledge/MATHEMATICAL_FOUNDATIONS.md
+      - ISA reference: knowledge/isa_reference.md
+      - ISA quickstart: knowledge/ISA_QUICKSTART.md
+      - SPU-13 ISA spec: spu13_isa_spec.md
+      - Lucas phinary MAC: knowledge/LUCAS_PHINARY_MAC.md
+      - Pell octave: knowledge/PELL_OCTAVE.md
+      - Rational curves spec: knowledge/RATIONAL_CURVES_SPEC.md
+
+exclude_docs: |
+  archive/
+  README.md

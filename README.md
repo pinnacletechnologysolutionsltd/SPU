@@ -6,7 +6,10 @@ evaluation, and quadray variety checks over finite algebraic rings.
 A hardware substrate for reproducible spatial reasoning and safety-critical
 control primitives, not a replacement for conventional AI accelerators.**
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml/badge.svg)](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml)
+[![Hardware: CERN-OHL-W-2.0](https://img.shields.io/badge/Hardware-CERN--OHL--W--2.0-blue.svg)](hardware/LICENSE)
+[![Software: MIT](https://img.shields.io/badge/Software-MIT-green.svg)](software/LICENSE)
+[![Docs: CC0](https://img.shields.io/badge/Docs-CC0_1.0-lightgrey.svg)](LICENSE)
 
 ## Current Hardware Direction
 

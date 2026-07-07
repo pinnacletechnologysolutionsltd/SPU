@@ -111,3 +111,7 @@ spu_strategy/
 
 # ─── Local flash-dump backups (proprietary bootloader content) ───────────
 /local_flash_backups/
+
+# MkDocs staging + output
+docs/knowledge/
+site/
