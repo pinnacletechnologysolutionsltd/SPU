@@ -56,12 +56,13 @@ module spu13_batch_inverter #(
     localparam S_TOWER_WAIT   = 4'd5;
     localparam S_NORM_PROBE_A = 4'd7;
     localparam S_NORM_PROBE_B = 4'd8;
-    localparam S_UNIT_TOWER   = 4'd9;   // per-element tower for unit lanes
-    localparam S_UNWIND_SETUP = 4'd10;
-    localparam S_UNWIND_MUL_A = 4'd11;
-    localparam S_UNWIND_MUL_B = 4'd12;
-    localparam S_OUTPUT       = 4'd13;
-    localparam S_DONE         = 4'd14;
+    localparam S_REBATCH_PREFIX_REQ  = 4'd9;
+    localparam S_REBATCH_PREFIX_WAIT = 4'd10;
+    localparam S_UNWIND_SETUP = 4'd11;
+    localparam S_UNWIND_MUL_A = 4'd12;
+    localparam S_UNWIND_MUL_B = 4'd13;
+    localparam S_OUTPUT       = 4'd14;
+    localparam S_DONE         = 4'd15;
 
     (* keep, fsm_encoding = "none" *) reg [3:0] state;
     assign debug_state = state;
@@ -80,7 +81,9 @@ module spu13_batch_inverter #(
     reg        has_singular; // set if any lane is singular
     reg [4:0]  n_units;     // count of unit lanes for re-batch
     reg [3:0]  unit_idx [0:MAX_BATCH-1]; // indices of unit lanes
-    reg [4:0]  unit_tower_idx;  // index into unit_idx[] for per-element towers
+    reg        in_rebatch;     // 1 during re-batch prefix/unwind phase
+    reg [4:0]  rb_idx;         // index during re-batch prefix loop
+    reg        single_unit;    // 1 when tower is for a single isolated unit
 
     // ── Shared multiplier (prefix/unwind + tower) ──────────────────
     // Single M31 multiplier shared between the batch FSM (prefix and
@@ -205,7 +208,9 @@ module spu13_batch_inverter #(
             has_singular <= 1'b0;
             probe_zero   <= 1'b0;
             n_units      <= 4'd0;
-            unit_tower_idx <= 4'd0;
+            in_rebatch   <= 1'b0;
+            single_unit  <= 1'b0;
+            rb_idx       <= 4'd0;
         end else begin
             done         <= 1'b0;
             inv_valid    <= 1'b0;
@@ -222,7 +227,9 @@ module spu13_batch_inverter #(
                         load_idx  <= 4'd0;
                         has_singular <= 1'b0;
                         n_units   <= 4'd0;
-                        unit_tower_idx <= 4'd0;
+                        in_rebatch <= 1'b0;
+                        single_unit <= 1'b0;
+                        rb_idx     <= 4'd0;
                         // Clear result array from previous batch
                         invs[0][0] <= 32'd0; invs[0][1] <= 32'd0;
                         invs[0][2] <= 32'd0; invs[0][3] <= 32'd0;
@@ -310,7 +317,32 @@ module spu13_batch_inverter #(
                 // ── TOWER_WAIT: wait for tower completion ────────────
                 S_TOWER_WAIT: begin
                     if (tower_done) begin
-                        if (tower_flags_v) begin
+                        if (single_unit) begin
+                            // Single isolated unit: store and output
+                            single_unit <= 1'b0;
+                            if (!tower_flags_v) begin
+                                invs[unit_idx[0]][0] <= tower_inv0;
+                                invs[unit_idx[0]][1] <= tower_inv1;
+                                invs[unit_idx[0]][2] <= tower_inv2;
+                                invs[unit_idx[0]][3] <= tower_inv3;
+                            end
+                            output_idx <= 4'd0;
+                            state <= S_OUTPUT;
+                        end else if (in_rebatch) begin
+                            // Re-batch tower on unit subset: start unwind
+                            if (tower_flags_v) begin
+                                // Shouldn't happen for verified unit lanes
+                                output_idx <= 4'd0;
+                                state <= S_OUTPUT;
+                            end else begin
+                                acc0 <= tower_inv0;
+                                acc1 <= tower_inv1;
+                                acc2 <= tower_inv2;
+                                acc3 <= tower_inv3;
+                                idx  <= n_units - 1;
+                                state <= S_UNWIND_SETUP;
+                            end
+                        end else if (tower_flags_v) begin
                             // At least one singular factor
                             has_singular <= 1'b1;
                             probe_idx    <= 4'd0;
@@ -375,20 +407,30 @@ module spu13_batch_inverter #(
                             n_units <= n_units + 1;
                         end
                         if (probe_idx == k - 1) begin
-                            // Done probing. If any unit lanes, run
-                            // per-element towers on them.
-                            if (n_units > 0) begin
-                                unit_tower_idx <= 4'd0;
-                                // Start tower on first unit lane
+                            // Done probing.
+                            if (n_units == 5'd0) begin
+                                output_idx <= 4'd0;
+                                state <= S_OUTPUT;
+                            end else if (n_units == 5'd1) begin
+                                // Single unit: tower directly
                                 tower_z0 <= dens[unit_idx[0]][0];
                                 tower_z1 <= dens[unit_idx[0]][1];
                                 tower_z2 <= dens[unit_idx[0]][2];
                                 tower_z3 <= dens[unit_idx[0]][3];
                                 tower_start <= 1'b1;
-                                state <= S_UNIT_TOWER;
+                                in_rebatch <= 1'b0;
+                                single_unit <= 1'b1;
+                                state <= S_TOWER_WAIT;
                             end else begin
-                                output_idx <= 4'd0;
-                                state <= S_OUTPUT;
+                                // Re-batch: compute prefix over unit subset
+                                in_rebatch <= 1'b1;
+                                single_unit <= 1'b0;
+                                rb_idx <= 5'd1;  // start at prefix[1]
+                                prefix[0][0] <= dens[unit_idx[0]][0];
+                                prefix[0][1] <= dens[unit_idx[0]][1];
+                                prefix[0][2] <= dens[unit_idx[0]][2];
+                                prefix[0][3] <= dens[unit_idx[0]][3];
+                                state <= S_REBATCH_PREFIX_REQ;
                             end
                         end else begin
                             probe_idx <= probe_idx + 1;
@@ -406,27 +448,39 @@ module spu13_batch_inverter #(
                     end
                 end
 
-                // ── UNIT_TOWER: per-element tower for unit lanes ──────
-                S_UNIT_TOWER: begin
-                    if (tower_done) begin
-                        if (!tower_flags_v) begin
-                            invs[unit_idx[unit_tower_idx]][0] <= tower_inv0;
-                            invs[unit_idx[unit_tower_idx]][1] <= tower_inv1;
-                            invs[unit_idx[unit_tower_idx]][2] <= tower_inv2;
-                            invs[unit_idx[unit_tower_idx]][3] <= tower_inv3;
-                        end
-                        // else: unit was misclassified; leave invs=0,
-                        // singular_mask already set by probe.
-                        if (unit_tower_idx < n_units - 1) begin
-                            unit_tower_idx <= unit_tower_idx + 1;
-                            tower_z0 <= dens[unit_idx[unit_tower_idx + 1]][0];
-                            tower_z1 <= dens[unit_idx[unit_tower_idx + 1]][1];
-                            tower_z2 <= dens[unit_idx[unit_tower_idx + 1]][2];
-                            tower_z3 <= dens[unit_idx[unit_tower_idx + 1]][3];
+                // ── REBATCH_PREFIX_REQ: prefix over unit subset ──────
+                S_REBATCH_PREFIX_REQ: begin
+                    // prefix[rb_idx] = prefix[rb_idx-1] * dens[unit_idx[rb_idx]]
+                    batch_mult_a0 <= prefix[rb_idx-1][0];
+                    batch_mult_a1 <= prefix[rb_idx-1][1];
+                    batch_mult_a2 <= prefix[rb_idx-1][2];
+                    batch_mult_a3 <= prefix[rb_idx-1][3];
+                    batch_mult_b0 <= dens[unit_idx[rb_idx]][0];
+                    batch_mult_b1 <= dens[unit_idx[rb_idx]][1];
+                    batch_mult_b2 <= dens[unit_idx[rb_idx]][2];
+                    batch_mult_b3 <= dens[unit_idx[rb_idx]][3];
+                    batch_mult_start <= 1'b1;
+                    state <= S_REBATCH_PREFIX_WAIT;
+                end
+
+                // ── REBATCH_PREFIX_WAIT: latch, iterate or tower ─────
+                S_REBATCH_PREFIX_WAIT: begin
+                    if (batch_mult_done && !batch_mult_start) begin
+                        prefix[rb_idx][0] <= batch_mult_r0;
+                        prefix[rb_idx][1] <= batch_mult_r1;
+                        prefix[rb_idx][2] <= batch_mult_r2;
+                        prefix[rb_idx][3] <= batch_mult_r3;
+                        if (rb_idx == n_units - 1) begin
+                            // Tower on accumulated unit product
+                            tower_z0 <= batch_mult_r0;
+                            tower_z1 <= batch_mult_r1;
+                            tower_z2 <= batch_mult_r2;
+                            tower_z3 <= batch_mult_r3;
                             tower_start <= 1'b1;
+                            state <= S_TOWER_WAIT;
                         end else begin
-                            output_idx <= 4'd0;
-                            state <= S_OUTPUT;
+                            rb_idx <= rb_idx + 1;
+                            state <= S_REBATCH_PREFIX_REQ;
                         end
                     end
                 end
@@ -459,19 +513,33 @@ module spu13_batch_inverter #(
                 // ── UNWIND_MUL_A: latch inv[idx], start acc update ───
                 S_UNWIND_MUL_A: begin
                     if (batch_mult_done && !batch_mult_start) begin
-                        invs[idx][0] <= batch_mult_r0;
-                        invs[idx][1] <= batch_mult_r1;
-                        invs[idx][2] <= batch_mult_r2;
-                        invs[idx][3] <= batch_mult_r3;
-                        // acc = acc * d[idx]
+                        if (in_rebatch) begin
+                            invs[unit_idx[idx]][0] <= batch_mult_r0;
+                            invs[unit_idx[idx]][1] <= batch_mult_r1;
+                            invs[unit_idx[idx]][2] <= batch_mult_r2;
+                            invs[unit_idx[idx]][3] <= batch_mult_r3;
+                        end else begin
+                            invs[idx][0] <= batch_mult_r0;
+                            invs[idx][1] <= batch_mult_r1;
+                            invs[idx][2] <= batch_mult_r2;
+                            invs[idx][3] <= batch_mult_r3;
+                        end
+                        // acc = acc * d[idx] (or d[unit_idx[idx]] if rebatch)
                         batch_mult_a0 <= acc0;
                         batch_mult_a1 <= acc1;
                         batch_mult_a2 <= acc2;
                         batch_mult_a3 <= acc3;
-                        batch_mult_b0 <= dens[idx][0];
-                        batch_mult_b1 <= dens[idx][1];
-                        batch_mult_b2 <= dens[idx][2];
-                        batch_mult_b3 <= dens[idx][3];
+                        if (in_rebatch) begin
+                            batch_mult_b0 <= dens[unit_idx[idx]][0];
+                            batch_mult_b1 <= dens[unit_idx[idx]][1];
+                            batch_mult_b2 <= dens[unit_idx[idx]][2];
+                            batch_mult_b3 <= dens[unit_idx[idx]][3];
+                        end else begin
+                            batch_mult_b0 <= dens[idx][0];
+                            batch_mult_b1 <= dens[idx][1];
+                            batch_mult_b2 <= dens[idx][2];
+                            batch_mult_b3 <= dens[idx][3];
+                        end
                         batch_mult_start <= 1'b1;
                         state <= S_UNWIND_MUL_B;
                     end
@@ -485,11 +553,19 @@ module spu13_batch_inverter #(
                         acc2 <= batch_mult_r2;
                         acc3 <= batch_mult_r3;
                         if (idx == 4'd1) begin
-                            // Last element: inv[0] = new acc
-                            invs[0][0] <= batch_mult_r0;
-                            invs[0][1] <= batch_mult_r1;
-                            invs[0][2] <= batch_mult_r2;
-                            invs[0][3] <= batch_mult_r3;
+                            // Last element: store final acc
+                            if (in_rebatch) begin
+                                invs[unit_idx[0]][0] <= batch_mult_r0;
+                                invs[unit_idx[0]][1] <= batch_mult_r1;
+                                invs[unit_idx[0]][2] <= batch_mult_r2;
+                                invs[unit_idx[0]][3] <= batch_mult_r3;
+                                in_rebatch <= 1'b0;
+                            end else begin
+                                invs[0][0] <= batch_mult_r0;
+                                invs[0][1] <= batch_mult_r1;
+                                invs[0][2] <= batch_mult_r2;
+                                invs[0][3] <= batch_mult_r3;
+                            end
                             output_idx <= 4'd0;
                             state <= S_OUTPUT;
                         end else begin
