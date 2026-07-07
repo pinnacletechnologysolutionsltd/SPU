@@ -82,25 +82,61 @@ module spu13_batch_inverter #(
     reg [3:0]  unit_idx [0:MAX_BATCH-1]; // indices of unit lanes
     reg [4:0]  unit_tower_idx;  // index into unit_idx[] for per-element towers
 
-    // ── Multiplier for prefix/unwind (instance A) ───────────────────
-    reg         mult_a_start;
-    reg  [31:0] mult_a_a0, mult_a_a1, mult_a_a2, mult_a_a3;
-    reg  [31:0] mult_a_b0, mult_a_b1, mult_a_b2, mult_a_b3;
-    wire [31:0] mult_a_r0, mult_a_r1, mult_a_r2, mult_a_r3;
-    wire        mult_a_done;
-    wire        mult_a_busy;
+    // ── Shared multiplier (prefix/unwind + tower) ──────────────────
+    // Single M31 multiplier shared between the batch FSM (prefix and
+    // unwind phases) and the fp4_inverter (tower phase). Fixed priority:
+    // inverter wins; batch FSM sees busy=1 when inverter owns it.
+    reg         batch_mult_start;
+    reg  [31:0] batch_mult_a0, batch_mult_a1, batch_mult_a2, batch_mult_a3;
+    reg  [31:0] batch_mult_b0, batch_mult_b1, batch_mult_b2, batch_mult_b3;
+    wire [31:0] batch_mult_r0, batch_mult_r1, batch_mult_r2, batch_mult_r3;
+    wire        batch_mult_done;
+    wire        batch_mult_busy;
 
-    spu13_m31_multiplier u_mult_a (
+    wire        inv_mult_start;
+    wire [31:0] inv_mult_a0, inv_mult_a1, inv_mult_a2, inv_mult_a3;
+    wire [31:0] inv_mult_b0, inv_mult_b1, inv_mult_b2, inv_mult_b3;
+
+    // Input mux: inverter has priority
+    wire        shared_mult_start = inv_mult_start ? inv_mult_start
+                                                     : batch_mult_start;
+    wire [31:0] shared_mult_a0 = inv_mult_start ? inv_mult_a0 : batch_mult_a0;
+    wire [31:0] shared_mult_a1 = inv_mult_start ? inv_mult_a1 : batch_mult_a1;
+    wire [31:0] shared_mult_a2 = inv_mult_start ? inv_mult_a2 : batch_mult_a2;
+    wire [31:0] shared_mult_a3 = inv_mult_start ? inv_mult_a3 : batch_mult_a3;
+    wire [31:0] shared_mult_b0 = inv_mult_start ? inv_mult_b0 : batch_mult_b0;
+    wire [31:0] shared_mult_b1 = inv_mult_start ? inv_mult_b1 : batch_mult_b1;
+    wire [31:0] shared_mult_b2 = inv_mult_start ? inv_mult_b2 : batch_mult_b2;
+    wire [31:0] shared_mult_b3 = inv_mult_start ? inv_mult_b3 : batch_mult_b3;
+
+    wire [31:0] shared_mult_r0, shared_mult_r1, shared_mult_r2, shared_mult_r3;
+    wire        shared_mult_done;
+    wire        shared_mult_busy;
+
+    spu13_m31_multiplier u_shared_mult (
         .clk  (clk),
         .rst_n(rst_n),
-        .start(mult_a_start),
-        .a0(mult_a_a0), .a1(mult_a_a1), .a2(mult_a_a2), .a3(mult_a_a3),
-        .b0(mult_a_b0), .b1(mult_a_b1), .b2(mult_a_b2), .b3(mult_a_b3),
-        .r0(mult_a_r0), .r1(mult_a_r1), .r2(mult_a_r2), .r3(mult_a_r3),
-        .done(mult_a_done),
-        .busy(mult_a_busy),
+        .start(shared_mult_start),
+        .a0(shared_mult_a0), .a1(shared_mult_a1),
+        .a2(shared_mult_a2), .a3(shared_mult_a3),
+        .b0(shared_mult_b0), .b1(shared_mult_b1),
+        .b2(shared_mult_b2), .b3(shared_mult_b3),
+        .r0(shared_mult_r0), .r1(shared_mult_r1),
+        .r2(shared_mult_r2), .r3(shared_mult_r3),
+        .done(shared_mult_done),
+        .busy(shared_mult_busy),
         .rns_error()
     );
+
+    // Result fan-out: both clients see results
+    assign batch_mult_r0 = shared_mult_r0;
+    assign batch_mult_r1 = shared_mult_r1;
+    assign batch_mult_r2 = shared_mult_r2;
+    assign batch_mult_r3 = shared_mult_r3;
+
+    // Done/busy gated per client: batch FSM sees busy=1 when inverter owns it
+    assign batch_mult_done = inv_mult_start ? 1'b0 : shared_mult_done;
+    assign batch_mult_busy = inv_mult_start ? 1'b1 : shared_mult_busy;
 
     // ── Tower inverter ──────────────────────────────────────────────
     reg         tower_start;
@@ -109,26 +145,6 @@ module spu13_batch_inverter #(
     wire        tower_done;
     wire        tower_busy;
     wire        tower_flags_v;
-
-    // Tower's dedicated multiplier (instance B)
-    wire        mult_b_start;
-    wire [31:0] mult_b_a0, mult_b_a1, mult_b_a2, mult_b_a3;
-    wire [31:0] mult_b_b0, mult_b_b1, mult_b_b2, mult_b_b3;
-    wire [31:0] mult_b_r0, mult_b_r1, mult_b_r2, mult_b_r3;
-    wire        mult_b_done;
-    wire        mult_b_busy;
-
-    spu13_m31_multiplier u_mult_b (
-        .clk  (clk),
-        .rst_n(rst_n),
-        .start(mult_b_start),
-        .a0(mult_b_a0), .a1(mult_b_a1), .a2(mult_b_a2), .a3(mult_b_a3),
-        .b0(mult_b_b0), .b1(mult_b_b1), .b2(mult_b_b2), .b3(mult_b_b3),
-        .r0(mult_b_r0), .r1(mult_b_r1), .r2(mult_b_r2), .r3(mult_b_r3),
-        .done(mult_b_done),
-        .busy(mult_b_busy),
-        .rns_error()
-    );
 
     spu13_fp4_inverter u_tower (
         .clk  (clk),
@@ -140,15 +156,15 @@ module spu13_batch_inverter #(
         .done(tower_done),
         .busy(tower_busy),
         .flags_v(tower_flags_v),
-        .mult_start(mult_b_start),
-        .mult_a0(mult_b_a0), .mult_a1(mult_b_a1),
-        .mult_a2(mult_b_a2), .mult_a3(mult_b_a3),
-        .mult_b0(mult_b_b0), .mult_b1(mult_b_b1),
-        .mult_b2(mult_b_b2), .mult_b3(mult_b_b3),
-        .mult_r0(mult_b_r0), .mult_r1(mult_b_r1),
-        .mult_r2(mult_b_r2), .mult_r3(mult_b_r3),
-        .mult_done(mult_b_done),
-        .mult_busy(mult_b_busy),
+        .mult_start(inv_mult_start),
+        .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
+        .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
+        .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
+        .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
+        .mult_r0(shared_mult_r0), .mult_r1(shared_mult_r1),
+        .mult_r2(shared_mult_r2), .mult_r3(shared_mult_r3),
+        .mult_done(shared_mult_done),
+        .mult_busy(shared_mult_busy),
         .debug_state(),
         .debug_start_accept()
     );
@@ -179,7 +195,7 @@ module spu13_batch_inverter #(
             busy         <= 1'b0;
             inv_valid    <= 1'b0;
             inv_singular <= 1'b0;
-            mult_a_start <= 1'b0;
+            batch_mult_start <= 1'b0;
             tower_start  <= 1'b0;
             k            <= 4'd0;
             idx          <= 4'd0;
@@ -193,7 +209,7 @@ module spu13_batch_inverter #(
         end else begin
             done         <= 1'b0;
             inv_valid    <= 1'b0;
-            mult_a_start <= 1'b0;
+            batch_mult_start <= 1'b0;
             tower_start  <= 1'b0;
 
             case (state)
@@ -252,31 +268,31 @@ module spu13_batch_inverter #(
 
                 // ── PREFIX_REQ: request next prefix multiply ────────
                 S_PREFIX_REQ: begin
-                    mult_a_a0 <= prefix[idx-1][0];
-                    mult_a_a1 <= prefix[idx-1][1];
-                    mult_a_a2 <= prefix[idx-1][2];
-                    mult_a_a3 <= prefix[idx-1][3];
-                    mult_a_b0 <= dens[idx][0];
-                    mult_a_b1 <= dens[idx][1];
-                    mult_a_b2 <= dens[idx][2];
-                    mult_a_b3 <= dens[idx][3];
-                    mult_a_start <= 1'b1;
+                    batch_mult_a0 <= prefix[idx-1][0];
+                    batch_mult_a1 <= prefix[idx-1][1];
+                    batch_mult_a2 <= prefix[idx-1][2];
+                    batch_mult_a3 <= prefix[idx-1][3];
+                    batch_mult_b0 <= dens[idx][0];
+                    batch_mult_b1 <= dens[idx][1];
+                    batch_mult_b2 <= dens[idx][2];
+                    batch_mult_b3 <= dens[idx][3];
+                    batch_mult_start <= 1'b1;
                     state <= S_PREFIX_WAIT;
                 end
 
                 // ── PREFIX_WAIT: latch result, iterate or continue ──
                 S_PREFIX_WAIT: begin
-                    if (mult_a_done && !mult_a_start) begin
-                        prefix[idx][0] <= mult_a_r0;
-                        prefix[idx][1] <= mult_a_r1;
-                        prefix[idx][2] <= mult_a_r2;
-                        prefix[idx][3] <= mult_a_r3;
+                    if (batch_mult_done && !batch_mult_start) begin
+                        prefix[idx][0] <= batch_mult_r0;
+                        prefix[idx][1] <= batch_mult_r1;
+                        prefix[idx][2] <= batch_mult_r2;
+                        prefix[idx][3] <= batch_mult_r3;
                         if (idx == k - 1) begin
                             // Done: start tower on prefix[k-1]
-                            tower_z0 <= mult_a_r0;
-                            tower_z1 <= mult_a_r1;
-                            tower_z2 <= mult_a_r2;
-                            tower_z3 <= mult_a_r3;
+                            tower_z0 <= batch_mult_r0;
+                            tower_z1 <= batch_mult_r1;
+                            tower_z2 <= batch_mult_r2;
+                            tower_z3 <= batch_mult_r3;
                             tower_start <= 1'b1;
                             state <= S_TOWER_WAIT;
                         end else begin
@@ -304,15 +320,15 @@ module spu13_batch_inverter #(
                             probe_z2 <= dens[0][2];
                             probe_z3 <= dens[0][3];
                             // Stage A: Z * Z_conj (conj flips √5, √15)
-                            mult_a_a0 <= dens[0][0];
-                            mult_a_a1 <= dens[0][1];
-                            mult_a_a2 <= dens[0][2];
-                            mult_a_a3 <= dens[0][3];
-                            mult_a_b0 <= dens[0][0];
-                            mult_a_b1 <= dens[0][1];
-                            mult_a_b2 <= m31_neg(dens[0][2]);
-                            mult_a_b3 <= m31_neg(dens[0][3]);
-                            mult_a_start <= 1'b1;
+                            batch_mult_a0 <= dens[0][0];
+                            batch_mult_a1 <= dens[0][1];
+                            batch_mult_a2 <= dens[0][2];
+                            batch_mult_a3 <= dens[0][3];
+                            batch_mult_b0 <= dens[0][0];
+                            batch_mult_b1 <= dens[0][1];
+                            batch_mult_b2 <= m31_neg(dens[0][2]);
+                            batch_mult_b3 <= m31_neg(dens[0][3]);
+                            batch_mult_start <= 1'b1;
                             state <= S_NORM_PROBE_A;
                         end else begin
                             // All unit: latch total_inv and start unwind
@@ -328,30 +344,30 @@ module spu13_batch_inverter #(
 
                 // ── NORM_PROBE_A: latch Stage A result, start Stage B
                 S_NORM_PROBE_A: begin
-                    if (mult_a_done && !mult_a_start) begin
-                        probe_w0 <= mult_a_r0;
-                        probe_w1 <= mult_a_r1;
-                        probe_w2 <= mult_a_r2;
-                        probe_w3 <= mult_a_r3;
+                    if (batch_mult_done && !batch_mult_start) begin
+                        probe_w0 <= batch_mult_r0;
+                        probe_w1 <= batch_mult_r1;
+                        probe_w2 <= batch_mult_r2;
+                        probe_w3 <= batch_mult_r3;
                         // Stage B: W * W_conj_3 -> scalar N
                         // W_conj w.r.t. √3: (w0, -w1, 0, 0)
-                        mult_a_a0 <= mult_a_r0;
-                        mult_a_a1 <= mult_a_r1;
-                        mult_a_a2 <= mult_a_r2;
-                        mult_a_a3 <= mult_a_r3;
-                        mult_a_b0 <= mult_a_r0;
-                        mult_a_b1 <= m31_neg(mult_a_r1);
-                        mult_a_b2 <= 32'd0;
-                        mult_a_b3 <= 32'd0;
-                        mult_a_start <= 1'b1;
+                        batch_mult_a0 <= batch_mult_r0;
+                        batch_mult_a1 <= batch_mult_r1;
+                        batch_mult_a2 <= batch_mult_r2;
+                        batch_mult_a3 <= batch_mult_r3;
+                        batch_mult_b0 <= batch_mult_r0;
+                        batch_mult_b1 <= m31_neg(batch_mult_r1);
+                        batch_mult_b2 <= 32'd0;
+                        batch_mult_b3 <= 32'd0;
+                        batch_mult_start <= 1'b1;
                         state <= S_NORM_PROBE_B;
                     end
                 end
 
                 // ── NORM_PROBE_B: check N, classify lane, iterate ───
                 S_NORM_PROBE_B: begin
-                    if (mult_a_done && !mult_a_start) begin
-                        if (mult_a_r0 == 32'd0) begin
+                    if (batch_mult_done && !batch_mult_start) begin
+                        if (batch_mult_r0 == 32'd0) begin
                             singular_mask[probe_idx] <= 1'b1;
                             has_singular <= 1'b1;
                         end else begin
@@ -376,15 +392,15 @@ module spu13_batch_inverter #(
                             end
                         end else begin
                             probe_idx <= probe_idx + 1;
-                            mult_a_a0 <= dens[probe_idx + 1][0];
-                            mult_a_a1 <= dens[probe_idx + 1][1];
-                            mult_a_a2 <= dens[probe_idx + 1][2];
-                            mult_a_a3 <= dens[probe_idx + 1][3];
-                            mult_a_b0 <= dens[probe_idx + 1][0];
-                            mult_a_b1 <= dens[probe_idx + 1][1];
-                            mult_a_b2 <= m31_neg(dens[probe_idx + 1][2]);
-                            mult_a_b3 <= m31_neg(dens[probe_idx + 1][3]);
-                            mult_a_start <= 1'b1;
+                            batch_mult_a0 <= dens[probe_idx + 1][0];
+                            batch_mult_a1 <= dens[probe_idx + 1][1];
+                            batch_mult_a2 <= dens[probe_idx + 1][2];
+                            batch_mult_a3 <= dens[probe_idx + 1][3];
+                            batch_mult_b0 <= dens[probe_idx + 1][0];
+                            batch_mult_b1 <= dens[probe_idx + 1][1];
+                            batch_mult_b2 <= m31_neg(dens[probe_idx + 1][2]);
+                            batch_mult_b3 <= m31_neg(dens[probe_idx + 1][3]);
+                            batch_mult_start <= 1'b1;
                             state <= S_NORM_PROBE_A;
                         end
                     end
@@ -427,53 +443,53 @@ module spu13_batch_inverter #(
                         state <= S_OUTPUT;
                     end else begin
                         // inv[idx] = acc * prefix[idx-1]
-                        mult_a_a0 <= acc0;
-                        mult_a_a1 <= acc1;
-                        mult_a_a2 <= acc2;
-                        mult_a_a3 <= acc3;
-                        mult_a_b0 <= prefix[idx-1][0];
-                        mult_a_b1 <= prefix[idx-1][1];
-                        mult_a_b2 <= prefix[idx-1][2];
-                        mult_a_b3 <= prefix[idx-1][3];
-                        mult_a_start <= 1'b1;
+                        batch_mult_a0 <= acc0;
+                        batch_mult_a1 <= acc1;
+                        batch_mult_a2 <= acc2;
+                        batch_mult_a3 <= acc3;
+                        batch_mult_b0 <= prefix[idx-1][0];
+                        batch_mult_b1 <= prefix[idx-1][1];
+                        batch_mult_b2 <= prefix[idx-1][2];
+                        batch_mult_b3 <= prefix[idx-1][3];
+                        batch_mult_start <= 1'b1;
                         state <= S_UNWIND_MUL_A;
                     end
                 end
 
                 // ── UNWIND_MUL_A: latch inv[idx], start acc update ───
                 S_UNWIND_MUL_A: begin
-                    if (mult_a_done && !mult_a_start) begin
-                        invs[idx][0] <= mult_a_r0;
-                        invs[idx][1] <= mult_a_r1;
-                        invs[idx][2] <= mult_a_r2;
-                        invs[idx][3] <= mult_a_r3;
+                    if (batch_mult_done && !batch_mult_start) begin
+                        invs[idx][0] <= batch_mult_r0;
+                        invs[idx][1] <= batch_mult_r1;
+                        invs[idx][2] <= batch_mult_r2;
+                        invs[idx][3] <= batch_mult_r3;
                         // acc = acc * d[idx]
-                        mult_a_a0 <= acc0;
-                        mult_a_a1 <= acc1;
-                        mult_a_a2 <= acc2;
-                        mult_a_a3 <= acc3;
-                        mult_a_b0 <= dens[idx][0];
-                        mult_a_b1 <= dens[idx][1];
-                        mult_a_b2 <= dens[idx][2];
-                        mult_a_b3 <= dens[idx][3];
-                        mult_a_start <= 1'b1;
+                        batch_mult_a0 <= acc0;
+                        batch_mult_a1 <= acc1;
+                        batch_mult_a2 <= acc2;
+                        batch_mult_a3 <= acc3;
+                        batch_mult_b0 <= dens[idx][0];
+                        batch_mult_b1 <= dens[idx][1];
+                        batch_mult_b2 <= dens[idx][2];
+                        batch_mult_b3 <= dens[idx][3];
+                        batch_mult_start <= 1'b1;
                         state <= S_UNWIND_MUL_B;
                     end
                 end
 
                 // ── UNWIND_MUL_B: latch new acc, iterate or output ───
                 S_UNWIND_MUL_B: begin
-                    if (mult_a_done && !mult_a_start) begin
-                        acc0 <= mult_a_r0;
-                        acc1 <= mult_a_r1;
-                        acc2 <= mult_a_r2;
-                        acc3 <= mult_a_r3;
+                    if (batch_mult_done && !batch_mult_start) begin
+                        acc0 <= batch_mult_r0;
+                        acc1 <= batch_mult_r1;
+                        acc2 <= batch_mult_r2;
+                        acc3 <= batch_mult_r3;
                         if (idx == 4'd1) begin
                             // Last element: inv[0] = new acc
-                            invs[0][0] <= mult_a_r0;
-                            invs[0][1] <= mult_a_r1;
-                            invs[0][2] <= mult_a_r2;
-                            invs[0][3] <= mult_a_r3;
+                            invs[0][0] <= batch_mult_r0;
+                            invs[0][1] <= batch_mult_r1;
+                            invs[0][2] <= batch_mult_r2;
+                            invs[0][3] <= batch_mult_r3;
                             output_idx <= 4'd0;
                             state <= S_OUTPUT;
                         end else begin
