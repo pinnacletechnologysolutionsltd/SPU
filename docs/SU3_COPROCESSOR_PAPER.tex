@@ -1,0 +1,430 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10}
+}
+
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{SU(3) Matrix Arithmetic over $A_{31}[i]$: \\
+       A Deterministic Unitary Coprocessor Extension}
+
+\author{
+\IEEEauthorblockN{John Curley}
+\IEEEauthorblockA{Independent Researcher, SPU-13 Project\\
+\texttt{github.com/pinnacletechnologysolutionsltd/SPU}}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present an extension of the $A_{31}$ split biquadratic algebra over the
+Mersenne prime M31 ($2^{31}-1$) to the degree-8 complex algebra $A_{31}[i]$,
+enabling deterministic $3\times3$ unitary matrix arithmetic with zero
+floating-point operations. The design reuses the existing M31 multiplier
+through a 4-phase time-division multiplexing scheme, running either as a
+dedicated standalone sidecar instance or as an integrated sidecar borrowing
+a top-level shared instance. On Artix-7, synthesis maps the logical
+16-product M31 datapath to 64 DSP48E1 slices. The FSM sequences 27 complex
+$A_{31}[i]$ multiplies to complete a full $3\times3$ matrix product in
+approximately 224 compute cycles, with row-major result elements emitted as
+their accumulators complete. A Python oracle (20 checks) plus multiplier and
+sidecar Verilog testbenches verify bit-exact correctness of the arithmetic,
+the Gell-Mann structure constants, the conjugate transpose, determinant
+checks, and the SPI-visible streaming protocol. The RTL is open-source and
+integrated in the Artix-7 SU3 and SU3SHARE spins; this paper reports
+simulation, synthesis, Wukong Artix-7 2\,MHz route/bitstream results, JTAG
+configuration, and functional SPI/QR silicon verification over the Wukong
+J11 header, including all nine dense-matrix result elements on the
+shared-multiplier SU3SHARE image.
+\end{abstract}
+
+\section{Introduction}
+
+\subsection{Motivation}
+
+Special unitary groups SU($N$) underpin much of modern physics --- lattice
+QCD, topological quantum computing, anyonic braid models, and fibre-bundle
+gauge theories. In all of these applications, the core computational
+primitives are matrix multiplication and coherence checks over the group.
+Standard implementations use IEEE-754 floating-point arithmetic, which
+accumulates rounding error over long unitary evolution sequences. For
+simulations requiring millions of steps --- or for real-time control of
+topological quantum systems --- this drift can destroy the structural
+invariants that define the group.
+
+\subsection{Approach}
+
+We extend the existing $A_{31}$ split biquadratic algebra over the Mersenne
+prime M31 ($2^{31}-1$) by adjoining $\sqrt{-1}$, giving the degree-8 algebra
+$A_{31}[i]$. This algebra contains both $\sqrt{3}$ (from $A_{31}$) and
+$\sqrt{-1}$ (the complex unit), enabling exact representation of the SU(3)
+generators as matrices over $A_{31}[i]$. All arithmetic is exact modular
+arithmetic --- no floating point, no rounding, no division in hot paths.
+
+The design instantiates or borrows the same \texttt{spu13\_m31\_multiplier}
+module used by the RPLU~v2 pipeline~\cite{rplu2026}, sequencing four
+$A_{31}$ base products per complex multiply through a 4-phase time-division
+multiplexer. A full $3\times3$ matrix product completes in approximately 224
+compute cycles, emitting row-major result elements as each $C[i][j]$
+accumulator completes. The standalone module keeps its own M31 multiplier
+instance; the SU3SHARE Artix spin instead muxes a top-level shared instance
+so the integrated image does not add a second 64-DSP M31 block.
+
+\subsection{What This Paper Is and Is Not}
+
+This paper reports the RTL design, mathematical foundation, and simulation
+verification of an SU(3) matrix multiply unit over $A_{31}[i]$. The RTL
+compiles under Icarus Verilog and passes all test cases. The Wukong Artix-7
+SU3 and SU3SHARE spins synthesize cleanly with the streaming sidecar and
+have produced routed 2\,MHz bring-up bitstreams that configure over
+DirtyJTAG. The SU3 SPI protocol has been functionally tested on FPGA
+hardware: an RP2350 streamed the dense A/B fixture over Wukong J11 and read
+exact QR commits for three selected result elements on the standalone
+sidecar proof, then for all nine result elements on the SU3SHARE image,
+which also preserves the RPLU2 config/QR regression on the same bitstream.
+This paper does not claim lattice-QCD-scale capability or timing closure
+beyond the 2\,MHz bring-up target.
+
+\section{Mathematical Foundation}
+
+\subsection{$A_{31}$: The Split Biquadratic Algebra over M31}
+
+The base field is the Mersenne prime field $\mathbb{F}_p$ with
+$p = 2^{31}-1 = 2147483647$ (M31). Since $p \equiv 3 \pmod 4$, the
+polynomial $x^2+1$ is irreducible --- $\sqrt{-1}$ does not exist in the
+base field. However, $3^{(p-1)/2} \equiv -1$ and $5^{(p-1)/2} \equiv -1$,
+so $\sqrt{3}$ and $\sqrt{5}$ exist in $\mathbb{F}_{p^2}$.
+
+The split biquadratic algebra is
+\begin{equation}
+A_{31} = \mathbb{F}_p[u,v]\,/\,(u^2-3,\; v^2-5)
+\end{equation}
+with basis $[1, u, v, uv]$, representing elements as 4-tuples
+$(c_0, c_1, c_2, c_3) \in [0, p-1]^4$. The algebra is \emph{split} because
+15 is a quadratic residue: $\sqrt{15}$ exists in $\mathbb{F}_p$, so the
+extension contains zero divisors. The conjugate reduction
+tower~\cite{rplu2026} inverts units in approximately 76 cycles and traps
+zero-norm elements via FLAGS.V.
+
+\subsection{Complex Extension: $A_{31}[i]$}
+
+We adjoin $i = \sqrt{-1}$ to $A_{31}$:
+\begin{equation}
+A_{31}[i] = A_{31}[x]\,/\,(x^2+1).
+\end{equation}
+An element of $A_{31}[i]$ is a pair $(r, s)$ with $r, s \in A_{31}$,
+representing $r + is$. The degree-8 basis over $\mathbb{F}_p$ is
+$[1, u, v, uv, i, iu, iv, iuv]$. Multiplication follows the complex rule
+\begin{equation}
+(r_1 + is_1)(r_2 + is_2) = (r_1 r_2 - s_1 s_2) + i(r_1 s_2 + s_1 r_2),
+\end{equation}
+so each complex multiply requires four $A_{31}$ base products
+($r_1r_2$, $s_1s_2$, $r_1s_2$, $s_1r_2$).
+
+The conjugate reduction tower generalises to three stages
+($\mathbb{F}_p \to \mathbb{F}_p(\sqrt{3}) \to \mathbb{F}_p(\sqrt{3},\sqrt{5})
+\to \mathbb{F}_p(\sqrt{3},\sqrt{5},\sqrt{-1})$), giving an inversion latency
+of approximately 114 cycles for $A_{31}[i]$.
+
+\subsection{SU(3) Structure Constants in $A_{31}[i]$}
+
+The eight Gell-Mann matrices $\lambda_1,\dots,\lambda_8$ generate
+$\mathfrak{su}(3)$~\cite{gellmann1962}. Their entries lie in
+$\{0, \pm1, \pm\tfrac{1}{2}, \pm\tfrac{\sqrt{3}}{2}\}$. In $A_{31}[i]$:
+\begin{itemize}
+\item $\pm1$ and $\pm\tfrac{1}{2}$ are field elements
+      ($2^{-1} = 1073741824$ in M31);
+\item $\sqrt{3}$ exists natively as $u$;
+\item $\pm\tfrac{\sqrt{3}}{2} = \pm\tfrac{1}{2}\cdot\sqrt{3}$ is a single
+      $A_{31}$ multiplication;
+\item $i$ is the complex unit, present as the imaginary basis element.
+\end{itemize}
+For this work we verify that $\lambda_1^2 = \operatorname{diag}(1,1,0)$,
+$\lambda_3$ is diagonal with entries $(1,-1,0)$, $\lambda_8$ carries the
+$\sqrt{3}$ dependence correctly, and matrix multiplication over $A_{31}[i]$
+is closed for $3\times3$ matrices. The determinant of every SU(3) element
+equals $1 + 0i$ in $A_{31}[i]$.
+
+\section{RTL Design}
+
+\subsection{Multiplier Topography}
+
+The \texttt{spu13\_su3\_mult} module uses the 2-stage pipelined
+\texttt{spu13\_m31\_multiplier} --- the same multiplier design used by the
+RPLU~v2 pipeline. Each $A_{31}$ product (4 components, 16 logical parallel
+$32\times32$ integer products) completes with 2-cycle throughput; Artix-7
+synthesis maps the logical products to 64 DSP48E1 slices. A complex
+$A_{31}[i]$ multiply is sequenced as four phases through this multiplier
+(Table~\ref{tab:phases}).
+
+\begin{table}[ht]
+\centering
+\caption{4-phase TDM sequence per complex multiply.}
+\label{tab:phases}
+\begin{tabular}{clc}
+\toprule
+Phase & Operation & Cycles \\
+\midrule
+0 & $RR = \mathrm{real}(A)\cdot\mathrm{real}(B)$ & 2 \\
+1 & $II = \mathrm{imag}(A)\cdot\mathrm{imag}(B)$ & 2 \\
+2 & $RI = \mathrm{real}(A)\cdot\mathrm{imag}(B)$ & 2 \\
+3 & $IR = \mathrm{imag}(A)\cdot\mathrm{real}(B)$ & 2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+After all four phases the accumulators update as
+$c_{\mathrm{real}} \mathrel{+}= RR - II$ and
+$c_{\mathrm{imag}} \mathrel{+}= RI + IR$ ($A_{31}$ subtraction and
+addition). Each complex multiply takes 8 cycles total, fully pipelined: the
+multiplier starts a new $A_{31}$ product every 2 cycles while the previous
+result is being accumulated.
+
+\subsection{$3\times3$ Matrix Multiply FSM}
+
+The FSM implements
+\begin{equation}
+C[i][j] = \sum_{k=0}^{2} A[i][k]\cdot B[k][j], \qquad i,j \in \{0,1,2\}.
+\end{equation}
+The interface uses element-wise loading: the host writes 9 elements
+(256 bits each) into matrix A via \texttt{load\_a} strobes, then 9 into
+matrix B via \texttt{load\_b} strobes. Each element packs the four
+imaginary then four real 32-bit components. The FSM sequences 27 complex
+multiplies in row-major order; each result element is emitted as soon as
+its three $k$-terms are accumulated, so the result stream is part of the
+compute schedule rather than a separate drain stage. Total latency is
+approximately 224 compute cycles.
+
+\subsection{Resource Utilisation}
+
+\begin{table}[ht]
+\centering
+\caption{Resource and timing snapshot (Wukong Artix-7 100T).}
+\label{tab:resources}
+\begin{tabular}{lc}
+\toprule
+Item & Value \\
+\midrule
+DSP slices & 64 DSP48E1 \\
+Estimated LCs & $\sim$6.2k multiplier, $\sim$8.2k SU3 spin \\
+Packed FFs (SU3 spin) & 9,488 \\
+Packed LUT cells (SU3 spin) & 21,092 (16\% of XC7A100T) \\
+SU3SHARE integration snapshot & 60,837 LUTX, 16,478 FFX, 64 DSP \\
+Post-route timing (SU3) & 51.58\,MHz max, PASS at 2\,MHz target \\
+Post-route timing (SU3SHARE) & 3.67\,MHz max, PASS at 2\,MHz target \\
+Cycles per $3\times3$ multiply & $\sim$224 \\
+Projected time at 200\,MHz & $\sim$1.2\,$\mu$s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The sidecar is parametrised on \texttt{EXTERNAL\_MULT}: the default
+instantiates a dedicated multiplier, while the SU3SHARE spin sets it to
+borrow one top-level shared \texttt{spu13\_m31\_multiplier} so the
+integrated image does not duplicate the 64-DSP block.
+
+\subsection{Worked Example: $\lambda_1 \times \lambda_1$}
+
+Consider the Gell-Mann generator $\lambda_1$ multiplied by itself:
+\begin{equation}
+\lambda_1 = \begin{pmatrix} 0&1&0\\ 1&0&0\\ 0&0&0 \end{pmatrix},
+\qquad
+\lambda_1^2 = \begin{pmatrix} 1&0&0\\ 0&1&0\\ 0&0&0 \end{pmatrix}.
+\end{equation}
+Each matrix element is an $A_{31}[i]$ value: a pair of 4-tuples
+(real, imaginary) over M31. Here all values are real with only $c_0$
+components equal to 0 or 1. The computation
+$C[0][0] = A[0][0]B[0][0] + A[0][1]B[1][0] + A[0][2]B[2][0]$ evaluates to
+$0\cdot0 + 1\cdot1 + 0\cdot0 = 1$. The middle term requires a full
+$A_{31}[i]$ multiply: the 4-phase TDM sequence produces $RR=1$, $II=0$,
+$RI=0$, $IR=0$, giving $c_{\mathrm{real}}=1$, $c_{\mathrm{imag}}=0$, so
+$C[0][0] = (1,0,0,0)$. This example is verified by both the Python oracle
+and the Verilog testbench.
+
+\section{Verification}
+
+\subsection{Python Oracle}
+
+The oracle (\texttt{test\_su3\_oracle.py}) implements $A_{31}[i]$
+arithmetic, the Gell-Mann matrices, $3\times3$ matrix multiplication, the
+conjugate transpose, determinant, and coherence checks. Twenty checks
+cover: $A_{31}$ arithmetic (3), $A_{31}[i]$ arithmetic including
+$i^2 = -1$ (2), matrix-multiply identity and closure (2), the dense packed
+fixture shared with the RTL testbench (1), Gell-Mann structure (8), product
+closure (1), self-adjoint coherence
+$\lambda_1\lambda_1^\dagger = \lambda_1^2$ (1), and determinant of the
+identity (2). All 20 checks pass. The oracle uses standard Python integers
+reduced modulo M31 --- no floating point, no external libraries.
+
+\subsection{RTL Testbench}
+
+The Verilog testbench (\texttt{spu13\_su3\_mult\_tb.v}) loads test
+matrices through the element-wise interface and asserts bit-exact output
+against the public result stream across five cases: identity closure,
+$\lambda_1 \times \lambda_1 = \operatorname{diag}(1,1,0)$, right-operand
+preservation, zero propagation with accumulator clearing, and a dense
+$A_{31}[i]$ product exercising all lanes and three-term accumulation with
+oracle-derived packed constants. All cases pass under Icarus Verilog, and
+the bench is auto-discovered by the project regression suite. The Python
+oracle serves as the golden reference, mirroring the verification
+methodology of the Lucas MAC~\cite{lucas2026} and RPLU~v2~\cite{rplu2026}
+pipelines.
+
+\subsection{Wukong Artix-7 Silicon Verification}
+
+On 2026-07-04, the sidecar-only SU3 bitstream was SRAM-loaded through
+RP2040 DirtyJTAG at 1\,MHz. RP2350 smoke firmware streamed the dense A/B
+matrix fixture over the Wukong J11 SPI path (command \texttt{0xB1}) at
+100\,kHz with 20\,$\mu$s CS-setup, read-turnaround, CRC-hold, and
+CS-recovery guard delays. Three independent result elements, read back
+through the QR commit path, matched the oracle exactly
+(Table~\ref{tab:silicon}); the capture ended with \texttt{SU3\_J11: PASS},
+and a 40-second capture completed thirteen three-case passes. A 5\,$\mu$s
+guard-delay probe produced an intermittent invalid QR read, so 20\,$\mu$s
+is the current practical margin.
+
+On 2026-07-06, the SU3SHARE smoke was expanded to all nine dense-product
+result elements, read through QR lanes 0--8. Two complete capture loops
+reported exact matches for every element, and the same bitstream then
+passed the RPLU2 config/QR regression.
+
+\begin{table}[ht]
+\centering
+\caption{Silicon QR readback, standalone SU3 spin (2026-07-04).}
+\label{tab:silicon}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{ccll}
+\toprule
+Result & QR lane & A & B \\
+\midrule
+0 & 2 & \texttt{7FFE271F7FFC43EF} & \texttt{7FFF6B677FFED36F} \\
+4 & 5 & \texttt{7FFD2A6B7FFA47FF} & \texttt{7FFF196B7FFE2E9F} \\
+8 & 8 & \texttt{7FFBF6DF7FF7DE5F} & \texttt{7FFEB5277FFD653F} \\
+\midrule
+Result & QR lane & C & D \\
+\midrule
+0 & 2 & \texttt{00021510000446A0} & \texttt{0000A30000014F30} \\
+4 & 5 & \texttt{00034B480006BAA8} & \texttt{00010678000218A8} \\
+8 & 8 & \texttt{0004CAA00009C0F0} & \texttt{00018250000312E0} \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\section{Integration Path}
+
+The SU(3) module is part of the Artix-7 synthesis script; Yosys prunes it
+from builds that do not instantiate it, so it adds zero cost until enabled.
+The element-wise load interface rides the existing SPI command path
+(\texttt{0xB1}): \texttt{EA} starts and selects a result element,
+\texttt{E8}/\texttt{E9} stream A/B element chunks, and \texttt{EB} commits
+the captured 256-bit result through QR A/B/C/D. A full $3\times3$ multiply
+requires 144 chunk writes (9 elements each for A and B), one start command,
+and one read command per selected result element.
+
+\section{Discussion}
+
+\subsection{Applications}
+
+The primary application is not large-scale lattice QCD --- the 32-bit M31
+field is too small for double-precision physics. The natural niche is
+topological and Fibonacci anyon models~\cite{freedman2000} where the
+algebra is naturally small-domain, exactness matters more than precision,
+and the SU(3) structure maps onto fusion-rule bookkeeping. A secondary
+application is exact unitary benchmarking: verifying that a sequence of
+unitary operations closes to the identity within a finite algebra, without
+floating-point drift.
+
+\subsection{Limitations}
+
+\begin{itemize}
+\item \textbf{Guarded bring-up link:} the silicon proof uses a 100\,kHz SPI
+stream with 20\,$\mu$s guard delays; a 5\,$\mu$s probe showed intermittent
+QR read invalidity, so link tuning should proceed from the 20\,$\mu$s
+baseline.
+\item \textbf{Small field:} M31 is a 32-bit prime; operations are exact but
+low-precision. Larger applications require multiple residues or larger
+Mersenne primes.
+\item \textbf{Multiplication only:} group exponentiation, logarithm, and
+generator decomposition are not implemented.
+\item \textbf{No exponential map:} $\exp(X)$ for
+$X \in \mathfrak{su}(3)$ involves factorials that are not well-defined in
+finite characteristic; the design works entirely in the group domain via
+direct matrix multiplication.
+\end{itemize}
+
+\subsection{Future Work}
+
+Generator exponentiation via repeated squaring; SU($N$) generalisation for
+$N > 3$; integration with the Lucas MAC for combined $\phi$ + unitary
+arithmetic; a standalone SU(3) probe on Tang 25K following the PHSLK
+microprobe pattern; and a multi-residue (CRT) extension for
+higher-precision unitary arithmetic.
+
+\section*{Appendix: Python Oracle (Abridged)}
+
+\begin{lstlisting}[language=Python]
+P = 2147483647  # M31
+
+def a31_mul(a, b):
+    """A31 multiplication: 16 products mod M31."""
+    c0, c1, c2, c3 = a; d0, d1, d2, d3 = b
+    return (
+        (c0*d0 + 3*c1*d1 + 5*c2*d2 + 15*c3*d3) % P,
+        (c0*d1 + c1*d0 + 5*c2*d3 + 5*c3*d2) % P,
+        (c0*d2 + c2*d0 + 3*c1*d3 + 3*c3*d1) % P,
+        (c0*d3 + c1*d2 + c2*d1 + c3*d0) % P,
+    )
+
+def ca_mul(r1, s1, r2, s2):
+    """A31[i] multiply: (r1 + i s1)(r2 + i s2)."""
+    rr = a31_mul(r1, r2); ss = a31_mul(s1, s2)
+    rs = a31_mul(r1, s2); sr = a31_mul(s1, r2)
+    return (a31_sub(rr, ss), a31_add(rs, sr))
+\end{lstlisting}
+
+Full oracle with 20 checks and Gell-Mann matrix definitions:
+\texttt{software/tests/test\_su3\_oracle.py}.
+
+\begin{thebibliography}{9}
+
+\bibitem{gellmann1962}
+M.~Gell-Mann, ``Symmetries of baryons and mesons,''
+\emph{Phys. Rev.}, vol.~125, p.~1067, 1962.
+
+\bibitem{freedman2000}
+M.~Freedman, M.~Larsen, and Z.~Wang, ``A modular functor which is universal
+for quantum computation,'' arXiv:quant-ph/0001108, 2000.
+
+\bibitem{crandall2005}
+R.~E.~Crandall and C.~Pomerance, \emph{Prime Numbers: A Computational
+Perspective}, 2nd~ed. Springer, 2005.
+
+\bibitem{lucas2026}
+J.~Curley, ``Zero-drift Lucas-prime phinary arithmetic for exact quantum
+phase coherence on FPGA,'' 2026, \emph{(in preparation)}.
+
+\bibitem{rplu2026}
+J.~Curley, ``A hardware jet algebra coprocessor over a split M31
+biquadratic algebra,'' 2026, \emph{(in preparation)}.
+
+\bibitem{spu13repo}
+SPU-13 Project, open-source RTL and oracles.
+\url{https://github.com/pinnacletechnologysolutionsltd/SPU}
+
+\end{thebibliography}
+
+\end{document}

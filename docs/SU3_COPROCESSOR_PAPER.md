@@ -27,7 +27,9 @@ synthesis: ~8.2k estimated LCs for the SU3 spin, 64 DSP48E1. Current shared
 Artix integration snapshot (`SU3SHARE`): 60,837 LUTX cells, 16,478 FFX cells,
 64 DSP48E1, `A7_CLK_DIV_LOG2=6`, post-route `clk_fast` max 3.67 MHz with PASS
 at the 2 MHz route target, and SHA-256
-`4dff1a6e5fbbfc2f10afca0afd5ff08846727a6b0b3571eb76deb755aafb80ed`.
+`0f886350d43966303aa1c74c38265dd8ee3b8554b71eb531589027db780681cf`
+(matches the on-disk `build/spu_a7_100t_SU3SHARE.bit` and
+`docs/CURRENT_STATUS.md`).
 
 ---
 
@@ -395,13 +397,14 @@ element is loaded as eight 32-bit chunk writes. A full 3×3 multiply
 requires 144 chunk writes (9 elements for A, 9 for B), one start command,
 and one read command for the selected result element.
 
-### 5.3 Larger Moduli
+### 5.3 Multiplier Sharing
 
-The module is parametrised on L_P and L_P_BITS for Lucas prime
-moduli, supporting any Lucas prime up to L₁₉ = 9349 (14-bit operands)
-with zero RTL changes. The multiplier handles this natively since
-the M31 multiplier operates on fixed 32-bit words regardless of the
-effective modulus precision.
+The sidecar is parametrised on `EXTERNAL_MULT`: with the default 0 it
+instantiates its own `spu13_m31_multiplier`; with 1 it exposes external
+multiplier ports and borrows a top-level shared instance, which is how
+the `SU3SHARE` spin avoids adding a second 64-DSP M31 block. The modulus
+itself is fixed at M31 — there is no Lucas-prime parametrisation in this
+module.
 
 ---
 
