@@ -99,7 +99,10 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - **RPLU2PADE Thimble-Padé pipeline** — full A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] over J11 SPI. 72 DSP, 34% LUT, route closed iteration 5 (`RPLU2PADE_J11: PASS`)
 - **LUCAS sidecar** — PSCALE/PCHIRAL/PMUL/PINV all verified over J11
 
-**No longer "awaiting silicon test":** ROTC, SOM/BMU, RPLU2 Padé, and Lucas MAC are all silicon-verified on either Tang 25K or Artix-7.
+**No longer "awaiting silicon test":** ROTC, SOM/BMU, RPLU2 Padé, Lucas MAC,
+and the SPU-4 Sentinel standalone core (first silicon 2026-07-08, Tang 25K,
+`SPU4:P A=0000 B=0155 C=0155 D=0155` — see `docs/hardware_evidence.md` §3.2j)
+are all silicon-verified on either Tang 25K or Artix-7.
 
 **RTL testbench-verified (remaining):**
 - **ROTC opcode** — all 6 corrected ROTC angles pass (TDM rotor core)

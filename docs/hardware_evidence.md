@@ -993,6 +993,15 @@ is `0385b641a86530696116c13e8b81676e74ec9da091617268808a503f186a9854`.
 SOM:P T:2 B:6 E:00
 ```
 
+**Re-baseline (2026-07-08):** the same golden line was re-captured on the
+bare dock (southbridge rig removed, BL616 USB-CDC on pin C3) after a BL616
+debugger-firmware update and a full rebuild from current HEAD — repeating
+`SOM:P T:2 B:6 E:00` stream confirmed. This re-validates the whole capture
+path (openFPGALoader JTAG load, 50 MHz clock, C3 UART leg) on the updated
+debugger firmware. Pin note for future bring-up: C3 is the dock's USB-CDC
+UART (per Sipeed's own `TangPrimer-25K-example` UART constraints); B11/A11
+`uart_tx_telemetry` is a separate FPGA↔BL616 link, not the CDC console.
+
 **Interpretation:**
 - `T:2` means both built-in fixture oracle scenarios were checked.
 - `B:6` means the final scenario selected node 6, the surd/titanium fixture.
@@ -1138,6 +1147,53 @@ role. Remaining full-concurrency, unmasked SDRAM, PINV, generalized
 robotics, and actuator/sensor-loop items are feature or Artix-7 integration
 work, not Tang board bring-up blockers.
 
+### 3.2j SPU-4 Sentinel Standalone Silicon Probe
+
+**Date:** 2026-07-08 NZT — **first SPU-4 silicon.**
+
+**Build & flash:**
+
+```
+bash build_25k_spu4_probe.sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_probe.fs
+```
+
+Bitstream SHA-256:
+`9599f5e420f46515d99b57d2b256489440341166941be3bc9992b0b827222664`.
+Capture path: bare dock, BL616 USB-CDC on pin C3 at 115200 baud, updated
+debugger firmware (path re-baselined the same day against the SOM/BMU
+golden line, §3.2g).
+
+**UART proof (repeating status line):**
+
+```
+SPU4:P A=0000 B=0155 C=0155 D=0155
+```
+
+**What executed:** the probe writes a two-instruction program (QROT + HALT)
+into the SPU-4 sequencer, pulses `run`, waits for busy to settle, and
+self-checks the register file outputs. Inputs B=C=D=0x0100 under circulant
+coefficients F=0x0050, G=0x00B5, H=0x0050 rotate to B=C=D=0x0155
+(0x50 + 0xB5 + 0x50 = 0x155 — the row-sum fixture). The proven pipeline is
+sequencer → decoder → regfile → Euclidean ALU → serial multiplier, executing
+from program memory on silicon.
+
+**Interpretation:** first hardware evidence for the SPU-4 Sentinel core as a
+program-executing machine (the Euclidean ALU alone was already
+formally verified). Not yet covered: sentinel mode (Piranha-gated), boot
+master, sovereign bus, cluster bridge.
+
+**Probe rewrite note:** the first flash attempt the same day was mute. The
+original probe top — never simulated at top level — had multi-driven
+`tx_active`/`tx_byte`/`tx_bit` (message pump and bit engine in separate
+always blocks: the UART could never transmit), a latched `run` that
+restarted the program forever (busy never settled), and a busy-stable-low
+check that could fire before execution began. All three were found in
+simulation after the SOM/BMU golden line exonerated the bench path. The
+UART engine now reuses the SOM probe's silicon-proven pattern; regression
+is `hardware/tests/spu13/spu13_tang25k_spu4_probe_tb.v`, which decodes the
+golden line byte-for-byte off `uart_tx`.
+
 ### 3.3 RPLU + Math + SDRAM Proof
 
 **Historical build command:**
@@ -1245,6 +1301,7 @@ yosys synth_gowin resource report:
 | Lucas MAC fast-path zero-drift bit-pattern probe | **Verified in Silicon** on Tang 25K with UART `LUCAS:P`; covers PSCALE/PCHIRAL and 100-period PSCALE zero-drift |
 | Lucas PHSLK phase-coherence microprobe | **Verified in Silicon** on Tang 25K with UART `PHSLK:P`; covers coherent, mismatch, and zero-divisor denominator cases plus live dynamic operand loop |
 | Lucas PMUL/PINV in silicon | **Verified in Silicon** on Wukong Artix-7 J11 via RP2350 SPI sidecar; PMUL `A=0x0000004200000029`, PINV `A=0x0000000500000201` |
+| SPU-4 Sentinel standalone core | **Verified in Silicon** on Tang 25K with UART `SPU4:P A=0000 B=0155 C=0155 D=0155`; QROT program executed from sequencer program memory (§3.2j) |
 | Davis Gate / Henosis one-cycle correction pulse | Simulated (verified in `davis_gate_dsp_tb`), not captured on hardware |
 | Pell octave rollover at r⁹ boundary | Verified in simulation (`spu_rotor_vault_tb`, `spu_vm_test.py`); hardware probe covers r⁰–r⁷ |
 | Inter-SPU node link protocol | `spu_node_link_tb` exists, not probed on hardware |
