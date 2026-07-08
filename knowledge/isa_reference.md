@@ -154,3 +154,42 @@ RET
 
 20 of 26 opcodes have RTL implementations. The remaining 6 are software sequences
 or require RPLU/SPI flash integration.
+
+## FLAGS Register
+
+The FLAGS register is a 6-bit status word read via the `SNAP` opcode (0x07)
+and updated by arithmetic/geometry operations. Bits are sticky within an
+instruction but cleared at the start of the next.
+
+| Bit | Name | Set by | Meaning |
+|-----|------|--------|---------|
+| 0 | Z | Arithmetic | Result is zero |
+| 1 | C | Arithmetic | Carry/overflow |
+| 2 | V | A₃₁ inverter | Zero-norm detected (non-unit element) |
+| **3** | **MISALIGNED** | **ROTC tagged** | **B/C/D exponents differ — ALIGN required before ROTATE** |
+| **4** | **OVERFLOW** | **ROTC tagged** | **Exponent would exceed MAX_EXPONENT — REDUCE required** |
+| **5** | **INEXACT** | **ROTC tagged** | **REDUCE failed: value not divisible by 3^exponent — true value is non-integer** |
+
+Bits 3–5 are implemented in `spu13_rotor_core_tagged.v` (deferred-reduction
+ROTC, `docs/ROTC_EXPONENT_STATE_MACHINE.md`). The legacy TDM rotor core
+(`spu13_rotor_core_tdm.v`) does not assert these flags — its `div3` silently
+truncates. The tagged core is the documented fix; see Davis Gate entry in
+`knowledge/SPU_LEXICON.md` for the correctness analysis.
+
+## Golden Vectors — Tagged ROTC Representation
+
+The existing six-step ROTC closure golden vectors (VM-vs-RTL trace equivalence,
+`software/tests/test_rotc_vm_rtl_trace.py`) were verified against the TDM core
+with `div3`. Re-verification under the tagged representation is defined as:
+
+1. The tagged core's ROTATE(angle) must produce the integer-coefficient output
+   (3× the TDM golden value) at exponent 1 for thirds angles (1, 3, 4).
+2. REDUCE on that output must recover the TDM golden value exactly at exponent 0.
+3. Angles 0 (identity), 2 (P5 forward), and 5 (P5 inverse) must produce
+   identical output to the TDM core (bypass path, no exponent change).
+
+**Status:** RTL testbench verified (7/7 tests,
+`hardware/tests/spu13/spu13_rotor_core_tagged_tb.v`). Silicon re-verification
+pending — probe target: `spu13_tang25k_rotc_tagged_probe.v`, awaiting board run.
+The existing six-step silicon evidence (`docs/hardware_evidence.md`)
+was obtained with the TDM core and remains the silicon baseline.

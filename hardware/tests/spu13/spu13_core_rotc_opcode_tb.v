@@ -12,6 +12,7 @@ module spu13_core_rotc_opcode_tb;
     wire qr_commit_valid;
     wire [3:0] qr_commit_lane;
     wire [63:0] qr_commit_A, qr_commit_B, qr_commit_C, qr_commit_D;
+    wire [15:0] rotc_debug_status;
     integer errors = 0;
 
     spu13_core #(
@@ -52,7 +53,8 @@ module spu13_core_rotc_opcode_tb;
         .laminar_flow_index_out(), .thermal_pressure_out(),
         .hex_valid(), .hex_q(), .hex_r(), .audio_p_out(), .audio_q_out(),
         .axiomatic_fault(), .fault_type(), .fault_count(),
-        .rns_error(), .ecc_single_err(), .ecc_double_err()
+        .rns_error(), .ecc_single_err(), .ecc_double_err(),
+        .rotc_debug_status(rotc_debug_status)
     );
 
     function [63:0] qldi;
@@ -147,6 +149,43 @@ module spu13_core_rotc_opcode_tb;
 
         issue(rotc(8'd11, 8'd0, 6'd5));
         expect_lane(4'd11, 32'sd1, 32'sd3, 32'sd4, 32'sd2);
+
+        // ── Bad-angle fault: manifold must NOT be corrupted ──────────
+        // Angle 12 is an unimplemented placeholder (VM's _ROTC_TABLE
+        // stub was F=G=H=0 -- would silently zero B/C/D). Load lane 12
+        // with known poison values, issue ROTC with angle 12, and
+        // require the lane to come back completely untouched plus the
+        // BAD_ANGLE fault flag (rotc_debug_status[15]) set.
+        issue(qldi(8'd12, 8'sd99, 8'sd98, 8'sd97, 8'sd96));
+        expect_lane(4'd12, 32'sd99, 32'sd98, 32'sd97, 32'sd96);
+
+        issue(rotc(8'd12, 8'd0, 6'd12));
+        expect_lane(4'd12, 32'sd99, 32'sd98, 32'sd97, 32'sd96);
+        if (rotc_debug_status[15] !== 1'b1) begin
+            $display("FAIL: angle 12 did not set BAD_ANGLE fault (status=%h)",
+                      rotc_debug_status);
+            errors = errors + 1;
+        end else begin
+            $display("PASS: angle 12 faulted (BAD_ANGLE) without touching QR12");
+        end
+
+        // Angle 6 is currently gated off too (real RTL axis permutation,
+        // no matching VM oracle logic yet -- see ROTC_MAX_VERIFIED_ANGLE
+        // comment in spu13_core.v). Confirm it faults the same way,
+        // not just angle values deep in the unimplemented-polyhedra range.
+        // Lanes 0-12 only (13-axis manifold: 12 vertices + center).
+        issue(qldi(8'd1, 8'sd50, 8'sd51, 8'sd52, 8'sd53));
+        expect_lane(4'd1, 32'sd50, 32'sd51, 32'sd52, 32'sd53);
+
+        issue(rotc(8'd1, 8'd1, 6'd6));
+        expect_lane(4'd1, 32'sd50, 32'sd51, 32'sd52, 32'sd53);
+        if (rotc_debug_status[15] !== 1'b1) begin
+            $display("FAIL: angle 6 did not set BAD_ANGLE fault (status=%h)",
+                      rotc_debug_status);
+            errors = errors + 1;
+        end else begin
+            $display("PASS: angle 6 faulted (BAD_ANGLE) without touching QR1");
+        end
 
         if (errors == 0)
             $display("spu13_core_rotc_opcode_tb: PASS");

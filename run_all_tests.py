@@ -513,6 +513,68 @@ def main():
     else:
         audio_pass = audio_fail = 0
 
+    # ROTC thirds-angle exactness research (dead-end audit trail + verified
+    # exponent-tagged fix) — no hardware required
+    rotc_fix_test = os.path.join(root_dir, "software", "tests", "test_rotc_thirds_native.py")
+    if os.path.exists(rotc_fix_test):
+        result_rotc_fix = subprocess.run(
+            [sys.executable, rotc_fix_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if result_rotc_fix.returncode == 0:
+            rotc_fix_pass, rotc_fix_fail = 1, 0
+        else:
+            rotc_fix_pass, rotc_fix_fail = 0, 1
+            print(f"\n  test_rotc_thirds_native.py FAILED:\n{result_rotc_fix.stdout[-500:]}")
+    else:
+        rotc_fix_pass = rotc_fix_fail = 0
+
+    # Cartesian bridge sensor/legacy boundary oracle (no hardware required)
+    bridge_test = os.path.join(root_dir, "software", "tests", "test_cartesian_bridge.py")
+    if os.path.exists(bridge_test):
+        result_bridge = subprocess.run(
+            [sys.executable, bridge_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_bridge.returncode == 0:
+            bridge_pass, bridge_fail = 1, 0
+        else:
+            bridge_pass, bridge_fail = 0, 1
+            print(f"\n  test_cartesian_bridge.py FAILED:\n{result_bridge.stdout[-500:]}")
+    else:
+        bridge_pass = bridge_fail = 0
+
+    # ROTC bad-angle fault (VM side of the "don't corrupt the manifold" fix,
+    # 2026-07-09) — no hardware required
+    rotc_bad_angle_test = os.path.join(root_dir, "software", "tests", "test_rotc_bad_angle.py")
+    if os.path.exists(rotc_bad_angle_test):
+        result_rotc_bad_angle = subprocess.run(
+            [sys.executable, rotc_bad_angle_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_rotc_bad_angle.returncode == 0:
+            rotc_bad_angle_pass, rotc_bad_angle_fail = 1, 0
+        else:
+            rotc_bad_angle_pass, rotc_bad_angle_fail = 0, 1
+            print(f"\n  test_rotc_bad_angle.py FAILED:\n{result_rotc_bad_angle.stdout[-500:]}")
+    else:
+        rotc_bad_angle_pass = rotc_bad_angle_fail = 0
+
+    # spu_host console parser (no hardware required)
+    host_test = os.path.join(root_dir, "software", "tests", "test_spu_host_parser.py")
+    if os.path.exists(host_test):
+        result_host = subprocess.run(
+            [sys.executable, host_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_host.returncode == 0:
+            host_pass, host_fail = 1, 0
+        else:
+            host_pass, host_fail = 0, 1
+            print(f"\n  test_spu_host_parser.py FAILED:\n{result_host.stdout[-500:]}")
+    else:
+        host_pass = host_fail = 0
+
     print(f"\nPython Tests: {py_pass + py_fail + cv_pass + cv_fail}")
     print(f"Passed:      {py_pass + cv_pass}")
     print(f"Failed:      {py_fail + cv_fail}")
@@ -521,8 +583,24 @@ def main():
     print(f"Passed:           {audio_pass}")
     print(f"Failed:           {audio_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail
+    print(f"\nHost Library Tests: {host_pass + host_fail}")
+    print(f"Passed:             {host_pass}")
+    print(f"Failed:             {host_fail}")
+
+    print(f"\nCartesian Bridge Tests: {bridge_pass + bridge_fail}")
+    print(f"Passed:                 {bridge_pass}")
+    print(f"Failed:                 {bridge_fail}")
+
+    print(f"\nROTC Thirds Fix Tests: {rotc_fix_pass + rotc_fix_fail}")
+    print(f"Passed:                {rotc_fix_pass}")
+    print(f"Failed:                {rotc_fix_fail}")
+
+    print(f"\nROTC Bad-Angle Fault Tests: {rotc_bad_angle_pass + rotc_bad_angle_fail}")
+    print(f"Passed:                     {rotc_bad_angle_pass}")
+    print(f"Failed:                     {rotc_bad_angle_fail}")
+
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")

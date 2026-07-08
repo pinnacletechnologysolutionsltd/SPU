@@ -90,6 +90,20 @@ try:
 except Exception:
     phinary_helpers = None
 
+
+class RotcUnverifiedAngleError(Exception):
+    """Raised when ROTC is issued with an angle beyond ROTC_MAX_VERIFIED_ANGLE.
+
+    Mirrors the RTL fault in spu13_core.v: angles 6-11 apply a real axis
+    permutation in hardware that this VM does not (yet) implement, and
+    angles 12+ were placeholder stubs (some literally F=G=H=0, which
+    would silently zero the destination's B/C/D). Detect and refuse
+    instead of computing a wrong or corrupted result -- same "detect,
+    never silently corrupt" idiom as A31 FLAGS.V and the ROTC tagged
+    core's MISALIGNED/OVERFLOW/INEXACT faults.
+    """
+
+
 # ---------------------------------------------------------------------------
 # Q(√3) Arithmetic — the only math the SPU does
 # ---------------------------------------------------------------------------
@@ -693,7 +707,8 @@ class DavisGasket:
         """
         One Davis Gate cycle.
         Checks if Σ QR[0..12] == zero vector (cubic leak test).
-        On leak: τ += quadrance of vector sum.
+        On leak: τ += stiffness of vector sum, where stiffness =
+            ivm_quadrance + gasket_sum² = 4·Σc².
         On stable: τ >>= 1 (halve toward zero, ANNE mechanic).
         Returns True if a cubic leak was detected this tick.
         """
@@ -712,10 +727,16 @@ class DavisGasket:
         self.leak = not is_zero_sum
 
         if self.leak:
-            # τ accumulates: add quadrance of (sa+sb+sc+sd) combined
-            # Simplified: add p² of each axis sum component (no cross terms)
-            tau_add_p = sa.a*sa.a + sb.a*sb.a + sc.a*sc.a + sd.a*sd.a
-            self.tau  = RationalSurd(self.tau.a + tau_add_p, self.tau.b)
+            # τ accumulates: stiffness = ivm_quadrance + gasket_sum² = 4·Σc²
+            # (normative formula: knowledge/SPU_LEXICON.md "Davis Gate" entry)
+            gs = sa + sb + sc + sd
+            vs_ivm = RationalSurd(0, 0)
+            comps = [sa, sb, sc, sd]
+            for i in range(4):
+                for j in range(i + 1, 4):
+                    diff = comps[i] - comps[j]
+                    vs_ivm = vs_ivm + diff * diff
+            self.tau = self.tau + vs_ivm + gs * gs
         else:
             # Stable: halve τ (exact integer >>1)
             self.tau = RationalSurd(self.tau.a >> 1, self.tau.b >> 1)
@@ -1319,64 +1340,41 @@ class SPUCore:
                 hx, hy = self.qregs[n].hex_project()
 
         elif opcode == OPCODES["ROTC"]:
-            # ROTC QRd, QRs, angle — F,G,H circulant rotation (64-entry table)
-            # angle 0-5: tetrahedral C₃ (Q(√3), field=00)
-            # angle 6-11: full A₄ group (Q(√3), field=00)
-            # angle 12-23: Platonic/Archimedean (field=01=Q(√5) or 00=Q(√3))
-            # angle 24-63: extended polyhedra (field selectable)
-            # Format: (Fa,Fb, Ga,Gb, Ha,Hb, denom, field)
+            # ROTC QRd, QRs, angle — F,G,H circulant rotation.
+            # Only angles 0-5 (tetrahedral C₃ subgroup) are implemented:
+            # cross-verified against the RTL, "all 6 corrected ROTC angles
+            # pass" per AGENTS.md. Format: (Fa,Fb, Ga,Gb, Ha,Hb, denom, field)
             #   field: 0=Q(√3), 1=Q(√5), 2=Q(√15)
+            #
+            # Angles 6-63 used to have table entries here (A₄ group 6-11,
+            # Platonic/Archimedean/Catalan/Kepler-Poinsot 12-33). They were
+            # removed 2026-07-09: the RTL applies a genuine axis permutation
+            # for 6-11 (spu_quadray_permute in spu13_core.v) that this VM
+            # never implemented, so those angles would have silently
+            # disagreed with hardware; angles 12-33 were literal F=G=H=0
+            # placeholders that would have silently zeroed B/C/D. Both are
+            # real "corrupted rotations in the manifold" risks, not
+            # hypothetical — see ROTC_MAX_VERIFIED_ANGLE in spu13_core.v for
+            # the matching RTL-side gate. Re-add an angle here only after it
+            # has its own oracle and a cross-verified RTL pass, same bar 0-5
+            # cleared.
+            ROTC_MAX_VERIFIED_ANGLE = 5
             _ROTC_TABLE = {
-                # ── Tetrahedral C₃ subgroup (D-axis) ──────────────────
                 0:  (1,  0,  0, 0,  0, 0, 1, 0),    # 0°:   identity, Q(√3)
                 1:  (2,  0,  2, 0, -1, 0, 3, 0),    # period-6 thirds rotor
                 2:  (0,  0,  1, 0,  0, 0, 1, 0),    # P5 forward: B'=D,C'=B,D'=C
                 3:  (-1, 0,  2, 0,  2, 0, 3, 0),    # period-2 determinant-1 operator
                 4:  (2,  0, -1, 0,  2, 0, 3, 0),    # inverse of angle 1
                 5:  (0,  0,  0, 0,  1, 0, 1, 0),    # P5 inverse: B'=C,C'=D,D'=B
-                # ── Tetrahedral A₄ group ─────────────────────────────
-                6:  (2,  0, -1, 0,  2, 0, 3, 0),    # 120° around A-axis
-                7:  (2,  0,  2, 0, -1, 0, 3, 0),    # 240° around A-axis
-                8:  (-1, 0,  2, 0,  2, 0, 3, 0),    # 120° around B-axis
-                9:  (2,  0,  2, 0, -1, 0, 3, 0),    # 240° around B-axis
-                10: (2,  0, -1, 0,  2, 0, 3, 0),    # 120° around C-axis
-                11: (-1, 0,  2, 0,  2, 0, 3, 0),    # 240° around C-axis
-                # ── Platonic solids ──────────────────────────────────
-                # Cube/octahedron: S₄ group (90° rotations).
-                #   Requires Q(√2) arithmetic — not in supported fields.
-                #   Use vertex ROM + tetrahedral ROTC to generate.
-                12: (0, 0, 0, 0, 0, 0, 1, 0),       # cube 90° (needs Q(√2))
-                13: (0, 0, 0, 0, 0, 0, 1, 0),       # cube 180° (needs Q(√2))
-                14: (0, 0, 0, 0, 0, 0, 1, 0),       # octahedron (needs Q(√2))
-                # Icosahedron/dodecahedron: A₅ group (72° rotations).
-                #   F = (1+√5)/6 is in Q(√5), but G,H require √(5+√5)
-                #   which is not in Q(√3,√5,√15). Use vertex ROM.
-                15: (0, 0, 0, 0, 0, 0, 5, 1),       # icosahedron 72° (needs A₅)
-                16: (0, 0, 0, 0, 0, 0, 5, 1),       # icosahedron 144° (needs A₅)
-                17: (0, 0, 0, 0, 0, 0, 5, 1),       # dodecahedron (needs A₅)
-                # ── Archimedean ──────────────────────────────────────
-                18: (0, 0, 0, 0, 0, 0, 1, 0),       # truncated tetrahedron
-                19: (0, 0, 0, 0, 0, 0, 1, 0),       # cuboctahedron (VE)
-                20: (0, 0, 0, 0, 0, 0, 1, 0),       # truncated cube
-                21: (0, 0, 0, 0, 0, 0, 1, 0),       # truncated octahedron
-                22: (0, 0, 0, 0, 0, 0, 1, 0),       # rhombicuboctahedron
-                23: (0, 0, 0, 0, 0, 0, 1, 0),       # snub cube
-                # ── Catalan ──────────────────────────────────────────
-                24: (0, 0, 0, 0, 0, 0, 1, 0),       # rhombic dodecahedron
-                25: (0, 0, 0, 0, 0, 0, 1, 0),       # triakis tetrahedron
-                26: (0, 0, 0, 0, 0, 0, 1, 0),       # triakis octahedron
-                27: (0, 0, 0, 0, 0, 0, 1, 0),       # tetrakis hexahedron
-                28: (0, 0, 0, 0, 0, 0, 1, 0),       # deltoidal icositetrahedron
-                29: (0, 0, 0, 0, 0, 0, 1, 0),       # rhombic triacontahedron
-                # ── Kepler-Poinsot ───────────────────────────────────
-                30: (0, 0, 0, 0, 0, 0, 5, 1),       # great dodecahedron
-                31: (0, 0, 0, 0, 0, 0, 5, 1),       # small stellated dodecahedron
-                32: (0, 0, 0, 0, 0, 0, 5, 1),       # great icosahedron
-                33: (0, 0, 0, 0, 0, 0, 5, 1),       # great stellated dodecahedron
-                # ── Reserved 34-63 ───────────────────────────────────
             }
             angle = p1_a & 0x3F       # 6-bit angle (0-63)
             field_sel = (p1_a >> 6) & 0x3  # 2-bit field selector
+            if angle > ROTC_MAX_VERIFIED_ANGLE:
+                raise RotcUnverifiedAngleError(
+                    f"ROTC angle {angle} is not implemented/verified "
+                    f"(only 0-{ROTC_MAX_VERIFIED_ANGLE} are); refusing "
+                    f"rather than silently corrupting QR{r1 % 13}"
+                )
             if angle in _ROTC_TABLE:
                 Fa, Fb, Ga, Gb, Ha, Hb, denom, _field = _ROTC_TABLE[angle]
                 F = RationalSurd(Fa, Fb)
@@ -1417,18 +1415,15 @@ class SPUCore:
                 )
                 if self.verbose:
                     angle_names = {
-                        0:"0°id",1:"60°D",2:"120°D",3:"180°D",4:"240°D",5:"300°D",
-                        6:"120°A",7:"240°A",8:"120°B",9:"240°B",10:"120°C",11:"240°C",
-                        12:"cube90",15:"ico60",19:"VE",
+                        0: "0°id", 1: "60°D", 2: "120°D",
+                        3: "180°D", 4: "240°D", 5: "300°D",
                     }
-                    name = angle_names.get(angle, f"poly{angle}")
+                    name = angle_names[angle]
                     print(f"  [{self.pc:04d}] ROTC QR{d} ← QR{s} "
                           f"@{name} → {self.qregs[d]!r}")
-            else:
-                if self.verbose:
-                    print(f"  [{self.pc:04d}] ROTC: angle {angle} "
-                          f"not populated (extended polyhedron — flash-load F,G,H)")
-                print(f"  [{self.pc:04d}] QROT QR{n} → {self.qregs[n]!r}  hex=({hx},{hy})")
+            # No else: angle > ROTC_MAX_VERIFIED_ANGLE already raised above,
+            # and _ROTC_TABLE now covers exactly 0..ROTC_MAX_VERIFIED_ANGLE,
+            # so "angle in _ROTC_TABLE" is always true past that guard.
             if self.proof:
                 print(f"         Pell rotor (2+√3) applied to each IVM axis:")
                 for i, (old_c, new_c) in enumerate(zip(prev.components(), self.qregs[n].components())):

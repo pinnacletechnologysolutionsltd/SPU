@@ -791,6 +791,20 @@ module spu13_core #(
     localparam [63:0] RS_2 = {32'd0, 32'd2};
     localparam [63:0] RS_N1 = {32'd0, 32'hFFFFFFFF};
 
+    // Only angles 0-5 are cross-verified against the VM oracle (AGENTS.md:
+    // "all 6 corrected ROTC angles pass"). Angles 6-11 apply a genuine
+    // axis permutation in this RTL (u_perm_fwd/u_perm_inv above) that the
+    // VM's _ROTC_TABLE does NOT implement -- VM and RTL would silently
+    // disagree if angle 6-11 were ever dispatched. Angles 12-63 are
+    // unimplemented placeholders (some literally F=G=H=0 in the VM table,
+    // which would zero B/C/D outright). Rather than let any of that reach
+    // the manifold, ROTC_MAX_VERIFIED_ANGLE gates dispatch in the decode
+    // FSM below: anything past it faults immediately and the QR register
+    // file is never written. Raise this bound only after angles 6-11 get
+    // their own VM-side permutation logic and a matching cross-verified
+    // oracle pass, same bar as 0-5 cleared.
+    localparam [5:0] ROTC_MAX_VERIFIED_ANGLE = 6'd5;
+
     assign rote_F = (rote_angle == 6'd0)  ? RS_1  :
                     (rote_angle == 6'd1)  ? RS_2  :
                     (rote_angle == 6'd2)  ? 64'd0 :
@@ -998,6 +1012,17 @@ module spu13_core #(
                 instr_wr_active <= 1;
                 inst_done_r <= 1;
 
+            end else if (inst_accept && eff_inst_word[63:56] == 8'h1C &&
+                         eff_inst_word[29:24] > ROTC_MAX_VERIFIED_ANGLE) begin
+                // Unverified/unimplemented angle: detect and fault immediately,
+                // exactly like the tagged ROTC core's MISALIGNED/OVERFLOW/INEXACT
+                // idiom -- do not launch the rotor, do not touch qrf_wr_en, the
+                // QR register file (the manifold) is left completely untouched.
+                rote_angle       <= eff_inst_word[29:24];
+                rotc_debug_angle <= eff_inst_word[29:24];
+                rotc_debug_flags <= 8'b1000_0001;  // bit0=latched, bit7=BAD_ANGLE fault
+                rotc_debug_busy  <= 1'b0;
+                inst_done_r      <= 1'b1;
             end else if (inst_accept && eff_inst_word[63:56] == 8'h1C) begin
                 rote_src_lane  <= eff_inst_word[47:40] % 13;
                 rote_dest_lane <= eff_inst_word[55:48] % 13;
