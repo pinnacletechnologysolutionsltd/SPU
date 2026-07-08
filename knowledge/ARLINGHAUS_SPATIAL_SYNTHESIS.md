@@ -153,7 +153,89 @@ projection distortion; we eliminate it at the arithmetic level.
 
 ---
 
-## 7. Relationship to Other Knowledge Docs
+## 7. Deployment Architecture: The Arlinghaus Constellation (2026-07-08)
+
+The micro/meso/macro hierarchy of §6 is not only a physics model — it is the
+deployment architecture. Each Arlinghaus level corresponds to a hardware
+tier, and the Davis invariant aggregates up the hierarchy exactly as the
+fracture model prescribes: every tier checks its own ΣABCD locally, attempts
+Henosis locally, and reports upward only what it could not recover.
+
+### Tier map
+
+| Arlinghaus level | Hardware tier | Compute | Invariant scope |
+|---|---|---|---|
+| Micro-cell | **Edge node**: SPU-4 only | Euclidean ALU, Quadray/quadrance ops | Local ΣABCD + Henosis |
+| Meso-cell | **Cluster**: SPU-13 + per-axis SPU-4 satellites | 13-axis manifold; satellites preprocess per axis | Governor aggregates satellite dissonance |
+| Macro-cell | **Constellation**: networked cluster nodes | Distributed (SOM, robotics, sensing) | Inter-node coherence beacons |
+
+### Edge node (micro): SPU-4 is sufficient — SPU-13 is overkill
+
+A Tang-25K-class (or smaller) edge node does not carry a rotating manifold,
+so it does not need the SPU-13. The SPU-4 standalone core — sequencer,
+decoder, regfile, Euclidean ALU, serial multiplier — measures **668 cells
+(~400 LUT4-equivalent + ~250 FF) including its UART fixture**, which fits
+the smallest commodity fabrics (Gowin GW1N-1, iCE40UP5K) with room to
+spare. First silicon: 2026-07-08 on Tang 25K
+(`SPU4:P A=0000 B=0155 C=0155 D=0155`, `docs/hardware_evidence.md` §3.2j).
+
+Integrity hardening for harsh-environment/edge roles is additive, not
+architectural: the Hamming SEC prims (`spu_hamming_72_64.v`, the ECC
+regfiles) drop in where the application warrants, alongside the Davis
+Gate's exact algebraic invariant. Detection-by-invariant, not
+detection-by-duplication.
+
+### Cluster (meso): SPU-4's dual role
+
+The same SPU-4 that runs standalone at the edge is the per-axis satellite
+of an SPU-13 cluster — one Sentinel per manifold axis, preprocessing
+sensory/Euclidean work and reporting coherence. The fabric for this
+**already exists in RTL** and its frame formats carry the invariant
+hierarchy natively:
+
+- `spu4_cluster_bridge.v` — SPU-4 → SPU-13 16-bit frame:
+  `{snap_locked, dissonance[8] (Davis ratio), status[7]}`;
+  SPU-13 → SPU-4 32-bit frame: `{prime_anchor[16], Davis integrity
+  tag[8], command[8]}`. The governor does not see raw state — it sees
+  *dissonance*, i.e. exactly the §6 rule that only unrecovered deviation
+  propagates upward.
+- `spu_node_link` — inter-SPU framing (testbench-verified, not yet on
+  hardware).
+- `spu4_sovereign_bus.v` / `spu4_boot_master.v` — bus mastership and boot
+  orchestration for the satellite population.
+
+### Constellation (macro): whisper protocol
+
+Whisper v0 exists in RTL (`spu_whisper_sane.v`): a one-way coherence
+beacon that emits `SANE\n` over UART while the manifold is laminar — a
+node that stops whispering is incoherent or dead, with zero protocol
+overhead. Whisper v1 (direction, not yet designed): extend the beacon to
+carry the 16-bit dissonance frame, making inter-node links the same
+independence-then-aggregation structure as the intra-cluster bridge. The
+southbridge SPI 5-opcode contract remains the command-plane HAL; whisper
+is the coherence plane.
+
+### Status honesty table
+
+| Component | State |
+|---|---|
+| SPU-4 standalone core | **Silicon-verified** (2026-07-08) |
+| SPU-4 resource envelope (~400 LUT) | Measured (yosys, incl. probe fixture) |
+| Hamming SEC prims / ECC regfiles | RTL + TB verified |
+| `spu4_cluster_bridge` | RTL + TB verified |
+| `spu_node_link` | TB verified, **not on hardware** |
+| Whisper v0 (SANE beacon) | RTL, wired in spu4/system tops |
+| Whisper v1 (dissonance gossip) | **Direction only — no spec yet** |
+| 13-satellite-per-SPU-13 topology | **Direction only — no top-level RTL** |
+
+Next concrete steps, in dependency order: (1) `spu_node_link` on silicon
+(two Tang boards or Tang↔Wukong), (2) a 1-satellite cluster probe (one
+SPU-4 + SPU-13 governor over the cluster bridge, single board), (3)
+whisper v1 frame spec as a one-page contract before any RTL.
+
+---
+
+## 8. Relationship to Other Knowledge Docs
 
 | Doc | Arlinghaus connection |
 |-----|-----------------------|
@@ -164,7 +246,7 @@ projection distortion; we eliminate it at the arithmetic level.
 
 ---
 
-## 8. References
+## 9. References
 
 - Arlinghaus, S.L. (1994). *Practical Handbook of Spatial Statistics*. CRC Press.
 - Arlinghaus, S.L. & Arlinghaus, W.C. Various papers on hexagonal hierarchies

@@ -216,6 +216,35 @@ incremental power reuse; "series stream" is the RTL realization
 `docs/SERIES_STREAM_CONTROLLER.md`.
 **Status:** settled.
 
+## Cluster & network vocabulary
+
+### Whisper protocol
+**Class:** coherence signaling.
+**Definition:** the SPU's coherence plane — a node continuously signals its
+own laminar state; silence means incoherent or dead. Distinct from the
+command plane (southbridge SPI 5-opcode contract).
+**SPU convention:** v0 (implemented): `spu_whisper_sane.v` emits `SANE\n`
+over UART while `is_laminar` holds. v1 (direction only): carry the 16-bit
+cluster-bridge dissonance frame between nodes.
+**Literature:** none (SPU-coined); closest standard concept is a
+heartbeat/liveness beacon, but whisper asserts *algebraic coherence*, not
+mere liveness.
+**Anchors:** `hardware/rtl/core/shared/../spu_whisper_sane.v` (see
+peripherals tests), `spu4_cluster_bridge.v`,
+`knowledge/ARLINGHAUS_SPATIAL_SYNTHESIS.md` §7.
+**Status:** v0 settled; OPEN: whisper v1 frame spec (one-page contract
+before RTL).
+
+### Dissonance
+**Class:** cluster telemetry quantity.
+**Definition:** the 8-bit Davis-ratio deviation a satellite reports to its
+governor — the residual ΣABCD state *after* local Henosis was attempted.
+Zero dissonance ⇒ the satellite is laminar; the governor never sees raw
+satellite state, only unrecovered deviation.
+**Anchors:** `hardware/rtl/core/spu4/spu4_cluster_bridge.v` frame format.
+**Status:** settled (encoding); OPEN: units/scaling of the 8-bit field as
+a documented mapping from exact ΣABCD values.
+
 ## House terms needing definitions (flagged, not yet formal)
 
 ### "Sovereign" (sovereign bus, Sovereign Geometry Library)

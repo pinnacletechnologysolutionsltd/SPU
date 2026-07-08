@@ -245,6 +245,7 @@ Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit p
 | Jet ring oracle | `software/lib/jet_ring.py` | A31[eps]/(eps^3) matching `spu13_jet_mac`/`spu13_jet_inv` multiply-for-multiply |
 | Hyper-Catalan tests | `software/tests/test_hyper_catalan_oracle.py` | 21 checks — paper tables, Geode factorization, exact jet root-tracking, Newton comparison |
 | SPU Lexicon | `knowledge/SPU_LEXICON.md` | Normative vocabulary: definitions, exact SPU conventions, literature mapping + divergence flags (Urner/SQR etc.), OPEN formalization worklist |
+| Arlinghaus constellation architecture | `knowledge/ARLINGHAUS_SPATIAL_SYNTHESIS.md` §7 | Deployment tiers: SPU-4-only edge node (~400 LUT, silicon-verified), SPU-13 + per-axis SPU-4 cluster (bridge frames carry Davis dissonance), whisper-networked constellation; status honesty table + next steps |
 | Digon-recursive cost model | `software/lib/digon_recursive.py` | Series-vs-Newton cycle tables at eps^3..eps^9 (4 strategies + sparse-jet model); source of the revised SRU verdict |
 | Sparse jet MAC contract | `docs/SPARSE_JET_MAC.md` | Nilpotency-window-tagged Cauchy product: skip rule, tag algebra, interface, acceptance checklist |
 
