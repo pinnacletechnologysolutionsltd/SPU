@@ -108,8 +108,11 @@ module spu13_series_stream (
             x_o1_z0<=0;x_o1_z1<=0;x_o1_z2<=0;x_o1_z3<=0;
             x_o2_z0<=0;x_o2_z1<=0;x_o2_z2<=0;x_o2_z3<=0;
         end else case(state)
-            ST_IDLE: begin done<=0; err_singular<=0;
+            // err_singular holds until the next start acceptance so
+            // scoreboards/probes can read it any time after done.
+            ST_IDLE: begin done<=0;
                 if(start) begin
+                    err_singular<=0;
                     rf[1][0]<=32'd1;
                     rf[11][0]<=c0_o0_z0;rf[11][1]<=c0_o0_z1;rf[11][2]<=c0_o0_z2;rf[11][3]<=c0_o0_z3;
                     rf[12][0]<=c0_o1_z0;rf[12][1]<=c0_o1_z1;rf[12][2]<=c0_o1_z2;rf[12][3]<=c0_o1_z3;

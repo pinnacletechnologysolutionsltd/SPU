@@ -424,8 +424,79 @@ def validate_series_vs_newton(num_vars=4, max_N=4, degree=5, trials=20):
     return all_ok
 
 
+def emit_series_mem(path, n_vectors=8, seed=0x5E12):
+    """Golden vectors for spu13_series_stream (eps^3, quadratic tail).
+
+    Format ($readmemh, 32-bit words):
+      word 0            : n_vectors
+      per vector (49 w) : flag (0=normal, 1=singular c1)
+                          c0 jet  (12w: order-major, components z0..z3)
+                          c1 jet  (12w, RAW p'(x0) convention — the DUT
+                                   negates internally)
+                          c2 jet  (12w)
+                          x  jet  (12w expected root; zeros if singular)
+
+    Vector order is adversarial on purpose: singular cases sit mid-run
+    AND last (the batch-inverter lesson — orderings their tests avoid).
+    """
+    import random
+    from lib.a31_field import P, a31_norm
+    from lib.jet_ring_N import jet_neg, jet_ring_ops_N
+    from lib.hyper_catalan import soft_poly_root
+
+    random.seed(seed)
+    rng = lambda: tuple(random.randrange(P) for _ in range(4))
+
+    def rand_unit():
+        while True:
+            z = rng()
+            if a31_norm(z) != 0:
+                return z
+
+    SQRT15 = pow(15, (P + 1) // 4, P)
+
+    def rand_zero_norm():
+        t = random.randrange(1, P)
+        return ((t * SQRT15) % P, 0, 0, t)   # t*(sqrt15,0,0,1): norm 0
+
+    ZJ = ((0, 0, 0, 0),) * 3
+    types = surviving_types(4, 2)
+    singular_at = {n_vectors // 2, n_vectors - 1}   # mid and LAST
+
+    words = [n_vectors]
+    for v in range(n_vectors):
+        singular = v in singular_at
+        c0 = ((0, 0, 0, 0), rng(), rng())            # O(eps) promise
+        c1 = ((rand_zero_norm() if singular else rand_unit()), rng(), rng())
+        c2 = (rng(), rng(), rng())
+        if singular:
+            x = ZJ
+        else:
+            ring = jet_ring_ops_N(2)
+            x = soft_poly_root([c0, jet_neg(c1), c2, ZJ, ZJ, ZJ], types, ring)
+        words.append(1 if singular else 0)
+        for jet in (c0, c1, c2, x):
+            for order in jet:
+                words.extend(order)
+
+    with open(path, "w") as f:
+        f.write("// spu13_series_stream golden vectors — GENERATED FILE\n")
+        f.write(f"// regen: PYTHONPATH=software python3 software/lib/"
+                f"digon_recursive.py --emit-series-mem {path}\n")
+        f.write(f"// seed=0x{seed:X}  n={n_vectors}  "
+                f"singular at indices {sorted(singular_at)}\n")
+        for w in words:
+            f.write(f"{w:08x}\n")
+    print(f"wrote {len(words)} words ({n_vectors} vectors) to {path}")
+
+
 if __name__ == "__main__":
-    compare_depths()
-    print()
-    print("── Correctness validation (series vs Newton, bit-exact) ──")
-    validate_series_vs_newton()
+    import sys
+    if "--emit-series-mem" in sys.argv:
+        out = sys.argv[sys.argv.index("--emit-series-mem") + 1]
+        emit_series_mem(out)
+    else:
+        compare_depths()
+        print()
+        print("── Correctness validation (series vs Newton, bit-exact) ──")
+        validate_series_vs_newton()

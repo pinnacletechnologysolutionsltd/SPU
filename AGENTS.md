@@ -116,9 +116,16 @@ are all silicon-verified on either Tang 25K or Artix-7.
   Hyper-Catalan series root, static 26-product schedule ROM, shared
   mult/tower handshake, done-coupled busy. Golden vectors oracle-verified;
   tb asserts exact resource counts (1 tower + 26 mults per eval, 1 tower +
-  0 mults on singular input) — 12 checks. Contract:
-  `docs/SERIES_STREAM_CONTROLLER.md`. Remaining: .mem goldens, Tang 25K
-  probe wiring (shared-resource mux with the batch inverter)
+  0 mults on singular input). Golden vectors are a COMMITTED .mem
+  (`hardware/tests/spu13/spu13_series_stream_golden.mem`, regenerate via
+  `digon_recursive.py --emit-series-mem`; singular cases mid-run AND last).
+  Tang probe (`spu13_tang25k_series_stream_probe.v`) is sim-verified —
+  walks all 8 vectors from a BSRAM ROM with ONE multiplier muxed between
+  tower and stream, golden line `SSTR:P V=8 M=1A E=00` — but does NOT yet
+  fit the 25K: `spu13_m31_multiplier` is 16 combinational 32x32 products
+  (fine as DSP48E1 on Artix-7; ~70k LUT4 = 305% on GW5A-25 in the OSS
+  flow). Blocker for Tang silicon: sequential M31 multiplier variant or
+  Gowin DSP primitive wrapper. Contract: `docs/SERIES_STREAM_CONTROLLER.md`
 - **A7 SOM/BMU probe** (`spu_a7_som_probe_top`) — port of the Tang-25K-proven
   fixture to the Wukong Artix-7 100T; identical scenarios + golden UART line
   (`SOM:P T:2 B:6 E:00`), tb decodes the UART stream bit-for-bit
@@ -237,6 +244,7 @@ Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit p
 | Hyper-Catalan oracle | `software/lib/hyper_catalan.py` | Exact C_m (Wildberger-Rubine Thm 5), ring-generic soft polynomial formula (Thm 4) |
 | Jet ring oracle | `software/lib/jet_ring.py` | A31[eps]/(eps^3) matching `spu13_jet_mac`/`spu13_jet_inv` multiply-for-multiply |
 | Hyper-Catalan tests | `software/tests/test_hyper_catalan_oracle.py` | 21 checks — paper tables, Geode factorization, exact jet root-tracking, Newton comparison |
+| SPU Lexicon | `knowledge/SPU_LEXICON.md` | Normative vocabulary: definitions, exact SPU conventions, literature mapping + divergence flags (Urner/SQR etc.), OPEN formalization worklist |
 | Digon-recursive cost model | `software/lib/digon_recursive.py` | Series-vs-Newton cycle tables at eps^3..eps^9 (4 strategies + sparse-jet model); source of the revised SRU verdict |
 | Sparse jet MAC contract | `docs/SPARSE_JET_MAC.md` | Nilpotency-window-tagged Cauchy product: skip rule, tag algebra, interface, acceptance checklist |
 
