@@ -221,3 +221,17 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | No proprietary blobs | All firmware already MIT in-repo |
 
 Certification target: after Rev A is assembled and the §6 plan passes.
+
+## 8. Rev B candidates (explicitly NOT in Rev A scope)
+
+- **RP2040 "swiss-army" bench probe:** one RP2040 running a
+  DirtyJTAG-class composite firmware — openFPGALoader-compatible JTAG
+  (Wukong programming) + CDC UART (probe telemetry) on a single USB
+  device. Firmware first, per the Rev A rule: the board adapts to proven
+  firmware, never the reverse. Until then the bench RP2040 stays a
+  dedicated JTAG programmer and UART monitoring uses a separate bridge.
+- **Socketed Tang 25K carrier:** a second board that permanently seats
+  the spare Tang 25K (the one bought during the SDRAM-fault diagnosis —
+  the FPGA was healthy) + RP2350-Zero southbridge as the always-wired
+  edge-tier regression rig. Separate board, separate spec; Rev A's scope
+  stays frozen for OSHWA capture.
