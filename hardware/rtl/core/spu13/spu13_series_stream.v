@@ -2,7 +2,7 @@
 
 // spu13_series_stream.v — Hyper-Catalan series root over J₂ = A31[ε]/(ε³)
 //
-// Static-ROM evaluator.  27 base products sequenced by a global counter.
+// Static-ROM evaluator.  26 base products sequenced by a global counter.
 // No runtime window arithmetic, no while-loops.
 //
 // Sign convention: c₁ is negated at input (paper's 0 = c₀ − c₁x + …).
@@ -23,6 +23,7 @@ module spu13_series_stream (
     output reg  [31:0]  x_o1_z0, x_o1_z1, x_o1_z2, x_o1_z3,
     output reg  [31:0]  x_o2_z0, x_o2_z1, x_o2_z2, x_o2_z3,
     output reg          done, err_singular,
+    output wire         busy,
     output reg          inv_start,
     output reg  [31:0]  inv_z0, inv_z1, inv_z2, inv_z3,
     input  wire [31:0]  inv_r0, inv_r1, inv_r2, inv_r3,
@@ -34,7 +35,7 @@ module spu13_series_stream (
     input  wire         mult_done
 );
     localparam P = 32'h7FFFFFFF;
-    localparam N_PRODS = 27, LAST_PROD = 5'd26;
+    localparam N_PRODS = 26, LAST_PROD = 5'd25;
     localparam ST_IDLE=3'd0, ST_INV=3'd1, ST_PROD_L=3'd2, ST_PROD_W=3'd3,
                ST_DISP=3'd4, ST_FINAL=3'd5;
     reg [2:0] state;
@@ -53,6 +54,10 @@ module spu13_series_stream (
         begin sub=(x>=y)?(x-y):(x+P-y); end endfunction
     function [31:0] neg; input [31:0] x;
         begin neg=(x==0)?0:(P-x); end endfunction
+
+    // Done-coupled busy (scoreboard discipline): high from start
+    // acceptance until the cycle done pulses.
+    assign busy = (state != ST_IDLE);
 
     initial begin
         // 0-5: jet_inv scalars → rf[5..10]
@@ -78,17 +83,18 @@ module spu13_series_stream (
         srcA[17]=7; srcB[17]=2; ops[17]=1; dest[17]=10; spec[17]=0;
         // 18: c0²
         srcA[18]=12; srcB[18]=12; ops[18]=1; dest[18]=14; spec[18]=0;
-        // 19-20: 1×c0
-        srcA[19]=1; srcB[19]=12; ops[19]=1; dest[19]=5; spec[19]=0;
-        srcA[20]=1; srcB[20]=13; ops[20]=1; dest[20]=6; spec[20]=4'b0010;
-        // 21-23: term0×ci  (c0[1] from rf[12], NOT rf[5] which is overwritten)
-        srcA[21]=12; srcB[21]=2; ops[21]=1; dest[21]=5; spec[21]=0;
-        srcA[22]=12; srcB[22]=3; ops[22]=0; dest[22]=0; spec[22]=0;
-        srcA[23]=6; srcB[23]=2; ops[23]=1; dest[23]=6; spec[23]=4'b0100;
-        // 24-26: term1
-        srcA[24]=1; srcB[24]=14; ops[24]=1; dest[24]=7; spec[24]=0;
-        srcA[25]=7; srcB[25]=8; ops[25]=1; dest[25]=7; spec[25]=0;
-        srcA[26]=7; srcB[26]=15; ops[26]=1; dest[26]=7; spec[26]=4'b1000;
+        // 19: C_m staging for term0's eps^2 leg only — 1×c0[2] → rf[6].
+        // (The eps^1 leg reads c0[1] straight from rf[12] at product 20;
+        // a 1×c0[1] staging product would never be read.)
+        srcA[19]=1; srcB[19]=13; ops[19]=1; dest[19]=6; spec[19]=0;
+        // 20-22: term0×ci  (c0[1] from rf[12])
+        srcA[20]=12; srcB[20]=2; ops[20]=1; dest[20]=5; spec[20]=0;
+        srcA[21]=12; srcB[21]=3; ops[21]=0; dest[21]=0; spec[21]=0;
+        srcA[22]=6; srcB[22]=2; ops[22]=1; dest[22]=6; spec[22]=4'b0100;
+        // 23-25: term1
+        srcA[23]=1; srcB[23]=14; ops[23]=1; dest[23]=7; spec[23]=0;
+        srcA[24]=7; srcB[24]=8; ops[24]=1; dest[24]=7; spec[24]=0;
+        srcA[25]=7; srcB[25]=15; ops[25]=1; dest[25]=7; spec[25]=4'b1000;
     end
 
     always @(posedge clk or negedge rst_n) begin

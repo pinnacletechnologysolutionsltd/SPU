@@ -156,6 +156,7 @@ module spu13_series_stream #(
     // Series root output (jet)
     output reg  [31:0]  x_z [0:N][0:3],
     output reg          done,
+    output wire         busy,          // done-coupled (scoreboard discipline)
     output reg          err_singular,  // c[1] not a unit → cannot invert
 
     // Shared M31 multiplier
@@ -221,6 +222,15 @@ the RTL to match an approximate model.
 |--:|:-------------|:----------------|:-----------------|:-----------------|
 | 2 | 2            | 45              | 1                | 211              |
 | 4 | 7            | 276             | 1                | 904              |
+
+**Measured (RTL, 2026-07-08):** the N=2 implementation
+(`spu13_series_stream.v`, static schedule ROM) executes exactly
+**1 tower + 26 base multiplies** per evaluation — asserted per-vector in
+`spu13_series_stream_tb.v` (12 checks). Singular input: 1 tower +
+0 multiplies. The 45-mult prediction above is the approximate Python
+model; per §"Caveat" it must be reconciled downward to the measured
+schedule, not the other way around. Cycle count to be measured on the
+Tang 25K probe.
 
 ## 8. Non-goals (v1)
 

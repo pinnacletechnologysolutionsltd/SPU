@@ -109,6 +109,13 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - **Montgomery batch inverter** — 1 tower + 3(k-1) mults for k≤16, deferred
   zero-divisor check, singular-lane isolation + unit-subset re-batch; 52
   golden lanes verified against the Python oracle (committed .mem)
+- **Series stream evaluator** (`spu13_series_stream.v`) — eps^3
+  Hyper-Catalan series root, static 26-product schedule ROM, shared
+  mult/tower handshake, done-coupled busy. Golden vectors oracle-verified;
+  tb asserts exact resource counts (1 tower + 26 mults per eval, 1 tower +
+  0 mults on singular input) — 12 checks. Contract:
+  `docs/SERIES_STREAM_CONTROLLER.md`. Remaining: .mem goldens, Tang 25K
+  probe wiring (shared-resource mux with the batch inverter)
 - **A7 SOM/BMU probe** (`spu_a7_som_probe_top`) — port of the Tang-25K-proven
   fixture to the Wukong Artix-7 100T; identical scenarios + golden UART line
   (`SOM:P T:2 B:6 E:00`), tb decodes the UART stream bit-for-bit

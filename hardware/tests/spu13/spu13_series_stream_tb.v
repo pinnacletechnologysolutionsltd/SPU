@@ -31,7 +31,7 @@ module spu13_series_stream_tb;
     wire [31:0] x_o0_z0, x_o0_z1, x_o0_z2, x_o0_z3;
     wire [31:0] x_o1_z0, x_o1_z1, x_o1_z2, x_o1_z3;
     wire [31:0] x_o2_z0, x_o2_z1, x_o2_z2, x_o2_z3;
-    wire done, err_singular;
+    wire done, err_singular, busy;
 
     // ── Inverter interface ───────────────────────────────────────────
     wire        inv_start;
@@ -84,7 +84,7 @@ module spu13_series_stream_tb;
         .x_o1_z2(x_o1_z2), .x_o1_z3(x_o1_z3),
         .x_o2_z0(x_o2_z0), .x_o2_z1(x_o2_z1),
         .x_o2_z2(x_o2_z2), .x_o2_z3(x_o2_z3),
-        .done(done), .err_singular(err_singular),
+        .done(done), .err_singular(err_singular), .busy(busy),
 
         .inv_start(inv_start),
         .inv_z0(inv_z0), .inv_z1(inv_z1),
@@ -141,10 +141,9 @@ module spu13_series_stream_tb;
     always #5 clk = ~clk;
 
     // ── Resource pulse counters ──────────────────────────────────────
-    // The point of the static-schedule design: exactly 27 shared-mult
+    // The point of the static-schedule design: exactly 26 shared-mult
     // launches and 1 tower launch per evaluation, data-independent.
-    // (27 includes the dead product at schedule slot 19 — tighten to 26
-    // when that slot is trimmed.)  Singular input: 1 tower, 0 mults.
+    // Singular input: 1 tower, 0 mults.
     integer mult_pulses = 0, inv_pulses = 0;
     integer mult_mark = 0, inv_mark = 0;
     always @(posedge clk) begin
@@ -182,12 +181,23 @@ module spu13_series_stream_tb;
         end
     endtask
 
+    integer busy_errors = 0;
+
     task run_stream;
         begin
             mult_mark = mult_pulses;
             inv_mark  = inv_pulses;
             start = 1; #10; start = 0;
+            #11;  // one clk after start acceptance
+            if (busy !== 1'b1) begin
+                busy_errors = busy_errors + 1;
+                $display("  busy not asserted after start");
+            end
             wait(done); #2;
+            if (busy !== 1'b0) begin
+                busy_errors = busy_errors + 1;
+                $display("  busy still asserted after done");
+            end
         end
     endtask
 
@@ -261,7 +271,7 @@ module spu13_series_stream_tb;
         test_total = test_total + 1;
         if (!err_singular) test_pass = test_pass + 1;
         else $display("FAIL: Vector 1 err_singular asserted");
-        check_counts("Vector 1", 27);
+        check_counts("Vector 1", 26);
 
         // ── Vector 2: random perturbed quintic ───────────────────────
         set_c0_jet(
@@ -284,7 +294,7 @@ module spu13_series_stream_tb;
         test_total = test_total + 1;
         if (!err_singular) test_pass = test_pass + 1;
         else $display("FAIL: Vector 2 err_singular asserted");
-        check_counts("Vector 2", 27);
+        check_counts("Vector 2", 26);
 
         // ── Vector 3: random perturbed quintic ───────────────────────
         set_c0_jet(
@@ -307,7 +317,7 @@ module spu13_series_stream_tb;
         test_total = test_total + 1;
         if (!err_singular) test_pass = test_pass + 1;
         else $display("FAIL: Vector 3 err_singular asserted");
-        check_counts("Vector 3", 27);
+        check_counts("Vector 3", 26);
 
         // ── Vector 4: singular c1 (zero-norm eps^0) ──────────────────
         // (sqrt15, 0, 0, 1) has zero A31 norm; negation preserves it.
@@ -326,6 +336,11 @@ module spu13_series_stream_tb;
         else
             $display("FAIL: Vector 4 counts: %0d mults / %0d towers, expected 0 / 1",
                      mult_pulses - mult_mark, inv_pulses - inv_mark);
+
+        // ── Busy discipline tally ────────────────────────────────────
+        test_total = test_total + 1;
+        if (busy_errors == 0) test_pass = test_pass + 1;
+        else $display("FAIL: %0d busy-discipline violations", busy_errors);
 
         // ── Report ───────────────────────────────────────────────────
         if (test_pass == test_total)
