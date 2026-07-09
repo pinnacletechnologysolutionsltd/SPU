@@ -8,6 +8,53 @@
 
 ---
 
+## Version & Compatibility Promise
+
+**This document defines Southbridge SPI protocol v1.** It is the wire
+contract behind the homogeneity rule in
+`knowledge/INTERCONNECT_ARCHITECTURE.md` §2: one protocol, one console
+grammar, any board with a resident southbridge MCU (Tang 25K, Wukong A7
+J11, and future T1-tier boards alike). Board differences are pin maps and
+constraints files, never protocol forks.
+
+**Opcode set (8, frozen as of this document):**
+
+| Opcode | Name | Direction | Bytes |
+|---|---|---|---|
+| `0xA0` | Manifold Burst | read | 32 |
+| `0xAC` | Status | read | 4 |
+| `0xAD` | Scale Table | read | 9 |
+| `0xAE` | QR Commit | read | 34 |
+| `0xAF` | HEX Projection | read | 5 |
+| `0xB0` | Sentinel Telemetry | read | 64 |
+| `0xB1` | Instruction Write | write | 64 bits + 8-bit CRC |
+| `0xA5` | RPLU Config Write | write | 128 bits + 8-bit CRC |
+
+Earlier repo documents (`AGENTS.md`, `CLAUDE.md`) summarize this as a
+"5-opcode contract" (`0xAC`, `0xA0`, `0xAE`, `0xB1`, `0xA5`) — that was
+shorthand for the opcodes exercised in early bring-up, not the full set.
+All 8 are RTL-testbench-verified (`spu_spi_slave_tb.v`); this table is
+the count of record.
+
+**Compatibility rules (v1):**
+1. An opcode's response format, once documented here, **never changes**
+   for the same opcode value. A format change is a new opcode.
+2. New functionality gets a new, previously-unused opcode byte. The
+   0xA0–0xB0 range above is allocated; pick outside it (or propose a
+   sub-range) for additions.
+3. Unknown opcodes return a single `0x00` byte and re-arm to `S_IDLE`
+   (see Error Handling) — this behavior is itself part of the v1
+   contract, so host code can safely probe for opcode support.
+4. Any host library or firmware written against this table is expected to
+   work unmodified against any board that implements v1, per the
+   Interconnect Architecture homogeneity rule. A board-specific fork of
+   this protocol is a bug in the port, not a new "board variant."
+
+A future v2 (if one is ever needed) gets its own document; this file's
+opcode table does not change to accommodate it.
+
+---
+
 ## Overview
 
 The **Southbridge** is the compute engine side of the RP2350↔FPGA bridge. It implements a **SPI slave** that answers queries from the RP2350 master, streaming manifold state, telemetry, and accepting instruction/configuration writes.
@@ -358,6 +405,24 @@ Byte Range  Content
 - **Node 0 (bits 511:448)** = bytes 0–7
 - **Node 1 (bits 447:384)** = bytes 8–15
 - Each node carries satellite SNR, phase, status flags
+
+**Discrepancy flagged 2026-07-08 (found building the host library):** the
+console command that issues this opcode (`cfgtele` in
+`hardware/rp_common/spu_diag.c: cmd_cfgtele`) does **not** decode this
+buffer as 8 sentinel nodes. It reads a `magic == "SPUC"` (`0x53505543`)
+guard at bytes 0–3, then `count` (2B), last-write `sel/material/addr/data`,
+a `checksum` (4B), and — when `count==149` or an RPLU2 status is set — six
+more RPLU2 telemetry words. This matches every bring-up log in this
+document (`magic=SPUC`, `rplu2_sum=...`, etc.), so **RPLU2 config-write
+telemetry is the real, currently-exercised use of 0xB0** on the
+southbridge/RPLU2 probe builds; the 8-node sentinel layout above may be
+correct for a different bitstream (a SOM/cluster build reporting actual
+satellites) or may be stale. Whichever a given bitstream implements,
+`0xB0`'s response is a `uint8_t[64]` opaque payload at the wire level —
+callers must know which build they're talking to before interpreting it.
+Resolve by confirming against current RTL (`spu_spi_slave.v` response mux
+for `SPU_CMD_READ_SENTINEL`) and either splitting into two opcodes or
+documenting the bitstream-dependent dual meaning here explicitly.
 
 ---
 
