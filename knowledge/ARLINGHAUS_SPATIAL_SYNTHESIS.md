@@ -222,16 +222,20 @@ is the coherence plane.
 | SPU-4 standalone core | **Silicon-verified** (2026-07-08) |
 | SPU-4 resource envelope (~400 LUT) | Measured (yosys, incl. probe fixture) |
 | Hamming SEC prims / ECC regfiles | RTL + TB verified |
-| `spu4_cluster_bridge` | RTL + TB verified |
+| `spu4_cluster_bridge` | RTL + TB verified; 24-bit frame with SOM label (2026-07-09) |
 | `spu_node_link` | TB verified, **not on hardware** |
 | Whisper v0 (SANE beacon) | RTL, wired in spu4/system tops |
-| Whisper v1 (dissonance gossip) | **Direction only — no spec yet** |
-| 13-satellite-per-SPU-13 topology | **Direction only — no top-level RTL** |
+| Whisper v1 (dissonance + SOM label gossip) | RTL + TB verified (2026-07-09); **not on hardware** |
+| SOM → cluster bridge wiring | Contract defined; SPU-4 edge SOM RTL + TB verified (2026-07-09) |
+| `spu4_som_edge` | RTL + TB verified (2026-07-09); ~61 cells, fits SPU-4 edge budget; 4-node register-backed quadrance BMU |
+| `spu13_satellite_aggregator` (13-satellite whisper array + addressed command bus) | RTL + TB verified (2026-07-09); not instantiated by any board top, not synthesised, not on hardware. Fixed a real status-packing bit-alignment bug (incoherent/som_valid/som_label/dissonance all landed one bit off due to a 15-bit concat assigned to a 16-bit register) and a hardcoded-CLK_HZ bug (module only worked at exactly 50 MHz, untestable at any other simulation clock) — both found by writing the first testbench for this module, not visible from compilation alone. |
 
 Next concrete steps, in dependency order: (1) `spu_node_link` on silicon
 (two Tang boards or Tang↔Wukong), (2) a 1-satellite cluster probe (one
-SPU-4 + SPU-13 governor over the cluster bridge, single board), (3)
-whisper v1 frame spec as a one-page contract before any RTL.
+SPU-4 + SPU-13 governor over the cluster bridge, single board) with SOM
+label propagation, (3) whisper v1 probe on silicon (emitter+listener
+loopback, board target ready 2026-07-09), (4) SPU-4 edge SOM — lightweight
+BMU classifier at ~400 LUT edge node.
 
 ---
 

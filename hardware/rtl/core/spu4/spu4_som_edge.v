@@ -41,11 +41,18 @@ module spu4_som_edge #(
     localparam FEATURE_W = 2 * WIDTH;
     localparam NODE_W    = NUM_FEATURES * FEATURE_W;
 
-    // ── Weight registers ──────────────────────────────────────────────
-    reg [NODE_W - 1 : 0] weights [0:3];
+    // ── Weight registers (flat — Icarus 14 submodule-NBA workaround) ─
+    reg [NODE_W - 1 : 0] weight0, weight1, weight2, weight3;
+    initial begin weight0=0; weight1=0; weight2=0; weight3=0; end
     always @(posedge clk) begin
-        if (weight_we)
-            weights[weight_node] <= weight_data;
+        if (weight_we) begin
+            case (weight_node)
+                2'd0: weight0 <= weight_data;
+                2'd1: weight1 <= weight_data;
+                2'd2: weight2 <= weight_data;
+                2'd3: weight3 <= weight_data;
+            endcase
+        end
     end
 
     // ── Per-feature combinational quadrance ───────────────────────────
@@ -75,16 +82,21 @@ module spu4_som_edge #(
     reg [63:0] best_q;
     reg [1:0]  best_idx;
 
+    // Mux active node's weight register
+    wire [NODE_W - 1 : 0] w = (node_idx == 2'd0) ? weight0 :
+                               (node_idx == 2'd1) ? weight1 :
+                               (node_idx == 2'd2) ? weight2 : weight3;
+
     // Combinational quadrance for current node
     wire [63:0] f0_q = feature_quadrance(
         features[1*FEATURE_W-1 : 0*FEATURE_W],
-        weights[node_idx][1*FEATURE_W-1 : 0*FEATURE_W]);
+        w[1*FEATURE_W-1 : 0*FEATURE_W]);
     wire [63:0] f1_q = feature_quadrance(
         features[2*FEATURE_W-1 : 1*FEATURE_W],
-        weights[node_idx][2*FEATURE_W-1 : 1*FEATURE_W]);
+        w[2*FEATURE_W-1 : 1*FEATURE_W]);
     wire [63:0] f2_q = feature_quadrance(
         features[3*FEATURE_W-1 : 2*FEATURE_W],
-        weights[node_idx][3*FEATURE_W-1 : 2*FEATURE_W]);
+        w[3*FEATURE_W-1 : 2*FEATURE_W]);
     wire [63:0] node_quadrance = f0_q + f1_q + f2_q;
 
     // Combinational winner for this cycle
