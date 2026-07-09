@@ -17,12 +17,12 @@ module spu_fluid_solver (
     input  wire [63:0]  cfg_wr_data
 );
 
-    // 1. Tensegrity Balancer (Geometric Laplacian)
+    // 1. IVM Laplacian (Geometric Laplacian — née Tensegrity Balancer)
     // Calculates the isotropic gradient with Laminar Thresholding.
     wire [255:0] grad_out;
     wire         equilibrium;
 
-    spu_tensegrity_balancer #(
+    spu_ivm_laplacian #(
         .THRESHOLD(32'd8) // Tuned for high-density manifolds
     ) u_balancer (
         .clk(clk), .reset(reset),

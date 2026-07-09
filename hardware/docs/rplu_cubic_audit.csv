@@ -20,7 +20,7 @@ file,lines,size,readmem_count,max_reg_index,has_real,has_float,fp_string_count
 "hardware/common/rtl/core/spu_execution_unit.v",146,5306,0,15,0,0,0
 "hardware/common/rtl/core/spu13_scoreboard.v",47,1541,0,25,0,0,0
 "hardware/common/rtl/core/spu_identity_monad.v",35,1364,0,0,0,0,0
-"hardware/common/rtl/core/spu_tensegrity_balancer.v",75,2716,0,0,0,0,0
+"hardware/rtl/core/shared/spu_ivm_laplacian.v",75,2716,0,0,0,0,0
 "hardware/common/rtl/core/spu_core.v",165,6338,0,831,0,0,0
 "hardware/common/rtl/core/spu_light_core.v",62,2155,0,255,0,0,0
 "hardware/common/rtl/core/spu_nano_core.v",85,3136,0,127,0,0,0

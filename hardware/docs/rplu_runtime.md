@@ -93,7 +93,7 @@ Recommended next actions:
 
 
 ## Recent changes (2026-04-08)
-- Implemented per-lane threshold for spu_tensegrity_balancer: sel==3'd0 updates threshold_reg[cfg_addr[2:0]] with signed cfg_data[15:0].
+- Implemented per-lane threshold for `spu_ivm_laplacian` (née `spu_tensegrity_balancer`): sel==3'd0 updates threshold_reg[cfg_addr[2:0]] with signed cfg_data[15:0]. Renamed 2026-07-09.
 - Added cfg inputs to hardware/common/rtl/bio/spu_fluid_solver.v and forwarded to u_balancer.
 - Added dec_fast_cfg_* inputs to hardware/common/rtl/core/spu13_core.v and wired them from top-level spu_system (dec_fast_cfg_* → spu13_core).
 - Exposed rplu_cfg_* inputs on hardware/spu4/rtl/spu4_top.v and wired them from spu_system per-sentinel.
