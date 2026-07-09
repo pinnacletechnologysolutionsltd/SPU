@@ -1,9 +1,11 @@
-// SPU-13 Rational Field Tensegrity Balancer (v2.0)
+// SPU-13 IVM Laplacian Relaxation Filter (v2.0)
 // Implementation: Parallel reduction tree for 12-neighbor Laplacian relaxation.
-// Field: Q(sqrt3), Logic: Algebraic Summation.
-// Objective: Absolute equilibrium (Henosis) detection via Rational Field reduction.
+// Field: Q(sqrt3).  Operates on the IVM's 12-around-1 coordination shell —
+// the natural discrete Laplacian on the cuboctahedral lattice.
+// Objective: Detect equilibrium (all lanes below threshold) via
+// rational-field neighbor-averaging and threshold-gated residual output.
 
-module spu_tensegrity_balancer #(
+module spu_ivm_laplacian #(
     parameter THRESHOLD = 16'd4 // Threshold Floor
 )(
     input  wire         clk,

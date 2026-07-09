@@ -59,7 +59,7 @@ read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_folded_alu.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_identity_monad.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_light_core.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_nano_core.v
-read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_tensegrity_balancer.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_ivm_laplacian.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/toroidal_regfile.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_cfg_mux.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/shared/spu_proprioception.v
