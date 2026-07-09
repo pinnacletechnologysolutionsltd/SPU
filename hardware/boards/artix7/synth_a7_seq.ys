@@ -1,0 +1,66 @@
+# synth_a7.ys — SPU-13 Artix-7 Yosys Synthesis Script
+#
+# Source list only. Use `build_a7.sh` to apply spin parameters and emit the
+# board-specific JSON artifact.
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/artix7/spu_a7_top.v \
+    hardware/rtl/top/spu_sierpinski_clk.v \
+    hardware/rtl/core/spu13/spu13_core.v \
+    hardware/rtl/core/spu13/spu13_lattice.v \
+    hardware/rtl/core/spu13/laminar_node.v \
+    hardware/rtl/core/shared/spu_rotor_vault.v \
+    hardware/rtl/core/shared/spu_cross_rotor.v \
+    hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/core/shared/toroidal_regfile.v \
+    hardware/rtl/core/shared/toroidal_regfile_ecc.v \
+    hardware/rtl/core/shared/spu_quadray_permute.v \
+    hardware/rtl/core/shared/spu_quadray_regfile.v \
+    hardware/rtl/common/prim/spu_hamming_72_64.v \
+    hardware/rtl/core/shared/spu_quadray_regfile_ecc.v \
+    hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
+    hardware/rtl/common/prim/surd_multiplier.v \
+    hardware/rtl/common/prim/spu_xilinx_prim.v \
+    hardware/rtl/core/spu13/spu_sequencer.v \
+    hardware/rtl/core/spu13/spu_quadrance_accum.v \
+    hardware/rtl/core/spu13/spu_som_weight_bram.v \
+    hardware/rtl/core/spu13/spu_som_bmu.v \
+    hardware/rtl/core/spu13/spu_cluster_reduce.v \
+    hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v \
+    hardware/rtl/top/spu_ve_qr_init.v \
+    hardware/rtl/core/spu13/spu13_m31_multiplier_seq.v hardware/rtl/core/spu13/spu13_m31_multiplier_seq_fallback.v \
+    hardware/rtl/core/spu13/spu13_m31_inverter.v \
+    hardware/rtl/core/spu13/spu13_fp4_inverter.v \
+    hardware/rtl/core/spu13/spu_bram_32x64_array.v \
+    hardware/rtl/core/spu13/spu_btu_collision_resolver.v \
+    hardware/rtl/core/spu13/spu13_btu_core_top.v \
+    hardware/rtl/core/spu13/spu_som_train.v \
+    hardware/rtl/core/spu13/spu13_multi_port_regfile.v \
+    hardware/rtl/core/spu13/spu13_quadray_variety.v \
+    hardware/rtl/core/spu13/spu13_nsa_core.v \
+    hardware/rtl/core/spu13/spu13_nsa_dual_alu.v \
+    hardware/rtl/core/spu13/spu13_topology6_state.v \
+    hardware/rtl/core/spu13/spu13_janus_dual_mode.v \
+    hardware/rtl/core/spu13/spu13_janus_screw_lines.v \
+    hardware/rtl/core/spu13/spu13_lucas_mac.v \
+    hardware/rtl/core/spu13/spu13_lucas_sidecar.v \
+    hardware/rtl/core/spu13/spu13_su3_mult.v \
+    hardware/rtl/core/spu13/spu13_su3_sidecar.v \
+    hardware/rtl/core/spu13/spu13_rplu2_sidecar.v \
+    hardware/rtl/core/spu13/spu13_rplu2_pade_sidecar.v \
+    hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v \
+    hardware/rtl/core/spu13/spu13_neuro_epoch_sidecar.v \
+    hardware/rtl/core/spu13/rplu_pipeline.v \
+    hardware/rtl/gpu/rplu_thimble_pade.v \
+    hardware/rtl/gpu/davis_to_rplu.v \
+    hardware/rtl/gpu/rplu_exp.v \
+    hardware/rtl/gpu/pade_eval_4_4.v \
+    hardware/rtl/gpu/rplu_poly_step.v \
+    hardware/rtl/math/rational_surd5_add.v \
+    hardware/rtl/math/rational_surd5_mul.v \
+    hardware/rtl/math/rational_surd5_mul64.v \
+    hardware/rtl/math/rational_surd5_norm.v \
+    hardware/rtl/math/rational_surd5_scale_manager.v \
+    hardware/rtl/peripherals/io/spu_spi_slave.v \
+    hardware/rtl/peripherals/io/surd_uart_tx.v \
+    hardware/rtl/arch/spu_optional_stubs.v
