@@ -100,6 +100,68 @@ module spu13_rotor_core_tagged #(
         end
     endfunction
 
+    // ── Division-free exact division by 3^k (REDUCE) ─────────────────
+    // Hacker's-Delight magic-constant technique, same family as
+    // spu13_rotor_core_tdm.v's div3 (which hardcodes the single divisor
+    // 3), generalized to REDUCE's 15 possible runtime divisors 3^1..3^15.
+    //
+    // For odd d, there is a unique 32-bit m with d*m ≡ 1 (mod 2^32).
+    // q = (n*m) mod 2^32 recovers the exact quotient n/d whenever d
+    // divides n (and always fits in 32 bits when it does, since a
+    // division only shrinks magnitude). Because d is invertible mod
+    // 2^32, d*x ≡ n (mod 2^32) has a solution for *every* n, exact or
+    // not — so exactness can NOT be checked by re-multiplying mod 2^32;
+    // it needs a full-precision compare (q*d, computed at 64-bit width,
+    // against the original 64-bit-sign-extended value) to actually
+    // distinguish "n is a true multiple of d" from "d is invertible".
+    // Verified against a 200,000-case random sweep over the full signed
+    // 32-bit range and all 15 exponents before this was written into RTL.
+    function [31:0] magic3;
+        input [3:0] e;
+        begin
+            case (e)
+                4'd1:  magic3 = 32'haaaaaaab;
+                4'd2:  magic3 = 32'h38e38e39;
+                4'd3:  magic3 = 32'h684bda13;
+                4'd4:  magic3 = 32'h781948b1;
+                4'd5:  magic3 = 32'hd2b3183b;
+                4'd6:  magic3 = 32'hf0e65d69;
+                4'd7:  magic3 = 32'ha5a21f23;
+                4'd8:  magic3 = 32'h37360a61;
+                4'd9:  magic3 = 32'h126758cb;
+                4'd10: magic3 = 32'hb0cd1d99;
+                4'd11: magic3 = 32'h90445f33;
+                4'd12: magic3 = 32'hdac17511;
+                4'd13: magic3 = 32'h9e407c5b;
+                4'd14: magic3 = 32'h8a157ec9;
+                4'd15: magic3 = 32'h2e072a43;
+                default: magic3 = 32'd0;
+            endcase
+        end
+    endfunction
+
+    // Candidate quotient n/3^k — correct only where 3^k exactly divides n;
+    // caller must check reduce_verify() before trusting this.
+    function signed [31:0] reduce_quotient;
+        input signed [31:0] n;
+        input [3:0] k;
+        reg signed [63:0] prod;
+        begin
+            prod = $signed(n) * $signed(magic3(k));
+            reduce_quotient = prod[31:0];
+        end
+    endfunction
+
+    // Full-precision re-multiply for the exactness check (must not be
+    // truncated mod 2^32 — see comment above).
+    function signed [63:0] reduce_verify;
+        input signed [31:0] q;
+        input [3:0] k;
+        begin
+            reduce_verify = $signed(q) * $signed({1'b0, pow3(k)});
+        end
+    endfunction
+
     // ── Lane exponent reader ──────────────────────────────────────────
     function [EXP_WIDTH-1:0] get_exp;
         input [2:0] lane;
@@ -323,16 +385,25 @@ module spu13_rotor_core_tagged #(
                     if (get_exp(reduce_lane) == 0) begin
                         state <= S_DONE;
                     end else begin
-                        // Load the value to reduce
+                        // Load the value to reduce. Lanes are signed
+                        // 32-bit values (module header) — sign-extend,
+                        // not zero-extend, or every negative lane value
+                        // (routine in this zero-sum representation, e.g.
+                        // D=(-3,0) in this TB's own Test 1) reduces to a
+                        // huge false-positive magnitude and either misses
+                        // a real exact division or spuriously faults
+                        // INEXACT on one. Verified against real RTL:
+                        // B=-9 at exp=1 (exact, -9/3=-3) previously
+                        // returned unchanged with a false INEXACT fault.
                         case (reduce_lane)
-                            3'd0: reduce_val64 <= {32'd0, A_in[63:32]};
-                            3'd1: reduce_val64 <= {32'd0, A_in[31:0]};
-                            3'd2: reduce_val64 <= {32'd0, B_in[63:32]};
-                            3'd3: reduce_val64 <= {32'd0, B_in[31:0]};
-                            3'd4: reduce_val64 <= {32'd0, C_in[63:32]};
-                            3'd5: reduce_val64 <= {32'd0, C_in[31:0]};
-                            3'd6: reduce_val64 <= {32'd0, D_in[63:32]};
-                            3'd7: reduce_val64 <= {32'd0, D_in[31:0]};
+                            3'd0: reduce_val64 <= {{32{A_in[63]}}, A_in[63:32]};
+                            3'd1: reduce_val64 <= {{32{A_in[31]}}, A_in[31:0]};
+                            3'd2: reduce_val64 <= {{32{B_in[63]}}, B_in[63:32]};
+                            3'd3: reduce_val64 <= {{32{B_in[31]}}, B_in[31:0]};
+                            3'd4: reduce_val64 <= {{32{C_in[63]}}, C_in[63:32]};
+                            3'd5: reduce_val64 <= {{32{C_in[31]}}, C_in[31:0]};
+                            3'd6: reduce_val64 <= {{32{D_in[63]}}, D_in[63:32]};
+                            3'd7: reduce_val64 <= {{32{D_in[31]}}, D_in[31:0]};
                         endcase
                         state <= S_REDUCE_DIV;
                     end
@@ -346,26 +417,26 @@ module spu13_rotor_core_tagged #(
                     exp_cp_out <= exp_cp_in; exp_cq_out <= exp_cq_in;
                     exp_dp_out <= exp_dp_in; exp_dq_out <= exp_dq_in;
 
-                    if (ENABLE_REDUCE_DIV) begin
-                        // Exactness: value must be divisible by 3^exponent
-                        if (($signed(reduce_val64) % $signed({1'b0, pow3(reduce_exp)})) == 0) begin
+                    if (ENABLE_REDUCE_DIV) begin : reduce_div_calc
+                        // Division-free: magic-constant multiply + a
+                        // full-precision re-multiply to verify exactness
+                        // (see reduce_quotient/reduce_verify above). One
+                        // multiplier computed once and reused across the
+                        // lane dispatch, not one runtime divider per lane.
+                        reg signed [31:0] q_cand;
+                        reg signed [63:0] verify;
+                        q_cand = reduce_quotient(reduce_val64[31:0], reduce_exp);
+                        verify = reduce_verify(q_cand, reduce_exp);
+                        if (verify == reduce_val64) begin
                             case (reduce_lane)
-                                3'd0: A_out[63:32] <= $signed(reduce_val64) /
-                                    $signed({1'b0, pow3(reduce_exp)});
-                                3'd1: A_out[31:0]  <= $signed(reduce_val64) /
-                                    $signed({1'b0, pow3(reduce_exp)});
-                                3'd2: B_out[63:32] <= $signed(reduce_val64) /
-                                    $signed({1'b0, pow3(reduce_exp)});
-                                3'd3: B_out[31:0]  <= $signed(reduce_val64) /
-                                    $signed({1'b0, pow3(reduce_exp)});
-                                3'd4: C_out[63:32] <= $signed(reduce_val64) /
-                                    $signed({1'b0, pow3(reduce_exp)});
-                                3'd5: C_out[31:0]  <= $signed(reduce_val64) /
-                                    $signed({1'b0, pow3(reduce_exp)});
-                                3'd6: D_out[63:32] <= $signed(reduce_val64) /
-                                    $signed({1'b0, pow3(reduce_exp)});
-                                3'd7: D_out[31:0]  <= $signed(reduce_val64) /
-                                    $signed({1'b0, pow3(reduce_exp)});
+                                3'd0: A_out[63:32] <= q_cand;
+                                3'd1: A_out[31:0]  <= q_cand;
+                                3'd2: B_out[63:32] <= q_cand;
+                                3'd3: B_out[31:0]  <= q_cand;
+                                3'd4: C_out[63:32] <= q_cand;
+                                3'd5: C_out[31:0]  <= q_cand;
+                                3'd6: D_out[63:32] <= q_cand;
+                                3'd7: D_out[31:0]  <= q_cand;
                             endcase
                             case (reduce_lane)
                                 3'd0: exp_ap_out <= 4'd0;

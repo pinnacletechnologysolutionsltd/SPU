@@ -75,6 +75,33 @@ module spu13_rotor_core_tagged_tb;
         begin pack_coeff = {32'd0, c}; end
     endfunction
 
+    // Independent oracle for Test 9 — deliberately NOT shared with the
+    // DUT's own pow3()/magic3() tables, so a bug in the DUT's table
+    // can't accidentally cancel out against the same bug in the check.
+    function signed [31:0] pow3_oracle;
+        input [3:0] e;
+        begin
+            case (e)
+                4'd1:  pow3_oracle = 3;
+                4'd2:  pow3_oracle = 9;
+                4'd3:  pow3_oracle = 27;
+                4'd4:  pow3_oracle = 81;
+                4'd5:  pow3_oracle = 243;
+                4'd6:  pow3_oracle = 729;
+                4'd7:  pow3_oracle = 2187;
+                4'd8:  pow3_oracle = 6561;
+                4'd9:  pow3_oracle = 19683;
+                4'd10: pow3_oracle = 59049;
+                4'd11: pow3_oracle = 177147;
+                4'd12: pow3_oracle = 531441;
+                4'd13: pow3_oracle = 1594323;
+                4'd14: pow3_oracle = 4782969;
+                4'd15: pow3_oracle = 14348907;
+                default: pow3_oracle = 1;
+            endcase
+        end
+    endfunction
+
     task set_all_exponents;
         input [EXP_WIDTH-1:0] e;
         begin
@@ -286,6 +313,92 @@ module spu13_rotor_core_tagged_tb;
         F = pack_coeff(2); G = pack_coeff(2); H = pack_coeff(-1);
         run_op(2'b00);
         check_fault("T7", 3'b010);  // OVERFLOW
+
+        // ── Test 8: REDUCE success on a negative value ─────────────
+        // B=-9 at exp=1. -9/3 = -3 exactly — must succeed, no fault.
+        // Regression test for a real bug: reduce_val64 was loaded via
+        // zero-extension instead of sign-extension, so every negative
+        // lane value reduced as if it were the huge positive number
+        // 2^32+value, either missing a real exact division (this case)
+        // or spuriously faulting INEXACT. Test 3 alone didn't catch it
+        // because -5's zero-extended residue is *also* nonzero mod 3 —
+        // a coincidence that masked the bug for that specific value.
+        $display("── Test 8: REDUCE success on negative value ──");
+        test_n = test_n + 1;
+        A_in = pack_surd(0, 0);
+        B_in = pack_surd(-9, 0);
+        C_in = pack_surd(0, 0);
+        D_in = pack_surd(0, 0);
+        exp_ap_in = 0; exp_aq_in = 0;
+        exp_bp_in = 1; exp_bq_in = 1;
+        exp_cp_in = 1; exp_cq_in = 1;
+        exp_dp_in = 1; exp_dq_in = 1;
+        reduce_lane = 3'd2;  // BP
+        run_op(2'b10);
+        check_no_fault("T8");
+        check_lane("T8 B reduced", -3, 0, B_out[63:32], B_out[31:0]);
+        check_exp("T8 B_P exp", 0, exp_bp_out);
+
+        // ── Test 9: REDUCE randomized marathon ─────────────────────
+        // Cross-checks the DUT's division-free magic-multiply REDUCE
+        // against an independent testbench-side oracle computed with
+        // ordinary Verilog '/' and '%' — fine here since this is
+        // verification code, not the synthesizable hot path the
+        // project's no-division rule actually governs. 2000 random
+        // (value, exponent) pairs over the full signed 32-bit range
+        // and all 15 REDUCE exponents.
+        $display("── Test 9: REDUCE randomized marathon ──");
+        begin : marathon
+            integer seed;
+            integer m;
+            integer rk_wide;
+            reg signed [31:0] rn;
+            reg [3:0] rk;
+            reg signed [31:0] rd_oracle;
+            reg oracle_exact;
+            seed = 32'hC0FFEE;
+            for (m = 0; m < 2000; m = m + 1) begin
+                rn = $random(seed);
+                rk_wide = $random(seed) % 15;         // -14..14
+                if (rk_wide < 0) rk_wide = -rk_wide;   // 0..14
+                rk = rk_wide[3:0] + 4'd1;              // 1..15
+
+                A_in = pack_surd(0, 0);
+                B_in = pack_surd(rn, 0);
+                C_in = pack_surd(0, 0);
+                D_in = pack_surd(0, 0);
+                exp_ap_in = 0; exp_aq_in = 0;
+                exp_bp_in = rk; exp_bq_in = rk;
+                exp_cp_in = 0; exp_cq_in = 0;
+                exp_dp_in = 0; exp_dq_in = 0;
+                reduce_lane = 3'd2;  // BP
+
+                oracle_exact = (rn % pow3_oracle(rk)) == 0;
+                rd_oracle = rn / pow3_oracle(rk);
+
+                run_op(2'b10);
+
+                if (oracle_exact) begin
+                    if (fault !== 3'b000) begin
+                        $display("FAIL: T9[%0d] n=%0d k=%0d expected exact, got fault=%b",
+                            m, rn, rk, fault);
+                        fail = fail + 1;
+                    end else if ($signed(B_out[63:32]) !== rd_oracle) begin
+                        $display("FAIL: T9[%0d] n=%0d k=%0d got=%0d exp=%0d",
+                            m, rn, rk, $signed(B_out[63:32]), rd_oracle);
+                        fail = fail + 1;
+                    end
+                end else begin
+                    if (fault !== 3'b100) begin
+                        $display("FAIL: T9[%0d] n=%0d k=%0d expected INEXACT, got fault=%b",
+                            m, rn, rk, fault);
+                        fail = fail + 1;
+                    end
+                end
+            end
+        end
+        test_n = test_n + 1;
+        $display("    (2000 randomized REDUCE cases checked)");
 
         // ── Report ───────────────────────────────────────────────────
         if (fail == 0)
