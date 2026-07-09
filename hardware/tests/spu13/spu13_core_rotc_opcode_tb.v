@@ -150,12 +150,51 @@ module spu13_core_rotc_opcode_tb;
         issue(rotc(8'd11, 8'd0, 6'd5));
         expect_lane(4'd11, 32'sd1, 32'sd3, 32'sd4, 32'sd2);
 
+        // ── Angles 6-11: axis-permutation conjugates ─────────────────
+        // These route through u_perm_fwd → rotor → u_perm_inv in
+        // spu13_core.v (invariant axis B for 6-7, C for 8-9, D for
+        // 10-11), so unlike 0-5 they rewrite ALL FOUR components.
+        // Source components are all multiples of 3 so every thirds
+        // division is exact (VM rounds, RTL div3 truncates — they only
+        // provably agree when the division is exact; same restriction
+        // the 0-5 canonical vector already obeys). Expected values are
+        // VM/exact-Fraction oracle outputs (test_rotc_vm_rtl_trace.py
+        // generates the same numbers independently).
+        issue(qldi(8'd2, 8'sd3, -8'sd6, 8'sd9, -8'sd12));
+        expect_lane(4'd2, 32'sd3, -32'sd6, 32'sd9, -32'sd12);
+
+        issue(rotc(8'd3, 8'd2, 6'd6));
+        expect_lane(4'd3, 32'sd12, -32'sd6, -32'sd3, -32'sd9);
+
+        issue(rotc(8'd4, 8'd2, 6'd7));
+        expect_lane(4'd4, -32'sd9, -32'sd6, 32'sd12, -32'sd3);
+
+        issue(rotc(8'd5, 8'd2, 6'd8));
+        expect_lane(4'd5, -32'sd13, -32'sd4, 32'sd9, 32'sd2);
+
+        issue(rotc(8'd3, 8'd2, 6'd9));
+        expect_lane(4'd3, -32'sd4, 32'sd2, 32'sd9, -32'sd13);
+
+        issue(rotc(8'd4, 8'd2, 6'd10));
+        expect_lane(4'd4, -32'sd5, 32'sd1, 32'sd10, -32'sd12);
+
+        issue(rotc(8'd5, 8'd2, 6'd11));
+        expect_lane(4'd5, 32'sd1, 32'sd10, -32'sd5, -32'sd12);
+
+        // Inverse-pair closure through the real core: angle 7 undoes
+        // angle 6 (thirds conjugates about B are mutual inverses).
+        issue(rotc(8'd3, 8'd2, 6'd6));
+        issue(rotc(8'd3, 8'd3, 6'd7));
+        expect_lane(4'd3, 32'sd3, -32'sd6, 32'sd9, -32'sd12);
+
         // ── Bad-angle fault: manifold must NOT be corrupted ──────────
         // Angle 12 is an unimplemented placeholder (VM's _ROTC_TABLE
         // stub was F=G=H=0 -- would silently zero B/C/D). Load lane 12
         // with known poison values, issue ROTC with angle 12, and
         // require the lane to come back completely untouched plus the
-        // BAD_ANGLE fault flag (rotc_debug_status[15]) set.
+        // BAD_ANGLE fault flag (rotc_debug_status[15]) set. Angle 12 is
+        // now the first angle past ROTC_MAX_VERIFIED_ANGLE (=11), so
+        // this also proves the moved gate boundary.
         issue(qldi(8'd12, 8'sd99, 8'sd98, 8'sd97, 8'sd96));
         expect_lane(4'd12, 32'sd99, 32'sd98, 32'sd97, 32'sd96);
 
@@ -169,22 +208,20 @@ module spu13_core_rotc_opcode_tb;
             $display("PASS: angle 12 faulted (BAD_ANGLE) without touching QR12");
         end
 
-        // Angle 6 is currently gated off too (real RTL axis permutation,
-        // no matching VM oracle logic yet -- see ROTC_MAX_VERIFIED_ANGLE
-        // comment in spu13_core.v). Confirm it faults the same way,
-        // not just angle values deep in the unimplemented-polyhedra range.
+        // Angle 63 (top of the 6-bit field) must fault the same way,
+        // not just angle values right at the boundary.
         // Lanes 0-12 only (13-axis manifold: 12 vertices + center).
         issue(qldi(8'd1, 8'sd50, 8'sd51, 8'sd52, 8'sd53));
         expect_lane(4'd1, 32'sd50, 32'sd51, 32'sd52, 32'sd53);
 
-        issue(rotc(8'd1, 8'd1, 6'd6));
+        issue(rotc(8'd1, 8'd1, 6'd63));
         expect_lane(4'd1, 32'sd50, 32'sd51, 32'sd52, 32'sd53);
         if (rotc_debug_status[15] !== 1'b1) begin
-            $display("FAIL: angle 6 did not set BAD_ANGLE fault (status=%h)",
+            $display("FAIL: angle 63 did not set BAD_ANGLE fault (status=%h)",
                       rotc_debug_status);
             errors = errors + 1;
         end else begin
-            $display("PASS: angle 6 faulted (BAD_ANGLE) without touching QR1");
+            $display("PASS: angle 63 faulted (BAD_ANGLE) without touching QR1");
         end
 
         if (errors == 0)

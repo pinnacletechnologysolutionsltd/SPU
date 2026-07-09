@@ -63,7 +63,7 @@
 | 0x13 | QLOAD | QRd | Load QR from manifold lane |
 | 0x14 | QLOG | QRd | Print QR to UART (quadrance + components) |
 | **0x1B** | **QSUB** | QRd, QRa, QRb | QR[d] = QR[a] - QR[b] |
-| **0x1C** | **ROTC** | QRd, QRs, θ | Thomson circulant rotation (F,G,H) |
+| **0x1C** | **ROTC** | QRd, QRs, θ | Thomson circulant rotation (F,G,H). θ = 0-11 verified (0-5 direct, A invariant; 6-11 axis-permutation conjugates about B/C/D — these rewrite all four components). θ ≥ 12 faults (`rotc_debug_status[15]` / `RotcUnverifiedAngleError`), manifold untouched. Full catalog: `AGENTS.md` |
 | **0x1D** | **QLDI** | QRd, A,B,C,D | Load immediate Quadray vector |
 | **0x1E** | **DELTA** | QRd, Q1,Q2,k | Triple quadrance parameterization |
 | **0x1F** | **MIN4** | QRd | Normalize: subtract min(A,B,C,D) |

@@ -94,13 +94,14 @@ except Exception:
 class RotcUnverifiedAngleError(Exception):
     """Raised when ROTC is issued with an angle beyond ROTC_MAX_VERIFIED_ANGLE.
 
-    Mirrors the RTL fault in spu13_core.v: angles 6-11 apply a real axis
-    permutation in hardware that this VM does not (yet) implement, and
-    angles 12+ were placeholder stubs (some literally F=G=H=0, which
-    would silently zero the destination's B/C/D). Detect and refuse
-    instead of computing a wrong or corrupted result -- same "detect,
-    never silently corrupt" idiom as A31 FLAGS.V and the ROTC tagged
-    core's MISALIGNED/OVERFLOW/INEXACT faults.
+    Mirrors the RTL fault in spu13_core.v: angles 12+ were placeholder
+    stubs (some literally F=G=H=0, which would silently zero the
+    destination's B/C/D). Detect and refuse instead of computing a wrong
+    or corrupted result -- same "detect, never silently corrupt" idiom
+    as A31 FLAGS.V and the ROTC tagged core's MISALIGNED/OVERFLOW/INEXACT
+    faults. (Angles 6-11 — the axis-permutation conjugates — were behind
+    this gate until 2026-07-10, when the VM gained matching permutation
+    logic and the cross-verified oracle pass moved the boundary to 11.)
     """
 
 
@@ -1341,24 +1342,25 @@ class SPUCore:
 
         elif opcode == OPCODES["ROTC"]:
             # ROTC QRd, QRs, angle — F,G,H circulant rotation.
-            # Only angles 0-5 (tetrahedral C₃ subgroup) are implemented:
-            # cross-verified against the RTL, "all 6 corrected ROTC angles
-            # pass" per AGENTS.md. Format: (Fa,Fb, Ga,Gb, Ha,Hb, denom, field)
+            # Angles 0-11 are implemented and cross-verified against the RTL.
+            # Format: (Fa,Fb, Ga,Gb, Ha,Hb, denom, field)
             #   field: 0=Q(√3), 1=Q(√5), 2=Q(√15)
             #
-            # Angles 6-63 used to have table entries here (A₄ group 6-11,
-            # Platonic/Archimedean/Catalan/Kepler-Poinsot 12-33). They were
-            # removed 2026-07-09: the RTL applies a genuine axis permutation
-            # for 6-11 (spu_quadray_permute in spu13_core.v) that this VM
-            # never implemented, so those angles would have silently
-            # disagreed with hardware; angles 12-33 were literal F=G=H=0
-            # placeholders that would have silently zeroed B/C/D. Both are
-            # real "corrupted rotations in the manifold" risks, not
-            # hypothetical — see ROTC_MAX_VERIFIED_ANGLE in spu13_core.v for
-            # the matching RTL-side gate. Re-add an angle here only after it
-            # has its own oracle and a cross-verified RTL pass, same bar 0-5
+            # Angles 0-5: the circulant acts directly, A invariant.
+            # Angles 6-11: the same three thirds coefficient sets, conjugated
+            # by an axis permutation (spu_quadray_permute in spu13_core.v) so
+            # the invariant axis is B (6-7), C (8-9), or D (10-11) instead of
+            # A. Cross-verified 2026-07-10 (test_rotc_vm_rtl_trace.py angles
+            # 0-11 + spu13_core_rotc_opcode_tb.v through the real core
+            # permuters), clearing the same bar as 0-5.
+            #
+            # Angles 12-33 were literal F=G=H=0 placeholders that would have
+            # silently zeroed B/C/D; they were removed 2026-07-09 and stay
+            # refused — see ROTC_MAX_VERIFIED_ANGLE in spu13_core.v for the
+            # matching RTL-side gate. Re-add an angle here only after it has
+            # its own oracle and a cross-verified RTL pass, same bar 0-11
             # cleared.
-            ROTC_MAX_VERIFIED_ANGLE = 5
+            ROTC_MAX_VERIFIED_ANGLE = 11
             _ROTC_TABLE = {
                 0:  (1,  0,  0, 0,  0, 0, 1, 0),    # 0°:   identity, Q(√3)
                 1:  (2,  0,  2, 0, -1, 0, 3, 0),    # period-6 thirds rotor
@@ -1366,6 +1368,15 @@ class SPUCore:
                 3:  (-1, 0,  2, 0,  2, 0, 3, 0),    # period-2 determinant-1 operator
                 4:  (2,  0, -1, 0,  2, 0, 3, 0),    # inverse of angle 1
                 5:  (0,  0,  0, 0,  1, 0, 1, 0),    # P5 inverse: B'=C,C'=D,D'=B
+                # A₄ conjugates (must stay bit-identical to the rote_F/G/H
+                # table AND the hardwired angle_scalar_*_sum functions in
+                # spu13_rotor_core_tdm.v):
+                6:  (2,  0, -1, 0,  2, 0, 3, 0),    # about B: conjugate of angle 4
+                7:  (2,  0,  2, 0, -1, 0, 3, 0),    # about B: conjugate of angle 1
+                8:  (-1, 0,  2, 0,  2, 0, 3, 0),    # about C: conjugate of angle 3
+                9:  (2,  0,  2, 0, -1, 0, 3, 0),    # about C: conjugate of angle 1
+                10: (2,  0, -1, 0,  2, 0, 3, 0),    # about D: conjugate of angle 4
+                11: (-1, 0,  2, 0,  2, 0, 3, 0),    # about D: conjugate of angle 3
             }
             angle = p1_a & 0x3F       # 6-bit angle (0-63)
             field_sel = (p1_a >> 6) & 0x3  # 2-bit field selector
@@ -1382,14 +1393,26 @@ class SPUCore:
                 H = RationalSurd(Ha, Hb)
                 d, s = r1 % 13, r2 % 13
 
+                # Axis permutation for angles 6-11 (mirrors spu_quadray_permute
+                # u_perm_fwd/u_perm_inv wiring in spu13_core.v): rotate the
+                # component tuple left so the target invariant axis lands in
+                # the circulant's A slot, rotate, then rotate back.
+                #   angle 0-5 → sel 0 (identity), 6-7 → sel 1 (B→A),
+                #   8-9 → sel 2 (C→A), 10-11 → sel 3 (D→A)
+                perm_sel = 0 if angle < 6 else \
+                           1 if angle < 8 else \
+                           2 if angle < 10 else 3
+                src = self.qregs[s]
+                comps = (src.a, src.b, src.c, src.d)
+                pA, pB, pC, pD = comps[perm_sel:] + comps[:perm_sel]
+
                 # Q12 fixed-point scaling (matching hardware surd_multiplier >>16).
                 # Scale source components by 4096 to preserve fractional precision
                 # through the circulant. After multiply, divide by 4096*denom.
                 Q12 = 4096
-                src = self.qregs[s]
-                B = RationalSurd(src.b.a * Q12, src.b.b * Q12)
-                C = RationalSurd(src.c.a * Q12, src.c.b * Q12)
-                D = RationalSurd(src.d.a * Q12, src.d.b * Q12)
+                B = RationalSurd(pB.a * Q12, pB.b * Q12)
+                C = RationalSurd(pC.a * Q12, pC.b * Q12)
+                D = RationalSurd(pD.a * Q12, pD.b * Q12)
 
                 # Apply circulant with scaled coefficients
                 b2 = F * B + H * C + G * D
@@ -1410,13 +1433,20 @@ class SPUCore:
                 c2 = RationalSurd(rdiv(c2.a), rdiv(c2.b))
                 d2 = RationalSurd(rdiv(d2.a), rdiv(d2.b))
 
+                # Inverse permutation (RTL: inv(sel 1)=3, inv(2)=2, inv(3)=1).
+                # For angles 0-5 this is the identity and A passes through
+                # unchanged, exactly as before.
+                out = (pA, b2, c2, d2)
+                inv_sel = (-perm_sel) % 4
                 self.qregs[d] = QuadrayVector(
-                    self.qregs[s].a, b2, c2, d2,
+                    *(out[inv_sel:] + out[:inv_sel])
                 )
                 if self.verbose:
                     angle_names = {
                         0: "0°id", 1: "60°D", 2: "120°D",
                         3: "180°D", 4: "240°D", 5: "300°D",
+                        6: "240°@B", 7: "60°@B", 8: "180°@C",
+                        9: "60°@C", 10: "240°@D", 11: "180°@D",
                     }
                     name = angle_names[angle]
                     print(f"  [{self.pc:04d}] ROTC QR{d} ← QR{s} "

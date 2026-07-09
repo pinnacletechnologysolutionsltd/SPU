@@ -52,7 +52,7 @@ Python/C++ oracle tests (software-side reference models the RTL must match bit-e
 ```bash
 python3 software/tests/test_rational_robotics.py     # 56 checks, Pell/FGH circulant robotics oracle
 python3 software/tests/test_rational_som.py          # 24 checks, SOM/BMU oracle
-python3 software/tests/test_rotc_vm_rtl_trace.py     # VM-vs-RTL trace equivalence, all 6 ROTC angles
+python3 software/tests/test_rotc_vm_rtl_trace.py     # VM-vs-RTL trace equivalence, all 12 ROTC angles (0-11)
 python3 software/tests/test_lucas_mac_oracle.py      # Lucas Phinary MAC, 1M-step zero-drift
 python3 software/tests/test_pade_batch_inversion.py  # A31 Montgomery batch inversion, 25 checks + cost tables
 python3 software/tests/test_hyper_catalan_oracle.py  # hyper-Catalan series + jet ring, 21 checks vs published tables
@@ -153,7 +153,7 @@ board; Wukong Artix-7 100T is the primary silicon-evidence board (J11 SPI southb
 
 ### ISA
 Full opcode reference: `knowledge/isa_reference.md`. VM opcode table: `software/spu_vm.py:493-515`.
-Assembler: `software/tools/spu13_asm.py`. Corrected ROTC 0-5 angle catalog (F/G/H circulant
+Assembler: `software/tools/spu13_asm.py`. Corrected ROTC 0-11 angle catalog (F/G/H circulant
 coefficients, periods, inverses) is documented in `AGENTS.md` — check there before touching
 `spu13_rotor_core_tdm.v` or the VM's ROTC table, they must stay bit-identical
 (verify with `python3 software/tests/test_rotc_vm_rtl_trace.py`).

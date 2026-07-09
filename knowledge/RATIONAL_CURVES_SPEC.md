@@ -151,6 +151,15 @@ Legacy table audit:
 - angle 3 used `(-1,-1,-1)/3`, which is singular (`det=0`);
 - angle 5 duplicated angle 1 instead of providing an inverse/reverse operation.
 
+**Angles 6-11 (verified 2026-07-10):** the same three thirds coefficient sets
+conjugated by an axis permutation (`spu_quadray_permute`), giving invariant
+axis B (angles 6-7), C (8-9), or D (10-11) instead of A. Unlike 0-5 they
+rewrite all four components. Inverse pairs: 6↔7; 8 and 11 are self-inverse;
+9 and 10 have no single-angle inverse in the catalog (their inverses are
+their own 5th powers). Full table with per-angle coefficients: `AGENTS.md`
+"Corrected ROTC 0–11 Angle Catalog". Angles ≥ 12 fault at decode
+(`ROTC_MAX_VERIFIED_ANGLE` in `spu13_core.v`).
+
 ---
 
 ## Type 2: Curve Segments

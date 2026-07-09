@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """ROTC bad-angle fault test — VM side of the "don't corrupt the manifold"
-fix (2026-07-09). Angles beyond ROTC_MAX_VERIFIED_ANGLE (5) must raise
-RotcUnverifiedAngleError and leave the destination register completely
-untouched, matching the RTL fault added in spu13_core.v (see the
-ROTC_MAX_VERIFIED_ANGLE localparam there for the matching hardware gate,
-and hardware/tests/spu13/spu13_core_rotc_opcode_tb.v for the RTL-side
-proof of the same property).
+fix (2026-07-09). Angles beyond ROTC_MAX_VERIFIED_ANGLE (11 since
+2026-07-10; was 5 until the axis-permutation conjugates 6-11 got their
+VM oracle + cross-verified RTL pass) must raise RotcUnverifiedAngleError
+and leave the destination register completely untouched, matching the
+RTL fault in spu13_core.v (see the ROTC_MAX_VERIFIED_ANGLE localparam
+there for the matching hardware gate, and
+hardware/tests/spu13/spu13_core_rotc_opcode_tb.v for the RTL-side proof
+of the same property).
 
-Why angles 6+ are refused rather than computed:
-  - Angles 6-11: the RTL applies a genuine axis permutation
-    (spu_quadray_permute) that this VM never implemented -- VM and RTL
-    would silently disagree if these were ever dispatched.
+Why angles 12+ are refused rather than computed:
   - Angles 12-33 (removed 2026-07-09): were literal F=G=H=0 placeholder
     entries that would have silently zeroed the destination's B/C/D.
+  - Angles 34-63: never had entries at all.
 """
 import os
 import sys
@@ -53,36 +53,36 @@ def qldi_a_b(a, b, c, d):
 
 print("=== ROTC bad-angle fault (VM side) ===")
 
-# Valid boundary: angle 5 must NOT raise.
+# Valid boundary: angle 11 must NOT raise (gate moved 5 → 11 on 2026-07-10
+# when the axis-permutation conjugates got their cross-verified oracle pass).
 core = make_core()
-a_field, b_field = qldi_a_b(1, 2, 3, 4)
+a_field, b_field = qldi_a_b(3, 6, 9, 12)
 core.load([
     word("QLDI", r1=1, a=a_field, b=b_field),
-    word("ROTC", r1=2, r2=1, a=5),
+    word("ROTC", r1=2, r2=1, a=11),
 ])
 raised = False
 try:
     core.run()
 except RotcUnverifiedAngleError:
     raised = True
-ok(not raised, "angle 5 (boundary, valid) does not raise")
+ok(not raised, "angle 11 (boundary, valid) does not raise")
 
-# Angle 6: real RTL permutation logic the VM doesn't implement -- must fault.
+# Angle 6 computes (permutation conjugate about B) and, unlike 0-5,
+# rewrites the A component too — regression-pin one full result.
+# Source (3,-6,9,-12), all multiples of 3 so the thirds division is
+# exact; expected (12,-6,-3,-9) from the exact-Fraction oracle.
 core = make_core()
-a_field, b_field = qldi_a_b(50, 51, 52, 53)
-core.load([word("QLDI", r1=1, a=a_field, b=b_field)])
+a_field, b_field = qldi_a_b(3, -6, 9, -12)
+core.load([
+    word("QLDI", r1=1, a=a_field, b=b_field),
+    word("ROTC", r1=2, r2=1, a=6),
+])
 core.run()
-poison_before = repr(core.qregs[1])
-core2_program_ok = True
-raised = False
-core.load([word("ROTC", r1=1, r2=1, a=6)])
-try:
-    core.run()
-except RotcUnverifiedAngleError:
-    raised = True
-ok(raised, "angle 6 raises RotcUnverifiedAngleError")
-ok(repr(core.qregs[1]) == poison_before,
-   "angle 6 leaves destination register QR1 completely untouched")
+got = core.qregs[2]
+ok((got.a.a, got.b.a, got.c.a, got.d.a) == (12, -6, -3, -9)
+   and (got.a.b, got.b.b, got.c.b, got.d.b) == (0, 0, 0, 0),
+   "angle 6 computes the B-axis conjugate incl. new A component")
 
 # Angle 12: old placeholder was F=G=H=0 (silent zero) -- must fault.
 core = make_core()

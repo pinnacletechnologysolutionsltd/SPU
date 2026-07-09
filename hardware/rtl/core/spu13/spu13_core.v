@@ -791,19 +791,21 @@ module spu13_core #(
     localparam [63:0] RS_2 = {32'd0, 32'd2};
     localparam [63:0] RS_N1 = {32'd0, 32'hFFFFFFFF};
 
-    // Only angles 0-5 are cross-verified against the VM oracle (AGENTS.md:
-    // "all 6 corrected ROTC angles pass"). Angles 6-11 apply a genuine
-    // axis permutation in this RTL (u_perm_fwd/u_perm_inv above) that the
-    // VM's _ROTC_TABLE does NOT implement -- VM and RTL would silently
-    // disagree if angle 6-11 were ever dispatched. Angles 12-63 are
-    // unimplemented placeholders (some literally F=G=H=0 in the VM table,
-    // which would zero B/C/D outright). Rather than let any of that reach
-    // the manifold, ROTC_MAX_VERIFIED_ANGLE gates dispatch in the decode
-    // FSM below: anything past it faults immediately and the QR register
-    // file is never written. Raise this bound only after angles 6-11 get
-    // their own VM-side permutation logic and a matching cross-verified
-    // oracle pass, same bar as 0-5 cleared.
-    localparam [5:0] ROTC_MAX_VERIFIED_ANGLE = 6'd5;
+    // Angles 0-11 are cross-verified against the VM oracle. 0-5 passed
+    // June 2026 ("all 6 corrected ROTC angles pass"); 6-11 (the axis
+    // permutation conjugates via u_perm_fwd/u_perm_inv above) passed
+    // 2026-07-10 once spu_vm.py gained matching permutation logic —
+    // proof in test_rotc_vm_rtl_trace.py (angles 0-11, bare rotor +
+    // permuters) and spu13_core_rotc_opcode_tb.v (through this core's
+    // real decode/permute/writeback path). Angles 12-63 remain
+    // unimplemented placeholders (the VM's old 12-33 entries were
+    // literally F=G=H=0, which would zero B/C/D outright). Rather than
+    // let that reach the manifold, ROTC_MAX_VERIFIED_ANGLE gates
+    // dispatch in the decode FSM below: anything past it faults
+    // immediately and the QR register file is never written. Raise this
+    // bound only after a new angle gets its own VM-side logic and a
+    // matching cross-verified oracle pass, same bar as 0-11 cleared.
+    localparam [5:0] ROTC_MAX_VERIFIED_ANGLE = 6'd11;
 
     assign rote_F = (rote_angle == 6'd0)  ? RS_1  :
                     (rote_angle == 6'd1)  ? RS_2  :

@@ -59,7 +59,7 @@ docs/                   Design guides and bring-up runbooks
 | `bash build_25k_spu13_rplu2_consume_probe.sh` | Build Tang 25K RPLU2 flash consume-probe bitstream and corrected consume-profile table |
 | `python3 software/tests/test_rational_robotics.py` | Run rational robotics oracle tests (56 checks) |
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
-| `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 6 ROTC angles |
+| `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 12 ROTC angles (0-11), both rotor datapaths |
 | `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` | Set up Python environment |
 | `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Synthesise RPLU2PADE pipeline for Wukong Artix-7 |
 || `openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_RPLU2PADE.bit` | SRAM-load RPLU2PADE bitstream via DirtyJTAG |
@@ -123,8 +123,10 @@ and the SPU-4 Sentinel standalone core (first silicon 2026-07-08, Tang 25K,
 are all silicon-verified on either Tang 25K or Artix-7.
 
 **RTL testbench-verified (remaining):**
-- **ROTC opcode** — all 6 corrected ROTC angles pass (TDM rotor core) on
-  the tested vectors. **Caveat found 2026-07-08, RTL fix implemented 2026-07-09:**
+- **ROTC opcode** — all 12 verified ROTC angles (0-11) pass (TDM rotor
+  core) on the tested vectors; 0-5 are the silicon-evidenced subset,
+  6-11 (axis-permutation conjugates, added 2026-07-10) are
+  testbench/trace-equivalence verified only so far. **Caveat found 2026-07-08, RTL fix implemented 2026-07-09:**
   the thirds angles (1, 3, 4) divide by 3 via a true floor-division
   magic-constant (`div3` in `spu13_rotor_core_tdm.v`) that silently
   truncates with no fault flag — see `knowledge/SPU_LEXICON.md` Davis
@@ -153,16 +155,31 @@ are all silicon-verified on either Tang 25K or Artix-7.
   (`spu_quadray_permute`) with no matching logic in the VM — a genuine
   VM/RTL divergence risk. Angles 12-33 were VM placeholder table
   entries with F=G=H=0, which would have silently zeroed the
-  destination's B/C/D on dispatch. Both are now gated: `spu13_core.v`'s
-  `ROTC_MAX_VERIFIED_ANGLE` localparam (=5) refuses any greater angle
-  at decode — no rotor launch, no register-file write, a sticky fault
-  flag on `rotc_debug_status[15]` — and `spu_vm.py` raises
-  `RotcUnverifiedAngleError` at the same boundary. Proof: the manifold
-  (QR register file) is provably untouched on a bad angle, not just
-  "probably fine" —
-  `hardware/tests/spu13/spu13_core_rotc_opcode_tb.v` and
-  `software/tests/test_rotc_bad_angle.py` both load known poison values
-  into the destination lane first and assert they survive unchanged.
+  destination's B/C/D on dispatch. Both were gated 2026-07-09 behind
+  `spu13_core.v`'s `ROTC_MAX_VERIFIED_ANGLE` localparam and the VM's
+  matching `RotcUnverifiedAngleError`.
+  **Angles 6-11 verified and re-enabled 2026-07-10:** `spu_vm.py` now
+  implements the axis permutation (rotate the component tuple so the
+  invariant axis lands in the circulant's A slot, rotate, rotate back —
+  mirrors `u_perm_fwd`/`u_perm_inv` in `spu13_core.v`), verified
+  against an independent exact-Fraction oracle (periods, inverse pairs
+  6↔7 / 8 / 11 self-inverse, det=+1, all 12 matrices distinct, Davis
+  zero-sum preserved) and cross-verified against RTL two ways:
+  `test_rotc_vm_rtl_trace.py` (all 12 angles through the real permuter
+  module around BOTH rotor datapaths — the F/G/H scalar-fast path and
+  the hardwired `angle_scalar_*_sum` path spu13_core uses — 144
+  bit-exact checks) and `spu13_core_rotc_opcode_tb.v` (through the real
+  core decode/permute/writeback, including a 6-then-7 inverse-closure
+  round trip). `ROTC_MAX_VERIFIED_ANGLE` is now 11 on both sides; the
+  fault boundary proof (poison values survive untouched +
+  `rotc_debug_status[15]`) moved to angles 12 and 63. Note the /3
+  exactness caveat applies to 6-11 exactly as to 1/3/4: all six are
+  thirds angles, and VM/RTL only provably agree when the thirds
+  division is exact (test vectors use all-multiples-of-3 components).
+  Angles 9 and 10 have no inverse within the 0-11 catalog (their
+  inverses are their own 5th powers). Silicon status: angles 6-11 are
+  testbench-verified only; the six-step silicon closure evidence covers
+  angles 0-5.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
@@ -267,26 +284,44 @@ Full ISA documentation: `knowledge/isa_reference.md` (26 opcodes, 19 hardware-ve
 VM opcode table: `software/spu_vm.py` lines 493–515
 Assembler opcode table: `software/tools/spu13_asm.py`
 
-### Corrected ROTC 0–5 Angle Catalog (June 2026)
+### Corrected ROTC 0–11 Angle Catalog (June 2026; 6–11 verified July 2026)
 
 The legacy ROTC table had three defects: angle 2 was documented with thirds coefficients
 while hardware bypassed it as P5 permutation; angle 3 was singular (`det=0`); angle 5
 duplicated angle 1. The corrected catalog is:
 
-| ROTC angle | Name | F | G | H | Period | Inverse |
-|---:|---|---:|---:|---:|---:|---:|
-| 0 | identity | 1 | 0 | 0 | 1 | 0 |
-| 1 | thirds period-6 | 2/3 | 2/3 | -1/3 | 6 | 4 |
-| 2 | P5 forward cycle | 0 | 1 | 0 | 3 | 5 |
-| 3 | thirds period-2 | -1/3 | 2/3 | 2/3 | 2 | 3 |
-| 4 | thirds period-6 inverse | 2/3 | -1/3 | 2/3 | 6 | 1 |
-| 5 | P5 inverse cycle | 0 | 0 | 1 | 3 | 2 |
+| ROTC angle | Name | Invariant axis | F | G | H | Period | Inverse |
+|---:|---|---|---:|---:|---:|---:|---:|
+| 0 | identity | — | 1 | 0 | 0 | 1 | 0 |
+| 1 | thirds period-6 | A | 2/3 | 2/3 | -1/3 | 6 | 4 |
+| 2 | P5 forward cycle | A | 0 | 1 | 0 | 3 | 5 |
+| 3 | thirds period-2 | A | -1/3 | 2/3 | 2/3 | 2 | 3 |
+| 4 | thirds period-6 inverse | A | 2/3 | -1/3 | 2/3 | 6 | 1 |
+| 5 | P5 inverse cycle | A | 0 | 0 | 1 | 3 | 2 |
+| 6 | conjugate of angle 4 about B | B | 2/3 | -1/3 | 2/3 | 6 | 7 |
+| 7 | conjugate of angle 1 about B | B | 2/3 | 2/3 | -1/3 | 6 | 6 |
+| 8 | conjugate of angle 3 about C | C | -1/3 | 2/3 | 2/3 | 2 | 8 |
+| 9 | conjugate of angle 1 about C | C | 2/3 | 2/3 | -1/3 | 6 | 9⁵ |
+| 10 | conjugate of angle 4 about D | D | 2/3 | -1/3 | 2/3 | 6 | 10⁵ |
+| 11 | conjugate of angle 3 about D | D | -1/3 | 2/3 | 2/3 | 2 | 11 |
 
-**RTL encoding:** Angles 0-3 use the TDM circulant path (`F,G,H` surd multiplies + optional `/3`).
-Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit permutation, zero multiplies.
+Angles 9 and 10 have no single-angle inverse within the catalog — their inverses are
+their own 5th powers (compose the angle five times).
 
-**VM-vs-RTL trace equivalence:** `python3 software/tests/test_rotc_vm_rtl_trace.py` — exercises all
-6 angles on a canonical test vector and asserts bit-exact match between Python VM and Verilog simulation.
+**RTL encoding:** Thirds angles use the TDM circulant path (`F,G,H` surd multiplies + `/3`).
+Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit permutation, zero
+multiplies. Angles 6-11 wrap the circulant in `spu_quadray_permute` (`u_perm_fwd`/`u_perm_inv`
+in `spu13_core.v`): the target invariant axis is rotated into the circulant's A slot and back,
+so unlike 0-5 they rewrite all four components of the destination lane. F/G/H for 6-11 must stay
+bit-identical in three places: the VM `_ROTC_TABLE`, the `rote_F/G/H` lookup in `spu13_core.v`,
+and the hardwired `angle_scalar_*_sum` functions in `spu13_rotor_core_tdm.v`.
+
+**VM-vs-RTL trace equivalence:** `python3 software/tests/test_rotc_vm_rtl_trace.py` — exercises
+all 12 angles (144 bit-exact checks) through the real permuter module against both rotor
+datapaths (`ENABLE_TDM_FALLBACK` 1 and 0). Thirds-division exactness is required for
+equivalence (VM rounds, RTL `div3` truncates), so the 6-11 vectors use all-multiples-of-3
+components; the /3 divisibility caveat (`knowledge/SPU_LEXICON.md`, Davis Gate entry) applies
+to 6-11 exactly as to 1/3/4.
 
 ### Rational Robotics & SOM Oracles
 
