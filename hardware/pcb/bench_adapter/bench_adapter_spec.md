@@ -21,8 +21,8 @@ pullups, and metering path — the failure classes documented in bring-up
         │
    [PWR LED + R]  ← on INPUT side: excluded from measurement
         │
-   INA219 module ── I2C0 (GP8/GP9) ──┐
-   VIN+ ─shunt─ VIN-                 │
+   INA226 module ── I2C0 (GP8/GP9) ──┐
+   VIN+ ─shunt─ VIN-    ALERT→GP15   │
         │                            │
    5V OUT (screw term + USB-A fp)    │
         → powers target FPGA board   │
@@ -84,16 +84,33 @@ Source: `hardware/rp2040/rp2040_flash_pmod.c:21-30`. Lets the same board run
 | FLASH_CS#  | GP5* | 7 | 33 Ω | 10 kΩ → 3V3 | 1 |
 | 3V3 | — | 36 | — | — | 6 |
 | GND | — | 3 | — | — | 5 |
-| (WP#, HOLD#) | — | — | — | 10 kΩ → 3V3 each | — |
 
-The WP#/HOLD# pullups live on the adapter so bare W25Q PMODs work without
-their own — this directly implements the bring-up rule from `AGENTS.md`.
+**Corrected 2026-07-09 (found during KiCad capture):** J3 is a 6-pin
+connector and has no WP#/HOLD# pins — a prior draft of this section
+claimed the adapter provides WP#/HOLD# pullups, which is not physically
+possible with this connector and was never implemented. Per
+`rp2040_flash_pmod.c`'s own comment ("the flash breakout must pull /WP
+and /HOLD high. Most 6-pin W25Q PMODs do"), Rev A instead **relies on
+the breakout module's own onboard WP#/HOLD# pullups** — true of the
+common 6-pin W25Q PMOD style this connector targets. This is a real
+constraint, not a cosmetic note: **a bare W25Q chip on a
+no-pullup breakout will not work on this board** — verify the specific
+module has onboard WP#/HOLD# pullups (nearly all do) before relying on
+it. A future Rev B could widen J3 to 8 pins to add these pullups
+directly; out of scope for Rev A.
 
 > *Conflict note:* GP4/GP5 are shared between the flash-PMOD role (MISO/CS)
 > and the southbridge FPGA-UART role (TX/RX, §2.4). The two roles are never
 > active in the same firmware image, but J3 and J4 must not be cabled
-> simultaneously. Rev A resolves this with jumper JP2 (3-pin, selects GP4/GP5
-> routing to either J3 or J4); silkscreen: "FLASH ⟷ UART — pick one".
+> simultaneously. **Corrected 2026-07-09 (found during KiCad capture):** a
+> single 3-pin jumper can only select one-of-two destinations for *one*
+> signal — switching GP4 *and* GP5 together as a matched pair needs two
+> poles. JP2 is therefore a **2×3 (6-pin) shorting-jumper block**: two
+> independent 3-pin groups (common=GPx, position A=J3 role, position
+> B=J4 role) side by side, moved together with two shunts. BOM corrected
+> to 6 pins, still one reference designator. Silkscreen: "FLASH ⟷ UART —
+> pick one", with the two shunts clearly grouped so they're moved as a
+> pair, not independently.
 
 ### 2.3 microSD module socket (J5)
 
@@ -122,20 +139,33 @@ Source: `hardware/rp2350/rp2350_uart_injector.c:17-18`.
 115200 baud telemetry capture without the FTDI/BL616 USB path — this is what
 lets a metrics soak run on metered power with no other cable attached.
 
-### 2.5 INA219 module socket (J6) and metering path
+### 2.5 INA226 module socket (J6) and metering path
+
+Rev A upgraded INA219 → INA226 (2026-07-08): 16-bit ADC (vs 12), hardware
+averaging up to 1024 samples, and an ALERT/conversion-ready pin — cleaner
+idle-vs-active deltas for the paper power tables at ~NZ$2 extra. Logger:
+`tools/bench_metrics/ina226_logger.py` (`ina219_logger.py` retained for
+breadboard use of existing INA219 stock).
 
 | Signal | Pico 2 GPIO | Pico pin | J6/module pin |
 |---|---|---|---|
 | I2C0 SDA | GP8 | 11 | SDA |
 | I2C0 SCL | GP9 | 12 | SCL |
+| ALERT (conversion ready) | GP15 | 20 | ALE/ALERT |
 | 3V3 | — | 36 | VCC |
 | GND | — | 13 | GND |
 | VIN+ | — | — | screw terminal T1 (5V IN) |
 | VIN− | — | — | screw terminal T2 (5V OUT) + USB-A fp J7 |
 
-Stock module shunt is 0.1 Ω: ±3.2 A range, ~0.8 mA resolution, 50 mV drop at
-500 mA — fine for every board in the fleet (Tang 25K, Wukong, Colorlight i9
-all draw well under 2 A at 5 V). Module carries its own I2C pullups.
+Stock module shunt is 0.1 Ω (R100): ±0.8 A usable range at the INA226's
+±81.92 mV shunt limit, ~0.1 mA-class resolution, 50 mV drop at 500 mA —
+fine for every board in the fleet (Tang 25K, Wukong, Colorlight i9 all
+draw well under 0.8 A at 5 V; a board that exceeds it saturates the shunt
+reading, it doesn't break). **Listing caution:** INA226 modules ship with
+either R100 or R010 shunts — order the R100 variant and verify the shunt
+marking on arrival. Module carries its own I2C pullups. ALERT lets the
+conversion-ready signal gate sampling windows in later logger versions;
+v1 polls and leaves it unconfigured.
 
 The power-indicator LED hangs on the **input** side of the shunt so it never
 appears in measurements. The ACT LED (GP14, pin 19) is firmware-controlled;
@@ -168,27 +198,34 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 
 ## 4. Bill of Materials (all off-the-shelf)
 
-| Ref | Part | Qty | Est. NZD | Notes |
-|---|---|---|---|---|
-| A1 | Raspberry Pi Pico 2 | 1 | 12 | Socketed, 2× 1x20 female headers. Pico 1 also fits (flash-PMOD role). |
-| A2 | INA219 breakout module | 1 | 5 | Common 6-pin purple module, 0.1 Ω shunt |
-| A3 | microSD SPI breakout module | 1 | 4 | 6-pin, 3V3-native (no level shifter type) |
-| J1 | 2-pin 5.08 mm screw terminal | 2 | 2 | T1 5V IN, T2 5V OUT |
-| J7 | USB-A female TH jack | 1 | 2 | Metered power out |
-| J1b | USB-C 5V breakout module fp | 0–1 | 3 | Optional alternative input, unpopulated default |
-| J2–J4, J8 | 2.54 mm male headers | ~40 pins | 2 | |
-| JP2 | 3-pin header + jumper | 1 | 0.5 | GP4/GP5: FLASH ⟷ UART select |
-| R | 33 Ω 1/4 W TH | 9 | 1 | Series termination |
-| R | 10 kΩ 1/4 W TH | 5 | 1 | CS# ×2, WP#, HOLD#, spare |
-| R | 1 kΩ 1/4 W TH | 2 | 0.5 | LED series |
-| LED | 3 mm green + red | 2 | 0.5 | PWR (input side), ACT (GP14) |
-| PCB | 2-layer, ~80×60 mm, HASL | 5 pcs | 15 | Any prototype fab |
-| | **Total** | | **~NZ$50** | including 5 spare PCBs |
+| Ref | Part | Qty | Est. NZD | MPN / listing | Notes |
+|---|---|---|---|---|---|
+| A1 | Raspberry Pi Pico 2 | 1 | 12 | official RPi Pico 2 (SC1631) | Socketed, 2× 1x20 female headers. Pico 1 (SC0915) also fits (flash-PMOD role). |
+| A2 | INA226 breakout module | 1 | 7 | Generic "INA226 I2C 36V" breakout, **R100 (0.1 Ω) shunt** — sold widely under this description on AliExpress/Amazon; 6-pin: VCC,GND,SCL,SDA,ALERT,+ one NC/A0. **Verify shunt marking (R100, not R010) on arrival before trusting readings.** | I2C + ALERT |
+| A3 | microSD SPI breakout module | 1 | 4 | Generic "Micro SD Card SPI breakout, 3.3V, 6-pin" (HW-125-style footprint, no onboard level shifter) — pin order printed on the module silkscreen as 3V3 CS MOSI CLK MISO GND; confirm against the specific listing before socketing. | 6-pin, 3V3-native |
+| J1 | 2-pin 5.08 mm screw terminal, THT | 2 | 2 | Generic 5.08mm pitch 2-pin terminal block (e.g. Phoenix-style clone, KF128-2P) | T1 5V IN, T2 5V OUT |
+| J7 | USB-A female THT jack | 1 | 2 | Generic USB-A Type-A female, through-hole, 4-pin | Metered power out |
+| J1b | USB-C 5V breakout module fp | 0–1 | 3 | Generic USB-C PD trigger/breakout board footprint (unpopulated default) | Optional alternative input |
+| J2–J4, J8 | 2.54 mm male headers | ~40 pins | 2 | Generic breakaway pin header strip | |
+| JP2 | 2×3 shrouded header + 2× jumper shunt | 1 | 0.5 | Generic 2.54mm 2x3 header + 2× 2.54mm jumper shunts | GP4/GP5: FLASH ⟷ UART select, both poles moved together |
+| R | 33 Ω 1/4 W THT | 9 | 1 | Generic carbon/metal film, 5% or better | Series termination |
+| R | 10 kΩ 1/4 W THT | 3 | 0.5 | Generic carbon/metal film, 5% or better | SPI_CS# + FLASH_CS# pullups (2, WP#/HOLD# pullups removed per §2.2 correction — not physically possible on the 6-pin J3), +1 spare |
+| R | 1 kΩ 1/4 W THT | 2 | 0.5 | Generic carbon/metal film, 5% or better | LED series |
+| LED | 3 mm THT, green + red | 2 | 0.5 | Generic 3mm THT LED | PWR (input side), ACT (GP14) |
+| PCB | 2-layer, ~80×60 mm, HASL | 5 pcs | 15 | Any prototype fab (JLCPCB/PCBWay) | |
+| | **Total** | | **~NZ$52** | | including 5 spare PCBs |
+
+**Listing discipline:** every "generic" line above is a widely-available part
+category, not a single-source dependency — any listing matching the stated
+pin count/pitch/pinout works. The two that need physical verification before
+first power-up regardless of listing: A2's shunt marking (R100 vs R010) and
+A3's pin order (confirm against the specific board's silkscreen, since 6-pin
+microSD breakouts do occasionally ship in a mirrored order).
 
 ## 5. Layout guidance
 
 - 2 layers; bottom = ground pour, top = signal + 5V metering trace.
-- Metering path (T1 → INA219 VIN+ → VIN− → T2/J7) in ≥2 mm trace, kept away
+- Metering path (T1 → INA226 VIN+ → VIN− → T2/J7) in ≥2 mm trace, kept away
   from SPI. Everything else is ≤2 MHz digital — routing is uncritical.
 - Keep each SPI group's traces together; grounds interleaved on J8 as tabled.
 - Hex/IVM silkscreen motif welcome; keep the outline rectangular in Rev A.
@@ -197,8 +234,10 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 ## 6. Bring-up & test plan (uses only existing repo firmware)
 
 1. **Continuity:** every table row above, before any module is socketed.
-2. **Meter sanity:** Pico 2 + INA219 + 47 Ω/5 W resistor on T2 → expect
-   ~106 mA ±5% at 5.0 V via the I2C logger.
+2. **Meter sanity:** Pico 2 + INA226 + 47 Ω/5 W resistor on T2 → expect
+   ~106 mA ±5% at 5.0 V via `tools/bench_metrics/ina226_logger.py`
+   (startup ID check must report TI manufacturer/die ID before trusting
+   readings).
 3. **Southbridge smoke:** `rp2350_spu_diag` UF2, J2 → Tang 25K
    `southbridge_link` probe → expect 0xAC status responses (known-good
    baseline from `docs/SOUTHBRIDGE_SPI_PROTOCOL.md`).
