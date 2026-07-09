@@ -48,6 +48,7 @@ docs/                   Design guides and bring-up runbooks
 | `bash build_25k_spu13_rplu2_arith_probe.sh` | RPLU2 arithmetic probe (6,282 LUTs, 27%) — QLDI/QSUB/RPLU2 config |
 | `bash build_25k_spu13_lucas_mac_probe.sh` | Lucas Phinary MAC standalone probe (~200 LUTs) — zero-drift proof |
 | `bash build_25k_spu13_rplu2_consume_probe.sh` | RPLU2 flash consume-probe (149-record table verification) |
+| `bash build_25k_spu13_satellite_aggregator_probe.sh` | 13-satellite whisper aggregator probe (7,855 LUTs, 34%) — 4 driven emitters + 9 deadman-idle lines, self-checking, `SAGG:P W:2 I:9 E:00` on UART |
 | `openFPGALoader -b tangprimer25k -f build/tang_primer_25k_spu13_math_probe.fs` | Flash bitstream to Tang Primer 25K |
 | `python3 tools/flash_layout.py` | Generate SPI flash image from .bin files (Wildberger library) |
 | `minipro -p W25Q128JV -r build/flash_backup.bin` | Read SPI flash backup (preserve bootloader) |
@@ -200,6 +201,19 @@ are all silicon-verified on either Tang 25K or Artix-7.
   (fine as DSP48E1 on Artix-7; ~70k LUT4 = 305% on GW5A-25 in the OSS
   flow). Blocker for Tang silicon: sequential M31 multiplier variant or
   Gowin DSP primitive wrapper. Contract: `docs/SERIES_STREAM_CONTROLLER.md`
+- **13-satellite whisper aggregator** (`spu13_satellite_aggregator.v`) —
+  Arlinghaus meso-tier governor component: 13 whisper v1 listeners,
+  per-satellite 16-bit status table, worst-axis/dissonance scan,
+  incoherent count, shared command bus. Module TB PASS
+  (`spu13_satellite_aggregator_tb.v`) and, since 2026-07-10, a Tang 25K
+  probe top (`spu13_tang25k_satellite_aggregator_probe.v`): 4 on-fabric
+  emitters with distinct identities + 9 idle lines proving the 3-miss
+  deadman, self-checking FSM incl. command-bus MSB-first shift proof,
+  golden UART line `SAGG:P W:2 I:9 E:00`. Probe TB PASS, full
+  synth/PnR/pack clean (7,855 LUT4 = 34%, Fmax 59.2 MHz @ 50 MHz clk,
+  single clock domain — a divided whisper clock fails hold at 17-actor
+  spread, see comment in the probe top). Awaiting board run
+  (`bash build_25k_spu13_satellite_aggregator_probe.sh`).
 - **A7 SOM/BMU probe** (`spu_a7_som_probe_top`) — port of the Tang-25K-proven
   fixture to the Wukong Artix-7 100T; identical scenarios + golden UART line
   (`SOM:P T:2 B:6 E:00`), tb decodes the UART stream bit-for-bit
