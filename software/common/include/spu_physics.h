@@ -54,7 +54,9 @@ struct DavisGasket {
 // Returns true if a Cubic Leak was detected (Henosis needed).
 //
 // Tension model:
-//   - Leak:    τ ← τ + quadrance(vec_sum)  (tension accumulates)
+//   - Leak:    τ ← τ + stiffness(vec_sum)  (tension accumulates)
+//     where stiffness = ivm_quadrance + gasket_sum² = 4·Σc²
+//     (normative formula: knowledge/SPU_LEXICON.md "Davis Gate" entry)
 //   - No leak: τ ← τ × (1,0) halved next ANNE — kept for caller to decay
 //
 // Matches the SNAP opcode in spu_vm.py: checks all axes, sets snap_failures.
@@ -62,9 +64,10 @@ inline bool gasket_tick(DavisGasket& g, const Manifold13& m) {
     g.tick_count++;
     g.leak = is_cubic_leak(m);
     if (g.leak) {
-        // Accumulate tension: how far off-balance is the manifold?
+        // Accumulate tension: stiffness = ivm_quadrance + gasket_sum²
         Quadray vs = manifold_vec_sum(m);
-        g.tau = g.tau + vs.quadrance();
+        RationalSurd gs = vs.a + vs.b + vs.c + vs.d;
+        g.tau = g.tau + vs.quadrance() + gs.quadrance();
         g.henosis_count++;
     } else {
         // Decay tension by one Pell inverse step when stable

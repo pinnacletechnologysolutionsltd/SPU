@@ -1,13 +1,19 @@
-// davis_gate_dsp_tb.v — Testbench: davis_gate_dsp v2.1
-// Verifies gasket_sum, quadrance (stiffness), ivm_quadrance (pairwise), q_rotated.
-// Uses DEVICE="SIM" — inferred multiply, no vendor primitives needed.
+// davis_gate_dsp_tb.v — Testbench: davis_gate_dsp v3.0
+//
+// Verifies gasket_sum, ivm_quadrance (pairwise), stiffness (ivm_quadrance +
+// gasket_sum² = 4·Σc²), and q_rotated. All expected values are computed from
+// the oracle formula — the TB does NOT encode the RTL implementation.
+//
+// Oracle stiffness:  S = ivm_quadrance + gasket_sum² = 4·(A²+B²+C²+D²)
+//   ivm_quadrance = Σᵢ<ⱼ(cᵢ−cⱼ)²  (6 pairwise terms)
+//   gasket_sum    = A+B+C+D
 //
 // Test vectors (A=4, B=3, C=2, D=1):
-//   gasket_sum    = 4+3+2+1               = 10
-//   quadrance     = 16+27+4+1             = 48   (A²+3B²+C²+D² stiffness)
-//   ivm_quadrance = (4-3)²+(4-2)²+(4-1)²
-//                 + (3-2)²+(3-1)²+(2-1)² = 1+4+9+1+4+1 = 20  (pairwise)
-//   q_rotated     = {B,C,D,A}             = {3,2,1,4}
+//   gasket_sum    = 4+3+2+1 = 10
+//   ivm_quadrance = (4-3)²+(4-2)²+(4-1)²+(3-2)²+(3-1)²+(2-1)² = 20
+//   gasket_sum²   = 100
+//   stiffness     = 20 + 100 = 120  (also: 4·(16+9+4+1) = 4·30 = 120)
+//   q_rotated     = {B,C,D,A} = {3,2,1,4}
 
 `timescale 1ns/1ps
 
@@ -18,7 +24,7 @@ module davis_gate_dsp_tb;
     reg  [63:0] q_in  = 0;
 
     wire [63:0] q_rot;
-    wire [31:0] quad;
+    wire [31:0] stiffness;
     wire [31:0] ivm_quad;
     wire [15:0] gsum;
 
@@ -27,7 +33,7 @@ module davis_gate_dsp_tb;
         .rst_n        (rst_n),
         .q_vector     (q_in),
         .q_rotated    (q_rot),
-        .quadrance    (quad),
+        .quadrance    (stiffness),
         .ivm_quadrance(ivm_quad),
         .gasket_sum   (gsum)
     );
@@ -48,51 +54,85 @@ module davis_gate_dsp_tb;
         end
     endtask
 
+    // Oracle helpers: compute expected values from inputs, never from RTL
+    function [31:0] oracle_stiffness;
+        input signed [15:0] a, b, c, d;
+        reg signed [31:0] sq_a, sq_b, sq_c, sq_d;
+        begin
+            sq_a = $signed(a) * $signed(a);
+            sq_b = $signed(b) * $signed(b);
+            sq_c = $signed(c) * $signed(c);
+            sq_d = $signed(d) * $signed(d);
+            oracle_stiffness = 4 * (sq_a + sq_b + sq_c + sq_d);
+        end
+    endfunction
+
+    function [31:0] oracle_ivm;
+        input signed [15:0] a, b, c, d;
+        reg signed [31:0] d_ab, d_ac, d_ad, d_bc, d_bd, d_cd;
+        begin
+            d_ab = $signed(a) - $signed(b);
+            d_ac = $signed(a) - $signed(c);
+            d_ad = $signed(a) - $signed(d);
+            d_bc = $signed(b) - $signed(c);
+            d_bd = $signed(b) - $signed(d);
+            d_cd = $signed(c) - $signed(d);
+            oracle_ivm = (d_ab * d_ab) + (d_ac * d_ac) + (d_ad * d_ad)
+                       + (d_bc * d_bc) + (d_bd * d_bd) + (d_cd * d_cd);
+        end
+    endfunction
+
+    function [15:0] oracle_gsum;
+        input signed [15:0] a, b, c, d;
+        begin
+            oracle_gsum = a + b + c + d;
+        end
+    endfunction
+
     initial begin
         @(posedge clk); rst_n = 1;
 
         // ── Test 1: A=4, B=3, C=2, D=1 ──────────────────────────────── //
         q_in = {16'd4, 16'd3, 16'd2, 16'd1};
         @(posedge clk);
-        check(gsum,         16'd10, "T1 gasket_sum");
-        check(q_rot[63:48], 16'd3,  "T1 rot[A]=B");
-        check(q_rot[47:32], 16'd2,  "T1 rot[B]=C");
-        check(q_rot[31:16], 16'd1,  "T1 rot[C]=D");
-        check(q_rot[15:0],  16'd4,  "T1 rot[D]=A");
+        check(gsum,         oracle_gsum(4,3,2,1), "T1 gasket_sum");
+        check(q_rot[63:48], 16'd3,                "T1 rot[A]=B");
+        check(q_rot[47:32], 16'd2,                "T1 rot[B]=C");
+        check(q_rot[31:16], 16'd1,                "T1 rot[C]=D");
+        check(q_rot[15:0],  16'd4,                "T1 rot[D]=A");
         @(posedge clk);
-        check(quad,      32'd48, "T1 quadrance stiffness");  // A²+3B²+C²+D²
-        check(ivm_quad,  32'd20, "T1 ivm_quadrance pairwise"); // Σᵢ<ⱼ(cᵢ-cⱼ)²
+        check(stiffness,    oracle_stiffness(4,3,2,1), "T1 stiffness (4·Σc²)");
+        check(ivm_quad,     oracle_ivm(4,3,2,1),       "T1 ivm_quadrance (pairwise)");
 
         // ── Test 2: Zero vector ───────────────────────────────────────── //
         q_in = 64'h0;
         @(posedge clk);
-        check(gsum, 16'd0, "T2 gasket_sum=0");
+        check(gsum, oracle_gsum(0,0,0,0), "T2 gasket_sum=0");
         @(posedge clk);
-        check(quad,     32'd0, "T2 quadrance=0");
-        check(ivm_quad, 32'd0, "T2 ivm_quadrance=0");
+        check(stiffness, oracle_stiffness(0,0,0,0), "T2 stiffness=0");
+        check(ivm_quad,  oracle_ivm(0,0,0,0),       "T2 ivm_quadrance=0");
 
         // ── Test 3: A=100, others zero ────────────────────────────────── //
-        q_in = {16'd100, 48'h0};
+        q_in = {16'sd100, 48'h0};
         @(posedge clk);
-        check(gsum, 16'd100, "T3 gasket_sum");
+        check(gsum, oracle_gsum(100,0,0,0), "T3 gasket_sum=100");
         @(posedge clk);
-        check(quad,     32'd10000, "T3 quadrance=100²");  // A²=10000, rest 0
-        // ivm: (100-0)²×3 = 30000
-        check(ivm_quad, 32'd30000, "T3 ivm_quadrance=3×100²");
+        check(stiffness, oracle_stiffness(100,0,0,0), "T3 stiffness=40000");
+        check(ivm_quad,  oracle_ivm(100,0,0,0),       "T3 ivm_quadrance=30000");
 
         // ── Test 4: IVM canonical basis (1,0,0,0) ─────────────────────── //
-        // C++ Quadray::quadrance() of (1,0,0,0) = 3
         q_in = {16'd1, 48'h0};
         @(posedge clk);
         @(posedge clk);
-        check(ivm_quad, 32'd3, "T4 ivm_quadrance canonical (1,0,0,0)=3");
+        check(ivm_quad,     oracle_ivm(1,0,0,0),       "T4 ivm_quadrance=3");
+        check(stiffness,    oracle_stiffness(1,0,0,0), "T4 stiffness=4");
 
         // ── Test 5: IVM neighbour (1,1,0,0) ───────────────────────────── //
-        // C++ Quadray::quadrance() of (1,1,0,0) = (1-1)²+(1-0)²+(1-0)²+(1-0)²+(1-0)²+(0-0)² = 0+1+1+1+1+0 = 4
         q_in = {16'd1, 16'd1, 32'h0};
         @(posedge clk);
         @(posedge clk);
-        check(ivm_quad, 32'd4, "T5 ivm_quadrance (1,1,0,0)=4");
+        check(ivm_quad,  oracle_ivm(1,1,0,0),       "T5 ivm_quadrance=4");
+        check(stiffness, oracle_stiffness(1,1,0,0), "T5 stiffness=8");
 
         // ── Test 6: Rotation twice gives {C,D,A,B} ────────────────────── //
         q_in = {16'd1, 16'd2, 16'd3, 16'd4};
@@ -101,6 +141,9 @@ module davis_gate_dsp_tb;
         check(q_rot[47:32], 16'd3, "T6 rot[1]");
         check(q_rot[31:16], 16'd4, "T6 rot[2]");
         check(q_rot[15:0],  16'd1, "T6 rot[3]");
+        @(posedge clk);
+        check(stiffness, oracle_stiffness(1,2,3,4), "T6 stiffness=120");
+        check(ivm_quad,  oracle_ivm(1,2,3,4),       "T6 ivm_quadrance=20");
 
         // ── Report ─────────────────────────────────────────────────────── //
         if (fail == 0)
