@@ -7,6 +7,12 @@ Contract for implementing the verified fix in
 acceptance means bit-exact agreement with it plus the fault conditions
 below — not just "results come out right" on the untested path.
 
+> **Provenance:** the framing of ROTC as a state-machine harness —
+> exactness state carried by the data, rotations as guarded transitions,
+> reduction as an explicit fallible operation — is due to Gene Yanenko
+> (see `docs/ATTRIBUTION.md`). This document is the formalization of that
+> idea against the /3 exactness finding.
+
 ## 1. Why it exists
 
 Thirds-angle ROTC divides by 3 via `div3`, a true floor division that

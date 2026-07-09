@@ -355,6 +355,7 @@ to 6-11 exactly as to 1/3/4.
 | Lucas Phinary MAC oracle | `software/tests/test_lucas_mac_oracle.py` | PSCALE/PCHIRAL/PMUL/PINV, 1M-step zero-drift over L_521 |
 | Lucas MAC architecture | `knowledge/LUCAS_PHINARY_MAC.md` | Ring separation, Barrett bridge, BTU integration, opcode map |
 | Lucas MAC paper | `docs/LUCAS_MAC_PAPER.md` | 7-section paper draft with empirical results |
+| ROTC kinematics paper | `docs/ROTC_KINEMATICS_PAPER.md` | Draft v0.1 (markdown, pre-TeX): 12-angle catalog + group structure, /3 exactness theorem + counterexample, Yanenko state-machine harness (§6), claim-discipline table (§10). Yanenko citation details pending confirmation |
 | A31 field oracle | `software/lib/a31_field.py` | A31 mult table, Conjugate Reduction Tower (FLAGS.V), Montgomery batch inversion, Padé eval, op counting |
 | Batch inversion tests | `software/tests/test_pade_batch_inversion.py` | 25 checks — bit-exact batch vs per-element towers, singular isolation, cycle/MAC tables |
 | Batch inversion RTL contract | `docs/MONTGOMERY_BATCH_INVERSION.md` | Semantics, interface, singular-lane tiers, acceptance checklist for the RTL block |
