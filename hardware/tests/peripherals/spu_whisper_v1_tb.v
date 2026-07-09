@@ -44,6 +44,7 @@ module spu_whisper_v1_tb;
         .clk(clk), .rst_n(rst_n),
         .is_laminar(is_laminar), .node_id(node_id),
         .flags_in(flags_in), .dissonance(dissonance),
+        .som_label(8'h00),    // SOM label not exercised in loopback TB
         .tx(tx), .busy(em_busy)
     );
 
@@ -64,7 +65,6 @@ module spu_whisper_v1_tb;
 
     integer fail;
     integer frame_count;
-    reg [7:0] expected_seq;
 
     // ── Oracle: compute expected frame bytes from inputs ─────────────
     function [7:0] nibble_to_hex;
@@ -177,7 +177,6 @@ module spu_whisper_v1_tb;
         dissonance  = 8'h2A;
         fail        = 0;
         frame_count = 0;
-        expected_seq = 8'd0;
 
         // Release reset, wait for first period
         #(HALF_CLK * 4);
@@ -188,19 +187,17 @@ module spu_whisper_v1_tb;
         wait_frame_or_die("T1");
         frame_count = frame_count + 1;
         check_frame(4'h5, 3'b101, 8'h2A, 8'd0, "T1 frame[0]");
-        expected_seq = 8'd1;
 
-        // ── Test 2: Second frame, seq increments ─────────────────────
-        $display("── Test 2: seq continuity ──");
+        // ── Test 2: Second frame, same som_label (static) ────────────
+        $display("── Test 2: seq stability ──");
         wait_frame_or_die("T2");
         frame_count = frame_count + 1;
-        check_frame(4'h5, 3'b101, 8'h2A, expected_seq, "T2 seq inc");
-        expected_seq = expected_seq + 8'd1;
+        check_frame(4'h5, 3'b101, 8'h2A, 8'd0, "T2 stable");
 
         // ── Test 3: Emission stops when !is_laminar ─────────────────
         $display("── Test 3: laminar drop stops emission ──");
         wait_frame_or_die("T3 setup");
-        frame_count = frame_count + 1; expected_seq = expected_seq + 8'd1;
+        frame_count = frame_count + 1;
         is_laminar = 0;
         // Wait enough time for at least one period to pass
         repeat (PERIOD_CYCLES + 1000) @(posedge clk);
@@ -214,14 +211,13 @@ module spu_whisper_v1_tb;
         is_laminar = 1;
         wait_frame_or_die("T4");
         frame_count = frame_count + 1;
-        check_frame(4'h5, 3'b101, 8'h2A, expected_seq, "T4 resume seq");
-        expected_seq = expected_seq + 8'd1;
+        check_frame(4'h5, 3'b101, 8'h2A, 8'd0, "T4 resume");
 
         // ── Test 5: Listener incoherence on 3 silent periods ────────
         $display("── Test 5: 3-miss incoherence ──");
         // Let one valid frame through to reset timeout
         wait_frame_or_die("T5 setup");
-        frame_count = frame_count + 1; expected_seq = expected_seq + 8'd1;
+        frame_count = frame_count + 1;
         // Now drop laminar for 4 periods
         is_laminar = 0;
         repeat (4 * PERIOD_CYCLES + 1000) @(posedge clk);
@@ -239,8 +235,7 @@ module spu_whisper_v1_tb;
             $display("FAIL: T6 incoherent not cleared after valid frame");
             fail = fail + 1;
         end
-        check_frame(4'h5, 3'b101, 8'h2A, expected_seq, "T6 recovery");
-        expected_seq = expected_seq + 8'd1;
+        check_frame(4'h5, 3'b101, 8'h2A, 8'd0, "T6 recovery");
 
         // ── Test 7: Varying fields ───────────────────────────────────
         $display("── Test 7: field variation ──");
@@ -248,15 +243,13 @@ module spu_whisper_v1_tb;
         flags_in   = 3'b010;
         dissonance = 8'hFF;
         wait_frame_or_die("T7a");
-        check_frame(4'hD, 3'b010, 8'hFF, expected_seq, "T7 node=D flags=010 diss=FF");
-        expected_seq = expected_seq + 8'd1;
+        check_frame(4'hD, 3'b010, 8'hFF, 8'd0, "T7 node=D flags=010 diss=FF");
 
         node_id    = 4'h0;
         flags_in   = 3'b000;
         dissonance = 8'h00;
         wait_frame_or_die("T7b");
-        check_frame(4'h0, 3'b000, 8'h00, expected_seq, "T7 node=0 flags=000 diss=00");
-        expected_seq = expected_seq + 8'd1;
+        check_frame(4'h0, 3'b000, 8'h00, 8'd0, "T7 node=0 flags=000 diss=00");
 
         // ── Report ───────────────────────────────────────────────────
         if (fail == 0)

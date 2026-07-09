@@ -2,6 +2,8 @@
 //
 // Emits an 18-byte ASCII frame each period while is_laminar holds.
 // Frame: W1 ii ff dd ss xx\n
+// ss = som_label (Arlinghaus SOM integration) — no longer an
+// auto-incrementing counter; the satellite feeds its edge SOM output.
 // XOR checksum covers bytes 0..14 (spaces included).
 //
 // Per docs/WHISPER_V1_SPEC.md §2–3.  Fail-silent while !is_laminar.
@@ -16,6 +18,7 @@ module spu_whisper_v1_emitter #(
     input  wire [3:0] node_id,
     input  wire [2:0] flags_in,
     input  wire [7:0] dissonance,
+    input  wire [7:0] som_label,   // Arlinghaus: edge SOM classification
     output wire       tx,
     output reg        busy
 );
@@ -59,14 +62,13 @@ module spu_whisper_v1_emitter #(
     reg [1:0]  state;
     reg [4:0]  byte_idx;
     reg [15:0] gap_cnt;
-    reg [7:0]  seq;
 
-    // ── Frame bytes (combinational, computed from current seq) ───────
+    // ── Frame bytes (combinational, computed from som_label) ────────
     wire [7:0] fb    = {5'b0, flags_in};
     wire [7:0] check = 8'h57 ^ 8'h31 ^ 8'h20 ^ h(4'd0) ^ h(node_id[3:0])
                      ^ 8'h20 ^ h(fb[7:4]) ^ h(fb[3:0]) ^ 8'h20
                      ^ h(dissonance[7:4]) ^ h(dissonance[3:0]) ^ 8'h20
-                     ^ h(seq[7:4]) ^ h(seq[3:0]) ^ 8'h20;
+                     ^ h(som_label[7:4]) ^ h(som_label[3:0]) ^ 8'h20;
 
     wire [7:0] frm [0:17];
     assign frm[0]  = 8'h57;
@@ -81,8 +83,8 @@ module spu_whisper_v1_emitter #(
     assign frm[9]  = h(dissonance[7:4]);
     assign frm[10] = h(dissonance[3:0]);
     assign frm[11] = 8'h20;
-    assign frm[12] = h(seq[7:4]);
-    assign frm[13] = h(seq[3:0]);
+    assign frm[12] = h(som_label[7:4]);
+    assign frm[13] = h(som_label[3:0]);
     assign frm[14] = 8'h20;
     assign frm[15] = h(check[7:4]);
     assign frm[16] = h(check[3:0]);
@@ -96,7 +98,6 @@ module spu_whisper_v1_emitter #(
             state    <= IDLE;
             byte_idx <= 0;
             gap_cnt  <= 0;
-            seq      <= 0;
             busy     <= 0;
             tx_send  <= 0;
         end else begin
@@ -123,7 +124,6 @@ module spu_whisper_v1_emitter #(
                             if (byte_idx < FRAME_LEN - 1)
                                 byte_idx <= byte_idx + 5'd1;
                             else begin
-                                seq   <= seq + 8'd1;
                                 state <= IDLE;
                             end
                         end

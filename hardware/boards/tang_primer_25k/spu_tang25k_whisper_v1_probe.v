@@ -58,6 +58,7 @@ module spu_tang25k_whisper_v1_probe (
         .clk(whisper_clk), .rst_n(rst_n),
         .is_laminar(is_laminar), .node_id(node_id),
         .flags_in(flags_in), .dissonance(dissonance),
+        .som_label(8'h00),
         .tx(tx_wire), .busy(em_busy)
     );
 

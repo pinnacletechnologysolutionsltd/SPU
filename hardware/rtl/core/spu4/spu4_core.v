@@ -44,7 +44,15 @@ module spu4_core (
     
     // Quadray Outputs (Sovereign state)
     output wire [15:0] A_out, B_out, C_out, D_out,
-    output wire        bloom_complete
+    output wire        bloom_complete,
+
+    // Dissonance — saturating |gasket_sum| for cluster bridge
+    // per knowledge/SPU_LEXICON.md "Dissonance" entry (2026-07-08)
+    output wire [7:0]  dissonance,
+
+    // Whisper v1 coherence-plane emitter (Arlinghaus meso tier)
+    // TX line for the constellation coherence plane.
+    output wire        whisper_tx
 );
 
     // 1. Soft-Start & Power Dispatch
@@ -174,6 +182,50 @@ module spu4_core (
     assign B_out = alu_B;
     assign C_out = alu_C;
     assign D_out = alu_D;
+
+    // Dissonance: saturating absolute value of gasket residual
+    // dissonance[7:0] = min(|A+B+C+D|, 255)
+    // 0x00 ⇔ laminar, 0xFF ⇔ saturated (|S| ≥ 255)
+    wire signed [16:0] gasket_sum_ext;
+    assign gasket_sum_ext = {alu_A[15], alu_A} + {alu_B[15], alu_B}
+                          + {alu_C[15], alu_C} + {alu_D[15], alu_D};
+    wire [16:0] abs_sum;
+    assign abs_sum = gasket_sum_ext[16] ? (~gasket_sum_ext + 17'd1) : gasket_sum_ext;
+    assign dissonance = (abs_sum > 17'd255) ? 8'hFF : abs_sum[7:0];
+
+    // ── Whisper v1 coherence-plane emitter ──────────────────────────
+    // The emitter continuously broadcasts the node's laminar state,
+    // dissonance, and a sequence number while the core is operational.
+    // Silence means incoherent or dead — the listener's 3-miss rule
+    // detects this without any protocol handshake.
+    //
+    // is_laminar: system is operational after boot completes.
+    // node_id:    hardwired per satellite; configurable via parameter.
+    // flags_in:   snap_locked from sentinel_mode, henosis=0 (SPU-4
+    //             has no tagged ROTC), relayed=0 (edge node).
+    // dissonance: the gasket_sum residual from the ALU.
+    localparam WHISPER_CLK_HZ  = 50000000;
+    localparam WHISPER_BAUD    = 115200;
+    localparam WHISPER_PERIOD  = WHISPER_CLK_HZ / 6000;
+
+    wire is_laminar_w;
+    assign is_laminar_w = bloom_complete && !reset;
+
+    wire [2:0] whisper_flags;
+    assign whisper_flags = {1'b0, 1'b0, sentinel_mode};  // {relayed, henosis, snap_locked}
+
+    spu_whisper_v1_emitter #(
+        .CLK_HZ(WHISPER_CLK_HZ), .BAUD(WHISPER_BAUD), .PERIOD_CYCLES(WHISPER_PERIOD)
+    ) u_whisper (
+        .clk(clk), .rst_n(!reset),
+        .is_laminar(is_laminar_w),
+        .node_id(4'h1),          // satellite ID: configurable per instance
+        .flags_in(whisper_flags),
+        .dissonance(dissonance),
+        .som_label(8'h00),       // placeholder — wire edge SOM output here
+        .tx(whisper_tx),
+        .busy()
+    );
 
     // Phinary chiral adder integration (enabled by default)
     wire [15:0] phin_A;

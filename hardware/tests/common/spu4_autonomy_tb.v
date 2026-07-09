@@ -19,6 +19,7 @@ module spu4_autonomy_tb;
     wire        bloom_complete;
 
     // 1. SPU-4 Autonomous Core
+    wire [7:0] dissonance_out;
     spu4_core u_sentinel (
         .clk(clk), .reset(reset),
         .prog_en_aux(prog_en), .prog_addr_aux(prog_addr), .prog_data_aux(prog_data),
@@ -27,7 +28,8 @@ module spu4_autonomy_tb;
         .F_rat(F_rat), .G_rat(G_rat), .H_rat(H_rat),
         .spi_miso(1'b0), .bus_ready(1'b0),
         .A_out(A_out), .B_out(B_out), .C_out(C_out), .D_out(D_out),
-        .bloom_complete(bloom_complete)
+        .bloom_complete(bloom_complete),
+        .dissonance(dissonance_out)
     );
 
     always #41.66 clk = ~clk; // 12 MHz
