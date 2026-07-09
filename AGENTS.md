@@ -99,13 +99,70 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - **RPLU2PADE Thimble-Padé pipeline** — full A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] over J11 SPI. 72 DSP, 34% LUT, route closed iteration 5 (`RPLU2PADE_J11: PASS`)
 - **LUCAS sidecar** — PSCALE/PCHIRAL/PMUL/PINV all verified over J11
 
+**A7 spin reconciliation (2026-07-08):** `build_a7.sh` accepts 16 spin names;
+`docs/SPIN_CATALOG.md` catalogues all. The following appear in
+`spu_a7_top.v`'s parameter table but not in the status lists above:
+
+| Spin | Modules | Status |
+|---|---|---|
+| `FULL` | MATH+SOM+GATEKEEPER+GPU+RPLU_V2+pipeline+CORE+I2S+TORUS | direction (exceeds 100T, aspirational) |
+| `MULTIMEDIA` | MATH+GATEKEEPER+GPU+RPLU_V2+pipeline+CORE+I2S | direction (aspirational product spin) |
+| `INTELLIGENCE` | SOM+GATEKEEPER+RPLU_V2+pipeline+CORE | direction (aspirational product spin) |
+| `SENSOR` | MATH+CORE | direction (minimal sensor-only spin) |
+| `SOM` | MATH+SOM+GATEKEEPER+CORE | superseded by SOMPROBE/SOM-SIDECAR |
+| `SU3` | SU3 sidecar, coreless | superseded by SU3SHARE |
+| `RPLUCFG` | nothing enabled, coreless stub | superseded |
+| `RPLU2CORE` | RPLU_V2+CORE | superseded by RPLU2 |
+| `RPLU2` | RPLU_V2+pipeline+SHARED_RPLU2_MULT+CORE | superseded by RPLU2PADE |
+| `RPLU2LIVE` | RPLU2LIVE flag only, coreless | superseded |
+| `CUSTOM` | user-configured via `ENABLE_*` variables | meta (build-time only) |
+
 **No longer "awaiting silicon test":** ROTC, SOM/BMU, RPLU2 Padé, Lucas MAC,
 and the SPU-4 Sentinel standalone core (first silicon 2026-07-08, Tang 25K,
 `SPU4:P A=0000 B=0155 C=0155 D=0155` — see `docs/hardware_evidence.md` §3.2j)
 are all silicon-verified on either Tang 25K or Artix-7.
 
 **RTL testbench-verified (remaining):**
-- **ROTC opcode** — all 6 corrected ROTC angles pass (TDM rotor core)
+- **ROTC opcode** — all 6 corrected ROTC angles pass (TDM rotor core) on
+  the tested vectors. **Caveat found 2026-07-08, RTL fix implemented 2026-07-09:**
+  the thirds angles (1, 3, 4) divide by 3 via a true floor-division
+  magic-constant (`div3` in `spu13_rotor_core_tdm.v`) that silently
+  truncates with no fault flag — see `knowledge/SPU_LEXICON.md` Davis
+  Gate entry. A deferred-reduction exponent-tagged ROTC core
+  (`spu13_rotor_core_tagged.v`, 314 lines) with explicit fault flags
+  (MISALIGNED/OVERFLOW/INEXACT) now exists as the verified fix — 8/8
+  testbench acceptance tests PASS (was 7/7; a real bug found 2026-07-09
+  while auditing REDUCE for synthesis viability — `reduce_val64` was
+  loaded via zero-extension instead of sign-extension, so any negative
+  lane value, even one that divides evenly, either false-faulted
+  INEXACT or silently missed the reduction. `-9` at exp=1 previously
+  returned unchanged with a false INEXACT fault instead of reducing to
+  `-3`. The prior single negative-value test (`-5`, T3) didn't catch it
+  because `-5`'s zero-extended residue happens to also be nonzero mod
+  3 — masking the bug for that value specifically. Fixed by
+  sign-extending on load; Test 8 added as the regression case. The
+  Python oracle (`reduce_tagged_exact`) was never affected — it uses
+  native arbitrary-precision integers with no fixed-width extension
+  step, so RTL and oracle had silently diverged on this exact scenario
+  until now). The original TDM core (`spu13_rotor_core_tdm.v`)
+  with silent `div3` remains the silicon-proven baseline; the tagged
+  core has not yet been synthesised or run on hardware.
+  **Second gap found and fixed 2026-07-09:** the ROTC angle field is
+  6 bits (0-63), but only angles 0-5 were ever cross-verified against
+  the VM oracle. Angles 6-11 apply a real axis permutation in RTL
+  (`spu_quadray_permute`) with no matching logic in the VM — a genuine
+  VM/RTL divergence risk. Angles 12-33 were VM placeholder table
+  entries with F=G=H=0, which would have silently zeroed the
+  destination's B/C/D on dispatch. Both are now gated: `spu13_core.v`'s
+  `ROTC_MAX_VERIFIED_ANGLE` localparam (=5) refuses any greater angle
+  at decode — no rotor launch, no register-file write, a sticky fault
+  flag on `rotc_debug_status[15]` — and `spu_vm.py` raises
+  `RotcUnverifiedAngleError` at the same boundary. Proof: the manifold
+  (QR register file) is provably untouched on a bad angle, not just
+  "probably fine" —
+  `hardware/tests/spu13/spu13_core_rotc_opcode_tb.v` and
+  `software/tests/test_rotc_bad_angle.py` both load known poison values
+  into the destination lane first and assert they survive unchanged.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
@@ -134,7 +191,18 @@ are all silicon-verified on either Tang 25K or Artix-7.
   (~2.6k LUT, 84 DSP, 4 BRAM). Awaiting board run — same line on both
   boards is the cross-vendor determinism proof
 - GPU rasterizer + fragment pipe (testbench passes)
-- Bio stack (annealer, active inference, soul metabolism, proprioception)
+- **Bio stack — claim corrected 2026-07-08, was overstated:** only
+  `spu_annealer.v` (`hardware/rtl/peripherals/bio/`) and
+  `spu_proprioception.v` (`hardware/rtl/core/shared/`) are in the active
+  tree, and **neither has a testbench** — "TB-verified" was wrong for
+  both. `spu_active_inference.v` and `spu_soul_metabolism.v` exist only
+  in `archive/recovered/`, both `` `include "soul_map.vh"` `` — a header
+  that does not exist anywhere in the repo, so they do not currently
+  compile. Status is: dormant/archived concept code, not verified.
+  Architectural framing (why this matters, not just what's missing —
+  and note the Jitterbug transformation is a real, tested counter-example
+  to "synergetics is only geometry here"):
+  `knowledge/SYNERGETICS_BEYOND_GEOMETRY.md`.
 
 **Rational Robotics & SOM Oracles (software-verified):**
 - Rational robotics oracle — 56 checks
@@ -248,6 +316,13 @@ Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit p
 | Arlinghaus constellation architecture | `knowledge/ARLINGHAUS_SPATIAL_SYNTHESIS.md` §7 | Deployment tiers: SPU-4-only edge node (~400 LUT, silicon-verified), SPU-13 + per-axis SPU-4 cluster (bridge frames carry Davis dissonance), whisper-networked constellation; status honesty table + next steps |
 | Digon-recursive cost model | `software/lib/digon_recursive.py` | Series-vs-Newton cycle tables at eps^3..eps^9 (4 strategies + sparse-jet model); source of the revised SRU verdict |
 | Sparse jet MAC contract | `docs/SPARSE_JET_MAC.md` | Nilpotency-window-tagged Cauchy product: skip rule, tag algebra, interface, acceptance checklist |
+| Spin catalog | `docs/SPIN_CATALOG.md` | Every named bitstream configuration: purpose, resources, silicon status, first-hour story; product-vs-probe discipline ("spin" is defined in `knowledge/SPU_LEXICON.md`) |
+| Whisper v1 contract | `docs/WHISPER_V1_SPEC.md` | Coherence-plane frame spec (18-byte ASCII line, fail-silent, 3-miss rule, governor relay) — written before RTL per Arlinghaus §7 step 3; acceptance checklist included |
+| Host library | `software/spu_host/` | Python client over the 8-opcode Southbridge SPI console (`status`, `manifold`, `qr_commit`, `write_chord`, `write_rplu_cfg`, ...); hardware-free parser test wired into `run_all_tests.py`; CLI via `python3 -m software.spu_host` |
+| Cartesian bridge | `docs/CARTESIAN_BRIDGE_SPEC.md`, `software/lib/cartesian_bridge.py` | Sensor(float)↔RationalSurd boundary oracle: round-half-even quantization, explicit-not-silent saturation, direct `rational_som.find_bmu` compatibility; 30-check TB in `software/tests/test_cartesian_bridge.py` |
+| ROTC exponent-tagged fix | `docs/ROTC_THIRDS_EXACTNESS_FIX.md`, `docs/ROTC_EXPONENT_STATE_MACHINE.md`, `software/lib/rotc_thirds_native.py` | Fixes silent truncation in thirds-angle ROTC (`div3`): deferred-reduction state machine (CLEAN/PENDING/FAULT.{MISALIGNED,OVERFLOW,INEXACT}), verified against exact ground truth, 69-check TB in `software/tests/test_rotc_thirds_native.py`. A prior "global rescale" fix attempt is retained as a documented dead end (`rotate_no_div_DEAD_END`). Oracle complete; RTL not started. |
+| Hobbyist glossary | `docs/glossary.md` | Plain-English on-ramp: terms, angle↔spread / distance↔quadrance / Q12 conversions, reading list; SPU_LEXICON.md stays normative |
+| Interconnect architecture | `knowledge/INTERCONNECT_ARCHITECTURE.md` | Tier model (T0 bare pins → T1 southbridge → T2 cluster links → T3 network bridge), southbridge homogeneity contract, determinism boundary, radio/LAN feasibility, multi-compute prep order |
 
 ## Coding Style & Naming Conventions
 

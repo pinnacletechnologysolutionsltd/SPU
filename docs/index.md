@@ -7,6 +7,14 @@ deterministic latency, bit-exact replay across Python, C++, and RTL.
 
 Pick your door:
 
+## 🧭 New here?
+
+- **[Glossary & conversions](glossary.md)** — every term in plain English,
+  angle↔spread and distance↔quadrance tables, and the reading list
+  (Wildberger, Fuller, Urner) the ideas come from
+- **[Spin catalog](SPIN_CATALOG.md)** — every named bitstream: what it does,
+  what board it fits, and its silicon status
+
 ## 🔬 For researchers
 
 - **[Current status](CURRENT_STATUS.md)** — board roles, silicon proof level, priorities
@@ -25,7 +33,7 @@ Pick your door:
 - **[Toolchain setup](toolchain_setup.md)** — OSS CAD Suite + OpenXC7; no vendor IDE
 - **[Southbridge SPI protocol](SOUTHBRIDGE_SPI_PROTOCOL.md)** — the RP2350↔FPGA control plane
 - **[Board scaling strategy](fpga_board_scaling_strategy.md)** — Tang 25K → Artix-7 → ECP5 → Kintex ladder
-- Bench adapter board and INA219 metrics harness: `hardware/pcb/bench_adapter/`,
+- Bench adapter board and INA226 metrics harness: `hardware/pcb/bench_adapter/`,
   `tools/bench_metrics/` in the repository
 
 ## 🤝 For contributors

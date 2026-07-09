@@ -65,7 +65,10 @@ contingent wrong choice. "Nature," he wrote, "doesn't use pi."
 The IVM basis uses 60° angles between basis vectors, not 90°. The four basis
 vectors of the IVM point to the vertices of a regular tetrahedron. This is
 the Quadray coordinate system, developed formally by Kirby Urner from Fuller's
-synergetics: four axes (a, b, c, d) with the constraint min(a,b,c,d) = 0.
+synergetics: four axes (a, b, c, d). Urner's original literature convention
+constrains points to the canonical form min(a,b,c,d) = 0, non-negative; the
+SPU's own working representative differs from this and is stated precisely
+in §6.
 
 ---
 
@@ -224,10 +227,28 @@ e₀ = (1, 0, 0, 0)   e₁ = (0, 1, 0, 0)
 e₂ = (0, 0, 1, 0)   e₃ = (0, 0, 0, 1)
 ```
 
-with the canonical form min(a, b, c, d) = 0. Every point in 3D space has a
-unique Quadray representation with non-negative rational coordinates. There are
-no negative coordinates in the canonical form — the entire space is addressed
-with non-negative Q(√3) values.
+**Literature convention (Urner):** the canonical form min(a, b, c, d) = 0.
+Every point in 3D space has a unique Quadray representation with
+non-negative rational coordinates — no negative coordinates in canonical
+form, the entire space addressed with non-negative values. This is the
+correct statement of Urner's original convention, and it is where the
+Quadray idea comes from historically.
+
+**SPU convention (differs, on purpose):** SPU-4 registers hold **signed**
+16-bit components A–D. The working representative is the **zero-sum
+hyperplane** (ΣABCD = 0), enforced continuously by the Davis Gate rather
+than at load time — Urner's min=0 canonical form is never constructed or
+restored anywhere in the RTL; no normalization block exists for it.
+Both Thomson's SQR (§4) and the SPU drop Urner's canonical-form
+constraint (min=0, non-negative) at the register level — but they
+diverge on what replaces it. Thomson works in full R4 ("no zero-sum
+projection"); the SPU works on the zero-sum hyperplane (ΣABCD = 0
+enforced by the Davis Gate) with signed 16-bit components. Both
+address vectors (displacements) rather than points. This distinction
+is normative in `knowledge/SPU_LEXICON.md`
+("Quadray coordinates" entry) — that entry is the RTL contract; this
+section is literature background plus the SPU divergence, not a second,
+competing source of truth.
 
 The SPU-13 extends this to 13 axes — one for each vertex of the cuboctahedron
 (Vector Equilibrium), the geometric form that Fuller identified as the zero-energy
@@ -276,13 +297,13 @@ wrong choice of basis. The SPU-13 removes the workaround.
 
 ---
 
-## 7. RPLU v2: Split Biquadratic Algebra A₃₁ over M31 (2026)
+## 8. RPLU v2: Split Biquadratic Algebra A₃₁ over M31 (2026)
 
 The RPLU v2 pipeline extends the arithmetic field from Q(√3) rational surds to
 the split biquadratic algebra A₃₁ = F_p[u,v]/(u²−3, v²−5) over the
 Mersenne prime M31 (p = 2³¹−1 = 2,147,483,647).
 
-### 7.1 Why a finite algebra?
+### 8.1 Why a finite algebra?
 
 Rational surds in Q(√3) provide exact arithmetic at the cost of unbounded
 bit-width growth with successive operations (denominator explosion). Finite algebras bound all values to fixed 31-bit registers, eliminating bit-width growth
@@ -290,7 +311,7 @@ while preserving exact closure. The trade is that values are taken modulo p,
 requiring algebraic reconstruction (Chinese Remainder Theorem) to recover
 real-world quantities at pipeline boundaries.
 
-### 7.2 Why M31?
+### 8.2 Why M31?
 
 p = 2^31−1 is a Mersenne prime with the Crandall property: 2^31 ≡ 1 (mod p).
 This enables **division-free modular reduction**:
@@ -299,14 +320,14 @@ x mod p = (x_lo + x_hi) mod p   (split at bit 31, add, conditional subtract)
 ```
 No division circuit, no lookup table — pure shift, mask, add, compare.
 
-### 7.3 The biquadratic extension A₃₁
+### 8.3 The biquadratic extension A₃₁
 
 The base field F_p is extended to the split biquadratic algebra A₃₁ =
 F_p[u,v]/(u²−3, v²−5), concretely represented with basis [1, √3, √5, √15].
 This preserves the SPU-13's geometric primitives (quadrance, spread, Pell rotor)
 while adding algebraic inversion (necessary for Padé denominator evaluation).
 
-15 is a quadratic residue (see Section 7.2), so the extension is a split
+15 is a quadratic residue (see Section 8.2), so the extension is a split
 algebra rather than a true field: A₃₁ contains structural zero-divisors.
 The hardware traps non-unit elements via FLAGS.V and routes them to the
 singular absorber rather than producing a false inverse.
@@ -318,9 +339,9 @@ Euler's criterion confirms both √3 and √5 are quadratic non-residues in M31:
 ```
 The extension is a split biquadratic ring, not a field — 15 is a quadratic
 residue, creating structural zero-divisors that the hardware traps via
-FLAGS.V (see Section 7.3).
+FLAGS.V (see Section 8.3).
 
-### 7.4 Conjugate reduction tower
+### 8.4 Conjugate reduction tower
 
 Inversion in A₃₁ avoids O(p⁴) exponentiation via nested quadratic collapse:
 ```
@@ -331,7 +352,7 @@ Z_inv       =  Z̄·W̄·N_inv                        (reconstruct in F_{p^4})
 ```
 76-cycle deterministic latency. Zero-norm detection (N=0) asserts FLAGS.V.
 
-### 7.5 Lefschetz thimble connection
+### 8.5 Lefschetz thimble connection
 
 The Thimble-Padé pipeline evaluates path integrals over Lefschetz thimbles:
 - Kohonen SOM identifies saddle points (∇S = 0) in the complexified action
