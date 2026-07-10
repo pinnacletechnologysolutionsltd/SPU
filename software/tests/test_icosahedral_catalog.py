@@ -394,6 +394,33 @@ check(alias_ok and len(ALIAS) == 12,
 check(set(ALIAS.keys()) == {IDX[R] for R in a4},
       "alias set == the A4 (integer) members of the canonical list")
 
+# ---- RTL inline ROM vs derivation ---------------------------------------------
+# The engine's code ROM is a hardcoded case function (yosys $readmemh path
+# resolution proved fragile, 2026-07-10), which creates a second copy of
+# the table. This check parses the Verilog and diffs all 540 entries
+# against the derivation directly, so drift after a regeneration can
+# never survive a suite run.
+_ENGINE_CODE = {(0, 0): 0, (1, 0): 1, (-1, 0): 2, (2, 0): 3, (-2, 0): 4,
+                (0, 1): 5, (0, -1): 6, (-1, 1): 7, (1, -1): 8,
+                (-1, 2): 9, (1, -2): 10}
+_engine_path = __import__("os").path.join(
+    __import__("os").path.dirname(__import__("os").path.abspath(__file__)),
+    "..", "..", "hardware", "rtl", "core", "spu13", "spu13_irotc_engine.v")
+try:
+    import re as _re
+    _src = open(_engine_path).read()
+    _rtl_rom = {int(m.group(1)): int(m.group(2)) for m in
+                _re.finditer(r"10'd(\d+):\s*code_lookup\s*=\s*4'd(\d+);", _src)}
+    _exp_rom = {}
+    for _i, _R in enumerate(CANON):
+        for _j, _k in enumerate(num_key(_R)):
+            _exp_rom[_i * 9 + _j] = _ENGINE_CODE[_k]
+    check(_rtl_rom == _exp_rom,
+          "spu13_irotc_engine.v inline code ROM: all 540 entries match the "
+          "derivation (no drift vs the generated table)")
+except FileNotFoundError:
+    check(False, "spu13_irotc_engine.v not found for ROM cross-check")
+
 # ---- catalog emission (--emit) ------------------------------------------------
 ANGLE_OF_TRACE = {Qp(3): "0°", Qp(-1): "180°", Qp(0): "±120°",
                   PHI: "±72°", Qp(1, -1): "±144°"}
