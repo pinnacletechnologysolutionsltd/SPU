@@ -9,7 +9,7 @@ below — not just "results come out right" on the untested path.
 
 > **Provenance:** the framing of ROTC as a state-machine harness —
 > exactness state carried by the data, rotations as guarded transitions,
-> reduction as an explicit fallible operation — is due to Gene Yanenko
+> reduction as an explicit fallible operation — is due to Evgeny Yanenko
 > (see `docs/ATTRIBUTION.md`). This document is the formalization of that
 > idea against the /3 exactness finding.
 

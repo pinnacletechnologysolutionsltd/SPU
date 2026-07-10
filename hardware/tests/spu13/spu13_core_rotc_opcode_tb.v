@@ -187,30 +187,117 @@ module spu13_core_rotc_opcode_tb;
         issue(rotc(8'd3, 8'd3, 6'd7));
         expect_lane(4'd3, 32'sd3, -32'sd6, 32'sd9, -32'sd12);
 
+        // ── Angles 12-14: Tranche 1 missing thirds conjugates ────────
+        // Source is (3,-6,9,-12) loaded at QR2.
+        // Angle 12 (180°@B): self-inverse, period 2.
+        issue(rotc(8'd3, 8'd2, 6'd12));
+        expect_lane(4'd3, -32'sd3, -32'sd6, -32'sd9, 32'sd12);
+
+        // Angle 13 (240°@C): inverse of angle 9.
+        issue(rotc(8'd4, 8'd2, 6'd13));
+        expect_lane(4'd4, 32'sd2, -32'sd13, 32'sd9, -32'sd4);
+
+        // Angle 14 (60°@D): inverse of angle 10.
+        issue(rotc(8'd5, 8'd2, 6'd14));
+        expect_lane(4'd5, 32'sd10, -32'sd5, 32'sd1, -32'sd12);
+
+        // Inverse-pair closure: angle 9 then 13 = identity.
+        issue(rotc(8'd3, 8'd2, 6'd9));
+        issue(rotc(8'd3, 8'd3, 6'd13));
+        expect_lane(4'd3, 32'sd3, -32'sd6, 32'sd9, -32'sd12);
+
+        // Inverse-pair closure: angle 10 then 14 = identity.
+        issue(rotc(8'd3, 8'd2, 6'd10));
+        issue(rotc(8'd3, 8'd3, 6'd14));
+        expect_lane(4'd3, 32'sd3, -32'sd6, 32'sd9, -32'sd12);
+
+        // Angle 12 self-inverse round trip.
+        issue(rotc(8'd3, 8'd2, 6'd12));
+        issue(rotc(8'd3, 8'd3, 6'd12));
+        expect_lane(4'd3, 32'sd3, -32'sd6, 32'sd9, -32'sd12);
+
+        // ── Angles 15-23: Tranche 2 A₄ pure permutations ─────────────
+        // Source (1,2,3,4) in QR0 — pure coordinate swaps, no /3.
+        // Bypass 3-cycles (15-20): perm_sel + bypass_p5/bypass_p5_inv.
+        issue(rotc(8'd3, 8'd0, 6'd15));
+        expect_lane(4'd3, 32'sd4, 32'sd2, 32'sd1, 32'sd3);
+
+        issue(rotc(8'd4, 8'd0, 6'd16));
+        expect_lane(4'd4, 32'sd3, 32'sd2, 32'sd4, 32'sd1);
+
+        issue(rotc(8'd5, 8'd0, 6'd17));
+        expect_lane(4'd5, 32'sd4, 32'sd1, 32'sd3, 32'sd2);
+
+        issue(rotc(8'd6, 8'd0, 6'd18));
+        expect_lane(4'd6, 32'sd2, 32'sd4, 32'sd3, 32'sd1);
+
+        issue(rotc(8'd7, 8'd0, 6'd19));
+        expect_lane(4'd7, 32'sd3, 32'sd1, 32'sd2, 32'sd4);
+
+        issue(rotc(8'd8, 8'd0, 6'd20));
+        expect_lane(4'd8, 32'sd2, 32'sd3, 32'sd1, 32'sd4);
+
+        // Double transpositions (21-23): direct wire swaps.
+        issue(rotc(8'd9, 8'd0, 6'd21));
+        expect_lane(4'd9, 32'sd2, 32'sd1, 32'sd4, 32'sd3);
+
+        issue(rotc(8'd10, 8'd0, 6'd22));
+        expect_lane(4'd10, 32'sd3, 32'sd4, 32'sd1, 32'sd2);
+
+        issue(rotc(8'd11, 8'd0, 6'd23));
+        expect_lane(4'd11, 32'sd4, 32'sd3, 32'sd2, 32'sd1);
+
+        // Inverse-pair closure: angle 15 then 16 = identity.
+        issue(rotc(8'd3, 8'd0, 6'd15));
+        issue(rotc(8'd3, 8'd3, 6'd16));
+        expect_lane(4'd3, 32'sd1, 32'sd2, 32'sd3, 32'sd4);
+
+        // ── Angles 24-35: Tranche 3 octahedral group ─────────────────
+        // Integer 3×3 matrices on BCD, entries 0,±1 — zero multiplies.
+        // Self-inverse (period 2): 24,25,28,31,32,34
+        // Inverse pairs (period 4): 26↔27, 29↔30, 33↔35
+        // NOTE: octahedral rotations recompute A = -(B+C+D). Self-inverse
+        // closure only holds when input has zero-sum (A+B+C+D=0).
+        // Test 1: direct application on (1,2,3,4) in QR0 (non-zero-sum).
+        issue(rotc(8'd3, 8'd0, 6'd24));
+        expect_lane(4'd3, 32'sd9, -32'sd2, -32'sd4, -32'sd3);
+
+        // Test 2: self-inverse on (-6,1,2,3) sum=0.
+        issue(qldi(8'd2, -8'sd6, 8'sd1, 8'sd2, 8'sd3));
+        expect_lane(4'd2, -32'sd6, 32'sd1, 32'sd2, 32'sd3);
+
+        issue(rotc(8'd4, 8'd2, 6'd24));
+        expect_lane(4'd4, 32'sd6, -32'sd1, -32'sd3, -32'sd2);
+
+        issue(rotc(8'd4, 8'd4, 6'd24));
+        expect_lane(4'd4, -32'sd6, 32'sd1, 32'sd2, 32'sd3);
+
+        // Period-4 inverse pair 33↔35 on (-6,1,2,3) sum=0:
+        //  33: (-6,1,2,3) → (-3,6,-1,-2) → 35: → (-6,1,2,3)
+        issue(rotc(8'd4, 8'd2, 6'd33));
+        expect_lane(4'd4, -32'sd3, 32'sd6, -32'sd1, -32'sd2);
+
+        issue(rotc(8'd4, 8'd4, 6'd35));
+        expect_lane(4'd4, -32'sd6, 32'sd1, 32'sd2, 32'sd3);
+
         // ── Bad-angle fault: manifold must NOT be corrupted ──────────
-        // Angle 12 is an unimplemented placeholder (VM's _ROTC_TABLE
-        // stub was F=G=H=0 -- would silently zero B/C/D). Load lane 12
-        // with known poison values, issue ROTC with angle 12, and
-        // require the lane to come back completely untouched plus the
-        // BAD_ANGLE fault flag (rotc_debug_status[15]) set. Angle 12 is
-        // now the first angle past ROTC_MAX_VERIFIED_ANGLE (=11), so
-        // this also proves the moved gate boundary.
+        // Angle 36 is the first angle past ROTC_MAX_VERIFIED_ANGLE (=35).
+        // Load lane 12 with known poison values, issue ROTC with angle 36,
+        // require the lane untouched plus BAD_ANGLE fault flag set.
         issue(qldi(8'd12, 8'sd99, 8'sd98, 8'sd97, 8'sd96));
         expect_lane(4'd12, 32'sd99, 32'sd98, 32'sd97, 32'sd96);
 
-        issue(rotc(8'd12, 8'd0, 6'd12));
+        issue(rotc(8'd12, 8'd0, 6'd36));
         expect_lane(4'd12, 32'sd99, 32'sd98, 32'sd97, 32'sd96);
         if (rotc_debug_status[15] !== 1'b1) begin
-            $display("FAIL: angle 12 did not set BAD_ANGLE fault (status=%h)",
+            $display("FAIL: angle 36 did not set BAD_ANGLE fault (status=%h)",
                       rotc_debug_status);
             errors = errors + 1;
         end else begin
-            $display("PASS: angle 12 faulted (BAD_ANGLE) without touching QR12");
+            $display("PASS: angle 36 faulted (BAD_ANGLE) without touching QR12");
         end
 
-        // Angle 63 (top of the 6-bit field) must fault the same way,
-        // not just angle values right at the boundary.
-        // Lanes 0-12 only (13-axis manifold: 12 vertices + center).
+        // Angle 63 (top of the 6-bit field) must fault the same way.
         issue(qldi(8'd1, 8'sd50, 8'sd51, 8'sd52, 8'sd53));
         expect_lane(4'd1, 32'sd50, 32'sd51, 32'sd52, 32'sd53);
 

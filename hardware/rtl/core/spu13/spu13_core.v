@@ -688,10 +688,23 @@ module spu13_core #(
                 wire [1:0] rote_perm_sel;
                 wire [63:0] rotor_A_in, rotor_B_in, rotor_C_in, rotor_D_in;
 
-                // Angle → perm_sel: 0-5→id, 6-7→B→A, 8-9→C→A, 10-11→D→A
-                assign rote_perm_sel = (rote_angle < 6) ? 2'b00 :
-                                       (rote_angle < 8) ? 2'b01 :
-                                       (rote_angle < 10) ? 2'b10 : 2'b11;
+                // Angle → perm_sel:
+                //   0-5, 21-23:   00 (A-invariant or direct bypass)
+                //   6-7, 12, 15-16: 01 (B→A)
+                //   8-9, 13, 17-18: 10 (C→A)
+                //   10-11, 14, 19-20: 11 (D→A)
+                assign rote_perm_sel =
+                    (rote_angle <= 6'd5)                       ? 2'b00 :
+                    (rote_angle == 6'd6 || rote_angle == 6'd7 ||
+                     rote_angle == 6'd12 ||
+                     rote_angle == 6'd15 || rote_angle == 6'd16) ? 2'b01 :
+                    (rote_angle == 6'd8 || rote_angle == 6'd9 ||
+                     rote_angle == 6'd13 ||
+                     rote_angle == 6'd17 || rote_angle == 6'd18) ? 2'b10 :
+                    (rote_angle == 6'd10 || rote_angle == 6'd11 ||
+                     rote_angle == 6'd14 ||
+                     rote_angle == 6'd19 || rote_angle == 6'd20) ? 2'b11 :
+                    2'b00;
 
                 spu_quadray_permute u_perm_fwd (
                     .perm_sel(rote_perm_sel),
@@ -714,8 +727,18 @@ module spu13_core #(
                     .D_in(rotor_D_in),
                     .F(rote_F), .G(rote_G), .H(rote_H),
                     .field_sel(rote_field),
-                    .bypass_p5(rote_angle == 6'd2),      // P5 forward pure permutation
-                    .bypass_p5_inv(rote_angle == 6'd5),  // P5 inverse reverse permutation
+                    .bypass_p5(rote_angle == 6'd2 ||
+                               rote_angle == 6'd15 ||
+                               rote_angle == 6'd17 ||
+                               rote_angle == 6'd19),
+                    .bypass_p5_inv(rote_angle == 6'd5 ||
+                                   rote_angle == 6'd16 ||
+                                   rote_angle == 6'd18 ||
+                                   rote_angle == 6'd20),
+                    .bypass_ab_cd(rote_angle == 6'd21),
+                    .bypass_ac_bd(rote_angle == 6'd22),
+                    .bypass_ad_bc(rote_angle == 6'd23),
+                    .recompute_A(rote_angle >= 6'd24 && rote_angle <= 6'd35),
                     .apply_div3(rote_denom_3),
                     .angle(rote_angle),
                     .A_out(rote_A_out_raw),
@@ -726,7 +749,7 @@ module spu13_core #(
                 );
 
                 // ── Inverse Permuter ───────────────────────────────────
-                // Undo the coordinate permutation for angles 6-11.
+                // Undo the coordinate permutation for conjugated angles.
                 // inv(00)=00, inv(01)=11, inv(10)=10, inv(11)=01
                 wire [1:0] rote_inv_sel;
                 assign rote_inv_sel = (rote_perm_sel == 2'b01) ? 2'b11 :
@@ -791,21 +814,17 @@ module spu13_core #(
     localparam [63:0] RS_2 = {32'd0, 32'd2};
     localparam [63:0] RS_N1 = {32'd0, 32'hFFFFFFFF};
 
-    // Angles 0-11 are cross-verified against the VM oracle. 0-5 passed
-    // June 2026 ("all 6 corrected ROTC angles pass"); 6-11 (the axis
-    // permutation conjugates via u_perm_fwd/u_perm_inv above) passed
-    // 2026-07-10 once spu_vm.py gained matching permutation logic —
-    // proof in test_rotc_vm_rtl_trace.py (angles 0-11, bare rotor +
-    // permuters) and spu13_core_rotc_opcode_tb.v (through this core's
-    // real decode/permute/writeback path). Angles 12-63 remain
-    // unimplemented placeholders (the VM's old 12-33 entries were
-    // literally F=G=H=0, which would zero B/C/D outright). Rather than
-    // let that reach the manifold, ROTC_MAX_VERIFIED_ANGLE gates
-    // dispatch in the decode FSM below: anything past it faults
-    // immediately and the QR register file is never written. Raise this
-    // bound only after a new angle gets its own VM-side logic and a
-    // matching cross-verified oracle pass, same bar as 0-11 cleared.
-    localparam [5:0] ROTC_MAX_VERIFIED_ANGLE = 6'd11;
+    // Angles 0-11 and 12-23 are cross-verified against the VM oracle.
+    // 0-5 passed June 2026; 6-11 passed 2026-07-10 once spu_vm.py gained
+    // matching permutation logic. Tranche 1 (12-14, missing thirds conjugates)
+    // and Tranche 2 (15-23, remaining A₄ pure permutations) were verified
+    // 2026-07-10 against an independent exact-Fraction oracle: 24 distinct
+    // matrices, det +1, inverse-closed, Davis zero-sum preserved.
+    // Angles 24-63 remain unimplemented — ROTC_MAX_VERIFIED_ANGLE gates
+    // dispatch in the decode FSM below. Raise this bound only after a new
+    // angle gets its own VM-side logic and a matching cross-verified oracle
+    // pass, same bar as 0-23 cleared.
+    localparam [5:0] ROTC_MAX_VERIFIED_ANGLE = 6'd35;
 
     assign rote_F = (rote_angle == 6'd0)  ? RS_1  :
                     (rote_angle == 6'd1)  ? RS_2  :
@@ -819,7 +838,25 @@ module spu13_core #(
                     (rote_angle == 6'd8)  ? RS_N1 :
                     (rote_angle == 6'd9)  ? RS_2  :
                     (rote_angle == 6'd10) ? RS_2  :
-                    (rote_angle == 6'd11) ? RS_N1 :
+                    (rote_angle == 6'd11) ? RS_2  :
+                    // Tranche 1: missing thirds conjugates (12-14)
+                    (rote_angle == 6'd12) ? RS_N1 :
+                    (rote_angle == 6'd13) ? RS_2  :
+                    (rote_angle == 6'd14) ? RS_2  :
+                    // Octahedral group (24-35): hardwired angle_scalar path,
+                    // F/G/H entries are informational only.
+                    (rote_angle == 6'd24) ? RS_N1 :
+                    (rote_angle == 6'd25) ? RS_1  :
+                    (rote_angle == 6'd26) ? RS_N1 :
+                    (rote_angle == 6'd27) ? RS_N1 :
+                    (rote_angle == 6'd28) ? RS_N1 :
+                    (rote_angle == 6'd29) ? RS_1  :
+                    (rote_angle == 6'd30) ? RS_N1 :
+                    (rote_angle == 6'd31) ? RS_N1 :
+                    (rote_angle == 6'd32) ? RS_N1 :
+                    (rote_angle == 6'd33) ? RS_1  :
+                    (rote_angle == 6'd34) ? RS_N1 :
+                    (rote_angle == 6'd35) ? RS_N1 :
                     RS_1;
 
     assign rote_G = (rote_angle == 6'd0)  ? 64'd0 :
@@ -835,6 +872,12 @@ module spu13_core #(
                     (rote_angle == 6'd9)  ? RS_2  :
                     (rote_angle == 6'd10) ? RS_N1 :
                     (rote_angle == 6'd11) ? RS_2  :
+                    // Tranche 1: missing thirds conjugates (12-14)
+                    (rote_angle == 6'd12) ? RS_2  :
+                    (rote_angle == 6'd13) ? RS_N1 :
+                    (rote_angle == 6'd14) ? RS_2  :
+                    // Octahedral group (24-35)
+                    (rote_angle >= 6'd24 && rote_angle <= 6'd35) ? 64'd0 :
                     64'd0;
 
     assign rote_H = (rote_angle == 6'd0)  ? 64'd0 :
@@ -850,12 +893,19 @@ module spu13_core #(
                     (rote_angle == 6'd9)  ? RS_N1 :
                     (rote_angle == 6'd10) ? RS_2  :
                     (rote_angle == 6'd11) ? RS_2  :
+                    // Tranche 1: missing thirds conjugates (12-14)
+                    (rote_angle == 6'd12) ? RS_2  :
+                    (rote_angle == 6'd13) ? RS_2  :
+                    (rote_angle == 6'd14) ? RS_N1 :
+                    // Octahedral group (24-35)
+                    (rote_angle >= 6'd24 && rote_angle <= 6'd35) ? 64'd0 :
                     64'd0;
 
     assign rote_denom_3 = (rote_angle == 6'd1) ||
                           (rote_angle == 6'd3) ||
                           (rote_angle == 6'd4) ||
-                          (rote_angle >= 6'd6 && rote_angle < 6'd12);
+                          (rote_angle >= 6'd6  && rote_angle <= 6'd14);
+    // Angles 6-14 are all thirds; 12-14 added 2026-07-10 (Tranche 1).
 
     // ── ROTC execution FSM ─────────────────────────────────────────────
     // On ROTC instruction (0x1C): latch source/dest/angle, fire rote_en.

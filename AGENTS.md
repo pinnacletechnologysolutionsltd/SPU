@@ -171,16 +171,28 @@ are all silicon-verified on either Tang 25K or Artix-7.
   the hardwired `angle_scalar_*_sum` path spu13_core uses — 144
   bit-exact checks) and `spu13_core_rotc_opcode_tb.v` (through the real
   core decode/permute/writeback, including a 6-then-7 inverse-closure
-  round trip). `ROTC_MAX_VERIFIED_ANGLE` is now 11 on both sides; the
-  fault boundary proof (poison values survive untouched +
-  `rotc_debug_status[15]`) moved to angles 12 and 63. Note the /3
-  exactness caveat applies to 6-11 exactly as to 1/3/4: all six are
-  thirds angles, and VM/RTL only provably agree when the thirds
-  division is exact (test vectors use all-multiples-of-3 components).
-  Angles 9 and 10 have no inverse within the 0-11 catalog (their
-  inverses are their own 5th powers). Silicon status: angles 6-11 are
-  testbench-verified only; the six-step silicon closure evidence covers
-  angles 0-5.
+  round trip). `ROTC_MAX_VERIFIED_ANGLE` is now 35 on both sides;
+  **Tranche 1 (12-14, missing thirds conjugates)**, **Tranche 2
+  (15-23, remaining A₄ pure permutations)**, and **Tranche 3 (24-35,
+  octahedral S₄ \ A₄)** were verified 2026-07-10 against an independent
+  exact-Fraction oracle: 36 distinct matrices, det +1, inverse-closed
+  (12→12, 9↔13, 10↔14 supply the previously missing thirds inverse
+  pairs; 15-23 add 6 permuted 3-cycles + 3 double-transpositions;
+  24-35 add six self-inverse 180° edge rotations {24,25,28,31,32,34}
+  and three 90°/270° face inverse pairs 26↔27, 29↔30, 33↔35), Davis
+  zero-sum preserved. The octahedral 12 are integer 3×3 matrices on
+  (B,C,D) with entries 0,±1 — zero multiplies, no Q(√2); they recompute
+  A = −(B+C+D) via the rotor core's `recompute_A` port, so closure
+  requires zero-sum input. Cross-verified via `test_rotc_vm_rtl_trace.py`
+  (336 bit-exact checks; both datapaths for 0-23, DUT1 hardwired path
+  only for 24-35 — the F/G/H scalar path cannot express non-circulants)
+  and `spu13_core_rotc_opcode_tb.v` (core-level decode/permute/writeback
+  including inverse round-trips for 9↔13, 10↔14, 15↔16, 33↔35, and
+  12/24 self-inverse). The fault boundary proof (poison values survive
+  untouched + `rotc_debug_status[15]`) moved to angles 36 and 63. Note
+  the /3 exactness caveat applies to all 12 thirds angles (1,3,4,6-14).
+  Silicon status: angles 0-5 are silicon-verified on Artix-7; 6-35 are
+  testbench-verified only.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
@@ -315,27 +327,64 @@ duplicated angle 1. The corrected catalog is:
 | 6 | conjugate of angle 4 about B | B | 2/3 | -1/3 | 2/3 | 6 | 7 |
 | 7 | conjugate of angle 1 about B | B | 2/3 | 2/3 | -1/3 | 6 | 6 |
 | 8 | conjugate of angle 3 about C | C | -1/3 | 2/3 | 2/3 | 2 | 8 |
-| 9 | conjugate of angle 1 about C | C | 2/3 | 2/3 | -1/3 | 6 | 9⁵ |
-| 10 | conjugate of angle 4 about D | D | 2/3 | -1/3 | 2/3 | 6 | 10⁵ |
+| 9 | conjugate of angle 1 about C | C | 2/3 | 2/3 | -1/3 | 6 | 13 |
+| 10 | conjugate of angle 4 about D | D | 2/3 | -1/3 | 2/3 | 6 | 14 |
 | 11 | conjugate of angle 3 about D | D | -1/3 | 2/3 | 2/3 | 2 | 11 |
+| 12 | 180° about B | B | -1/3 | 2/3 | 2/3 | 2 | 12 |
+| 13 | 240° about C | C | 2/3 | -1/3 | 2/3 | 6 | 9 |
+| 14 | 60° about D | D | 2/3 | 2/3 | -1/3 | 6 | 10 |
+| 15 | P5 fwd about B | B | — | — | — | 3 | 16 |
+| 16 | P5 inv about B | B | — | — | — | 3 | 15 |
+| 17 | P5 fwd about C | C | — | — | — | 3 | 18 |
+| 18 | P5 inv about C | C | — | — | — | 3 | 17 |
+| 19 | P5 fwd about D | D | — | — | — | 3 | 20 |
+| 20 | P5 inv about D | D | — | — | — | 3 | 19 |
+| 21 | (AB)(CD) | — | — | — | — | 2 | 21 |
+| 22 | (AC)(BD) | — | — | — | — | 2 | 22 |
+| 23 | (AD)(BC) | — | — | — | — | 2 | 23 |
+| 24 | 180° edge (CD) | — | — | — | — | 2 | 24 |
+| 25 | 180° edge (AB) | — | — | — | — | 2 | 25 |
+| 26 | 90° face (x) | — | — | — | — | 4 | 27 |
+| 27 | 270° face (x) | — | — | — | — | 4 | 26 |
+| 28 | 180° edge (BC) | — | — | — | — | 2 | 28 |
+| 29 | 90° face (z) | — | — | — | — | 4 | 30 |
+| 30 | 270° face (z) | — | — | — | — | 4 | 29 |
+| 31 | 180° edge (AD) | — | — | — | — | 2 | 31 |
+| 32 | 180° edge (BD) | — | — | — | — | 2 | 32 |
+| 33 | 270° face (y) | — | — | — | — | 4 | 35 |
+| 34 | 180° edge (AC) | — | — | — | — | 2 | 34 |
+| 35 | 90° face (y) | — | — | — | — | 4 | 33 |
 
-Angles 9 and 10 have no single-angle inverse within the catalog — their inverses are
-their own 5th powers (compose the angle five times).
+Angles 12-14 (Tranche 1) supply the previously missing inverses: 13↔9 and 14↔10.
+Angles 15-23 (Tranche 2) complete the A₄ pure-permutation subgroup (12 elements
+including identity and angles 2/5). Angles 15-23 are pure coordinate permutations
+with zero multiplies (bypass path). Angles 21-23 are double transpositions using
+dedicated bypass signals (`bypass_ab_cd`, `bypass_ac_bd`, `bypass_ad_bc`).
+Angles 24-35 (Tranche 3) are the 12 remaining cube rotations (S₄ \ A₄): integer
+3×3 matrices on (B,C,D) with entries 0,±1 — no Q(√2) — hardwired in
+`spu13_rotor_core_tdm.v` with A recomputed from zero-sum (`recompute_A`).
+Edge labels name the swapped cube diagonals (each 180° edge rotation is
+negation ∘ that transposition); face axes x/y/z are shared with the double
+transpositions — 26²=27²=21, 29²=30²=23, 33²=35²=22 (verified exactly).
 
 **RTL encoding:** Thirds angles use the TDM circulant path (`F,G,H` surd multiplies + `/3`).
-Angles 2 and 5 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit permutation, zero
-multiplies. Angles 6-11 wrap the circulant in `spu_quadray_permute` (`u_perm_fwd`/`u_perm_inv`
-in `spu13_core.v`): the target invariant axis is rotated into the circulant's A slot and back,
-so unlike 0-5 they rewrite all four components of the destination lane. F/G/H for 6-11 must stay
-bit-identical in three places: the VM `_ROTC_TABLE`, the `rote_F/G/H` lookup in `spu13_core.v`,
-and the hardwired `angle_scalar_*_sum` functions in `spu13_rotor_core_tdm.v`.
+Angles 2,5,15-20 use hardware bypass (`bypass_p5`, `bypass_p5_inv`) — pure bit permutation,
+zero multiplies, combined with axis permutation (`perm_sel`) for 15-20. Angles 21-23 use
+dedicated double-transposition bypass signals. Angles 6-23 wrap the rotor core in
+`spu_quadray_permute` (`u_perm_fwd`/`u_perm_inv` in `spu13_core.v`): the target
+invariant axis is rotated into the circulant's A slot and back, so unlike 0-5 they
+rewrite all four components of the destination lane. F/G/H for 0-14 must stay
+bit-identical in three places: the VM `_ROTC_TABLE`, the `rote_F/G/H` lookup in
+`spu13_core.v`, and the hardwired `angle_scalar_*_sum` functions in
+`spu13_rotor_core_tdm.v`. Bypass angles (2,5,15-23) bypass the arithmetic path entirely.
 
 **VM-vs-RTL trace equivalence:** `python3 software/tests/test_rotc_vm_rtl_trace.py` — exercises
-all 12 angles (144 bit-exact checks) through the real permuter module against both rotor
-datapaths (`ENABLE_TDM_FALLBACK` 1 and 0). Thirds-division exactness is required for
-equivalence (VM rounds, RTL `div3` truncates), so the 6-11 vectors use all-multiples-of-3
-components; the /3 divisibility caveat (`knowledge/SPU_LEXICON.md`, Davis Gate entry) applies
-to 6-11 exactly as to 1/3/4.
+all 36 angles (336 bit-exact checks) through the real permuter module against both rotor
+datapaths (`ENABLE_TDM_FALLBACK` 1 and 0) for angles 0-23; octahedral angles 24-35 run on
+DUT1 (hardwired path) only, since the F/G/H scalar path cannot express non-circulant
+matrices. Thirds-division exactness is required for equivalence (VM rounds, RTL `div3`
+truncates), so the 6-11 vectors use all-multiples-of-3 components; the /3 divisibility
+caveat (`knowledge/SPU_LEXICON.md`, Davis Gate entry) applies to 6-11 exactly as to 1/3/4.
 
 ### Rational Robotics & SOM Oracles
 
@@ -355,7 +404,7 @@ to 6-11 exactly as to 1/3/4.
 | Lucas Phinary MAC oracle | `software/tests/test_lucas_mac_oracle.py` | PSCALE/PCHIRAL/PMUL/PINV, 1M-step zero-drift over L_521 |
 | Lucas MAC architecture | `knowledge/LUCAS_PHINARY_MAC.md` | Ring separation, Barrett bridge, BTU integration, opcode map |
 | Lucas MAC paper | `docs/LUCAS_MAC_PAPER.md` | 7-section paper draft with empirical results |
-| ROTC kinematics paper | `docs/ROTC_KINEMATICS_PAPER.md` | Draft v0.1 (markdown, pre-TeX): 12-angle catalog + group structure, /3 exactness theorem + counterexample, Yanenko state-machine harness (§6), claim-discipline table (§10). Yanenko citation details pending confirmation |
+| ROTC kinematics paper | `docs/ROTC_KINEMATICS_PAPER.md` | Draft v0.1 (markdown, pre-TeX): 36-angle catalog (0-35, incl. octahedral S₄) + group structure, /3 exactness theorem + counterexample, Evgeny Yanenko state-machine harness (§6; see `Theory/EvolvingCategories.pdf`), claim-discipline table (§10) |
 | A31 field oracle | `software/lib/a31_field.py` | A31 mult table, Conjugate Reduction Tower (FLAGS.V), Montgomery batch inversion, Padé eval, op counting |
 | Batch inversion tests | `software/tests/test_pade_batch_inversion.py` | 25 checks — bit-exact batch vs per-element towers, singular isolation, cycle/MAC tables |
 | Batch inversion RTL contract | `docs/MONTGOMERY_BATCH_INVERSION.md` | Semantics, interface, singular-lane tiers, acceptance checklist for the RTL block |
@@ -371,6 +420,7 @@ to 6-11 exactly as to 1/3/4.
 | Host library | `software/spu_host/` | Python client over the 8-opcode Southbridge SPI console (`status`, `manifold`, `qr_commit`, `write_chord`, `write_rplu_cfg`, ...); hardware-free parser test wired into `run_all_tests.py`; CLI via `python3 -m software.spu_host` |
 | Cartesian bridge | `docs/CARTESIAN_BRIDGE_SPEC.md`, `software/lib/cartesian_bridge.py` | Sensor(float)↔RationalSurd boundary oracle: round-half-even quantization, explicit-not-silent saturation, direct `rational_som.find_bmu` compatibility; 30-check TB in `software/tests/test_cartesian_bridge.py` |
 | ROTC exponent-tagged fix | `docs/ROTC_THIRDS_EXACTNESS_FIX.md`, `docs/ROTC_EXPONENT_STATE_MACHINE.md`, `software/lib/rotc_thirds_native.py` | Fixes silent truncation in thirds-angle ROTC (`div3`): deferred-reduction state machine (CLEAN/PENDING/FAULT.{MISALIGNED,OVERFLOW,INEXACT}), verified against exact ground truth, 69-check TB in `software/tests/test_rotc_thirds_native.py`. A prior "global rescale" fix attempt is retained as a documented dead end (`rotate_no_div_DEAD_END`). Oracle complete; RTL not started. |
+| State-machine harness plan | `docs/STATE_MACHINE_HARNESS.md` | Yanenko categorical framework applied across the SPU stack: per-subsystem state machines (ROTC, SOM/BMU, BTU, Padé, Lucas MAC, Batch inverter), invariants, verification methodology, implementation order. ROTC is the reference implementation (done); others are planned. |
 | Hobbyist glossary | `docs/glossary.md` | Plain-English on-ramp: terms, angle↔spread / distance↔quadrance / Q12 conversions, reading list; SPU_LEXICON.md stays normative |
 | Interconnect architecture | `knowledge/INTERCONNECT_ARCHITECTURE.md` | Tier model (T0 bare pins → T1 southbridge → T2 cluster links → T3 network bridge), southbridge homogeneity contract, determinism boundary, radio/LAN feasibility, multi-compute prep order |
 

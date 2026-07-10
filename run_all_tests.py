@@ -439,6 +439,19 @@ def main():
         else:
             print(f"\n  test_lucas_mac_oracle.py FAILED:\n{result_lucas.stdout[-500:]}")
 
+    # Lucas MAC state-machine harness
+    lucas_harness_pass = 0
+    lucas_harness_test = os.path.join(root_dir, "software", "tests", "test_lucas_mac_harness.py")
+    if os.path.exists(lucas_harness_test):
+        result_lh = subprocess.run(
+            [sys.executable, lucas_harness_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "0 failed" in result_lh.stdout:
+            lucas_harness_pass = 1
+        else:
+            print(f"\n  test_lucas_mac_harness.py FAILED:\n{result_lh.stdout[-500:]}")
+
     # SU(3) oracle
     su3_pass = 0
     su3_test = os.path.join(root_dir, "software", "tests", "test_su3_oracle.py")
@@ -563,7 +576,7 @@ def main():
     # ROTC VM-vs-RTL trace equivalence, all 12 angles (0-11) against both
     # rotor datapaths — needs iverilog/vvp, same as the Verilog TBs above.
     # This is the load-bearing cross-verification proof behind
-    # ROTC_MAX_VERIFIED_ANGLE=11; a regression here means VM and RTL have
+    # ROTC_MAX_VERIFIED_ANGLE=23; a regression here means VM and RTL have
     # diverged, which the angle gate exists to prevent.
     rotc_trace_test = os.path.join(root_dir, "software", "tests", "test_rotc_vm_rtl_trace.py")
     if os.path.exists(rotc_trace_test):
@@ -622,8 +635,8 @@ def main():
     print(f"Passed:                       {rotc_trace_pass}")
     print(f"Failed:                       {rotc_trace_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + (0 if lucas_harness_pass else 1)
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")

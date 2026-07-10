@@ -23,7 +23,9 @@ module spu13_rotc_tdm_tb;
         .F(F), .G(G), .H(H),
         .field_sel(field_sel), .bypass_p5(bypass_p5),
         .bypass_p5_inv(bypass_p5_inv),
-        .apply_div3(apply_div3),
+        .bypass_ab_cd(1'b0), .bypass_ac_bd(1'b0), .bypass_ad_bc(1'b0),
+        .recompute_A(1'b0),
+        .apply_div3(apply_div3), .angle(6'd0),
         .A_out(A_out), .B_out(B_out), .C_out(C_out), .D_out(D_out)
     );
 

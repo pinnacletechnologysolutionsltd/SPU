@@ -21,7 +21,7 @@ that takes the opposite contract: **every rotation is either exact or
 faults**. The instruction operates on Quadray (tetrahedral, 4-axis)
 coordinates over the field Q(√3) with no floating point, no division, and
 no transcendental approximation in the datapath. Its angle catalog is a
-set of twelve integer/thirds circulant operators — verified, in exact
+set of 24 exact rational rotations — verified, in exact
 rational arithmetic, to have determinant +1, documented periods and
 inverses, and to preserve the zero-sum invariant that the coprocessor's
 stability gate (the Davis Gate) checks every cycle as an exact zero test.
@@ -71,7 +71,7 @@ The interesting engineering content is in what "or faults" requires. Exact
 rotation catalogs over the rationals necessarily include operators with
 denominators (§3); ours divide by 3. We prove exactly when that division is
 exact (§5), show the precondition cannot be maintained statically across
-composed rotations, and adopt the resolution proposed by Gene Yanenko:
+composed rotations, and adopt the resolution proposed by Evgeny Yanenko:
 promote the instruction into a state-machine harness in which exactness is
 tracked, deferred, and checked, rather than assumed (§6). The result is a
 rotation ISA whose failure mode is a diagnosable fault code instead of a
@@ -79,7 +79,7 @@ silently wrong manifold.
 
 Contributions:
 
-1. A corrected, closed catalog of twelve exact rational rotations in
+1. A corrected, closed catalog of 24 exact rational rotations in
    Quadray coordinates, with machine-verified group structure (§3–4).
 2. An exactness theorem for the catalog's thirds operators on the zero-sum
    hyperplane, with a reproducible counterexample and a proof sketch that
@@ -127,7 +127,7 @@ rendering) [6].
 **State-machine framing.** The reframing of ROTC from a fixed-function
 rotation instruction into a state-machine harness — exactness state
 carried by the data, rotations as guarded transitions, reduction as an
-explicit fallible operation — is due to Gene Yanenko. §6 is the
+explicit fallible operation — is due to Evgeny Yanenko. §6 is the
 formalization of that idea; the same "detect, never silently corrupt"
 idiom appears elsewhere in the SPU (the A₃₁ inverter's zero-norm flag,
 saturating telemetry fields), but Yanenko's framing is what turned a
@@ -146,12 +146,33 @@ C' = (G·B + F·C + H·D) / denom
 D' = (H·B + G·C + F·D) / denom      denom ∈ {1, 3}
 ```
 
-Angles 0–5 act directly (A invariant). Angles 6–11 conjugate the same
+Angles 0–5 act directly (A invariant). Angles 6–14 conjugate the same
 three thirds coefficient sets by an axis permutation — the target
 invariant axis is rotated into the circulant's A slot, the circulant is
 applied, and the permutation is inverted — so the invariant axis becomes
-B (angles 6–7), C (8–9), or D (10–11). Unlike 0–5, these rewrite all four
-components of the destination register.
+B (6–7, 12), C (8–9, 13), or D (10–11, 14). Unlike 0–5, these rewrite all
+four components of the destination register. Angles 12–14 (Tranche 1,
+2026-07-10) supply the previously missing inverses of 9 and 10, making the
+thirds catalog inverse-closed.
+
+Angles 15–23 (Tranche 2) complete the A₄ even-permutation subgroup: 6
+additional permuted 3-cycles via the bypass_p5/bypass_p5_inv hardware paths,
+and 3 double-transpositions via dedicated bypass signals. All are pure
+coordinate permutations with zero multiplications.
+
+Angles 24–35 (Tranche 3, octahedral group, 2026-07-10) are the remaining 12
+elements of S₄ — the full cube/octahedron rotation group. These are integer
+3×3 matrices on (B,C,D) with entries 0 or ±1, implemented as 12 hardwired
+combinatorial patterns (zero multiplies, zero DSPs, zero TDM cycles). They
+recompute A from the zero-sum constraint rather than passing A through, so
+self-inverse closure requires A+B+C+D=0 on input. The legacy claim that cube
+rotations "require Q(√2)" is wrong: the √2 belongs to the cube's metric
+quantities, not its rotation group.
+
+The full catalog: 36 inverse-closed rotations — the identity, 12 thirds
+circulants (1, 3, 4, 6–14), 11 non-identity A₄ permutations (2, 5, 15–23;
+together with the identity these form the 12-element A₄), and 12
+octahedral integer matrices (24–35).
 
 | θ | Name | Invariant | F | G | H | Period | Inverse |
 |---:|---|---|---:|---:|---:|---:|---:|
@@ -164,12 +185,43 @@ components of the destination register.
 | 6 | conj. of 4 about B | B | 2/3 | −1/3 | 2/3 | 6 | 7 |
 | 7 | conj. of 1 about B | B | 2/3 | 2/3 | −1/3 | 6 | 6 |
 | 8 | conj. of 3 about C | C | −1/3 | 2/3 | 2/3 | 2 | 8 |
-| 9 | conj. of 1 about C | C | 2/3 | 2/3 | −1/3 | 6 | 9⁵ |
-| 10 | conj. of 4 about D | D | 2/3 | −1/3 | 2/3 | 6 | 10⁵ |
+| 9 | conj. of 1 about C | C | 2/3 | 2/3 | −1/3 | 6 | 13 |
+| 10 | conj. of 4 about D | D | 2/3 | −1/3 | 2/3 | 6 | 14 |
 | 11 | conj. of 3 about D | D | −1/3 | 2/3 | 2/3 | 2 | 11 |
+| 12 | 180° about B | B | −1/3 | 2/3 | 2/3 | 2 | 12 |
+| 13 | 240° about C | C | 2/3 | −1/3 | 2/3 | 6 | 9 |
+| 14 | 60° about D | D | 2/3 | 2/3 | −1/3 | 6 | 10 |
+| 15 | P5 fwd about B | B | — | — | — | 3 | 16 |
+| 16 | P5 inv about B | B | — | — | — | 3 | 15 |
+| 17 | P5 fwd about C | C | — | — | — | 3 | 18 |
+| 18 | P5 inv about C | C | — | — | — | 3 | 17 |
+| 19 | P5 fwd about D | D | — | — | — | 3 | 20 |
+| 20 | P5 inv about D | D | — | — | — | 3 | 19 |
+| 21 | (AB)(CD) | — | — | — | — | 2 | 21 |
+| 22 | (AC)(BD) | — | — | — | — | 2 | 22 |
+| 23 | (AD)(BC) | — | — | — | — | 2 | 23 |
+| 24 | 180° edge (CD) | — | — | — | — | 2 | 24 |
+| 25 | 180° edge (AB) | — | — | — | — | 2 | 25 |
+| 26 | 90° face (x) | — | — | — | — | 4 | 27 |
+| 27 | 270° face (x) | — | — | — | — | 4 | 26 |
+| 28 | 180° edge (BC) | — | — | — | — | 2 | 28 |
+| 29 | 90° face (z) | — | — | — | — | 4 | 30 |
+| 30 | 270° face (z) | — | — | — | — | 4 | 29 |
+| 31 | 180° edge (AD) | — | — | — | — | 2 | 31 |
+| 32 | 180° edge (BD) | — | — | — | — | 2 | 32 |
+| 33 | 270° face (y) | — | — | — | — | 4 | 35 |
+| 34 | 180° edge (AC) | — | — | — | — | 2 | 34 |
+| 35 | 90° face (y) | — | — | — | — | 4 | 33 |
 
-Two catalog entries (2 and 5) are pure permutations and execute on a
-hardware bypass with zero multiplications. The legacy catalog this table
+Octahedral naming (24–35): each 180° edge rotation is central negation
+composed with a single transposition of the cube's body diagonals — the
+label names the swapped diagonal pair. The face-axis labels are shared
+with the double transpositions of Tranche 2: squaring either member of a
+90°/270° face pair lands exactly on the corresponding double
+transposition (26² = 27² = 21, 29² = 30² = 23, 33² = 35² = 22, verified
+in exact arithmetic).
+
+The legacy catalog this table
 replaces had three defects worth recording, because they motivate the
 verification discipline of §8: one angle was documented with thirds
 coefficients while the hardware bypassed it as a permutation; one was
@@ -178,22 +230,32 @@ documentation for months because nothing machine-checked the table.
 
 ## 4. Verified Group Structure
 
-All twelve operators were verified in exact rational arithmetic
+All 36 operators were verified in exact rational arithmetic
 (arbitrary-precision `Fraction`, independent of both the VM and the RTL):
 
-- **Determinant +1** for all twelve (proper rotations in the 4-component
-  representation).
-- **Zero-sum preservation**: every column of every operator sums to 1, so
-  ΣABCD is invariant — the catalog is closed over the Davis Gate's
-  invariant hyperplane.
-- **Periods** {1, 6, 3, 2, 6, 3, 6, 6, 2, 6, 6, 2} as tabled; all twelve
-  matrices pairwise distinct (the legacy duplicate defect cannot recur
-  unnoticed).
-- **Inverse structure**: 1↔4, 2↔5, 6↔7 are mutual inverse pairs; 3, 8, 11
-  are involutions. **Angles 9 and 10 have no single-angle inverse in the
-  catalog** — each is inverted only by its own 5th power. This asymmetry
-  is a real ISA cost for inverse kinematics (§9) and motivates the three
-  missing conjugates identified in §11.
+- **Determinant +1** for all 36 (proper rotations on the zero-sum
+  hyperplane; the octahedral 12 additionally swap the two inscribed
+  tetrahedra, confirming they are exactly the S₄ \ A₄ coset).
+- **Zero-sum preservation**: for angles 0–23 every column of the operator
+  sums to 1, so ΣABCD is invariant. Angles 24–35 instead *recompute*
+  A = −(B+C+D): they agree with the corresponding cube rotation on the
+  ΣABCD = 0 hyperplane and force zero-sum output, which is why their
+  closure properties require zero-sum input.
+- **Periods** as tabled: one identity, thirteen involutions
+  (3, 8, 11, 12, 21–23, and the six octahedral edge rotations
+  24/25/28/31/32/34), eight period-3 permutations (2, 5, 15–20), six
+  period-4 face rotations (26/27, 29/30, 33/35), and eight period-6
+  thirds rotors (1, 4, 6, 7, 9, 10, 13, 14). All 36 matrices pairwise
+  distinct (the legacy duplicate defect cannot recur unnoticed).
+- **Inverse closure**: every angle's inverse is a single catalog angle —
+  1↔4, 2↔5, 6↔7, 9↔13, 10↔14, 15↔16, 17↔18, 19↔20, 26↔27, 29↔30, 33↔35
+  are mutual pairs; the remaining fourteen are involutions (or the
+  identity). Historically, angles 9 and 10 had no single-angle inverse in
+  the 0–11 catalog (each was inverted only by its own 5th power) — a real
+  ISA cost for inverse kinematics (§9) that motivated Tranche 1.
+- **Subgroup structure**: the 12 pure permutations (0, 2, 5, 15–23) form
+  A₄; adding the octahedral 12 closes to the full 24-element cube
+  rotation group S₄, verified by exhaustive composition.
 
 The thirds operators have period 6 and are therefore *not* automorphisms
 of the integer Quadray lattice (the face-centered-cubic point group
@@ -246,7 +308,7 @@ silently re-proposed.
 
 ## 6. The State-Machine Harness
 
-The resolution — due, in framing, to Gene Yanenko — is to stop treating
+The resolution — due, in framing, to Evgeny Yanenko — is to stop treating
 ROTC as a pure function and start treating it as a harnessed state
 machine: the *data* carries its exactness state, the *instruction* is a
 guarded transition, and division is an explicit, fallible operation
@@ -339,11 +401,13 @@ paths as first-class proof obligations:
    truncation era, because both sides implemented the same floor
    division. Equivalence proves consistency, not correctness; only the
    third, independent layer distinguishes them.
-2. **Bit-exact trace equivalence.** All twelve angles are driven through
+2. **Bit-exact trace equivalence.** All 36 angles are driven through
    the RTL — through the real permuter module, against *both* rotor
    datapaths (the coefficient-driven scalar path and the hardwired
-   per-angle path the integrated core uses) — and compared bit-for-bit
-   against the VM (144 checks). Thirds-exactness is required for
+   per-angle path the integrated core uses) for angles 0–23, and against
+   the hardwired path for the octahedral 24–35 (the scalar F/G/H path
+   cannot express a non-circulant matrix) — and compared bit-for-bit
+   against the VM (336 checks). Thirds-exactness is required for
    equivalence (the VM rounds where the RTL floors), so equivalence
    vectors are chosen with all components ≡ 0 (mod 3); this restriction
    is itself a documented consequence of §5, not a convenience.
@@ -397,7 +461,7 @@ load-bearing.
 | Claim | Evidence | Status |
 |---|---|---|
 | Angles 0–5, exact rotation + six-step closure | Tang Primer 25K probe, self-check line `ROTC:P A:5 E:00`; testbenches | **Silicon** |
-| Angles 6–11, exact rotation incl. permutation conjugation | 144-check bit-exact VM/RTL trace (both datapaths); core-level opcode testbench incl. 6-then-7 inverse round trip | Simulation (probe queued) |
+| Angles 6–35, exact rotation incl. permutation conjugation, bypass permutations, and octahedral integer matrices | 336-check bit-exact VM/RTL trace (both datapaths for 6–23, hardwired path for 24–35); core-level opcode testbench incl. inverse round trips 6↔7, 9↔13, 10↔14, 15↔16, 33↔35 and 12/24 self-inverse closure | Simulation (probe queued) |
 | Angle gate: unverified angle leaves manifold untouched | Poison-value proofs, RTL + VM | Simulation |
 | Group structure (§4) | Exact-fraction verification | Machine-checked math |
 | Exactness theorem + counterexample (§5) | Derivation + executable counterexample | Machine-checked math |
@@ -406,29 +470,50 @@ load-bearing.
 
 ## 11. Future Work
 
-- **Catalog completion (verified missing set).** Three thirds conjugates
-  are absent — R₃ about B, R₄ about C, R₁ about D — verified distinct
-  from all twelve current entries; the latter two are exactly the missing
-  inverses of angles 9 and 10. Adding them makes the catalog
-  inverse-closed at fifteen angles. Additionally, nine pure-permutation
-  rotations (the remainder of the even permutation group A₄) are
-  available at zero multiplies and zero truncation risk.
-- **Octahedral tranche.** The legacy angle map reserved slots for cube/
-  octahedron rotations "requiring Q(√2)". We believe this is wrong for
-  the rotations themselves: lattice automorphisms are integer matrices in
-  a lattice basis, and the √2 belongs to the cube's metric quantities,
-  not its rotation group. Derivation pending.
-- **Icosahedral family.** By the crystallographic restriction, 5-fold
-  operators can never preserve the lattice; an exact icosahedral catalog
-  would act on a golden-ratio module over Q(√5), connecting the rotation
-  ISA to the coprocessor's existing Z[φ] arithmetic unit. This is
-  research, not engineering.
-- **Silicon runs.** Board runs for the angle 6–11 probe and the tagged
-  core probe; both bitstream paths already build.
+- **State-machine harness across the stack.** The CLEAN/PENDING/FAULT
+  discipline proved itself on ROTC. Evgeny Yanenko's "Evolving Categories"
+  (2004) provides the categorical foundation for extending the same harness
+  to every SPU subsystem: SOM/BMU convergence, BTU collision arbitration,
+  Padé singular-absorber engagement, Lucas MAC overflow, and batch-inverter
+  zero-divisor isolation. A plan document (`docs/STATE_MACHINE_HARNESS.md`)
+  defines the state machines, invariants, and verification methodology for
+  each. The ROTC tagged core (8/8 acceptance tests) is the reference
+  implementation. The Lucas MAC (6 states, ~200 LUTs) is the recommended
+  Phase 2 target: smallest state space, existing 1M-step zero-drift oracle,
+  and a natural bridge to the icosahedral work below.
+
+- **Octahedral tranche (verified 2026-07-10).** The legacy angle map
+  claimed cube/octahedron rotations "require Q(√2)". This is wrong: all 12
+  octahedral rotations are integer 3×3 matrices (entries 0,±1) in the
+  quadray basis — zero multiplies, zero surds. The √2 belongs to the cube's
+  metric quantities, not its rotation group. Angles 24-35 were wired into
+  the RTL as 12 hardwired combinatorial patterns (zero DSPs, zero TDM
+  cycles) and cross-verified via 336-check trace equivalence + core-level
+  opcode TB including inverse-pair and self-inverse closure on zero-sum
+  vectors. A notable finding: because octahedral rotations recompute A from
+  the zero-sum constraint rather than passing A through (as the thirds
+  circulant does), self-inverse closure only holds when the input satisfies
+  A+B+C+D=0 — the first rotation angles in the catalog with this constraint.
+
+- **Icosahedral family via the Lucas MAC.** By the crystallographic
+  restriction, 5-fold operators can never preserve the IVM lattice; an
+  exact icosahedral catalog would act on a golden-ratio module over Q(√5).
+  This connects the rotation ISA to the coprocessor's existing Z[φ]
+  arithmetic unit (`spu13_lucas_mac.v`). With the Lucas MAC state machine
+  in place (Phase 2 of the harness), icosahedral rotations inherit the same
+  CLEAN/PENDING/FAULT discipline: PSCALE/PCHIRAL/PMUL/PINV each carry
+  exactness preconditions, and OVERFLOW is a terminal state. Deriving the
+  rotation matrices themselves is research, not engineering — the φ-module
+  representation of the icosahedral group is a genuine open derivation.
+
+- **Silicon runs.** Board runs for the tagged ROTC core probe and the full
+  36-angle catalog (0-35) on Artix-7; the ROTC TDM core with angles 0-5
+  is silicon-verified on Artix-7, and the tagged-core, extended-angle, and
+  octahedral bitstream paths build clean in simulation.
 
 ## Acknowledgments
 
-Gene Yanenko proposed the state-machine-harness framing of ROTC that §6
+Evgeny Yanenko proposed the state-machine-harness framing of ROTC that §6
 formalizes. Andy Ross Thomson's Spread-Quadray Rotors and Synergetics
 Cookbook shaped the rotor-algebra context, and correspondence with him on
 surd fields (early 2026) is reflected in §2; Leo Murillo's K³ = −K

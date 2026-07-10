@@ -61,6 +61,10 @@ module spu13_tang25k_rotc_probe (
         .field_sel(2'b00),
         .bypass_p5(bypass_p5),
         .bypass_p5_inv(bypass_p5_inv),
+        .bypass_ab_cd(1'b0),
+        .bypass_ac_bd(1'b0),
+        .bypass_ad_bc(1'b0),
+        .recompute_A(1'b0),
         .apply_div3(apply_div3),
         .A_out(A_out), .B_out(B_out), .C_out(C_out), .D_out(D_out)
     );
