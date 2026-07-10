@@ -227,8 +227,21 @@ are all silicon-verified on either Tang 25K or Artix-7.
   `spu13_irotc_codes.mem` / `spu13_irotc_golden.mem`). TB pins: 120
   oracle golden cases bit-exact, 12-clock latency on every case,
   10-step back-to-back chain, BADIDX/UNTAGGED/CATMIX fault matrix with
-  poison holds. Remaining: sidecar/SPI integration (0xB1, tag storage),
-  Tang 25K probe, Artix-7.
+  poison holds. **Tang 25K probe built 2026-07-10**
+  (`spu13_tang25k_irotc_probe.v` + `build_25k_spu13_irotc_probe.sh`,
+  DeepSeek authored / Claude verified): self-checking FSM (idx 16
+  period-3, idx 36 period-5 — constants verified against the oracle —
+  plus the three-fault matrix), Lucas-probe UART on C3, expected line
+  `IROTC:P E=00`. LEDs are diagnostics only ([1]=engine idle,
+  [2]=off=test finished) — read the verdict from UART. The engine's code
+  ROM is a hardcoded case function (yosys $readmemh path fragility);
+  oracle check 23 diffs all 540 entries against the derivation every
+  suite run, so it cannot drift. Probe TB decodes the real UART line in
+  sim (CLK_FREQ parameter shrunk). Bitstream:
+  `build/tang_primer_25k_spu13_irotc_probe.fs` — **awaiting bench run**;
+  keep claims at testbench-verified until the board prints the line.
+  Remaining after silicon: 2-bit tag storage in `spu13_core.v` (13
+  lanes), sidecar/SPI integration (0xB1 opcodes 0xD6-0xD8).
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.

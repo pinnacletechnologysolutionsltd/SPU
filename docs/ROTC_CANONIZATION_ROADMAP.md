@@ -88,11 +88,20 @@ All six steps done; suite 145/145. Decisions and findings:
   oracle), 12-clock latency pinned per case, 10-step back-to-back
   chain, BADIDX/UNTAGGED/CATMIX fault matrix with poison holds.
   Generic yosys synth clean, 0 DSP. Tables generated via `--emit-rtl`.
+- 🟨 Tang 25K probe (DeepSeek 2026-07-10, verified + repaired same day):
+  self-check FSM + UART, bitstream built, TB decodes the real UART line.
+  Found in verification: TB port name stale vs final top (never compiled
+  as committed — the claimed TB pass was a stale binary), TB UART
+  timeout impossible at CLK_FREQ=50M (made CLK_FREQ a parameter), build
+  script LED legend wrong vs RTL. Probe constants, hardcoded ROM
+  (540/540 vs .mem), start-pulse fix, and fault FSM all verified
+  correct. Oracle check 23 now pins the inline ROM against the
+  derivation permanently. **Awaiting bench run** (John's hands).
 - ⬜ Sidecar/SPI integration: 0xB1 opcodes 0xD6-0xD8 alongside the
-  Lucas MAC probe ops; 2-bit typestate storage beside the QR lanes;
-  LOAD2X/SCALE2 paths.
-- ⬜ Tang 25K probe top + bench run, then Artix-7 (silicon claim only
-  after bench, per the claim-discipline table).
+  Lucas MAC probe ops; 2-bit typestate storage in spu13_core.v (13
+  lanes); LOAD2X/SCALE2 paths.
+- ⬜ Artix-7 after Tang bench (silicon claim only after bench, per the
+  claim-discipline table).
 
 ## Phase 4 — Harness formalization (parallel track, low urgency)
 
