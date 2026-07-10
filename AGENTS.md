@@ -73,6 +73,8 @@ docs/                   Design guides and bring-up runbooks
 | `python3 software/tests/test_irotc_vm_trace.py` | IROTC VM-vs-exact-Fraction trace equivalence (60 indices × both catalogs + A₄ alias interop) |
 | `python3 software/tests/test_irotc_poison.py` | IROTC dispatch-fault poison proofs (UNTAGGED/BADIDX/CATMIX) |
 | `python3 software/tests/test_irotc_chains.py` | IROTC 10-step chain tests + typestate transitions (thirds/octahedral/QADD lattice) |
+| `python3 software/tests/test_icosahedral_catalog.py --emit-rtl` | Regenerate IROTC RTL code ROM + golden vectors (`spu13_irotc_codes.mem`, `spu13_irotc_golden.mem`) |
+| `iverilog -g2012 -I hardware/rtl/arch -o build/irotc_tb.vvp hardware/rtl/core/spu13/spu13_irotc_engine.v hardware/tests/spu13/spu13_irotc_engine_tb.v && vvp build/irotc_tb.vvp` | Run IROTC engine RTL testbench (120 golden cases + chain + fault matrix) |
 
 Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
 
@@ -216,8 +218,17 @@ are all silicon-verified on either Tang 25K or Artix-7.
   all 60 × both catalogs (`test_irotc_vm_trace.py`, 9 checks), poison
   proofs all 3 faults (`test_irotc_poison.py`, 14), chain tests incl.
   thirds-mid-chain fault (`test_irotc_chains.py`, 12). Derivation oracle
-  now 22 checks. Next: RTL micro-program engine on the Lucas MAC sidecar
-  (IROTC_SPEC §6-7).
+  now 22 checks. **RTL engine landed 2026-07-10**
+  (`spu13_irotc_engine.v`, testbench-verified): term-serial
+  coefficient-select datapath, fixed 13-cycle slot (φ₁₃ gate) for all
+  60 indices × both catalogs, signed exact Z[φ] (NOT mod-L_p), 0 DSP;
+  conjugate catalog = 4-bit code remap, no second ROM. Code ROM + golden
+  vectors are GENERATED (`test_icosahedral_catalog.py --emit-rtl` →
+  `spu13_irotc_codes.mem` / `spu13_irotc_golden.mem`). TB pins: 120
+  oracle golden cases bit-exact, 12-clock latency on every case,
+  10-step back-to-back chain, BADIDX/UNTAGGED/CATMIX fault matrix with
+  poison holds. Remaining: sidecar/SPI integration (0xB1, tag storage),
+  Tang 25K probe, Artix-7.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.

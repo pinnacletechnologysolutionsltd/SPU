@@ -74,14 +74,25 @@ All six steps done; suite 145/145. Decisions and findings:
    bit-identical encodings (inline LOAD2X accepts 5-arg and packed
    forms; inline QLDI remains packed-only — pre-existing divergence).
 
-## Phase 3 — IROTC in RTL
+## Phase 3 — IROTC in RTL (engine done 2026-07-10; probes remaining)
 
-- Micro-program engine on the Lucas MAC sidecar (PSCALE/ADD/SUB chains +
-  shared `>>>1`, no guards in the hot path). Worst case 8 PSCALE +
-  16 ADD/SUB.
-- **Sequencer decision**: worst-case ~27 steps fits the Fibonacci-21
-  slot only at 2 ops/cycle; otherwise IROTC is a 34-slot instruction.
-- TB + bit-exact VM equivalence, then Tang 25K probe, then Artix-7.
+- ✅ **Sequencer decision (John, 2026-07-10): term-serial, 13-slot.**
+  The v0.1 micro-program dilemma (21 @ 2 ops/cycle vs 34) dissolved:
+  each alphabet value is a single-cycle signed pair map, so one shared
+  term unit does any rotation in a FIXED 13-cycle slot (φ₁₃ gate),
+  uniform across all 60 indices × both catalogs. Key insight recorded
+  in spec §6: the engine is signed exact Z[φ] — it cannot reuse the
+  mod-L_p MAC datapath, only the sidecar's plumbing.
+- ✅ `spu13_irotc_engine.v` + TB: 120 oracle-generated golden cases
+  bit-exact (VM↔RTL closed transitively through the shared derivation
+  oracle), 12-clock latency pinned per case, 10-step back-to-back
+  chain, BADIDX/UNTAGGED/CATMIX fault matrix with poison holds.
+  Generic yosys synth clean, 0 DSP. Tables generated via `--emit-rtl`.
+- ⬜ Sidecar/SPI integration: 0xB1 opcodes 0xD6-0xD8 alongside the
+  Lucas MAC probe ops; 2-bit typestate storage beside the QR lanes;
+  LOAD2X/SCALE2 paths.
+- ⬜ Tang 25K probe top + bench run, then Artix-7 (silicon claim only
+  after bench, per the claim-discipline table).
 
 ## Phase 4 — Harness formalization (parallel track, low urgency)
 

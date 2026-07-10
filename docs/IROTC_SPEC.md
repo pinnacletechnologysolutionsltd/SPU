@@ -147,24 +147,33 @@ PCHIRAL ∘ R ∘ PCHIRAL. This reaches the dual-orientation icosahedron's
 catalogs share exactly the 12 A₄ aliases (conjugation fixes rational
 matrices, so `sel[6]` is a don't-care for aliased indices).
 
-## 6. Micro-program shape and cost
+## 6. Engine shape and cost (settled 2026-07-10: term-serial, 13-slot)
 
-Per output component: accumulate over the three inputs with coefficients
-from the numerator alphabet, then one shared arithmetic shift right:
+Implemented: `hardware/rtl/core/spu13/spu13_irotc_engine.v`. The v0.1
+micro-program cost model (PSCALE/ADD decomposition chains, worst case
+~27 steps, 21-vs-34-slot dilemma) is superseded: each alphabet value is
+a **single-cycle signed map** on a Z[φ] pair, so one shared term unit
+executes every rotation in a fixed slot:
 
 ```
-  ×0 : skip            ×±1 : ADD/SUB          ×±2 : ADD twice
-  ×±φ : PSCALE, ADD    ×±φ⁻¹ : PSCALE, ADD, SUB (φx − x)
-  ×±√5 : PSCALE, ADD×2, SUB (2φx − x)
-  finally: out = acc >>> 1   (unguarded — licensed by DOUBLED)
+  ×0 : (0, 0)              ×±1 : ±(a, b)          ×±2 : ±(a+a, b+b)
+  ×±φ : ±(b, a+b)          ×±φ⁻¹ : ±(b−a, a)      ×±√5 : ±(2b−a, 2a+b)
+
+  cycle 0     dispatch: guards (BADIDX → UNTAGGED → CATMIX), latch
+  cycles 1-9  acc[row] += code(idx,row,col) × w[col]  (×0 burns the cycle)
+  cycle 10    acc >>>= 1        (unguarded — typestate-licensed)
+  cycle 11    A = −(B+C+D); done, out_tag
+  cycle 12    done visible; engine re-dispatchable
 ```
 
-No PMUL, no PINV, no DSPs. Cost bounds from the catalog: worst rotation
-is 8 PSCALE + 16 ADD/SUB (+3 shifts); the A₄ aliases are 0 PSCALE.
-Sequencer note: PSCALE is 1-cycle/0-DSP on the existing sidecar, so a
-worst-case IROTC is a ~27-step micro-program before overlap — dispatch
-fits inside a single Fibonacci slot (21) only with 2 ops/cycle; otherwise
-IROTC occupies the 34 slot. To be settled at RTL design time.
+**Fixed 13-cycle slot for all 60 indices × both catalogs** — lands on the
+φ₁₃ meso gate; latency is uniform (deterministic, no index dependence).
+This is signed exact Z[φ] arithmetic, NOT the mod-L_p plane of
+`spu13_lucas_mac.v` — the engine has its own adders (no multipliers, no
+DSPs; generic synth ≈ 6.9k gates incl. the ROM-as-logic). Coefficients:
+60×9 4-bit codes (`spu13_irotc_codes.mem`, GENERATED via
+`test_icosahedral_catalog.py --emit-rtl`); the conjugate catalog is the
+code remap 5↔8, 6↔7, 9↔10 in hardware — no second table.
 
 ## 7. Verification plan (before any RTL)
 
@@ -180,7 +189,13 @@ IROTC occupies the 34 slot. To be settled at RTL design time.
 4. ✅ Chain tests: 10-step pure-main and pure-conjugate chains exact;
    thirds-ROTC mid-chain faults the next IROTC without corruption;
    octahedral demotion; QADD lattice (`test_irotc_chains.py`, 12 checks).
-5. ⬜ RTL micro-program engine on the Lucas MAC; bit-exact against VM.
+5. 🟨 RTL engine done (`spu13_irotc_engine.v` + `spu13_irotc_engine_tb.v`:
+   120 golden cases from the derivation oracle bit-exact — the same
+   oracle the VM is trace-equivalent to, closing VM↔RTL transitively —
+   fixed 12-clock latency pinned on every case, 10-step back-to-back
+   chain, full fault matrix incl. poison holds; generic yosys synth
+   clean, 0 DSP). Remaining: sidecar/SPI integration (0xB1 opcodes
+   0xD6-0xD8, tag storage beside the QR file), Tang 25K probe, Artix-7.
 
 ## Appendix A — canonical catalog (generated, do not hand-edit)
 
