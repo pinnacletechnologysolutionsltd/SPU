@@ -99,11 +99,19 @@ All six steps done; suite 145/145. Decisions and findings:
   the inline ROM against the derivation permanently. Silicon scope:
   idx 16 (period-3) + idx 36 (period-5, genuine φ-arithmetic) + all
   three dispatch faults; conjugate catalog not yet in silicon.
-- ⬜ Sidecar/SPI integration: 0xB1 opcodes 0xD6-0xD8 alongside the
-  Lucas MAC probe ops; 2-bit typestate storage in spu13_core.v (13
-  lanes); LOAD2X/SCALE2 paths.
-- ⬜ Artix-7 after Tang bench (silicon claim only after bench, per the
-  claim-discipline table).
+- ✅ **Core integration 2026-07-11** (decision: in-core, not the sidecar
+  DeepSeek sketched — the sidecar pattern is stateless and IROTC chains
+  need persistent registers; a "SIMD instruction" integrates inside the
+  core next to the register file). ENABLE_IROTC generate in
+  spu13_core.v: 0xD6-0xD8 in the dispatch FSM, engine on the core QR
+  file, 13×2-bit tag file with the full transition algebra at every
+  write site (default-clear for unknown writers). SPI dispatch = the
+  existing 0xB1 fall-through. spu13_core_irotc_opcode_tb.v (25 checks),
+  suite 148/148. TB lesson: wait for VE hydration (init-port priority)
+  before issuing instructions.
+- ⬜ Enable ENABLE_IROTC in a Tang 25K spin, bench the instruction path
+  over southbridge SPI (include a conjugate-catalog vector — not yet in
+  silicon), then Artix-7 (claim discipline as always).
 
 ## Phase 4 — Harness formalization (parallel track, low urgency)
 

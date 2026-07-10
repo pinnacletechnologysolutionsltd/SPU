@@ -189,13 +189,23 @@ code remap 5↔8, 6↔7, 9↔10 in hardware — no second table.
 4. ✅ Chain tests: 10-step pure-main and pure-conjugate chains exact;
    thirds-ROTC mid-chain faults the next IROTC without corruption;
    octahedral demotion; QADD lattice (`test_irotc_chains.py`, 12 checks).
-5. 🟨 RTL engine done (`spu13_irotc_engine.v` + `spu13_irotc_engine_tb.v`:
-   120 golden cases from the derivation oracle bit-exact — the same
-   oracle the VM is trace-equivalent to, closing VM↔RTL transitively —
-   fixed 12-clock latency pinned on every case, 10-step back-to-back
-   chain, full fault matrix incl. poison holds; generic yosys synth
-   clean, 0 DSP). Remaining: sidecar/SPI integration (0xB1 opcodes
-   0xD6-0xD8, tag storage beside the QR file), Tang 25K probe, Artix-7.
+5. ✅ RTL engine (`spu13_irotc_engine.v` + TB: 120 golden cases bit-exact,
+   12-clock latency pinned, chain, fault matrix; 0 DSP). Silicon on Tang
+   25K 2026-07-10 (`IROTC:P E=00`, hardware_evidence §3.2k).
+6. ✅ **Core integration (2026-07-11, decision: in-core, not sidecar).**
+   `ENABLE_IROTC` generate in `spu13_core.v`: opcodes 0xD6-0xD8 decoded
+   in the dispatch FSM, engine reads/writes the core's own QR file (the
+   structure the VM models), 13×2-bit typestate tag file updated at
+   every QR write site — QSUB lattice join, ROTC angle classes
+   (thirds/bypass/octahedral), raw-load clears, IROTC/LOAD2X/SCALE2 set;
+   unknown writers default to UNTAGGED, so a stale license is
+   structurally impossible. Faults report through `rotc_debug_status`
+   (bit 15 + code in [13:12]), destination and tag bit-identically held.
+   SPI dispatch is the existing 0xB1 fall-through (sidecars don't claim
+   0xD6-0xD8). Proof: `spu13_core_irotc_opcode_tb.v`, 25 checks through
+   real decode/guard/engine/writeback. Remaining: enable `ENABLE_IROTC`
+   in a board spin + bench the instruction path over SPI (incl. a
+   conjugate-catalog vector), Artix-7.
 
 ## Appendix A — canonical catalog (generated, do not hand-edit)
 

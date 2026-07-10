@@ -246,9 +246,17 @@ Tang 25K or Artix-7.
   dispatch faults firing with exact codes. Full evidence:
   `docs/hardware_evidence.md` §3.2k. Silicon scope = probe vectors
   (idx 16, 36 main catalog + fault matrix); full 60×2 surface is
-  TB-verified. Remaining: conjugate catalog in silicon, 2-bit tag
-  storage in `spu13_core.v` (13 lanes), sidecar/SPI integration
-  (0xB1 opcodes 0xD6-0xD8), Artix-7.
+  TB-verified. **Core integration landed 2026-07-11**: `ENABLE_IROTC`
+  generate in `spu13_core.v` decodes 0xD6-0xD8 in the dispatch FSM;
+  the engine reads/writes the core's own QR file; a 13×2-bit typestate
+  tag file applies the full spec §3 transition algebra at every QR
+  write site (QSUB lattice join, ROTC thirds/bypass/octahedral classes,
+  raw-load clears; unknown writers default to UNTAGGED). Faults report
+  via `rotc_debug_status` bit 15 + code [13:12], destination and tag
+  held. SPI dispatch = existing 0xB1 fall-through (no sidecar; decision
+  recorded in the roadmap). Proof: `spu13_core_irotc_opcode_tb.v`
+  (25 checks). Remaining: enable in a board spin + SPI bench (incl.
+  conjugate catalog, not yet in silicon), Artix-7.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.

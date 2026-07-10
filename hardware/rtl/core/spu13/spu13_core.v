@@ -17,6 +17,7 @@ module spu13_core #(
     parameter EXTERNAL_RPLU_PADE_MULT = 0,
     parameter SHARE_RPLU_PADE_INV_MULT = 0,
     parameter ENABLE_TORUS = 0, // optional 832-bit manifold snapshot ring buffer
+    parameter ENABLE_IROTC = 0, // icosahedral A₅ engine + φ-plane typestate (IROTC_SPEC.md v0.2)
     parameter [255:0] MEM_FILE = "hardware/rtl/arch/hw_test.mem"
 )(
     input  wire         clk,            // Fast Clock (e.g. 12-24MHz)
@@ -929,6 +930,102 @@ module spu13_core #(
     assign qsub_res_C = rs_sub64(qsub_lhs_C, qrf_rd_C);
     assign qsub_res_D = rs_sub64(qsub_lhs_D, qrf_rd_D);
 
+    // ── φ-plane typestate tag file (IROTC_SPEC.md §3; 2 bits × 13 lanes) ──
+    // Lives beside the QR file and is updated at every QR write site in
+    // the dispatch FSM below. Soundness rule: a write from any op without
+    // an explicit tag class clears the lane to UNTAGGED — a stale license
+    // is structurally impossible. VE boot hydration is covered by the
+    // reset default (tags reset UNTAGGED; hydration precedes boot_done, and
+    // no φ-plane op can dispatch before the sequencer/SPI paths open).
+    localparam [1:0] TAG_UNTAGGED = 2'd0;
+    localparam [1:0] TAG_FRESH    = 2'd1;
+    localparam [1:0] TAG_MAIN     = 2'd2;
+    localparam [1:0] TAG_CONJ     = 2'd3;
+    localparam [7:0] OP_IROTC  = 8'hD6;
+    localparam [7:0] OP_LOAD2X = 8'hD7;
+    localparam [7:0] OP_SCALE2 = 8'hD8;
+    reg [1:0] qr_tags [0:12];
+    reg [3:0] qsub_lhs_lane;        // for the QSUB tag lattice join
+    reg       irotc_active;         // dispatch accepted, waiting one cycle
+    reg       irotc_start;          // one-cycle engine start pulse
+    reg [6:0] irotc_sel;
+    reg [3:0] irotc_dst_lane;
+    reg [1:0] irotc_src_tag;
+    reg       scale2_active;
+    reg [3:0] scale2_dst_lane;
+    integer   tag_i;
+
+    // QADD/QSUB linearity: lattice join (spec §3) — FRESH yields, equal
+    // states preserve, MAIN+CONJ or any UNTAGGED clears.
+    function [1:0] tag_join;
+        input [1:0] x;
+        input [1:0] y;
+        begin
+            if (x == TAG_UNTAGGED || y == TAG_UNTAGGED) tag_join = TAG_UNTAGGED;
+            else if (x == y)          tag_join = x;
+            else if (x == TAG_FRESH)  tag_join = y;
+            else if (y == TAG_FRESH)  tag_join = x;
+            else                      tag_join = TAG_UNTAGGED; // MAIN+CONJ
+        end
+    endfunction
+
+    // ROTC angle classes (spec §3): thirds (1,3,4,6-14) clear; A₄ bypass
+    // and identity (0,2,5,15-23) preserve; octahedral (24-35, integer but
+    // not in A₅) demote MAIN/CONJ to UNTAGGED while FRESH (even) survives.
+    function [1:0] rotc_tag_next;
+        input [5:0] angle;
+        input [1:0] src_tag;
+        begin
+            if (angle == 6'd1 || angle == 6'd3 || angle == 6'd4 ||
+                (angle >= 6'd6 && angle <= 6'd14))
+                rotc_tag_next = TAG_UNTAGGED;
+            else if (angle >= 6'd24)
+                rotc_tag_next = (src_tag == TAG_FRESH) ? TAG_FRESH
+                                                       : TAG_UNTAGGED;
+            else
+                rotc_tag_next = src_tag;
+        end
+    endfunction
+
+    // IROTC engine (term-serial, fixed 13-cycle slot) — instantiated only
+    // when ENABLE_IROTC; its dispatch guards are re-checked here at decode
+    // so faults never launch the engine (belt and braces: the engine's own
+    // guards would also refuse).
+    wire        eng_irotc_busy, eng_irotc_done, eng_irotc_fault;
+    wire [1:0]  eng_irotc_fault_code, eng_irotc_out_tag;
+    wire [31:0] eng_out_a_a, eng_out_a_b, eng_out_b_a, eng_out_b_b;
+    wire [31:0] eng_out_c_a, eng_out_c_b, eng_out_d_a, eng_out_d_b;
+    generate
+        if (ENABLE_IROTC) begin : gen_irotc_engine
+            spu13_irotc_engine #(.W(32)) u_irotc (
+                .clk(clk), .rst_n(rst_n),
+                .start(irotc_start),
+                .sel(irotc_sel),
+                .src_tag(irotc_src_tag),
+                .in_b_a(qrf_rd_B[31:0]), .in_b_b(qrf_rd_B[63:32]),
+                .in_c_a(qrf_rd_C[31:0]), .in_c_b(qrf_rd_C[63:32]),
+                .in_d_a(qrf_rd_D[31:0]), .in_d_b(qrf_rd_D[63:32]),
+                .busy(eng_irotc_busy), .done(eng_irotc_done),
+                .fault(eng_irotc_fault), .fault_code(eng_irotc_fault_code),
+                .out_tag(eng_irotc_out_tag),
+                .out_a_a(eng_out_a_a), .out_a_b(eng_out_a_b),
+                .out_b_a(eng_out_b_a), .out_b_b(eng_out_b_b),
+                .out_c_a(eng_out_c_a), .out_c_b(eng_out_c_b),
+                .out_d_a(eng_out_d_a), .out_d_b(eng_out_d_b)
+            );
+        end else begin : gen_no_irotc_engine
+            assign eng_irotc_busy = 1'b0;
+            assign eng_irotc_done = 1'b0;
+            assign eng_irotc_fault = 1'b0;
+            assign eng_irotc_fault_code = 2'd0;
+            assign eng_irotc_out_tag = 2'd0;
+            assign eng_out_a_a = 32'd0; assign eng_out_a_b = 32'd0;
+            assign eng_out_b_a = 32'd0; assign eng_out_b_b = 32'd0;
+            assign eng_out_c_a = 32'd0; assign eng_out_c_b = 32'd0;
+            assign eng_out_d_a = 32'd0; assign eng_out_d_b = 32'd0;
+        end
+    endgenerate
+
     assign inst_done = inst_done_r;
     assign rotc_debug_status = {
         rotc_debug_flags[7],
@@ -981,6 +1078,16 @@ module spu13_core #(
             qsub_lhs_C <= 0;
             qsub_lhs_D <= 0;
             hex_valid <= 0;   // default: one-cycle pulse
+            qsub_lhs_lane <= 0;
+            irotc_active <= 0;
+            irotc_start <= 0;
+            irotc_sel <= 0;
+            irotc_dst_lane <= 0;
+            irotc_src_tag <= 0;
+            scale2_active <= 0;
+            scale2_dst_lane <= 0;
+            for (tag_i = 0; tag_i < 13; tag_i = tag_i + 1)
+                qr_tags[tag_i] <= TAG_UNTAGGED;
         end else begin
             qrf_wr_en <= 0;  // default: no write
             inst_done_r <= 0;
@@ -988,6 +1095,7 @@ module spu13_core #(
             qr_commit_valid_r <= 0;
             hex_valid <= 0;   // default: one-cycle pulse
             rote_en <= 0;     // default: one-cycle rotor start pulse
+            irotc_start <= 0; // default: one-cycle engine start pulse
             if (rote_done_tdm)
                 rotc_debug_flags[3] <= 1'b1;
 
@@ -1015,6 +1123,8 @@ module spu13_core #(
                 end else begin
                     qrf_wr_en   <= 1;
                     qrf_wr_lane <= qsub_dest_lane;
+                    qr_tags[qsub_dest_lane] <= tag_join(qr_tags[qsub_lhs_lane],
+                                                        qr_tags[qsub_rhs_lane]);
                     instr_wr_A <= qsub_res_A;
                     instr_wr_B <= qsub_res_B;
                     instr_wr_C <= qsub_res_C;
@@ -1035,6 +1145,7 @@ module spu13_core #(
             end else if (inst_accept && eff_inst_word[63:56] == 8'h1D) begin
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= eff_inst_word[55:48] % 13;
+                qr_tags[eff_inst_word[55:48] % 13] <= TAG_UNTAGGED; // raw load
                 instr_wr_A[31:0]  <= {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
                 instr_wr_A[63:32] <= 32'd0;
                 instr_wr_B[31:0]  <= {{24{eff_inst_word[31]}}, eff_inst_word[31:24]};
@@ -1057,6 +1168,7 @@ module spu13_core #(
                 // VM parity endpoint: QRd.A=Q1+Q2, QRd.B=0, QRd.C=steps, QRd.D=0.
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= eff_inst_word[55:48] % 13;
+                qr_tags[eff_inst_word[55:48] % 13] <= TAG_UNTAGGED; // raw load
                 instr_wr_A <= {32'd0, ({16'd0, eff_inst_word[39:24]} + {16'd0, eff_inst_word[23:8]})};
                 instr_wr_B <= 64'd0;
                 instr_wr_C <= {32'd0, (eff_inst_word[47:40] != 8'd0 ? {24'd0, eff_inst_word[47:40]} : 32'd4)};
@@ -1093,6 +1205,8 @@ module spu13_core #(
                 // TDM rotor core done — writeback
                 qrf_wr_en   <= 1;
                 qrf_wr_lane <= rote_dest_lane;
+                qr_tags[rote_dest_lane] <= rotc_tag_next(rote_angle,
+                                                         qr_tags[rote_src_lane]);
                 qr_commit_valid_r <= 1;
                 qr_commit_lane_r <= rote_dest_lane;
                 qr_commit_A_r <= qrf_wr_A;
@@ -1104,10 +1218,110 @@ module spu13_core #(
                 rotc_debug_flags[4] <= 1'b1;
                 rotc_debug_flags[5] <= 1'b1;
                 rotc_debug_busy <= 1'b0;
+            // ── IROTC (0xD6): icosahedral A₅ rotation on the φ-plane ──
+            // Guards at dispatch in decode order BADIDX → UNTAGGED → CATMIX
+            // (IROTC_SPEC.md §4); any fault leaves the QR file and the tag
+            // file bit-identically untouched, mirroring the ROTC bad-angle
+            // idiom. flags[5:4] carry the fault code.
+            end else if (ENABLE_IROTC && inst_accept &&
+                         eff_inst_word[63:56] == OP_IROTC &&
+                         eff_inst_word[29:24] > 6'd59) begin
+                rotc_debug_flags <= 8'b1001_0001;          // fault, code 1
+                rotc_debug_busy  <= 1'b0;
+                inst_done_r      <= 1'b1;
+            end else if (ENABLE_IROTC && inst_accept &&
+                         eff_inst_word[63:56] == OP_IROTC &&
+                         qr_tags[eff_inst_word[47:40] % 13] == TAG_UNTAGGED) begin
+                rotc_debug_flags <= 8'b1010_0001;          // fault, code 2
+                rotc_debug_busy  <= 1'b0;
+                inst_done_r      <= 1'b1;
+            end else if (ENABLE_IROTC && inst_accept &&
+                         eff_inst_word[63:56] == OP_IROTC &&
+                         ((qr_tags[eff_inst_word[47:40] % 13] == TAG_MAIN &&
+                           eff_inst_word[30]) ||
+                          (qr_tags[eff_inst_word[47:40] % 13] == TAG_CONJ &&
+                           !eff_inst_word[30]))) begin
+                rotc_debug_flags <= 8'b1011_0001;          // fault, code 3
+                rotc_debug_busy  <= 1'b0;
+                inst_done_r      <= 1'b1;
+            end else if (ENABLE_IROTC && inst_accept &&
+                         eff_inst_word[63:56] == OP_IROTC) begin
+                rote_src_lane  <= eff_inst_word[47:40] % 13;
+                irotc_dst_lane <= eff_inst_word[55:48] % 13;
+                irotc_sel      <= eff_inst_word[30:24];
+                irotc_src_tag  <= qr_tags[eff_inst_word[47:40] % 13];
+                irotc_active   <= 1;
+                rotc_debug_flags <= 8'b0000_0001;
+                rotc_debug_busy  <= 1'b1;
+            end else if (irotc_active) begin
+                irotc_start  <= 1;   // qrf_rd_* now presents the source lane
+                irotc_active <= 0;
+            end else if (eng_irotc_done) begin
+                qrf_wr_en   <= 1;
+                qrf_wr_lane <= irotc_dst_lane;
+                qr_tags[irotc_dst_lane] <= eng_irotc_out_tag;
+                instr_wr_A <= {eng_out_a_b, eng_out_a_a};
+                instr_wr_B <= {eng_out_b_b, eng_out_b_a};
+                instr_wr_C <= {eng_out_c_b, eng_out_c_a};
+                instr_wr_D <= {eng_out_d_b, eng_out_d_a};
+                instr_wr_active <= 1;
+                qr_commit_valid_r <= 1;
+                qr_commit_lane_r <= irotc_dst_lane;
+                qr_commit_A_r <= {eng_out_a_b, eng_out_a_a};
+                qr_commit_B_r <= {eng_out_b_b, eng_out_b_a};
+                qr_commit_C_r <= {eng_out_c_b, eng_out_c_a};
+                qr_commit_D_r <= {eng_out_d_b, eng_out_d_a};
+                inst_done_r <= 1;
+                rotc_debug_busy <= 1'b0;
+            end else if (eng_irotc_fault) begin
+                // Defensive: core guards precede launch, so the engine's own
+                // guards cannot fire — but if they ever do, fault cleanly.
+                rotc_debug_flags <= {2'b10, eng_irotc_fault_code, 4'b0001};
+                rotc_debug_busy  <= 1'b0;
+                inst_done_r      <= 1'b1;
+
+            // ── LOAD2X (0xD7): QLDI format, every component doubled ──
+            end else if (ENABLE_IROTC && inst_accept &&
+                         eff_inst_word[63:56] == OP_LOAD2X) begin
+                qrf_wr_en   <= 1;
+                qrf_wr_lane <= eff_inst_word[55:48] % 13;
+                qr_tags[eff_inst_word[55:48] % 13] <= TAG_FRESH;
+                instr_wr_A <= {32'd0, {{23{eff_inst_word[39]}}, eff_inst_word[39:32], 1'b0}};
+                instr_wr_B <= {32'd0, {{23{eff_inst_word[31]}}, eff_inst_word[31:24], 1'b0}};
+                instr_wr_C <= {32'd0, {{23{eff_inst_word[23]}}, eff_inst_word[23:16], 1'b0}};
+                instr_wr_D <= {32'd0, {{23{eff_inst_word[15]}}, eff_inst_word[15:8], 1'b0}};
+                instr_wr_active <= 1;
+                inst_done_r <= 1;
+
+            // ── SCALE2 (0xD8): QRd = 2·QRs, re-condition to FRESH ──
+            end else if (ENABLE_IROTC && inst_accept &&
+                         eff_inst_word[63:56] == OP_SCALE2) begin
+                rote_src_lane   <= eff_inst_word[47:40] % 13;
+                scale2_dst_lane <= eff_inst_word[55:48] % 13;
+                scale2_active   <= 1;
+            end else if (scale2_active) begin
+                qrf_wr_en   <= 1;
+                qrf_wr_lane <= scale2_dst_lane;
+                qr_tags[scale2_dst_lane] <= TAG_FRESH;
+                // Componentwise doubling: both 32-bit halves independently
+                // (plane-agnostic — carries never cross the half boundary).
+                instr_wr_A <= {qrf_rd_A[63:32] + qrf_rd_A[63:32],
+                               qrf_rd_A[31:0]  + qrf_rd_A[31:0]};
+                instr_wr_B <= {qrf_rd_B[63:32] + qrf_rd_B[63:32],
+                               qrf_rd_B[31:0]  + qrf_rd_B[31:0]};
+                instr_wr_C <= {qrf_rd_C[63:32] + qrf_rd_C[63:32],
+                               qrf_rd_C[31:0]  + qrf_rd_C[31:0]};
+                instr_wr_D <= {qrf_rd_D[63:32] + qrf_rd_D[63:32],
+                               qrf_rd_D[31:0]  + qrf_rd_D[31:0]};
+                instr_wr_active <= 1;
+                scale2_active <= 0;
+                inst_done_r <= 1;
+
             end else if (inst_accept && eff_inst_word[63:56] == 8'h1B) begin
                 // QSUB QRd, QRa, QRb: QR[d] = QR[a] - QR[b].
                 qsub_dest_lane <= eff_inst_word[55:48] % 13;
                 qsub_rhs_lane <= eff_inst_word[11:8] % 13;
+                qsub_lhs_lane <= eff_inst_word[47:40] % 13;
                 rote_src_lane <= eff_inst_word[47:40] % 13;
                 qsub_active <= 1;
                 qsub_stage <= 0;
@@ -1151,6 +1365,9 @@ module spu13_core #(
                          eff_inst_word[63:56] != 8'h16 &&
                          eff_inst_word[63:56] != 8'h1B &&
                          eff_inst_word[63:56] != 8'h1E &&
+                         !(ENABLE_IROTC && (eff_inst_word[63:56] == OP_IROTC ||
+                                            eff_inst_word[63:56] == OP_LOAD2X ||
+                                            eff_inst_word[63:56] == OP_SCALE2)) &&
                          !(ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_EXTENSIONS && core_nsa_opcode) &&
                          !(ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_PIPELINE &&
                            eff_inst_word[63:56] == 8'h2A) &&
