@@ -352,10 +352,14 @@ def main():
                     out_vvp.unlink()
                 continue
 
-        # Execute (with timeout safeguard)
+        # Execute (with timeout safeguard). 15s, not 5: the safeguard is for
+        # hung TBs (no $finish), but spu13_core_rotc_opcode_tb.v legitimately
+        # takes ~5.0s wallclock — at timeout=5 it was a coin-flip against
+        # machine load, the source of every phantom "2 FAIL" this week
+        # (measured 2026-07-10: three trials, 5.03-5.04s, $finish reached).
         run_cmd = ["vvp", str(out_vvp)]
         try:
-            run_result = subprocess.run(run_cmd, capture_output=True, timeout=5)
+            run_result = subprocess.run(run_cmd, capture_output=True, timeout=15)
             try:
                 output = run_result.stdout.decode('utf-8', errors='replace')
             except UnicodeDecodeError:
@@ -680,7 +684,7 @@ def main():
     print(f"Failed:         {irotc_fail}")
 
     total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass)
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")

@@ -46,7 +46,7 @@ Run a single testbench manually:
 iverilog -I hardware/rtl/arch -o build/foo_tb.vvp hardware/rtl/core/spu13/spu13_lucas_mac.v hardware/tests/spu13/spu13_lucas_mac_tb.v
 vvp build/foo_tb.vvp
 ```
-Testbenches must print `PASS`/`FAIL` and call `$finish` (otherwise `run_all_tests.py` times out at 5s).
+Testbenches must print `PASS`/`FAIL` and call `$finish` (otherwise `run_all_tests.py` times out at 15s; raised from 5s on 2026-07-10 because the heaviest passing TB legitimately needs ~5.0s wallclock and was flaking on the boundary).
 
 Python/C++ oracle tests (software-side reference models the RTL must match bit-exactly):
 ```bash
