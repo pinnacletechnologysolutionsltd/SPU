@@ -125,9 +125,11 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 | `CUSTOM` | user-configured via `ENABLE_*` variables | meta (build-time only) |
 
 **No longer "awaiting silicon test":** ROTC, SOM/BMU, RPLU2 Padé, Lucas MAC,
-and the SPU-4 Sentinel standalone core (first silicon 2026-07-08, Tang 25K,
-`SPU4:P A=0000 B=0155 C=0155 D=0155` — see `docs/hardware_evidence.md` §3.2j)
-are all silicon-verified on either Tang 25K or Artix-7.
+the SPU-4 Sentinel standalone core (first silicon 2026-07-08, Tang 25K,
+`SPU4:P A=0000 B=0155 C=0155 D=0155` — see `docs/hardware_evidence.md` §3.2j),
+and the IROTC icosahedral engine (first A₅ silicon 2026-07-10, Tang 25K,
+repeating `IROTC:P E=00` — §3.2k) are all silicon-verified on either
+Tang 25K or Artix-7.
 
 **RTL testbench-verified (remaining):**
 - **ROTC opcode** — all 12 verified ROTC angles (0-11) pass (TDM rotor
@@ -237,11 +239,16 @@ are all silicon-verified on either Tang 25K or Artix-7.
   ROM is a hardcoded case function (yosys $readmemh path fragility);
   oracle check 23 diffs all 540 entries against the derivation every
   suite run, so it cannot drift. Probe TB decodes the real UART line in
-  sim (CLK_FREQ parameter shrunk). Bitstream:
-  `build/tang_primer_25k_spu13_irotc_probe.fs` — **awaiting bench run**;
-  keep claims at testbench-verified until the board prints the line.
-  Remaining after silicon: 2-bit tag storage in `spu13_core.v` (13
-  lanes), sidecar/SPI integration (0xB1 opcodes 0xD6-0xD8).
+  sim (CLK_FREQ parameter shrunk). **SILICON 2026-07-10 NZT**: bench run
+  on the Tang 25K printed repeating `IROTC:P E=00` (bare dock, BL616
+  USB-CDC on C3) — first icosahedral A₅ rotation silicon, including a
+  genuine period-5 φ-arithmetic rotation and all three typestate
+  dispatch faults firing with exact codes. Full evidence:
+  `docs/hardware_evidence.md` §3.2k. Silicon scope = probe vectors
+  (idx 16, 36 main catalog + fault matrix); full 60×2 surface is
+  TB-verified. Remaining: conjugate catalog in silicon, 2-bit tag
+  storage in `spu13_core.v` (13 lanes), sidecar/SPI integration
+  (0xB1 opcodes 0xD6-0xD8), Artix-7.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.

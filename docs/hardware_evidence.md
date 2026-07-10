@@ -1194,6 +1194,54 @@ UART engine now reuses the SOM probe's silicon-proven pattern; regression
 is `hardware/tests/spu13/spu13_tang25k_spu4_probe_tb.v`, which decodes the
 golden line byte-for-byte off `uart_tx`.
 
+### 3.2k IROTC Icosahedral Rotation Engine Silicon Probe
+
+**Date:** 2026-07-10 NZT — **first icosahedral (A₅) rotation silicon.**
+
+**Build & flash:**
+
+```
+bash build_25k_spu13_irotc_probe.sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_irotc_probe.fs
+```
+
+Bitstream SHA-256:
+`4aedc90143e4e9c5bceb5bf3c25046a737b4b70d10a5e9b97126db248619bb24`.
+Capture path: bare dock, BL616 USB-CDC on pin C3 at 115200 baud (the
+§3.2g/§3.2j re-baselined path).
+
+**UART proof (repeating status line):**
+
+```
+IROTC:P E=00
+```
+
+**What executed:** the self-checking FSM drives the term-serial IROTC
+engine (`spu13_irotc_engine.v`, fixed 13-cycle slot, signed exact Z[φ],
+0 DSP) through five phases in fabric: (1) catalog index 16 — period-3
+rotation — on a doubled Z[φ] input, both output pairs bit-checked against
+oracle-derived constants; (2) index 36 — period-5, a genuinely
+icosahedral rotation whose matrix requires φ-arithmetic (no A₄/octahedral
+alias exists); (3-5) the dispatch-fault matrix: BADIDX (idx 60),
+UNTAGGED, and CATMIX (conjugate-catalog request on MAIN-locked data),
+each required to raise the exact fault code and nothing else. The
+verdict line repeats every 0.2 s (§3.2g pattern). Golden constants were
+independently re-derived from the exact-Fraction oracle before commit;
+the engine's 540-entry code ROM is pinned to the derivation by oracle
+check 23 on every suite run.
+
+**Interpretation:** first hardware evidence for the icosahedral catalog
+(ROTC paper §11 trajectory A₄→S₄→A₅) and for the theorem-licensed
+typestate guard (IROTC_SPEC.md v0.2): the doubling theorem's `>>>1`
+executed unguarded in fabric on licensed data, and all three dispatch
+refusals fired on unlicensed data. Silicon scope is the probe's vector
+set (indices 16 and 36, main catalog, plus the three faults); the full
+60-index × both-catalog surface is testbench-verified
+(`spu13_irotc_engine_tb.v`, 120 oracle golden cases, 12-clock latency
+pinned per case). Not yet in silicon: conjugate-catalog rotations,
+LOAD2X/SCALE2 as instructions, tag storage in `spu13_core.v`,
+sidecar/SPI dispatch.
+
 ### 3.3 RPLU + Math + SDRAM Proof
 
 **Historical build command:**

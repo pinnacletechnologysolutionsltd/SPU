@@ -88,15 +88,17 @@ All six steps done; suite 145/145. Decisions and findings:
   oracle), 12-clock latency pinned per case, 10-step back-to-back
   chain, BADIDX/UNTAGGED/CATMIX fault matrix with poison holds.
   Generic yosys synth clean, 0 DSP. Tables generated via `--emit-rtl`.
-- 🟨 Tang 25K probe (DeepSeek 2026-07-10, verified + repaired same day):
-  self-check FSM + UART, bitstream built, TB decodes the real UART line.
-  Found in verification: TB port name stale vs final top (never compiled
-  as committed — the claimed TB pass was a stale binary), TB UART
-  timeout impossible at CLK_FREQ=50M (made CLK_FREQ a parameter), build
-  script LED legend wrong vs RTL. Probe constants, hardcoded ROM
-  (540/540 vs .mem), start-pulse fix, and fault FSM all verified
-  correct. Oracle check 23 now pins the inline ROM against the
-  derivation permanently. **Awaiting bench run** (John's hands).
+- ✅ **Tang 25K probe — SILICON 2026-07-10 NZT** (`IROTC:P E=00`
+  repeating; evidence §3.2k). Probe authored by DeepSeek, verified +
+  repaired before bench (stale TB port name — the claimed TB pass was a
+  stale binary; impossible TB UART timeout — CLK_FREQ now a parameter;
+  wrong LED legend in the build script; one-shot verdict line —
+  changed to the §3.2g repeating pattern, which is what made the bench
+  capture work). Probe constants, hardcoded ROM (540/540 vs .mem),
+  start-pulse fix, and fault FSM verified correct. Oracle check 23 pins
+  the inline ROM against the derivation permanently. Silicon scope:
+  idx 16 (period-3) + idx 36 (period-5, genuine φ-arithmetic) + all
+  three dispatch faults; conjugate catalog not yet in silicon.
 - ⬜ Sidecar/SPI integration: 0xB1 opcodes 0xD6-0xD8 alongside the
   Lucas MAC probe ops; 2-bit typestate storage in spu13_core.v (13
   lanes); LOAD2X/SCALE2 paths.
