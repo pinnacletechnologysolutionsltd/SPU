@@ -210,7 +210,6 @@ module spu13_tang25k_irotc_probe #(
     reg [3:0]  msg_idx = 0;
     reg        line_active = 0;
     reg [27:0] line_timer = 0;
-    reg        line_sent = 0;
 
     assign uart_tx = tx_shift[0];
 
@@ -248,7 +247,6 @@ module spu13_tang25k_irotc_probe #(
             tx_shift <= 10'h3FF; tx_bits <= 0; baud_cnt <= 0;
             tx_busy <= 0; tx_go <= 0; start_ready <= 0;
             start_cnt <= 0; line_timer <= 0; msg_idx <= 0; line_active <= 0;
-            line_sent <= 0;
         end else begin
             if (tx_busy) begin
                 if (baud_cnt < CLKS_PER_BIT - 1) baud_cnt <= baud_cnt + 1;
@@ -276,10 +274,11 @@ module spu13_tang25k_irotc_probe #(
                 end
             end else if (line_timer < CLK_FREQ/5 - 1) begin
                 line_timer <= line_timer + 1;
-            end else if (!line_sent &&
-                       (test_state == S_PASS || test_state == S_FAIL)) begin
+            end else if (test_state == S_PASS || test_state == S_FAIL) begin
+                // Repeat the verdict line every 0.2 s forever, matching the
+                // proven PHSLK probe — a one-shot line is unfalsifiable on
+                // the bench if the terminal attaches after boot.
                 line_active <= 1; msg_idx <= 0; line_timer <= 0;
-                line_sent <= 1;
             end
         end
     end
