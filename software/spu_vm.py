@@ -105,6 +105,82 @@ class RotcUnverifiedAngleError(Exception):
     """
 
 
+class IrotcBadIndexError(Exception):
+    """IROTC_ERR_BADIDX — sel[5:0] beyond the 60-entry A₅ catalog.
+
+    Dispatch-time guard (IROTC_SPEC.md §4): the destination register must
+    be left bit-identically untouched, same idiom as the ROTC angle gate.
+    """
+
+
+class IrotcUntaggedError(Exception):
+    """IROTC_ERR_UNTAGGED — source register's DOUBLED tag is clear.
+
+    The unguarded >>>1 in the IROTC micro-program is licensed by the
+    doubling theorem only for doubled data (IROTC_SPEC.md §3); refuse at
+    dispatch instead of silently truncating. Destination untouched.
+    """
+
+
+class IrotcCatalogMixError(Exception):
+    """IROTC_ERR_CATMIX — source register is catalog-locked the other way.
+
+    The doubling theorem composes only WITHIN one catalog: main x conjugate
+    matrix products leave ½Z[φ] (denominators reach 4 — machine-checked in
+    test_icosahedral_catalog.py, found 2026-07-10 when 101/200 random
+    main→conj VM chains tripped the evenness assert). A register that has
+    passed through a main-catalog IROTC is only main-safe (PHI_MAIN), and
+    vice versa (PHI_CONJ); only fresh doubled data (PHI_FRESH — output of
+    LOAD2X/SCALE2, componentwise even) is safe for either catalog.
+    Re-condition with SCALE2 to return to PHI_FRESH. Destination untouched.
+    """
+
+
+# φ-plane typestate per QR register (2 bits in RTL). Values chosen so
+# truthiness == "tagged" and bool True == PHI_FRESH.
+PHI_UNTAGGED = 0   # no license — IROTC faults
+PHI_FRESH    = 1   # componentwise even (LOAD2X/SCALE2) — either catalog safe
+PHI_MAIN     = 2   # produced by a main-catalog IROTC — main-safe only
+PHI_CONJ     = 3   # produced by a conjugate-catalog IROTC — conj-safe only
+
+
+def _phi_tag_join(x: int, y: int) -> int:
+    """Tag of a linear combination (QADD/QSUB) of two tagged registers.
+
+    Lattice: FRESH ⊑ MAIN and FRESH ⊑ CONJ (even vectors are safe either
+    way); MAIN and CONJ are incompatible; anything with UNTAGGED is
+    UNTAGGED (scale incoherence — IROTC_SPEC.md §3).
+    """
+    if x == PHI_UNTAGGED or y == PHI_UNTAGGED:
+        return PHI_UNTAGGED
+    if x == y:
+        return x
+    if x == PHI_FRESH:
+        return y
+    if y == PHI_FRESH:
+        return x
+    return PHI_UNTAGGED  # MAIN + CONJ
+
+
+# Generated IROTC catalog (software/lib/irotc_catalog.py) — lazy import,
+# checksum-verified against the oracle's pinned SHA before first use.
+_irotc_catalog_mod = None
+
+
+def _irotc_catalog():
+    global _irotc_catalog_mod
+    if _irotc_catalog_mod is None:
+        import importlib.util as _il2
+        _path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             'lib', 'irotc_catalog.py')
+        _spec2 = _il2.spec_from_file_location('irotc_catalog', _path)
+        _mod = _il2.module_from_spec(_spec2)
+        _spec2.loader.exec_module(_mod)
+        _mod.verify_checksum()
+        _irotc_catalog_mod = _mod
+    return _irotc_catalog_mod
+
+
 # ---------------------------------------------------------------------------
 # Q(√3) Arithmetic — the only math the SPU does
 # ---------------------------------------------------------------------------
@@ -536,6 +612,8 @@ OPCODES = {
     # Quadray IVM operations
     "QADD":  0x10, "QROT":  0x11, "QNORM": 0x12,
     "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C, "QLDI":  0x1D, "DELTA": 0x1E,
+    # Icosahedral A₅ φ-plane ops (IROTC_SPEC.md, Lucas MAC sidecar space)
+    "IROTC": 0xD6, "LOAD2X": 0xD7, "SCALE2": 0xD8,
     "CALL":  0x20, "RET":   0x21,
     "MIN4":  0x1F, "QREAD": 0x22,
     # Geometry output
@@ -605,6 +683,31 @@ def assemble_line(line: str, line_no: int, labels: dict) -> int | None:
         word = (opcode << 56) | (r1 << 48) | (r2 << 40) | (p1_a << 24) | (p1_b << 8)
         return word
 
+    if mnemonic == "LOAD2X":
+        # LOAD2X QRd, A, B, C, D (5-arg, matches spu13_asm.py) or
+        # LOAD2X QRd, AB, CD (packed 16-bit halves, QLDI-style)
+        tok = parts[1].upper()
+        if not tok.startswith('QR'):
+            print(f"  ASM error line {line_no}: LOAD2X expects a QR register")
+            return None
+        r1 = int(tok[2:]) & 0xFF
+        try:
+            vals = [int(p, 0) for p in parts[2:]]
+        except ValueError as exc:
+            print(f"  ASM error line {line_no}: {exc}")
+            return None
+        if len(vals) == 4:
+            p1_a = ((vals[0] & 0xFF) << 8) | (vals[1] & 0xFF)
+            p1_b = ((vals[2] & 0xFF) << 8) | (vals[3] & 0xFF)
+        elif len(vals) == 2:
+            p1_a = vals[0] & 0xFFFF
+            p1_b = vals[1] & 0xFFFF
+        else:
+            print(f"  ASM error line {line_no}: LOAD2X takes 4 components "
+                  f"or 2 packed halves")
+            return None
+        return (opcode << 56) | (r1 << 48) | (p1_a << 24) | (p1_b << 8)
+
     def parse_arg(arg: str, is_first: bool) -> tuple[int, int, int]:
         """Returns (r1_val, r2_val, p1_a_val) for a single argument."""
         arg = arg.upper()
@@ -640,7 +743,7 @@ def assemble_line(line: str, line_no: int, labels: dict) -> int | None:
         #   QLDI QRd, AB, CD → CD in p1_b
         #   SPREAD Rd, QRa, QRb → QRb index in p1_b
         arg = parts[3].upper()
-        if mnemonic == "ROTC":
+        if mnemonic in ("ROTC", "IROTC"):
             p1_a = _parse_int16(arg)
         elif arg.startswith('QR'):
             p1_b = int(arg[2:]) & 0xFFFF
@@ -985,6 +1088,10 @@ class SPUCore:
                  gasket_trace: bool = False):
         self.regs: list[RationalSurd] = [RationalSurd(0, 0) for _ in range(NUM_REGS)]
         self.qregs: list[QuadrayVector] = [QuadrayVector() for _ in range(13)]
+        # φ-plane DOUBLED typestate (IROTC_SPEC.md §3) — PHI_UNTAGGED /
+        # PHI_FRESH / PHI_MAIN / PHI_CONJ per QR register, living with the
+        # register file (load() preserves qregs, so tags too).
+        self.qr_doubled: list[int] = [PHI_UNTAGGED] * 13
         self.call_stack: list[int] = []
         self.pc: int = 0
         self.program: list[int] = []
@@ -1265,6 +1372,7 @@ class SPUCore:
                 self.regs[(base + 3) % NUM_REGS],
             )
             self.qregs[r1 % 13] = qr
+            self.qr_doubled[r1 % 13] = PHI_UNTAGGED  # raw load clears DOUBLED
             if self.verbose:
                 print(f"  [{self.pc:04d}] QLOAD QR{r1} ← R{base}..R{base+3} = {qr!r}")
 
@@ -1284,6 +1392,7 @@ class SPUCore:
                 RationalSurd(A, 0), RationalSurd(B, 0),
                 RationalSurd(C, 0), RationalSurd(D, 0),
             )
+            self.qr_doubled[r1 % 13] = PHI_UNTAGGED  # raw load clears DOUBLED
             if self.verbose:
                 print(f"  [{self.pc:04d}] QLDI QR{r1} ← ({A},{B},{C},{D}) "
                       f"→ {self.qregs[r1 % 13]!r}")
@@ -1312,6 +1421,7 @@ class SPUCore:
                 RationalSurd(steps, 0),
                 RationalSurd(0, 0),
             )
+            self.qr_doubled[d] = PHI_UNTAGGED  # raw load clears DOUBLED
             if self.verbose:
                 print(f"  [{self.pc:04d}] DELTA QR{d} Q1={Q1} Q2={Q2} "
                       f"steps={steps} → q_sum={q_sum} rhs²={rhs_sq}/{steps}")
@@ -1321,6 +1431,10 @@ class SPUCore:
             # QADD QRd, QRs — QRd = QRd + QRs
             d, s = r1 % 13, r2 % 13
             self.qregs[d] = self.qregs[d] + self.qregs[s]
+            # φ-plane typestate: lattice join (linearity; mixed catalogs or
+            # an untagged operand clear the tag — IROTC_SPEC.md §3).
+            self.qr_doubled[d] = _phi_tag_join(self.qr_doubled[d],
+                                               self.qr_doubled[s])
             if self.verbose:
                 print(f"  [{self.pc:04d}] QADD QR{d} + QR{s} → {self.qregs[d]!r}")
 
@@ -1329,6 +1443,8 @@ class SPUCore:
             # Two-operand assembly is encoded as QSUB QRd, QRd, QRs.
             d, a, b = r1 % 13, r2 % 13, p1_b % 13
             self.qregs[d] = self.qregs[a] - self.qregs[b]
+            self.qr_doubled[d] = _phi_tag_join(self.qr_doubled[a],
+                                               self.qr_doubled[b])
             if self.verbose:
                 print(f"  [{self.pc:04d}] QSUB QR{d} ← QR{a} - QR{b} → {self.qregs[d]!r}")
 
@@ -1337,6 +1453,7 @@ class SPUCore:
             n = r1 % 13
             prev = self.qregs[n]
             self.qregs[n] = prev.rotate()
+            self.qr_doubled[n] = PHI_UNTAGGED  # Q(√3) Pell rotor — wrong plane
             if self.verbose:
                 hx, hy = self.qregs[n].hex_project()
 
@@ -1441,6 +1558,9 @@ class SPUCore:
                     result = QuadrayVector(*(bp[inv_sel:] + bp[:inv_sel]))
 
                 self.qregs[d] = result
+                # Pure component permutation: bit-identical shuffle, so the
+                # DOUBLED tag rides along (enables A₄ alias interop with IROTC).
+                self.qr_doubled[d] = self.qr_doubled[s]
                 if self.verbose:
                     _angles_names = {
                         2: "120°D", 5: "300°D",
@@ -1492,6 +1612,13 @@ class SPUCore:
                 # A' = -(B'+C'+D') from zero-sum
                 Ap = RationalSurd(-(Bp.a + Cp.a + Dp.a), -(Bp.b + Cp.b + Dp.b))
                 self.qregs[d] = QuadrayVector(Ap, Bp, Cp, Dp)
+                # Octahedral matrices are integer but NOT in A₅: evenness
+                # (FRESH) survives, but catalog safety does not — sandwich
+                # products M₂·O·M₁ reach denominator 4, so MAIN/CONJ demote
+                # to UNTAGGED (machine-checked 2026-07-10).
+                self.qr_doubled[d] = (PHI_FRESH
+                                      if self.qr_doubled[s] == PHI_FRESH
+                                      else PHI_UNTAGGED)
                 if self.verbose:
                     _oct_names = {
                         24: "180°edge(CD)", 25: "180°edge(AB)",
@@ -1555,6 +1682,11 @@ class SPUCore:
                 self.qregs[d] = QuadrayVector(
                     *(out[inv_sel:] + out[:inv_sel])
                 )
+                # Thirds (/3) output breaks A₅ divisibility safety — the
+                # DOUBLED→cleared harness transition (IROTC_SPEC.md §3).
+                # Only angle 0 (identity) through this path preserves.
+                self.qr_doubled[d] = (self.qr_doubled[s] if angle == 0
+                                      else PHI_UNTAGGED)
                 if self.verbose:
                     _angles_names = {
                         0: "0°id", 1: "60°D", 3: "180°D", 4: "240°D",
@@ -1573,10 +1705,114 @@ class SPUCore:
                     print(f"         axis[{i}]: ({a}+{b}·√3) → ({na}+{nb}·√3)"
                           f"  Q={na*na-3*nb*nb}")
 
+        # ------------------------------------------------------------------
+        # Icosahedral A₅ φ-plane ops (IROTC_SPEC.md; opcodes 0xD6-0xD8)
+        # QR registers overlay the φ-plane: components are Z[φ] pairs (a, b)
+        # meaning a + b·φ, stored in the same RationalSurd (a, b) slots
+        # (decided 2026-07-10 — same registers, tag-disciplined, so the
+        # thirds-ROTC tag-clear and QADD linearity rules are enforceable).
+        # ------------------------------------------------------------------
+        elif opcode == OPCODES["LOAD2X"]:
+            # LOAD2X QRd, A, B, C, D — QLDI immediate format, each component
+            # loaded shifted left 1; DOUBLED tag set. The doubling is not
+            # preprocessing: the catalog matrices are N = 2M, so φ-plane
+            # data lives in doubled representation (IROTC_SPEC.md §3).
+            a = (p1_a >> 8) & 0xFF
+            b = p1_a & 0xFF
+            c = (p1_b >> 8) & 0xFF
+            dl = p1_b & 0xFF
+            A = (a - 256 if a >= 128 else a) << 1
+            B = (b - 256 if b >= 128 else b) << 1
+            C = (c - 256 if c >= 128 else c) << 1
+            D = (dl - 256 if dl >= 128 else dl) << 1
+            d = r1 % 13
+            self.qregs[d] = QuadrayVector(
+                RationalSurd(A, 0), RationalSurd(B, 0),
+                RationalSurd(C, 0), RationalSurd(D, 0),
+            )
+            self.qr_doubled[d] = PHI_FRESH
+            if self.verbose:
+                print(f"  [{self.pc:04d}] LOAD2X QR{d} ← ({A},{B},{C},{D}) [FRESH]")
+
+        elif opcode == OPCODES["SCALE2"]:
+            # SCALE2 QRd, QRs — QRd = QRs + QRs; DOUBLED tag set. Runtime
+            # conditioning for φ-plane data that arrives undoubled (e.g.
+            # via the southbridge). Componentwise add is plane-agnostic.
+            d, s = r1 % 13, r2 % 13
+            src = self.qregs[s]
+            self.qregs[d] = src + src
+            self.qr_doubled[d] = PHI_FRESH
+            if self.verbose:
+                print(f"  [{self.pc:04d}] SCALE2 QR{d} ← 2·QR{s} [FRESH]")
+
+        elif opcode == OPCODES["IROTC"]:
+            # IROTC QRd, QRs, sel — icosahedral A₅ rotation on (B,C,D) as
+            # Z[φ] pairs; A recomputed from zero-sum. sel[5:0] = catalog
+            # index (0-59), sel[6] = conjugate-catalog flag (Galois
+            # φ → 1−φ, i.e. PCHIRAL ∘ R ∘ PCHIRAL — the dual icosahedron).
+            # Exactly two guards, both at dispatch; no divisibility check
+            # in the accumulate/shift path (IROTC_SPEC.md §4, §6).
+            idx = p1_a & 0x3F
+            conj = (p1_a >> 6) & 1
+            d, s = r1 % 13, r2 % 13
+            if idx > 59:
+                raise IrotcBadIndexError(
+                    f"IROTC index {idx} beyond the 60-entry A₅ catalog "
+                    f"(IROTC_ERR_BADIDX); refusing rather than corrupting QR{d}"
+                )
+            if self.qr_doubled[s] == PHI_UNTAGGED:
+                raise IrotcUntaggedError(
+                    f"IROTC source QR{s} lacks the DOUBLED tag "
+                    f"(IROTC_ERR_UNTAGGED); the unguarded >>1 is only "
+                    f"licensed by the doubling theorem on doubled data"
+                )
+            want = PHI_CONJ if conj else PHI_MAIN
+            if self.qr_doubled[s] not in (PHI_FRESH, want):
+                raise IrotcCatalogMixError(
+                    f"IROTC source QR{s} is locked to the "
+                    f"{'main' if self.qr_doubled[s] == PHI_MAIN else 'conjugate'} "
+                    f"catalog (IROTC_ERR_CATMIX); the doubling theorem does "
+                    f"not compose across catalogs — SCALE2 to re-condition"
+                )
+            N = _irotc_catalog().IROTC_NUMS[idx]
+            if conj:
+                N = tuple((na + nb, -nb) for (na, nb) in N)
+            src = self.qregs[s]
+            w = ((src.b.a, src.b.b), (src.c.a, src.c.b), (src.d.a, src.d.b))
+            out = []
+            for i in range(3):
+                ta = tb = 0
+                for j in range(3):
+                    na, nb = N[3 * i + j]
+                    wa, wb = w[j]
+                    # Z[φ] product: (na+nb·φ)(wa+wb·φ), φ² = φ+1
+                    ta += na * wa + nb * wb
+                    tb += na * wb + nb * wa + nb * wb
+                # Doubling theorem: every pre-shift sum on tagged data is
+                # even (machine-checked in test_icosahedral_catalog.py).
+                # RTL shifts unguarded; this assert only documents the
+                # licensed invariant and cannot fire on tagged inputs.
+                assert (ta & 1) == 0 and (tb & 1) == 0, \
+                    "doubling theorem violated — tag discipline bug"
+                out.append((ta >> 1, tb >> 1))
+            Bp = RationalSurd(out[0][0], out[0][1])
+            Cp = RationalSurd(out[1][0], out[1][1])
+            Dp = RationalSurd(out[2][0], out[2][1])
+            Ap = RationalSurd(-(Bp.a + Cp.a + Dp.a), -(Bp.b + Cp.b + Dp.b))
+            self.qregs[d] = QuadrayVector(Ap, Bp, Cp, Dp)
+            # Doubling theorem licenses further rotations in THIS catalog
+            # only — the output is catalog-locked, not FRESH.
+            self.qr_doubled[d] = want
+            if self.verbose:
+                cat = "conj" if conj else "main"
+                print(f"  [{self.pc:04d}] IROTC QR{d} ← QR{s} "
+                      f"idx={idx} [{cat}] → {self.qregs[d]!r}")
+
         elif opcode == OPCODES["QNORM"]:
             # QNORM QRn — normalize to canonical IVM form (min component = 0)
             n = r1 % 13
             self.qregs[n] = self.qregs[n].normalize()
+            self.qr_doubled[n] = PHI_UNTAGGED  # rs_min compare is Q(√3)-plane only
             if self.verbose:
                 print(f"  [{self.pc:04d}] QNORM QR{n} → {self.qregs[n]!r}")
 
@@ -1635,6 +1871,7 @@ class SPUCore:
                 RationalSurd(v.c.a - m, v.c.b),
                 RationalSurd(v.d.a - m, v.d.b),
             )
+            self.qr_doubled[d] = PHI_UNTAGGED  # Q(√3)-plane normalize
             if self.verbose:
                 print(f"  [{self.pc:04d}] MIN4 QR{d}  min={m} → "
                       f"({v.a.a-m}, {v.b.a-m}, {v.c.a-m}, {v.d.a-m})")
@@ -1644,6 +1881,7 @@ class SPUCore:
             d = r1 % 13
             lane = r2 % 13
             self.qregs[d] = self.qregs[lane]
+            self.qr_doubled[d] = self.qr_doubled[lane]  # bit-identical copy
             if self.verbose:
                 print(f"  [{self.pc:04d}] QREAD QR{d} ← QR{lane}")
 
@@ -1700,6 +1938,7 @@ class SPUCore:
                 RationalSurd(1, 0), RationalSurd(0, 0),
                 RationalSurd(0, 0), RationalSurd(0, 0),
             )
+            self.qr_doubled[n] = PHI_UNTAGGED  # raw load clears DOUBLED
             if self.verbose:
                 print(f"  [{self.pc:04d}] IDNT QR{n} → [1,0,0,0]  (was {prev!r})")
             if self.proof:
@@ -1724,6 +1963,7 @@ class SPUCore:
             prev = self.qregs[n]
             new_comps = [RationalSurd(c.a >> 1, c.b >> 1) for c in prev.components()]
             self.qregs[n] = QuadrayVector(*new_comps).normalize()
+            self.qr_doubled[n] = PHI_UNTAGGED  # halving un-doubles
             if self.verbose:
                 print(f"  [{self.pc:04d}] ANNE QR{n}: {prev!r} → {self.qregs[n]!r}")
             if self.proof:
@@ -2023,6 +2263,10 @@ class SPUCore:
                 # Attempt Henosis recovery on meso/macro gates
                 if gate.startswith('φ₁₃') or gate.startswith('φ₂₁'):
                     pulses = self.gasket.henosis_recover(self.qregs, max_pulses=3)
+                    if pulses:
+                        # Henosis halves every QR component in place — any
+                        # doubled φ-plane data is un-doubled by the pulse.
+                        self.qr_doubled = [PHI_UNTAGGED] * 13
                     if pulses and self.verbose:
                         print(f"  [{self.pc:04d}] ✦  Henosis: {pulses} pulse(s) applied"
                               f"  τ→{self.gasket.tau!r}")

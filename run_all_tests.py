@@ -605,6 +605,29 @@ def main():
     else:
         rotc_trace_pass = rotc_trace_fail = 0
 
+    # IROTC VM suite (trace equivalence / poison proofs / chain tests) —
+    # φ-plane icosahedral opcodes, no hardware required. The trace and
+    # chain tests import test_icosahedral_catalog.py, so the derivation's
+    # self-checks re-run inside them (a broken derivation fails here too).
+    irotc_results = {}
+    for irotc_name in ("test_irotc_vm_trace.py", "test_irotc_poison.py",
+                       "test_irotc_chains.py"):
+        irotc_path = os.path.join(root_dir, "software", "tests", irotc_name)
+        if not os.path.exists(irotc_path):
+            irotc_results[irotc_name] = (0, 0)
+            continue
+        result_irotc = subprocess.run(
+            [sys.executable, irotc_path],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_irotc.returncode == 0:
+            irotc_results[irotc_name] = (1, 0)
+        else:
+            irotc_results[irotc_name] = (0, 1)
+            print(f"\n  {irotc_name} FAILED:\n{result_irotc.stdout[-500:]}")
+    irotc_pass = sum(p for p, _ in irotc_results.values())
+    irotc_fail = sum(f for _, f in irotc_results.values())
+
     # spu_host console parser (no hardware required)
     host_test = os.path.join(root_dir, "software", "tests", "test_spu_host_parser.py")
     if os.path.exists(host_test):
@@ -652,8 +675,12 @@ def main():
     print(f"Passed:                    {icosa_pass}")
     print(f"Failed:                    {1 - icosa_pass}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass)
+    print(f"\nIROTC VM Tests: {irotc_pass + irotc_fail}")
+    print(f"Passed:         {irotc_pass}")
+    print(f"Failed:         {irotc_fail}")
+
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass)
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")

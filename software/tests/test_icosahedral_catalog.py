@@ -309,6 +309,24 @@ check(sum(1 for R in new48 if conj_mat(R) in rset) == 0,
 check(len({conj_mat(R) for R in rset} & rset) == 12,
       "the conjugate A5 shares exactly A4 with this one")
 
+# The doubling theorem does NOT compose across catalogs: quadray products
+# conj(M1)·M2 leave (1/2)Z[phi] (denominator 4 occurs), so a register that
+# has been rotated in one catalog is not licensed for the other — the
+# 1-bit DOUBLED tag is unsound, IROTC_ERR_CATMIX is necessary (2026-07-10;
+# 101/200 random main->conj VM chains tripped the evenness invariant).
+_mixed_maxden = 0
+for R1 in rotations:
+    Q1c = tuple(tuple(e.conj() for e in row) for row in qmats[R1])
+    for R2 in rotations:
+        for row in mmul(Q1c, qmats[R2]):
+            for e in row:
+                d = max(e.a.denominator, e.b.denominator)
+                if d > _mixed_maxden:
+                    _mixed_maxden = d
+check(_mixed_maxden == 4,
+      "mixed-catalog products conj(M1)·M2 reach denominator 4 — "
+      "catalog switching needs re-conditioning (CATMIX guard is necessary)")
+
 # ---- canonical IROTC index space (spec: docs/IROTC_SPEC.md) -------------------
 # Deterministic ordering: sort all 60 by (period, row-major numerator key),
 # numerator key per entry = (a, b) integers of 2M in Z[phi]. Index 0 = identity.
@@ -402,8 +420,72 @@ def emit_catalog():
               f"{ANGLE_OF_TRACE[t]} | {ps} | {ad} |")
 
 
+def emit_vm_module(path):
+    """Write the checksummed VM catalog module (software/lib/irotc_catalog.py).
+
+    The numerator table is emitted verbatim from CANON's num_keys — the very
+    list whose repr() is pinned by PINNED_SHA — so the importer can recompute
+    the checksum and refuse a drifted or hand-edited table.
+    """
+    nums = [num_key(R) for R in CANON]
+    inv = tuple(IDX[mT(R)] for R in CANON)
+    per = tuple(period(R) for R in CANON)
+    lines = [
+        '"""IROTC canonical catalog — GENERATED, DO NOT HAND-EDIT.',
+        "",
+        "Regenerate with:",
+        "    python3 software/tests/test_icosahedral_catalog.py --emit-vm",
+        "",
+        "Each IROTC_NUMS entry is the doubled quadray BCD numerator matrix",
+        "N = 2M of one A5 rotation, row-major, entries as Z[phi] integer",
+        'pairs (a, b) meaning a + b*phi. repr(IROTC_NUMS) is pinned by',
+        "IROTC_SHA (sha256 prefix) — verify_checksum() must pass at import.",
+        '"""',
+        "import hashlib",
+        "",
+        f'IROTC_SHA = "{PINNED_SHA}"',
+        "",
+        f"IROTC_PERIOD = {per!r}",
+        "",
+        f"IROTC_INVERSE = {inv!r}",
+        "",
+        "# IROTC index -> aliased ROTC angle (the 12 shared A4 members)",
+        f"IROTC_ALIAS = {dict(sorted(ALIAS.items()))!r}",
+        "",
+        "IROTC_NUMS = [",
+    ]
+    for i, k in enumerate(nums):
+        lines.append(f"    {k!r},  # idx {i}")
+    lines += [
+        "]",
+        "",
+        "",
+        "def verify_checksum():",
+        "    got = hashlib.sha256(repr(IROTC_NUMS).encode()).hexdigest()[:16]",
+        "    if got != IROTC_SHA:",
+        "        raise ValueError(",
+        '            f"IROTC catalog checksum mismatch: {got} != {IROTC_SHA} '
+        '— "',
+        '            "regenerate with test_icosahedral_catalog.py --emit-vm")',
+        "    return True",
+        "",
+    ]
+    with open(path, "w") as f:
+        f.write("\n".join(lines))
+    print(f"wrote {path} ({len(nums)} entries, sha {PINNED_SHA})")
+
+
 if __name__ == "__main__" and "--emit" in __import__("sys").argv:
     emit_catalog()
+
+if __name__ == "__main__" and "--emit-vm" in __import__("sys").argv:
+    import os
+    _default = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "..", "lib", "irotc_catalog.py")
+    _argv = __import__("sys").argv
+    _i = _argv.index("--emit-vm")
+    _path = _argv[_i + 1] if _i + 1 < len(_argv) else os.path.normpath(_default)
+    emit_vm_module(_path)
 
 print()
 if fails == 0:

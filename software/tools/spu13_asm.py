@@ -65,6 +65,8 @@ OPCODES: dict[str, int] = {
     "SPREAD": 0x15, "HEX":    0x16,
     # v1.2 — Vector Equilibrium + Janus layer
     "EQUIL":  0x17, "IDNT":   0x18, "JINV":   0x19, "ANNE":   0x1A,
+    # Icosahedral A₅ φ-plane ops (IROTC_SPEC.md, Lucas MAC sidecar space)
+    "IROTC":  0xD6, "LOAD2X": 0xD7, "SCALE2": 0xD8,
     # No-op
     "NOP":    0xFF,
 }
@@ -103,7 +105,8 @@ OPCODES_WF: dict[str, int] = {
 _NO_ARGS  = {"NOP", "HALT", "RET", "SNAP", "EQUIL"}
 # Opcodes where first arg is a QR register
 _QR_FIRST = {"QLOAD", "QLOG", "QADD", "QSUB", "QROT", "QNORM", "HEX", "MIN4",
-              "SPREAD", "IDNT", "ANNE", "ROTC", "QLDI", "QREAD"}
+              "SPREAD", "IDNT", "ANNE", "ROTC", "QLDI", "QREAD",
+              "IROTC", "LOAD2X", "SCALE2"}
 
 
 def _s16(val: int) -> int:
@@ -231,11 +234,27 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
             r2 = r1
             _, p1_b = _parse_reg(args[1])
 
-    elif mnemonic == "ROTC":
-        # ROTC QRd, QRs, angle
+    elif mnemonic in ("ROTC", "IROTC"):
+        # ROTC  QRd, QRs, angle — field[7:6] + angle[5:0]
+        # IROTC QRd, QRs, sel   — sel[6]=conjugate catalog, idx[5:0] 0-59
         _, r1 = _parse_reg(args[0])
         _, r2 = _parse_reg(args[1])
-        p1_a = int(args[2]) & 0xFF if len(args) > 2 else 0  # 8-bit: field[7:6] + angle[5:0]
+        p1_a = int(args[2], 0) & 0xFF if len(args) > 2 else 0
+
+    elif mnemonic == "LOAD2X":
+        # LOAD2X QRd, A, B, C, D — QLDI format, loaded doubled + FRESH tag
+        _, r1 = _parse_reg(args[0])
+        a = int(args[1]) & 0xFF if len(args) > 1 else 0
+        b = int(args[2]) & 0xFF if len(args) > 2 else 0
+        c = int(args[3]) & 0xFF if len(args) > 3 else 0
+        d = int(args[4]) & 0xFF if len(args) > 4 else 0
+        p1_a = (a << 8) | b
+        p1_b = (c << 8) | d
+
+    elif mnemonic == "SCALE2":
+        # SCALE2 QRd, QRs — QRd = 2·QRs, FRESH tag (φ-plane re-conditioning)
+        _, r1 = _parse_reg(args[0])
+        _, r2 = _parse_reg(args[1]) if len(args) > 1 else (None, r1)
 
     elif mnemonic == "QLDI":
         # QLDI QRd, A, B, C, D
