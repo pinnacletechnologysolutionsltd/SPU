@@ -181,21 +181,29 @@ Implementation notes:
 ### 3.5 Lucas Phinary MAC — Z[φ]/L_p Arithmetic
 
 ```
-States:    IDLE, DOUBLED, SCALED, CHIRAL, MULTIPLIED, INVERTED, OVERFLOW
+States:    IDLE, FRESH, MAIN, CONJ, SCALED, CHIRAL, MULTIPLIED, INVERTED,
+           OVERFLOW
+           (FRESH/MAIN/CONJ are the DOUBLED typestate of IROTC_SPEC v0.2 —
+            the 1-bit DOUBLED of v0.1 was unsound across catalogs, found
+            2026-07-10: mixed-catalog products leave ½Z[φ])
 Initial:   IDLE
 Terminal:  OVERFLOW (modulus exceeded)
 
 Transitions:
   PSCALE:  IDLE       → SCALED      (guard: φ-scaling factor ∈ Z[φ])
-  LOAD2X:  IDLE       → DOUBLED     (load-path conditioning, imm << 1)
-  SCALE2:  IDLE       → DOUBLED     (runtime conditioning, x + x)
-  IROTC:   DOUBLED    → DOUBLED     (guard: DOUBLED tag + index ≤ 59 at
-                                     dispatch ONLY; the /2 inside the
+  LOAD2X:  IDLE       → FRESH       (load-path conditioning, imm << 1)
+  SCALE2:  any        → FRESH       (runtime conditioning, x + x —
+                                     also the catalog-switch recovery)
+  IROTC-main: FRESH|MAIN → MAIN     (guard at dispatch ONLY: state license
+  IROTC-conj: FRESH|CONJ → CONJ      + index ≤ 59; the /2 inside the
                                      micro-program is unguarded — doubling
-                                     theorem, see docs/IROTC_SPEC.md §3–4)
-  ROTC-thirds: DOUBLED → IDLE       (tag cleared — thirds output breaks A₅
-                                     divisibility safety)
-  PSCALE:  DOUBLED    → SCALED      (rotation micro-program interior)
+                                     theorem, see docs/IROTC_SPEC.md §3–4;
+                                     wrong-catalog source = CATMIX fault)
+  PCHIRAL: MAIN ↔ CONJ, FRESH → FRESH (ring automorphism carries license)
+  ROTC-thirds: FRESH|MAIN|CONJ → IDLE (tag cleared — thirds output breaks
+                                     A₅ divisibility safety)
+  ROTC-octahedral: FRESH → FRESH; MAIN|CONJ → IDLE (integer but not A₅)
+  PSCALE:  FRESH|MAIN|CONJ → SCALED (rotation micro-program interior)
   PCHIRAL: SCALED     → CHIRAL      (guard: chirality bit matches sequence parity)
   PMUL:    CHIRAL     → MULTIPLIED  (guard: Barrett reduction remainder < L_p)
   PINV:    MULTIPLIED → INVERTED    (guard: GCD complete, inverse verified)
@@ -204,8 +212,12 @@ Transitions:
   RESET:   OVERFLOW   → IDLE        (explicit clear)
 
 Invariants:
-  I(DOUBLED):    value = 2·(integer Z[φ] load) evolved only by A₅
-                 transitions — every IROTC pre-division sum is even
+  I(FRESH):      value componentwise even — N·w ≡ 0 (mod 2) for EVERY
+                 integer matrix N (either catalog licensed)
+  I(MAIN):       value = 2·(M_k…M₁·v) with all Mᵢ in the main A₅ —
+                 next main-catalog pre-division sum is even (doubling
+                 theorem); NOT licensed for the conjugate catalog
+  I(CONJ):       mirror of I(MAIN) under φ → 1−φ
   I(SCALED):     value < L_p (post-scaling modulus check)
   I(CHIRAL):     parity(value) = chirality_config[1]
   I(MULTIPLIED): product < L_p² before reduction, < L_p after
@@ -213,12 +225,17 @@ Invariants:
   I(OVERFLOW):   true (terminal)
 ```
 
-DOUBLED is a data-plane state deliberately ordered as a *prefix* of the
-operation-trace states: the doubling is an intrinsic part of the
+FRESH/MAIN/CONJ are data-plane states deliberately ordered as a *prefix*
+of the operation-trace states: the doubling is an intrinsic part of the
 rotational operation itself (icosahedral matrices live in ½Z[φ]; the
 doubled representation is what closes them over Z[φ]), so no rotation
 micro-program PSCALE may fire from a register that has not passed
-through DOUBLED. See `docs/IROTC_SPEC.md` for the full tag algebra.
+through one of them. The MAIN/CONJ split is the harness story in
+miniature: the state is licensed by a theorem (doubling theorem, valid
+within one A₅) and the state machine refuses exactly where the theorem's
+hypothesis fails (catalog mixing — machine-checked necessary, not
+paranoia). See `docs/IROTC_SPEC.md` §3 for the full transition algebra
+and `software/tests/test_irotc_chains.py` for the executable proofs.
 
 Implementation notes:
 - The Lucas MAC is small (~200 LUTs) and the state space is 6 states — exhaustive

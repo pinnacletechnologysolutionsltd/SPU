@@ -69,6 +69,10 @@ docs/                   Design guides and bring-up runbooks
 | `iverilog -I hardware/rtl/arch -o build/lucas_mac_tb.vvp hardware/rtl/core/spu13/spu13_lucas_mac.v hardware/tests/spu13/spu13_lucas_mac_tb.v && vvp build/lucas_mac_tb.vvp` | Run Lucas MAC RTL testbench (11 ops + 100-period zero-drift) |
 | `python3 software/tests/test_pade_batch_inversion.py` | Run Montgomery batch inversion oracle (25 checks, tower/MAC cost tables) |
 | `python3 software/tests/test_hyper_catalan_oracle.py` | Run hyper-Catalan series + jet-ring oracle (21 checks vs Wildberger-Rubine 2025) |
+| `python3 software/tests/test_icosahedral_catalog.py --emit-vm` | Regenerate the checksummed IROTC VM catalog (`software/lib/irotc_catalog.py`) after oracle changes |
+| `python3 software/tests/test_irotc_vm_trace.py` | IROTC VM-vs-exact-Fraction trace equivalence (60 indices × both catalogs + A₄ alias interop) |
+| `python3 software/tests/test_irotc_poison.py` | IROTC dispatch-fault poison proofs (UNTAGGED/BADIDX/CATMIX) |
+| `python3 software/tests/test_irotc_chains.py` | IROTC 10-step chain tests + typestate transitions (thirds/octahedral/QADD lattice) |
 
 Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
 
@@ -193,6 +197,27 @@ are all silicon-verified on either Tang 25K or Artix-7.
   the /3 exactness caveat applies to all 12 thirds angles (1,3,4,6-14).
   Silicon status: angles 0-5 are silicon-verified on Artix-7; 6-35 are
   testbench-verified only.
+- **IROTC — icosahedral A₅ φ-plane rotations (VM-verified 2026-07-10; no
+  RTL yet).** Opcodes 0xD6-0xD8 (`IROTC`/`LOAD2X`/`SCALE2`) implemented in
+  `spu_vm.py` + both assemblers per `docs/IROTC_SPEC.md` v0.2. Register
+  plane decision: Z[φ] pairs overlay the QR register file (same component
+  slots as the (P,Q) surd packing). The 60-entry catalog is GENERATED
+  (`test_icosahedral_catalog.py --emit-vm` → `software/lib/irotc_catalog.py`)
+  and checksum-verified at first dispatch (`aabef37c9c8b0317`) — never
+  hand-edit it. **v0.2 finding: the 1-bit DOUBLED tag of spec v0.1 was
+  unsound** — the doubling theorem does not compose across the main and
+  conjugate (Galois-dual) catalogs; mixed products leave ½Z[φ] (oracle
+  check, denominator 4) and 101/200 random main→conj VM chains would have
+  silently truncated. Repaired as a 4-state typestate per QR register
+  (UNTAGGED/FRESH/MAIN/CONJ, 2 bits in RTL) with a third dispatch fault
+  IROTC_ERR_CATMIX; SCALE2 re-conditions to FRESH. Octahedral ROTC
+  (24-35) demotes MAIN/CONJ→UNTAGGED (not in A₅); the 12 A₄ bypass
+  angles preserve state (alias interop proven). Tests: trace equivalence
+  all 60 × both catalogs (`test_irotc_vm_trace.py`, 9 checks), poison
+  proofs all 3 faults (`test_irotc_poison.py`, 14), chain tests incl.
+  thirds-mid-chain fault (`test_irotc_chains.py`, 12). Derivation oracle
+  now 22 checks. Next: RTL micro-program engine on the Lucas MAC sidecar
+  (IROTC_SPEC §6-7).
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.

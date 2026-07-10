@@ -39,27 +39,40 @@ re-deriving context. Read alongside `AGENTS.md` (current status),
    §7 open item — why exactly 16/64 residue classes are safe for every
    icosahedral numerator).
 
-## Phase 2 — IROTC in the VM (next coding session's main course)
+## Phase 2 — IROTC in the VM ✅ COMPLETE 2026-07-10 (same-day session)
 
-Order matters; each step gates the next:
+All six steps done; suite 145/145. Decisions and findings:
 
-1. **Register-plane decision** (the one real design choice left):
-   φ-plane in the QR register file vs. a vector bank on the Lucas MAC
-   sidecar. Components are Z[φ] pairs, NOT RationalSurd. Decide before
-   writing any code.
-2. **Implement** `LOAD2X`/`SCALE2`/`IROTC` + DOUBLED tag semantics in
-   `spu_vm.py`. The 60-entry table must be GENERATED from the oracle
-   (`--emit`), never hand-copied; verify against checksum at import or
-   in a test.
-3. **Trace oracle**: VM vs exact-Fraction over all 60 indices × both
-   catalogs (sel[6]) on tagged inputs — style of
-   `test_rotc_vm_rtl_trace.py`.
-4. **Poison proofs**: `IROTC_ERR_UNTAGGED`, `IROTC_ERR_BADIDX` —
-   destination survives bit-identically, fault flag raised (mirror
-   `test_rotc_bad_angle.py`).
-5. **Chain tests**: doubled load → mixed 10-step A₅ chains exact;
-   a thirds ROTC mid-chain must clear the tag and fault the next IROTC.
-6. **Assembler**: mnemonics in `software/tools/spu13_asm.py`.
+1. **Register-plane decision → QR register file overlay.** Z[φ] pair
+   `(a, b)` lives in the same component slots as the `(P, Q)` surd
+   packing. Forced by the spec's own tag algebra (thirds-ROTC clears,
+   QADD linearity) — those rules are only enforceable on shared
+   registers; also reuses the sidecar's existing qr_commit path.
+2. **Implemented** (`spu_vm.py` 0xD6-0xD8; table generated via
+   `--emit-vm` → `software/lib/irotc_catalog.py`, checksum-verified at
+   first dispatch).
+   **MAJOR FINDING: the v0.1 1-bit DOUBLED tag was unsound.** The
+   doubling theorem does not compose across catalogs — mixed products
+   `conj(M₁)·M₂` leave ½Z[φ] (denominator 4; oracle check 20, now 22
+   checks total), so main→conj chains silently truncate (101/200 random
+   repro). Repaired as a 4-state typestate (UNTAGGED/FRESH/MAIN/CONJ,
+   2 bits/register in RTL) + third dispatch fault `IROTC_ERR_CATMIX`;
+   SCALE2 re-conditions to FRESH; PCHIRAL swaps MAIN↔CONJ. Octahedral
+   ROTC (24-35, not in A₅) demotes MAIN/CONJ→UNTAGGED (sandwich check).
+   Spec bumped to v0.2; `STATE_MACHINE_HARNESS.md` §3.5 updated. This is
+   the harness story's best exhibit yet: theorem-licensed states, and
+   the machine refuses exactly where the theorem's hypothesis fails.
+3. **Trace oracle** ✅ `test_irotc_vm_trace.py` (9 checks: 60×both
+   catalogs ×3 vectors, junk-A rejection, A₄ alias interop, sel[6]
+   don't-care on aliases).
+4. **Poison proofs** ✅ `test_irotc_poison.py` (14 checks, all three
+   faults + BADIDX>UNTAGGED precedence + SCALE2 recovery).
+5. **Chain tests** ✅ `test_irotc_chains.py` (12 checks: 40×10-step
+   pure-catalog chains exact, thirds mid-chain, octahedral demotion,
+   QADD lattice).
+6. **Assembler** ✅ both `spu13_asm.py` and the VM inline assembler,
+   bit-identical encodings (inline LOAD2X accepts 5-arg and packed
+   forms; inline QLDI remains packed-only — pre-existing divergence).
 
 ## Phase 3 — IROTC in RTL
 

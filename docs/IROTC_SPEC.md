@@ -1,10 +1,28 @@
-# IROTC — Icosahedral Rotation Opcode Specification (v0.1)
+# IROTC — Icosahedral Rotation Opcode Specification (v0.2)
 
-**Status: specification only.** The mathematical basis is machine-checked
-(`software/tests/test_icosahedral_catalog.py`, 21 checks, catalog checksum
+**Status: VM implemented and verified; no RTL, no silicon.** The
+mathematical basis is machine-checked
+(`software/tests/test_icosahedral_catalog.py`, 22 checks, catalog checksum
 `aabef37c9c8b0317`); findings in `docs/ICOSAHEDRAL_QUADRAY_CATALOG.md`.
-No VM implementation, no RTL, no silicon. Opcode numbers are provisional
-in the Lucas MAC sidecar probe space. Spec fixed 2026-07-10.
+VM implementation 2026-07-10 (`software/spu_vm.py`, opcodes live in the
+main dispatch; table generated + checksum-verified at first dispatch from
+`software/lib/irotc_catalog.py`, regenerated via
+`test_icosahedral_catalog.py --emit-vm`). Verification: trace equivalence
+(`test_irotc_vm_trace.py`), poison proofs (`test_irotc_poison.py`), chain
+tests (`test_irotc_chains.py`). Opcode numbers are provisional in the
+Lucas MAC sidecar probe space.
+
+**v0.2 (2026-07-10): the DOUBLED tag is a 4-state typestate, not one
+bit.** v0.1's rule "IROTC (any index, either catalog) preserves DOUBLED"
+was unsound: the doubling theorem composes only *within* one catalog.
+Mixed-catalog quadray products `conj(M₁)·M₂` leave ½Z[φ] (denominators
+reach 4 — machine-checked, oracle check 20), so a main-then-conjugate
+chain produces odd pre-shift sums that the unguarded `>>>1` would
+silently truncate (101/200 random VM chains reproduced the corruption).
+Register plane decision (same date): the φ-plane **overlays the QR
+register file** — Z[φ] pair `(a, b)` in the same component slots as the
+`(P, Q)` surd packing — so the cross-plane tag transitions in §3 are
+enforceable on real registers.
 
 ## 1. Why a new opcode (not new ROTC angles)
 
@@ -33,12 +51,12 @@ PINV, PHSLK×2), delivered via SPI `CMD 0xB1`. IROTC continues the block:
 Operand layout mirrors ROTC (`p1_a[5:0]` = index, high bits = flags) so
 the decoder pattern carries over.
 
-## 3. The DOUBLED tag
+## 3. The DOUBLED typestate (v0.2: four states, 2 bits per register)
 
-One bit per quadray register in the φ-plane register file. The doubling
+Two bits per quadray register in the φ-plane register file. The doubling
 is not preprocessing — it is an intrinsic part of the rotational
 operation in ½Z[φ] (the matrices are `N/2`; the doubled representation is
-what makes the arithmetic closed over Z[φ]). Accordingly DOUBLED is a
+what makes the arithmetic closed over Z[φ]). Accordingly the tag is a
 **data-plane state, ordered as a prefix of the operation-trace states**:
 in the Lucas MAC harness machine the rotation micro-program's trace is
 
@@ -49,17 +67,36 @@ IDLE → DOUBLED → SCALED → … (PSCALE/ADD accumulation) → COMMIT
 and no PSCALE transition belonging to a rotation micro-program may fire
 from a register that has not passed through DOUBLED.
 
-Tag algebra (each rule verified by the oracle):
+The four states (`spu_vm.py` `PHI_*` constants):
 
-| Event | Effect on DOUBLED |
+| State | Encoding | Meaning | IROTC license |
+|---|---|---|---|
+| `UNTAGGED` | 00 | no divisibility guarantee | none — faults |
+| `FRESH` | 01 | componentwise even (fresh `LOAD2X`/`SCALE2` output) | **either** catalog |
+| `MAIN` | 10 | output of a main-catalog `IROTC` | main only |
+| `CONJ` | 11 | output of a conjugate-catalog `IROTC` | conjugate only |
+
+Why `FRESH` splits: an even vector satisfies `N·w ≡ 0 (mod 2)` for
+*every* integer matrix. But a rotated vector `w = 2Mv` is generally odd;
+its next step is licensed by `N_a·N_b = 2·N_ab`, which holds only inside
+one A₅. Products across the two catalogs leave ½Z[φ], so `MAIN` and
+`CONJ` are mutually exclusive licenses. `SCALE2` re-conditions any
+register back to `FRESH` (at the cost of one factor-of-2 in scale —
+program-level bookkeeping, same convention family as Q12).
+
+Transition algebra (each rule VM-implemented and test-pinned):
+
+| Event | Effect on state |
 |---|---|
-| `LOAD2X`, `SCALE2` | **set** |
-| `IROTC` (any index, either catalog) | **preserved** (doubling theorem: `N_a·N_b = 2·N_ab`, so every pre-division sum in an A₅ chain is even) |
-| `QADD`/`QSUB` with both operands tagged | **preserved** (linearity) |
-| `PCHIRAL` | **preserved** (conjugation is a ring automorphism; enables the dual catalog) |
-| thirds `ROTC` (angles 1,3,4,6–14) | **cleared** — the DOUBLED→PENDING harness transition; thirds output breaks A₅ divisibility safety |
-| `QADD`/`QSUB` with mixed tags | **cleared** (scale incoherence; assembler should warn) |
-| raw load over the register | **cleared** |
+| `LOAD2X`, `SCALE2` | → `FRESH` |
+| `IROTC` main / conjugate | `FRESH`/matching state → `MAIN` / `CONJ`; mismatched state → **CATMIX fault** |
+| `QADD`/`QSUB` | lattice join: `FRESH` yields to the other operand; equal states preserve; `MAIN`+`CONJ` or any `UNTAGGED` → `UNTAGGED` |
+| `PCHIRAL` | swaps `MAIN` ↔ `CONJ`, fixes `FRESH` (conjugation is a ring automorphism carrying one license to the other). **Spec-only in the VM** — PCHIRAL is a sidecar op (silicon-verified over J11) with no VM handler, so this transition has no executable proof until the RTL phase; the VM route to the conjugate catalog is `SCALE2` → `FRESH` → `IROTC[sel[6]=1]` |
+| A₄ bypass `ROTC` (0,2,5,15–23) | **preserved** (these 12 lie in both catalogs; enables alias interop) |
+| octahedral `ROTC` (24–35) | `FRESH` → `FRESH`; `MAIN`/`CONJ` → `UNTAGGED` (integer but not in A₅: sandwiches `M₂·O·M₁` leave ½Z[φ]) |
+| thirds `ROTC` (angles 1,3,4,6–14) | → `UNTAGGED` — thirds output breaks A₅ divisibility safety |
+| raw load, `QROT`, `QNORM`, `MIN4`, `ANNE`, Henosis pulse | → `UNTAGGED` (Henosis halves components in place — it un-doubles) |
+| `QREAD` | copies the source state (bit-identical copy) |
 
 The Davis gate is unaffected: `ΣABCD = 0` is scale-invariant, so the
 stability machinery needs no changes. Readback is in half-units — the
@@ -67,16 +104,21 @@ same convention family as the existing Q12 fixed-point scaling.
 
 ## 4. Dispatch guard and faults (poison discipline)
 
-IROTC has **exactly one guard, at dispatch** — the same pattern and cost
-as the ROTC bad-angle gate; there is no divisibility check anywhere in
-the micro-program hot path (no branches in hot paths):
+IROTC guards **only at dispatch** — the same pattern and cost as the
+ROTC bad-angle gate; there is no divisibility check anywhere in the
+micro-program hot path (no branches in hot paths). Decode order:
 
-- `IROTC_ERR_UNTAGGED` — source register's DOUBLED tag is clear.
-- `IROTC_ERR_BADIDX` — `sel[5:0] > 59`.
+- `IROTC_ERR_BADIDX` — `sel[5:0] > 59` (checked first: index decode
+  precedes the operand read).
+- `IROTC_ERR_UNTAGGED` — source register state is `UNTAGGED`.
+- `IROTC_ERR_CATMIX` — source register is catalog-locked the other way
+  (`MAIN` source with `sel[6]=1`, or `CONJ` source with `sel[6]=0`).
+  Recovery: `SCALE2` re-conditions to `FRESH`. (v0.2 — see header.)
 
-Both faults must leave the destination register bit-identically untouched
-and raise the fault flag; both require poison-value proofs on VM and RTL,
-mirroring `test_rotc_bad_angle.py` and the ROTC gate testbenches.
+All faults must leave the destination register bit-identically untouched
+(including its tag state) and raise the fault flag; all require
+poison-value proofs on VM and RTL, mirroring `test_rotc_bad_angle.py`
+and the ROTC gate testbenches. VM proofs: `test_irotc_poison.py`.
 
 ## 5. Canonical index space and the conjugate catalog
 
@@ -126,15 +168,19 @@ IROTC occupies the 34 slot. To be settled at RTL design time.
 
 ## 7. Verification plan (before any RTL)
 
-1. VM: implement `IROTC`/`LOAD2X`/`SCALE2` + tag semantics; table
-   generated from the oracle, never hand-copied (checksum-checked).
-2. Trace oracle: VM-vs-exact-Fraction equivalence over all 60 × both
-   catalogs on tagged inputs (style of `test_rotc_vm_rtl_trace.py`).
-3. Poison proofs for both fault codes.
-4. Chain tests: doubled load → mixed 10-step A₅ chains exact;
-   thirds-ROTC-in-the-middle must fault the subsequent IROTC (tag
-   cleared), not corrupt.
-5. RTL micro-program engine on the Lucas MAC; bit-exact against VM.
+1. ✅ VM: `IROTC`/`LOAD2X`/`SCALE2` + typestate semantics; table
+   generated from the oracle, never hand-copied (checksum-checked at
+   first dispatch). Assembler mnemonics in `spu13_asm.py` + the VM's
+   inline assembler (bit-identical encodings, verified).
+2. ✅ Trace oracle: VM-vs-exact-Fraction equivalence over all 60 × both
+   catalogs on tagged inputs, junk-A rejection, A₄ alias interop
+   (`test_irotc_vm_trace.py`, 9 checks).
+3. ✅ Poison proofs for all three fault codes + decode precedence + SCALE2
+   re-conditioning (`test_irotc_poison.py`, 14 checks).
+4. ✅ Chain tests: 10-step pure-main and pure-conjugate chains exact;
+   thirds-ROTC mid-chain faults the next IROTC without corruption;
+   octahedral demotion; QADD lattice (`test_irotc_chains.py`, 12 checks).
+5. ⬜ RTL micro-program engine on the Lucas MAC; bit-exact against VM.
 
 ## Appendix A — canonical catalog (generated, do not hand-edit)
 
