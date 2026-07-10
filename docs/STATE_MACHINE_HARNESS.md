@@ -181,12 +181,21 @@ Implementation notes:
 ### 3.5 Lucas Phinary MAC — Z[φ]/L_p Arithmetic
 
 ```
-States:    IDLE, SCALED, CHIRAL, MULTIPLIED, INVERTED, OVERFLOW
+States:    IDLE, DOUBLED, SCALED, CHIRAL, MULTIPLIED, INVERTED, OVERFLOW
 Initial:   IDLE
 Terminal:  OVERFLOW (modulus exceeded)
 
 Transitions:
   PSCALE:  IDLE       → SCALED      (guard: φ-scaling factor ∈ Z[φ])
+  LOAD2X:  IDLE       → DOUBLED     (load-path conditioning, imm << 1)
+  SCALE2:  IDLE       → DOUBLED     (runtime conditioning, x + x)
+  IROTC:   DOUBLED    → DOUBLED     (guard: DOUBLED tag + index ≤ 59 at
+                                     dispatch ONLY; the /2 inside the
+                                     micro-program is unguarded — doubling
+                                     theorem, see docs/IROTC_SPEC.md §3–4)
+  ROTC-thirds: DOUBLED → IDLE       (tag cleared — thirds output breaks A₅
+                                     divisibility safety)
+  PSCALE:  DOUBLED    → SCALED      (rotation micro-program interior)
   PCHIRAL: SCALED     → CHIRAL      (guard: chirality bit matches sequence parity)
   PMUL:    CHIRAL     → MULTIPLIED  (guard: Barrett reduction remainder < L_p)
   PINV:    MULTIPLIED → INVERTED    (guard: GCD complete, inverse verified)
@@ -195,12 +204,21 @@ Transitions:
   RESET:   OVERFLOW   → IDLE        (explicit clear)
 
 Invariants:
+  I(DOUBLED):    value = 2·(integer Z[φ] load) evolved only by A₅
+                 transitions — every IROTC pre-division sum is even
   I(SCALED):     value < L_p (post-scaling modulus check)
   I(CHIRAL):     parity(value) = chirality_config[1]
   I(MULTIPLIED): product < L_p² before reduction, < L_p after
   I(INVERTED):   value × inverse ≡ 1 (mod L_p)
   I(OVERFLOW):   true (terminal)
 ```
+
+DOUBLED is a data-plane state deliberately ordered as a *prefix* of the
+operation-trace states: the doubling is an intrinsic part of the
+rotational operation itself (icosahedral matrices live in ½Z[φ]; the
+doubled representation is what closes them over Z[φ]), so no rotation
+micro-program PSCALE may fire from a register that has not passed
+through DOUBLED. See `docs/IROTC_SPEC.md` for the full tag algebra.
 
 Implementation notes:
 - The Lucas MAC is small (~200 LUTs) and the state space is 6 states — exhaustive

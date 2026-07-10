@@ -452,6 +452,19 @@ def main():
         else:
             print(f"\n  test_lucas_mac_harness.py FAILED:\n{result_lh.stdout[-500:]}")
 
+    # Icosahedral catalog derivation oracle
+    icosa_pass = 0
+    icosa_test = os.path.join(root_dir, "software", "tests", "test_icosahedral_catalog.py")
+    if os.path.exists(icosa_test):
+        result_ic = subprocess.run(
+            [sys.executable, icosa_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if "ICOSAHEDRAL CATALOG DERIVATION: ALL PASS" in result_ic.stdout:
+            icosa_pass = 1
+        else:
+            print(f"\n  test_icosahedral_catalog.py FAILED:\n{result_ic.stdout[-500:]}")
+
     # SU(3) oracle
     su3_pass = 0
     su3_test = os.path.join(root_dir, "software", "tests", "test_su3_oracle.py")
@@ -635,8 +648,12 @@ def main():
     print(f"Passed:                       {rotc_trace_pass}")
     print(f"Failed:                       {rotc_trace_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + (0 if lucas_harness_pass else 1)
+    print(f"\nIcosahedral Catalog Tests: {1}")
+    print(f"Passed:                    {icosa_pass}")
+    print(f"Failed:                    {1 - icosa_pass}")
+
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass)
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")
