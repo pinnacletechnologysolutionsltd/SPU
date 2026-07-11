@@ -60,7 +60,7 @@ docs/                   Design guides and bring-up runbooks
 | `bash build_25k_spu13_rplu2_consume_probe.sh` | Build Tang 25K RPLU2 flash consume-probe bitstream and corrected consume-profile table |
 | `python3 software/tests/test_rational_robotics.py` | Run rational robotics oracle tests (56 checks) |
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
-| `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 12 ROTC angles (0-11), both rotor datapaths |
+| `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 36 ROTC angles (0-35), 336 bit-exact checks across both rotor datapaths |
 | `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` | Set up Python environment |
 | `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Synthesise RPLU2PADE pipeline for Wukong Artix-7 |
 || `openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_RPLU2PADE.bit` | SRAM-load RPLU2PADE bitstream via DirtyJTAG |
@@ -201,8 +201,9 @@ Tang 25K or Artix-7.
   the /3 exactness caveat applies to all 12 thirds angles (1,3,4,6-14).
   Silicon status: angles 0-5 are silicon-verified on Artix-7; 6-35 are
   testbench-verified only.
-- **IROTC — icosahedral A₅ φ-plane rotations (VM-verified 2026-07-10; no
-  RTL yet).** Opcodes 0xD6-0xD8 (`IROTC`/`LOAD2X`/`SCALE2`) implemented in
+- **IROTC — icosahedral A₅ φ-plane rotations (VM + RTL + core-integrated;
+  A₅ silicon 2026-07-10, details below).** Opcodes 0xD6-0xD8
+  (`IROTC`/`LOAD2X`/`SCALE2`) implemented in
   `spu_vm.py` + both assemblers per `docs/IROTC_SPEC.md` v0.2. Register
   plane decision: Z[φ] pairs overlay the QR register file (same component
   slots as the (P,Q) surd packing). The 60-entry catalog is GENERATED
