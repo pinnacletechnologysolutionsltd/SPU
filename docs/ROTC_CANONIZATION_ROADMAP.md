@@ -250,3 +250,40 @@ rule was 100% useful.
   disjointness, so the name undersells it. Touches the guard, its
   fault_detail, feasibility doc + STATE_MACHINE_HARNESS.md guard rows.
   Bundle with the next tensegrity round, not worth solo churn.
+
+### Session close 2026-07-12 (read this first next session)
+
+Tree: five local commits **NOT pushed** (d8352a6 quantizer, daeb961
+tee fix, 9f58f66 tensegrity Q(φ), 4030b4a + this one docs). John's
+`bench_adapter.kicad_pcb` still deliberately untracked. Suite:
+**154/154**. Both GTP orders from the round queue performed, verified,
+committed — GTP's reports were accurate throughout this session.
+
+**Bench run was imminent at close** (John flashing as session ended):
+- Bitstream: `build/tang_primer_25k_spu13_irotc_spi.fs`,
+  sha256 ca54c1dcdd1b358f786dab9a1094192c94402e86800bcd5cb6301ca0844c072a,
+  BSRAM 1/56, LUT4 49%, worst Fmax 47.2 MHz @ 12 MHz constraint.
+- **SRAM-load, not flash**: `openFPGALoader -b tangprimer25k <fs>`
+  (no -f; keeps RPLU2 boot tables at flash 0x110000 intact).
+- Wiring: Tang 25K PMOD **J4** flash-compatible mapping — CS#=G10,
+  SCK=D10, MOSI=B10, MISO=C10 — to RP2350 **spi0 on GP16–19**
+  (MISO=16, CS=17, SCK=18, MOSI=19, per rp2350_spu_irotc_test.c).
+  NOT GP0–4. Common ground required.
+- **No SD card needed**: boot_done is tied 1'b1 in this spin
+  (spu13_tang25k_fpga_top.v:492) — hydration is the internal 13-cycle
+  VE walk; boot_ready (0xAC byte 3 mask 0x04) comes up immediately.
+- Pass criteria: six-case CDC output; case [2] = conjugate-catalog
+  silicon, case [3] = CATMIX no-commit over the link. On pass: §3.2k
+  evidence entry pinned to the sha above. On fail: want the raw CDC
+  dump + which case.
+
+**Queue after bench (unchanged order):** A7 IROTC spin (needs a new A7
+board target; engine is BSRAM now, A7 has plenty) → MATH=1 southbridge
+fit decision (John) → Fuller §640.02/§724.30 primary-source check
+(John) → INA226 sensor demo (digital path 100% done incl. quantizer
+RTL d8352a6; blocked on John's PCB layout/parts/fab — see memory) →
+deferred guard rename (bundle with next tensegrity round).
+
+Paper: figure + TeX regenerated from live logs this session (tee fix
+daeb961 was blocking the generator end-to-end); TeX freeze candidate
+once bench evidence lands.
