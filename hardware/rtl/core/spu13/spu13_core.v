@@ -614,12 +614,21 @@ module spu13_core #(
         end
     endgenerate
 
-    // Mux: external inst_valid or sequencer-driven
+    // Mux: external inst_valid or sequencer-driven.
+    // Gated on VE hydration: spu_ve_qr_init walks lanes 1-12 with
+    // init-port priority right after boot_done, so an instruction
+    // accepted mid-hydration would have its QR write overwritten (the
+    // sequencer path could actually hit this; SPI is too slow to).
+    // Structural interlock, not a timeout: the inst_valid/inst_done
+    // handshake holds the sender, so an early instruction just waits
+    // the few cycles until qrf_hydrated.
+    wire        qrf_hydrated;
     wire        eff_inst_valid;
     wire [63:0] eff_inst_word;
     wire        inst_accept;
     reg         inst_seen;
-    assign eff_inst_valid = ENABLE_SEQUENCER ? seq_inst_valid : inst_valid;
+    assign eff_inst_valid = (ENABLE_SEQUENCER ? seq_inst_valid : inst_valid)
+                            && qrf_hydrated;
     assign eff_inst_word  = ENABLE_SEQUENCER ? seq_inst_word  : inst_word;
     assign inst_accept    = eff_inst_valid && !inst_seen;
     wire core_jscr_opcode = (eff_inst_word[63:56] == 8'h48);
@@ -642,7 +651,13 @@ module spu13_core #(
     // Actually, we just use eff_inst_valid/eff_inst_word everywhere.
 
     generate
-        if (ENABLE_MATH || ENABLE_CORE_SOM || ENABLE_CORE_RPLU_V2) begin : gen_qrf
+        // ENABLE_IROTC included: the φ-plane engine needs the QR file +
+        // instruction write paths (gen_qrf_only suffices — no TDM rotor),
+        // enabling a lean MATH=0 IROTC spin on tight fabrics. Note a
+        // MATH=0 spin must not issue ROTC (0x1C): the rotor never
+        // completes, so the instruction hangs at the inst_done handshake.
+        if (ENABLE_MATH || ENABLE_CORE_SOM || ENABLE_CORE_RPLU_V2 ||
+            ENABLE_IROTC) begin : gen_qrf
 
             wire ecc_qr_single, ecc_qr_double;
             // ── VE QR Hydration ──────────────────────────────────
@@ -664,6 +679,10 @@ module spu13_core #(
                 .init_C(ve_qr_init_C), .init_D(ve_qr_init_D),
                 .init_done(ve_qr_init_done)
             );
+            // "Hydration not pending/in-flight": with boot_done low the
+            // hydrator can never fire, so instructions are safe; once
+            // boot_done rises, hold instructions until the walk finishes.
+            assign qrf_hydrated = ve_qr_init_done || !boot_done;
 
             spu_quadray_regfile_ecc u_qrf (
                 .clk(clk), .rst_n(rst_n),
@@ -793,6 +812,7 @@ module spu13_core #(
             assign ecc_double_err = 1'b0;
             end
         end else begin : gen_no_qrf
+            assign qrf_hydrated = 1'b1;   // no QR file, nothing to hydrate
             assign qrf_rd_A = 64'd0; assign qrf_rd_B = 64'd0;
             assign qrf_rd_C = 64'd0; assign qrf_rd_D = 64'd0;
             assign qrf_wr_A = 64'd0; assign qrf_wr_B = 64'd0;
@@ -1291,6 +1311,12 @@ module spu13_core #(
                 instr_wr_C <= {32'd0, {{23{eff_inst_word[23]}}, eff_inst_word[23:16], 1'b0}};
                 instr_wr_D <= {32'd0, {{23{eff_inst_word[15]}}, eff_inst_word[15:8], 1'b0}};
                 instr_wr_active <= 1;
+                qr_commit_valid_r <= 1;
+                qr_commit_lane_r <= eff_inst_word[55:48] % 13;
+                qr_commit_A_r <= {32'd0, {{23{eff_inst_word[39]}}, eff_inst_word[39:32], 1'b0}};
+                qr_commit_B_r <= {32'd0, {{23{eff_inst_word[31]}}, eff_inst_word[31:24], 1'b0}};
+                qr_commit_C_r <= {32'd0, {{23{eff_inst_word[23]}}, eff_inst_word[23:16], 1'b0}};
+                qr_commit_D_r <= {32'd0, {{23{eff_inst_word[15]}}, eff_inst_word[15:8], 1'b0}};
                 inst_done_r <= 1;
 
             // ── SCALE2 (0xD8): QRd = 2·QRs, re-condition to FRESH ──
@@ -1314,6 +1340,16 @@ module spu13_core #(
                 instr_wr_D <= {qrf_rd_D[63:32] + qrf_rd_D[63:32],
                                qrf_rd_D[31:0]  + qrf_rd_D[31:0]};
                 instr_wr_active <= 1;
+                qr_commit_valid_r <= 1;
+                qr_commit_lane_r <= scale2_dst_lane;
+                qr_commit_A_r <= {qrf_rd_A[63:32] + qrf_rd_A[63:32],
+                                  qrf_rd_A[31:0]  + qrf_rd_A[31:0]};
+                qr_commit_B_r <= {qrf_rd_B[63:32] + qrf_rd_B[63:32],
+                                  qrf_rd_B[31:0]  + qrf_rd_B[31:0]};
+                qr_commit_C_r <= {qrf_rd_C[63:32] + qrf_rd_C[63:32],
+                                  qrf_rd_C[31:0]  + qrf_rd_C[31:0]};
+                qr_commit_D_r <= {qrf_rd_D[63:32] + qrf_rd_D[63:32],
+                                  qrf_rd_D[31:0]  + qrf_rd_D[31:0]};
                 scale2_active <= 0;
                 inst_done_r <= 1;
 

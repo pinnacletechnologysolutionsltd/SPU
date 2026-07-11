@@ -255,8 +255,18 @@ Tang 25K or Artix-7.
   via `rotc_debug_status` bit 15 + code [13:12], destination and tag
   held. SPI dispatch = existing 0xB1 fall-through (no sidecar; decision
   recorded in the roadmap). Proof: `spu13_core_irotc_opcode_tb.v`
-  (25 checks). Remaining: enable in a board spin + SPI bench (incl.
-  conjugate catalog, not yet in silicon), Artix-7.
+  (25 checks). **SPI spin built 2026-07-11**
+  (`build_25k_spu13_irotc_spi.sh`, southbridge pins): lean MATH=0 +
+  IROTC=1 — `gen_qrf` enables on ENABLE_IROTC alone; do NOT issue ROTC
+  on MATH=0 spins (hangs the inst handshake). Hydration interlock in
+  the core: instructions held until VE hydration is not
+  pending/in-flight (structural, fixes a latent sequencer race).
+  SPI-level proof `spu13_spi_core_irotc_tb.v` (CRC'd 0xB1 + 0xAE
+  through the real slave: LOAD2X, idx36 main + CONJUGATE, CATMIX
+  no-commit over the link, SCALE2 recondition). Bench firmware
+  `hardware/rp2350/rp2350_spu_irotc_test.c` (cmake target
+  rp2350_spu_irotc_test, same 6 vectors). Awaiting bench = conjugate
+  catalog silicon. Then Artix-7.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
@@ -344,6 +354,13 @@ Tang 25K or Artix-7.
   eps^3/eps^5 regime — contract in `docs/SPARSE_JET_MAC.md`
 
 **Known board limitations:**
+- **`build_25k_spu13_southbridge.sh` (MATH=1 fpga_top spin) no longer
+  fits at HEAD** (found 2026-07-11): post-synth 25.5k LUT4 vs 23k
+  device; the last successful placement (2026-06-29) was already 90%.
+  Core growth since June 29 (ROTC tranches 2-3, RPLU2/M31 additions)
+  is the cause. The June 29 southbridge bitstream still works but
+  cannot be rebuilt from HEAD. Lean spins (rplu2_arith at MATH=0,
+  irotc_spi at MATH=0) are unaffected.
 - SDRAM module (W9825G6KH) retired — DQ[10] fault confirmed, not an FPGA issue
 - Tang 25K FPGA board is healthy; SDRAM fault was on the external module
 - RPLU2 full pipeline (MATH=1 + RPLU_V2=1) too large for 25K (89% LUT) — needs Wukong Artix-7

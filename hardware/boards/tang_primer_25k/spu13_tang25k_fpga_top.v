@@ -10,7 +10,8 @@ module spu13_tang25k_southbridge_top #(
     parameter CORE_ENABLE_RPLU_V2 = 0,
     parameter CORE_ENABLE_RPLU_V2_PIPELINE = CORE_ENABLE_RPLU_V2,
     parameter CORE_ENABLE_RPLU_V2_EXTENSIONS = 0,
-    parameter CORE_ENABLE_TORUS = 0
+    parameter CORE_ENABLE_TORUS = 0,
+    parameter CORE_ENABLE_IROTC = 0
 ) (
     input  wire        sys_clk,
     output wire [2:0]  led,
@@ -477,7 +478,8 @@ module spu13_tang25k_southbridge_top #(
         .ENABLE_CORE_RPLU_V2(CORE_ENABLE_RPLU_V2),
         .ENABLE_CORE_RPLU_V2_PIPELINE(CORE_ENABLE_RPLU_V2_PIPELINE),
         .ENABLE_CORE_RPLU_V2_EXTENSIONS(CORE_ENABLE_RPLU_V2_EXTENSIONS),
-        .ENABLE_TORUS(CORE_ENABLE_TORUS)
+        .ENABLE_TORUS(CORE_ENABLE_TORUS),
+        .ENABLE_IROTC(CORE_ENABLE_IROTC)
     ) u_core (
         .clk(clk_core), .rst_n(rst_n),
         .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),

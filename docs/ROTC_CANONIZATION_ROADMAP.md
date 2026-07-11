@@ -109,9 +109,27 @@ All six steps done; suite 145/145. Decisions and findings:
   existing 0xB1 fall-through. spu13_core_irotc_opcode_tb.v (25 checks),
   suite 148/148. TB lesson: wait for VE hydration (init-port priority)
   before issuing instructions.
-- ⬜ Enable ENABLE_IROTC in a Tang 25K spin, bench the instruction path
-  over southbridge SPI (include a conjugate-catalog vector — not yet in
-  silicon), then Artix-7 (claim discipline as always).
+- 🟨 IROTC SPI spin built 2026-07-11 (`build_25k_spu13_irotc_spi.sh` →
+  `tang_primer_25k_spu13_irotc_spi.fs`, southbridge .cst/pins).
+  **Lean config MATH=0 + IROTC=1**: the MATH=1 southbridge base no
+  longer fits at HEAD (25.5k LUT4 post-synth vs 23k device; last
+  successful placement 2026-06-29 was already 90%) — core growth since
+  June 29 is a standing regression for `build_25k_spu13_southbridge.sh`,
+  flagged, not yet addressed. `gen_qrf` now enables on ENABLE_IROTC
+  alone (gen_qrf_only path, no TDM rotor; do NOT issue ROTC on MATH=0
+  spins — it hangs the inst handshake by design of the stub tie-offs).
+  **Hydration interlock added** (John's question caught it):
+  instructions are held until VE hydration is not pending/in-flight
+  (`qrf_hydrated = init_done || !boot_done`) — structural, no timeout;
+  fixes a latent sequencer-vs-hydration race and the TB gotcha class.
+  Proof: `spu13_spi_core_irotc_tb.v` — CRC'd 0xB1 writes + 0xAE
+  readbacks through the real spu_spi_slave: LOAD2X, idx36 main,
+  **idx36 conjugate**, CATMIX with no-commit proven over the link,
+  SCALE2 recondition → legal switch. Suite 149/149. Bench firmware:
+  `hardware/rp2350/rp2350_spu_irotc_test.c` (6-case table, same
+  vectors). **Awaiting bench** — this run puts the conjugate catalog
+  in silicon.
+- ⬜ Artix-7 after Tang bench (claim discipline as always).
 
 ## Phase 4 — Harness formalization (parallel track, low urgency)
 

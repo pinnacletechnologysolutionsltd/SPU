@@ -207,6 +207,25 @@ pico_enable_stdio_usb(rp2350_spu_arithmetic_test 1)
 pico_enable_stdio_uart(rp2350_spu_arithmetic_test 0)
 pico_add_extra_outputs(rp2350_spu_arithmetic_test)
 
+# IROTC icosahedral test driver — LOAD2X/IROTC/SCALE2 via SPI (spec v0.2)
+add_executable(rp2350_spu_irotc_test
+    rp2350_spu_irotc_test.c
+)
+
+target_link_libraries(rp2350_spu_irotc_test
+    pico_stdlib
+    hardware_spi
+    spu_rp_common
+)
+
+target_compile_definitions(rp2350_spu_irotc_test PRIVATE
+    ${SPU_SPI_PIN_DEFS}
+)
+
+pico_enable_stdio_usb(rp2350_spu_irotc_test 1)
+pico_enable_stdio_uart(rp2350_spu_irotc_test 0)
+pico_add_extra_outputs(rp2350_spu_irotc_test)
+
 # Repeating Wukong J11 Lucas sidecar smoke test. This avoids the interactive
 # CDC write path while proving PSCALE/PCHIRAL/PMUL/PINV over SPI.
 add_executable(rp2350_lucas_j11_smoke
