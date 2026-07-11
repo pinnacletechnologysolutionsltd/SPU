@@ -1,0 +1,14 @@
+# Synth comparison: typestate guard vs SVA-equivalent guard
+# Measures area overhead for THEOREM_LICENSED_TYPESTATE.md §7
+
+# ── Typestate guard ─────────────────────────────────────────────
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_typestate_guard.v
+synth_gowin -top spu13_typestate_guard -json build/typestate_guard_synth.json
+
+# ── SVA guard ───────────────────────────────────────────────────
+design -reset
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_sva_guard.v
+synth_gowin -top spu13_sva_guard -json build/sva_guard_synth.json
+
+# ── Report comparison ───────────────────────────────────────────
+tee -q build/guard_comparison.txt stat
