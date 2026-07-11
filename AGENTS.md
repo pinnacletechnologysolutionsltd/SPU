@@ -237,9 +237,13 @@ Tang 25K or Artix-7.
   plus the three-fault matrix), Lucas-probe UART on C3, expected line
   `IROTC:P E=00`. LEDs are diagnostics only ([1]=engine idle,
   [2]=off=test finished) — read the verdict from UART. The engine's code
-  ROM is a hardcoded case function (yosys $readmemh path fragility);
-  oracle check 23 diffs all 540 entries against the derivation every
-  suite run, so it cannot drift. Probe TB decodes the real UART line in
+  ROM is an initialized memory with a registered, prefetch-hidden BSRAM
+  read (converted 2026-07-12: the earlier combinational case-function
+  form synthesized into a wide-mux forest that livelocked GW5A routing
+  on the SPI spin at 53% LUT — two independent runs plateaued at the
+  same congestion figure). Values bit-identical; oracle check 23 diffs
+  all 540 entries against the derivation every suite run, so it cannot
+  drift; the 13-cycle slot is unchanged and testbench-pinned. Probe TB decodes the real UART line in
   sim (CLK_FREQ parameter shrunk). **SILICON 2026-07-10 NZT**: bench run
   on the Tang 25K printed repeating `IROTC:P E=00` (bare dock, BL616
   USB-CDC on C3) — first icosahedral A₅ rotation silicon, including a

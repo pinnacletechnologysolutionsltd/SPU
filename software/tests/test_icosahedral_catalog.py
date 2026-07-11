@@ -410,7 +410,7 @@ try:
     import re as _re
     _src = open(_engine_path).read()
     _rtl_rom = {int(m.group(1)): int(m.group(2)) for m in
-                _re.finditer(r"10'd(\d+):\s*code_lookup\s*=\s*4'd(\d+);", _src)}
+                _re.finditer(r"code_mem\[(\d+)\]\s*=\s*4'd(\d+);", _src)}
     _exp_rom = {}
     for _i, _R in enumerate(CANON):
         for _j, _k in enumerate(num_key(_R)):
