@@ -1,6 +1,6 @@
 # Current Project Status
 
-Date: 2026-07-06
+Date: 2026-07-11
 
 This file is the short source of truth for current board roles and near-term
 bring-up direction.
@@ -43,6 +43,11 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   dynamic live-operand loop (`PHSLK:P` on `/dev/ttyUSB2`).
 - Tang 25K `rotc_probe` is SRAM-load/UART verified for corrected ROTC angles
   0-5, including canonical VM/RTL trace matching and period closure.
+- ROTC angles 0-35 are gated as the verified VM/RTL surface; angles 0-5 are
+  silicon-verified, while 6-35 remain testbench/trace-equivalence verified.
+- Tang 25K `irotc_probe` is SRAM-load/UART verified for IROTC probe vectors
+  idx 16, idx 36 main catalog, and the BADIDX/UNTAGGED/CATMIX fault matrix
+  (`IROTC:P E=00`). Full 60 x 2 catalog behavior is testbench-verified.
 - Tang 25K `som_bmu_probe` is SRAM-load/UART verified for deterministic
   weighted SOM/BMU classification over the BRAM-backed 7-node fixture.
 - Tang 25K `som_hydrate_probe` is SRAM-load/UART verified for SOM BRAM
@@ -76,8 +81,8 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   smoke repeatedly reports `RPLU2PADE_J11: PASS` across five rational
   constant Padé cases, with status `raw=7F 2A 13 00`, `crc_error=0`,
   and `busy=0`.
-- Full repository regression on 2026-07-05: `python3 run_all_tests.py` reported
-  `Total PASS: 107`, `Total FAIL: 0`.
+- Full repository regression on 2026-07-11: `python3 run_all_tests.py` reported
+  `Total PASS: 151`, `Total FAIL: 0`.
 
 ## Open-Toolchain Build Evidence
 

@@ -632,6 +632,25 @@ def main():
     irotc_pass = sum(p for p, _ in irotc_results.values())
     irotc_fail = sum(f for _, f in irotc_results.values())
 
+    # Tensegrity balancer exact oracle/state-machine tests.
+    tensegrity_results = {}
+    for tensegrity_name in ("test_tensegrity_balancer.py",):
+        tensegrity_path = os.path.join(root_dir, "software", "tests", tensegrity_name)
+        if not os.path.exists(tensegrity_path):
+            tensegrity_results[tensegrity_name] = (0, 0)
+            continue
+        result_tensegrity = subprocess.run(
+            [sys.executable, tensegrity_path],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_tensegrity.returncode == 0:
+            tensegrity_results[tensegrity_name] = (1, 0)
+        else:
+            tensegrity_results[tensegrity_name] = (0, 1)
+            print(f"\n  {tensegrity_name} FAILED:\n{result_tensegrity.stdout[-500:]}")
+    tensegrity_pass = sum(p for p, _ in tensegrity_results.values())
+    tensegrity_fail = sum(f for _, f in tensegrity_results.values())
+
     # spu_host console parser (no hardware required)
     host_test = os.path.join(root_dir, "software", "tests", "test_spu_host_parser.py")
     if os.path.exists(host_test):
@@ -683,8 +702,12 @@ def main():
     print(f"Passed:         {irotc_pass}")
     print(f"Failed:         {irotc_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
+    print(f"\nTensegrity Balancer Tests: {tensegrity_pass + tensegrity_fail}")
+    print(f"Passed:                    {tensegrity_pass}")
+    print(f"Failed:                    {tensegrity_fail}")
+
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass + tensegrity_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + tensegrity_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")

@@ -1,176 +1,41 @@
-# SPU-13 Sovereign Engine — Copilot Instructions
+# SPU-13 Copilot Pointer
 
-## Build, Test & Synthesis
+Use `AGENTS.md` for current project status, board evidence, and commands. This
+file only records stable navigation hints so it does not become a second source
+of truth.
 
-### Run all tests
+## Layout
+
+- `hardware/rtl/core/shared/` — shared RTL: ALU, register files, decoder,
+  Davis gate, interconnect helpers.
+- `hardware/rtl/core/spu13/` — SPU-13 cortex, ROTC/IROTC, RPLU2, SOM/BMU,
+  Lucas, batch/series sidecars.
+- `hardware/rtl/core/spu4/` — SPU-4 Sentinel.
+- `hardware/boards/` — board tops, constraints, synthesis scripts.
+- `hardware/tests/` — Verilog testbenches.
+- `software/` — VM, assemblers, oracles, host tooling.
+- `docs/`, `knowledge/` — design guides, evidence, specs, lexicon.
+
+## Test Command
+
 ```bash
 python3 run_all_tests.py
 ```
-Uses `iverilog` to compile every `*_tb.v` / `testbench*.v` file found recursively, executes each with `vvp` (5 s timeout), and checks stdout for `PASS` / `FAIL`.
 
-### Run a single test manually
-```bash
-iverilog -y hardware/common/rtl -I hardware/common/rtl \
-         -y hardware/spu13/rtl  -I hardware/spu13/rtl  \
-         -y hardware/spu4/rtl   -I hardware/spu4/rtl   \
-         -y hardware/rtl/core/spu13 -I hardware/rtl/core/spu13 \
-         -y hardware/rtl/gpu    -I hardware/rtl/gpu    \
-         -y reference/synergeticrenderer/Laminar-Core/hardware/archive \
-         -o test.vvp hardware/common/tests/spu_whisper_tb.v
-vvp test.vvp
-```
+The runner discovers Verilog, C++, and selected Python/oracle tests. Verilog
+testbenches must print `PASS` or `FAIL` and finish; the runner timeout is 15s.
 
-### Run RPLU v2 tests
-```bash
-TB_FILTER=spu13_m31 python3 run_all_tests.py     # M31 multiplier + inverter
-TB_FILTER=spu13_fp4 python3 run_all_tests.py     # F_{p^4} conjugate reduction tower
-TB_FILTER=spu_som_node python3 run_all_tests.py  # SOM node classification + training
-TB_FILTER=singular_absorber python3 run_all_tests.py  # Zero-norm exception stress test
-TB_FILTER=btu_collision python3 run_all_tests.py # BTU multi-saddle collision stress
-```
+## Discipline
 
-### Run a pre-compiled simulator
-```bash
-./whisper_sim      # Whisper serial protocol
-./spu13_sim        # SPU-13 core
-./sentinel_sim     # SPU-4 Sentinel
-./stress_sim       # Long-duration stress
-# …and 11 others in the repo root
-```
+- Exact arithmetic only for RTL and RTL-facing oracles: no float, no
+  transcendental approximation.
+- Do not edit generated catalogs or golden `.mem` files by hand.
+- "Silicon-verified" means the bench run is recorded in
+  `docs/hardware_evidence.md`; otherwise say testbench-verified, built,
+  unmeasured, or pending.
 
-### View waveforms
-```bash
-gtkwave spu13_deep_spin.vcd &    # Most detailed trace (11 MB)
-gtkwave artery_trace.vcd &
-```
+## License Split
 
-### Synthesise for Artix-7
-```bash
-bash hardware/boards/artix7/build_a7.sh    # Primary target (100T, 240 DSP48E1)
-```
-
-### Regenerate BRAM initialisation
-```bash
-python3 generate_bram.py         # Writes spu_init.mem
-```
-
----
-
-## Architecture Overview
-
-The project is a **dual-core rational-field processor** implemented in Verilog/RTL.
-
-### Two cores
-| Core | File | Axes | Width | Role |
-|------|------|------|-------|------|
-| **SPU-4 Sentinel** | `hardware/spu4/rtl/spu4_core.v` | 4 (Quadray) | 32-bit | Euclidean satellite, sensory input |
-| **SPU-13 Cortex** | `hardware/spu13/rtl/spu13_top.v` | 13 | 832-bit | Sovereign manifold engine |
-
-Both live under `hardware/common/rtl/top/spu_system.v`, the system orchestrator.
-
-### Data representation — `Q(√3)` surds
-All values are **rational surds** `(a, b)` where the real value is `a + b·√3`. The packed on-wire / in-register form is a 32-bit `RationalSurd`: upper 16 bits = `P` (rational part), lower 16 bits = `Q` (surd part). The BRAM format used by `generate_bram.py` packs `(a, b, c)` into 24-bit fields `[a:6|b:9|c:9]`.
-
-### Key RTL modules
-```
-hardware/common/rtl/
-  core/   spu_unified_alu_tdm.v   — TDM ALU, one DSP slice, folded architecture
-          spu13_sequencer.v       — Fibonacci-interval instruction dispatch
-          spu_register_file.v     — Unified register file
-          spu_rotor_vault.v       — Cached rotor state lookup
-  mem/    spu_mem_bridge_qspi.v   — QSPI memory bridge
-  prim/   spu_multiplier_serial.v — Bit-serial multiplier (area-optimised)
-          spu_psram_ctrl.v        — PSRAM controller
-  proto/  SPU_WHISPER_TX/RX.v     — 1-wire serial telemetry (PWI protocol)
-          SPU_ARTERY_FIFO.v       — Multi-node interconnect FIFO
-  top/    spu_system.v            — Multi-core orchestrator
-          spu_sierpinski_clk.v    — Fractal clock → 61.44 kHz Piranha Pulse
-          spu_soft_start.v        — Fibonacci-stepped power-up
-          spu_laminar_power.v     — Dynamic power/frequency scaling
-
-hardware/spu13/rtl/
-  spu_berry_gate.v    — Berry-phase manifold transform
-  spu_janus_mirror.v  — Janus-bit reflection (dual-polarity geometry)
-  spu_permute_13.v    — 13-axis permutation network
-  davis_gate_dsp.v    — DSP-optimised Davis Law stability checker (Quadrance)
-
-hardware/rtl/core/spu13/   — RPLU v2 Thimble-Padé Pipeline
-  spu13_m31_multiplier.v   — F_{p^4} multiplier over M31 (16 parallel DSPs, Mersenne reduction)
-  spu13_m31_inverter.v     — BEEA scalar modular inverter (~180 LUTs, zero divisions)
-  spu13_fp4_inverter.v     — Conjugate Reduction Tower (F_{p^4} inversion, ~76 cycles)
-  spu13_btu_core_top.v     — BTU core: Kohonen→F_{p^4} spatial router (4-lane BRAM)
-  spu_btu_collision_resolver.v — Priority encoder + bubble stall (64→6, backlog queue)
-  spu13_multi_port_regfile.v   — 4R2W register file with write-forwarding bypass
-  spu_som_node.v           — Individual SOM node (3-stage parallel quadrance pipeline)
-  spu_som_node_array.v     — Parallel SOM array with combinational WTA tree
-  rplu_pipeline.v          — 4-stage top: Φ₁(Kohonen)→Φ₂(BTU)→Φ₃(Padé)→Φ₄(Output)
-
-hardware/rtl/gpu/
-  rplu_thimble_pade.v      — [4/4] Padé rational approximant over F_{p^4} (Horner + inverter)
-```
-
-### Stability mechanism — Davis Law Gasket
-Every cycle the hardware computes `C = τ/K` (Davis Ratio). If the manifold sum `ΣABCD ≠ 0` ("Cubic Leak"), `davis_gate_dsp.v` triggers **Henosis** — a soft recovery pulse — rather than a hard reset.
-
-### Timing — Phi-Gated / Fibonacci Pulse
-Instructions are dispatched at Fibonacci intervals (8, 13, 21 cycles) generated by `spu_sierpinski_clk.v`. The system reference is **61.44 kHz** ("Piranha Pulse"). The RP2350 side mirrors this via `software/common/pio/spu_bio_resonance.pio`.
-
-### Communication protocols
-- **Whisper (PWI)** — 1-wire, pulse-width-proportional-to-Davis-Ratio telemetry. Frame = 104 bytes at 921.6 k baud. Monitored by `software/spu_inhale.go`.
-- **Artery** — multi-node FIFO interconnect for distributed manifold calculation across SPU nodes.
-- **Laminar Input (L-CLK / L-DAT)** — 2-wire synchronous sensory interface for zero-latency Identity Strikes.
-
-### Dual-MCU roles
-| Device | Firmware | Role |
-|--------|----------|------|
-| **RP2350** (Pico 2) | `hardware/rp2350/rp2350_spu_interface.c` | Laminar Controller — SPI polling of SPU-4, PIO Piranha Pulse, streams 104-byte frames to RP2040 over UART1 (GP4, 921600 baud) |
-| **RP2040** (Pico) | `hardware/rp2040/rp2040_visualiser.c` | Visualiser & debug bridge — forwards frames to PC via USB CDC; GP28 low at boot = emulate mode (synthetic Jitterbug frames, no FPGA needed); also flashable as picoprobe (SWD: GP2=SWCLK, GP3=SWDIO) |
-
-### Software / ISA
-- `software/common/include/spu_lithic_l.h` — **Lithic-L** ISA: 16-bit Chord instructions; all control flow compiled to Boolean-polynomial `MUX` primitives (no branches).
-- `software/spu4_intrinsics.h` — C intrinsics wrapping `__asm__` for Quadray operations (e.g. `spu_qrot`, `spu_spread`).
-
----
-
-## Key Conventions
-
-### Hard constraints (never violate)
-- **No floating-point** anywhere in the core ALU or RTL. All arithmetic must be exact in `Q(√3)`.
-- **No division**; no transcendental approximations.
-- **No framebuffers** — display output is streamed live (zero-buffer mandate).
-- **No branches** in hot paths — compile control flow to `MUX` Boolean polynomials.
-- Timing deviations are **design flaws**, not to be papered over with FIFOs or skew buffers.
-
-### Naming conventions
-| Prefix | Domain |
-|--------|--------|
-| `SPU_` | Core processor modules |
-| `HAL_` | Hardware Abstraction Layer (display, I/O) |
-| `IVM_` | Isotropic Vector Matrix geometry primitives |
-| `spu_` | Lowercase = implementation files (Verilog) |
-
-### Lithic style
-Modules must be **single-purpose** ("Lithic") and **zero-drift** ("Laminar"). Split concerns aggressively — one module, one job. File length is typically 50–150 lines.
-
-### Testbench conventions
-- Output `PASS` or `FAIL` to stdout (checked by `run_all_tests.py`).
-- Call `$finish` to terminate simulation (otherwise it times out at 5 s).
-- Place new testbenches in `hardware/{common,spu13,spu4}/tests/` — they are auto-discovered.
-
-### Adding a new Verilog module
-1. Place RTL in the appropriate `hardware/*/rtl/` subdirectory.
-2. Add a corresponding `*_tb.v` testbench in `hardware/*/tests/`.
-3. If needed, add the new RTL path to the board-specific synth script (e.g., `synth_gowin_25k_spu13_rplu_v2.ys`).
-4. Run `python3 run_all_tests.py` before committing — 100 % PASS required.
-
-### Surd encoding reference
-```
-Unity   → to_surd_hex(1, 0, 0)  → "010000"
-√3      → to_surd_hex(0, 1, 0)
-√5      → to_surd_hex(0, 0, 1)
-PHI_1   → "01A785"
-S_HALF  → "010000"
-```
-
-### License
-All contributions are **CC0 1.0 Universal** (public domain).
+- Hardware and board files: CERN-OHL-W-2.0.
+- Software, VM, firmware, tools: MIT.
+- Docs and knowledge notes: CC0 1.0.

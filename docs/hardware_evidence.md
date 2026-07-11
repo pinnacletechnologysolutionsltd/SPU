@@ -3,7 +3,14 @@
 A boring, reproducible record of what passed, what failed, and what remains
 unproven.  No speculation — only commands, conditions, and results.
 
-*Last updated: 2026-07-06*
+*Last updated: 2026-07-11*
+
+Current regression headline: `python3 run_all_tests.py` reports
+`Total PASS: 151`, `Total FAIL: 0`. ROTC is gated through angles 0-35
+(0-5 silicon-verified; 6-35 testbench/trace-equivalence verified). IROTC uses
+the v0.2 phi-plane typestate contract; Tang 25K silicon scope is the §3.2k
+engine probe vectors (idx 16, idx 36 main catalog, and fault matrix), with the
+full 60 x 2 catalog surface testbench-verified.
 
 ---
 
@@ -1382,8 +1389,8 @@ board.
 
 | Item | Status |
 |---|---|
-| `run_all_tests.py` | Hardcoded path fixed (now uses `Path(__file__).resolve().parent`); **directory paths not yet reconciled** with refactored RTL layout — inc_dirs/scan_dirs reference `hardware/common/rtl/` which is now `hardware/rtl/`. Needs full path audit before Verilog suite runs. |
-| C++ test suite automated run | `run_all_tests.py` supports C++ discovery; three key tests confirmed passing manually (spu_surd, spu_quadray, spu_wildberger via `g++ -std=c++17`). Full suite not yet exercised. |
+| `run_all_tests.py` | Full automated regression exercised on 2026-07-11: `Total PASS: 151`, `Total FAIL: 0`. |
+| C++ test suite automated run | Covered by `run_all_tests.py` full regression. |
 | Cross-validation (Python VM vs C++) | PASS — `cross_validate.py`: 5/5 snaps matched |
 
 ---
