@@ -220,3 +220,29 @@ Working model: GTP performs, Claude orchestrates/verifies/owns reserved
 RTL (spu13_core.v, spu_spi_slave.v). Verify every GTP/DeepSeek numeric
 claim against the tree before commit — this week's hit rate on that
 rule was 100% useful.
+
+### Addendum 2026-07-12 (same day, mid-morning)
+
+- IROTC SPI bitstream: netlist confirmed BSRAM engine (**BSRAM: 1/56**
+  in nextpnr log — not the stale case-ROM). Router converging, overuse
+  ~15.4k at iter 253k and falling (old netlist livelocked at ~58.9k).
+  Detached build + 120s watcher loop both still alive; watcher prints
+  sha256 + utilisation when the .fs lands. Nothing to do but wait.
+- Cartesian bridge v0 checklist (spec §5): **closed** — all six items
+  verified against `test_cartesian_bridge.py` (30 checks), boxes ticked.
+- Bridge RTL ingest promoted: spec **§7** now defines the
+  `spu_cartesian_quantizer` contract (S24.8 in, round-half-even,
+  saturate, Q=0, registered 1-cycle). Input is fixed-point, NOT
+  IEEE-754 — floats never exist on the fabric; host/southbridge owns
+  any float→S24.8 step.
+- Quantizer RTL **landed same morning**: GTP performed from the §7
+  order, module passed the staged oracle-derived TB verbatim (incl. the
+  two boundary traps: 32767.5 rounds out→sat, -32768.5 rounds back
+  in→no sat). `hardware/rtl/core/shared/spu_cartesian_quantizer.v`.
+  Suite back green at **154/154**. The TB remains the acceptance
+  authority — never edit it to fit an implementation.
+- GTP round queue: quantizer order done; still pending is the
+  micro-round (Q(φ) segments_intersect_interior generalization +
+  segments_contact_closed T-junction predicate + tensegrity doc rider
+  with John's fault-code→diagnosis table) — paste-ready text is in the
+  2026-07-12 session transcript, not yet sent.
