@@ -241,8 +241,12 @@ rule was 100% useful.
   in→no sat). `hardware/rtl/core/shared/spu_cartesian_quantizer.v`.
   Suite back green at **154/154**. The TB remains the acceptance
   authority — never edit it to fit an implementation.
-- GTP round queue: quantizer order done; still pending is the
-  micro-round (Q(φ) segments_intersect_interior generalization +
-  segments_contact_closed T-junction predicate + tensegrity doc rider
-  with John's fault-code→diagnosis table) — paste-ready text is in the
-  2026-07-12 session transcript, not yet sent.
+- GTP round queue: **both orders done** — quantizer (d8352a6) and the
+  Q(φ) micro-round (9f58f66, verified claim-by-claim; GTP report was
+  accurate throughout).
+- Deferred cleanup (GTP suggestion, agreed, low priority): rename
+  `guard_struts_disjoint_interior` → `guard_struts_no_contact` or
+  similar — since 9f58f66 it enforces closed contact, not just interior
+  disjointness, so the name undersells it. Touches the guard, its
+  fault_detail, feasibility doc + STATE_MACHINE_HARNESS.md guard rows.
+  Bundle with the next tensegrity round, not worth solo churn.
