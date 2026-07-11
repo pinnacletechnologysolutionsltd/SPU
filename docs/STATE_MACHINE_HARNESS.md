@@ -353,3 +353,116 @@ clean one without explicit reduction.
 - `docs/MONTGOMERY_BATCH_INVERSION.md` — batch inverter RTL contract
 - `knowledge/SPU_LEXICON.md` — Davis Gate entry (§ /3 divisibility)
 - `docs/SERIES_STREAM_CONTROLLER.md` — series stream contract
+- `docs/TENSEGRITY_BALANCER_FEASIBILITY.md` — tensegrity balancer feasibility analysis
+- `software/lib/tensegrity_balancer.py` — exact tensegrity oracle
+- `software/tests/test_tensegrity_balancer.py` — suite-registered tensegrity tests (36 checks)
+- `docs/BOOT_SEQUENCE_FSM.md` — canonical boot-sequence FSM specification
+- `software/lib/boot_sequence_oracle.py` — exact boot FSM oracle
+- `software/tests/test_boot_sequence.py` — suite-registered boot FSM tests
+
+## 7. Subsystem 6 — Tensegrity Balancer (Prototype)
+
+### 7.1 Fuller's Tensegrity Framework
+
+From *Synergetics* (1997) §640-790: discontinuous compression islands in a
+continuous tension network, the six-strut expanded octahedron (§724.30),
+sphere-as-compression-island framing (§640.20), and transverse precession
+under axial compression (§640.12). The canonical six-strut fixture is not the
+regular icosahedron: the executable oracle checks that the regular vertex set
+with the 24-cable net has no cable-positive/strut-negative self-stress.
+
+The canonical fixture uses cyclic permutations of `(0, +/-1, +/-2)`, the
+`t = 2` all-integer expanded octahedron. Its 24 cables have quadrance 6, its
+six struts have quadrance 16, and the solver derives `q_cable:q_strut = 2:-3`
+exactly.
+
+Quadrance only proves separation or collapse: zero means a cable/GAP collapsed
+or strut endpoints coincide. Tension versus compression is carried by the
+equilibrium force-density signs: cable/GAP positive, strut negative.
+
+### 7.2 SPU-13 Primitive Mapping
+
+| Fuller concept | SPU-13 primitive | Status |
+|---|---|---|
+| Icosahedral A5 rotations | IROTC opcode (60-entry 1/2 Z[phi] catalog) | Tang 25K silicon for probe vectors idx 16, idx 36 main, and fault matrix; full surface testbench-verified |
+| Tetrahedral rotations | ROTC opcode (36-angle Q(sqrt3) catalog) | 0-5 silicon-verified; 6-35 testbench-verified |
+| Quadray coordinates | QR register file | QLDI/QSUB/readback silicon-verified |
+| Exact quadrance | QSUB / Davis-style exact arithmetic | Existing arithmetic probes silicon-verified |
+| MAIN/CONJ grid alternation | phi-plane 4-state typestate | Core integration testbench-verified |
+
+The balancer itself has no RTL or silicon proof yet. It is currently a
+software oracle and state-machine case study.
+
+### 7.3 States
+
+```
+IDLE → CONFIGURING → BALANCED ⇄ ROTATING
+           ↓              ↓
+        FAULT.TOPOLOGY   FAULT.CABLE_SLACK
+                         FAULT.STRUT_COLLISION
+                         FAULT.STRUT_INTERSECTION
+                         FAULT.GRID_MISMATCH
+                         FAULT.NOT_IN_EQUILIBRIUM
+```
+
+All FAULT states are terminal (no outgoing transitions).  Recovery is
+explicit `reset()`.
+
+### 7.4 Guards (Theorem-Licensed)
+
+| Guard | Theorem | Check |
+|---|---|---|
+| `guard_valid_topology` | Fuller §724.30 | ≥6 structural edges (STRUT or GAP), connected |
+| `guard_struts_separated` | Fuller §640.02 | Each node touches ≤1 strut |
+| `guard_struts_disjoint_interior` | Fuller §640.02 | Exact segment test rejects interior strut crossings |
+| `guard_cables_taut` | Continuous tension | Cable/GAP quadrance is exact nonzero positive |
+| `guard_grid_consistency` | Conjugate grid model | Cross-grid edges must be GAP type |
+| `guard_equilibrium` | Static self-stress | Exact Z[phi] force densities exist with cable/GAP positive and strut negative signs |
+
+### 7.5 Dual-Grid Interpenetration
+
+The architectural insight: when IROTC rotates a node between MAIN and CONJ
+grids, it lands on a deterministically shifted conjugate coordinate.  The
+edge spanning the grid boundary is a "tensegrity gap" — a tension member
+with exact rational quadrance.  This is a discrete state transition, not a
+continuous tracking problem.
+
+The φ-plane typestate lattice (FRESH/MAIN/CONJ/UNTAGGED) from
+`THEOREM_LICENSED_TYPESTATE.md` §4 is the hardware encoding of this grid
+alternation.
+
+### 7.6 Status
+
+Prototype oracle: `software/lib/tensegrity_balancer.py`;
+suite-registered tests: `software/tests/test_tensegrity_balancer.py` (36
+checks). RTL is not started and therefore resource use is unmeasured. For
+comparison only, the IROTC engine probe top is 1,670 LUT4 / 532 DFF / 59.9 MHz
+/ 0 DSP in `knowledge/THEOREM_LICENSED_TYPESTATE.md` Appendix A, sourced from
+`build/spu13_irotc_probe_nextpnr.log`.
+
+Bug-ledger case: the old regular-icosahedron antipodal fixture passes topology,
+endpoint separation, tautness, grid consistency, and equilibrium, but all six
+struts cross at the origin. `guard_struts_disjoint_interior` is the guard that
+rejects it, proving endpoint separation alone under-approximates Fuller
+§640.02.
+
+## 8. Subsystem 7 — Canonical Boot Sequence FSM
+
+Boot sequencing is specified as a four-state safety machine:
+
+```
+RESET → HYDRATING → READY
+             ↓
+        FAULT.HYDRATION_TIMEOUT
+```
+
+The load-bearing invariant is that no instruction is accepted outside READY.
+The HYDRATING exit guard is the generate-conditional AND-join of existing or
+proposed subsystem ready lines: VE QR init done, RPLU table loaded, and SOM
+BRAM hydrated. See `docs/BOOT_SEQUENCE_FSM.md` for exact signal provenance,
+watchdog-bound derivation, Pell-vault scope, and the status-polling contract.
+
+Prototype oracle: `software/lib/boot_sequence_oracle.py`; suite-registered
+tests: `software/tests/test_boot_sequence.py`. RTL is not started; the reserved
+integration points are `spu13_core.v` instruction gating and `spu_spi_slave.v`
+status exposure.
