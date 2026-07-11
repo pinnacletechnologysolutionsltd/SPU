@@ -178,3 +178,45 @@ wedge.
 5. The /2 (icosahedral) and /3 (thirds) look similar but are opposites:
    /2 is statically dischargeable (finite group), /3 is not
    (non-closed catalog). Don't let docs or code conflate them.
+
+## Session handoff 2026-07-12 (read this first next session)
+
+Tree: everything pushed through `73acd91`; only John's hand-routed
+`bench_adapter.kicad_pcb` is untracked (deliberate). Suite: **153/153**.
+
+**In flight at close:** the IROTC SPI bitstream is rebuilding from the
+BSRAM-engine netlist as a DETACHED process (survives session end).
+Check: `ls build/tang_primer_25k_spu13_irotc_spi.fs`; progress in
+`build/spu13_irotc_spi_nextpnr.log` (expect BSRAM:1 in utilisation —
+if BSRAM:0 it's a stale netlist, kill and rerun
+`build_25k_spu13_irotc_spi.sh`). The old case-ROM netlist LIVELOCKED
+routing (~58.9k congestion plateau, two seeds); the BSRAM engine
+(73acd91) removes the mux forest. Ops note: pkill -f patterns that
+appear in your own command line self-kill the shell (exit 144) — use
+[b]racket patterns and separate kill from launch invocations.
+
+**Next actions, in order:**
+1. Bitstream lands → `tools/gen_paper_figures.py` (venv has matplotlib)
+   → recompile `docs/theorem_licensed_typestate.tex` → bench handoff:
+   RP2350 target `rp2350_spu_irotc_test` (polls boot_ready = 0xAC
+   byte 3 mask 0x04), FPGA SRAM-load the .fs, six-case CDC output;
+   case [2] = conjugate catalog silicon, case [3] = CATMIX no-commit
+   over the link. Evidence entry on pass (§3.2k format).
+2. GTP micro-round (order not yet sent): Q(φ) generalization of
+   segments_intersect_interior (docstring lists the three confirmed
+   gaps: φ-coords assert-crash, collinear overlap missed, T-junction
+   boundary), + tensegrity doc rider (adopt "discrete exact
+   admissibility" positioning + the fault-code→physical-diagnosis
+   table from John's 2026-07-12 paste).
+3. Artix-7: IROTC spin (engine now BSRAM — A7 has plenty), then the
+   A7 evidence entry.
+4. Standing regression: MATH=1 southbridge spin no longer fits at HEAD
+   (AGENTS known-limitations) — needs a diet or a 2-device split
+   decision (John).
+5. Paper: figure lands → TeX freeze candidate; Fuller §-numbers
+   (640.02, 724.30) still await John's primary-source check.
+
+Working model: GTP performs, Claude orchestrates/verifies/owns reserved
+RTL (spu13_core.v, spu_spi_slave.v). Verify every GTP/DeepSeek numeric
+claim against the tree before commit — this week's hit rate on that
+rule was 100% useful.
