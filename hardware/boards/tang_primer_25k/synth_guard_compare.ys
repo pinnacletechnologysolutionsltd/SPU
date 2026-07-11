@@ -11,4 +11,4 @@ read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_sva_guard.v
 synth_gowin -top spu13_sva_guard -json build/sva_guard_synth.json
 
 # ── Report comparison ───────────────────────────────────────────
-tee -q build/guard_comparison.txt stat
+tee -q -o build/guard_comparison.txt stat

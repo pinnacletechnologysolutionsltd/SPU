@@ -121,3 +121,7 @@ docs/*.aux
 docs/*.log
 docs/*.out
 docs/*.toc
+docs/*.fdb_latexmk
+docs/*.fls
+docs/*.bbl
+docs/*.blg
