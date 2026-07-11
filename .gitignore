@@ -115,3 +115,9 @@ spu_strategy/
 # MkDocs staging + output
 docs/knowledge/
 site/
+
+# LaTeX build litter (paper drafts live in docs/)
+docs/*.aux
+docs/*.log
+docs/*.out
+docs/*.toc
