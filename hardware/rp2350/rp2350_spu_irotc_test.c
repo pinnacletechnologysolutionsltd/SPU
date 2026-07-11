@@ -58,6 +58,23 @@
 #define SPI_SCK_PIN  SPU_SPI_SCK_PIN
 #define SPI_MOSI_PIN SPU_SPI_MOSI_PIN
 
+#ifndef SPU_IROTC_POLL_BOOT_READY
+#define SPU_IROTC_POLL_BOOT_READY 0
+#endif
+#ifndef SPU_BOOT_READY_STATUS_BYTE
+// Default from docs/BOOT_SEQUENCE_FSM.md §3.6: current flags byte is full;
+// use status[3][2] unless the reserved RTL change chooses another byte/bit.
+#define SPU_BOOT_READY_STATUS_BYTE 3
+#endif
+#ifndef SPU_BOOT_READY_STATUS_MASK
+#define SPU_BOOT_READY_STATUS_MASK (1u << 2)
+#endif
+#ifndef SPU_BOOT_READY_MAX_POLLS
+// RPLU2 consume profile uses 149 records; +1 catches completion exactly at
+// the documented watchdog bound (docs/BOOT_SEQUENCE_FSM.md §3.4).
+#define SPU_BOOT_READY_MAX_POLLS 150
+#endif
+
 // ── Test case definitions ─────────────────────────────────────────────────
 #define INST_QLDI(lane, a, b, c, d) \
     ((((uint64_t)0x1D) << 56) | (((uint64_t)(uint8_t)(lane)) << 48) | \
@@ -170,6 +187,30 @@ static bool read_qr_commit(spu_link_t *link,
                            uint8_t *lane_out,
                            int32_t comp[8]);
 
+static bool wait_boot_ready(spu_link_t *link) {
+#if SPU_IROTC_POLL_BOOT_READY
+    uint8_t status[4] = {0};
+    for (unsigned i = 0; i < SPU_BOOT_READY_MAX_POLLS; i++) {
+        spu_link_read_status_raw(link, status);
+        if ((status[SPU_BOOT_READY_STATUS_BYTE] & SPU_BOOT_READY_STATUS_MASK) != 0) {
+            printf("boot_ready after %u polls status=%02X %02X %02X %02X\n",
+                   i + 1, status[0], status[1], status[2], status[3]);
+            return true;
+        }
+        sleep_ms(1);
+    }
+    printf("FAIL: boot_ready timeout after %u polls status=%02X %02X %02X %02X\n",
+           (unsigned)SPU_BOOT_READY_MAX_POLLS,
+           status[0], status[1], status[2], status[3]);
+    return false;
+#else
+    (void)link;
+    // Compatibility path for existing bitstreams without boot_ready status.
+    sleep_ms(5);
+    return true;
+#endif
+}
+
 static void send_instruction(spu_link_t *link, uint64_t word) {
     uint8_t chord[SPU_LINK_CHORD_BYTES];
     uint8_t status[4] = {0};
@@ -275,6 +316,13 @@ int main(void) {
     printf("\n=== SPU-13 Arithmetic/ROTC Test Driver ===\n");
     printf("SPI baud: %u Hz\n", (unsigned)SPI_BAUD_HZ);
     printf("Tests: %u\n\n", (unsigned)ARITHMETIC_TEST_COUNT);
+
+    if (!wait_boot_ready(&link)) {
+        printf("ARITHMETIC_BLAZE: FAIL (boot not ready)\n");
+        while (1) {
+            sleep_ms(1000);
+        }
+    }
 
     for (unsigned i = 0; i < ARITHMETIC_TEST_COUNT; i++) {
         const arithmetic_test_case_t *test = &arithmetic_tests[i];

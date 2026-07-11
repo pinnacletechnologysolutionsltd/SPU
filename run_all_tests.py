@@ -651,6 +651,25 @@ def main():
     tensegrity_pass = sum(p for p, _ in tensegrity_results.values())
     tensegrity_fail = sum(f for _, f in tensegrity_results.values())
 
+    # Canonical boot-sequence FSM oracle/state-machine tests.
+    boot_sequence_results = {}
+    for boot_sequence_name in ("test_boot_sequence.py",):
+        boot_sequence_path = os.path.join(root_dir, "software", "tests", boot_sequence_name)
+        if not os.path.exists(boot_sequence_path):
+            boot_sequence_results[boot_sequence_name] = (0, 0)
+            continue
+        result_boot_sequence = subprocess.run(
+            [sys.executable, boot_sequence_path],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_boot_sequence.returncode == 0:
+            boot_sequence_results[boot_sequence_name] = (1, 0)
+        else:
+            boot_sequence_results[boot_sequence_name] = (0, 1)
+            print(f"\n  {boot_sequence_name} FAILED:\n{result_boot_sequence.stdout[-500:]}")
+    boot_sequence_pass = sum(p for p, _ in boot_sequence_results.values())
+    boot_sequence_fail = sum(f for _, f in boot_sequence_results.values())
+
     # spu_host console parser (no hardware required)
     host_test = os.path.join(root_dir, "software", "tests", "test_spu_host_parser.py")
     if os.path.exists(host_test):
@@ -706,8 +725,12 @@ def main():
     print(f"Passed:                    {tensegrity_pass}")
     print(f"Failed:                    {tensegrity_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass + tensegrity_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + tensegrity_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
+    print(f"\nBoot Sequence FSM Tests: {boot_sequence_pass + boot_sequence_fail}")
+    print(f"Passed:                 {boot_sequence_pass}")
+    print(f"Failed:                 {boot_sequence_fail}")
+
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass + tensegrity_pass + boot_sequence_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + tensegrity_fail + boot_sequence_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")
