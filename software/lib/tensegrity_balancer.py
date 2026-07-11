@@ -193,6 +193,15 @@ class Phi:
     def __rmul__(self, scalar):
         return self * scalar
 
+    def __truediv__(self, other: "Phi") -> "Phi":
+        if not isinstance(other, Phi):
+            return NotImplemented
+        norm = other.a * other.a + other.a * other.b - other.b * other.b
+        if norm == 0:
+            raise ZeroDivisionError
+        conj = Phi(other.a + other.b, -other.b)
+        return (self * conj) * (ONE / norm)
+
     def __neg__(self):
         return Phi(-self.a, -self.b)
 
@@ -355,12 +364,12 @@ class TensegritySystem:
             for b in struts[i + 1:]:
                 if {a.node_a, a.node_b} & {b.node_a, b.node_b}:
                     continue
-                if segments_intersect_interior(
+                if segments_contact_closed(
                         self.nodes[a.node_a], self.nodes[a.node_b],
                         self.nodes[b.node_a], self.nodes[b.node_b]):
                     self.fault_detail = (
                         f"Struts {a.node_a}-{a.node_b} and "
-                        f"{b.node_a}-{b.node_b} intersect in their interiors")
+                        f"{b.node_a}-{b.node_b} touch or intersect")
                     return False
         return True
 
@@ -451,14 +460,59 @@ def _vec_to_frac3(v: Vec3Phi) -> tuple[Fraction, Fraction, Fraction]:
     return (_phi_to_fraction(v.x), _phi_to_fraction(v.y), _phi_to_fraction(v.z))
 
 
-def _dot(u: tuple[Fraction, Fraction, Fraction],
-         v: tuple[Fraction, Fraction, Fraction]) -> Fraction:
+def _phi_lt(a: Phi, b: Phi) -> bool:
+    return (b - a).is_positive()
+
+
+def _phi_le(a: Phi, b: Phi) -> bool:
+    return a == b or _phi_lt(a, b)
+
+
+def _phi_gt(a: Phi, b: Phi) -> bool:
+    return _phi_lt(b, a)
+
+
+def _phi_ge(a: Phi, b: Phi) -> bool:
+    return a == b or _phi_gt(a, b)
+
+
+def _phi_min(a: Phi, b: Phi) -> Phi:
+    return a if _phi_le(a, b) else b
+
+
+def _phi_max(a: Phi, b: Phi) -> Phi:
+    return a if _phi_ge(a, b) else b
+
+
+def _vec_to_phi3(v: Vec3Phi) -> tuple[Phi, Phi, Phi]:
+    return (v.x, v.y, v.z)
+
+
+def _dot(u: tuple[Phi, Phi, Phi],
+         v: tuple[Phi, Phi, Phi]) -> Phi:
     return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]
 
 
-def _sub3(a: tuple[Fraction, Fraction, Fraction],
-          b: tuple[Fraction, Fraction, Fraction]) -> tuple[Fraction, Fraction, Fraction]:
+def _sub3(a: tuple[Phi, Phi, Phi],
+          b: tuple[Phi, Phi, Phi]) -> tuple[Phi, Phi, Phi]:
     return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+
+
+def _cross(u: tuple[Phi, Phi, Phi],
+           v: tuple[Phi, Phi, Phi]) -> tuple[Phi, Phi, Phi]:
+    return (
+        u[1] * v[2] - u[2] * v[1],
+        u[2] * v[0] - u[0] * v[2],
+        u[0] * v[1] - u[1] * v[0],
+    )
+
+
+def _is_zero3(v: tuple[Phi, Phi, Phi]) -> bool:
+    return v[0].is_zero() and v[1].is_zero() and v[2].is_zero()
+
+
+def _same_point(a: tuple[Phi, Phi, Phi], b: tuple[Phi, Phi, Phi]) -> bool:
+    return a[0] == b[0] and a[1] == b[1] and a[2] == b[2]
 
 
 def _is_antipodal_through_origin(a: Vec3Phi, b: Vec3Phi) -> bool:
@@ -469,51 +523,111 @@ def _is_antipodal_through_origin(a: Vec3Phi, b: Vec3Phi) -> bool:
     )
 
 
-def segments_intersect_interior(p0: Vec3Phi, p1: Vec3Phi,
-                                q0: Vec3Phi, q1: Vec3Phi) -> bool:
-    """Exact segment-segment interior intersection for rational 3D points.
+def _param_in_unit_interval(value: Phi, closed: bool) -> bool:
+    if closed:
+        return _phi_ge(value, PHI_ZERO) and _phi_le(value, PHI_ONE)
+    return _phi_gt(value, PHI_ZERO) and _phi_lt(value, PHI_ONE)
 
-    SCOPE LIMITATIONS (adversarially confirmed 2026-07-11; none is
-    reachable from the shipped fixtures; all queued for the Q(phi)
-    generalization round):
-      - coordinates with a nonzero phi component hit the assert in
-        _phi_to_fraction rather than returning a verdict (the antipodal
-        special case above covers the counterexample fixture only);
-      - collinear overlapping interiors are NOT detected (parallel
-        branch falls through);
-      - endpoint-on-interior contact (T-junction) returns False: strict
-        s/t bounds treat endpoints as non-interior, but Fuller 640.02
-        forbids compression members touching at all, so a physical
-        T-contact between struts is currently invisible.
-    """
+
+def _collinear_segments_contact(p0: tuple[Phi, Phi, Phi],
+                                p1: tuple[Phi, Phi, Phi],
+                                q0: tuple[Phi, Phi, Phi],
+                                q1: tuple[Phi, Phi, Phi],
+                                closed: bool) -> bool:
+    u = _sub3(p1, p0)
+    v = _sub3(q1, q0)
+
+    if _is_zero3(u):
+        if _is_zero3(v):
+            return closed and _same_point(p0, q0)
+        return False
+    if _is_zero3(v):
+        return False
+
+    axis = next(i for i, coord in enumerate(u) if not coord.is_zero())
+    q0_param = (q0[axis] - p0[axis]) / u[axis]
+    q1_param = (q1[axis] - p0[axis]) / u[axis]
+    lo = _phi_max(PHI_ZERO, _phi_min(q0_param, q1_param))
+    hi = _phi_min(PHI_ONE, _phi_max(q0_param, q1_param))
+    if closed:
+        return _phi_le(lo, hi)
+    return _phi_lt(lo, hi)
+
+
+def _point_on_segment_closed(point: tuple[Phi, Phi, Phi],
+                             start: tuple[Phi, Phi, Phi],
+                             end: tuple[Phi, Phi, Phi]) -> bool:
+    u = _sub3(end, start)
+    w = _sub3(point, start)
+    if _is_zero3(u):
+        return _same_point(point, start)
+    if not _is_zero3(_cross(w, u)):
+        return False
+    axis = next(i for i, coord in enumerate(u) if not coord.is_zero())
+    param = w[axis] / u[axis]
+    return _param_in_unit_interval(param, closed=True)
+
+
+def _segments_contact(p0: Vec3Phi, p1: Vec3Phi,
+                      q0: Vec3Phi, q1: Vec3Phi,
+                      closed: bool) -> bool:
     if (_is_antipodal_through_origin(p0, p1) and
             _is_antipodal_through_origin(q0, q1)):
         return True
 
-    p0f = _vec_to_frac3(p0)
-    p1f = _vec_to_frac3(p1)
-    q0f = _vec_to_frac3(q0)
-    q1f = _vec_to_frac3(q1)
-    u = _sub3(p1f, p0f)
-    v = _sub3(q1f, q0f)
-    w = _sub3(q0f, p0f)
-    # Solve s*u - t*v = w by trying the three 2x2 coordinate minors.
+    p0v = _vec_to_phi3(p0)
+    p1v = _vec_to_phi3(p1)
+    q0v = _vec_to_phi3(q0)
+    q1v = _vec_to_phi3(q1)
+    u = _sub3(p1v, p0v)
+    v = _sub3(q1v, q0v)
+    w = _sub3(q0v, p0v)
+
+    if _is_zero3(u) or _is_zero3(v):
+        if not closed:
+            return False
+        if _is_zero3(u):
+            return _point_on_segment_closed(p0v, q0v, q1v)
+        return _point_on_segment_closed(q0v, p0v, p1v)
+
+    # Solve s*u - t*v = w by trying the three 2x2 coordinate minors in Q(phi).
     pairs = ((0, 1), (0, 2), (1, 2))
     for a, b in pairs:
         det = (-u[a] * v[b]) + (u[b] * v[a])
-        if det == 0:
+        if det.is_zero():
             continue
         s = (-w[a] * v[b] + w[b] * v[a]) / det
         t = (u[a] * w[b] - u[b] * w[a]) / det
-        if s <= 0 or s >= 1 or t <= 0 or t >= 1:
+        if (not _param_in_unit_interval(s, closed) or
+                not _param_in_unit_interval(t, closed)):
             return False
-        hit_p = (p0f[0] + u[0] * s, p0f[1] + u[1] * s, p0f[2] + u[2] * s)
-        hit_q = (q0f[0] + v[0] * t, q0f[1] + v[1] * t, q0f[2] + v[2] * t)
+        hit_p = (p0v[0] + u[0] * s, p0v[1] + u[1] * s, p0v[2] + u[2] * s)
+        hit_q = (q0v[0] + v[0] * t, q0v[1] + v[1] * t, q0v[2] + v[2] * t)
         return hit_p == hit_q
-    # Parallel/collinear case: detect overlapping interiors on the common line.
-    if _dot(_sub3(q0f, p0f), _sub3(q0f, p0f)) == 0:
-        return True
+
+    if _is_zero3(_cross(w, u)):
+        return _collinear_segments_contact(p0v, p1v, q0v, q1v, closed)
     return False
+
+
+def segments_intersect_interior(p0: Vec3Phi, p1: Vec3Phi,
+                                q0: Vec3Phi, q1: Vec3Phi) -> bool:
+    """Exact open-interval segment intersection over Q(phi).
+
+    Coordinates are exact Fraction pairs a + b*phi. All ordering is done by
+    Phi.is_positive(), which maps a + b*phi to (2a+b) + b*sqrt(5) and uses
+    conjugate square comparisons; no floats or epsilon tests are used.
+    Collinear segments return True only when their open interiors overlap.
+    Endpoint touches, including T-junctions, are reserved for
+    segments_contact_closed().
+    """
+    return _segments_contact(p0, p1, q0, q1, closed=False)
+
+
+def segments_contact_closed(p0: Vec3Phi, p1: Vec3Phi,
+                            q0: Vec3Phi, q1: Vec3Phi) -> bool:
+    """Exact closed-interval segment contact over Q(phi)."""
+    return _segments_contact(p0, p1, q0, q1, closed=True)
 
 
 def _matrix_rows(nodes: List[Vec3Phi], edges: List[Edge]) -> List[List[Fraction]]:

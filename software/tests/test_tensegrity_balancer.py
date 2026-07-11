@@ -11,15 +11,20 @@ from lib.tensegrity_balancer import (
     EdgeType,
     Fraction,
     GridState,
+    ONE,
     Phi,
     PHI_ONE,
+    PHI_ZERO,
     RationalSurd,
     TensegrityFault,
     TensegrityState,
     TensegritySystem,
     Vec3Phi,
+    ZERO,
     make_tensegrity_antipodal_counterexample,
     make_tensegrity_six_strut,
+    segments_contact_closed,
+    segments_intersect_interior,
     solve_equilibrium,
 )
 
@@ -60,6 +65,54 @@ def test_exact_surd_sign_cases():
           "Q(sqrt3) sign: -1 + sqrt3 > 0 by exact square compare")
     check(not RationalSurd(Fraction(-2), Fraction(1)).is_positive(),
           "Q(sqrt3) sign: -2 + sqrt3 < 0 by exact square compare")
+
+
+def _p(a=0, b=0) -> Phi:
+    return Phi(Fraction(a), Fraction(b))
+
+
+def _point(x: Phi, y: Phi, z: Phi = PHI_ZERO) -> Vec3Phi:
+    return Vec3Phi(x, y, z)
+
+
+def test_segment_predicates_over_qphi():
+    half_phi = Phi(ZERO, Fraction(1, 2))
+    phi = Phi(ZERO, ONE)
+    p0 = _point(PHI_ZERO, PHI_ZERO)
+    p1 = _point(phi, PHI_ZERO)
+    q0 = _point(half_phi, _p(-1))
+    q1 = _point(half_phi, _p(1))
+    check(segments_intersect_interior(p0, p1, q0, q1),
+          "Q(phi) segment intersection returns a verdict instead of crashing")
+    check(segments_contact_closed(p0, p1, q0, q1),
+          "Q(phi) segment contact accepts the same interior crossing")
+
+    p0 = _point(_p(0), PHI_ZERO)
+    p1 = _point(_p(3), PHI_ZERO)
+    q0 = _point(_p(1), PHI_ZERO)
+    q1 = _point(_p(4), PHI_ZERO)
+    check(segments_intersect_interior(p0, p1, q0, q1),
+          "collinear overlapping interiors are detected")
+    check(segments_contact_closed(p0, p1, q0, q1),
+          "closed contact detects the same collinear overlap")
+
+    p0 = _point(_p(0), PHI_ZERO)
+    p1 = _point(_p(2), PHI_ZERO)
+    q0 = _point(_p(1), PHI_ZERO)
+    q1 = _point(_p(1), _p(1))
+    check(not segments_intersect_interior(p0, p1, q0, q1),
+          "T-junction endpoint-on-interior is not an open-interval intersection")
+    check(segments_contact_closed(p0, p1, q0, q1),
+          "T-junction endpoint-on-interior is closed-interval contact")
+
+    p0 = _point(_p(0), PHI_ZERO)
+    p1 = _point(_p(2), PHI_ZERO)
+    q0 = _point(_p(0), _p(1))
+    q1 = _point(_p(2), _p(1))
+    check(not segments_intersect_interior(p0, p1, q0, q1),
+          "non-touching parallel struts have no open-interval intersection")
+    check(not segments_contact_closed(p0, p1, q0, q1),
+          "non-touching parallel struts have no closed-interval contact")
 
 
 def test_canonical_six_strut_balances():
@@ -253,6 +306,7 @@ if __name__ == "__main__":
     print("=== Tensegrity balancer exact oracle tests ===")
     for case in (
         test_exact_surd_sign_cases,
+        test_segment_predicates_over_qphi,
         test_canonical_six_strut_balances,
         test_canonical_fixture_geometry_and_ratio,
         test_strut_collision_detected,

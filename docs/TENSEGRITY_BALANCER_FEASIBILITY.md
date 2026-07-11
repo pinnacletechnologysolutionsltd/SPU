@@ -1,7 +1,7 @@
 # Tensegrity Balancer — Feasibility Analysis & SPU-13 Integration
 
 **Status:** software oracle complete and suite-registered
-(`software/tests/test_tensegrity_balancer.py`, 36 checks). RTL not started.
+(`software/tests/test_tensegrity_balancer.py`, 44 checks). RTL not started.
 Part of the state-machine harness catalogue
 (`docs/STATE_MACHINE_HARNESS.md`) as case study #6.
 
@@ -71,16 +71,29 @@ IDLE -> CONFIGURING -> BALANCED <-> ROTATING
                          FAULT.NOT_IN_EQUILIBRIUM
 ```
 
-All fault states are terminal until explicit `reset()`.
+All fault states are terminal until explicit `reset()`. These faults are
+discrete exact admissibility results, not measurement excursions beyond a
+tolerance. A fault means the proposed configuration is exactly inadmissible:
+the guard has produced a sign or zero certificate in the field, with no epsilon
+or floating-point boundary anywhere.
 
 | Guard | Invariant | Check |
 |---|---|---|
 | `guard_valid_topology` | Fuller §724.30 structural minimum | At least 6 structural edges and all nodes connected |
 | `guard_struts_separated` | Compression islands do not touch | Each node touches at most one strut; strut endpoints distinct |
-| `guard_struts_disjoint_interior` | Fuller §640.02 compression islands | Exact segment test rejects interior strut crossings |
+| `guard_struts_disjoint_interior` | Fuller §640.02 compression islands | Exact closed segment contact rejects strut endpoint touches and interior crossings |
 | `guard_cables_taut` | Tension members do not collapse | CABLE/GAP quadrance is exact positive/nonzero |
 | `guard_grid_consistency` | Compression does not cross MAIN/CONJ | Cross-grid edges must be GAP |
 | `guard_equilibrium` | Static tensegrity self-stress | Exact force densities exist with cable/GAP positive and strut negative signs |
+
+| Fault code | Physical diagnosis |
+|---|---|
+| `CABLE_SLACK` | tendon lost tension or actuator over-released |
+| `STRUT_COLLISION` | compression members share endpoints incorrectly |
+| `STRUT_INTERSECTION` | hidden interior collision, like the antipodal counterexample |
+| `NOT_IN_EQUILIBRIUM` | topology exists but force-density signs cannot sustain it |
+| `GRID_MISMATCH` | wrong MAIN/CONJ coupling, useful for dual-lattice models |
+| `TOPOLOGY_ERROR` | not a closed network; too few nodes/struts or disconnected; assembly incomplete or a member reported missing |
 
 `verify_balance` requires all six guards. The equilibrium guard solves the
 small force-density linear system over exact coordinates; the canonical
@@ -102,6 +115,7 @@ solver derives `q_cable:q_strut = 2:-3`, so strut force density is exactly
 | Test group | What it proves |
 |---|---|
 | Exact Q(sqrt3) sign cases | `P + Q sqrt3 > 0` uses integer square comparisons; no float boundary |
+| Exact Q(phi) segment predicates | Segment contact/intersection uses field division and conjugate sign tests; phi coordinates, collinear overlap, T-junction contact, and disjoint parallels are pinned |
 | Canonical expanded-octahedron fixture balances | Topology, endpoint separation, interior disjointness, tautness, grid consistency, and equilibrium all pass |
 | Canonical fixture geometry | 24 cables at quadrance 6, six struts at quadrance 16, derived `2:-3` self-stress |
 | Fault matrix | Strut collision, cable slack, grid mismatch, disconnected topology, and terminal fault semantics |
