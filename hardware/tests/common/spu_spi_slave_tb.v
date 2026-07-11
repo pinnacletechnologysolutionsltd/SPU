@@ -59,6 +59,7 @@ module spu_spi_slave_tb;
         .laminar_index(dissonance),
         .turbulence(1'b0),
         .rplu_mode(1'b0),
+        .boot_ready(1'b1),  // no boot FSM in this top — always ready
         .sentinel_telemetry(sentinel_telemetry)
     );
 
@@ -319,13 +320,14 @@ module spu_spi_slave_tb;
         // --- T2: CMD 0xAC — 4-byte status ---
         spi_transaction(8'hAC, 4);
 
-        // laminar_index=0xBEEF; flags bit1=janus=1, bit0=snaps[0]=0 -> 0x02; rplu_mode=0
+        // laminar_index=0xBEEF; flags bit1=janus=1, bit0=snaps[0]=0 -> 0x02;
+        // byte3 = {5'h0, boot_ready(=1 in this TB), crc_sticky(0), rplu_mode(0)} = 0x04
         if (rx_buf[0] === 8'hBE && rx_buf[1] === 8'hEF &&
-            rx_buf[2] === 8'h02 && rx_buf[3] === 8'h00) begin
-            $display("T2 PASS: status bytes correct (laminar=BEEF flags=02 mode=00)");
+            rx_buf[2] === 8'h02 && rx_buf[3] === 8'h04) begin
+            $display("T2 PASS: status bytes correct (laminar=BEEF flags=02 byte3=04)");
             pass_count = pass_count + 1;
         end else begin
-            $display("T2 FAIL: [%02h,%02h,%02h,%02h] expected BE,EF,02,00",
+            $display("T2 FAIL: [%02h,%02h,%02h,%02h] expected BE,EF,02,04",
                 rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3]);
             fail_count = fail_count + 1;
         end
@@ -435,7 +437,7 @@ module spu_spi_slave_tb;
 
         spi_transaction(8'hAC, 4);
         if (rx_buf[0] === 8'hBE && rx_buf[1] === 8'hEF &&
-            rx_buf[2] === 8'h02 && rx_buf[3] === 8'h00) begin
+            rx_buf[2] === 8'h02 && rx_buf[3] === 8'h04) begin
             $display("T8a PASS: status survives long RPLU burst");
             pass_count = pass_count + 1;
         end else begin

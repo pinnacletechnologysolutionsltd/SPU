@@ -388,6 +388,7 @@ module spu13_tang25k_southbridge_top #(
         .tx(diag_uart_tx)
     );
 
+    wire core_boot_ready;
     spu_spi_slave u_spi (
         .clk(clk_50m), .rst_n(rst_n),
         .spi_cs_n(spi_cs_n), .spi_sck(spi_sck),
@@ -415,6 +416,7 @@ module spu13_tang25k_southbridge_top #(
         .fifo_full(1'b0),
         .laminar_index(southbridge_status),
         .turbulence(1'b0), .rplu_mode(CORE_ENABLE_RPLU_V2 ? 1'b1 : 1'b0),
+        .boot_ready(core_boot_ready),
         .sentinel_telemetry(southbridge_telemetry)
     );
 
@@ -516,7 +518,8 @@ module spu13_tang25k_southbridge_top #(
         .axiomatic_fault(), .fault_type(), .fault_count(),
         .rns_error(),
         .ecc_single_err(),
-        .ecc_double_err()
+        .ecc_double_err(),
+        .boot_ready(core_boot_ready)
     );
 
     // ── LEDs ───────────────────────────────────────────────────

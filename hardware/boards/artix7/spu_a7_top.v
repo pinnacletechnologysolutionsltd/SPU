@@ -236,6 +236,7 @@ module spu_a7_top #(
     wire rns_error;
     wire ecc_single_err, ecc_double_err;
     wire [15:0] core_rotc_debug_status;
+    wire core_boot_ready;
     reg [7:0] debug_last_spi_opcode = 8'h00;
     reg [7:0] debug_last_core_opcode = 8'h00;
     reg [7:0] debug_active_core_opcode = 8'h00;
@@ -631,6 +632,7 @@ module spu_a7_top #(
                 .ecc_single_err(ecc_single_err),
                 .ecc_double_err(ecc_double_err),
                 .rotc_debug_status(core_rotc_debug_status),
+                .boot_ready(core_boot_ready),
                 .rplu_pade_mult_start(core_rplu_pade_mult_start),
                 .rplu_pade_mult_a0(core_rplu_pade_mult_a0),
                 .rplu_pade_mult_a1(core_rplu_pade_mult_a1),
@@ -900,6 +902,7 @@ module spu_a7_top #(
         .laminar_index(spi_status_index),
         .turbulence(spi_status_turbulence),
         .rplu_mode(spi_status_mode),
+        .boot_ready(core_boot_ready),
         .sentinel_telemetry(southbridge_telemetry)
     );
 

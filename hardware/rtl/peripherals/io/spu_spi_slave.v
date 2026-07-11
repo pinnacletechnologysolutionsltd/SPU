@@ -75,6 +75,7 @@ module spu_spi_slave (
     input  wire [15:0] laminar_index,
     input  wire        turbulence,
     input  wire        rplu_mode,   // Current RPLU bank: 0=Smooth 1=Turbulent
+    input  wire        boot_ready,  // Boot FSM READY (docs/BOOT_SEQUENCE_FSM.md §3.6)
 
     // Sentinel Telemetry (piranha domain snapshot)
     input  wire [511:0] sentinel_telemetry
@@ -431,11 +432,11 @@ module spu_spi_slave (
                             // 4-byte status:
                             //   [0..1] laminar_index (big-endian)
                             //   [2]    flags: {ratio_lat[2:0], ratio_valid, fifo_full, turbulence, janus, snap}
-                            //   [3]    rplu_mode[0] — current RPLU bank (0=Smooth, 1=Turbulent)
+                            //   [3]    {5'h0, boot_ready, crc_error_sticky, rplu_mode}
                             resp_buf[0] <= laminar_index[15:8];
                             resp_buf[1] <= laminar_index[7:0];
                             resp_buf[2] <= {ratio_lat[2:0], ratio_valid_lat, fifo_full, turbulence, janus_lat, snaps_lat[0]};
-                            resp_buf[3] <= {6'h0, crc_error_sticky, rplu_mode};
+                            resp_buf[3] <= {5'h0, boot_ready, crc_error_sticky, rplu_mode};
                             resp_len    <= 6'd4;
                             shift_out <= laminar_index[15:8];
                             byte_idx  <= 6'd0;

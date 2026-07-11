@@ -1,9 +1,16 @@
 # Boot Sequence FSM — Canonical Hydration Interlock
 
-**Status:** software oracle complete and suite-registered
-(`software/tests/test_boot_sequence.py`). RTL integration not started. The
-reserved RTL changes are `hardware/rtl/core/spu13/spu13_core.v` and
-`hardware/rtl/peripherals/io/spu_spi_slave.v`.
+**Status:** implemented end to end (2026-07-11). Oracle + suite
+registration (`software/tests/test_boot_sequence.py`, 23 checks), RTL boot
+FSM in `spu13_core.v` (RESET/HYDRATING/READY/FAULT.HYDRATION_TIMEOUT,
+generate-conditional join, parameter watchdog, subsumes `qrf_hydrated`),
+`boot_ready` output wired through the Tang/Artix board tops, 0xAC status
+byte 3 bit 2 in `spu_spi_slave.v`, RTL testbench
+(`spu13_core_boot_fsm_tb.v`: hydration hold + watchdog fault terminality +
+28-write SOM join), firmware readiness poll defaults matching the bit.
+RPLU readiness enters via `boot_done` itself (the flash boot master raises
+it only after streaming its records); SOM fixture spins are ready at reset,
+`SOM_HOST_HYDRATION=1` spins require the 28-write set.
 
 ## 3.1 Purpose
 

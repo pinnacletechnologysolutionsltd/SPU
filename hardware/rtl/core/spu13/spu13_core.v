@@ -18,6 +18,9 @@ module spu13_core #(
     parameter SHARE_RPLU_PADE_INV_MULT = 0,
     parameter ENABLE_TORUS = 0, // optional 832-bit manifold snapshot ring buffer
     parameter ENABLE_IROTC = 0, // icosahedral A₅ engine + φ-plane typestate (IROTC_SPEC.md v0.2)
+    parameter SOM_HOST_HYDRATION = 0, // 1 = SOM weights arrive via 28 host writes before dispatch
+    parameter [15:0] BOOT_WATCHDOG_CYCLES = 16'd256, // hydration bound (VE walk = 13; host-driven
+                                                     // lines need a bound matching their protocol)
     parameter [255:0] MEM_FILE = "hardware/rtl/arch/hw_test.mem"
 )(
     input  wire         clk,            // Fast Clock (e.g. 12-24MHz)
@@ -115,6 +118,7 @@ module spu13_core #(
     output wire                      ecc_single_err,   // QR regfile single-bit error corrected
     output wire                      ecc_double_err,   // QR regfile double-bit error detected
     output wire [15:0]               rotc_debug_status, // bring-up: flags/state/angle
+    output wire                      boot_ready,        // boot FSM in READY (docs/BOOT_SEQUENCE_FSM.md)
 
     // Optional external RPLU v2 Padé multiplier. Active only when
     // EXTERNAL_RPLU_PADE_MULT=1 and ENABLE_CORE_RPLU_V2_PIPELINE=1.
@@ -614,21 +618,62 @@ module spu13_core #(
         end
     endgenerate
 
-    // Mux: external inst_valid or sequencer-driven.
-    // Gated on VE hydration: spu_ve_qr_init walks lanes 1-12 with
-    // init-port priority right after boot_done, so an instruction
-    // accepted mid-hydration would have its QR write overwritten (the
-    // sequencer path could actually hit this; SPI is too slow to).
-    // Structural interlock, not a timeout: the inst_valid/inst_done
-    // handshake holds the sender, so an early instruction just waits
-    // the few cycles until qrf_hydrated.
+    // ── Canonical boot-sequence FSM (docs/BOOT_SEQUENCE_FSM.md §3) ──
+    // RESET → HYDRATING → READY, terminal FAULT.HYDRATION_TIMEOUT.
+    // The HYDRATING exit is the generate-conditional join of in-core
+    // hydration ready lines. RPLU table readiness enters through
+    // boot_done itself: the flash boot master raises boot_done only
+    // after its RPLU records are streamed (spu_laminar_boot state 15),
+    // and on SPI spins RPLU config arrives post-boot under firmware
+    // sequencing — so no external ready port is needed. SOM: the
+    // shipped 7-node core uses fixture-initialised weights, so
+    // som_hydrated defaults true; set SOM_HOST_HYDRATION=1 for spins
+    // that require the 28-write host hydration before dispatch.
+    // Instruction license: no instruction is accepted outside READY —
+    // this subsumes the earlier one-off qrf_hydrated interlock, which
+    // is now one input to the join. Structural, not a timeout: the
+    // inst_valid/inst_done handshake holds the sender.
     wire        qrf_hydrated;
+    localparam [1:0] BOOT_RESET     = 2'd0;
+    localparam [1:0] BOOT_HYDRATING = 2'd1;
+    localparam [1:0] BOOT_READY_ST  = 2'd2;
+    localparam [1:0] BOOT_FAULT     = 2'd3;
+    reg  [1:0]  boot_state;
+    reg  [15:0] boot_watchdog;
+    wire        som_hydrated;
+    wire        boot_join = qrf_hydrated && som_hydrated;
+    assign boot_ready = (boot_state == BOOT_READY_ST);
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            boot_state    <= BOOT_RESET;
+            boot_watchdog <= 16'd0;
+        end else begin
+            case (boot_state)
+                BOOT_RESET: if (boot_done) begin
+                    boot_state    <= BOOT_HYDRATING;
+                    boot_watchdog <= BOOT_WATCHDOG_CYCLES;
+                end
+                BOOT_HYDRATING: begin
+                    if (boot_join)
+                        boot_state <= BOOT_READY_ST;   // at-bound completion OK
+                    else if (boot_watchdog == 16'd0)
+                        boot_state <= BOOT_FAULT;      // terminal until reset
+                    else
+                        boot_watchdog <= boot_watchdog - 16'd1;
+                end
+                BOOT_READY_ST: ;                       // stable until reset
+                BOOT_FAULT:    ;                       // terminal (explicit reset only)
+            endcase
+        end
+    end
+
     wire        eff_inst_valid;
     wire [63:0] eff_inst_word;
     wire        inst_accept;
     reg         inst_seen;
     assign eff_inst_valid = (ENABLE_SEQUENCER ? seq_inst_valid : inst_valid)
-                            && qrf_hydrated;
+                            && boot_ready;
     assign eff_inst_word  = ENABLE_SEQUENCER ? seq_inst_word  : inst_word;
     assign inst_accept    = eff_inst_valid && !inst_seen;
     wire core_jscr_opcode = (eff_inst_word[63:56] == 8'h48);
@@ -1790,6 +1835,19 @@ module spu13_core #(
             // Config addr[4:0] = {node_id[2:0], feature_id[1:0]}
             // Config data[35:0] = {Q[17:0], P[17:0]} for one feature
             wire        host_som_we   = dec_fast_cfg_wr_en && dec_fast_cfg_sel == SOM_CFG_WEIGHT;
+
+            // Boot join ready line: fixture-initialised weights are ready at
+            // reset; host-hydrated spins (SOM_HOST_HYDRATION=1) require the
+            // full 7-node × 4-feature write set (28) before dispatch opens.
+            reg [4:0] som_host_wr_count;
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n)
+                    som_host_wr_count <= 5'd0;
+                else if (host_som_we && som_host_wr_count != 5'd28)
+                    som_host_wr_count <= som_host_wr_count + 5'd1;
+            end
+            assign som_hydrated = (SOM_HOST_HYDRATION == 0) ||
+                                  (som_host_wr_count == 5'd28);
             wire [2:0]  host_som_node = dec_fast_cfg_addr[4:2];
             wire [1:0]  host_som_feat = dec_fast_cfg_addr[1:0];
             wire [35:0] host_som_feat_data = dec_fast_cfg_data[35:0];
@@ -1909,6 +1967,7 @@ module spu13_core #(
                 end
             end
         end else begin : gen_no_som
+            assign som_hydrated = 1'b1;   // no SOM, nothing to hydrate
             assign som_done = 1'b0;
             assign som_train_done = 1'b0;
             assign som_classify_valid = 1'b0;

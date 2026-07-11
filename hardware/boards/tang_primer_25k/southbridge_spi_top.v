@@ -139,6 +139,7 @@ module spu13_tang25k_southbridge_top (
         .fifo_full(1'b0),
         .laminar_index(16'h25a5),
         .turbulence(1'b0), .rplu_mode(1'b0),
+        .boot_ready(1'b1),  // no boot FSM in this top — always ready
         .sentinel_telemetry(southbridge_telemetry)
     );
 endmodule

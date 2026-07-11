@@ -75,7 +75,7 @@ module spu13_core_rplu2_cfg_tb;
         .prime_data(24'd0),
         .prime_addr(4'd0),
         .prime_we(1'b0),
-        .boot_done(1'b0),
+        .boot_done(1'b1)  /* canonical boot contract: hydration interlock makes early writes safe (BOOT_SEQUENCE_FSM.md) */,
         .pell_data(32'd0),
         .pell_addr(3'd0),
         .pell_we(1'b0),

@@ -32,6 +32,7 @@ module spu13_spi_core_irotc_tb;
     wire [3:0] qr_commit_lane;
     wire [63:0] qr_commit_A, qr_commit_B, qr_commit_C, qr_commit_D;
     wire inst_done;
+    wire core_boot_ready;
     wire [831:0] manifold_state;
     wire [51:0] scale_table;
     wire [12:0] scale_overflow;
@@ -92,7 +93,8 @@ module spu13_spi_core_irotc_tb;
         .hex_valid(), .hex_q(), .hex_r(), .audio_p_out(), .audio_q_out(),
         .axiomatic_fault(), .fault_type(), .fault_count(),
         .rns_error(rns_error),
-        .ecc_single_err(ecc_single_err), .ecc_double_err(ecc_double_err)
+        .ecc_single_err(ecc_single_err), .ecc_double_err(ecc_double_err),
+        .boot_ready(core_boot_ready)
     );
 
     spu_spi_slave u_spi (
@@ -123,6 +125,7 @@ module spu13_spi_core_irotc_tb;
         .laminar_index({8'd0, laminar_flow_index}),
         .turbulence(rns_error || ecc_double_err),
         .rplu_mode(1'b0),
+        .boot_ready(core_boot_ready),
         .sentinel_telemetry(512'd0)
     );
 

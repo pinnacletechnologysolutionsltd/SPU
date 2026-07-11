@@ -111,6 +111,7 @@ module spu13_spi_rplu2_pade_tb;
         .laminar_index({debug_status, last_opcode}),
         .turbulence(sidecar_error),
         .rplu_mode(sidecar_busy),
+        .boot_ready(1'b1),  // no boot FSM in this top — always ready
         .sentinel_telemetry(512'd0)
     );
 

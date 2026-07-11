@@ -148,6 +148,7 @@ module spu13_spi_su3share_tb;
         .laminar_index({su3_debug_status, last_opcode}),
         .turbulence(su3_error),
         .rplu_mode(su3_busy),
+        .boot_ready(1'b1),  // no boot FSM in this top — always ready
         .sentinel_telemetry(512'd0)
     );
 
