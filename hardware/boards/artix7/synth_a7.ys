@@ -19,6 +19,7 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/common/prim/spu_hamming_72_64.v \
     hardware/rtl/core/shared/spu_quadray_regfile_ecc.v \
     hardware/rtl/core/spu13/spu13_rotor_core_tdm.v \
+    hardware/rtl/core/spu13/spu13_irotc_engine.v \
     hardware/rtl/common/prim/surd_multiplier.v \
     hardware/rtl/common/prim/spu_xilinx_prim.v \
     hardware/rtl/core/spu13/spu_sequencer.v \

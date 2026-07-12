@@ -26,6 +26,7 @@
 //   SPIN = "RPLU2"       — SPI + core + RPLU2 pipeline bring-up, shared Padé/inverter M31
 //   SPIN = "RPLU2LIVE"   — SPI-visible coreless RPLU2 live evaluator proof
 //   SPIN = "RPLU2PADE"   — SPI-visible coreless Padé evaluator proof
+//   SPIN = "IROTC"       — SPI + core + IROTC typestate/engine proof
 //   SPIN = "FULL"        — everything                  (development, 100T/200T)
 //   SPIN = "SENSOR"      — MATH only, minimal          (medical wearables, iCESugar)
 //   SPIN = "CUSTOM"      — use individual ENABLE_* parameters
@@ -54,6 +55,7 @@ module spu_a7_top #(
     parameter ENABLE_RPLU_V2_EXTENSIONS = 0,
     parameter ENABLE_LUCAS_MAC  = 0,
     parameter ENABLE_SU3        = 0,
+    parameter ENABLE_IROTC      = 0,
     parameter ENABLE_I2S        = 0,
     parameter ENABLE_TORUS      = 0,
     parameter ENABLE_LATTICE    = 0,
@@ -80,7 +82,8 @@ module spu_a7_top #(
         (SPIN == "INTELLIGENCE" || SPIN == "LUCAS" ||
          SPIN == "SU3" || SPIN == "SU3SHARE" || SPIN == "RPLUCFG" ||
          SPIN == "RPLU2CORE" || SPIN == "RPLU2" ||
-         SPIN == "RPLU2LIVE" || SPIN == "RPLU2PADE") ? 0 : 1;
+         SPIN == "RPLU2LIVE" || SPIN == "RPLU2PADE" ||
+         SPIN == "IROTC") ? 0 : 1;
     localparam _S = (SPIN == "CUSTOM") ? ENABLE_SOM :
         (SPIN == "INTELLIGENCE" || SPIN == "FULL" || SPIN == "SOM") ? 1 : 0;
     localparam _K = (SPIN == "CUSTOM") ? ENABLE_GATEKEEPER :
@@ -102,6 +105,8 @@ module spu_a7_top #(
         (SPIN == "LUCAS") ? 1 : 0;
     localparam _U = (SPIN == "CUSTOM") ? ENABLE_SU3 :
         (SPIN == "SU3" || SPIN == "SU3SHARE") ? 1 : 0;
+    localparam _IROTC = (SPIN == "CUSTOM") ? ENABLE_IROTC :
+        (SPIN == "IROTC") ? 1 : 0;
     localparam _R2_LIVE = (SPIN == "RPLU2LIVE") ? 1 : 0;
     localparam _R2_PADE = (SPIN == "RPLU2PADE") ? 1 : 0;
     localparam _SHARED_SU3_MULT = (SPIN == "SU3SHARE") ? 1 : 0;
@@ -587,6 +592,7 @@ module spu_a7_top #(
                 .ENABLE_CORE_RPLU_V2(_R2),
                 .ENABLE_CORE_RPLU_V2_PIPELINE(_R2_PIPELINE),
                 .ENABLE_CORE_RPLU_V2_EXTENSIONS(_R2_EXT),
+                .ENABLE_IROTC(_IROTC),
                 .EXTERNAL_RPLU_PADE_MULT(_SHARED_SU3_MULT),
                 .SHARE_RPLU_PADE_INV_MULT(_SHARED_RPLU2_MULT),
                 .ENABLE_TORUS(_T)
