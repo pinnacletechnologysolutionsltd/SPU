@@ -30,7 +30,7 @@ pullups, and metering path — the failure classes documented in bring-up
   ┌──────────────────────────────────┴─┐
   │  Raspberry Pi Pico 2 (socketed)    │
   │                                    │
-  │ GP16-19 ──[33R]── J11/PMOD SPI hdr ├── to Tang 25K southbridge /
+  │ GP16-19 ──[100R]── J11/PMOD SPI hdr├── to Tang 25K southbridge /
   │                   (10k on CS#)     │   Wukong J11
   │ GP2-5   ──[33R]── FLASH PMOD hdr   ├── W25Q flash PMOD (rp2040_flash_pmod)
   │                   (10k CS/WP/HOLD) │
@@ -56,16 +56,32 @@ Source: `hardware/rp2350/rp2350_su3_j11_smoke.c:49-58`, `rp2350_spu_diag.c`,
 
 | Signal | Pico 2 GPIO | Pico pin | Series R | Pull | J2 pin |
 |---|---|---|---|---|---|
-| SPI_MISO | GP16 | 21 | 33 Ω (near header) | — | 3 |
-| SPI_CS#  | GP17 | 22 | 33 Ω (near Pico) | 10 kΩ → 3V3 | 1 |
-| SPI_SCK  | GP18 | 24 | 33 Ω (near Pico) | — | 4 |
-| SPI_MOSI | GP19 | 25 | 33 Ω (near Pico) | — | 2 |
+| SPI_MISO | GP16 | 21 | 100 Ω (near header) | — | 3 |
+| SPI_CS#  | GP17 | 22 | 100 Ω (near Pico) | 10 kΩ → 3V3 | 1 |
+| SPI_SCK  | GP18 | 24 | 100 Ω (near Pico) | — | 4 |
+| SPI_MOSI | GP19 | 25 | 100 Ω (near Pico) | — | 2 |
 | 3V3 (sense/ref only) | — | 36 | — | — | 6 |
 | GND | — | 23 | — | — | 5 |
 
 J2 = 1x6 male 2.54 mm header (plus an optional parallel 2x6 PMOD-pattern
 footprint, unpopulated in Rev A). The CS# pullup guarantees idle-high during
 Pico reboot — required by the FPGA-side SPI deadman timer.
+
+**Series R raised 33 Ω → 100 Ω 2026-07-13 (Gemini finding, post A7 Wukong
+J11 damage):** the original 33 Ω was sized for signal termination, not fault
+current. `hardware/rp2040/`/`rp2350/` bring-up on the Wukong A7 confirmed via
+multimeter that J11 CS/SCK/MOSI (all three are Pico-driven outputs into the
+FPGA) took permanent I/O damage from sustained backfeed while the FPGA board
+was unpowered but the Pico stayed powered and driving — 33 Ω limits that
+fault current to ~100 mA (3.3 V / 33 Ω), which is high enough to stress an
+unpowered pin's clamp diodes over a long/repeated exposure. 100 Ω caps it at
+~33 mA, a meaningfully safer margin, at the cost of slightly softer edges at
+these boards' ≤2 MHz SPI rates — a non-issue at this frequency. Applied to
+all four J2 lines (including MISO, an FPGA output) for symmetric protection
+in case wiring roles ever get swapped. J3's flash-PMOD resistors stay at
+33 Ω: that link never crosses an independent power domain (flash chip has no
+board of its own to be "unpowered"), so it isn't exposed to this failure
+mode.
 
 **3V3 on J2 pin 6 is a reference/sense line only.** The target FPGA board is
 never powered from the Pico's 3V3 regulator.
@@ -208,7 +224,8 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | J1b | USB-C 5V breakout module fp | 0–1 | 3 | Generic USB-C PD trigger/breakout board footprint (unpopulated default) | Optional alternative input |
 | J2–J4, J8 | 2.54 mm male headers | ~40 pins | 2 | Generic breakaway pin header strip | |
 | JP2 | 2×3 shrouded header + 2× jumper shunt | 1 | 0.5 | Generic 2.54mm 2x3 header + 2× 2.54mm jumper shunts | GP4/GP5: FLASH ⟷ UART select, both poles moved together |
-| R | 33 Ω 1/4 W THT | 9 | 1 | Generic carbon/metal film, 5% or better | Series termination |
+| R | 100 Ω 1/4 W THT | 4 | 0.5 | Generic carbon/metal film, 5% or better | J2 SPI-to-FPGA series (MISO/CS/SCK/MOSI) — fault-current-limiting value, see §2.1 note |
+| R | 33 Ω 1/4 W THT | 5 | 1 | Generic carbon/metal film, 5% or better | J3 flash-PMOD series termination (4) +1 spare |
 | R | 10 kΩ 1/4 W THT | 3 | 0.5 | Generic carbon/metal film, 5% or better | SPI_CS# + FLASH_CS# pullups (2, WP#/HOLD# pullups removed per §2.2 correction — not physically possible on the 6-pin J3), +1 spare |
 | R | 1 kΩ 1/4 W THT | 2 | 0.5 | Generic carbon/metal film, 5% or better | LED series |
 | LED | 3 mm THT, green + red | 2 | 0.5 | Generic 3mm THT LED | PWR (input side), ACT (GP14) |

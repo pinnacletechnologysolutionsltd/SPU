@@ -375,6 +375,31 @@ Tang 25K or Artix-7.
 - RPLU2 full pipeline (MATH=1 + RPLU_V2=1) too large for 25K (89% LUT) — needs Wukong Artix-7
 - Split-build strategy: 4 independent probes fit on 25K (southbridge_link, math_probe, rplu2_arith_probe, lucas_mac_probe)
 - USB 3.0 port on BL616 bridge unreliable — use USB 2.0 only
+- **Wukong Artix-7 100T (this unit): J11 CS/SCK/MOSI confirmed damaged
+  2026-07-13** — sustained RP2350→FPGA backfeed during repeated power
+  cycles (RP2350 left powered/driving while the Wukong was unpowered)
+  caused permanent I/O damage: multimeter reads 1.0 V instead of clean
+  logic levels on 3 of J11's 4 pins (CS/SCK/MOSI, all RP2350-driven
+  outputs); MISO (the one FPGA-output signal on J11) reads healthy
+  3.3 V, matching the untouched control header. Clock/core logic
+  separately proven alive via a UART probe on the same bank (Bank 35,
+  pin E3) — this is contained I/O-bank damage, not a dead chip. Do not
+  reconnect RP2350 to this board's J11 without first rewiring the
+  southbridge SPI to different pins.
+- **Bench safety rule for all SPI southbridge jumper-wire hookups
+  (added 2026-07-13, root cause of the J11 damage above):** never power
+  an RP2350 (or anything else driving signals into an FPGA) while the
+  target FPGA board is unpowered — always disconnect/power down one
+  before power-cycling the other. Additionally, put 100 Ω series
+  resistors inline on all 4 SPI jumper wires (CS/SCK/MOSI/MISO) between
+  the RP2350 and the FPGA header — caps fault current at ~33 mA/pin if
+  backfeed happens anyway (vs bare wire). This is now the built-in
+  default in the not-yet-fabbed `bench_adapter` PCB
+  (`hardware/pcb/bench_adapter/`, §2.1 — J2 series R raised 33→100 Ω for
+  this reason); until that board is fabbed and in use, splice discrete
+  100 Ω THT resistors inline on the loose jumper wires for any board
+  being bench-wired directly (Tang Primer 25K, any future Wukong
+  reconnection).
 
 **RP2040 SPI Flash PMOD Programmer (bench-proven):**
 - Purpose: reliable replacement for bad SOIC clips / ambiguous XGECU ICSP wiring. Use it to program and verify W25Q-style PMOD flash before FPGA-side J4 probes.
