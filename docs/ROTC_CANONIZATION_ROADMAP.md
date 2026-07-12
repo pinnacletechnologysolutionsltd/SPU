@@ -259,28 +259,36 @@ tee fix, 9f58f66 tensegrity Q(φ), 4030b4a + this one docs). John's
 **154/154**. Both GTP orders from the round queue performed, verified,
 committed — GTP's reports were accurate throughout this session.
 
-**Bench run was imminent at close** (John flashing as session ended):
+**Bench run: PASS, 2026-07-12 late** — 6/6, including case [3]
+(conjugate-catalog, lane 3) and case [4] (CATMIX no-commit, holds at
+lane 3). First conjugate-icosahedron silicon. Full result + evidence:
+`docs/hardware_evidence.md` §3.2k.1; AGENTS.md IROTC entry updated.
+
 - Bitstream: `build/tang_primer_25k_spu13_irotc_spi.fs`,
   sha256 ca54c1dcdd1b358f786dab9a1094192c94402e86800bcd5cb6301ca0844c072a,
   BSRAM 1/56, LUT4 49%, worst Fmax 47.2 MHz @ 12 MHz constraint.
 - **SRAM-load, not flash**: `openFPGALoader -b tangprimer25k <fs>`
   (no -f; keeps RPLU2 boot tables at flash 0x110000 intact).
-- Wiring: Tang 25K PMOD **J4** flash-compatible mapping — CS#=G10,
-  SCK=D10, MOSI=B10, MISO=C10 — to RP2350 **spi0 on GP16–19**
-  (MISO=16, CS=17, SCK=18, MOSI=19, per rp2350_spu_irotc_test.c).
-  NOT GP0–4. Common ground required.
+- Wiring, **corrected 2026-07-12 late**: this section previously said
+  GP16–19 ("NOT GP0–4") — that was wrong. The bench board can't reach
+  GP16–19, and John's RP2350 Pico 2 exposes only GP0–4. The actual
+  built artifact (`build/rp2350_irotc_check/rp2350_spu_irotc_test.uf2`)
+  had always been compiled with `-DSPU_RP2350_ZERO_HEADER_SPI=ON`
+  (CMakeLists.txt:25-27,41-47), i.e. GP0–3 all along — confirmed via
+  `build.ninja` DEFINES and reproduced with a clean rebuild at
+  `build/rp2350_irotc_gp0_3/rp2350_spu_irotc_test.uf2`. Correct wiring:
+  Tang 25K PMOD **J4** — CS#=G10, SCK=D10, MOSI=B10, MISO=C10 — to
+  RP2350 spi0 GP0–3 (MISO=GP0←C10, CS=GP1→G10, SCK=GP2→D10,
+  MOSI=GP3→B10), common ground. This is what was on the bench for the
+  passing run above.
 - **No SD card needed**: boot_done is tied 1'b1 in this spin
   (spu13_tang25k_fpga_top.v:492) — hydration is the internal 13-cycle
   VE walk; boot_ready (0xAC byte 3 mask 0x04) comes up immediately.
-- Pass criteria: six-case CDC output; case [2] = conjugate-catalog
-  silicon, case [3] = CATMIX no-commit over the link. On pass: §3.2k
-  evidence entry pinned to the sha above. On fail: want the raw CDC
-  dump + which case.
 
-**Queue after bench (unchanged order):** A7 IROTC spin (needs a new A7
-board target; engine is BSRAM now, A7 has plenty) → MATH=1 southbridge
-fit decision (John) → Fuller §640.02/§724.30 primary-source check
-(John) → INA226 sensor demo (digital path 100% done incl. quantizer
+**Queue (unchanged order, bench item now done):** A7 IROTC spin (needs
+a new A7 board target; engine is BSRAM now, A7 has plenty) → MATH=1
+southbridge fit decision (John) → Fuller §640.02/§724.30 primary-source
+check (John) → INA226 sensor demo (digital path 100% done incl. quantizer
 RTL d8352a6; blocked on John's PCB layout/parts/fab — see memory) →
 deferred guard rename (bundle with next tensegrity round).
 

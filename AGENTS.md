@@ -270,8 +270,12 @@ Tang 25K or Artix-7.
   through the real slave: LOAD2X, idx36 main + CONJUGATE, CATMIX
   no-commit over the link, SCALE2 recondition). Bench firmware
   `hardware/rp2350/rp2350_spu_irotc_test.c` (cmake target
-  rp2350_spu_irotc_test, same 6 vectors). Awaiting bench = conjugate
-  catalog silicon. Then Artix-7.
+  rp2350_spu_irotc_test, same 6 vectors; RP2350 spi0 wired GP0-3, not
+  GP16-19 — build with `-DSPU_RP2350_ZERO_HEADER_SPI=ON`). **SILICON
+  2026-07-12**: bench run over the real SPI link, 6/6 PASS, including
+  the conjugate-catalog rotation (case 3) and CATMIX no-commit
+  (case 4) — first conjugate-icosahedron silicon. Full evidence:
+  `docs/hardware_evidence.md` §3.2k.1. Then Artix-7.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.

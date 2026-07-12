@@ -1245,9 +1245,73 @@ refusals fired on unlicensed data. Silicon scope is the probe's vector
 set (indices 16 and 36, main catalog, plus the three faults); the full
 60-index × both-catalog surface is testbench-verified
 (`spu13_irotc_engine_tb.v`, 120 oracle golden cases, 12-clock latency
-pinned per case). Not yet in silicon: conjugate-catalog rotations,
-LOAD2X/SCALE2 as instructions, tag storage in `spu13_core.v`,
-sidecar/SPI dispatch.
+pinned per case). Not yet in silicon at this probe: conjugate-catalog
+rotations, LOAD2X/SCALE2 as instructions, tag storage in
+`spu13_core.v`, sidecar/SPI dispatch — closed by §3.2k.1 below.
+
+### 3.2k.1 IROTC SPI Core-Integration + Conjugate-Catalog Silicon Proof
+
+**Date:** 2026-07-12 — closes every gap §3.2k left open: LOAD2X/IROTC/
+SCALE2 as real instructions dispatched over the SPI link, the 13×2-bit
+tag file, and — the headline — the **conjugate catalog** (dual
+icosahedron) executing in fabric for the first time.
+
+**Build & flash:**
+
+```
+bash build_25k_spu13_irotc_spi.sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_irotc_spi.fs
+```
+
+Bitstream SHA-256:
+`ca54c1dcdd1b358f786dab9a1094192c94402e86800bcd5cb6301ca0844c072a`.
+Resources: BSRAM 1/56, LUT4 49%, worst Fmax 47.2 MHz @ 12 MHz
+constraint (engine ROM converted case-mux→BSRAM this session,
+73acd91, to close the routing livelock that had blocked this bitstream
+— 6.9k→3.0k cells). SRAM-loaded, not flashed (`openFPGALoader` without
+`-f`), so the RPLU2 boot tables at flash 0x110000 stay untouched.
+`boot_done` is tied `1'b1` in this spin (no flash boot master, no
+chord streaming) — `boot_ready` (status byte 3, mask 0x04) comes up
+as soon as the internal 13-cycle VE hydration walk completes, no SD
+card involved.
+
+**Capture path:** RP2350 Pico 2, `rp2350_spu_irotc_test` firmware,
+spi0 on GP0-3 (MISO=GP0, CS=GP1, SCK=GP2, MOSI=GP3; built with
+`-DSPU_RP2350_ZERO_HEADER_SPI=ON`) wired to the Tang 25K PMOD J4
+flash-compatible header (CS#=G10, SCK=D10, MOSI=B10, MISO=C10),
+common ground, USB CDC at 115200 baud.
+
+**Six-case link-level proof, all PASS:**
+
+```
+[1/6] LOAD2X QR1 = 2*(0,3,-6,9)                                 PASS
+[2/6] IROTC QR2 <- QR1 idx36 main                                PASS
+[3/6] IROTC QR3 <- QR1 idx36 CONJUGATE                           PASS  <- conjugate-catalog silicon
+[4/6] CATMIX conj-on-MAIN faults, no commit (still QR3)          PASS  <- CATMIX poison, no commit
+[5/6] SCALE2 QR5 = 2*QR2 (recondition)                           PASS
+[6/6] IROTC QR6 <- QR5 conj idx3 (post-SCALE2 switch)            PASS
+=== Results: 6/6 PASSED ===
+ARITHMETIC_BLAZE: PASS
+```
+
+Case [3] (`D603010064000000`) committed lane 3 = A=(3,-6) B=(-3,-9)
+C=(-12,15) D=(12,0) — the dual-icosahedron rotation of idx36 applied
+to the same doubled input as case [2]'s main-catalog result, bit-exact
+against `test_icosahedral_catalog.py`. Case [4] issued a CONJ-tagged
+IROTC against QR2 (MAIN-tagged from case [2]) — the CATMIX guard
+fired and the QR commit correctly held at lane 3 (case [3]'s value),
+proving the 13×2-bit tag file enforces the typestate contract over the
+SPI link, not just in the bare-engine TB. Case [6] proves SCALE2's
+FRESH re-conditioning legally re-opens the catalog choice (conjugate
+idx3 after a main-catalog idx36 chain).
+
+**Interpretation:** IROTC is now silicon-proven end-to-end — engine,
+tag file, dispatch FSM, and SPI transport — including the conjugate
+catalog and CATMIX refusal that §3.2k left as testbench-only. Full
+60-index × both-catalog surface remains testbench-verified
+(`spu13_irotc_engine_tb.v`, `spu13_spi_core_irotc_tb.v`); this probe's
+silicon scope is the six-case vector set above (idx36 main+conjugate,
+idx3 conjugate, LOAD2X, SCALE2, one CATMIX fault).
 
 ### 3.3 RPLU + Math + SDRAM Proof
 

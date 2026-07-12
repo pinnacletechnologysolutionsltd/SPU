@@ -15,7 +15,7 @@
 // Build:
 //   cmake -S hardware/rp2350 -B build/rp2350_irotc -G Ninja \
 //     -DPICO_SDK_PATH=$PICO_SDK_PATH -DSPU_RP2350_ZERO_HEADER_SPI=ON
-//   ninja -C build/rp2350_irotc rp2350_spu_arithmetic_test
+//   ninja -C build/rp2350_irotc rp2350_spu_irotc_test
 //
 // Connection: USB CDC at 115200 baud.
 
