@@ -399,7 +399,10 @@ Tang 25K or Artix-7.
   this reason); until that board is fabbed and in use, splice discrete
   100 Ω THT resistors inline on the loose jumper wires for any board
   being bench-wired directly (Tang Primer 25K, any future Wukong
-  reconnection).
+  reconnection). **The same fix applies to the RP2040 DirtyJTAG
+  adapter** (TCK/TMS/TDI/TDO over bare jumper wires — identical exposure
+  to the RP2350 SPI link) — see
+  `tools/rp2040_tooling/README.md` "Bench safety" note.
 
 **RP2040 SPI Flash PMOD Programmer (bench-proven):**
 - Purpose: reliable replacement for bad SOIC clips / ambiguous XGECU ICSP wiring. Use it to program and verify W25Q-style PMOD flash before FPGA-side J4 probes.

@@ -69,6 +69,17 @@ RP2040 GP3  <- target TDO
 RP2040 GND  -> target GND
 ```
 
+**Bench safety, added 2026-07-13 (same root cause as the bench_adapter SPI
+fix, see `hardware/pcb/bench_adapter/bench_adapter_spec.md` §2.1):** this
+adapter has the identical exposure that caused confirmed backfeed damage to
+the Wukong's J11 SPI pins — an always-USB-powered RP2040 driving TCK/TMS/TDI
+(and optionally RST) over bare jumper wires straight into the target FPGA.
+Put 100-200 Ω series resistors inline on all of TCK/TMS/TDI/TDO (and RST if
+wired) between the RP2040 and the target header. At the 1 MHz JTAG rate used
+here (`openFPGALoader --freq 1000000`) this costs nothing in signal
+integrity. This is in addition to, not instead of, the existing discipline
+of never leaving the RP2040 powered while the target board is unpowered.
+
 For the QMTech Wukong V02 J1 schematic, the visible JTAG header nets are:
 
 ```text
