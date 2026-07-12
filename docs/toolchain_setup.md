@@ -29,16 +29,19 @@ $HOME/.local/openxc7/lib/external/nextpnr-xilinx-meta
 $HOME/.local/openxc7/lib/constids.inc
 ```
 
-Bitstream packing also needs Project X-Ray's `fasm2frames.py`. Keep its Python
-environment isolated from the system interpreter and install the Project X-Ray
-requirements from the Project X-Ray checkout root:
+Bitstream packing also needs Project X-Ray's `fasm2frames.py`. Keep this
+environment isolated from both the system interpreter and the repo's oracle
+`.venv`; Project X-Ray is toolchain infrastructure, not an SPU software
+dependency.
 
 ```bash
-python3 -m venv $HOME/.local/openxc7/venv
-git clone https://github.com/f4pga/prjxray.git $HOME/src/prjxray
-git -C $HOME/src/prjxray submodule update --init third_party/fasm third_party/python-sdf-timing
-cd $HOME/src/prjxray
-$HOME/.local/openxc7/venv/bin/python -m pip install -r requirements.txt
+mkdir -p $HOME/toolchains $HOME/.local/venvs
+git clone https://github.com/f4pga/prjxray.git $HOME/toolchains/prjxray
+git -C $HOME/toolchains/prjxray submodule update --init third_party/fasm
+
+python3 -m venv $HOME/.local/venvs/prjxray
+$HOME/.local/venvs/prjxray/bin/python -m pip install \
+  textx pyyaml intervaltree simplejson progressbar2 pyjson5
 ```
 
 If `fasm2frames` is not installed as an executable, point the build script at a
@@ -47,9 +50,12 @@ script under `utils/fasm2frames.py`; older trees may use `tools/fasm2frames.py`.
 The Artix build script checks both locations.
 
 ```bash
-export PRJXRAY_ROOT=$HOME/src/prjxray
-export OPENXC7_PYTHON=$HOME/.local/openxc7/venv/bin/python
+export PRJXRAY_ROOT=$HOME/toolchains/prjxray
+export OPENXC7_PYTHON=$HOME/.local/venvs/prjxray/bin/python
 ```
+
+The fallback textX FASM parser is slow but works. A warning about the missing
+fast Antlr parser is acceptable for local bitstream packing.
 
 Override the prefix with `OPENXC7_ROOT`:
 
@@ -175,11 +181,21 @@ A7_FREQ=2 \
   bash hardware/boards/artix7/build_a7.sh 100t lucas pnr
 ```
 
-Use `pack` after P&R to emit `build/spu_a7_100t_LUCAS.bit`:
+Use `pack` after P&R to emit a bitstream:
 
 ```bash
-PRJXRAY_ROOT=$HOME/src/prjxray \
-OPENXC7_PYTHON=$HOME/.local/openxc7/venv/bin/python \
+PRJXRAY_ROOT=$HOME/toolchains/prjxray \
+OPENXC7_PYTHON=$HOME/.local/venvs/prjxray/bin/python \
 A7_FREQ=2 \
   bash hardware/boards/artix7/build_a7.sh 100t lucas pack
+```
+
+Current routed IROTC spin pack command:
+
+```bash
+source tools/env_openxc7.sh
+PRJXRAY_ROOT=$HOME/toolchains/prjxray \
+OPENXC7_PYTHON=$HOME/.local/venvs/prjxray/bin/python \
+A7_FREQ=2 \
+  bash hardware/boards/artix7/build_a7.sh 100t irotc pack
 ```
