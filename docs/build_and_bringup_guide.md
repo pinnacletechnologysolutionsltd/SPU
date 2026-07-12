@@ -543,6 +543,54 @@ Active on the bench for silicon proofs.
 Only write the Wukong configuration flash after the SRAM-loaded bitstream has
 passed JTAG, reset, UART, and southbridge smoke tests.
 
+### 5.3a Wukong Post-Damage Peripheral Inventory (do this before trusting the
+board for any new claim, 2026-07-13)
+
+This unit took confirmed RP2350-backfeed damage to J11 pins 1-3
+(spi_cs_n/spi_sck/spi_mosi — see `spu_a7_100t.xdc` comments and AGENTS.md
+"Known board limitations"). Treat it as a constrained compute/proof board,
+not a fully-trusted one, until this checklist has been run fresh:
+
+1. **Confirm JTAG/configuration is still reliable.**
+   ```bash
+   openFPGALoader --scan-usb
+   openFPGALoader -c dirtyJtag --freq 1000000 --detect -v
+   ```
+   Expect the same baseline as before the damage: IDCODE `0x03631093`,
+   manufacturer Xilinx, family Artix A7 100T, model `xc7a100`, IR length 6.
+   If this fails or reports something different, stop — this is now a
+   hardware-recovery question, not a bring-up one.
+
+2. **Run the known-good UART self-test.** Reflash
+   `spu_a7_uart_probe_top.v` / `synth_a7_uart_probe.ys` fresh (not a
+   bitstream that's been sitting configured for a while — a stale
+   config can mask or mimic damage). Confirm `UART:P\r\n` repeats
+   cleanly at 115200 8N1 on the onboard USB-UART (`/dev/ttyUSB0` or
+   equivalent). This is the cheapest, most information-dense check
+   available: correct UART timing proves `clk_100mhz` and core logic
+   are genuinely executing, not just powered.
+
+3. **Test only the specific remaining pins you intend to use next**,
+   each with its own minimal loopback/LED design — do not assume a pin
+   is healthy just because it isn't J11. In particular, `led_out[3:0]`
+   (V17/W21/Y21/V26) are flagged unresolved/misbehaving from the same
+   session and must not be trusted without a fresh isolated check.
+   Do this with a freshly-configured bitstream each time (unconfigured/
+   floating Xilinx I/O can read as unstable "damage" that isn't real).
+
+4. **Record results.** Damaged/unresolved pins are already marked
+   directly in `hardware/boards/artix7/spu_a7_100t.xdc` next to their
+   `set_property PACKAGE_PIN` lines — update those comments (and the
+   AGENTS.md "Known board limitations" entry) if this inventory changes
+   the known-status list.
+
+Until this passes, scope new work on this unit to UART-based core
+demonstrations and UART-commanded tests that don't depend on J11 or the
+suspect LED bank — not PMOD- or LED-based claims. The failure mode being
+guarded against is intermittent/marginal I/O producing a misleading
+arithmetic or protocol result rather than a clean pass/fail, which would
+be worse than an honest "board doesn't work right now."
+
 ## 6. Verification Matrix
 
 | Test | VM | RTL (iverilog) | RTL (Verilator) | Silicon |

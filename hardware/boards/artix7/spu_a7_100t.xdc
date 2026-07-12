@@ -1,5 +1,15 @@
 # spu_a7_100t.xdc — QMTech Wukong Artix-7 XC7A100T-FGG676 V02 constraints
 # Pins are derived from QMTECH-XC7A100T_200T-Wukong-Board-V02-20210426.pdf.
+#
+# KNOWN DAMAGE ON THIS UNIT (2026-07-13, multimeter-confirmed) — see AGENTS.md
+# "Known board limitations" for full detail. J11 pins 1-3 (H4/F4/A4 below,
+# spi_cs_n/spi_sck/spi_mosi) are permanently damaged from RP2350 backfeed and
+# must not be reused for new signals. led_out[3:0] (V17/W21/Y21/V26) misbehave
+# by a still-unresolved mechanism — do not trust them for new claims without a
+# fresh loopback/probe check first. clk_100mhz, core logic, uart_tx (E3), and
+# spi_miso (A5) are the confirmed-healthy paths on this unit; treat this board
+# as UART-tier constrained compute/proof only until a full peripheral
+# inventory says otherwise.
 
 # 50 MHz oscillator
 set_property PACKAGE_PIN M21 [get_ports clk_100mhz]
@@ -13,6 +23,12 @@ set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
 # ── RP2350 SPI Slave ──────────────────────────────────────
 # Wukong J11 PMOD, VCCO_35 = 3V3. Wire RP2350 GP1/GP2/GP3/GP0 to
 # J11-1/J11-2/J11-3/J11-4 for the existing header-friendly southbridge pinset.
+# DAMAGED on this unit (2026-07-13, multimeter: 1.0V not clean logic levels) —
+# H4/F4/A4 (spi_cs_n/spi_sck/spi_mosi) are RP2350-driven outputs that took
+# backfeed damage and must not be used for a new southbridge link on this
+# board without first rewiring to a different, unused I/O bank. A5 (spi_miso,
+# the one FPGA-output signal here) reads healthy but sits on the same
+# connector as the damaged pins — do not treat J11 as usable as-is.
 set_property PACKAGE_PIN H4 [get_ports spi_cs_n]
 set_property PACKAGE_PIN F4 [get_ports spi_sck]
 set_property PACKAGE_PIN A4 [get_ports spi_mosi]
@@ -25,10 +41,21 @@ set_property IOSTANDARD LVCMOS33 [get_ports spi_miso]
 # ── Onboard CP2102N USB-UART ────────────────────────────
 # CP2102N RXD is the FPGA transmit path. CP2102N TXD is available on F3, but
 # spu_a7_top currently exposes TX only.
+# CONFIRMED HEALTHY on this unit (2026-07-13): same bank as damaged J11
+# (Bank 35), but E3 itself ran a clean, correctly-timed UART stream —
+# proves clk_100mhz and core logic execution are genuinely intact. This is
+# the recommended path for proof-of-life/core-execution demonstrations
+# until a fuller peripheral inventory is done.
 set_property PACKAGE_PIN E3 [get_ports uart_tx]
 set_property IOSTANDARD LVCMOS33 [get_ports uart_tx]
 
 # ── Status LEDs ───────────────────────────────────────────
+# UNRESOLVED on this unit (2026-07-13): these 4 pins stayed non-blinking
+# across multiple proven-good bitstreams (including a pre-dated, silicon-
+# verified design) while clk_100mhz/core logic/uart_tx on the same bank
+# (E3) ran correctly in the same test. Mechanism unknown — they were never
+# externally driven, unlike J11. Do not trust led_out for a new claim on
+# this unit without a fresh isolated loopback/probe check first.
 set_property PACKAGE_PIN V17 [get_ports {led_out[0]}]
 set_property PACKAGE_PIN W21 [get_ports {led_out[1]}]
 set_property PACKAGE_PIN Y21 [get_ports {led_out[2]}]

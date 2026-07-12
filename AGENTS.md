@@ -385,7 +385,12 @@ Tang 25K or Artix-7.
   separately proven alive via a UART probe on the same bank (Bank 35,
   pin E3) — this is contained I/O-bank damage, not a dead chip. Do not
   reconnect RP2350 to this board's J11 without first rewiring the
-  southbridge SPI to different pins.
+  southbridge SPI to different pins. **Source of truth for this unit's
+  per-pin damage/health status is now `hardware/boards/artix7/spu_a7_100t.xdc`**
+  (comments next to each affected `set_property PACKAGE_PIN`), not this
+  bullet — update the XDC first if new inventory changes the picture, this
+  entry second. Peripheral-inventory checklist before trusting this board
+  for any new claim: `docs/build_and_bringup_guide.md` §5.3a.
 - **Bench safety rule for all SPI southbridge jumper-wire hookups
   (added 2026-07-13, root cause of the J11 damage above):** never power
   an RP2350 (or anything else driving signals into an FPGA) while the
