@@ -46,6 +46,11 @@ set_property IOSTANDARD LVCMOS33 [get_ports spi_miso]
 # proves clk_100mhz and core logic execution are genuinely intact. This is
 # the recommended path for proof-of-life/core-execution demonstrations
 # until a fuller peripheral inventory is done.
+# RE-CONFIRMED 2026-07-13 (same day, after DirtyJTAG rewiring + inline
+# series resistors added to TCK/TMS/TDI/TDO): JTAG detect passed with the
+# correct IDCODE post-rewire, and a fresh reflash of spu_a7_100t_UARTPROBE.bit
+# repeated `UART:P` cleanly on E3 — checklist §5.3a steps 1-2 both pass
+# today, not just carried over from the prior session.
 set_property PACKAGE_PIN E3 [get_ports uart_tx]
 set_property IOSTANDARD LVCMOS33 [get_ports uart_tx]
 

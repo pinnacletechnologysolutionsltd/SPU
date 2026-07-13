@@ -390,7 +390,10 @@ Tang 25K or Artix-7.
   (comments next to each affected `set_property PACKAGE_PIN`), not this
   bullet — update the XDC first if new inventory changes the picture, this
   entry second. Peripheral-inventory checklist before trusting this board
-  for any new claim: `docs/build_and_bringup_guide.md` §5.3a.
+  for any new claim: `docs/build_and_bringup_guide.md` §5.3a. Steps 1-2
+  (JTAG detect, UART self-test) re-confirmed passing 2026-07-13 after
+  DirtyJTAG's own JTAG lines got the same inline-resistor treatment as
+  the RP2350 SPI link; step 3 (isolated `led_out` test) still open.
 - **Bench safety rule for all SPI southbridge jumper-wire hookups
   (added 2026-07-13, root cause of the J11 damage above):** never power
   an RP2350 (or anything else driving signals into an FPGA) while the

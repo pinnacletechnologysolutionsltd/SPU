@@ -591,6 +591,16 @@ guarded against is intermittent/marginal I/O producing a misleading
 arithmetic or protocol result rather than a clean pass/fail, which would
 be worse than an honest "board doesn't work right now."
 
+**Result, 2026-07-13 (same day):** steps 1-2 both re-run fresh after
+DirtyJTAG's JTAG lines were rewired with inline 100-200 Ω series
+resistors (same fault-current-limiting fix as the RP2350 SPI link, see
+`tools/rp2040_tooling/README.md`). An initial `--detect` found 0 devices
+(the pre-rewire wiring itself, not new damage — root-caused to a loose/
+mis-mapped jumper). After rewiring: `--detect` reports the correct
+baseline IDCODE, and a fresh reflash of `spu_a7_100t_UARTPROBE.bit`
+repeats `UART:P` cleanly. Step 3 (isolated `led_out` test via
+`spu_a7_100t_BLINKY.bit`, already built) is next.
+
 ## 6. Verification Matrix
 
 | Test | VM | RTL (iverilog) | RTL (Verilator) | Silicon |
