@@ -599,7 +599,12 @@ resistors (same fault-current-limiting fix as the RP2350 SPI link, see
 mis-mapped jumper). After rewiring: `--detect` reports the correct
 baseline IDCODE, and a fresh reflash of `spu_a7_100t_UARTPROBE.bit`
 repeats `UART:P` cleanly. Step 3 (isolated `led_out` test via
-`spu_a7_100t_BLINKY.bit`, already built) is next.
+`spu_a7_100t_BLINKY.bit`) ran next: no blinking, and multimeter reads
+non-logic-level voltages that reproduce a specific figure (1.85V) from
+the prior session on a different bitstream — a real, stable anomaly, but
+not further diagnosable without a scope. Closed as not-fixed/
+deprioritized; see `spu_a7_100t.xdc` comments for full detail. Does not
+block the board's UART-tier usable status.
 
 ## 6. Verification Matrix
 

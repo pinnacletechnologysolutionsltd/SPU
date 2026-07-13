@@ -393,7 +393,12 @@ Tang 25K or Artix-7.
   for any new claim: `docs/build_and_bringup_guide.md` §5.3a. Steps 1-2
   (JTAG detect, UART self-test) re-confirmed passing 2026-07-13 after
   DirtyJTAG's own JTAG lines got the same inline-resistor treatment as
-  the RP2350 SPI link; step 3 (isolated `led_out` test) still open.
+  the RP2350 SPI link. **Step 3 (isolated `led_out` test) ran and closed
+  2026-07-13**: reproduced the same non-blinking/non-logic-level anomaly
+  from the prior session (including an exact repeat of one voltage
+  figure on a different bitstream), confirming it's real and stable, but
+  a multimeter can't diagnose it further — deprioritized without a scope,
+  does not block the board's UART-tier usable status.
 - **Bench safety rule for all SPI southbridge jumper-wire hookups
   (added 2026-07-13, root cause of the J11 damage above):** never power
   an RP2350 (or anything else driving signals into an FPGA) while the

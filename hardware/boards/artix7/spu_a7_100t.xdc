@@ -61,6 +61,15 @@ set_property IOSTANDARD LVCMOS33 [get_ports uart_tx]
 # (E3) ran correctly in the same test. Mechanism unknown — they were never
 # externally driven, unlike J11. Do not trust led_out for a new claim on
 # this unit without a fresh isolated loopback/probe check first.
+# CLOSED, NOT FIXED (2026-07-13, same day): reproduced again on a fresh
+# spu_a7_100t_BLINKY.bit reflash — no blinking, and multimeter reads
+# non-logic-level voltages (2 pins clean 3.3V, one 2.65V, one 1.85V; the
+# 1.85V figure exactly repeats a reading from the prior session on a
+# different bitstream, ruling out random floating-pin noise). This is a
+# real, stable, reproducible I/O anomaly, but a multimeter can't diagnose
+# it further — needs a scope on the actual pin waveform. Not investigating
+# further without better equipment; does not block using this board
+# (UART/E3 already covers proof-of-life/status duty).
 set_property PACKAGE_PIN V17 [get_ports {led_out[0]}]
 set_property PACKAGE_PIN W21 [get_ports {led_out[1]}]
 set_property PACKAGE_PIN Y21 [get_ports {led_out[2]}]
