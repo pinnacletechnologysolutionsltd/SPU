@@ -21,18 +21,30 @@ set_property PACKAGE_PIN H7 [get_ports rst_n]
 set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
 
 # ── RP2350 SPI Slave ──────────────────────────────────────
-# Wukong J11 PMOD, VCCO_35 = 3V3. Wire RP2350 GP1/GP2/GP3/GP0 to
-# J11-1/J11-2/J11-3/J11-4 for the existing header-friendly southbridge pinset.
-# DAMAGED on this unit (2026-07-13, multimeter: 1.0V not clean logic levels) —
-# H4/F4/A4 (spi_cs_n/spi_sck/spi_mosi) are RP2350-driven outputs that took
-# backfeed damage and must not be used for a new southbridge link on this
-# board without first rewiring to a different, unused I/O bank. A5 (spi_miso,
-# the one FPGA-output signal here) reads healthy but sits on the same
-# connector as the damaged pins — do not treat J11 as usable as-is.
-set_property PACKAGE_PIN H4 [get_ports spi_cs_n]
-set_property PACKAGE_PIN F4 [get_ports spi_sck]
-set_property PACKAGE_PIN A4 [get_ports spi_mosi]
-set_property PACKAGE_PIN A5 [get_ports spi_miso]
+# Wukong J11 PMOD, VCCO_35 = 3V3. J11 is a 12-pin (2x6) connector, per the
+# QMTECH-XC7A100T_200T-Wukong-Board-V02-20210426.pdf schematic:
+#   J11 pin 1  BANK35_H4   J11 pin 7  BANK35_J4
+#   J11 pin 2  BANK35_F4   J11 pin 8  BANK35_G4
+#   J11 pin 3  BANK35_A4   J11 pin 9  BANK35_B4
+#   J11 pin 4  BANK35_A5   J11 pin 10 BANK35_B5
+#   J11 pin 5  GND         J11 pin 11 GND
+#   J11 pin 6  3V3         J11 pin 12 3V3
+# REMAPPED 2026-07-13 to the bottom row (pins 7-10 / J4-G4-B4-B5) after
+# confirmed backfeed damage to the top row (pins 1-3 / H4-F4-A4, see below).
+# The bottom row was never connected to anything before this, same bank
+# (35, same VCCO/IOSTANDARD), so no exposure to the backfeed event. Wire
+# RP2350 GP1/GP2/GP3/GP0 to J11-7/J11-8/J11-9/J11-10 (GND from J11-11).
+# No RTL/firmware change needed — spi_cs_n/spi_sck/spi_mosi/spi_miso are
+# just port names; only the physical J11 pin they land on changed.
+#
+# Top row (pins 1-4 / H4-F4-A4-A5), RETIRED, DAMAGED, DO NOT REUSE:
+# H4/F4/A4 (spi_cs_n/spi_sck/spi_mosi) took confirmed RP2350 backfeed
+# damage (multimeter: 1.0V, not clean logic levels). A5 (spi_miso) itself
+# reads healthy but sits on the same now-abandoned connector row.
+set_property PACKAGE_PIN J4 [get_ports spi_cs_n]
+set_property PACKAGE_PIN G4 [get_ports spi_sck]
+set_property PACKAGE_PIN B4 [get_ports spi_mosi]
+set_property PACKAGE_PIN B5 [get_ports spi_miso]
 set_property IOSTANDARD LVCMOS33 [get_ports spi_cs_n]
 set_property IOSTANDARD LVCMOS33 [get_ports spi_sck]
 set_property IOSTANDARD LVCMOS33 [get_ports spi_mosi]

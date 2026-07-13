@@ -383,9 +383,13 @@ Tang 25K or Artix-7.
   outputs); MISO (the one FPGA-output signal on J11) reads healthy
   3.3 V, matching the untouched control header. Clock/core logic
   separately proven alive via a UART probe on the same bank (Bank 35,
-  pin E3) — this is contained I/O-bank damage, not a dead chip. Do not
-  reconnect RP2350 to this board's J11 without first rewiring the
-  southbridge SPI to different pins. **Source of truth for this unit's
+  pin E3) — this is contained I/O-bank damage, not a dead chip. **J11 SPI
+  remapped 2026-07-13** to J11's bottom row (pins 7-10 / package pins
+  J4/G4/B4/B5 — a full 12-pin 2x6 connector, bottom row never previously
+  connected to anything), reflected in the XDC and
+  `docs/build_and_bringup_guide.md` §4.2; physical rewiring + reflash/
+  smoke-test on the bench is the next step, not yet done as of this
+  entry. **Source of truth for this unit's
   per-pin damage/health status is now `hardware/boards/artix7/spu_a7_100t.xdc`**
   (comments next to each affected `set_property PACKAGE_PIN`), not this
   bullet — update the XDC first if new inventory changes the picture, this

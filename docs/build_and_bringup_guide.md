@@ -296,17 +296,32 @@ make
 ```
 
 ### 4.2 Wukong J11 SPI Wiring
+
+**REMAPPED 2026-07-13** to J11's bottom row after confirmed backfeed damage
+to the top row (pins 1-3). J11 is a 12-pin (2x6) connector; the bottom row
+(pins 7-10) was never connected to anything before this and requires no
+RTL/firmware change — only the physical wire destination moves. Current
+wiring:
 ```
 QMTech Wukong J11 PMOD / FPGA  RP2350-Zero/Pico SPI master
 ────────────────────────       ────────────────────────────
-J11-1 / H4 / spi_cs_n    ────  GP1 (software CS#)
-J11-2 / F4 / spi_sck     ────  GP2 (SPI0 SCK)
-J11-3 / A4 / spi_mosi    ────  GP3 (SPI0 TX)
-J11-4 / A5 / spi_miso    ────  GP0 (SPI0 RX)
-J11-5 or J11-11 / GND    ────  GND
-J11-6 or J11-12 / 3V3    ────  target reference only
+J11-7 / J4 / spi_cs_n    ────  GP1 (software CS#)
+J11-8 / G4 / spi_sck     ────  GP2 (SPI0 SCK)
+J11-9 / B4 / spi_mosi    ────  GP3 (SPI0 TX)
+J11-10 / B5 / spi_miso   ────  GP0 (SPI0 RX)
+J11-11 / GND             ────  GND
+J11-12 / 3V3             ────  target reference only
 E3 / uart_tx             ────  GP5 (UART1 RX) [optional]
 GND                      ────  GND
+```
+
+**Retired, DAMAGED, do not use** — J11's top row:
+```
+J11-1 / H4 / spi_cs_n    (backfeed-damaged, 1.0V not clean logic levels)
+J11-2 / F4 / spi_sck     (backfeed-damaged)
+J11-3 / A4 / spi_mosi    (backfeed-damaged)
+J11-4 / A5 / spi_miso    (reads healthy, but stranded on the abandoned row)
+J11-5 or J11-6           (GND / 3V3 — harmless, but no reason to use this row)
 ```
 
 The Wukong V02 schematic also has a separate 20x2 expansion header named J12.
