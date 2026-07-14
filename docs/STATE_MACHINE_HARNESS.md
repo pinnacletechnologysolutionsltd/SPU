@@ -390,8 +390,9 @@ equilibrium force-density signs: cable/GAP positive, strut negative.
 | Exact quadrance | QSUB / Davis-style exact arithmetic | Existing arithmetic probes silicon-verified |
 | MAIN/CONJ grid alternation | phi-plane 4-state typestate | Core integration testbench-verified |
 
-The balancer itself has no RTL or silicon proof yet. It is currently a
-software oracle and state-machine case study.
+The bounded admission guard now has RTL and a first-tranche Artix silicon
+proof. Exact strut contact is present in the second RTL tranche; force-density
+equilibrium and active balancing remain outside the hardware subset.
 
 ### 7.3 States
 
@@ -434,11 +435,21 @@ alternation.
 ### 7.6 Status
 
 Prototype oracle: `software/lib/tensegrity_balancer.py`;
-suite-registered tests: `software/tests/test_tensegrity_balancer.py` (36
-checks). RTL is not started and therefore resource use is unmeasured. For
-comparison only, the IROTC engine probe top is 1,670 LUT4 / 532 DFF / 59.9 MHz
-/ 0 DSP in `knowledge/THEOREM_LICENSED_TYPESTATE.md` Appendix A, sourced from
-`build/spu13_irotc_probe_nextpnr.log`.
+suite-registered tests: `software/tests/test_tensegrity_balancer.py` (44
+checks). RTL: `spu13_tensegrity_guard.v` plus the term-serial exact Z[phi]
+`spu13_tensegrity_intersection.v`. The first V:6 image failed fixture 4 in
+silicon (`TGR:F V:4 E:84`) after a route with only 51.89 MHz modeled Fmax. The
+hardened V:6 route pipelined distributed-table predicates and 108-bit
+arithmetic decisions, but its board run still returned `TGR:F V:4 E:90`
+(`BALANCED/F_NONE`). The current image advances the full guard domain at 25
+MHz through a divided BUFG and adds an intersection-attempt count to failure
+telemetry. It uses 13,895 `SLICE_LUTX`, 3,515 `SLICE_FFX`, 72 DSP48E1 and 0
+BRAM; OpenXC7 conservatively closes that guard domain at 59.16 MHz while
+checking it at 50 MHz. Behavioral and synthesized-cell intersection tests
+pass. The divided-clock image produced `TGR:P V:6 E:00` in silicon on
+2026-07-14, closing the six-fixture admission-guard proof. Silicon scope for
+the intersection predicate is the antipodal origin-crossing fixture; the
+complete contact matrix remains RTL-verified.
 
 Bug-ledger case: the old regular-icosahedron antipodal fixture passes topology,
 endpoint separation, tautness, grid consistency, and equilibrium, but all six

@@ -1,9 +1,11 @@
 # Tensegrity Balancer — Feasibility Analysis & SPU-13 Integration
 
 **Status:** software oracle complete and suite-registered
-(`software/tests/test_tensegrity_balancer.py`, 44 checks). RTL not started.
-Part of the state-machine harness catalogue
-(`docs/STATE_MACHINE_HARNESS.md`) as case study #6.
+(`software/tests/test_tensegrity_balancer.py`, 44 checks). The bounded Artix
+admission guard implements five of the six guards, including exact strut
+contact; force-density equilibrium remains oracle-only. Part of the
+state-machine harness catalogue (`docs/STATE_MACHINE_HARNESS.md`) as case
+study #6.
 
 ## 1. Fuller's Tensegrity in 60 Seconds
 
@@ -38,9 +40,9 @@ positive density, struts require negative density.
 | MAIN/CONJ grid alternation | phi-plane 4-state typestate | Testbench-verified in core integration; IROTC engine probe has Tang silicon scope above |
 | Exact quadrance | `QSUB`/Davis-style exact arithmetic | Silicon-verified for existing arithmetic probes |
 
-The proposed balancer is a control-plane FSM around existing arithmetic
-primitives. It still needs its own RTL and board proof; this document does not
-claim a silicon-verified tensegrity balancer.
+The balancer is a control-plane FSM around existing arithmetic primitives. A
+bounded admission-guard subset now has RTL and a first-tranche board proof;
+this document does not claim a complete silicon-verified active balancer.
 
 ## 3. Dual-Grid Interpenetration
 
@@ -131,8 +133,17 @@ would use fixed-width state and explicit guard datapaths.
 
 ## 6. RTL Integration Path
 
-No tensegrity RTL exists yet. A future balancer would sit alongside
-`spu13_core.v` as a control-plane FSM:
+The bounded admission guard now consists of `spu13_tensegrity_guard.v` and the
+term-serial exact predicate `spu13_tensegrity_intersection.v`. It implements
+topology/connectivity, strut endpoint separation, cable/GAP collapse,
+closed-segment strut contact over Z[phi], grid/GAP consistency, terminal fault
+lockout, and explicit clear/reset recovery. The intersection scan skips pairs
+that share an endpoint because the earlier separation guard diagnoses those as
+`STRUT_COLLISION`; all other closed contact, including endpoint-on-interior
+and collinear overlap, is `STRUT_INTERSECTION`. Force-density equilibrium is
+still oracle-only, so this remains an admission guard rather than a full active
+balancer. The eventual integrated balancer sits alongside `spu13_core.v` as a
+control-plane FSM:
 
 ```
 spu13_core.v
@@ -147,10 +158,33 @@ spu13_core.v
       - Fault latch
 ```
 
-Do not quote an RTL resource estimate for the balancer yet; it is unmeasured.
-For comparison only, the IROTC engine **probe top** is 1,670 LUT4 / 532 DFF /
-59.9 MHz / 0 DSP from `knowledge/THEOREM_LICENSED_TYPESTATE.md` Appendix A,
-which cites `build/spu13_irotc_probe_nextpnr.log`.
+The bounded guard has a standalone Artix wrapper and probe-level UART test.
+The first V:5 image (without the intersection predicate) used 2,013
+`SLICE_LUTX`, 526 `SLICE_FFX`, 0 BRAM, and 0 DSP, and closed at 72.51 MHz. It
+was SRAM-loaded through DirtyJTAG on 2026-07-14 and the operator confirmed the
+probe working; that silicon scope is IDs 0, 1, 2, 3, and 5 only.
+
+The second-tranche wrapper loads IDs 0 through 5 and emits
+`TGR:P V:6 E:00` only after checking every state/fault pair. Its UART
+testbench independently observes all six completions before accepting the
+line. The first V:6 route closed at only 51.89 MHz and then failed fixture 4
+in silicon with `TGR:F V:4 E:84`; zero-delay synthesized-cell simulation still
+passed, identifying the sub-nanosecond timing margin as unsafe rather than an
+RTL/synthesis arithmetic mismatch. The guard table read is now split into
+fetch/node-evaluate/commit stages, and 108-bit intersection subtraction and
+equality decisions consume registered results. That second image closed at
+57.27 MHz but still returned `TGR:F V:4 E:90` in silicon, explicitly decoding
+to `BALANCED/F_NONE`: no contact was latched. The current probe therefore runs
+the complete loader/guard/intersection domain from a divided BUFG at 25 MHz;
+UART remains at 50 MHz. The route uses 13,895 `SLICE_LUTX`, 3,515 `SLICE_FFX`,
+72 DSP48E1, and 0 BRAM. OpenXC7 conservatively checked the guard domain at 50
+MHz anyway and closed it at 59.16 MHz; the UART domain closes at 111.15 MHz.
+Failure telemetry appends the exact intersection-attempt count as `A:xx`.
+This divided-clock image produced repeating `TGR:P V:6 E:00` in silicon on
+2026-07-14 (SHA-256 `d72412f1cfbd82b2a7c8d4ded597382c4272531628711f8b24ac53212ac344d8`).
+The large multiplier footprint is the exact Z[phi] intersection datapath, not
+an estimate. Silicon scope is the six probe fixtures, including the antipodal
+origin-crossing counterexample; the wider contact matrix remains RTL-verified.
 
 ## 7. Open Design Items
 
@@ -170,8 +204,13 @@ which cites `build/spu13_irotc_probe_nextpnr.log`.
 
 ## 8. Next Steps
 
-1. Keep the exact oracle suite-registered.
-2. Add strut-slenderness and local-precession guards at the oracle level before
-   any RTL.
-3. Only then sketch an RTL edge-table/guard-evaluator contract with measured,
-   not estimated, synthesis numbers after a probe top exists.
+1. Keep the exact oracle and the seven-vector TGR1 corpus suite-registered.
+2. Add force-density equilibrium as the final TGR1 admission-guard tranche;
+   do not classify vector 6 as BALANCED before that datapath exists.
+3. Replace the distributed configuration arrays with initialized or
+   host-hydrated BRAM, define storage/transport, and re-measure the probe.
+4. Add strut-slenderness and local-precession guards at the oracle level, then
+   extend TGR1 only with an explicit version bump if their data is needed.
+5. Only after admission is complete, specify the active balancing controller
+   (rotation/actuation proposals, re-verification, and rollback) separately
+   from the frozen TGR1 table ABI.

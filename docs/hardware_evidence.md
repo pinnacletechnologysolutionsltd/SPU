@@ -1313,6 +1313,84 @@ catalog and CATMIX refusal that §3.2k left as testbench-only. Full
 silicon scope is the six-case vector set above (idx36 main+conjugate,
 idx3 conjugate, LOAD2X, SCALE2, one CATMIX fault).
 
+### 3.2l Wukong Tensegrity Admission-Guard Silicon Probe
+
+**Date:** 2026-07-14. The first-tranche standalone Artix probe was
+SRAM-loaded through the inline-100-ohm-protected RP2040 DirtyJTAG path. The
+operator confirmed the probe working after load. Its acceptance contract is:
+
+```
+TGR:P V:5 E:00
+```
+
+The five completed fixtures are TGR1 IDs 0, 1, 2, 3, and 5: canonical
+balanced, topology fault, shared-endpoint strut collision, collapsed cable,
+and MAIN/CONJ grid mismatch. The wrapper compares every state/fault pair
+before emitting the verdict; `V:5` is a completed-fixture count, not vector
+ID 5. Build figures were 2,013 `SLICE_LUTX`, 526 `SLICE_FFX`, 0 BRAM, 0 DSP,
+and 72.51 MHz against the 50 MHz board clock.
+
+**Second-tranche attempt:** the first V:6 image (SHA-256
+`c178462f9fdcb11533467b74fb3425dc083c307e2016b7355e14eb7779cd9b54`) was
+loaded and repeatedly reported:
+
+```
+TGR:F V:4 E:84
+```
+
+This proves fixtures 0-3 completed and fixture 4 returned a state/fault
+mismatch; it is not intersection silicon evidence. That route closed at only
+51.89 MHz, leaving 0.7 ns modeled slack. The synthesized Xilinx-cell model of
+the intersection engine passed all eight cases, while post-route inspection
+found two independent near-critical combinational paths: distributed
+edge/node-table predicates and a 108-bit subtraction feeding its decision in
+the same cycle. Both are now pipelined. The replacement image uses 13,876
+`SLICE_LUTX`, 3,509 `SLICE_FFX`, 72 DSP48E1, 0 BRAM and closes at 57.27 MHz
+while constrained to 55 MHz. SHA-256:
+`07748c85a3a212c9128641824792d962a3547b5435cf6e3d6dc4aaab0f3f6c0d`.
+Its repeat board result is recorded below; it encodes the actual state/fault
+pair as `E:1SSSSFFF` rather than the first image's generic `84`.
+
+**Repeat result:** the 57.27 MHz replacement (SHA-256
+`07748c85a3a212c9128641824792d962a3547b5435cf6e3d6dc4aaab0f3f6c0d`)
+still failed fixture 4:
+
+```
+TGR:F V:4 E:90
+```
+
+`0x90 = {1, state=2, fault=0}` decodes to `BALANCED/F_NONE`: counts and the
+first four verdicts were correct, but no intersection contact was latched.
+The next image moves the entire table loader, guard scanner, and intersection
+engine to a divided-BUFG 25 MHz domain; UART remains at the board's 50 MHz.
+OpenXC7 still conservatively timed the guard clock against 50 MHz and closed
+at 59.16 MHz (UART/sys clock 111.15 MHz), giving more than 2x margin at the
+actual guard cadence. Resources: 13,895 `SLICE_LUTX`, 3,515 `SLICE_FFX`, 72
+DSP48E1, 0 BRAM. Failure lines now append `A:xx`, the number of strut-pair
+intersection attempts, so another miss separates pair scanning from predicate
+arithmetic without a diagnostic rebuild. Current packed bitstream SHA-256:
+`d72412f1cfbd82b2a7c8d4ded597382c4272531628711f8b24ac53212ac344d8`.
+
+**Successful repeat:** the divided-clock image produced the repeating board
+verdict:
+
+```
+TGR:P V:6 E:00
+```
+
+This closes silicon evidence for all six RTL-supported admission fixtures:
+canonical balanced plus topology, strut collision, cable slack, exact
+antipodal strut intersection, and grid mismatch faults. The failure sequence
+also establishes the operating boundary: the exact guard is reliable at the
+25 MHz divided cadence, while the two attempted 50 MHz images produced a
+fixture-4 false negative despite nominal OpenXC7 closure.
+
+**Scope boundary:** V:6 is now the silicon-proven bounded admission scope, not
+a complete tensegrity balancer. Intersection silicon scope is the antipodal
+origin-crossing fixture; the full crossing/overlap/T-junction matrix remains
+RTL-verified. Force-density equilibrium (ID 6), table transport, and active
+rotation/actuation control remain outside this silicon claim.
+
 ### 3.3 RPLU + Math + SDRAM Proof
 
 **Historical build command:**
