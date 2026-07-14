@@ -1,0 +1,3 @@
+read_verilog hardware/boards/artix7/spu_a7_uart_probe_top.v
+synth_xilinx -family xc7 -top spu_a7_uart_probe_top -json build/spu_a7_100t_UARTPROBE.json
+stat -top spu_a7_uart_probe_top

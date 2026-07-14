@@ -61,8 +61,19 @@ module spu_a7_top #(
     parameter ENABLE_LATTICE    = 0,
     parameter ENABLE_SDRAM      = 0,
     // Bring-up divider for openXC7 timing-closure spins.
-    // 0 = raw board clock; N > 0 = clk_100mhz / 2**N.
-    parameter A7_CLK_DIV_LOG2   = 0
+    // 0 = raw board clock; N > 0 = clk_100mhz / 2**N. build_a7.sh
+    // defaults this per spin (0 for the coreless sidecar spins, 6
+    // otherwise) mirroring the _CORE ternary below — keep both lists
+    // in sync. This parameter has no default-safe value here: build_a7.sh
+    // always passes it explicitly via chparam.
+    parameter A7_CLK_DIV_LOG2   = 0,
+    // TEMPORARY bring-up aid, default OFF: when 1, uart_tx carries a
+    // free-running diagnostic line (heartbeat/CS-seen/cmd-seen/boot_ready)
+    // instead of real hex telemetry. Only meaningful while chasing the
+    // boot_ready/nextpnr regression (see AGENTS.md) -- real spins must not
+    // ship with this on. Explicit opt-in only (build_a7.sh A7_UART_DIAG=1),
+    // no spin defaults this to 1.
+    parameter A7_UART_DIAG      = 0
 )(
     input  wire        clk_100mhz,
     input  wire        rst_n,
@@ -111,6 +122,10 @@ module spu_a7_top #(
     localparam _R2_PADE = (SPIN == "RPLU2PADE") ? 1 : 0;
     localparam _SHARED_SU3_MULT = (SPIN == "SU3SHARE") ? 1 : 0;
     localparam _SHARED_RPLU2_MULT = (SPIN == "RPLU2") ? 1 : 0;
+    // Keep this spin list in sync with build_a7.sh's A7_CLK_DIV_LOG2
+    // default case statement — coreless spins here must match the
+    // 0-default spins there, or clk_fast comes up undivided on a core
+    // spin (silent QR telemetry corruption, no synth/sim warning).
     localparam _CORE = (SPIN == "LUCAS" || SPIN == "SU3" ||
                         SPIN == "RPLUCFG" || SPIN == "RPLU2LIVE" ||
                         SPIN == "RPLU2PADE") ? 0 : 1;
@@ -130,6 +145,76 @@ module spu_a7_top #(
             clk_div <= clk_div + 8'd1;
     end
 
+    // Diagnostic heartbeat — free-running off raw clk_100mhz, independent
+    // of clk_fast/A7_CLK_DIV_LOG2, rst_n, and the boot FSM. If led_out[3]
+    // isn't visibly blinking (~0.75 Hz at 100 MHz), clk_100mhz isn't
+    // toggling or rst_n is stuck low; nothing downstream can be trusted.
+    reg [26:0] heartbeat_ctr = 27'd0;
+    always @(posedge clk_100mhz)
+        heartbeat_ctr <= heartbeat_ctr + 27'd1;
+
+    // Diagnostic sticky CS latch — independent 2-flop synchronizer on the
+    // raw spi_cs_n pin (not spu_spi_slave's internal one), set permanently
+    // once a falling edge (CS asserted) is ever seen, cleared only by
+    // rst_n. Isolates "does a CS transition from the RP2350 even reach and
+    // get recognized by this pin" from everything inside spu_spi_slave.
+    reg [1:0] diag_cs_sync = 2'b11;
+    reg       diag_cs_ever_seen = 1'b0;
+    always @(posedge clk_100mhz or negedge rst_n) begin
+        if (!rst_n) begin
+            diag_cs_sync <= 2'b11;
+            diag_cs_ever_seen <= 1'b0;
+        end else begin
+            diag_cs_sync <= {diag_cs_sync[0], spi_cs_n};
+            if (diag_cs_sync == 2'b10)
+                diag_cs_ever_seen <= 1'b1;
+        end
+    end
+
+    // Diagnostic independent command-byte shifter — a from-scratch replica
+    // of spu_spi_slave's own sck/cs/mosi synchronizer and S_CMD bit-shift,
+    // built entirely separately (own registers, own clk_fast domain) so it
+    // cannot share a bug with the real slave. Sticky-latches once an 8-bit
+    // frame equal to 8'hAC (CMD status read) is seen while CS was active.
+    // If this lights up, the physical bit-level link is provably fine and
+    // the bug is inside spu_spi_slave's own FSM; if it never lights up,
+    // the bug is upstream of command decode (signal integrity/framing).
+    reg [2:0] diag2_sck_r = 3'b0;
+    reg [2:0] diag2_cs_r  = 3'b111;
+    reg [1:0] diag2_mosi_r = 2'b0;
+    reg [2:0] diag2_bit_cnt = 3'd0;
+    reg [7:0] diag2_cmd_byte = 8'd0;
+    reg       diag2_cmd_ac_seen = 1'b0;
+    wire diag2_sck_rise = (diag2_sck_r[2:1] == 2'b01);
+    wire diag2_cs_active = !diag2_cs_r[1];
+    wire diag2_cs_fall = (diag2_cs_r[2:1] == 2'b10);
+    always @(posedge clk_fast or negedge rst_n) begin
+        if (!rst_n) begin
+            diag2_sck_r <= 3'b0;
+            diag2_cs_r  <= 3'b111;
+            diag2_mosi_r <= 2'b0;
+            diag2_bit_cnt <= 3'd0;
+            diag2_cmd_byte <= 8'd0;
+            diag2_cmd_ac_seen <= 1'b0;
+        end else begin
+            diag2_sck_r  <= {diag2_sck_r[1:0], spi_sck};
+            diag2_cs_r   <= {diag2_cs_r[1:0], spi_cs_n};
+            diag2_mosi_r <= {diag2_mosi_r[0], spi_mosi};
+            if (diag2_cs_fall)
+                diag2_bit_cnt <= 3'd0;
+            if (diag2_cs_active && diag2_sck_rise) begin
+                diag2_cmd_byte <= {diag2_cmd_byte[6:0], diag2_mosi_r[1]};
+                if (diag2_bit_cnt == 3'd7) begin
+                    diag2_bit_cnt <= 3'd0;
+                    if ({diag2_cmd_byte[6:0], diag2_mosi_r[1]} == 8'hAC)
+                        diag2_cmd_ac_seen <= 1'b1;
+                end else begin
+                    diag2_bit_cnt <= diag2_bit_cnt + 3'd1;
+                end
+            end
+        end
+    end
+
     generate
         if (A7_CLK_DIV_LOG2 == 0) begin : gen_raw_clk
             BUFG u_clk_fast_buf (
@@ -138,6 +223,10 @@ module spu_a7_top #(
             );
         end else begin : gen_div_clk
             assign clk_fast_pre = clk_div[A7_CLK_DIV_LOG2-1];
+            // Pin the fabric-derived clock to the BUFG site used by the
+            // silicon-proven /64 RPLU2CORE image. Unconstrained IROTC routes
+            // selected X0Y23/X0Y25; both configured but produced a dead
+            // clk_fast domain on the Wukong board with the openXC7 packer.
             BUFG u_clk_fast_buf (
                 .I(clk_fast_pre),
                 .O(clk_fast)
@@ -242,6 +331,7 @@ module spu_a7_top #(
     wire ecc_single_err, ecc_double_err;
     wire [15:0] core_rotc_debug_status;
     wire core_boot_ready;
+    wire [1:0] core_boot_state_dbg; // bring-up only: 0=RESET 1=HYDRATING 2=READY 3=FAULT
     reg [7:0] debug_last_spi_opcode = 8'h00;
     reg [7:0] debug_last_core_opcode = 8'h00;
     reg [7:0] debug_active_core_opcode = 8'h00;
@@ -639,6 +729,7 @@ module spu_a7_top #(
                 .ecc_double_err(ecc_double_err),
                 .rotc_debug_status(core_rotc_debug_status),
                 .boot_ready(core_boot_ready),
+                .boot_state_dbg(core_boot_state_dbg),
                 .rplu_pade_mult_start(core_rplu_pade_mult_start),
                 .rplu_pade_mult_a0(core_rplu_pade_mult_a0),
                 .rplu_pade_mult_a1(core_rplu_pade_mult_a1),
@@ -913,16 +1004,112 @@ module spu_a7_top #(
     );
 
     // ── UART TX ─────────────────────────────────────────────
-    surd_uart_tx #(.BAUD(115200), .CLK_HZ(50_000_000)) u_uart (
-        .clk(clk_fast),
-        .reset(!rst_n),
-        .data_in({32'd0, hex_q, hex_r}),
-        .start(hex_valid),
-        .tx(uart_tx),
-        .ready()
-    );
+    generate
+        if (A7_UART_DIAG == 0) begin : gen_uart_real
+            surd_uart_tx #(.BAUD(115200), .CLK_HZ(50_000_000)) u_uart (
+                .clk(clk_fast),
+                .reset(!rst_n),
+                .data_in({32'd0, hex_q, hex_r}),
+                .start(hex_valid),
+                .tx(uart_tx),
+                .ready()
+            );
+        end else begin : gen_uart_diag
+            // Free-running diagnostic line, clocked off clk_100mhz (not
+            // clk_fast, so baud timing stays correct regardless of
+            // A7_CLK_DIV_LOG2): "DIAG HB:x CS:x AC:x RDY:x\r\n" where each
+            // x is the sticky/heartbeat bit latched at the start of that
+            // message. HB toggling proves clk_100mhz/reset are healthy;
+            // CS proves a CS falling edge physically reached this pin; AC
+            // proves an independently-shifted 8-bit 0xAC frame was seen
+            // while CS was active; RDY is core_boot_ready itself.
+            localparam BAUD_DIV = 434; // 50MHz/115200, matches the probes
+            localparam MSG_LEN = 33; // includes trailing \r\n in the array
+            reg [7:0] msg [0:MSG_LEN-1];
+            reg [15:0] baud_cnt = 16'd0;
+            wire baud_tick = (baud_cnt == BAUD_DIV-1);
+            reg [5:0] msg_idx = 6'd0;
+            reg [9:0] shift_reg = 10'h3FF;
+            reg [3:0] bits_rem = 4'd0;
+            reg tx_r = 1'b1;
+            reg [24:0] gap_cnt = 25'd0;
+            reg gapping = 1'b0;
 
-    assign led_out = {3'b0, inst_done};
+            assign uart_tx = tx_r;
+
+            always @(posedge clk_100mhz) begin
+                if (baud_tick)
+                    baud_cnt <= 16'd0;
+                else
+                    baud_cnt <= baud_cnt + 16'd1;
+
+                if (baud_tick) begin
+                    if (gapping) begin
+                        if (gap_cnt == 25'd115_200) begin
+                            gapping <= 1'b0;
+                            gap_cnt <= 25'd0;
+                        end else begin
+                            gap_cnt <= gap_cnt + 25'd1;
+                        end
+                    end else if (bits_rem == 4'd0) begin
+                        if (msg_idx == 5'd0) begin
+                            msg[0]  <= "D"; msg[1]  <= "I"; msg[2]  <= "A";
+                            msg[3]  <= "G"; msg[4]  <= " "; msg[5]  <= "H";
+                            msg[6]  <= "B"; msg[7]  <= ":";
+                            msg[8]  <= heartbeat_ctr[26] ? "1" : "0";
+                            msg[9]  <= " "; msg[10] <= "C"; msg[11] <= "S";
+                            msg[12] <= ":";
+                            msg[13] <= diag_cs_ever_seen ? "1" : "0";
+                            msg[14] <= " "; msg[15] <= "A"; msg[16] <= "C";
+                            msg[17] <= ":";
+                            msg[18] <= diag2_cmd_ac_seen ? "1" : "0";
+                            msg[19] <= " "; msg[20] <= "R"; msg[21] <= "D";
+                            msg[22] <= "Y"; msg[23] <= ":";
+                            msg[24] <= core_boot_ready ? "1" : "0";
+                            msg[25] <= " "; msg[26] <= "B"; msg[27] <= "S";
+                            msg[28] <= "T"; msg[29] <= ":";
+                            // 0=RESET 1=HYDRATING 2=READY 3=FAULT
+                            msg[30] <= 8'h30 + {6'd0, core_boot_state_dbg};
+                            msg[31] <= 8'h0d; // \r
+                            msg[32] <= 8'h0a; // \n
+                        end
+                        // Only load+shift a real character while msg_idx is
+                        // still in range; the out-of-range pass (msg_idx ==
+                        // MSG_LEN) happens strictly after the last real
+                        // character (msg[MSG_LEN-1], '\n') has *fully*
+                        // shifted out over its own 10 bits_rem cycles, so
+                        // gapping never preempts an in-progress character.
+                        if (msg_idx < MSG_LEN) begin
+                            shift_reg <= {1'b1, msg[msg_idx], 1'b0};
+                            bits_rem <= 4'd10;
+                            msg_idx <= msg_idx + 5'd1;
+                        end else begin
+                            msg_idx <= 5'd0;
+                            gapping <= 1'b1;
+                            tx_r <= 1'b1;
+                        end
+                    end else begin
+                        tx_r <= shift_reg[0];
+                        shift_reg <= {1'b1, shift_reg[9:1]};
+                        bits_rem <= bits_rem - 4'd1;
+                    end
+                end
+            end
+        end
+    endgenerate
+
+    // led_out tied off, THIS UNIT ONLY: this Wukong's led_out bank
+    // (V17/W21/Y21/V26) has shown abnormal voltage patterns even on
+    // bitstreams with zero LED-related logic (see
+    // a7-wukong-bringup-session notes / spu_a7_100t.xdc) -- not a
+    // reliable witness for anything, diagnostic or otherwise, until that
+    // anomaly is separately explained. Diagnostic bits (heartbeat,
+    // diag_cs_ever_seen, core_boot_ready, diag2_cmd_ac_seen) still exist
+    // above as regs for probing with a simulator/ILA; they're just not
+    // routed to the pins. Don't restore this assignment on a
+    // known-healthy board without revisiting -- LED status output itself
+    // isn't the problem, this unit's bank is.
+    assign led_out = 4'b0000;
     assign fault_led = axiomatic_fault || lucas_error || su3_error ||
                        rplu2_sidecar_error;
     assign hdmi_d_p = 4'd0;

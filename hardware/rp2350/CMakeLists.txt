@@ -146,8 +146,17 @@ target_link_libraries(rp2350_spu_diag
     spu_rp_common
 )
 
+set(SPU_DIAG_SPI_BAUD_HZ "" CACHE STRING
+    "Override rp2350_spu_diag's SPI clock (default 2 MHz in-source). Needed \
+below clk_fast on divided A7 core spins -- see AGENTS.md boot_ready notes.")
+set(SPU_DIAG_SPI_BAUD_DEFS "")
+if(SPU_DIAG_SPI_BAUD_HZ)
+    list(APPEND SPU_DIAG_SPI_BAUD_DEFS SPI_BAUD_HZ=${SPU_DIAG_SPI_BAUD_HZ})
+endif()
+
 target_compile_definitions(rp2350_spu_diag PRIVATE
     ${SPU_SPI_PIN_DEFS}
+    ${SPU_DIAG_SPI_BAUD_DEFS}
 )
 
 pico_enable_stdio_usb(rp2350_spu_diag 1)

@@ -59,7 +59,7 @@
 #define SPI_MOSI_PIN SPU_SPI_MOSI_PIN
 
 #ifndef SPU_IROTC_POLL_BOOT_READY
-#define SPU_IROTC_POLL_BOOT_READY 0
+#define SPU_IROTC_POLL_BOOT_READY 1
 #endif
 #ifndef SPU_BOOT_READY_STATUS_BYTE
 // Default from docs/BOOT_SEQUENCE_FSM.md §3.6: current flags byte is full;

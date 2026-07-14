@@ -8,22 +8,62 @@
 #   bash build_a7.sh 100t intelligence           # INTELLIGENCE spin on 100T
 #   A7_FREQ=2 bash build_a7.sh 100t lucas all    # Wukong pinned low-speed bring-up
 #
-# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | irotc | som | somprobe | custom
+# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | irotc | som | somprobe | tensegrityprobe | custom
 #
 # somprobe is a standalone top (not a spu_a7_top spin): the Tang-25K-proven
 # SOM/BMU fixture on its own synthesis path + minimal XDC.  Golden UART line
 # at 115200: "SOM:P T:2 B:6 E:00".
+# tensegrityprobe is likewise standalone.  It runs the six RTL-supported
+# TGR1-derived guard fixtures and reports "TGR:P V:6 E:00".
 
 set -euo pipefail
+
+# Keep the documented one-command build path working in a fresh shell.  The
+# helper only prepends the repo-local OpenXC7 install; it leaves an existing
+# PATH/toolchain selection untouched.
+if ! command -v nextpnr-xilinx >/dev/null 2>&1; then
+    OPENXC7_ROOT_CANDIDATE="${OPENXC7_ROOT:-$HOME/.local/openxc7}"
+    if [ -d "$OPENXC7_ROOT_CANDIDATE" ] && [ -f tools/env_openxc7.sh ]; then
+        OPENXC7_ROOT="$OPENXC7_ROOT_CANDIDATE" source tools/env_openxc7.sh
+    elif [ -f "$OPENXC7_ROOT_CANDIDATE/export.sh" ]; then
+        source "$OPENXC7_ROOT_CANDIDATE/export.sh"
+    fi
+    unset OPENXC7_ROOT_CANDIDATE
+fi
 
 DEVICE_CHIP="${1:-100t}"
 SPIN="${2:-full}"
 STEP="${3:-all}"
-A7_FREQ="${A7_FREQ:-50}"
-A7_CLK_DIV_LOG2="${A7_CLK_DIV_LOG2:-0}"
+A7_FREQ_ENV="${A7_FREQ:-}"
+# TEMPORARY bring-up aid, explicit opt-in only, no spin defaults this to 1 --
+# see spu_a7_top.v's A7_UART_DIAG parameter doc.
+A7_UART_DIAG="${A7_UART_DIAG:-0}"
 
 # Resolve spin to uppercase
 SPIN=$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')
+
+# A7_FREQ default, spin-aware.  IROTC's current routed timing closes at low
+# bring-up speed; asking nextpnr for 50 MHz makes it chase an impossible target
+# for a long time.  An explicit A7_FREQ env var still overrides this default.
+case "$SPIN" in
+    IROTC) A7_FREQ_DEFAULT=2;;
+    *)     A7_FREQ_DEFAULT=50;;
+esac
+A7_FREQ="${A7_FREQ_ENV:-$A7_FREQ_DEFAULT}"
+
+# A7_CLK_DIV_LOG2 default, spin-aware — mirrors the _CORE ternary in
+# spu_a7_top.v (keep this list in sync with that one). Coreless sidecar
+# spins (no spu13_core instance) run the raw fabric clock; every
+# core-based spin needs clk_fast divided down to the Piranha Pulse
+# dispatch cadence or QR telemetry corrupts silently with no synthesis
+# or sim-side warning (root-caused in docs/hardware_evidence.md
+# §3.2e.4, recurred on the IROTC spin's first build — §3.2k.1). An
+# explicit A7_CLK_DIV_LOG2 env var still overrides this default.
+case "$SPIN" in
+    LUCAS|SU3|RPLUCFG|RPLU2LIVE|RPLU2PADE|SOMPROBE|TENSEGRITYPROBE) A7_CLK_DIV_LOG2_DEFAULT=0;;
+    *)                                     A7_CLK_DIV_LOG2_DEFAULT=6;;
+esac
+A7_CLK_DIV_LOG2="${A7_CLK_DIV_LOG2:-$A7_CLK_DIV_LOG2_DEFAULT}"
 
 case "$DEVICE_CHIP" in
     35t)
@@ -54,6 +94,10 @@ if [ "$SPIN" = "SOMPROBE" ]; then
     YS="hardware/boards/artix7/synth_a7_som_probe.ys"
     XDC="hardware/boards/artix7/spu_a7_som_probe.xdc"
     TOP="spu_a7_som_probe_top"
+elif [ "$SPIN" = "TENSEGRITYPROBE" ]; then
+    YS="hardware/boards/artix7/synth_a7_tensegrity_probe.ys"
+    XDC="hardware/boards/artix7/spu_a7_tensegrity_probe.xdc"
+    TOP="spu_a7_tensegrity_probe_top"
 fi
 
 echo "=== SPU-13 Artix-7 Build ==="
@@ -62,12 +106,15 @@ echo "  Spin:   $SPIN"
 echo "  Step:   $STEP"
 echo "  Freq:   ${A7_FREQ} MHz"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
+if [ "$A7_UART_DIAG" != "0" ]; then
+    echo "  UART:   DIAGNOSTIC MODE (real hex telemetry disabled)"
+fi
 echo ""
 
 synth() {
     echo ">>> Yosys Synthesis <<<"
     mkdir -p build
-    if [ "$SPIN" = "SOMPROBE" ]; then
+    if [ "$TOP" != "spu_a7_top" ]; then
         yosys -p "script $YS; \
             synth_xilinx -family xc7 -top $TOP -json \"$JSON\"; \
             stat -top $TOP"
@@ -76,6 +123,7 @@ synth() {
             chparam -set DEVICE \"$DEVICE_PARAM\" \
                     -set SPIN \"$SPIN\" \
                     -set A7_CLK_DIV_LOG2 $A7_CLK_DIV_LOG2 \
+                    -set A7_UART_DIAG $A7_UART_DIAG \
                     spu_a7_top; \
             hierarchy -check -top spu_a7_top; \
             synth_xilinx -family xc7 -top spu_a7_top -json \"$JSON\"; \

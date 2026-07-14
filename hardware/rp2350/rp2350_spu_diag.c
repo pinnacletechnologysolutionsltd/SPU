@@ -22,7 +22,9 @@
 #include "spu_link.h"
 
 #define SPI_PORT     spi0
+#ifndef SPI_BAUD_HZ
 #define SPI_BAUD_HZ  2000000
+#endif
 
 #ifndef SPU_SPI_MISO_PIN
 #define SPU_SPI_MISO_PIN 16

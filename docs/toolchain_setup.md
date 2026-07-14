@@ -42,6 +42,10 @@ git -C $HOME/toolchains/prjxray submodule update --init third_party/fasm
 python3 -m venv $HOME/.local/venvs/prjxray
 $HOME/.local/venvs/prjxray/bin/python -m pip install \
   textx pyyaml intervaltree simplejson progressbar2 pyjson5
+# fasm2frames.py imports `fasm`, which is not on PyPI under that name —
+# install it from the submodule checked out above, not via pip install fasm.
+$HOME/.local/venvs/prjxray/bin/python -m pip install \
+  $HOME/toolchains/prjxray/third_party/fasm
 ```
 
 If `fasm2frames` is not installed as an executable, point the build script at a
