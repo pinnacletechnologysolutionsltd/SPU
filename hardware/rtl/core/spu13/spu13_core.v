@@ -119,6 +119,7 @@ module spu13_core #(
     output wire                      ecc_double_err,   // QR regfile double-bit error detected
     output wire [15:0]               rotc_debug_status, // bring-up: flags/state/angle
     output wire                      boot_ready,        // boot FSM in READY (docs/BOOT_SEQUENCE_FSM.md)
+    output wire [1:0]                boot_state_dbg,    // raw boot FSM state: 0=RESET 1=HYDRATING 2=READY 3=FAULT (bring-up only)
 
     // Optional external RPLU v2 Padé multiplier. Active only when
     // EXTERNAL_RPLU_PADE_MULT=1 and ENABLE_CORE_RPLU_V2_PIPELINE=1.
@@ -643,6 +644,7 @@ module spu13_core #(
     wire        som_hydrated;
     wire        boot_join = qrf_hydrated && som_hydrated;
     assign boot_ready = (boot_state == BOOT_READY_ST);
+    assign boot_state_dbg = boot_state;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
