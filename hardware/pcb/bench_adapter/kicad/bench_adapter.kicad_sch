@@ -2862,7 +2862,7 @@
   (wire (pts (xy 34.92 45.08) (xy 29.84 45.08)) (stroke (width 0) (type default)) (uuid "78acac56-7468-44a0-be6b-4926c8fddf2a"))
   (label "GND" (at 29.84 45.08 0) (effects (font (size 1.27 1.27))) (uuid "6fb279c5-ab38-4761-b3e6-24ca5758f297"))
   (wire (pts (xy 34.92 47.62) (xy 29.84 47.62)) (stroke (width 0) (type default)) (uuid "bb6442b1-4750-4682-8619-bd642a5defc3"))
-  (label "V3V3" (at 29.84 47.62 0) (effects (font (size 1.27 1.27))) (uuid "2fb9da94-b95d-4333-82cf-45215201c08f"))
+  (label "TARGET_3V3_SENSE" (at 29.84 47.62 0) (effects (font (size 1.27 1.27))) (uuid "2fb9da94-b95d-4333-82cf-45215201c08f"))
   (wire (pts (xy 34.92 74.92) (xy 29.84 74.92)) (stroke (width 0) (type default)) (uuid "e545b716-3e44-4bcc-8f71-893b8ffa73ca"))
   (label "FLASH_CS_HDR" (at 29.84 74.92 0) (effects (font (size 1.27 1.27))) (uuid "f06052d5-4a7f-4c6e-a80e-8a842c6c19b4"))
   (wire (pts (xy 34.92 77.46) (xy 29.84 77.46)) (stroke (width 0) (type default)) (uuid "24cba09f-7a83-403e-bb9b-fc738b2c2e68"))

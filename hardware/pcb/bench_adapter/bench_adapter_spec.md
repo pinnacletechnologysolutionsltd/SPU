@@ -1,16 +1,19 @@
-# SPU-13 Bench Metrics & Southbridge Adapter — Rev A Specification
+# SPU-13 Bench Metrics & Southbridge Adapter — Rev B Specification
 
-**Status:** Netlist-level specification, ready for KiCad capture.
+**Status:** Rev B safety design update.  The existing Rev A PCB must not be
+ordered.  Breadboard-verify the power-ready interlock in §2.1 first, then
+capture that proven circuit in the KiCad schematic and lay out a new PCB.
 **Scope:** 2-layer, hand-solderable, all-through-hole/module carrier board.
 **License:** CERN-OHL-W-2.0 (this directory), docs CC0 1.0.
 **Role:** First OSHWA-certifiable SPU-13 board; permanent bench replacement for
 jumper-wire SPI southbridge hookups; in-line power metering for the paper
 metrics program.
 
-This board deliberately contains **no bare ICs**. Every active component is an
-off-the-shelf module on socket headers. The board is the wiring, termination,
-pullups, and metering path — the failure classes documented in bring-up
-(cracked `/CS` joints, floating `WP`/`HOLD`, rat's-nest SPI) are what it fixes.
+Rev A deliberately contained no bare ICs.  Rev B makes one safety exception:
+the J2 interlock uses a bus-switch IC and a micropower comparator.  This is
+not optional convenience circuitry: it prevents a powered Pico from driving
+an unpowered FPGA through its I/O clamp diodes.  The board remains otherwise
+a socketed-module carrier for wiring, termination, pullups, and metering.
 
 ---
 
@@ -30,8 +33,9 @@ pullups, and metering path — the failure classes documented in bring-up
   ┌──────────────────────────────────┴─┐
   │  Raspberry Pi Pico 2 (socketed)    │
   │                                    │
-  │ GP16-19 ──[100R]── J11/PMOD SPI hdr├── to Tang 25K southbridge /
-  │                   (10k on CS#)     │   Wukong J11
+  │ GP16-19 ──[100R]──[PGOOD / Ioff]── J11/PMOD SPI hdr
+  │                   (10k on CS#)     ├── to Tang 25K southbridge /
+  │                                     │   Wukong J11
   │ GP2-5   ──[33R]── FLASH PMOD hdr   ├── W25Q flash PMOD (rp2040_flash_pmod)
   │                   (10k CS/WP/HOLD) │
   │ GP10-13 ────────── microSD module  │   (SD hydration path)
@@ -49,7 +53,7 @@ pullups, and metering path — the failure classes documented in bring-up
 All GP assignments are copied from silicon-verified firmware in this repo.
 The board adapts to the firmware, never the reverse.
 
-### 2.1 Southbridge SPI → J11/PMOD header (J2)
+### 2.1 Southbridge SPI → J11/PMOD header (J2), power-ready interlocked
 
 Source: `hardware/rp2350/rp2350_su3_j11_smoke.c:49-58`, `rp2350_spu_diag.c`,
 `rp2350_spu_arithmetic_test.c` (identical in all).
@@ -64,8 +68,8 @@ Source: `hardware/rp2350/rp2350_su3_j11_smoke.c:49-58`, `rp2350_spu_diag.c`,
 | GND | — | 23 | — | — | 5 |
 
 J2 = 1x6 male 2.54 mm header (plus an optional parallel 2x6 PMOD-pattern
-footprint, unpopulated in Rev A). The CS# pullup guarantees idle-high during
-Pico reboot — required by the FPGA-side SPI deadman timer.
+footprint, unpopulated). The CS# pullup guarantees idle-high during Pico
+reboot — required by the FPGA-side SPI deadman timer.
 
 **Series R raised 33 Ω → 100 Ω 2026-07-13 (Gemini finding, post A7 Wukong
 J11 damage):** the original 33 Ω was sized for signal termination, not fault
@@ -83,8 +87,48 @@ in case wiring roles ever get swapped. J3's flash-PMOD resistors stay at
 board of its own to be "unpowered"), so it isn't exposed to this failure
 mode.
 
-**3V3 on J2 pin 6 is a reference/sense line only.** The target FPGA board is
-never powered from the Pico's 3V3 regulator.
+#### Mandatory Rev B interlock
+
+All four J2 signals shall pass through **U1, SN74CBTLV3125** (or a documented,
+pin-compatible substitute explicitly rated for `Ioff` / powered-off
+protection).  It is a four-channel bidirectional FET bus switch, so it safely
+covers the three Pico-to-FPGA drivers and FPGA-to-Pico MISO without assigning a
+fixed direction.  Its four active-low OE pins are tied together as `J2_OE_N`.
+
+`J2_OE_N` is pulled up to **Pico 3V3** with 10 kΩ, so the safe default is all
+four signals disconnected.  U2, a Pico-3V3-powered open-drain comparator with
+an independent/fail-safe input (prototype: **TLV3011B**), pulls `J2_OE_N` low
+only after `TARGET_3V3_SENSE` crosses the qualified-on threshold.  Use its
+1.242 V reference with a 137 kΩ / 100 kΩ divider from J2-6 for a nominal
+2.94 V rising threshold.  Provide a 1 MΩ hysteresis footprint (DNP until the
+breadboard test sets the falling threshold); target 2.75–2.85 V falling.
+
+U1 and U2 are both powered from Pico 3V3.  This deliberately avoids powering
+any safety logic from the target.  U1's `Ioff` rating is required to keep the
+J2 side high impedance if the Pico itself is unpowered; U2's fail-safe input is
+required so a powered target cannot back-power the Pico through the sense path.
+Retain the four 100 Ω resistors between the Pico and U1 as secondary
+fault-current limiting / signal damping.  They are no longer the primary
+protection mechanism.
+
+**J2 pin 6 is `TARGET_3V3_SENSE`, not a rail tie.** It goes only to U2 through
+the high-impedance divider; it must never connect to Pico pin 36, Pico 3V3, or
+any other adapter supply rail.  The target FPGA board is never powered from
+the Pico's 3V3 regulator.
+
+Breadboard acceptance, before PCB layout:
+
+1. With Pico powered and target 3V3 absent, add a temporary 10 kΩ pull-down
+   to each U1 target-side pin. All four pins must stay below 100 mV while the
+   Pico drives the corresponding source-side signals.
+2. Ramp target sense from 0 to 3.3 V. `J2_OE_N` must stay high below the chosen
+   falling threshold and go low only above the qualified-on threshold.
+3. With target power removed while the Pico continues to issue SPI traffic,
+   target-side CS#/SCK/MOSI must remain high impedance and the target rail must
+   not rise measurably through the interface.
+4. With both domains powered, run the existing 2 MHz southbridge smoke test.
+5. Repeat steps 1–3 with Pico unpowered and target powered, validating U1's
+   powered-off isolation in the opposite direction.
 
 ### 2.2 Flash-PMOD programmer header (J3)
 
@@ -225,6 +269,10 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | J2–J4, J8 | 2.54 mm male headers | ~40 pins | 2 | Generic breakaway pin header strip | |
 | JP2 | 2×3 shrouded header + 2× jumper shunt | 1 | 0.5 | Generic 2.54mm 2x3 header + 2× 2.54mm jumper shunts | GP4/GP5: FLASH ⟷ UART select, both poles moved together |
 | R | 100 Ω 1/4 W THT | 4 | 0.5 | Generic carbon/metal film, 5% or better | J2 SPI-to-FPGA series (MISO/CS/SCK/MOSI) — fault-current-limiting value, see §2.1 note |
+| U1 | SN74CBTLV3125PW | 1 | 2 | TI or pin-compatible `Ioff`-rated 4-channel bidirectional bus switch | Mandatory J2 isolation; TSSOP-14 |
+| U2 | TLV3011BIDBVR | 1 | 2 | TI micropower open-drain comparator | Pico-powered `TARGET_3V3_SENSE` supervisor; SOT-23-6 |
+| R | 10 kΩ, 137 kΩ, 100 kΩ | 3 | 0.5 | 1% metal-film preferred | U1 OE pull-up and U2 2.94 V sense divider |
+| R | 1 MΩ | 1 | 0.2 | 1% metal-film; mark DNP on first PCB | Optional U2 hysteresis, populate after breadboard characterization |
 | R | 33 Ω 1/4 W THT | 5 | 1 | Generic carbon/metal film, 5% or better | J3 flash-PMOD series termination (4) +1 spare |
 | R | 10 kΩ 1/4 W THT | 3 | 0.5 | Generic carbon/metal film, 5% or better | SPI_CS# + FLASH_CS# pullups (2, WP#/HOLD# pullups removed per §2.2 correction — not physically possible on the 6-pin J3), +1 spare |
 | R | 1 kΩ 1/4 W THT | 2 | 0.5 | Generic carbon/metal film, 5% or better | LED series |
@@ -245,7 +293,13 @@ microSD breakouts do occasionally ship in a mirrored order).
 - Metering path (T1 → INA226 VIN+ → VIN− → T2/J7) in ≥2 mm trace, kept away
   from SPI. Everything else is ≤2 MHz digital — routing is uncritical.
 - Keep each SPI group's traces together; grounds interleaved on J8 as tabled.
-- Hex/IVM silkscreen motif welcome; keep the outline rectangular in Rev A.
+- Place U1 immediately behind J2, with short grouped SPI traces; leave the
+  100 Ω resistors on the Pico side of U1. Place U2 and its divider by J2-6,
+  away from SCK. Label the target-side U1 nets `TARGET_SPI_*`, never `SPI_*`.
+- Add labelled test pads for `TARGET_3V3_SENSE`, `J2_OE_N`, and all four
+  target-side SPI nets; these make the interlock acceptance test possible
+  without touching a connector pin.
+- Hex/IVM silkscreen motif welcome; keep the outline rectangular in Rev B.
 - Mounting: 4× M3 holes.
 
 ## 6. Bring-up & test plan (uses only existing repo firmware)
@@ -255,18 +309,68 @@ microSD breakouts do occasionally ship in a mirrored order).
    ~106 mA ±5% at 5.0 V via `tools/bench_metrics/ina226_logger.py`
    (startup ID check must report TI manufacturer/die ID before trusting
    readings).
-3. **Southbridge smoke:** `rp2350_spu_diag` UF2, J2 → Tang 25K
+3. **Interlock qualification:** complete the five tests in §2.1 with a bench
+   supply and meter/scope before attaching any FPGA. Record the measured
+   rising/falling thresholds and only then populate R16 if hysteresis needs
+   adjustment.
+4. **Southbridge smoke:** `rp2350_spu_diag` UF2, J2 → Tang 25K
    `southbridge_link` probe → expect 0xAC status responses (known-good
    baseline from `docs/SOUTHBRIDGE_SPI_PROTOCOL.md`).
-4. **Flash PMOD:** `rp2040_flash_pmod.uf2` on a Pico 1 in the same socket,
+5. **Flash PMOD:** `rp2040_flash_pmod.uf2` on a Pico 1 in the same socket,
    JP2 → FLASH; `tools/rp2040_flash_pmod.py --port <tty> id` must report
    `JEDEC: EF4018` on a known-good W25Q PMOD.
-5. **SD path:** SD hydration regression via `spu_sd` firmware on J5.
-6. **First real metrics run:** Tang 25K probe ladder power table — idle vs.
+6. **SD path:** SD hydration regression via `spu_sd` firmware on J5.
+7. **First real metrics run:** Tang 25K probe ladder power table — idle vs.
    active for each silicon-verified probe, logged to CSV. This table feeds
    the central paper §Power and Timing.
 
-## 7. OSHWA mapping
+## 7. Rev B layout / tapeout handoff
+
+The project owner may hand-layout the board as far as practical, then engage
+an EE student or other qualified reviewer to complete and review the tapeout.
+The reviewer is not expected to redesign the board's role: this specification,
+the breadboard interlock proof, and the proven firmware pin map are the design
+inputs. Their job is to turn them into a safe, manufacturable, reproducible
+KiCad design.
+
+### Non-negotiable electrical requirements
+
+- J2's CS#, SCK, MOSI, and MISO each pass through the hardware
+  power-ready/`Ioff` interlock in §2.1; none may bypass it for convenience.
+- J2-6 is `TARGET_3V3_SENSE` only. It shall not connect directly to Pico 3V3,
+  Pico pin 36, or an adapter power rail.
+- Retain the four 100 Ω Pico-side J2 series resistors after U1 is added.
+- Provide labelled test pads for target sense, `J2_OE_N`, and both sides of
+  each SPI channel, so backfeed and signal-integrity checks are repeatable.
+- Keep the INA226 5 V metering path physically and electrically distinct from
+  J2 SPI routing. Maintain the specified wide 5 V trace and a continuous,
+  low-impedance ground return under the SPI group.
+
+### Required review and tapeout deliverables
+
+- KiCad schematic and PCB with symbols, footprints, net names, and values
+  matching this spec; the active interlock must be present in the actual
+  netlist, not only in a note or BOM.
+- Electrical Rules Check and Design Rules Check reports, with every remaining
+  warning either fixed or documented with a specific rationale.
+- Fabrication package: Gerbers, drill files, board outline, stack-up, and
+  fabrication drawing; provide pick-and-place and assembly drawings if an
+  assembler will be used.
+- Public BOM with manufacturer part numbers, distributor alternatives where
+  sensible, DNP markings, and the exact U1/U2 qualified parts.
+- A short assembly/inspection note covering polarity, Pico/module orientation,
+  J2 pin 1 orientation, and the target-power safety rule.
+
+### Required acceptance evidence
+
+Before any board is treated as a stable southbridge fixture, retain the
+breadboard/assembled-board results for: target-off with Pico-on; Pico-off with
+target-on; power-threshold and hysteresis measurements; and the existing 2 MHz
+southbridge smoke test. After those pass, collect the INA226 CSV power table
+for the supported probe ladder. These artifacts are both the first metrics
+capture dataset and the electrical evidence supporting OSHWA self-certification.
+
+## 8. OSHWA mapping
 
 | OSHWA requirement | This board |
 |---|---|
@@ -276,9 +380,10 @@ microSD breakouts do occasionally ship in a mirrored order).
 | Docs to build/modify | This spec + assembly notes at capture |
 | No proprietary blobs | All firmware already MIT in-repo |
 
-Certification target: after Rev A is assembled and the §6 plan passes.
+Certification target: after Rev B is assembled, its design files and
+manufacturing package are published, and the §6/§7 acceptance evidence passes.
 
-## 8. Rev B candidates (explicitly NOT in Rev A scope)
+## 9. Later candidates (explicitly NOT in Rev B scope)
 
 - **RP2040 "swiss-army" bench probe:** one RP2040 running a
   DirtyJTAG-class composite firmware — openFPGALoader-compatible JTAG
