@@ -1,5 +1,5 @@
 read_verilog \
-    hardware/boards/tang_primer_25k/spu13_tang25k_southbridge_smoke_top.v \
+    hardware/boards/tang_primer_25k/spu13_tang25k_fpga_smoke_top.v \
     hardware/rtl/peripherals/io/spu_spi_slave.v
 
 hierarchy -check -top spu13_tang25k_southbridge_smoke_top
