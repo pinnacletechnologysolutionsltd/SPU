@@ -1,4 +1,4 @@
-// spu_som_sidecar_top.v — Standalone SOM edge classifier
+// spu13_tang25k_som_sidecar_top.v — Standalone SOM edge classifier
 //
 // Direct SPI-to-SOM BMU bridge. No processor core.
 // Protocol (0xA5 writes):
@@ -7,14 +7,21 @@
 //   sel=6  classify                          — run BMU, output UART result
 //
 // UART at 115200 baud on uart_tx_telemetry (B11 → USB bridge).
+//
+// Named distinctly from hardware/rtl/core/spu13/spu_som_sidecar_top.v (an
+// unrelated, unreferenced cfg-bus/QR-commit variant) -- both used to share
+// the name "spu_som_sidecar_top", which run_all_tests.py's source scan
+// silently resolved to whichever file it saw first in scan_dirs order,
+// so a naive testbench for this module would have silently compiled
+// against the wrong one instead of erroring.
 
-module spu_som_sidecar_top (
+module spu13_tang25k_som_sidecar_top (
     input  wire        sys_clk,
     input  wire        spi_cs_n,
     input  wire        spi_sck,
     input  wire        spi_mosi,
     output wire        spi_miso,
-    output wire        uart_tx_telemetry,
+    output reg         uart_tx_telemetry,
     output wire [2:0]  led
 );
 
@@ -33,6 +40,15 @@ module spu_som_sidecar_top (
     wire [2:0]  cfg_sel;
     wire [9:0]  cfg_addr;
     wire [63:0] cfg_data;
+
+    // Declared ahead of u_spi's instantiation (not just ahead of use) --
+    // iverilog, unlike yosys's frontend, requires nets referenced directly
+    // in a port-connection expression to be declared before that
+    // instantiation, not just before the enclosing always block.
+    wire        bmu_start;
+    wire        bmu_done;
+    wire [15:0] bmu_best, bmu_label;
+    reg         class_pend;
 
     spu_spi_cfg u_spi (
         .clk(sys_clk), .rst_n(rst_n),
@@ -72,18 +88,14 @@ module spu_som_sidecar_top (
     wire [2:0]  som_node      = cfg_addr[4:2];
     wire [1:0]  som_feat      = cfg_addr[1:0];
     wire [35:0] som_feat_data = cfg_data[35:0];
-    wire [143:0] som_wdata;
+    reg  [143:0] som_wdata;
     always @(*) begin
         som_wdata = 144'd0;
         som_wdata[som_feat * 36 +: 36] = som_feat_data;
     end
 
-    // ── BMU instantiation ────────────────────────────────────────────
-    wire        bmu_start;
-    wire        bmu_done;
-    wire [15:0] bmu_best, bmu_label;
-
-    reg class_pend;
+    // ── BMU instantiation (bmu_start/bmu_done/bmu_best/bmu_label/class_pend
+    //    declared earlier, ahead of u_spi) ──────────────────────────────
     always @(posedge sys_clk or negedge rst_n) begin
         if (!rst_n)
             class_pend <= 1'b0;
@@ -147,8 +159,10 @@ module spu_som_sidecar_top (
             end
 
             // On BMU done, send result byte
+            // bmu_best is a node id 0-6 (needs 3 bits) -- 2 bits would alias
+            // {0,4}, {1,5}, {2,6}; keep the full field, drop padding to 3'd0.
             if (bmu_done && !tx_pending && !tx_sending) begin
-                tx_byte <= {4'd0, bmu_label[1:0], bmu_best[1:0]};
+                tx_byte <= {3'd0, bmu_label[1:0], bmu_best[2:0]};
                 tx_pending <= 1'b1;
             end
         end

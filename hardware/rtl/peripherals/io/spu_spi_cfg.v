@@ -66,9 +66,14 @@ module spu_spi_cfg (
                     hdr[62:56] <= hdr[63:57];
                     bit_cnt <= bit_cnt + 1;
                     if (bit_cnt == 7) begin
-                        // Check if it's 0xA5 (write) or 0x01 (read)
-                        // hdr[63:56] now holds the full command byte
-                        if (hdr[63:56] == 8'hA5) begin
+                        // Check if it's 0xA5 (write) or 0x01 (read).
+                        // hdr[63:56] is one cycle stale here -- this cycle's
+                        // hdr[63]<=spi_mosi / hdr[62:56]<=hdr[63:57] above
+                        // hasn't taken effect yet, so compare against the
+                        // about-to-be-latched value instead (this was a real
+                        // bug: hdr[63:56]==8'hA5 never matched, so no 0xA5
+                        // write command could ever be accepted).
+                        if ({spi_mosi, hdr[63:57]} == 8'hA5) begin
                             got_cmd <= 1'b1;
                             byte_cnt <= 1;
                             bit_cnt <= 0;
