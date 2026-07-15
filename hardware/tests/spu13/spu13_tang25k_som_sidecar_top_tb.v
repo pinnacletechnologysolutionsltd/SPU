@@ -27,11 +27,9 @@
 // entire write/classify path was silently dead, in simulation and on real
 // silicon, until fixed (see spu_spi_cfg.v). Separately (not fixed here):
 // the SPI status-read path (cmd_result() in spu_diag.c, a single 8-clock
-// dummy-byte transfer) always reads back 0x00 in this TB -- the DUT only
-// starts driving the real result nibble onto MISO as of the 8th clock of
-// that same transfer, one clock too late for a single-byte host transfer to
-// ever sample it. The UART telemetry byte (what this TB actually checks)
-// is unaffected and is the reliable first-hour-demo signal.
+// dummy-byte transfer) used to read back 0x00: the DUT can only shift the
+// result after consuming the command byte. The host now clocks a second byte,
+// and this regression checks both that readback and UART telemetry.
 
 module spu13_tang25k_som_sidecar_top_tb;
 
@@ -111,11 +109,13 @@ module spu13_tang25k_som_sidecar_top_tb;
         end
     endtask
 
-    // ---- raw status nibble read, mirrors spu_diag.c's cmd_result() ----
+    // ---- status nibble read, mirrors spu_diag.c's cmd_result() --------
     task automatic spi_read_status(output [7:0] resp);
+        reg [7:0] ignored;
         begin
             spi_cs_n = 1'b0;
-            spi_xfer_byte(8'h01, resp);
+            spi_xfer_byte(8'h01, ignored);
+            spi_xfer_byte(8'h00, resp);
             #(SCK_HALF);
             spi_cs_n = 1'b1;
             #20;
@@ -161,6 +161,16 @@ module spu13_tang25k_som_sidecar_top_tb;
             end else begin
                 $display("FAIL %0s: best_node=%0d, expected %0d (telemetry=0x%02X)",
                           label_str, tel[2:0], expect_node, tel);
+                fail_count = fail_count + 1;
+            end
+            if (status_resp[7] && !status_resp[6] &&
+                status_resp[5:4] == tel[4:3]) begin
+                $display("PASS %0s: status valid/idle/label=0x%02X",
+                         label_str, status_resp);
+                pass_count = pass_count + 1;
+            end else begin
+                $display("FAIL %0s: bad status=0x%02X for telemetry=0x%02X",
+                         label_str, status_resp, tel);
                 fail_count = fail_count + 1;
             end
         end

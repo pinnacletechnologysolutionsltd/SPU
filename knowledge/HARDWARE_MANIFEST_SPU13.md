@@ -126,14 +126,15 @@ rational arithmetic pipeline over the Mersenne prime M31 (p = 2^31−1).
 | `spu_btu_collision_resolver.v` | 64→6 priority encoder + backlog queue | ~180 | 0 |
 | `spu13_btu_core_top.v` | BTU spatial→A₃₁ router, 4-lane BRAM | ~50 | 0 |
 | `rplu_thimble_pade.v` | [4/4] Padé Horner evaluator + coefficient storage | ~350 | 0 |
-| `spu_som_node.v` ×7 | Individual SOM node, 3-stage quadrance pipeline | ~700 | 0 |
-| `spu_som_node_array.v` | Parallel array with WTA comparator tree | ~250 | 0 |
+| `spu_som_weight_bram.v` | Four-slice writable SOM prototype store | unverified | 0 |
+| `spu_som_bmu.v` | Serial exact-field BMU scan with best/runner-up | unverified | target-dependent |
 | `spu13_multi_port_regfile.v` | 4R2W register file with write-forwarding bypass | ~400 | 0 |
 | `rplu_pipeline.v` | 4-stage pipeline top | ~100 | 0 |
-| **Total** | | **~3,230** | **16** |
+| **Total** | | **not re-baselined** | **not re-baselined** |
 
 Resource comparison with legacy RPLU (Morse potential, `rplu_exp.v` + `rplu_skel.v`):
-- LUTs: 3,230 vs ~1,100 (+2,130) — trades area for deterministic field arithmetic + parallel SOM
+- LUTs: the former 3,230 estimate included an archived parallel SOM and is no
+  longer a valid active-tree total; use per-spin synthesis reports.
 - BRAMs: 8 vs 6–8 (parity — Morse tables become BTU lanes + Padé coeffs)
 - DSPs: 16 vs 4 (+12) — the A₃₁ multiplier's 16 parallel products dominate
 

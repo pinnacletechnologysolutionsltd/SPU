@@ -13,7 +13,8 @@
 //   4. Arithmetic right-shift by `shift` (1 cycle)
 //   5. Adds to weight, writes back to BRAM (1 cycle)
 //
-// Total: BMU scan (~56 cycles) + 5 cycles update (read + 2 BRAM wait + delta + shift + write)
+// Total: fixed-schedule BMU scan (serial exact-field comparisons) + 5 cycles
+// update (read + 2 BRAM wait + delta + shift + write)
 //
 // Parameters:
 //   NUM_FEATURES = 4    feature dimensions

@@ -82,12 +82,17 @@ module spu_som_bmu #(
     assign train_rdata = bram_rd_data;
 
     // ── Scan FSM ──────────────────────────────────────────────────────
-    localparam SCAN_IDLE    = 3'd0;
-    localparam SCAN_PRIME   = 3'd1;
-    localparam SCAN_COMPUTE = 3'd2;
-    localparam SCAN_DONE    = 3'd3;
+    localparam SCAN_IDLE       = 4'd0;
+    localparam SCAN_PRIME      = 4'd1;
+    localparam SCAN_COMPUTE    = 4'd2;
+    localparam SCAN_CMP_BEST   = 4'd3;
+    localparam SCAN_WAIT_BEST  = 4'd4;
+    localparam SCAN_CMP_SECOND = 4'd5;
+    localparam SCAN_WAIT_SECOND= 4'd6;
+    localparam SCAN_ADVANCE    = 4'd7;
+    localparam SCAN_DONE       = 4'd8;
 
-    reg [2:0]  scan_state;
+    reg [3:0]  scan_state;
     reg [ADDR_W-1 : 0] scan_node;       // Current node being evaluated
 
     // Pipeline registers for quadrance computation
@@ -107,7 +112,29 @@ module spu_som_bmu #(
     reg [15:0] scan_sec_label;
     reg [63:0] scan_best_q_reg;
     reg [63:0] scan_sec_q_reg;
+    reg [63:0] scan_cand_q;
+    reg [15:0] scan_cand_id;
+    reg [15:0] scan_cand_label;
+    reg        scan_cand_lt_best;
+    reg        scan_have_best;
     reg        scan_has_sec;
+
+    // Exact Q(sqrt(3)) ordering is deliberately bit-serial. A combinational
+    // implementation inferred two wide squares and overwhelmed the Tang 25K;
+    // the serial comparator spends at most 35 clocks and uses two shift-add
+    // accumulators instead.
+    wire cmp_start = (scan_state == SCAN_CMP_BEST) ||
+                     (scan_state == SCAN_CMP_SECOND);
+    wire [63:0] cmp_rhs = (scan_state == SCAN_CMP_SECOND)
+                        ? scan_sec_q_reg : scan_best_q_reg;
+    wire cmp_done;
+    wire cmp_lt;
+
+    spu_surd_lt_serial u_surd_lt (
+        .clk(clk), .rst_n(rst_n), .start(cmp_start),
+        .lhs(scan_cand_q), .rhs(cmp_rhs),
+        .done(cmp_done), .lt(cmp_lt)
+    );
 
     // ── Quadrance computation datapath ────────────────────────────────
     function [4*WIDTH-1:0] rs_weighted_quadrance;
@@ -171,6 +198,12 @@ module spu_som_bmu #(
             scan_sec_dist  <= 32'h7FFFFFFF;
             scan_best_id   <= 0;
             scan_sec_id    <= 0;
+            scan_cand_q    <= 0;
+            scan_cand_id   <= 0;
+            scan_cand_label <= 0;
+            scan_cand_lt_best <= 0;
+            scan_have_best <= 0;
+            scan_has_sec   <= 0;
             pipe_stage     <= 0;
             q_accum_p      <= 0;
             q_accum_q      <= 0;
@@ -191,6 +224,7 @@ module spu_som_bmu #(
                         scan_sec_dist  <= 32'h7FFFFFFF;
                         scan_best_id   <= 0;
                         scan_sec_id    <= 0;
+                        scan_have_best <= 0;
                         scan_has_sec   <= 0;
                         pipe_stage     <= 0;
                         q_accum_p      <= 0;
@@ -217,7 +251,7 @@ module spu_som_bmu #(
                     //   pipe 0: latch BRAM output into w_reg
                     //   pipe 1: compute per-feature quadrance
                     //   pipe 2: accumulate across features, issue BRAM read-ahead
-                    //   pipe 3: compare, advance scan_node
+                    //   pipe 3: latch candidate; exact comparison is serial
                     //
                     // BRAM has 1-cycle registered read latency.  Read-ahead is
                     // issued in pipe 2 (bram_rd_addr <= scan_node+1).  The BRAM
@@ -261,37 +295,86 @@ module spu_som_bmu #(
                         pipe_stage <= 3;
                     end
                     else begin
-                        // Compare
-                        if (q_accum_p < scan_best_dist ||
-                            (q_accum_p == scan_best_dist
-                             && $signed(q_accum_q)
-                                < $signed(scan_best_q_reg[31:0]))) begin
-                            scan_sec_dist   <= scan_best_dist;
-                            scan_sec_id     <= scan_best_id;
-                            scan_sec_label  <= scan_best_label;
-                            scan_sec_q_reg  <= scan_best_q_reg;
+                        scan_cand_q <= {q_accum_p, q_accum_q[31:0]};
+                        scan_cand_id <= {{(16-ADDR_W){1'b0}}, scan_node};
+                        scan_cand_label <= node_label[scan_node];
+                        if (!scan_have_best) begin
                             scan_best_dist  <= q_accum_p;
                             scan_best_id    <= {{(16-ADDR_W){1'b0}}, scan_node};
                             scan_best_label <= node_label[scan_node];
                             scan_best_q_reg <= {q_accum_p, q_accum_q[31:0]};
-                            scan_has_sec    <= (scan_best_dist != 32'h7FFFFFFF);
-                        end else if (q_accum_p < scan_sec_dist ||
-                                   (q_accum_p == scan_sec_dist
-                                    && $signed(q_accum_q)
-                                       < $signed(scan_sec_q_reg[31:0]))) begin
-                            scan_sec_dist  <= q_accum_p;
-                            scan_sec_id    <= {{(16-ADDR_W){1'b0}}, scan_node};
-                            scan_sec_label <= node_label[scan_node];
-                            scan_sec_q_reg <= {q_accum_p, q_accum_q[31:0]};
-                            scan_has_sec   <= 1;
-                        end
+                            scan_have_best  <= 1'b1;
+                            scan_state <= SCAN_ADVANCE;
+                        end else
+                            scan_state <= SCAN_CMP_BEST;
+                    end
+                end
 
-                        if (scan_node == MAX_NODES - 1) begin
-                            scan_state <= SCAN_DONE;
+                SCAN_CMP_BEST:
+                    scan_state <= SCAN_WAIT_BEST;
+
+                SCAN_WAIT_BEST: begin
+                    if (cmp_done) begin
+                        if (!scan_has_sec) begin
+                            if (cmp_lt) begin
+                                scan_sec_dist   <= scan_best_dist;
+                                scan_sec_id     <= scan_best_id;
+                                scan_sec_label  <= scan_best_label;
+                                scan_sec_q_reg  <= scan_best_q_reg;
+                                scan_best_dist  <= scan_cand_q[63:32];
+                                scan_best_id    <= scan_cand_id;
+                                scan_best_label <= scan_cand_label;
+                                scan_best_q_reg <= scan_cand_q;
+                            end else begin
+                                scan_sec_dist  <= scan_cand_q[63:32];
+                                scan_sec_id    <= scan_cand_id;
+                                scan_sec_label <= scan_cand_label;
+                                scan_sec_q_reg <= scan_cand_q;
+                            end
+                            scan_has_sec <= 1'b1;
+                            scan_state     <= SCAN_ADVANCE;
                         end else begin
-                            scan_node  <= scan_node + 1;
-                            pipe_stage <= 0;
+                            // Always perform the runner-up comparison once a
+                            // second candidate exists, even when this candidate
+                            // already beat the winner. This keeps node latency
+                            // independent of the data.
+                            scan_cand_lt_best <= cmp_lt;
+                            scan_state <= SCAN_CMP_SECOND;
                         end
+                    end
+                end
+
+                SCAN_CMP_SECOND:
+                    scan_state <= SCAN_WAIT_SECOND;
+
+                SCAN_WAIT_SECOND: begin
+                    if (cmp_done) begin
+                        if (scan_cand_lt_best) begin
+                            scan_sec_dist   <= scan_best_dist;
+                            scan_sec_id     <= scan_best_id;
+                            scan_sec_label  <= scan_best_label;
+                            scan_sec_q_reg  <= scan_best_q_reg;
+                            scan_best_dist  <= scan_cand_q[63:32];
+                            scan_best_id    <= scan_cand_id;
+                            scan_best_label <= scan_cand_label;
+                            scan_best_q_reg <= scan_cand_q;
+                        end else if (cmp_lt) begin
+                            scan_sec_dist  <= scan_cand_q[63:32];
+                            scan_sec_id    <= scan_cand_id;
+                            scan_sec_label <= scan_cand_label;
+                            scan_sec_q_reg <= scan_cand_q;
+                        end
+                        scan_state <= SCAN_ADVANCE;
+                    end
+                end
+
+                SCAN_ADVANCE: begin
+                    if (scan_node == MAX_NODES - 1)
+                        scan_state <= SCAN_DONE;
+                    else begin
+                        scan_node  <= scan_node + 1'b1;
+                        pipe_stage <= 0;
+                        scan_state <= SCAN_COMPUTE;
                     end
                 end
 
@@ -315,4 +398,92 @@ module spu_som_bmu #(
         end
     end
 
+endmodule
+
+// Exact less-than comparator for non-negative Q(sqrt(3)) distances encoded as
+// {P[31:0], Q[31:0]}. For mixed-sign component differences it evaluates
+// |a|^2 versus 3|b|^2 with 33 shift-add steps instead of inferred multipliers.
+module spu_surd_lt_serial (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire        start,
+    input  wire [63:0] lhs,
+    input  wire [63:0] rhs,
+    output reg         done,
+    output reg         lt
+);
+    localparam C_IDLE = 2'd0;
+    localparam C_RUN  = 2'd1;
+    localparam C_DECIDE = 2'd2;
+
+    reg [1:0] state;
+    reg [5:0] bit_idx;
+    reg [32:0] abs_a, abs_b;
+    reg [65:0] sq_a, sq_b;
+    reg mixed_a_negative;
+    reg direct_case;
+    reg direct_lt;
+
+    wire signed [32:0] da = $signed({1'b0, lhs[63:32]})
+                                  - $signed({1'b0, rhs[63:32]});
+    wire signed [32:0] db = $signed({lhs[31], lhs[31:0]})
+                                  - $signed({rhs[31], rhs[31:0]});
+    wire [65:0] add_a = abs_a[bit_idx]
+                       ? ({33'd0, abs_a} << bit_idx) : 66'd0;
+    wire [65:0] add_b = abs_b[bit_idx]
+                       ? ({33'd0, abs_b} << bit_idx) : 66'd0;
+    wire [65:0] three_sq_b = sq_b + (sq_b << 1);
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            state <= C_IDLE;
+            done <= 1'b0;
+            lt <= 1'b0;
+            bit_idx <= 0;
+            abs_a <= 0;
+            abs_b <= 0;
+            sq_a <= 0;
+            sq_b <= 0;
+            mixed_a_negative <= 1'b0;
+            direct_case <= 1'b0;
+            direct_lt <= 1'b0;
+        end else begin
+            done <= 1'b0;
+            case (state)
+                C_IDLE: if (start) begin
+                    direct_case <= (da == 0 && db == 0) ||
+                                   (da <= 0 && db <= 0) ||
+                                   (da >= 0 && db >= 0);
+                    direct_lt <= !(da == 0 && db == 0) &&
+                                 (da <= 0 && db <= 0);
+                    abs_a <= da < 0 ? -da : da;
+                    abs_b <= db < 0 ? -db : db;
+                    mixed_a_negative <= da < 0;
+                    sq_a <= 0;
+                    sq_b <= 0;
+                    bit_idx <= 0;
+                    state <= C_RUN;
+                end
+
+                C_RUN: begin
+                    sq_a <= sq_a + add_a;
+                    sq_b <= sq_b + add_b;
+                    if (bit_idx == 6'd32)
+                        state <= C_DECIDE;
+                    else
+                        bit_idx <= bit_idx + 1'b1;
+                end
+
+                C_DECIDE: begin
+                    lt <= direct_case ? direct_lt :
+                          (mixed_a_negative ? (sq_a > three_sq_b)
+                                            : (sq_a < three_sq_b));
+                    done <= 1'b1;
+                    state <= C_IDLE;
+                end
+
+                default: state <= C_IDLE;
+            endcase
+        end
+    end
 endmodule

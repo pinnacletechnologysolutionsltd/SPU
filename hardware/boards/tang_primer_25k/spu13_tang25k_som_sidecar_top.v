@@ -49,6 +49,7 @@ module spu13_tang25k_som_sidecar_top (
     wire        bmu_done;
     wire [15:0] bmu_best, bmu_label;
     reg         class_pend;
+    reg         class_valid;
 
     spu_spi_cfg u_spi (
         .clk(sys_clk), .rst_n(rst_n),
@@ -58,7 +59,7 @@ module spu13_tang25k_som_sidecar_top (
         .sel(cfg_sel),
         .addr(cfg_addr),
         .data(cfg_data),
-        .result({bmu_done, class_pend, bmu_label[1:0]})
+        .result({class_valid, class_pend, bmu_label[1:0]})
     );
 
     // ── Feature register writes (sel=5) ──────────────────────────────
@@ -97,12 +98,16 @@ module spu13_tang25k_som_sidecar_top (
     // ── BMU instantiation (bmu_start/bmu_done/bmu_best/bmu_label/class_pend
     //    declared earlier, ahead of u_spi) ──────────────────────────────
     always @(posedge sys_clk or negedge rst_n) begin
-        if (!rst_n)
+        if (!rst_n) begin
             class_pend <= 1'b0;
-        else if (cfg_wr_en && cfg_sel == 3'd6)
+            class_valid <= 1'b0;
+        end else if (cfg_wr_en && cfg_sel == 3'd6) begin
             class_pend <= 1'b1;
-        else if (bmu_done)
+            class_valid <= 1'b0;
+        end else if (bmu_done) begin
             class_pend <= 1'b0;
+            class_valid <= 1'b1;
+        end
     end
     assign bmu_start = class_pend && !bmu_done;
 

@@ -98,8 +98,12 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
 - Tang 25K `SOM-SIDECAR`'s own bespoke SPI write/classify path
   (`spu_spi_cfg.v`) was found completely non-functional (a one-cycle-stale
   command-byte comparison meant no write could ever be accepted, in
-  simulation or on real silicon) and fixed 2026-07-16 — simulation-verified
-  only so far, still needs its own board run.
+  simulation or on real silicon) and fixed 2026-07-16. Its formerly unusable
+  one-byte result read was also corrected to a two-byte command/response with
+  latched valid/busy/label status. Both paths are simulation-verified only so
+  far. The exact-field fixed-434-cycle rebuild is PnR-clean at 12,812 LUT4
+  (55%), 8 BSRAM, 0 DSP, 81.06 MHz routed Fmax at the 12 MHz target; the
+  sidecar still needs its own board run.
 
 ## Open-Toolchain Build Evidence
 

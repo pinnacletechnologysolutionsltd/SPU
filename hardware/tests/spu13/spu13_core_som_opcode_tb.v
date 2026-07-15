@@ -1,6 +1,7 @@
 `timescale 1ns/1ps
 
 module spu13_core_som_opcode_tb;
+    localparam SOM_OPCODE_TIMEOUT = 500; // BMU contract is 434 clocks + core handshake
     reg clk = 0;
     reg rst_n = 0;
     always #5 clk = ~clk;
@@ -128,7 +129,7 @@ module spu13_core_som_opcode_tb;
         end
 
         $display("TEST 2: SOM_CLASSIFY waits for reduced label");
-        issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), 260);
+        issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), SOM_OPCODE_TIMEOUT);
 
         if (issue_hex_valid !== 1'b1) begin
             $display("FAIL: SOM_CLASSIFY did not pulse hex_valid at inst_done");
@@ -155,7 +156,7 @@ module spu13_core_som_opcode_tb;
         // Level 0 (RCA₀): small integer features — no fault expected
         $display("TEST 3: RCA₀ level — small integer feature, expect no fault");
         phinary_level = 16'h0000;  // axiomatic_level = 00 (RCA₀)
-        issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), 260);
+        issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), SOM_OPCODE_TIMEOUT);
 
         if (axiomatic_fault !== 1'b0) begin
             $display("FAIL: RCA₀ spurious fault type=%b count=%d", fault_type, fault_count);
@@ -167,7 +168,7 @@ module spu13_core_som_opcode_tb;
         // Level 1 (WKL₀): same as RCA₀ for small integers
         $display("TEST 4: WKL₀ level — same feature, expect no fault");
         phinary_level = 16'h0004;  // axiomatic_level = 01 (WKL₀)
-        issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), 260);
+        issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), SOM_OPCODE_TIMEOUT);
 
         if (axiomatic_fault !== 1'b0) begin
             $display("FAIL: WKL₀ spurious fault type=%b", fault_type);
@@ -179,7 +180,7 @@ module spu13_core_som_opcode_tb;
         // Level 3 (OFF): gatekeeper disabled
         $display("TEST 5: OFF level — gatekeeper disabled, expect no fault");
         phinary_level = 16'h000C;  // axiomatic_level = 11 (OFF)
-        issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), 260);
+        issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), SOM_OPCODE_TIMEOUT);
 
         if (axiomatic_fault !== 1'b0) begin
             $display("FAIL: OFF gatekeeper fired spuriously");

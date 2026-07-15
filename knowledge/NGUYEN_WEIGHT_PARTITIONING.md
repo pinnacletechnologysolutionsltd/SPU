@@ -156,12 +156,10 @@ This is the "Heartbeat" function — it tells the 25K how to breathe the 13D dat
 
 ## RPLU v2 Integration (June 2026)
 
-The RPLU v2 pipeline maps Nguyen weights into the A₃₁ split biquadratic algebra
-field over M31. Weight vectors are stored as A₃₁ 4-tuples (c0, c1, c2, c3)
-in the BTU BRAM lanes (`spu13_btu_core_top.v`). The SOM node array
-(`spu_som_node_array.v`) computes weighted quadrance directly in A₃₁,
-replacing the legacy Q(√3) rational surd format with bounded 31-bit field
-elements. The BRAM tiering logic (BRAM18/SDRAM/PSRAM) remains valid for the
-legacy RPLU; the RPLU v2 pipeline uses flat BRAM storage for coeffs and BTU
-lanes.
+The active SOM v1 path does not compute its BMU in A₃₁. It stores four
+`Q(sqrt(3))` prototypes per node in `spu_som_weight_bram.v` and scans them with
+`spu_som_bmu.v`; the result may then feed the separate BTU/A₃₁ RPLU2 path.
+The former parallel `spu_som_node_array.v` design is archived and must not be
+used to describe current integration. The BRAM tiering proposal remains a
+future placement policy rather than implemented SOM behavior.
 - Davis Law: ΣABCD == 0 is the global laminar stability predicate

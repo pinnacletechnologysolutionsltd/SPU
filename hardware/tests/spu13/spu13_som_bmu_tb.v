@@ -72,28 +72,38 @@ module spu13_som_bmu_tb;
     endfunction
 
     integer test_pass, test_total;
+    integer cycle_count, expected_latency;
+    always @(posedge clk) cycle_count = cycle_count + 1;
 
     task run_case;
         input [NUM_FEATURES * FEATURE_W - 1:0] feature_vec;
         input [15:0] exp_best;
         input [15:0] exp_label;
+        integer start_cycle;
+        integer this_latency;
         begin
             test_total = test_total + 1;
             @(negedge clk);
             features = feature_vec;
+            start_cycle = cycle_count;
             start = 1'b1;
             @(negedge clk);
             start = 1'b0;
             wait(done);
             #1;
+            this_latency = cycle_count - start_cycle;
+            if (expected_latency < 0)
+                expected_latency = this_latency;
 
             if (bmu_valid !== 1'b1 ||
                 best_node_id !== exp_best ||
                 cluster_label !== exp_label ||
-                axiomatic_fault !== 1'b0) begin
-                $display("FAIL: best=%0d label=%0d valid=%b fault=%b type=%h count=%0d",
+                axiomatic_fault !== 1'b0 ||
+                this_latency != expected_latency) begin
+                $display("FAIL: best=%0d label=%0d valid=%b fault=%b type=%h count=%0d latency=%0d expected_latency=%0d",
                          best_node_id, cluster_label, bmu_valid,
-                         axiomatic_fault, fault_type, fault_count);
+                         axiomatic_fault, fault_type, fault_count,
+                         this_latency, expected_latency);
             end else begin
                 test_pass = test_pass + 1;
             end
@@ -110,6 +120,8 @@ module spu13_som_bmu_tb;
         feature_weights = vec4(rs(1, 0), rs(2, 0), rs(1, 0), rs(1, 0));
         test_pass = 0;
         test_total = 0;
+        cycle_count = 0;
+        expected_latency = -1;
 
         #20 rst_n = 1;
         repeat (2) @(posedge clk);
@@ -118,10 +130,17 @@ module spu13_som_bmu_tb;
         run_case(vec4(rs(0, 0), rs(2, 0), rs(0, 0), rs(0, 0)), 16'd2, 16'd1);
         run_case(vec4(rs(0, 0), rs(0, 0), rs(-2, 0), rs(1, 1)), 16'd6, 16'd3);
 
+        // Exact Q(sqrt(3)) ordering regression. Node 5 has quadrance
+        // 159+36sqrt(3); node 6 has 157+48sqrt(3). Lexicographic (P,Q)
+        // ordering incorrectly picks node 6, while the exact order picks 5.
+        run_case(vec4(rs(-3, -3), rs(-3, -3), rs(-3, -3), rs(-2, 3)),
+                 16'd5, 16'd3);
+
         if (test_pass == test_total)
             $display("PASS: spu13_som_bmu_tb (%0d/%0d)", test_pass, test_total);
         else
             $display("FAIL: spu13_som_bmu_tb (%0d/%0d)", test_pass, test_total);
+        $display("INFO: fixed SOM BMU latency = %0d clocks", expected_latency);
 
         $finish;
     end

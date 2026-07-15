@@ -96,33 +96,30 @@ or run on hardware (the TDM `div3` core remains the silicon baseline).
 ### 3.2 SOM/BMU — Kohonen Classification
 
 ```
-States:    IDLE, CLASSIFYING, CONVERGED, DIVERGED, TRAINING
+States:    IDLE, CLASSIFYING, RESULT, TRAINING
 Initial:   IDLE
-Terminal:  DIVERGED (ambiguous — no unique winner)
+Terminal:  none; ambiguity is result evidence, not a fault
 
 Transitions:
   CLASSIFY:      IDLE       → CLASSIFYING  (guard: feature vector loaded)
-  WTA_SETTLE:    CLASSIFYING → CONVERGED   (guard: BMU quadrance < 2nd-best)
-  WTA_SETTLE:    CLASSIFYING → DIVERGED    (guard: BMU = 2nd-best → tie)
-  TRAIN_STEP:    CONVERGED   → TRAINING    (guard: learning rate > 0)
+  SCAN_DONE:     CLASSIFYING → RESULT      (best and runner-up latched)
+  RESULT_IDLE:   RESULT      → IDLE        (classification consumed)
+  TRAIN_STEP:    RESULT      → TRAINING    (guard: prior BMU valid)
   TRAIN_COMMIT:  TRAINING    → IDLE        (guard: weight update applied)
-  RESEED:        DIVERGED    → IDLE        (explicit reset, not automatic)
 
 Invariants:
-  I(CLASSIFYING): WTA tree is stable (no oscillation)
-  I(CONVERGED):   BMU index is unique, quadrance(BMU) ≥ 0
+  I(CLASSIFYING): one ascending BRAM scan; candidates ordered exactly in Q(sqrt(3))
+  I(RESULT):      lower node index wins exact ties; zero gap marks ambiguous
   I(TRAINING):    weight deltas are bounded by learning rate × |feature − weight|
-  I(DIVERGED):    true (terminal; user must reseed or adjust topology)
 ```
 
 Implementation notes:
-- The 7-node parallel SOM array (`spu_som_node_array.v`) has a combinational
-  WTA tree. The DIVERGED state fires when `som_ambiguous` is asserted — two
-  or more nodes claim exactly equal quadrance to the input.
+- `spu_som_bmu.v` scans the writable BRAM serially and retains best plus
+  runner-up. An exact tie still returns the deterministic lower-index winner
+  and asserts `som_ambiguous`; it does not lock the machine.
 - Training transitions are opcode-driven (SOM_CLASSIFY 0x2A, SOM_TRAIN 0x2B);
   the state machine lives in `spu13_core.v` alongside the ROTC FSM.
-- The Nguyen cluster reduction (`knowledge/RATIONAL_SOM_NGUYEN_CLUSTER_NOTES.md`)
-  can trigger RESEED programmatically when the DIVERGED count crosses a threshold.
+- Full neighborhood adaptation and automatic reseeding are not implemented.
 
 ### 3.3 BTU — Spatial-to-A₃₁ Transmutation
 

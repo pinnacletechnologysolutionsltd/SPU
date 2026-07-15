@@ -10,6 +10,9 @@ SKIP_DISCOVERY_DIRS = {
     ".venv",
     "__pycache__",
     "build",
+    # Archived RTL and its historical regressions document superseded
+    # implementations; they are not part of the active verification gate.
+    "archive",
 }
 
 

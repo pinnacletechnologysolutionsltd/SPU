@@ -431,13 +431,19 @@ static void cmd_classify(spu_diag_t *diag, char *args) {
 
 static void cmd_result(spu_diag_t *diag, char *args) {
     (void)args;
-    uint8_t resp = 0;
+    // spu_spi_cfg consumes the first byte as the read command and shifts the
+    // result during the following byte. A one-byte transfer can only receive
+    // the pre-command idle value.
+    uint8_t tx[2] = {0x01, 0x00};
+    uint8_t rx[2] = {0, 0};
     gpio_put(diag->link->cs_pin, 0);
-    spi_read_blocking(diag->link->spi, 0x01, &resp, 1);
+    spi_write_read_blocking(diag->link->spi, tx, rx, sizeof(tx));
     sleep_us(10);
     gpio_put(diag->link->cs_pin, 1);
+    uint8_t resp = rx[1];
+    // Result is four MSB-first bits followed by zeros, hence the high nibble.
     printf("OK result done=%u busy=%u label=%u raw=0x%02X\r\n",
-           (resp >> 3) & 1, (resp >> 2) & 1, resp & 3, resp);
+           (resp >> 7) & 1, (resp >> 6) & 1, (resp >> 4) & 3, resp);
 }
 
 static void cmd_sdprobe(void) {

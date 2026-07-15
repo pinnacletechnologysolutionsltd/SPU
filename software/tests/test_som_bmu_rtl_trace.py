@@ -270,28 +270,34 @@ def main() -> int:
     feats_2 = [rs(0), rs(0), rs(-2), rs(2, 1)]
     exp_2 = compute_expected(feats_2, nodes, f_weights)
 
-    # Test scenario 3: Stable tie-breaking (all-zero features, all-zero weights)
-    fw_3 = [rs(1)]
-    nodes_3 = [
+    # Test scenario 3: field-order adversary. Lexicographic (P,Q) ordering
+    # picks node 6, but exact Q(sqrt(3)) ordering picks node 5.
+    feats_3 = [rs(-3, -3), rs(-3, -3), rs(-3, -3), rs(-2, 3)]
+    exp_3 = compute_expected(feats_3, nodes, f_weights)
+
+    # Software-only scenario 4: stable tie-breaking with custom node IDs.
+    fw_4 = [rs(1)]
+    nodes_4 = [
         SomNode(5, 0, 0, 9, (rs(0),)),
         SomNode(1, 1, 0, 7, (rs(0),)),
         SomNode(3, 0, 1, 8, (rs(0),)),
     ]
-    feats_3 = [rs(0)]
-    exp_3 = compute_expected(feats_3, nodes_3, fw_3)
-
-    # Test scenario 4: Invalid node should be skipped
-    fw_4 = [rs(1)]
-    nodes_4 = [
-        SomNode(0, 0, 0, 1, (rs(0),), valid=False),
-        SomNode(1, 1, 0, 2, (rs(3),)),
-    ]
     feats_4 = [rs(0)]
     exp_4 = compute_expected(feats_4, nodes_4, fw_4)
 
+    # Software-only scenario 5: invalid node should be skipped.
+    fw_5 = [rs(1)]
+    nodes_5 = [
+        SomNode(0, 0, 0, 1, (rs(0),), valid=False),
+        SomNode(1, 1, 0, 2, (rs(3),)),
+    ]
+    feats_5 = [rs(0)]
+    exp_5 = compute_expected(feats_5, nodes_5, fw_5)
+
     print("Expected outputs from software oracle:")
     for label, exp in [("Integer BMU", exp_1), ("Surd BMU", exp_2),
-                        ("Tie-breaking", exp_3), ("Skip invalid", exp_4)]:
+                        ("Exact field order", exp_3),
+                        ("Tie-breaking", exp_4), ("Skip invalid", exp_5)]:
         print(f"  {label}: best={exp['best_node_id']} sec={exp['second_node_id']} "
               f"label={exp['cluster_label']} best_q={exp['best_q']} "
               f"gap={exp['confidence_gap']} has_sec={exp['has_second']} "
@@ -305,9 +311,10 @@ def main() -> int:
     # Build testbench body with scenarios
     scenarios = []
 
-    # For scenarios 1-2: use built-in 7-node fixture
+    # Scenarios 1-3 use the built-in 7-node fixture.
     for i, (feats, fw, exp) in enumerate(
-        [(feats_1, f_weights, exp_1), (feats_2, f_weights, exp_2)]
+        [(feats_1, f_weights, exp_1), (feats_2, f_weights, exp_2),
+         (feats_3, f_weights, exp_3)]
     ):
         scenarios.append(
             f"        // Scenario {i+1}\n"
@@ -322,9 +329,9 @@ def main() -> int:
             f"                 1'b{1 if exp['ambiguous'] else 0});\n"
         )
 
-    # Note: scenarios 3-4 need custom node ROM (different node counts/features)
+    # Note: scenarios 4-5 need custom node ROM (different node counts/features)
     # These are covered by the software oracle tests; for RTL trace we
-    # verify scenarios 1-2 that exercise the 7-node fixture
+    # verify scenarios 1-3 that exercise the 7-node fixture.
 
     tb_content = TB_BODY.replace("`SCENARIOS", "\n".join(scenarios))
 

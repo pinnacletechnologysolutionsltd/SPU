@@ -328,7 +328,7 @@ Candidate module breakdown:
 - `spu_rational_normalize.v`
 - `spu_quadrance_accum.v`
 - `spu_nguyen_weight.v`
-- `spu_som_node.v`
+- `spu_som_weight_bram.v`
 - `spu_som_bmu.v`
 - `spu_cluster_reduce.v`
 - `spu_nguyen_cluster.v`
@@ -346,15 +346,17 @@ spu_feature_ingest
     -> spu_class_emit
 ```
 
-### Implementation Status (June 2026 — RPLU v2)
+### Implementation Status (July 2026)
 
-Several modules from the candidate list were drafted but subsequently archived or superseded. The current active SOM implementation is the standalone `spu4_som_edge.v` and the BRAM-backed `spu_som_weight_bram.v`.
+Several modules from the candidate list were drafted but subsequently archived
+or superseded. The canonical SPU-13 path is the serial, BRAM-backed
+`spu_som_bmu.v`; `spu4_som_edge.v` is a separate SPU-4 edge classifier.
 
 | Candidate Module | Implemented As | Status |
 |:---|:---|:---|
-| `spu_som_node.v` | `hardware/rtl/core/spu13/spu_som_node.v` | 🚧 **Archived** (Orphaned module) |
-| `spu_som_bmu.v` | `hardware/rtl/core/spu13/spu_som_node_array.v` | 🚧 **Archived** (Orphaned module) |
-| Node storage | `spu13_multi_port_regfile.v` | ✅ 4R2W register file with write-forwarding bypass |
+| `spu_som_node.v` | `hardware/boards/tang_primer_25k/archive/spu_som_node.v` | Archived reference |
+| `spu_som_bmu.v` | `hardware/rtl/core/spu13/spu_som_bmu.v` | Active serial exact-field BMU |
+| Node storage | `spu_som_weight_bram.v` | Active writable four-feature prototype store |
 | BMU→RPLU routing | `spu13_btu_core_top.v` | ✅ BTU spatial→A₃₁ 4-lane BRAM router |
 | Collision safety | `spu_btu_collision_resolver.v` | ✅ 64→6 priority encoder + bubble insertion |
 | Rational arithmetic | `spu13_m31_multiplier.v` | ✅ A₃₁ multiplier over M31 |

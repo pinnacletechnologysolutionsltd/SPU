@@ -70,11 +70,13 @@ Slack: >1 ns @ 12 MHz
 - **Issue:** Distributed throughout device; may conflict with rotor vault BRAM
 - **Mitigation:** Place BTU near output registers; keep BRAM entries separate in address space
 
-### 3.3 SOM Node Array (spu_som_node_array.v, if included)
-- **LUTs:** ~1,400 (7 parallel 3-stage quadrance pipelines + WTA tree)
-- **DSPs:** 0 (quadrance via LUT multipliers)
-- **Issue:** Wide combinational tree (WTA comparator); may fail timing
-- **Mitigation:** Relax frequency target to 40 MHz; add pipeline stage after WTA output
+### 3.3 SOM BMU (`spu_som_bmu.v`, if included)
+- **Architecture:** serial scan of the writable prototype BRAM
+- **Resources:** use the current synthesis report; the former ~1,400-LUT
+  parallel-array estimate described archived RTL
+- **Issue:** exact `Q(sqrt(3))` comparison includes wide integer squares
+- **Mitigation:** constrain and pipeline only after measuring the canonical
+  serial path; do not reintroduce the archived WTA tree implicitly
 
 ---
 

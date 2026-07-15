@@ -73,8 +73,6 @@ VERILOG_SOURCES=(
     "${SPU13_CORE_RTL_DIR}/spu_sequencer.v"
     "${SPU13_CORE_RTL_DIR}/spu_som_weight_bram.v"
     "${SPU13_CORE_RTL_DIR}/spu_som_bmu.v"
-    "${SPU13_CORE_RTL_DIR}/spu_som_node.v"
-    "${SPU13_CORE_RTL_DIR}/spu_som_node_array.v"
     "${SPU13_CORE_RTL_DIR}/spu_som_train.v"
 
     # Include all other necessary GPU/RPLU dependencies
