@@ -1490,8 +1490,8 @@ documented elsewhere in this ledger and in AGENTS.md.*
 
 | Item | Status |
 |---|---|
-| SDRAM DQ[10] repair | Physical fault — permanent mask or board replacement required |
-| Second FPGA board | In transit — needed for unmasked full-bandwidth SDRAM probe |
+| SDRAM DQ[10] repair | Physical fault in the external SDRAM module — permanent mask or module replacement required (FPGA board itself is healthy) |
+| Second FPGA board | Stale entry, unconfirmed as of 2026-07-16 — reported in transit as of this doc's 2026-07-11-era update; no later confirmation of arrival found |
 | RP2350 southbridge (SPI/SD hydration link) | **Verified in Silicon** (June 28, 2026) |
 | RP2350 southbridge (USB/HID/sensors/timing) | Not wired, not tested |
 | RP2040 visualization/debug bridge | Not wired, not tested |
