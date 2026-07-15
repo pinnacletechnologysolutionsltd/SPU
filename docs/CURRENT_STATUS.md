@@ -1,6 +1,6 @@
 # Current Project Status
 
-Date: 2026-07-11
+Date: 2026-07-16
 
 This file is the short source of truth for current board roles and near-term
 bring-up direction.
@@ -20,7 +20,7 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
 | Board | Role | Use for | Do not use for |
 |---|---|---|---|
 | Tang Primer 25K | Closed regression/probe target | SPI/RP2350 link checks, QLDI/QSUB QR commit readback, RPLU2 table hydration, math/ROTC/Lucas/robotics/SOM/neuro slice probes, risky PMOD wiring | Full concurrent RPLU2/SPU-13 integration, wide SDRAM confidence, architecture decisions driven by LUT starvation |
-| Wukong Artix-7 100T | Artix silicon-evidence and constrained integration target | Reproducible Artix builds, LUCAS/SU3/ROBOTICS/RPLU2CORE/RPLU2PADE J11 proofs, shared-multiplier integration baseline, lean RPLU2 live-evaluator experiments | Full concurrent live RPLU2 plus all sidecars/safety layers, or first-pass risky wiring without a small smoke test |
+| Wukong Artix-7 100T | Artix silicon-evidence and constrained integration target | Reproducible Artix builds, LUCAS/SU3/ROBOTICS/RPLU2CORE/RPLU2PADE J11 proofs, shared-multiplier integration baseline, lean RPLU2 live-evaluator experiments, tensegrity admission-guard proofs | Full concurrent live RPLU2 plus all sidecars/safety layers, or first-pass risky wiring without a small smoke test; **J11's top-row pins (CS/SCK/MOSI) are permanently damaged from an RP2350 backfeed incident — remapped to the bottom row 2026-07-13, confirmed working in silicon 2026-07-14; `hardware/boards/artix7/spu_a7_100t.xdc` is the source of truth for per-pin status** |
 | Colorlight i9 (ECP5-45F) | Open-toolchain ECP5 portability target | Routed lean RPLU2 ECP5 proof (Yosys/nextpnr-ecp5/ecppack), SDRAM, Ethernet, cheap warm spare | Full concurrent core integration — current RPLU2 probe already uses 72/72 DSPs |
 | Kintex-7 K7-480T PCIe (YZCA-00338) | Full-integration + PCIe proof target | Full concurrent SPU-13/RPLU2/sidecar/safety images, PCIe host interface, 4GB DDR3 SDRAM, massive headroom for all arithmetic pipelines | Early bring-up — wait until Artix probe ladder and host-PC requirements are closed |
 | Raspberry Pi Pico 2 | RP2350 southbridge reference board | Cleaner RP2350 wiring, PIO transport development, repeatable USB CDC/SPI/JTAG experiments | Replacing the Wukong/FPGA proof path; it is a transport upgrade, not a larger FPGA |
@@ -81,8 +81,25 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   smoke repeatedly reports `RPLU2PADE_J11: PASS` across five rational
   constant Padé cases, with status `raw=7F 2A 13 00`, `crc_error=0`,
   and `busy=0`.
-- Full repository regression on 2026-07-11: `python3 run_all_tests.py` reported
-  `Total PASS: 151`, `Total FAIL: 0`.
+- Full repository regression on 2026-07-16: `python3 run_all_tests.py` reported
+  `Total PASS: 161`, `Total FAIL: 0`.
+- Tang 25K `irotc_spi` southbridge image is silicon-verified over the real
+  RP2350 SPI link, 6/6 PASS, including the conjugate-catalog rotation
+  (case 3) and CATMIX no-commit (case 4) — first conjugate-icosahedron
+  silicon. Full evidence: `docs/hardware_evidence.md` §3.2k.1.
+- Wukong Artix-7 `TENSEGRITYPROBE` image is silicon-verified: `TGR:P V:7
+  E:00`, closing silicon evidence for all seven frozen TGR1 admission
+  fixtures including the type-uniform Z[φ] equilibrium fault. Full
+  evidence: `docs/hardware_evidence.md` §3.2l.
+- Wukong Artix-7 `TENSEGRITYLINK` (host/BRAM transport for the tensegrity
+  guard, SPI opcodes 0xB2/0xB3) is PnR-clean with a packed bitstream, but
+  **not yet board-run** — do not cite as silicon-proven until a real bench
+  session exercises B2/B3 and rollback.
+- Tang 25K `SOM-SIDECAR`'s own bespoke SPI write/classify path
+  (`spu_spi_cfg.v`) was found completely non-functional (a one-cycle-stale
+  command-byte comparison meant no write could ever be accepted, in
+  simulation or on real silicon) and fixed 2026-07-16 — simulation-verified
+  only so far, still needs its own board run.
 
 ## Open-Toolchain Build Evidence
 

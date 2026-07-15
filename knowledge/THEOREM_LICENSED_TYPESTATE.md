@@ -347,7 +347,7 @@ invented.
 | φ-plane typestate guard | 7¹ (52 cells) | 5 | —¹ | 0 | synth-only | `synth_guard_compare.ys` |
 | φ-plane SVA-style guard | 8¹ (52 cells) | 5 | —¹ | 0 | synth-only | `synth_guard_compare.ys` |
 | IROTC engine probe | 1,670 | 532 | 59.9 | 0 | ✅ §3.2k | `build/spu13_irotc_probe_nextpnr.log` |
-| IROTC SPI (core-integrated) | 12,397 | 8,639 | 50.4/29.3² | 0 | awaiting bench | `build/spu13_irotc_spi_nextpnr.log` |
+| IROTC SPI (core-integrated) | 12,397 | 8,639 | 50.4/29.3² | 0 | ✅ §3.2k.1 | `build/spu13_irotc_spi_nextpnr.log` |
 | Lucas MAC probe | 697 | 216 | 119.0 | 0 | ✅ | `build/spu13_lucas_mac_probe_nextpnr.log` |
 | Lucas PHSLK probe | 293 | 146 | 200.4 | 0 | ✅ | `build/spu13_lucas_phslk_probe_nextpnr.log` |
 | Southbridge SPI link probe | 1,861 | 840 | 82.5 | 0 | ✅ | `build/southbridge_spi_probe_nextpnr.log` |

@@ -1,4 +1,24 @@
 # SPU-13 Hardware Manifest (v4.1.0)
+
+> **STALE — verified 2026-07-16, do not use as a current source of truth.**
+> Last substantive edit was 2026-04-07; the active tree has diverged
+> significantly since. Specifically verified wrong or nonexistent as of
+> this note: the board tier table (§3) describes a 6-tier ladder (Tang
+> Nano 1K, iCESugar, Tang Nano 9K, Tang Primer 20K, Tang 25K, Gowin Mega)
+> against build scripts/directories that don't exist anywhere in the repo
+> (`build_gw1n1.sh`, `build_icesugar.sh`, `build_25k.sh`,
+> `hardware/boards/tang_nano_9k/`, `hardware/boards/tang_primer_20k/`,
+> `hardware/boards/gowin_mega/`) — the current board set is only
+> `hardware/boards/{artix7,colorlight_i9,ecp5_85k,tang_primer_25k}/`, and
+> the Tang 25K path is now many narrowly-scoped `build_25k_spu13_*_probe.sh`
+> scripts, not one monolithic full-core build. The "post-route Fmax
+> 140.83 MHz" full-core figure (§3, target ladder row 5) appears nowhere
+> else in the repository. §4's `tools/lattice_listener.py` and
+> `tools/laminar_audit.py` do not exist. For current board roles and
+> capability, see `AGENTS.md` and `docs/SPIN_CATALOG.md`. The rest of this
+> document (Davis Law framing, claims in §1-2) has not been re-verified
+> either way and is left as-is pending a decision on rewrite scope.
+
 ## Objective: Geometric Determinism in Silicon
 
 The SPU-13 (Synergetic Processing Unit) is a hardware implementation of Deterministic Quadratic Field Arithmetic (DQFA). It replaces legacy floating-point approximations with bit-locked isotropic transformations.

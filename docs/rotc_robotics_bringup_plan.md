@@ -112,7 +112,7 @@ hardware verification. Keep under `build/`, not in the repo.
 ### 0.4 Host Visual Renderer for Robotics
 
 Extend the Phase 0 host renderer (from `docs/som_bringup_plan.md` and
-`docs/visual_som_devboard_plan.md`) to include the Rotor/Kinematics map view
+`docs/archive/legacy/visual_som_devboard_plan.md`) to include the Rotor/Kinematics map view
 (type 0x04):
 
 1. Plot the ABCD components of the commanded trajectory as a tetrahedral
@@ -508,6 +508,6 @@ last 4       crc32
 - C++ robotics: `software/common/include/spu_rational_robotics.h`
 - C++ robotics tests: `software/common/tests/spu_rational_robotics_test.cpp`
 - ROTC proof program: `software/programs/rotc_proof.lith`
-- RPLU bring-up guard: `docs/rplu_bringup_guard.md`
+- RPLU bring-up guard: `docs/archive/legacy/rplu_bringup_guard.md`
 - SOM bring-up plan: `docs/som_bringup_plan.md`
 - Commercialization roadmap: `docs/commercialization_and_development_roadmap.md`

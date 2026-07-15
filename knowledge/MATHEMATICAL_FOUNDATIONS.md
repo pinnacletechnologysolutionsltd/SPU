@@ -407,7 +407,7 @@ no floating-point, no oscillatory sign problem, no truncation drift.
 ### SPU Project Hardware
 - `docs/hardware_evidence.md` — Evidence ledger: commands, board conditions,
   probe results, and remaining gaps
-- `docs/rplu_bringup_guard.md` — RPLU flash-load repeatability procedures
+- `docs/archive/legacy/rplu_bringup_guard.md` — RPLU flash-load repeatability procedures
 - `knowledge/PELL_OCTAVE.md` — Pell octave: unbounded rotor range with 16-bit registers
 
 ---

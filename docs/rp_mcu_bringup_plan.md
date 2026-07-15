@@ -1,7 +1,7 @@
 # RP2040/RP2350 Bring-Up Plan
 
 For the display and deterministic SOM map direction, see
-`docs/visual_som_devboard_plan.md`.
+`docs/archive/legacy/visual_som_devboard_plan.md`.
 
 Status anchor: Tang Primer 25K is now the stable regression/probe target, while
 Wukong Artix-7 100T is the Artix silicon-evidence and constrained integration

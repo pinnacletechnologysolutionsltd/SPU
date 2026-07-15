@@ -69,7 +69,7 @@ tested, and proven here that go beyond the foundational lineage.
 |---|---|
 | **RPLU architecture** | An indexed rational response surface implemented as FPGA BRAM lookup tables; flash-loaded chord records; deterministic state classification and correction lookup |
 | **RPLU over Morse projections** | The specific combination of Morse-theoretic projection geometry with RPLU table indexing; discovered in conversation with Gemini |
-| **RPLU flash boot chain** | SPI flash → BRAM loader → RPLU table verification; JEDEC ID check; 2051-record chord payload with rolling checksum; proven on Tang Primer 25K hardware (evidence: `docs/rplu_bringup_guard.md`) |
+| **RPLU flash boot chain** | SPI flash → BRAM loader → RPLU table verification; JEDEC ID check; 2051-record chord payload with rolling checksum; proven on Tang Primer 25K hardware (evidence: `docs/archive/legacy/rplu_bringup_guard.md`) |
 
 ### Pell Octave
 

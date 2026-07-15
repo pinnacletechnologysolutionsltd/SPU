@@ -325,7 +325,7 @@ Implementation:
   return commanded + correction                      // corrected target
 ```
 
-The RPLU table is loaded at boot from flash (see `docs/rplu_bringup_guard.md`).
+The RPLU table is loaded at boot from flash (see `docs/archive/legacy/rplu_bringup_guard.md`).
 For trajectory correction, the table maps quadrance error magnitudes to
 correction vectors. The table is pre-computed from simulation: for each
 error bin, the correction is the inverse of the average observed drift.

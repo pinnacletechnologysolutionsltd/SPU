@@ -210,7 +210,19 @@ present in `build/`, and a 40-second UART soak on `six_step_probe` stayed on
 | `LUCAS` | SPI-visible Lucas MAC sidecar, no core math/RPLU2 | 35T | `bash hardware/boards/artix7/build_a7.sh 100t lucas synth` |
 | `NEURO_SAFE` (planned) | Fixed-epoch neuro sidecar + Lucas norm guard | 35T after Tang probe | Tang adapter proof: `build_25k_spu13_neuro_sidecar_probe.sh` |
 | `SENSOR` | MATH only | 35T / iCE40 | Minimum viable build |
+| `SU3SHARE` | SU3 sidecar + RPLU2 config/QR, one shared M31 multiplier | 100T | `bash hardware/boards/artix7/build_a7.sh 100t su3share` |
+| `RPLU2PADE` | A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] | 100T | `bash hardware/boards/artix7/build_a7.sh 100t rplu2pade` |
+| `IROTC` | Icosahedral A₅ φ-plane rotation engine, core-integrated | 100T | `bash hardware/boards/artix7/build_a7.sh 100t irotc` |
+| `SOMPROBE` | Tang-proven SOM/BMU fixture ported to A7 | 100T | `bash hardware/boards/artix7/build_a7.sh 100t somprobe` |
+| `TENSEGRITYPROBE` | Tensegrity admission-guard silicon probe, 7 frozen TGR1 fixtures | 100T | `bash hardware/boards/artix7/build_a7.sh 100t tensegrityprobe` |
+| `TENSEGRITYLINK` | Tensegrity guard + host/BRAM transport sidecar (SPI 0xB2/0xB3) | 100T | `bash hardware/boards/artix7/build_a7.sh 100t tensegritylink` |
 | `CUSTOM` | Manual ENABLE_* | Any | Override any flag |
+
+`SU3`, `RPLUCFG`, `RPLU2CORE`, `RPLU2`, `RPLU2LIVE`, and `SOM` are older
+Artix spin names, each superseded by one of the rows above or by a Tang-first
+probe — see AGENTS.md's "A7 spin reconciliation" table for the exact status
+of each rather than assuming any of them is a live target. `docs/SPIN_CATALOG.md`
+is the authoritative per-spin status/resource table for everything above.
 
 ### 2.2 Prim Layer
 One RTL, three hardware backends.  Swapped at synthesis time:
@@ -656,15 +668,17 @@ Historical snapshot only. Use `rg --files`, `git status`, and
 | Knowledge specs | 15 | — | ISA, math, RPLU, SOM |
 | Docs | 12 + this | — | Bring-up plans, strategy |
 
-Active boards: 4 (`artix7/`, `ecp5_25f/`, `tang_primer_25k/`, `icesugar/`).
-Archived boards: 7 (+23 build scripts) in `hardware/boards/archive/`.
+Active boards: 4 (`artix7/`, `colorlight_i9/`, `ecp5_85k/`, `tang_primer_25k/`).
+Archived build scripts (49 files) live at
+`hardware/boards/tang_primer_25k/archive/` — there is no
+`hardware/boards/archive/` at the top level.
 
 ## 8. Key Paths
 
 ```
 Synthesis YS files:
   hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_math_probe.ys
-  hardware/boards/ecp5_25f/synth_ecp5_math.ys
+  hardware/boards/ecp5_85k/build_ecp5_85k_minimal.sh   (ECP5 flow has no separate .ys file)
   hardware/boards/artix7/synth_a7_math.ys   (math probe)
   hardware/boards/artix7/synth_a7.ys         (spin-based main build)
   hardware/boards/artix7/build_a7.sh         (unified build script)

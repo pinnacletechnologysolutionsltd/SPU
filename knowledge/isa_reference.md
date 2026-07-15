@@ -1,17 +1,21 @@
-# SPU-13 Sovereign ISA Reference — LEGACY v3.2
+# SPU-13 Canonical Silicon ISA Reference
 
-> **⚠ LEGACY ARCHITECTURE — Linear Forward-Flowing Execution**
+> **Status: current canonical encoding.**
 >
-> This ISA (v3.2) is the currently-silicon-proven architecture, running on Tang Primer 25K hardware.
-> It is **slated for deprecation** in favor of the Wheeler-Feynman Next-Gen ISA (v1.0).
+> This is the ISA implemented by the active `spu13_core.v` integration,
+> `software/spu_vm.py`, `.sas` programs, and the default mode of
+> `software/tools/spu13_asm.py`. Tang Primer 25K and Wukong Artix-7 evidence
+> uses this encoding; individual opcode evidence levels are noted below and in
+> `docs/hardware_evidence.md`.
 >
-> **Migration path:**
-> - New development should target `docs/spu13_isa_spec.md` (Wheeler-Feynman v1.0)
-> - RPLU v2 Thimble-Padé pipeline (`rplu_thimble_pade.v` + `spu13_fp4_inverter.v`) targets v1.0
-> - SOM classification uses parallel 7-node array (`spu_som_node_array.v`) with v1.0 opcodes 0x2A/0x2B
-> - Use `spu13_asm.py --arch linear` to assemble programs for this legacy ISA
-> - Use `spu13_asm.py --arch wf` (default) for the next-gen ISA
-> - The `spu_vm.py` emulator supports v3.2; `spu13_arch_sim.py` supports v1.0
+> [`docs/spu13_isa_spec.md`](../docs/spu13_isa_spec.md) describes a separate,
+> experimental Wheeler–Feynman twin-register adapter profile. Its isolated
+> simulator/RTL tests do not make it the successor to this ISA, and there is no
+> current deprecation decision.
+>
+> Assemble canonical `.sas` programs without an architecture flag:
+> `python3 software/tools/spu13_asm.py program.sas`. The optional
+> `--arch wf` flag selects the experimental adapter opcode table.
 
 ## Instruction Encoding
 
@@ -89,18 +93,20 @@
 
 ### RPLU / Polynomial Extensions
 
-> **RPLU v2 (Next-Gen ISA v1.0):** The legacy POLY_STEP/RATIO_CMP opcodes are
-> superseded by the Thimble-Padé pipeline (`rplu_thimble_pade.v`) which evaluates
-> [4/4] Padé rational approximants over A₃₁ (M31) using Horner + conjugate
-> reduction tower inversion. See `docs/spu13_isa_spec.md` §5.5–5.8 for the
-> OFFR/CNFM/PHSLK/SOM opcode chain.
+> **Current RPLU2 integration:** The Thimble-Padé sidecar evaluates [4/4]
+> rational approximants over A₃₁ (M31) using Horner evaluation and conjugate
+> reduction-tower inversion. It is integrated and exercised through the
+> canonical core/SPI control path; it does not depend on the experimental
+> OFFR/CNFM/PHSLK encoding. POLY_STEP/RATIO_CMP remain older extension-space
+> definitions rather than the interface used by the silicon-tested
+> `RPLU2PADE` spin.
 
 | Opcode | Mnemonic | Operands | Description |
 |--------|----------|----------|-------------|
 | 0x60 | POLY_STEP | Rd,Rx | Horner step via RPLU (legacy Morse potential) |
 | 0x61 | RATIO_CMP | Rd,Rs | Rational comparison (legacy) |
 
-### Classification / SOM (v1.0 ISA only)
+### Classification / SOM extensions
 
 | Opcode | Mnemonic | Format | Description |
 |--------|----------|--------|-------------|
@@ -191,7 +197,7 @@ with `div3`. Re-verification under the tagged representation is defined as:
 3. Angles 0 (identity), 2 (P5 forward), and 5 (P5 inverse) must produce
    identical output to the TDM core (bypass path, no exponent change).
 
-**Status:** RTL testbench verified (7/7 tests,
+**Status:** RTL testbench verified (9/9 tests, verified 2026-07-16 —
 `hardware/tests/spu13/spu13_rotor_core_tagged_tb.v`). Silicon re-verification
 pending — probe target: `spu13_tang25k_rotc_tagged_probe.v`, awaiting board run.
 The existing six-step silicon evidence (`docs/hardware_evidence.md`)

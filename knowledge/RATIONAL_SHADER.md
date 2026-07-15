@@ -1,6 +1,20 @@
 # Rational Shader & Bresenham Killer — Pipeline Integration
 # SPU-13 Synergetic Engine v4.1
 
+> **STALE — verified 2026-07-16, do not use as a current source of truth.**
+> Effectively unedited since original creation (2026-04-04). None of the
+> module filenames this document treats as implemented/tested exist under
+> those names anywhere in `hardware/`: `HAL_SDRAM_Winbond.v`,
+> `spu_rasterizer.v`, `spu_fragment_pipe.v`, `spu_bresenham_killer.v`.
+> `hardware/rtl/gpu/` currently has `spu_raster_unit.v`, `spu_dual_raster.v`,
+> and `spu_bresenham_raster.v`, which may cover some of the same ground as
+> the renderer/traversal stages below, but no one has re-verified the
+> correspondence in detail — treat every "✅ implemented/tested" claim
+> below as unconfirmed rather than assuming a simple rename. No "fragment
+> pipe"-shaped module was found anywhere in `hardware/`; that stage may be
+> genuinely unimplemented rather than renamed. Needs a real audit against
+> `hardware/rtl/gpu/` before this document is trustworthy again.
+
 ## Overview
 
 The SPU-13 rendering pipeline eliminates floating-point at every stage. This document

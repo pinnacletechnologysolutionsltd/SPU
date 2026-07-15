@@ -97,7 +97,7 @@ This trace exercises the two built-in seven-node fixture scenarios shared with
 the silicon probe. Additional edge cases, including tie-breaking and skipped
 invalid nodes, remain covered by the software oracle tests.
 
-### 0.3 Host Visual Renderer (Phase 0 of `visual_som_devboard_plan.md`)
+### 0.3 Host Visual Renderer (Phase 0 of `docs/archive/legacy/visual_som_devboard_plan.md`)
 
 Before the FPGA is ready, build a desktop renderer that consumes the SOM BMU
 frame (telemetry ABI v0 frame_type 0x01) and renders the hex map:
@@ -363,7 +363,7 @@ partitioning strategy. Once BRAM-backed SOM maps are available, implement:
 
 ### 5.1 SOM BMU Frame (type 0x01)
 
-The visual telemetry ABI (defined in `docs/visual_som_devboard_plan.md`) includes
+The visual telemetry ABI (defined in `docs/archive/legacy/visual_som_devboard_plan.md`) includes
 frame type `0x01` for SOM BMU data:
 
 ```
@@ -417,5 +417,5 @@ hex map.
 - C++ oracle: `software/common/include/spu_rational_som.h`
 - Nguyen partitioning: `knowledge/NGUYEN_WEIGHT_PARTITIONING.md`
 - SOM Nguyen notes: `knowledge/RATIONAL_SOM_NGUYEN_CLUSTER_NOTES.md`
-- Visual devboard plan: `docs/visual_som_devboard_plan.md`
+- Visual devboard plan: `docs/archive/legacy/visual_som_devboard_plan.md`
 - RP MCU bring-up: `docs/rp_mcu_bringup_plan.md`

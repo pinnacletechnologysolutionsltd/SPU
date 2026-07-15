@@ -207,7 +207,7 @@ with larger boards documented as expansion targets.
 - Commercialization roadmap:
   `docs/commercialization_and_development_roadmap.md`
 - Visual SOM devboard plan:
-  `docs/visual_som_devboard_plan.md`
+  `docs/archive/legacy/visual_som_devboard_plan.md`
 - SOM bring-up plan:
   `docs/som_bringup_plan.md`
 - ROTC/Robotics bring-up plan:

@@ -29,14 +29,17 @@ bring-up context.
 
 ## Current Board / Target Docs
 
+These six now live under `docs/archive/ecp5/`, not at the docs root — paths
+below are relative to `docs/`.
+
 | File | Status |
 |---|---|
-| `COLORLIGHT_I9_PINOUT_VERIFIED.md` | Current i9 pinout audit; open-flow P&R passes, hardware smoke pending |
-| `COLORLIGHT_I9_SETUP_SUMMARY.md` | i9 setup summary with measured RPLU2 synthesis/P&R/bitstream results |
-| `colorlight_i9_feasibility.md` | i9 feasibility decision; build proof yes, hardware proof no |
-| `ecp5_vs_artix7_gap_analysis.md` | Missing ECP5 southbridge/result wiring versus Artix |
-| `ecp5_85k_curated_source_strategy.md` | Curated-source approach for ECP5-85F synthesis/P&R |
-| `ecp5_evaluator_ee_handoff.md` | EE handoff for future custom ECP5 evaluator |
+| `archive/ecp5/COLORLIGHT_I9_PINOUT_VERIFIED.md` | Current i9 pinout audit; open-flow P&R passes, hardware smoke pending |
+| `archive/ecp5/COLORLIGHT_I9_SETUP_SUMMARY.md` | i9 setup summary with measured RPLU2 synthesis/P&R/bitstream results |
+| `archive/ecp5/colorlight_i9_feasibility.md` | i9 feasibility decision; build proof yes, hardware proof no |
+| `archive/ecp5/ecp5_vs_artix7_gap_analysis.md` | Missing ECP5 southbridge/result wiring versus Artix |
+| `archive/ecp5/ecp5_85k_curated_source_strategy.md` | Curated-source approach for ECP5-85F synthesis/P&R |
+| `archive/ecp5/ecp5_evaluator_ee_handoff.md` | EE handoff for future custom ECP5 evaluator |
 | `oshwa_application.md` | Pre-certification draft only; not ready to submit |
 
 ## Historical / Planning Docs

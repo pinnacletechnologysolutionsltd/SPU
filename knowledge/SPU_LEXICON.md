@@ -267,8 +267,8 @@ corner.
 **Status: fix RTL-complete 2026-07-09, silicon pending.** The deferred-reduction
 exponent-tagged ROTC core (`spu13_rotor_core_tagged.v`, 314 lines) implements
 the full state machine from `docs/ROTC_EXPONENT_STATE_MACHINE.md` with
-explicit fault flags (MISALIGNED/OVERFLOW/INEXACT). TB passes 7/7
-acceptance tests. Tang 25K probe (`spu13_tang25k_rotc_tagged_probe.v`)
+explicit fault flags (MISALIGNED/OVERFLOW/INEXACT). TB passes 9/9
+acceptance tests (verified 2026-07-16). Tang 25K probe (`spu13_tang25k_rotc_tagged_probe.v`)
 built and bitstream produced — awaiting board flash. The original TDM core
 (`spu13_rotor_core_tdm.v`) with silent `div3` remains the silicon baseline
 until the tagged core has its own silicon evidence entry. Do not claim

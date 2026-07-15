@@ -201,7 +201,7 @@ R:<checksum> A:F
 ```
 
 The checksum is read automatically from `build/rplu_metrics/` or
-`build/rplu_boot_chords.bin` when present. See `docs/rplu_bringup_guard.md`
+`build/rplu_boot_chords.bin` when present. See `docs/archive/legacy/rplu_bringup_guard.md`
 for the detailed decode.
 
 ### 6. RPLU + Math Probe
