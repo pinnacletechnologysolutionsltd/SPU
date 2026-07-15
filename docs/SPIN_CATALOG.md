@@ -86,6 +86,8 @@ Wukong Artix-7:
 | Spin | Proves | Status |
 |---|---|---|
 | SOMPROBE (`build_a7.sh 100t somprobe`) | Tang-proven SOM fixture on A7 — same golden line `SOM:P T:2 B:6 E:00` on both vendors = cross-vendor determinism proof | built, awaiting board run (~2.6k LUT, 84 DSP, 4 BRAM) |
+| TENSEGRITYPROBE (`build_a7.sh 100t tensegrityprobe`) | seven frozen TGR1 admission fixtures, including exact strut intersection and type-uniform Z[phi] equilibrium | silicon PASS 2026-07-14: `TGR:P V:7 E:00` |
+| TENSEGRITYLINK (`build_a7.sh 100t tensegritylink`) | B2 transactional TGR1 BRAM hydration, synchronous guard replay, coherent B3 status, and rollback | Partial silicon 2026-07-16: J11/SD/B2/B3/parser proven and canonical commits with intersection-only or equilibrium-only images; full combined image remains `verify_busy` after all 468 bytes, so atomic combined admission/rollback are not yet proven. Refactor into explicit stages before another full build. |
 
 **Untracked A7 spin names** (`multimedia`, `intelligence`, `full`,
 `sensor`, `rplucfg`, `rplu2core`, `rplu2`, `rplu2live`, `som`, `custom`

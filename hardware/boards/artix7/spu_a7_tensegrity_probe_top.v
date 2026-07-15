@@ -1,14 +1,13 @@
 // spu_a7_tensegrity_probe_top.v -- Artix-7 first-tranche tensegrity probe.
 //
-// A table-loader FSM presents six bounded TGR1-derived fixtures to the
+// A table-loader FSM presents all seven TGR1-derived fixtures to the
 // admission guard through its configuration interface.  The wrapper checks
 // every terminal state/fault pair and emits the UART verdict:
 //
-//   TGR:P V:6 E:00
+//   TGR:P V:7 E:00
 //
-// V:6 is intentionally narrower than the seven-vector software corpus.
-// Force-density equilibrium remains oracle-only until that RTL tranche exists;
-// this probe must not classify it.
+// The exact type-uniform equilibrium engine derives the canonical force-
+// density ratio and rejects the perturbed vector-6 fixture.
 
 module spu_a7_tensegrity_probe_top #(
     parameter CLKS_PER_BIT = 434,
@@ -30,12 +29,14 @@ module spu_a7_tensegrity_probe_top #(
     localparam [3:0] ST_FAULT_STRUT_COLLISION = 4'd5;
     localparam [3:0] ST_FAULT_GRID_MISMATCH   = 4'd6;
     localparam [3:0] ST_FAULT_TOPOLOGY        = 4'd7;
+    localparam [3:0] ST_FAULT_NOT_IN_EQUILIBRIUM = 4'd8;
 
     localparam [2:0] F_NONE            = 3'd0;
     localparam [2:0] F_CABLE_SLACK     = 3'd1;
     localparam [2:0] F_STRUT_COLLISION = 3'd2;
     localparam [2:0] F_GRID_MISMATCH   = 3'd3;
     localparam [2:0] F_TOPOLOGY        = 3'd4;
+    localparam [2:0] F_NOT_IN_EQUILIBRIUM = 3'd5;
 
     localparam [3:0] L_RESET       = 4'd0;
     localparam [3:0] L_CLEAR_WAIT  = 4'd1;
@@ -345,7 +346,8 @@ module spu_a7_tensegrity_probe_top #(
                 3'd2: expected_state = ST_FAULT_STRUT_COLLISION;
                 3'd3: expected_state = ST_FAULT_CABLE_SLACK;
                 3'd4: expected_state = 4'd9;
-                default: expected_state = ST_FAULT_GRID_MISMATCH;
+                3'd5: expected_state = ST_FAULT_GRID_MISMATCH;
+                default: expected_state = ST_FAULT_NOT_IN_EQUILIBRIUM;
             endcase
         end
     endfunction
@@ -359,7 +361,8 @@ module spu_a7_tensegrity_probe_top #(
                 3'd2: expected_fault = F_STRUT_COLLISION;
                 3'd3: expected_fault = F_CABLE_SLACK;
                 3'd4: expected_fault = 3'd6;
-                default: expected_fault = F_GRID_MISMATCH;
+                3'd5: expected_fault = F_GRID_MISMATCH;
+                default: expected_fault = F_NOT_IN_EQUILIBRIUM;
             endcase
         end
     endfunction
@@ -419,6 +422,10 @@ module spu_a7_tensegrity_probe_top #(
                         cfg_x_a <= antipodal_xa(node_index);
                         cfg_y_a <= antipodal_ya(node_index);
                         cfg_z_a <= antipodal_za(node_index);
+                    end else if (fixture_index == 3'd6 && node_index == 4'd0) begin
+                        cfg_x_a <= canonical_x(node_index) + 32'sd1;
+                        cfg_y_a <= canonical_y(node_index);
+                        cfg_z_a <= canonical_z(node_index);
                     end else if (fixture_index == 3'd3 && node_index == 4'd4) begin
                         cfg_x_a <= canonical_x(4'd0);
                         cfg_y_a <= canonical_y(4'd0);
@@ -489,8 +496,8 @@ module spu_a7_tensegrity_probe_top #(
                         // divergence is diagnosable without a second image.
                         fail_code <= {1'b1, guard_state, guard_fault};
                         loader_state <= L_FAIL;
-                    end else if (fixture_index == 3'd5) begin
-                        vectors_done <= 3'd6;
+                    end else if (fixture_index == 3'd6) begin
+                        vectors_done <= 3'd7;
                         loader_state <= L_PASS;
                     end else begin
                         vectors_done <= fixture_index + 1'b1;
@@ -499,7 +506,7 @@ module spu_a7_tensegrity_probe_top #(
                     end
                 end
 
-                L_PASS: vectors_done <= 3'd6;
+                L_PASS: vectors_done <= 3'd7;
                 L_FAIL: loader_state <= L_FAIL;
 
                 default: begin

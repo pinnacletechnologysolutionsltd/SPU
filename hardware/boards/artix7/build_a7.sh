@@ -8,13 +8,13 @@
 #   bash build_a7.sh 100t intelligence           # INTELLIGENCE spin on 100T
 #   A7_FREQ=2 bash build_a7.sh 100t lucas all    # Wukong pinned low-speed bring-up
 #
-# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | irotc | som | somprobe | tensegrityprobe | custom
+# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | irotc | som | somprobe | tensegrityprobe | tensegritylink | custom
 #
 # somprobe is a standalone top (not a spu_a7_top spin): the Tang-25K-proven
 # SOM/BMU fixture on its own synthesis path + minimal XDC.  Golden UART line
 # at 115200: "SOM:P T:2 B:6 E:00".
-# tensegrityprobe is likewise standalone.  It runs the six RTL-supported
-# TGR1-derived guard fixtures and reports "TGR:P V:6 E:00".
+# tensegrityprobe is likewise standalone.  It runs all seven TGR1-derived
+# guard fixtures and reports "TGR:P V:7 E:00".
 
 set -euo pipefail
 
@@ -43,13 +43,20 @@ A7_UART_DIAG="${A7_UART_DIAG:-0}"
 SPIN=$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')
 
 # A7_FREQ default, spin-aware.  IROTC's current routed timing closes at low
-# bring-up speed; asking nextpnr for 50 MHz makes it chase an impossible target
-# for a long time.  An explicit A7_FREQ env var still overrides this default.
+# bring-up speed. TENSEGRITYPROBE and TENSEGRITYLINK have a 50 MHz board domain
+# but intentionally advance their generated guard clock at 25 MHz; nextpnr
+# applies --freq to that otherwise-unconstrained generated clock. An explicit
+# A7_FREQ env var still overrides these defaults.
 case "$SPIN" in
-    IROTC) A7_FREQ_DEFAULT=2;;
-    *)     A7_FREQ_DEFAULT=50;;
+    IROTC)            A7_FREQ_DEFAULT=2;;
+    TENSEGRITYPROBE|TENSEGRITYLINK) A7_FREQ_DEFAULT=25;;
+    *)                A7_FREQ_DEFAULT=50;;
 esac
 A7_FREQ="${A7_FREQ_ENV:-$A7_FREQ_DEFAULT}"
+
+# Make nextpnr's seed explicit in logs and metrics. A7_SEED remains available
+# for deterministic placement exploration without changing the default flow.
+A7_SEED="${A7_SEED:-1}"
 
 # A7_CLK_DIV_LOG2 default, spin-aware — mirrors the _CORE ternary in
 # spu_a7_top.v (keep this list in sync with that one). Coreless sidecar
@@ -60,7 +67,7 @@ A7_FREQ="${A7_FREQ_ENV:-$A7_FREQ_DEFAULT}"
 # §3.2e.4, recurred on the IROTC spin's first build — §3.2k.1). An
 # explicit A7_CLK_DIV_LOG2 env var still overrides this default.
 case "$SPIN" in
-    LUCAS|SU3|RPLUCFG|RPLU2LIVE|RPLU2PADE|SOMPROBE|TENSEGRITYPROBE) A7_CLK_DIV_LOG2_DEFAULT=0;;
+    LUCAS|SU3|RPLUCFG|RPLU2LIVE|RPLU2PADE|SOMPROBE|TENSEGRITYPROBE|TENSEGRITYLINK) A7_CLK_DIV_LOG2_DEFAULT=0;;
     *)                                     A7_CLK_DIV_LOG2_DEFAULT=6;;
 esac
 A7_CLK_DIV_LOG2="${A7_CLK_DIV_LOG2:-$A7_CLK_DIV_LOG2_DEFAULT}"
@@ -98,6 +105,10 @@ elif [ "$SPIN" = "TENSEGRITYPROBE" ]; then
     YS="hardware/boards/artix7/synth_a7_tensegrity_probe.ys"
     XDC="hardware/boards/artix7/spu_a7_tensegrity_probe.xdc"
     TOP="spu_a7_tensegrity_probe_top"
+elif [ "$SPIN" = "TENSEGRITYLINK" ]; then
+    YS="hardware/boards/artix7/synth_a7_tensegrity_link.ys"
+    XDC="hardware/boards/artix7/spu_a7_tensegrity_link.xdc"
+    TOP="spu_a7_tensegrity_link_top"
 fi
 
 echo "=== SPU-13 Artix-7 Build ==="
@@ -105,6 +116,7 @@ echo "  Device: $DEVICE_CHIP ($PART)"
 echo "  Spin:   $SPIN"
 echo "  Step:   $STEP"
 echo "  Freq:   ${A7_FREQ} MHz"
+echo "  Seed:   ${A7_SEED}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
 if [ "$A7_UART_DIAG" != "0" ]; then
     echo "  UART:   DIAGNOSTIC MODE (real hex telemetry disabled)"
@@ -146,6 +158,7 @@ pnr() {
         --fasm "${JSON}.pnr.fasm"
         --log "${JSON}.nextpnr.log"
         --freq "$A7_FREQ"
+        --seed "$A7_SEED"
     )
     if nextpnr-xilinx --help 2>&1 | grep -q -- "--report"; then
         NEXTPNR_ARGS+=(
@@ -167,7 +180,7 @@ pnr() {
             --log "${JSON}.nextpnr.log" \
             --out-json "build/metrics/artix7_${DEVICE_CHIP}_${SPIN}.json" \
             --out-md "build/metrics/artix7_${DEVICE_CHIP}_${SPIN}.md" \
-            --note "A7_FREQ=${A7_FREQ} MHz; post-route metrics from nextpnr-xilinx."
+            --note "A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; post-route metrics from nextpnr-xilinx."
     else
         echo "  nextpnr build has no JSON timing report; skipping metrics collection."
     fi

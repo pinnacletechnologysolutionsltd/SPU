@@ -29,10 +29,28 @@ HEADER = struct.Struct(">4sBBBBI")
 NODE = struct.Struct(">iiiiiiB3x")
 EDGE = struct.Struct(">BBBB")
 STATUS = struct.Struct(">BBBBI")
+LOAD_PREFIX = struct.Struct(">HI")
+TRANSPORT_DIAG = struct.Struct(">BBBBHH")
+
+CMD_TGR_LOAD = 0xB2
+CMD_TGR_STATUS = 0xB3
 
 
 class TensegrityAbiError(ValueError):
     """The table/status record cannot be represented or is corrupt."""
+
+
+def crc8_ccitt(data: bytes) -> int:
+    """CRC-8-CCITT used by the Sovereign SPI write envelope (poly 0x07)."""
+
+    crc = 0
+    for value in data:
+        for bit in range(8):
+            feedback = ((crc >> 7) & 1) ^ ((value >> (7 - bit)) & 1)
+            crc = (crc << 1) & 0xFF
+            if feedback:
+                crc ^= 0x07
+    return crc
 
 
 def _integer(value: Fraction, field: str) -> int:
@@ -140,3 +158,27 @@ def decode_status(blob: bytes) -> tuple[TensegrityState, TensegrityFault, int]:
         return TensegrityState(state), TensegrityFault(fault), vector_id
     except ValueError as exc:
         raise TensegrityAbiError("invalid TGR1 state or fault code") from exc
+
+
+def encode_load_transaction(system: TensegritySystem, vector_id: int = 0) -> bytes:
+    """Encode one complete CMD 0xB2 SPI transaction, including transport CRC."""
+
+    if not 0 <= vector_id <= 0xFFFFFFFF:
+        raise TensegrityAbiError("vector_id is outside the uint32 range")
+    table = encode_table(system)
+    if len(table) > 0xFFFF:
+        raise TensegrityAbiError("TGR1 table exceeds the B2 uint16 length field")
+    body = bytes((CMD_TGR_LOAD,)) + LOAD_PREFIX.pack(len(table), vector_id) + table
+    return body + bytes((crc8_ccitt(body),))
+
+
+def decode_transport_status(blob: bytes) -> tuple[
+        TensegrityState, TensegrityFault, int, int, int, int, int, int, int]:
+    """Decode CMD 0xB3: frozen eight-byte TGR1 status plus loader diagnostics."""
+
+    if len(blob) != STATUS.size + TRANSPORT_DIAG.size:
+        raise TensegrityAbiError("TGR transport status must be exactly 16 bytes")
+    state, fault, vector_id = decode_status(blob[:STATUS.size])
+    flags, error, nodes, edges, received, expected = TRANSPORT_DIAG.unpack_from(
+        blob, STATUS.size)
+    return state, fault, vector_id, flags, error, nodes, edges, received, expected

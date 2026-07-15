@@ -169,6 +169,23 @@ def test_write_rplu_cfg():
     check("rplu.data", r["data"] == 0xDEADBEEF)
 
 
+def test_tensegrity_transport():
+    client = make_client({
+        "tgrload /TGR/06.tgr 6": ["OK tgrload bytes=468 vector=6"],
+        "tgrstatus": [
+            "OK tgrstatus version=1 state=8 fault=5 vector=6"
+            " flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468"
+        ],
+    })
+    load = client.load_tensegrity_sd("/TGR/06.tgr", 6)
+    check("tgrload byte count", load == {"bytes": 468, "vector": 6})
+    status = client.tensegrity_status()
+    check("tgrstatus exact verdict", status["state"] == 8 and status["fault"] == 5)
+    check("tgrstatus diagnostics", status["flags"] == 8 and
+          status["error"] == 0 and status["received"] == 468 and
+          status["expected"] == 468)
+
+
 def test_err_response_raises():
     client = make_client({"status": ["ERR unknown command: status"]})
     raised = False
@@ -189,6 +206,7 @@ def main():
     test_rplu_config_telemetry_with_rplu2()
     test_write_chord()
     test_write_rplu_cfg()
+    test_tensegrity_transport()
     test_err_response_raises()
 
     print(f"spu_host parser: {checks} checks, {len(failures)} failed")

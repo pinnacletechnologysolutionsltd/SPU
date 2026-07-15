@@ -1,4 +1,4 @@
-"""client.py — typed wrapper over the 8-opcode Southbridge SPI protocol,
+"""client.py — typed wrapper over the Southbridge SPI protocol,
 via the RP2350/RP2040 diag console (hardware/rp_common/spu_diag.c).
 
 Opcode -> method mapping (docs/SOUTHBRIDGE_SPI_PROTOCOL.md is the wire
@@ -11,6 +11,8 @@ contract of record; this table is the console-command view of it):
     0xAF hex       -> hex_projection()
     0xB0 cfgtele   -> rplu_config_telemetry()
     0xB1 chord     -> write_chord(data)
+    0xB2 tgrload   -> load_tensegrity_sd(path, vector_id)
+    0xB3 tgrstatus -> tensegrity_status()
     0xA5 rplu      -> write_rplu_cfg(sel, material, addr, data)
 
 `raw(cmd)` is the escape hatch for firmware-specific console commands not
@@ -199,6 +201,27 @@ class SPUHostClient:
             raise ValueError("chord must be exactly 8 bytes")
         kv, hex_tokens = self._run("chord " + data.hex())
         return bytes.fromhex("".join(hex_tokens)) if hex_tokens else kv
+
+    # ── 0xB2/0xB3 transactional TGR1 sidecar ───────────────────────
+    def load_tensegrity_sd(self, path, vector_id=0):
+        """Load a .tgr file already present on the RP2350 SD filesystem."""
+        kv, _hex_tokens = self._run("tgrload %s %d" % (path, vector_id))
+        return {"bytes": int(kv["bytes"]), "vector": int(kv["vector"])}
+
+    def tensegrity_status(self):
+        kv, _hex_tokens = self._run("tgrstatus")
+        return {
+            "version": int(kv["version"]),
+            "state": int(kv["state"]),
+            "fault": int(kv["fault"]),
+            "vector": int(kv["vector"]),
+            "flags": _int_auto(kv["flags"]),
+            "error": int(kv["error"]),
+            "nodes": int(kv["nodes"]),
+            "edges": int(kv["edges"]),
+            "received": int(kv["received"]),
+            "expected": int(kv["expected"]),
+        }
 
     # ── 0xA5 RPLU config write ──────────────────────────────────────
     def write_rplu_cfg(self, sel, material, addr, data):

@@ -16,14 +16,22 @@
 //   CMD 0xAF → read sticky HEX result: [valid, q_hi, q_lo, r_hi, r_lo].
 //   CMD 0xB0 → 64-byte Sentinel telemetry burst.
 //   CMD 0xB1 → write one 64-bit SPU instruction/chord, big-endian.
+//   CMD 0xB2 → write one TGR1 table: len16, vector_id32, table bytes, CRC-8.
+//   CMD 0xB3 → read 16-byte TGR1 verdict + loader diagnostics.
 //   CMD 0xA5 → write two 64-bit RPLU config chords: HEADER, DATA.
 //
 // Manifold layout (manifold_state[831:0], 26 × 32-bit RationalSurd):
 //   Axis N: manifold_state[32*N+31:32*N+16] = P (rational)
 //           manifold_state[32*N+15:32*N]    = Q (surd)
 
-module spu_spi_slave (
-    input  wire        clk,            // System clock (24 MHz)
+module spu_spi_slave #(
+    parameter ENABLE_TENSEGRITY = 0,
+    // Standalone TGR sidecar builds may remove the legacy response/write
+    // surface at synthesis time. Default zero preserves the frozen base
+    // protocol and all existing instantiations.
+    parameter TENSEGRITY_ONLY = 0
+) (
+    input  wire        clk,            // Selected southbridge fabric clock
     input  wire        rst_n,
 
     // SPI bus (from RP2350 master)
@@ -78,7 +86,18 @@ module spu_spi_slave (
     input  wire        boot_ready,  // Boot FSM READY (docs/BOOT_SEQUENCE_FSM.md §3.6)
 
     // Sentinel Telemetry (piranha domain snapshot)
-    input  wire [511:0] sentinel_telemetry
+    input  wire [511:0] sentinel_telemetry,
+
+    // Optional transactional TGR1 sidecar transport (CMD 0xB2/0xB3).
+    output reg          tgr_stream_start,
+    output reg [15:0]   tgr_stream_length,
+    output reg [31:0]   tgr_stream_vector_id,
+    output reg          tgr_stream_valid,
+    output reg [7:0]    tgr_stream_data,
+    output reg          tgr_stream_commit,
+    output reg          tgr_stream_abort,
+    output reg          tgr_status_hold,
+    input  wire [127:0] tgr_transport_status
 );
 
     // --- 2-stage synchronisers for async SPI signals ---
@@ -158,16 +177,20 @@ module spu_spi_slave (
     reg [6:0] resp_len;   // 0–64; must be 7-bit so 64 doesn't truncate
 
     // --- State machine ---
-    localparam S_IDLE      = 3'd0;  // waiting for CS
-    localparam S_CMD       = 3'd1;  // receiving 8-bit command
-    localparam S_FILL      = 3'd2;  // one cycle to load resp_buf
-    localparam S_RESP      = 3'd3;  // clocking out response
-    localparam S_RECV_HDR  = 3'd4;  // receive 64-bit HEADER
-    localparam S_RECV_DATA = 3'd5;  // receive 64-bit DATA
-    localparam S_RECV_INST = 3'd6;  // receive 64-bit instruction chord
-    localparam S_RECV_CRC  = 3'd7;  // receive 8-bit CRC-8 after write
+    localparam [3:0]
+        S_IDLE            = 4'd0,  // waiting for CS
+        S_CMD             = 4'd1,  // receiving 8-bit command
+        S_FILL            = 4'd2,  // one cycle to load resp_buf
+        S_RESP            = 4'd3,  // clocking out response
+        S_RECV_HDR        = 4'd4,  // receive 64-bit HEADER
+        S_RECV_DATA       = 4'd5,  // receive 64-bit DATA
+        S_RECV_INST       = 4'd6,  // receive 64-bit instruction chord
+        S_RECV_CRC        = 4'd7,  // receive 8-bit CRC-8 after write
+        S_RECV_TGR_PREFIX = 4'd8,  // receive len16 + vector_id32
+        S_RECV_TGR_DATA   = 4'd9,  // receive length-delimited TGR1 bytes
+        S_RECV_TGR_CRC    = 4'd10; // receive transport CRC-8
 
-    reg [2:0]  state;
+    reg [3:0]  state;
     reg [2:0]  bit_cnt;    // bits received in CMD phase
     reg [7:0]  cmd_byte;
     reg [6:0]  byte_idx;   // current response byte index (0–63)
@@ -185,6 +208,19 @@ module spu_spi_slave (
     reg        hex_valid_lat;
     reg [15:0] hex_q_lat;
     reg [15:0] hex_r_lat;
+    reg [5:0]  tgr_prefix_bits;
+    reg [47:0] tgr_prefix_shift;
+    reg [2:0]  tgr_bit_count;
+    reg [7:0]  tgr_byte_shift;
+    reg [15:0] tgr_data_count;
+    reg [15:0] tgr_length_latched;
+    reg [7:0]  tgr_crc_accum;
+    reg [7:0]  tgr_crc_recv;
+    reg        tgr_transaction_started;
+    // The standalone TGR-only spin indexes the sidecar's status directly.
+    // B3 cannot mutate that transactional status while its CS remains active,
+    // so this is a coherent snapshot without another 128 response flip-flops.
+    reg [6:0]   tgr_resp_remaining;
 
     // Deadman timer: reset to IDLE if SCK stalls mid-receive.
     // RP SDK blocking writes can leave CS low with multi-us gaps between
@@ -196,7 +232,10 @@ module spu_spi_slave (
     wire       deadman_active = (state == S_RECV_HDR ||
                                  state == S_RECV_DATA ||
                                  state == S_RECV_INST ||
-                                 state == S_RECV_CRC);
+                                 state == S_RECV_CRC ||
+                                 state == S_RECV_TGR_PREFIX ||
+                                 state == S_RECV_TGR_DATA ||
+                                 state == S_RECV_TGR_CRC);
 
     // ── CRC-8-CCITT accumulator (x⁸ + x² + x + 1) ──────────────
     // Computed over command + payload bytes for write transactions.
@@ -265,6 +304,14 @@ module spu_spi_slave (
             rplu_cfg_data    <= 64'd0;
             inst_valid       <= 1'b0;
             inst_word        <= 64'd0;
+            tgr_stream_start <= 1'b0;
+            tgr_stream_length <= 16'd0;
+            tgr_stream_vector_id <= 32'd0;
+            tgr_stream_valid <= 1'b0;
+            tgr_stream_data <= 8'd0;
+            tgr_stream_commit <= 1'b0;
+            tgr_stream_abort <= 1'b0;
+            tgr_status_hold <= 1'b0;
 
             hdr_shift <= 64'd0;
             data_shift<= 64'd0;
@@ -291,10 +338,26 @@ module spu_spi_slave (
             pending_data <= 64'd0;
             crc_error_sticky <= 1'b0;
             crc_bit_cnt <= 3'd0;
+            tgr_prefix_bits <= 6'd0;
+            tgr_prefix_shift <= 48'd0;
+            tgr_bit_count <= 3'd0;
+            tgr_byte_shift <= 8'd0;
+            tgr_data_count <= 16'd0;
+            tgr_length_latched <= 16'd0;
+            tgr_crc_accum <= 8'd0;
+            tgr_crc_recv <= 8'd0;
+            tgr_transaction_started <= 1'b0;
+            tgr_resp_remaining <= 7'd0;
         end else begin
             // default: clear the one-cycle strobe
             rplu_cfg_wr_en <= 1'b0;
             inst_valid <= 1'b0;
+            tgr_stream_start <= 1'b0;
+            tgr_stream_valid <= 1'b0;
+            tgr_stream_commit <= 1'b0;
+            tgr_stream_abort <= 1'b0;
+            if (!cs_active)
+                tgr_status_hold <= 1'b0;
 
             // Reset CRC at the start of a fresh transaction
             if (cs_fall) begin
@@ -352,7 +415,8 @@ module spu_spi_slave (
                         cmd_byte <= {cmd_byte[6:0], mosi_d};
                         if (bit_cnt == 3'd7) begin
                             bit_cnt <= 3'd0;
-                            if ({cmd_byte[6:0], mosi_d} == 8'hA5) begin
+                            if (!TENSEGRITY_ONLY &&
+                                {cmd_byte[6:0], mosi_d} == 8'hA5) begin
                                 // Write commands sample on SCK rises only; enter
                                 // receive immediately so the first payload bit is
                                 // not lost if the command trailing fall is missed
@@ -362,12 +426,28 @@ module spu_spi_slave (
                                 data_shift <= 64'd0;
                                 spi_miso <= 1'b0;
                                 state <= S_RECV_HDR;
-                            end else if ({cmd_byte[6:0], mosi_d} == 8'hB1) begin
+                            end else if (!TENSEGRITY_ONLY &&
+                                         {cmd_byte[6:0], mosi_d} == 8'hB1) begin
                                 recv_bits <= 6'd0;
                                 data_shift <= 64'd0;
                                 spi_miso <= 1'b0;
                                 state <= S_RECV_INST;
+                            end else if (ENABLE_TENSEGRITY &&
+                                         {cmd_byte[6:0], mosi_d} == 8'hB2) begin
+                                tgr_prefix_bits <= 6'd0;
+                                tgr_prefix_shift <= 48'd0;
+                                tgr_bit_count <= 3'd0;
+                                tgr_byte_shift <= 8'd0;
+                                tgr_data_count <= 16'd0;
+                                tgr_crc_accum <= crc8_byte(8'h00, 8'hB2);
+                                tgr_crc_recv <= 8'd0;
+                                tgr_transaction_started <= 1'b0;
+                                spi_miso <= 1'b0;
+                                state <= S_RECV_TGR_PREFIX;
                             end else begin
+                                if (ENABLE_TENSEGRITY &&
+                                    {cmd_byte[6:0], mosi_d} == 8'hB3)
+                                    tgr_status_hold <= 1'b1;
                                 state <= S_FILL;
                             end
                         end else begin
@@ -386,7 +466,7 @@ module spu_spi_slave (
                     // never sees it as a response clock edge.
                     if (sck_fall) begin
                         // Build response buffer based on latched cmd_byte
-                        if (cmd_byte == 8'hA0) begin
+                        if (!TENSEGRITY_ONLY && cmd_byte == 8'hA0) begin
                             // 4 axes × 8 bytes = 32 bytes
                             resp_buf[0]  <= p_axis[0][15:8];
                             resp_buf[1]  <= p_axis[0][7:0];
@@ -428,7 +508,7 @@ module spu_spi_slave (
                             spi_miso  <= p_axis[0][15];
                             state     <= S_RESP;
 
-                        end else if (cmd_byte == 8'hAC) begin
+                        end else if (!TENSEGRITY_ONLY && cmd_byte == 8'hAC) begin
                             // 4-byte status:
                             //   [0..1] laminar_index (big-endian)
                             //   [2]    flags: {ratio_lat[2:0], ratio_valid, fifo_full, turbulence, janus, snap}
@@ -446,7 +526,7 @@ module spu_spi_slave (
                             crc_error_sticky <= 1'b0;  // clear-on-read
                             state     <= S_RESP;
 
-                        end else if (cmd_byte == 8'hAD) begin
+                        end else if (!TENSEGRITY_ONLY && cmd_byte == 8'hAD) begin
                             // 9-byte scale table: 7 bytes scale_table + 2 bytes overflow
                             resp_buf[0] <= scale_tab_lat[51:44];
                             resp_buf[1] <= scale_tab_lat[43:36];
@@ -465,7 +545,7 @@ module spu_spi_slave (
                             spi_miso  <= scale_tab_lat[51];
                             state     <= S_RESP;
 
-                        end else if (cmd_byte == 8'hAE) begin
+                        end else if (!TENSEGRITY_ONLY && cmd_byte == 8'hAE) begin
                             // Last committed QR lane and its four components.
                             resp_buf[0] <= {7'd0, qr_valid_lat};
                             resp_buf[1] <= {4'd0, qr_lane_lat};
@@ -482,7 +562,7 @@ module spu_spi_slave (
                             spi_miso  <= 1'b0;
                             state     <= S_RESP;
 
-                        end else if (cmd_byte == 8'hAF) begin
+                        end else if (!TENSEGRITY_ONLY && cmd_byte == 8'hAF) begin
                             // Sticky HEX projection result.
                             resp_buf[0] <= {7'd0, hex_valid_lat};
                             resp_buf[1] <= hex_q_lat[15:8];
@@ -497,7 +577,7 @@ module spu_spi_slave (
                             hex_valid_lat <= 1'b0;
                             state     <= S_RESP;
 
-                        end else if (cmd_byte == 8'hB0) begin
+                        end else if (!TENSEGRITY_ONLY && cmd_byte == 8'hB0) begin
                             // 64-byte Sentinel Telemetry Burst (8 nodes * 8 bytes)
                             for (k = 0; k < 64; k = k + 1) begin
                                 // Big-endian byte streaming. node 0 (bits 511:448) is bytes 0-7.
@@ -510,14 +590,14 @@ module spu_spi_slave (
                             spi_miso  <= sentinel_lat[511];
                             state     <= S_RESP;
 
-                        end else if (cmd_byte == 8'hB1) begin
+                        end else if (!TENSEGRITY_ONLY && cmd_byte == 8'hB1) begin
                             // CMD B1: receive one 64-bit SPU instruction/chord
                             recv_bits <= 6'd0;
                             data_shift <= 64'd0;
                             spi_miso <= 1'b0;
                             state <= S_RECV_INST;
 
-                        end else if (cmd_byte == 8'hA5) begin
+                        end else if (!TENSEGRITY_ONLY && cmd_byte == 8'hA5) begin
                             // CMD A5: receive two 64-bit chords (HEADER then DATA)
                             recv_bits <= 6'd0;
                             hdr_shift <= 64'd0;
@@ -525,6 +605,24 @@ module spu_spi_slave (
                             // Keep MISO low while receiving payload
                             spi_miso <= 1'b0;
                             state <= S_RECV_HDR;
+
+                        end else if (ENABLE_TENSEGRITY && cmd_byte == 8'hB3) begin
+                            // Frozen eight-byte TGR1 verdict followed by eight
+                            // bytes of loader/transport diagnostics.
+                            if (TENSEGRITY_ONLY) begin
+                                tgr_resp_remaining <= 7'd127;
+                                spi_miso <= tgr_transport_status[127];
+                                state <= S_RESP;
+                            end else begin
+                                for (k = 0; k < 16; k = k + 1)
+                                    resp_buf[k] <= tgr_transport_status[127-k*8 -: 8];
+                                resp_len <= 7'd16;
+                                shift_out <= tgr_transport_status[127:120];
+                                byte_idx <= 7'd0;
+                                resp_bit <= 3'd7;
+                                spi_miso <= tgr_transport_status[127];
+                                state <= S_RESP;
+                            end
 
                         end else begin
                             // Unknown command — respond with one 0x00
@@ -605,24 +703,115 @@ module spu_spi_slave (
                     end
                 end
 
+                S_RECV_TGR_PREFIX: begin
+                    if (!cs_active || deadman_timeout) begin
+                        if (tgr_transaction_started)
+                            tgr_stream_abort <= 1'b1;
+                        tgr_transaction_started <= 1'b0;
+                        state <= S_IDLE;
+                    end else if (sck_rise) begin
+                        tgr_prefix_shift <= {tgr_prefix_shift[46:0], mosi_d};
+                        tgr_byte_shift <= {tgr_byte_shift[6:0], mosi_d};
+                        if (tgr_prefix_bits[2:0] == 3'd7)
+                            tgr_crc_accum <= crc8_byte(
+                                tgr_crc_accum, {tgr_byte_shift[6:0], mosi_d});
+                        if (tgr_prefix_bits == 6'd47) begin
+                            tgr_length_latched <= {tgr_prefix_shift[46:39],
+                                                   tgr_prefix_shift[38:31]};
+                            tgr_stream_length <= {tgr_prefix_shift[46:39],
+                                                  tgr_prefix_shift[38:31]};
+                            tgr_stream_vector_id <= {tgr_prefix_shift[30:0], mosi_d};
+                            tgr_stream_start <= 1'b1;
+                            tgr_transaction_started <= 1'b1;
+                            tgr_data_count <= 16'd0;
+                            tgr_bit_count <= 3'd0;
+                            tgr_byte_shift <= 8'd0;
+                            if ({tgr_prefix_shift[46:39],
+                                 tgr_prefix_shift[38:31]} == 16'd0)
+                                state <= S_RECV_TGR_CRC;
+                            else
+                                state <= S_RECV_TGR_DATA;
+                        end else begin
+                            tgr_prefix_bits <= tgr_prefix_bits + 1'b1;
+                        end
+                    end
+                end
+
+                S_RECV_TGR_DATA: begin
+                    if (!cs_active || deadman_timeout) begin
+                        tgr_stream_abort <= 1'b1;
+                        tgr_transaction_started <= 1'b0;
+                        state <= S_IDLE;
+                    end else if (sck_rise) begin
+                        tgr_byte_shift <= {tgr_byte_shift[6:0], mosi_d};
+                        if (tgr_bit_count == 3'd7) begin
+                            tgr_stream_data <= {tgr_byte_shift[6:0], mosi_d};
+                            tgr_stream_valid <= 1'b1;
+                            tgr_crc_accum <= crc8_byte(
+                                tgr_crc_accum, {tgr_byte_shift[6:0], mosi_d});
+                            tgr_bit_count <= 3'd0;
+                            tgr_byte_shift <= 8'd0;
+                            if (tgr_data_count + 1'b1 >= tgr_length_latched) begin
+                                state <= S_RECV_TGR_CRC;
+                            end
+                            tgr_data_count <= tgr_data_count + 1'b1;
+                        end else begin
+                            tgr_bit_count <= tgr_bit_count + 1'b1;
+                        end
+                    end
+                end
+
+                S_RECV_TGR_CRC: begin
+                    if (!cs_active || deadman_timeout) begin
+                        tgr_stream_abort <= 1'b1;
+                        tgr_transaction_started <= 1'b0;
+                        state <= S_IDLE;
+                    end else if (sck_rise) begin
+                        if (tgr_bit_count == 3'd7) begin
+                            if (tgr_crc_accum == {tgr_crc_recv[6:0], mosi_d}) begin
+                                tgr_stream_commit <= 1'b1;
+                            end else begin
+                                tgr_stream_abort <= 1'b1;
+                                crc_error_sticky <= 1'b1;
+                            end
+                            tgr_transaction_started <= 1'b0;
+                            tgr_bit_count <= 3'd0;
+                            state <= S_IDLE;
+                        end else begin
+                            tgr_crc_recv <= {tgr_crc_recv[6:0], mosi_d};
+                            tgr_bit_count <= tgr_bit_count + 1'b1;
+                        end
+                    end
+                end
+
                 S_RESP: begin
                     if (!cs_active) begin
                         state    <= S_IDLE;
                         spi_miso <= 1'b0;
                     end else if (sck_fall) begin
-                        if (resp_bit == 3'd0) begin
-                            // Last bit of this byte — advance to next
-                            resp_bit <= 3'd7;
-                            if (byte_idx + 6'd1 < resp_len) begin
-                                byte_idx  <= byte_idx + 6'd1;
-                                shift_out <= resp_buf[byte_idx + 6'd1];
-                                spi_miso  <= resp_buf[byte_idx + 6'd1][7];
+                        if (TENSEGRITY_ONLY) begin
+                            if (tgr_resp_remaining != 7'd0) begin
+                                tgr_resp_remaining <= tgr_resp_remaining - 1'b1;
+                                spi_miso <= tgr_transport_status[
+                                    tgr_resp_remaining - 1'b1];
                             end else begin
                                 spi_miso <= 1'b0;  // all bytes sent
                             end
                         end else begin
-                            resp_bit <= resp_bit - 3'd1;
-                            spi_miso <= shift_out[resp_bit - 3'd1];
+                            if (resp_bit == 3'd0) begin
+                                // Last bit of this byte — advance to next
+                                resp_bit <= 3'd7;
+                                if (byte_idx + 6'd1 < resp_len) begin
+                                    byte_idx  <= byte_idx + 6'd1;
+                                    shift_out <= resp_buf[byte_idx + 6'd1];
+                                    spi_miso  <= resp_buf[byte_idx + 6'd1][7];
+                                end else begin
+                                    spi_miso <= 1'b0;  // all bytes sent
+                                end
+                            end else begin
+                                resp_bit <= resp_bit - 3'd1;
+                                spi_miso <= shift_out[resp_bit - 3'd1];
+                            end
                         end
                     end
                 end

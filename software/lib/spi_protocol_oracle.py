@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Southbridge SPI protocol oracle — typestate case study.
 
-Models the spu_spi_slave.v state machine (8 states, 7 receive guards, 8
-response paths).  Provides a bit-exact reference for trace equivalence
+Models the spu_spi_slave.v state machine (11 states, including the optional
+TGR1 transport). Provides a bit-exact reference for trace equivalence
 against the RTL state machine and poison-proof fault injection.
 
 This is the non-arithmetic case study for THEOREM_LICENSED_TYPESTATE.md
@@ -41,6 +41,13 @@ def crc8_word64(crc: int, word: int) -> int:
     return s & 0xFF
 
 
+def crc8_bytes(crc: int, data: bytes) -> int:
+    s = crc & 0xFF
+    for value in data:
+        s = crc8_byte(s, value)
+    return s
+
+
 # ── State machine ────────────────────────────────────────────────
 
 
@@ -54,6 +61,9 @@ class SPIState(IntEnum):
     S_RECV_DATA = 5
     S_RECV_INST = 6
     S_RECV_CRC = 7
+    S_RECV_TGR_PREFIX = 8
+    S_RECV_TGR_DATA = 9
+    S_RECV_TGR_CRC = 10
 
 
 class Fault(IntEnum):
@@ -73,16 +83,16 @@ class Fault(IntEnum):
 class SPITransaction:
     """One complete SPI transaction as seen by the slave."""
     cmd_byte: int          # 8-bit command
-    payload: bytes = b""   # Write payload (for 0xB1, 0xA5)
+    payload: bytes = b""   # Write payload (for 0xB1, 0xA5, 0xB2)
     crc_byte: Optional[int] = None  # CRC-8 for writes
 
     @property
     def is_write(self) -> bool:
-        return self.cmd_byte in (0xB1, 0xA5)
+        return self.cmd_byte in (0xB1, 0xB2, 0xA5)
 
     @property
     def is_read(self) -> bool:
-        return self.cmd_byte in (0xA0, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0)
+        return self.cmd_byte in (0xA0, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB3)
 
 
 @dataclass
@@ -117,7 +127,8 @@ class SPISlaveState:
 
     def guard_valid_cmd(self) -> bool:
         """Guard: command byte must be a recognized opcode."""
-        return self.last_cmd in (0xA0, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xA5)
+        return self.last_cmd in (
+            0xA0, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xA5)
 
     def guard_crc_match(self, expected_crc: int) -> bool:
         """Guard: received CRC-8 must match computed accumulator."""
@@ -183,7 +194,7 @@ class SPISlaveOracle:
             s.state = SPIState.S_RECV_INST
             s.recv_bits = 64  # completed after 64 bits
             s.data_shift = int.from_bytes(txn.payload[:8], "big")
-            s.crc_accum = crc8_word64(0x00, s.data_shift)
+            s.crc_accum = crc8_word64(crc8_byte(0x00, 0xB1), s.data_shift)
 
             # CRC guard
             if txn.crc_byte is not None:
@@ -201,7 +212,7 @@ class SPISlaveOracle:
             if len(txn.payload) >= 8:
                 s.hdr_shift = int.from_bytes(txn.payload[:8], "big")
                 s.recv_bits = 64
-                s.crc_accum = crc8_word64(0x00, s.hdr_shift)
+                s.crc_accum = crc8_word64(crc8_byte(0x00, 0xA5), s.hdr_shift)
 
             if len(txn.payload) >= 16:
                 s.state = SPIState.S_RECV_DATA
@@ -215,6 +226,27 @@ class SPISlaveOracle:
                     s.crc_error_sticky = True
                     s.state = SPIState.S_IDLE
                     return s
+            s.state = SPIState.S_IDLE
+            return s
+
+        if txn.cmd_byte == 0xB2:
+            # Prefix is len16 + vector_id32, followed by exactly len TGR1 bytes.
+            s.state = SPIState.S_RECV_TGR_PREFIX
+            if len(txn.payload) < 6:
+                s.fault = Fault.FRAMING_ERROR
+                s.state = SPIState.S_IDLE
+                return s
+            declared = int.from_bytes(txn.payload[:2], "big")
+            if len(txn.payload) != 6 + declared:
+                s.fault = Fault.FRAMING_ERROR
+                s.state = SPIState.S_IDLE
+                return s
+            s.state = SPIState.S_RECV_TGR_DATA
+            s.recv_bits = len(txn.payload) * 8
+            s.crc_accum = crc8_bytes(crc8_byte(0x00, 0xB2), txn.payload)
+            if txn.crc_byte is None or not s.guard_crc_match(txn.crc_byte):
+                s.fault = Fault.CRC_MISMATCH
+                s.crc_error_sticky = True
             s.state = SPIState.S_IDLE
             return s
 
@@ -244,6 +276,8 @@ class SPISlaveOracle:
             return bytes(5)
         elif cmd == 0xB0:  # Sentinel Telemetry — 64 bytes
             return bytes(64)
+        elif cmd == 0xB3:  # TGR1 verdict + loader diagnostics — 16 bytes
+            return bytes(16)
         return b"\x00"
 
 
@@ -276,7 +310,7 @@ def test_valid_b1_write():
     """Valid B1 instruction write with correct CRC."""
     oracle = SPISlaveOracle()
     payload = bytes([0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x00, 0x00, 0x00])
-    expected_crc = crc8_word64(0x00, int.from_bytes(payload, "big"))
+    expected_crc = crc8_word64(crc8_byte(0x00, 0xB1), int.from_bytes(payload, "big"))
     txn = SPITransaction(cmd_byte=0xB1, payload=payload, crc_byte=expected_crc)
     result = oracle.process_transaction(txn)
     assert result.fault == Fault.NONE, f"Expected NONE, got {result.fault}"
@@ -291,7 +325,7 @@ def test_valid_a5_write():
     hdr = bytes([0xA5, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     data = bytes([0x00] * 8)
     payload = hdr + data
-    crc = crc8_word64(0x00, int.from_bytes(hdr, "big"))
+    crc = crc8_word64(crc8_byte(0x00, 0xA5), int.from_bytes(hdr, "big"))
     crc = crc8_word64(crc, int.from_bytes(data, "big"))
     txn = SPITransaction(cmd_byte=0xA5, payload=payload, crc_byte=crc)
     result = oracle.process_transaction(txn)
@@ -299,11 +333,24 @@ def test_valid_a5_write():
     assert result.state == SPIState.S_IDLE
 
 
+def test_valid_b2_write_and_framing():
+    oracle = SPISlaveOracle()
+    table = b"TGR1" + bytes(8)
+    payload = len(table).to_bytes(2, "big") + (6).to_bytes(4, "big") + table
+    crc = crc8_bytes(crc8_byte(0, 0xB2), payload)
+    result = oracle.process_transaction(
+        SPITransaction(cmd_byte=0xB2, payload=payload, crc_byte=crc))
+    assert result.fault == Fault.NONE
+    malformed = oracle.process_transaction(
+        SPITransaction(cmd_byte=0xB2, payload=b"\x00\x0d" + payload[2:], crc_byte=crc))
+    assert malformed.fault == Fault.FRAMING_ERROR
+
+
 def test_read_response_lengths():
     """All read commands return the correct response byte count."""
     oracle = SPISlaveOracle()
     expected = {
-        0xA0: 32, 0xAC: 4, 0xAD: 9, 0xAE: 34, 0xAF: 5, 0xB0: 64,
+        0xA0: 32, 0xAC: 4, 0xAD: 9, 0xAE: 34, 0xAF: 5, 0xB0: 64, 0xB3: 16,
     }
     for cmd, length in expected.items():
         txn = SPITransaction(cmd_byte=cmd)
@@ -317,13 +364,13 @@ def test_crc_accumulator_reset():
     """CRC accumulator resets at CS assertion (each new transaction)."""
     oracle = SPISlaveOracle()
     payload1 = bytes([0x01] * 8)
-    crc1 = crc8_word64(0x00, int.from_bytes(payload1, "big"))
+    crc1 = crc8_word64(crc8_byte(0x00, 0xB1), int.from_bytes(payload1, "big"))
     txn1 = SPITransaction(cmd_byte=0xB1, payload=payload1, crc_byte=crc1)
     oracle.process_transaction(txn1)
 
     # Second transaction: CRC accumulator must start fresh
     payload2 = bytes([0x02] * 8)
-    crc2 = crc8_word64(0x00, int.from_bytes(payload2, "big"))
+    crc2 = crc8_word64(crc8_byte(0x00, 0xB1), int.from_bytes(payload2, "big"))
     txn2 = SPITransaction(cmd_byte=0xB1, payload=payload2, crc_byte=crc2)
     result2 = oracle.process_transaction(txn2)
     assert result2.fault == Fault.NONE, f"CRC should reset per transaction"
@@ -353,7 +400,7 @@ def test_typestate_lattice():
 def test_all_read_commands_fault_free():
     """All 6 read commands complete without fault."""
     oracle = SPISlaveOracle()
-    for cmd in (0xA0, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0):
+    for cmd in (0xA0, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB3):
         txn = SPITransaction(cmd_byte=cmd)
         result = oracle.process_transaction(txn)
         assert result.fault == Fault.NONE, f"Cmd 0x{cmd:02X} unexpected fault {result.fault}"
@@ -365,6 +412,7 @@ if __name__ == "__main__":
         test_crc_mismatch_poison,
         test_valid_b1_write,
         test_valid_a5_write,
+        test_valid_b2_write_and_framing,
         test_read_response_lengths,
         test_crc_accumulator_reset,
         test_typestate_lattice,

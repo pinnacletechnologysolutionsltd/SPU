@@ -37,6 +37,8 @@ print(client.qr_commit()) # {'valid': True, 'lane': 3, 'A': ..., ...}
 
 client.write_chord(0x0A00000000000000)          # QLDI-style instruction
 client.write_rplu_cfg(sel=3, material=5, addr=15, data=0xDEADBEEF)
+client.load_tensegrity_sd("/TGR/06_fault_not_in_equilibrium.tgr", vector_id=6)
+print(client.tensegrity_status())
 ```
 
 ## CLI
@@ -57,10 +59,12 @@ python3 -m software.spu_host --port /dev/ttyACM0 raw sdhydrate
 | `hex_projection()` | `0xAF` | HEX Projection |
 | `rplu_config_telemetry()` | `0xB0` | see discrepancy note below |
 | `write_chord(data)` | `0xB1` | Instruction Write |
+| `load_tensegrity_sd(path, vector_id)` | `0xB2` | Transactional TGR1 Load |
+| `tensegrity_status()` | `0xB3` | TGR1 Verdict + Loader Diagnostics |
 | `write_rplu_cfg(sel, material, addr, data)` | `0xA5` | RPLU Config Write |
 
 `raw(cmd)` is the escape hatch for firmware-specific console commands not
-part of the frozen 8-opcode protocol (`ping`, `hydrate`, `classify`,
+part of the typed binary protocol (`ping`, `hydrate`, `classify`,
 `result`, `sd*`, `somwrite`, `featwrite`) — those vary by probe build.
 
 **Known discrepancy:** `0xB0` is documented in

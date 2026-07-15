@@ -7,13 +7,19 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lib.tensegrity_abi import (
+    CMD_TGR_LOAD,
     EDGE,
     HEADER,
+    LOAD_PREFIX,
     NODE,
     STATUS,
+    TRANSPORT_DIAG,
     TensegrityAbiError,
+    crc8_ccitt,
     decode_status,
+    decode_transport_status,
     decode_table,
+    encode_load_transaction,
     encode_status,
     encode_table,
 )
@@ -59,3 +65,17 @@ expect(len(status) == STATUS.size and
        decode_status(status) == (TensegrityState.FAULT_CABLE_SLACK,
                                  TensegrityFault.CABLE_SLACK, 0x12345678),
        "TGR1 eight-byte status preserves terminal fault and vector id")
+
+transaction = encode_load_transaction(canonical, 0x12345678)
+length, vector_id = LOAD_PREFIX.unpack_from(transaction, 1)
+expect(transaction[0] == CMD_TGR_LOAD and length == len(blob) and
+       vector_id == 0x12345678 and transaction[7:-1] == blob and
+       transaction[-1] == crc8_ccitt(transaction[:-1]),
+       "CMD B2 frames length, vector id, exact TGR1 bytes, and CRC-8")
+
+transport_status = status + TRANSPORT_DIAG.pack(0x0A, 0, 12, 30, len(blob), len(blob))
+expect(decode_transport_status(transport_status) == (
+           TensegrityState.FAULT_CABLE_SLACK,
+           TensegrityFault.CABLE_SLACK,
+           0x12345678, 0x0A, 0, 12, 30, len(blob), len(blob)),
+       "CMD B3 preserves frozen status prefix and loader diagnostics")

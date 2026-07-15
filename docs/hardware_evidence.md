@@ -1381,18 +1381,87 @@ verdict:
 TGR:P V:6 E:00
 ```
 
-This closes silicon evidence for all six RTL-supported admission fixtures:
+This closes silicon evidence for all six fixtures carried by the V:6 image:
 canonical balanced plus topology, strut collision, cable slack, exact
 antipodal strut intersection, and grid mismatch faults. The failure sequence
 also establishes the operating boundary: the exact guard is reliable at the
 25 MHz divided cadence, while the two attempted 50 MHz images produced a
 fixture-4 false negative despite nominal OpenXC7 closure.
 
-**Scope boundary:** V:6 is now the silicon-proven bounded admission scope, not
-a complete tensegrity balancer. Intersection silicon scope is the antipodal
-origin-crossing fixture; the full crossing/overlap/T-junction matrix remains
-RTL-verified. Force-density equilibrium (ID 6), table transport, and active
-rotation/actuation control remain outside this silicon claim.
+**Final admission tranche (silicon PASS):** the V:7 wrapper adds
+TGR1 ID 6 and the exact type-uniform Z[phi] equilibrium guard. It accumulates
+one cable/GAP and one strut force row per node/axis, derives the shared density
+ratio from a nonzero pivot, checks every row by exact cross multiplication,
+and applies exact sign tests; the canonical `2:-3` ratio is not hard-coded.
+The direct guard TB additionally passes a phi-scaled canonical fixture, and
+the wrapper TB observes all seven state/fault pairs before accepting:
+
+```
+TGR:P V:7 E:00
+```
+
+Focused regression: `TB_FILTER=tensegrity python3 run_all_tests.py` = 37 PASS,
+0 FAIL. XC7A100T synthesis/P&R/pack are clean. Resources are 22,520
+`SLICE_LUTX` (17%), 6,373 `SLICE_FFX` (5%), 108 DSP48E1 (45%), and 0 BRAM.
+Post-route Fmax is 106.72 MHz for the 50 MHz system/UART domain and 42.93 MHz
+for the divided 25 MHz guard domain. The node table is explicitly implemented
+as registers: allowing a third replicated asynchronous RAM32M read port made
+nextpnr's timing graph incomplete. Packed bitstream:
+`build/spu_a7_100t_TENSEGRITYPROBE.bit`, 3,825,929 bytes, SHA-256
+`7859d0e7d78218fcf49d5b4cd091332f0f0b5d5c3641edbc8b0380caba592d3f`.
+After DirtyJTAG SRAM load on 2026-07-14, the operator returned the exact UART
+verdict `TGR:P V:7 E:00`. This closes silicon evidence for all seven frozen
+TGR1 admission fixtures, including ID 6's type-uniform equilibrium fault.
+
+**Scope boundary:** V:7 is the silicon-proven bounded admission scope.
+Intersection silicon scope is the antipodal origin-crossing fixture; the full
+crossing/overlap/T-junction matrix remains RTL-verified. Equilibrium silicon
+scope is the canonical pass plus ID 6's perturbed-coordinate rejection under
+the type-uniform density contract. The oracle's broader nonuniform per-edge
+nullspace fallback and active rotation/actuation control remain outside the
+hardware claim.
+
+**Transactional table-link build evidence (not silicon evidence):** the
+follow-on `TENSEGRITYLINK` spin connects optional southbridge commands B2/B3
+to `spu13_tensegrity_sidecar.v`. Its raw 1,016-byte store is inferred as
+exactly one RAMB18E1 and split into active/staging banks. A B2 transaction is
+made visible only after transport CRC-8, TGR1 CRC-32, structural parsing, and
+full guard replay complete; every rejection path preserves the prior active
+vector and verdict. The sidecar module bench proves valid commit, CS abort,
+payload-CRC rejection, and a second mechanically failing but representationally
+valid commit. The SPI integration bench proves exact B2 framing, B3 response,
+bad-CRC diagnostics, deadman-timeout abort, and rollback through the real
+slave. A boundary regression holds B3 across the guard's one-cycle done pulse,
+proves the prior status remains coherent, then releases and commits the
+remembered result. The focused suite is
+37 PASS / 0 FAIL; the host parser is 33/33 and the protocol oracle is 9/9.
+XC7A100T synthesis is clean at 12,909 estimated logic cells, 108 DSP48E1, and
+one RAMB18E1. The reproducible seed-1 route closes with zero overuse at
+24,675 `SLICE_LUTX`, 7,655 `SLICE_FFX`, 40.16 MHz guard-domain Fmax, and
+318.78 MHz system-domain Fmax against a 25 MHz constraint. The packed
+3,825,928-byte bitstream is
+`build/spu_a7_100t_TENSEGRITYLINK.bit`, SHA-256
+`a515381a8b90ceba836da83c7fe80bf719033717d72458cfb8297d7753d63463`.
+**Partial board evidence, 2026-07-16:** after reseating the remapped J11
+connector, the standalone electrical loopback returned repeated 16/16 exact
+passes. The RP2350 then initialized the SD card and sent the 468-byte canonical
+TGR1 table through B2; B3 reported `received=expected=468`, proving the live
+SPI/SD/transport/length-accounting path. Reduced images using the same sidecar
+and parser each terminate correctly: intersection-only committed vector 100,
+and equilibrium-only committed vectors 100 and 101, as
+`state=2 fault=0 flags=0x08 nodes=12 edges=30`.
+
+The original full combined image does **not** terminate on that same canonical
+table. It remains at `state=0 fault=0 vector=0 flags=0x04`, with no active
+nodes/edges and `received=expected=468`; an immediate post-reset retry and a
+second combined build with a lower guard-domain constraint behave identically.
+This localizes the open issue to the combined intersection+equilibrium
+implementation, after successful transport/parser replay, but does not yet
+distinguish the exact internal wait state. Therefore B2/B3 have partial silicon
+evidence, while complete atomic admission and invalid-table rollback through
+the combined guard remain unproven. The agreed next step is componentization
+with explicit stage handshakes/watchdogs and eventual shared Z[phi] arithmetic,
+not further blind place-and-route seed searches.
 
 ### 3.3 RPLU + Math + SDRAM Proof
 

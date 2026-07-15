@@ -1,0 +1,5 @@
+read_verilog -sv -D SYNTHESIS hardware/rtl/peripherals/io/spu_spi_slave.v
+read_verilog -sv hardware/rtl/core/spu13/spu13_tensegrity_intersection.v
+read_verilog -sv hardware/rtl/core/spu13/spu13_tensegrity_guard.v
+read_verilog -sv hardware/rtl/core/spu13/spu13_tensegrity_sidecar.v
+read_verilog -sv -D SYNTHESIS hardware/boards/artix7/spu_a7_tensegrity_link_top.v

@@ -2,8 +2,9 @@
 
 **Status:** software oracle complete and suite-registered
 (`software/tests/test_tensegrity_balancer.py`, 44 checks). The bounded Artix
-admission guard implements five of the six guards, including exact strut
-contact; force-density equilibrium remains oracle-only. Part of the
+admission guard now implements all six guards, including exact strut contact
+and type-uniform force-density equilibrium. The seven-fixture V:7 image is
+silicon-verified on Wukong Artix-7. Part of the
 state-machine harness catalogue (`docs/STATE_MACHINE_HARNESS.md`) as case
 study #6.
 
@@ -86,7 +87,7 @@ or floating-point boundary anywhere.
 | `guard_struts_disjoint_interior` | Fuller §640.02 compression islands | Exact closed segment contact rejects strut endpoint touches and interior crossings |
 | `guard_cables_taut` | Tension members do not collapse | CABLE/GAP quadrance is exact positive/nonzero |
 | `guard_grid_consistency` | Compression does not cross MAIN/CONJ | Cross-grid edges must be GAP |
-| `guard_equilibrium` | Static tensegrity self-stress | Exact force densities exist with cable/GAP positive and strut negative signs |
+| `guard_equilibrium` | Static tensegrity self-stress | Exact type-uniform cable/GAP-positive and strut-negative force densities exist in RTL; the oracle may also search nonuniform densities |
 
 | Fault code | Physical diagnosis |
 |---|---|
@@ -97,10 +98,14 @@ or floating-point boundary anywhere.
 | `GRID_MISMATCH` | wrong MAIN/CONJ coupling, useful for dual-lattice models |
 | `TOPOLOGY_ERROR` | not a closed network; too few nodes/struts or disconnected; assembly incomplete or a member reported missing |
 
-`verify_balance` requires all six guards. The equilibrium guard solves the
-small force-density linear system over exact coordinates; the canonical
+`verify_balance` requires all six guards. The software equilibrium guard solves
+the small force-density linear system over exact coordinates; the canonical
 fixture's density ratio is derived by the executable test, not copied as a
-literature constant.
+literature constant. The bounded RTL implements the exact type-uniform subset:
+one shared cable/GAP density and one shared strut density. For each node and
+axis it accumulates the two Z[phi] force rows, derives a nonzero pivot ratio,
+checks every remaining row by cross multiplication, and proves the required
+opposite density signs with an exact integer-square sign predicate.
 
 The canonical fixture uses the cyclic permutations of `(0, +/-1, +/-2)`,
 equivalently the `t = 2` all-integer expanded octahedron. Its 24 cables are
@@ -127,9 +132,11 @@ solver derives `q_cable:q_strut = 2:-3`, so strut force density is exactly
 | Antipodal counterexample | Old regular-icosahedron antipodal fixture passes the older topology/separation/tautness/grid/equilibrium guards, then fails exactly `guard_struts_disjoint_interior` |
 | Regular-icosahedron comparison | Regular-icosahedron vertex set with the 24-cable net has no cable-positive/strut-negative self-stress |
 
-The oracle is structurally different from a future RTL implementation:
-software uses exact Python integers wrapped as rational and Z[phi] pairs; RTL
-would use fixed-width state and explicit guard datapaths.
+The oracle is structurally broader than the bounded RTL implementation:
+software uses exact Python integers and can fall back from the type-uniform
+solution to a small per-edge nullspace search. RTL uses fixed-width state and
+explicit Z[phi] datapaths and accepts only the type-uniform subset. The
+canonical and perturbed golden fixtures lie inside that shared subset.
 
 ## 6. RTL Integration Path
 
@@ -137,13 +144,14 @@ The bounded admission guard now consists of `spu13_tensegrity_guard.v` and the
 term-serial exact predicate `spu13_tensegrity_intersection.v`. It implements
 topology/connectivity, strut endpoint separation, cable/GAP collapse,
 closed-segment strut contact over Z[phi], grid/GAP consistency, terminal fault
-lockout, and explicit clear/reset recovery. The intersection scan skips pairs
-that share an endpoint because the earlier separation guard diagnoses those as
-`STRUT_COLLISION`; all other closed contact, including endpoint-on-interior
-and collinear overlap, is `STRUT_INTERSECTION`. Force-density equilibrium is
-still oracle-only, so this remains an admission guard rather than a full active
-balancer. The eventual integrated balancer sits alongside `spu13_core.v` as a
-control-plane FSM:
+lockout, explicit clear/reset recovery, and exact type-uniform force-density
+equilibrium. The intersection scan skips pairs that share an endpoint because
+the earlier separation guard diagnoses those as `STRUT_COLLISION`; all other
+closed contact, including endpoint-on-interior and collinear overlap, is
+`STRUT_INTERSECTION`. This is now a complete bounded TGR1 admission guard, but
+it is not a general nonuniform equilibrium solver or an active balancer. The
+eventual integrated balancer sits alongside `spu13_core.v` as a control-plane
+FSM:
 
 ```
 spu13_core.v
@@ -152,8 +160,8 @@ spu13_core.v
   - ROTC TDM/octahedral paths
   - Davis Gate
   - phi-plane tag file
-  - [NEW] Tensegrity balancer FSM
-      - Edge table BRAM
+  - [NEW] Tensegrity balancer sidecar/FSM
+      - Transactional double-buffered TGR1 BRAM
       - Guard evaluator
       - Fault latch
 ```
@@ -174,7 +182,7 @@ RTL/synthesis arithmetic mismatch. The guard table read is now split into
 fetch/node-evaluate/commit stages, and 108-bit intersection subtraction and
 equality decisions consume registered results. That second image closed at
 57.27 MHz but still returned `TGR:F V:4 E:90` in silicon, explicitly decoding
-to `BALANCED/F_NONE`: no contact was latched. The current probe therefore runs
+to `BALANCED/F_NONE`: no contact was latched. The successful V:6 probe therefore runs
 the complete loader/guard/intersection domain from a divided BUFG at 25 MHz;
 UART remains at 50 MHz. The route uses 13,895 `SLICE_LUTX`, 3,515 `SLICE_FFX`,
 72 DSP48E1, and 0 BRAM. OpenXC7 conservatively checked the guard domain at 50
@@ -185,6 +193,49 @@ This divided-clock image produced repeating `TGR:P V:6 E:00` in silicon on
 The large multiplier footprint is the exact Z[phi] intersection datapath, not
 an estimate. Silicon scope is the six probe fixtures, including the antipodal
 origin-crossing counterexample; the wider contact matrix remains RTL-verified.
+
+The final admission tranche adds the exact type-uniform equilibrium engine and
+loads TGR1 ID 6, a one-coordinate perturbation of the canonical fixture. The
+module testbench also scales the canonical coordinates into the phi
+coefficient, proving the datapath is not an integer-only shortcut. The V:7
+probe and focused tensegrity suite pass in simulation; synthesis/P&R/pack are
+clean on XC7A100T. Post-route usage is 22,520 `SLICE_LUTX` (17%), 6,373
+`SLICE_FFX` (5%), 108 DSP48E1 (45%), and 0 BRAM. The actual-domain Fmax report
+is 106.72 MHz for the 50 MHz system/UART clock and 42.93 MHz for the divided
+25 MHz guard clock. The small 12-entry node table is forced to registers
+because a third replicated asynchronous RAM32M read port made nextpnr's timing
+graph incomplete. Packed
+bitstream SHA-256 is
+`7859d0e7d78218fcf49d5b4cd091332f0f0b5d5c3641edbc8b0380caba592d3f`.
+The board run on 2026-07-14 produced `TGR:P V:7 E:00`, closing silicon proof
+for all seven bounded admission fixtures, including exact type-uniform
+equilibrium rejection.
+
+The storage/transport tranche is now implemented separately as the
+`TENSEGRITYLINK` Artix spin. `0xB2` streams a length-delimited TGR1 image and
+vector ID into the inactive half of a 1,016-byte raw table store; transport
+CRC-8, TGR1 payload CRC-32, header/count bounds, and every node/edge record are
+checked before synchronous replay through the existing guard. `0xB3` exposes
+the frozen eight-byte verdict plus eight bytes of loader diagnostics. The
+active bank changes only after a complete valid table reaches a coherent
+terminal guard result. Abort, timeout, CRC, and parse failures preserve the
+previous active bank and verdict. Synthesis uses exactly one RAMB18E1, 108
+DSP48E1, and 12,909 estimated logic cells. The seed-1 route closes at 25 MHz
+with 24,675 `SLICE_LUTX` (19%), 7,655 `SLICE_FFX` (6%), and post-route Fmax
+of 40.16 MHz for the guard domain and 318.78 MHz for the system domain. The
+focused regression is 37/37. Packed bitstream SHA-256 is
+`a515381a8b90ceba836da83c7fe80bf719033717d72458cfb8297d7753d63463`.
+Board work on 2026-07-16 proves the remapped J11 electrical link, RP2350 SD
+load, B2 receipt, exact 468-byte length accounting, TGR1 parse/replay, and B3
+status path. It also proves each large exact stage separately through that
+same transport: an intersection-only image and an equilibrium-only image both
+commit the canonical 12-node/30-edge table as `BALANCED/F_NONE`. The original
+combined image does not complete verification: B3 remains at `flags=0x04`
+(`verify_busy`) with `received=expected=468` and no active-bank commit. A
+second combined build at a lower guard-domain constraint behaves identically.
+Accordingly, this is partial link silicon evidence, not a complete atomic
+TENSEGRITYLINK proof and not evidence of rollback through the full combined
+guard.
 
 ## 7. Open Design Items
 
@@ -205,12 +256,17 @@ origin-crossing counterexample; the wider contact matrix remains RTL-verified.
 ## 8. Next Steps
 
 1. Keep the exact oracle and the seven-vector TGR1 corpus suite-registered.
-2. Add force-density equilibrium as the final TGR1 admission-guard tranche;
-   do not classify vector 6 as BALANCED before that datapath exists.
-3. Replace the distributed configuration arrays with initialized or
-   host-hydrated BRAM, define storage/transport, and re-measure the probe.
-4. Add strut-slenderness and local-precession guards at the oracle level, then
+2. Componentize the link verifier into transport, parser, topology/local guard,
+   intersection, equilibrium, and admission-coordinator stages with explicit
+   handshakes, vector IDs, terminal results, and watchdogs. Keep standalone
+   probe builds, but integrate the final verifier over one inactive snapshot.
+3. Share or serialize the exact Z[phi] arithmetic between intersection and
+   equilibrium if the componentized full build remains route-heavy; the two
+   stages never need to execute concurrently.
+4. Decide whether a general nonuniform self-stress solver is required in
+   hardware; it is outside the current type-uniform admission contract.
+5. Add strut-slenderness and local-precession guards at the oracle level, then
    extend TGR1 only with an explicit version bump if their data is needed.
-5. Only after admission is complete, specify the active balancing controller
-   (rotation/actuation proposals, re-verification, and rollback) separately
-   from the frozen TGR1 table ABI.
+6. Implement the active balancing controller as a second transactional layer:
+   propose a bounded rotation/actuation, re-run admission, commit only on a
+   balanced verdict, and roll back on fault or timeout.

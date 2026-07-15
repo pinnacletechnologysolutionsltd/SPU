@@ -160,6 +160,17 @@ void spu_link_read_sentinel(spu_link_t *link,
     spu_link_deselect(link);
 }
 
+void spu_link_read_tgr_status(spu_link_t *link,
+                              uint8_t out[SPU_LINK_TGR_STATUS_BYTES]) {
+    uint8_t cmd = SPU_CMD_READ_TGR_STATUS;
+
+    spu_link_select(link);
+    spi_write_blocking(link->spi, &cmd, 1);
+    spu_link_read_turnaround(link);
+    spi_read_blocking(link->spi, 0x00, out, SPU_LINK_TGR_STATUS_BYTES);
+    spu_link_deselect(link);
+}
+
 bool spu_link_fifo_full(spu_link_t *link) {
     uint16_t dissonance;
     uint8_t flags;
@@ -233,4 +244,35 @@ void spu_link_write_rplu_cfg(spu_link_t *link, uint64_t header,
     spi_write_blocking(link->spi, &crc, 1);
     sleep_us(link->crc_hold_us);
     spu_link_deselect(link);
+}
+
+bool spu_link_write_tgr1(spu_link_t *link, uint32_t vector_id,
+                         const uint8_t *table, uint16_t table_len) {
+    uint8_t cmd = SPU_CMD_WRITE_TGR1;
+    uint8_t prefix[6];
+    uint8_t crc;
+
+    if (table == NULL || table_len < 12 || table_len > SPU_LINK_TGR_MAX_BYTES) {
+        return false;
+    }
+
+    prefix[0] = (uint8_t)(table_len >> 8);
+    prefix[1] = (uint8_t)table_len;
+    prefix[2] = (uint8_t)(vector_id >> 24);
+    prefix[3] = (uint8_t)(vector_id >> 16);
+    prefix[4] = (uint8_t)(vector_id >> 8);
+    prefix[5] = (uint8_t)vector_id;
+
+    crc = spu_crc8_byte(0x00, cmd);
+    crc = spu_crc8_bytes(crc, prefix, sizeof(prefix));
+    crc = spu_crc8_bytes(crc, table, table_len);
+
+    spu_link_select(link);
+    spi_write_blocking(link->spi, &cmd, 1);
+    spi_write_blocking(link->spi, prefix, sizeof(prefix));
+    spi_write_blocking(link->spi, table, table_len);
+    spi_write_blocking(link->spi, &crc, 1);
+    sleep_us(link->crc_hold_us);
+    spu_link_deselect(link);
+    return true;
 }

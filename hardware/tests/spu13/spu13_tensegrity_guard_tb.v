@@ -113,6 +113,16 @@ module spu13_tensegrity_guard_tb;
         node(8,2,0,1,1); node(9,2,0,-1,1); node(10,-2,0,1,1); node(11,-2,0,-1,1);
     end endtask
 
+    task canonical_nodes_phi_scaled;
+    begin
+        node_phi(0,0,0,0,1,0,2);   node_phi(1,0,0,0,1,0,-2);
+        node_phi(2,0,0,0,-1,0,2);  node_phi(3,0,0,0,-1,0,-2);
+        node_phi(4,0,1,0,2,0,0);   node_phi(5,0,1,0,-2,0,0);
+        node_phi(6,0,-1,0,2,0,0);  node_phi(7,0,-1,0,-2,0,0);
+        node_phi(8,0,2,0,0,0,1);   node_phi(9,0,2,0,0,0,-1);
+        node_phi(10,0,-2,0,0,0,1); node_phi(11,0,-2,0,0,0,-1);
+    end endtask
+
     task canonical_edges;
     begin
         put_edge(0,0,4,0); put_edge(1,0,6,0); put_edge(2,0,8,0); put_edge(3,0,10,0);
@@ -146,6 +156,9 @@ module spu13_tensegrity_guard_tb;
         wipe; canonical_nodes; canonical_edges;
         run_expect(2,0,"canonical");
 
+        wipe; canonical_nodes_phi_scaled; canonical_edges;
+        run_expect(2,0,"canonical_phi_scaled");
+
         wipe; canonical_nodes; canonical_edges; put_edge(25,0,9,1);
         run_expect(5,2,"strut_collision");
 
@@ -165,6 +178,9 @@ module spu13_tensegrity_guard_tb;
 
         wipe; antipodal_nodes; antipodal_edges;
         run_expect(9,6,"strut_intersection");
+
+        wipe; canonical_nodes; canonical_edges; node(0,1,1,2,1);
+        run_expect(8,5,"not_in_equilibrium");
 
         if (errors == 0) $display("SPU13_TENSEGRITY_GUARD_TB: PASS");
         else $display("SPU13_TENSEGRITY_GUARD_TB: FAIL errors=%0d", errors);

@@ -171,6 +171,8 @@ static void cmd_help(void) {
     printf("  qr\r\n");
     printf("  hex\r\n");
     printf("  cfgtele\r\n");
+    printf("  tgrload <path.tgr> [vector_id]\r\n");
+    printf("  tgrstatus\r\n");
     printf("  chord <16 hex digits>\r\n");
     printf("  rplu <sel> <material> <addr> <data64>\r\n");
     printf("  somwrite <node> <feat> <hex16>\r\n");
@@ -289,6 +291,61 @@ static void cmd_cfgtele(spu_diag_t *diag) {
                rplu2_row1, rplu2_kappa);
     }
     printf("\r\n");
+}
+
+static void cmd_tgrstatus(spu_diag_t *diag) {
+    uint8_t status[SPU_LINK_TGR_STATUS_BYTES] = {0};
+
+    spu_link_read_tgr_status(diag->link, status);
+    printf("OK tgrstatus version=%u state=%u fault=%u vector=%" PRIu32
+           " flags=0x%02X error=%u nodes=%u edges=%u"
+           " received=%u expected=%u\r\n",
+           status[0], status[1], status[2], read_be32(&status[4]),
+           status[8], status[9], status[10], status[11],
+           read_be16(&status[12]), read_be16(&status[14]));
+}
+
+static void cmd_tgrload(spu_diag_t *diag, char *args) {
+    static uint8_t table[SPU_LINK_TGR_MAX_BYTES];
+    char *path = next_token(&args);
+    uint32_t vector_id = 0;
+    FIL file;
+    UINT read_count = 0;
+    FRESULT result;
+    FSIZE_t size;
+
+    if (path == NULL) {
+        printf("ERR usage: tgrload <path.tgr> [vector_id]\r\n");
+        return;
+    }
+    if (*skip_ws(args) != '\0' && !parse_u32_token(&args, &vector_id)) {
+        printf("ERR invalid vector_id\r\n");
+        return;
+    }
+    if (!spu_storage_init()) {
+        printf("ERR no SD card\r\n");
+        return;
+    }
+    result = f_open(&file, path, FA_READ);
+    if (result != FR_OK) {
+        printf("ERR TGR1 file not found\r\n");
+        return;
+    }
+    size = f_size(&file);
+    if (size < 12 || size > SPU_LINK_TGR_MAX_BYTES) {
+        f_close(&file);
+        printf("ERR TGR1 size must be 12..%u bytes\r\n", SPU_LINK_TGR_MAX_BYTES);
+        return;
+    }
+    result = f_read(&file, table, (UINT)size, &read_count);
+    f_close(&file);
+    if (result != FR_OK || read_count != (UINT)size ||
+        !spu_link_write_tgr1(diag->link, vector_id, table, (uint16_t)size)) {
+        printf("ERR TGR1 read/transport failed\r\n");
+        return;
+    }
+    printf("OK tgrload bytes=%u vector=%" PRIu32 "\r\n",
+           (unsigned)size, vector_id);
 }
 
 static void cmd_chord(spu_diag_t *diag, char *args) {
@@ -619,6 +676,10 @@ static void execute_line(spu_diag_t *diag) {
         cmd_hex(diag);
     } else if (strcmp(cmd, "cfgtele") == 0) {
         cmd_cfgtele(diag);
+    } else if (strcmp(cmd, "tgrload") == 0) {
+        cmd_tgrload(diag, cursor);
+    } else if (strcmp(cmd, "tgrstatus") == 0) {
+        cmd_tgrstatus(diag);
     } else if (strcmp(cmd, "chord") == 0) {
         cmd_chord(diag, cursor);
     } else if (strcmp(cmd, "rplu") == 0) {

@@ -48,6 +48,8 @@ enum sb_platform_t {
 #define SB_CMD_HEX_READ         0xA3
 #define SB_CMD_SENTINEL_READ    0xA4
 #define SB_CMD_TELEMETRY_STATUS 0xB0
+#define SB_CMD_TGR1_LOAD        0xB2
+#define SB_CMD_TGR1_STATUS      0xB3
 
 /**
  * @brief Initialize SPI master interface

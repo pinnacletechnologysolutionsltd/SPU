@@ -1,10 +1,13 @@
-# Sovereign Processor Unit — Southbridge SPI Protocol v1.1
+# Sovereign Processor Unit — Southbridge SPI Protocol v1.2
 
 **Document:** SPU Southbridge Serial Protocol
-**Version:** 1.1 (2026-06-28)
-**Hardware:** Tang Primer 25K (GW5A-25A FPGA, `spu_spi_slave.v`)
+**Version:** 1.2 (2026-07-14)
+**Hardware:** Tang Primer 25K and Wukong Artix-7 (`spu_spi_slave.v`)
 **Master:** RP2350 Microcontroller (SPI0 @ 2 MHz, Mode 0)
-**Status:** RTL testbench PASS; Tang 25K/RP2350 `0xAC` status read verified
+**Status:** base RTL testbench PASS; Tang 25K/RP2350 `0xAC` status read
+verified; optional B2/B3 TGR1 extension RTL/host verified. Artix-7 board work
+proves J11/SD/B2/B3 and each exact guard engine separately, while the full
+combined guard remains `verify_busy`; see the tensegrity handover.
 
 ---
 
@@ -17,7 +20,7 @@ grammar, any board with a resident southbridge MCU (Tang 25K, Wukong A7
 J11, and future T1-tier boards alike). Board differences are pin maps and
 constraints files, never protocol forks.
 
-**Opcode set (8, frozen as of this document):**
+**Base opcode set (8, frozen since v1.1):**
 
 | Opcode | Name | Direction | Bytes |
 |---|---|---|---|
@@ -36,12 +39,30 @@ shorthand for the opcodes exercised in early bring-up, not the full set.
 All 8 are RTL-testbench-verified (`spu_spi_slave_tb.v`); this table is
 the count of record.
 
+**Optional v1 extension opcodes (v1.2):**
+
+| Opcode | Name | Direction | Bytes |
+|---|---|---|---|
+| `0xB2` | TGR1 Transactional Load | write | 6-byte prefix + 12–508-byte table + CRC-8 |
+| `0xB3` | TGR1 Status | read | 16 |
+
+These opcodes are implemented only when `spu_spi_slave.v` is built with
+`ENABLE_TENSEGRITY=1`. A base-v1 bitstream retains the frozen unknown-command
+response, so a host can probe `0xB3` without changing the original eight
+commands.
+
+The standalone Artix `TENSEGRITYLINK` appliance additionally sets
+`TENSEGRITY_ONLY=1`, which prunes the legacy command datapaths at synthesis
+time so this dense guard build can route. It intentionally exposes only B2,
+B3, and the frozen unknown-command response. The parameter defaults to zero;
+all integrated southbridge builds retain the complete base-v1 command set and
+the optional opcodes do not alter any existing wire format.
+
 **Compatibility rules (v1):**
 1. An opcode's response format, once documented here, **never changes**
    for the same opcode value. A format change is a new opcode.
-2. New functionality gets a new, previously-unused opcode byte. The
-   0xA0–0xB0 range above is allocated; pick outside it (or propose a
-   sub-range) for additions.
+2. New functionality gets a new, previously-unused opcode byte. Existing
+   opcode formats are never widened in place.
 3. Unknown opcodes return a single `0x00` byte and re-arm to `S_IDLE`
    (see Error Handling) — this behavior is itself part of the v1
    contract, so host code can safely probe for opcode support.
@@ -50,8 +71,9 @@ the count of record.
    Interconnect Architecture homogeneity rule. A board-specific fork of
    this protocol is a bug in the port, not a new "board variant."
 
-A future v2 (if one is ever needed) gets its own document; this file's
-opcode table does not change to accommodate it.
+A future incompatible v2 (if one is ever needed) gets its own document.
+Compatible v1 extensions may allocate unused opcodes as above, while the
+frozen base formats remain unchanged.
 
 ---
 
@@ -60,7 +82,9 @@ opcode table does not change to accommodate it.
 The **Southbridge** is the compute engine side of the RP2350↔FPGA bridge. It implements a **SPI slave** that answers queries from the RP2350 master, streaming manifold state, telemetry, and accepting instruction/configuration writes.
 
 ### Key Characteristics
-- **Synchronous:** All edges are sampled on the rising edge of the system clock (50 MHz)
+- **Synchronous:** All edges are sampled on the rising edge of the selected
+  southbridge clock (50 MHz on the original Tang spin; 25 MHz on
+  `TENSEGRITYLINK`)
 - **Big-endian:** All multi-byte values streamed MSB first
 - **Latched:** Entire manifold snapshot captured atomically at CS assertion
 - **Sticky state:** HEX and RPLU ratio valid bits clear on read; QR commit remains latched until overwritten or reset
@@ -217,7 +241,9 @@ Before powering both boards together:
 
 ## SPI Slave State Machine
 
-The FPGA implements a 7-state machine to handle command parsing and response delivery.
+The FPGA implements an 11-state machine. The original response and fixed-size
+write path is unchanged; the optional TGR1 path adds prefix, payload, and CRC
+receive states.
 
 ```
                      ┌─────────────────────────────┐
@@ -266,6 +292,10 @@ The FPGA implements a 7-state machine to handle command parsing and response del
 | `S_RECV_HDR` | Receive 64-bit RPLU header | 64 bits received on sck_rise |
 | `S_RECV_DATA` | Receive 64-bit RPLU data | 64 bits received + hdr check |
 | `S_RECV_INST` | Receive 64-bit instruction | 64 bits received on sck_rise |
+| `S_RECV_CRC` | Receive CRC-8 for B1/A5 | 8 bits received on sck_rise |
+| `S_RECV_TGR_PREFIX` | Receive TGR1 length and vector ID | 48 bits received on sck_rise |
+| `S_RECV_TGR_DATA` | Stream the length-delimited TGR1 payload | declared byte count received |
+| `S_RECV_TGR_CRC` | Receive and decide TGR1 transport CRC-8 | 8 bits received on sck_rise |
 
 ---
 
@@ -330,7 +360,8 @@ Byte  Bits        Content
 - **Janus Point:** Set when manifold crosses dual-polarity boundary
 - **Satellite Snap:** SPU-4 Sentinel lock indicator
 - **RPLU Mode:** Current active RPLU bank (0 = default, 1 = alternate) — byte 3 bit 0
-- **CRC Error:** Set if last write (0xB1 or 0xA5) had CRC-8 mismatch — byte 3 bit 1, clears on 0xAC read
+- **CRC Error:** Set if the last B1, A5, or B2 write had a CRC-8 mismatch —
+  byte 3 bit 1, clears on 0xAC read
 
 ---
 
@@ -426,7 +457,7 @@ documenting the bitstream-dependent dual meaning here explicitly.
 
 ---
 
-### Write Commands (0xB1, 0xA5)
+### Write Commands (0xB1, 0xA5, 0xB2)
 
 #### **0xB1 — Instruction Write** (Recv: 64 bits + 8 CRC)
 **Role:** Stream a single 64-bit SPU instruction/chord
@@ -516,6 +547,59 @@ After DATA received:
 
 ---
 
+#### **0xB2 — TGR1 Transactional Load** (Recv: 6-byte prefix + table + CRC)
+
+This optional command streams one complete TGR1 table into the inactive
+sidecar bank. All multi-byte fields are big-endian and the entire transaction
+must remain under one CS# assertion:
+
+```text
+byte 0        command = 0xB2
+bytes 1..2    TGR1 table length, uint16 (12..508)
+bytes 3..6    caller vector ID, uint32
+bytes 7..N    exactly `length` TGR1 bytes
+byte N+1      CRC-8-CCITT over command + prefix + table
+```
+
+The TGR1 header contains its own CRC-32 over the table payload. The transport
+CRC-8 protects framing; the payload CRC-32 protects the stored representation.
+After a valid transport commit the sidecar parses the inactive BRAM bank,
+replays its nodes and edges through the admission guard, and switches the
+active bank only when verification reaches a coherent terminal verdict.
+Malformed headers, length/count violations, invalid records, CRC failure, CS#
+abort, and deadman timeout preserve the previous active bank and verdict.
+
+The maximum is the bounded hardware profile: 12 nodes and 40 edges, or
+`12 + 12*28 + 40*4 = 508` bytes. The canonical 12-node/30-edge table is 468
+bytes and its complete B2 wire transaction is 476 bytes.
+
+#### **0xB3 — TGR1 Status** (Response: 16 bytes)
+
+The first eight bytes are the frozen TGR1 status record. The following eight
+bytes are transport/loader diagnostics:
+
+| Byte(s) | Field |
+|---|---|
+| 0 | TGR1 ABI version (`1`) |
+| 1 | active balancer state |
+| 2 | active terminal fault |
+| 3 | reserved (`0`) |
+| 4–7 | active vector ID, uint32 |
+| 8 | flags: bit 3 active-valid, bit 2 verify-busy, bit 1 RX-busy, bit 0 error-present |
+| 9 | loader error |
+| 10 | active node count |
+| 11 | active edge count |
+| 12–13 | bytes received in the last load, uint16 |
+| 14–15 | bytes expected in the last load, uint16 |
+
+Loader error values are: `0` none, `1` transport abort/CRC, `2` magic,
+`3` version, `4` flags, `5` bounds, `6` length, `7` payload CRC-32,
+`8` node record, and `9` edge record. A nonzero diagnostic error describes
+the rejected staging transaction; bytes 1–7 continue to report the last
+committed active verdict.
+
+---
+
 ## Protocol Timing
 
 ### Slave Sampling & Drive Times
@@ -523,7 +607,7 @@ After DATA received:
 | Phase | Timing |
 |:---:|:---|
 | **Command** | 8 × SCK cycles |
-| **Response load** | 1 × system clock (50 MHz) |
+| **Response load** | 1 × selected southbridge clock |
 | **MISO setup** | < 50 ns (combinational) |
 | **MISO hold** | 0 ns (already stable) |
 | **Max freq** | ~5 MHz conservative (2 MHz recommended) |
@@ -652,7 +736,9 @@ If FPGA receives unrecognized opcode:
 ### Hung Transactions
 If RP2350 stops clocking SCK while CS# is active:
 - FPGA state machine remains in active state (S_CMD, S_RESP, S_RECV_*, S_RECV_CRC)
-- **Deadman timer:** 128-cycle timeout (≈2.6 µs at 50 MHz) resets to S_IDLE if no SCK edge arrives
+- **Deadman timer:** 128-cycle timeout (≈2.6 µs at 50 MHz or 5.1 µs at
+  25 MHz) resets to S_IDLE if no SCK edge arrives; an in-flight B2 staging
+  transaction is aborted
 - RP2350 must assert CS# if transaction times out
 
 **Recommended:** RP2350 firmware should implement SCK watchdog (~10 ms timeout).
@@ -671,7 +757,18 @@ All protocol paths verified in `hardware/tests/common/spu_spi_slave_tb.v`:
 - ✓ Sticky state (QR/HEX valid bits)
 - ✓ Timing margins at 2 MHz
 
-**Test Status:** PASS (spu_spi_slave_tb.v)
+Optional TGR1 paths are verified in
+`hardware/tests/spu13/spu13_tensegrity_transport_tb.v`:
+- ✓ Valid B2 load through the real SPI slave and exact 16-byte B3 response
+- ✓ Bad transport CRC preserves the active bank/verdict and reports error 1
+- ✓ Stalled B2 trips the 128-cycle deadman, aborts staging, and preserves the
+  active bank/verdict
+- ✓ B3 status remains coherent when a guard result completes during the read;
+  commit is held and its one-cycle result is remembered until CS# deasserts
+- ✓ Base eight-opcode testbench still passes with the extension disabled
+
+**Test Status:** PASS (`spu_spi_slave_tb.v` and
+`spu13_tensegrity_transport_tb.v`)
 
 ### Hardware Validation (Tang Primer 25K)
 When southbridge bitstream is tested with RP2350:
@@ -681,6 +778,17 @@ When southbridge bitstream is tested with RP2350:
 4. Test `0xB1` instruction writes, then `0xA5` RPLU config writes.
 5. Prove SD separately with `spu_sd_test.uf2`; only then use SD-backed
    hydration commands from the RP2350 diagnostic console.
+
+For the Wukong `TENSEGRITYLINK` spin, use the remapped J11 bottom row recorded
+in `spu_a7_tensegrity_link.xdc`: GP1/GP2/GP3/GP0 to J11 pins 7/8/9/10, common
+ground, and 100-ohm series resistance on all four signals. Never leave the
+RP2350 powered and driving while the FPGA board is unpowered. The diagnostic
+console commands are `tgrload <path.tgr> [vector_id]` and `tgrstatus`. The
+The commands have now been exercised over this remapped link: the canonical
+468-byte table reaches the parser and B3 reports exact receipt. Reduced
+intersection-only and equilibrium-only images commit it, while the combined
+image remains in verification. This is partial transport silicon evidence,
+not a complete combined-admission or rollback proof.
 
 ---
 

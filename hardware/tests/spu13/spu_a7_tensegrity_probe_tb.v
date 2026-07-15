@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
-// Artix tensegrity probe: exercise the real table loader, pin the six
-// first-tranche guard verdicts in order, and decode the UART acceptance line.
+// Artix tensegrity probe: exercise the real table loader, pin all seven TGR1
+// guard verdicts in order, and decode the UART acceptance line.
 module spu_a7_tensegrity_probe_tb;
     localparam CLKS_PER_BIT = 8;
     localparam LINE_LEN = 16;
@@ -38,6 +38,7 @@ module spu_a7_tensegrity_probe_tb;
                 3: if (dut.guard_state !== 4'd4 || dut.guard_fault !== 3'd1) errors = errors + 1;
                 4: if (dut.guard_state !== 4'd9 || dut.guard_fault !== 3'd6) errors = errors + 1;
                 5: if (dut.guard_state !== 4'd6 || dut.guard_fault !== 3'd3) errors = errors + 1;
+                6: if (dut.guard_state !== 4'd8 || dut.guard_fault !== 3'd5) errors = errors + 1;
                 default: errors = errors + 1;
             endcase
             verdicts_seen = verdicts_seen + 1;
@@ -65,7 +66,7 @@ module spu_a7_tensegrity_probe_tb;
     initial begin
         expected[0]="T"; expected[1]="G"; expected[2]="R"; expected[3]=":";
         expected[4]="P"; expected[5]=" "; expected[6]="V"; expected[7]=":";
-        expected[8]="6"; expected[9]=" "; expected[10]="E"; expected[11]=":";
+        expected[8]="7"; expected[9]=" "; expected[10]="E"; expected[11]=":";
         expected[12]="0"; expected[13]="0";
         expected[14]=8'h0d; expected[15]=8'h0a;
 
@@ -85,11 +86,11 @@ module spu_a7_tensegrity_probe_tb;
             end
         end
 
-        if (verdicts_seen != 6) begin
+        if (verdicts_seen != 7) begin
             errors = errors + 1;
-            $display("FAIL guard verdict count got=%0d expected=6", verdicts_seen);
+            $display("FAIL guard verdict count got=%0d expected=7", verdicts_seen);
         end
-        if (dut.vectors_done !== 3'd6 || dut.loader_state !== 4'd9) begin
+        if (dut.vectors_done !== 3'd7 || dut.loader_state !== 4'd9) begin
             errors = errors + 1;
             $display("FAIL terminal state loader=%0d vectors=%0d",
                      dut.loader_state, dut.vectors_done);
@@ -100,7 +101,7 @@ module spu_a7_tensegrity_probe_tb;
         end
 
         if (errors == 0)
-            $display("SPU_A7_TENSEGRITY_PROBE_TB: PASS (TGR:P V:6 E:00)");
+            $display("SPU_A7_TENSEGRITY_PROBE_TB: PASS (TGR:P V:7 E:00)");
         else
             $display("SPU_A7_TENSEGRITY_PROBE_TB: FAIL errors=%0d", errors);
         $finish(errors != 0);

@@ -53,13 +53,17 @@ module spu13_tensegrity_guard #(
                S_EQ_MUL_LEFT = 5'd20, S_EQ_MUL_RIGHT = 5'd21,
                S_EQ_COMPARE = 5'd22, S_EQ_ADVANCE = 5'd23;
 
-    reg signed [31:0] node_xa [0:MAX_NODES-1];
-    reg signed [31:0] node_xb [0:MAX_NODES-1];
-    reg signed [31:0] node_ya [0:MAX_NODES-1];
-    reg signed [31:0] node_yb [0:MAX_NODES-1];
-    reg signed [31:0] node_za [0:MAX_NODES-1];
-    reg signed [31:0] node_zb [0:MAX_NODES-1];
-    reg [1:0] node_grid [0:MAX_NODES-1];
+    // The probe needs several independent asynchronous coordinate reads
+    // (guard scan, segment predicate, equilibrium row). Keep this bounded
+    // 12-entry table in registers; inferring a third replicated RAM32M read
+    // port produces an incomplete timing graph in nextpnr-xilinx.
+    (* mem2reg *) reg signed [31:0] node_xa [0:MAX_NODES-1];
+    (* mem2reg *) reg signed [31:0] node_xb [0:MAX_NODES-1];
+    (* mem2reg *) reg signed [31:0] node_ya [0:MAX_NODES-1];
+    (* mem2reg *) reg signed [31:0] node_yb [0:MAX_NODES-1];
+    (* mem2reg *) reg signed [31:0] node_za [0:MAX_NODES-1];
+    (* mem2reg *) reg signed [31:0] node_zb [0:MAX_NODES-1];
+    (* mem2reg *) reg [1:0] node_grid [0:MAX_NODES-1];
     reg [3:0] edge_a [0:MAX_EDGES-1];
     reg [3:0] edge_b [0:MAX_EDGES-1];
     reg [1:0] edge_type [0:MAX_EDGES-1];

@@ -390,8 +390,9 @@ equilibrium force-density signs: cable/GAP positive, strut negative.
 | Exact quadrance | QSUB / Davis-style exact arithmetic | Existing arithmetic probes silicon-verified |
 | MAIN/CONJ grid alternation | phi-plane 4-state typestate | Core integration testbench-verified |
 
-The bounded admission guard now has RTL and a first-tranche Artix silicon
-proof. Exact strut contact is present in the second RTL tranche; force-density
+The bounded admission guard now has RTL and Artix silicon proof for all six
+guards. The final V:7 tranche adds exact type-uniform force-density
+equilibrium and produced `TGR:P V:7 E:00` on the board. General nonuniform
 equilibrium and active balancing remain outside the hardware subset.
 
 ### 7.3 States
@@ -418,7 +419,7 @@ explicit `reset()`.
 | `guard_struts_disjoint_interior` | Fuller §640.02 | Exact segment test rejects interior strut crossings |
 | `guard_cables_taut` | Continuous tension | Cable/GAP quadrance is exact nonzero positive |
 | `guard_grid_consistency` | Conjugate grid model | Cross-grid edges must be GAP type |
-| `guard_equilibrium` | Static self-stress | Exact Z[phi] force densities exist with cable/GAP positive and strut negative signs |
+| `guard_equilibrium` | Static self-stress | Exact type-uniform Z[phi] densities have cable/GAP-positive and strut-negative signs; the oracle's nonuniform fallback is broader |
 
 ### 7.5 Dual-Grid Interpenetration
 
@@ -441,7 +442,7 @@ checks). RTL: `spu13_tensegrity_guard.v` plus the term-serial exact Z[phi]
 silicon (`TGR:F V:4 E:84`) after a route with only 51.89 MHz modeled Fmax. The
 hardened V:6 route pipelined distributed-table predicates and 108-bit
 arithmetic decisions, but its board run still returned `TGR:F V:4 E:90`
-(`BALANCED/F_NONE`). The current image advances the full guard domain at 25
+(`BALANCED/F_NONE`). The successful V:6 image advances the full guard domain at 25
 MHz through a divided BUFG and adds an intersection-attempt count to failure
 telemetry. It uses 13,895 `SLICE_LUTX`, 3,515 `SLICE_FFX`, 72 DSP48E1 and 0
 BRAM; OpenXC7 conservatively closes that guard domain at 59.16 MHz while
@@ -450,6 +451,54 @@ pass. The divided-clock image produced `TGR:P V:6 E:00` in silicon on
 2026-07-14, closing the six-fixture admission-guard proof. Silicon scope for
 the intersection predicate is the antipodal origin-crossing fixture; the
 complete contact matrix remains RTL-verified.
+
+The final admission tranche accumulates cable/GAP and strut force rows for
+every node/axis over Z[phi], derives one exact type-uniform density ratio, and
+checks all rows by cross multiplication plus exact sign tests. The module TB
+passes canonical integer and phi-scaled coordinates and rejects the perturbed
+ID 6 fixture with `NOT_IN_EQUILIBRIUM`; the Artix wrapper TB emits
+`TGR:P V:7 E:00`. The packed XC7A100T image uses 22,520 `SLICE_LUTX`, 6,373
+`SLICE_FFX`, 108 DSP48E1, and 0 BRAM. Post-route Fmax is 106.72 MHz for the
+50 MHz UART/system domain and 42.93 MHz for the actual 25 MHz guard domain.
+SHA-256 is
+`7859d0e7d78218fcf49d5b4cd091332f0f0b5d5c3641edbc8b0380caba592d3f`;
+the Wukong board run produced `TGR:P V:7 E:00` on 2026-07-14, closing the
+seven-fixture bounded-admission silicon proof.
+
+The table-loader tranche adds a transaction machine around that proven guard:
+
+```text
+IDLE --B2 prefix--> RECEIVE --CRC8/CS abort--> REJECT (active bank held)
+                         |
+                         `--transport commit--> PARSE/CRC32
+                                                   |
+                       malformed ------------------+--> REJECT
+                                                   |
+                                                   `--> REPLAY_GUARD
+                                                            |
+                                               terminal verdict
+                                                            v
+                                                    COMMIT_BANK --> IDLE
+```
+
+Its state invariant is stronger than “the bytes were valid”: the externally
+visible table, vector ID, and mechanical verdict always refer to the same
+committed bank. The inactive bank may be dirty while receiving or verifying,
+but no failure path can select it. `0xB3` reports the committed eight-byte TGR1
+status first, followed by staging diagnostics, so a rejected transaction is
+observable without corrupting the last good state. Module and real-SPI
+integration benches prove commit, CRC rejection, CS abort, guard replay, and
+rollback, including a B3 hold across the guard's one-cycle done pulse. The
+standalone Artix link closes seed-1 route/pack at 25 MHz with 24,675
+`SLICE_LUTX`, 7,655 `SLICE_FFX`, 108 DSP48E1, one RAMB18E1, and 40.16 MHz
+post-route guard Fmax. Its packed SHA-256 is
+`a515381a8b90ceba836da83c7fe80bf719033717d72458cfb8297d7753d63463`;
+board work on 2026-07-16 proves the remapped J11/SD/B2/B3 path and successful
+canonical commits when either intersection or equilibrium is enabled alone.
+The full combined image remains `verify_busy` after all 468 bytes are received,
+so complete atomic admission/rollback are not yet silicon-proven. Refactor the
+verifier into explicit transport, parser, guard-service, and coordinator FSMs
+with watchdogs before adding the active propose/reverify/commit controller.
 
 Bug-ledger case: the old regular-icosahedron antipodal fixture passes topology,
 endpoint separation, tautness, grid consistency, and equilibrium, but all six
