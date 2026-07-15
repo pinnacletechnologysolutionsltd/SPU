@@ -274,6 +274,50 @@ Tang 25K or Artix-7.
   the conjugate-catalog rotation (case 3) and CATMIX no-commit
   (case 4) — first conjugate-icosahedron silicon. Full evidence:
   `docs/hardware_evidence.md` §3.2k.1. Then Artix-7.
+- **Tensegrity admission guard** (`spu13_tensegrity_guard.v` +
+  `spu13_tensegrity_intersection.v`, GTP-authored, independently
+  verified) — bounded admission guard for the tensegrity balancer
+  feasibility track, not a full active balancer: checks topology/
+  connectivity, strut endpoint separation, cable/GAP collapse, exact
+  closed-segment strut contact over Z[φ] (crossings, T-junctions,
+  collinear overlap), MAIN/CONJ grid consistency, terminal fault
+  lockout with explicit clear/reset recovery. **Type-uniform
+  force-density equilibrium over Z[φ]** is also now implemented
+  (`ST_FAULT_NOT_IN_EQUILIBRIUM`/`F_NOT_IN_EQUILIBRIUM`, states 8/5) —
+  simulation-verified 2026-07-15 with both a positive case (canonical
+  balanced, including a φ-scaled-coordinate variant proving scale
+  invariance) and a genuine negative case (a single perturbed node
+  coordinate correctly detected as not-in-equilibrium), 9/9 in
+  `spu13_tensegrity_guard_tb.v`. V:5 (5 fixtures, no intersection engine)
+  board-confirmed 2026-07-14 at 72.51 MHz, 2,013 LUTs. **V:6 silicon proof
+  2026-07-14** (all 6 RTL-supported fixtures, including the antipodal
+  strut-intersection case): two full-speed attempts (51.89 MHz, then a
+  pipelined 57.27 MHz) each had nextpnr report a clean timing close but
+  **failed in real silicon** with an identical false-negative — the same
+  nextpnr-xilinx timing-model weakness noted in the Wukong entry above,
+  not an RTL bug (sim already covered the failing case correctly). Fix:
+  ran the loader/guard/intersection domain on a separately divided
+  25 MHz clock instead of trusting the reported 50 MHz-domain closure —
+  produced repeating `TGR:P V:6 E:00` in silicon. 13,895 LUTs, 72 DSPs.
+  **V:7 silicon proof, also 2026-07-14** — the wrapper adds TGR1 ID 6, the
+  exact type-uniform Z[φ] equilibrium guard itself (not just the earlier
+  6 fixtures): repeating `TGR:P V:7 E:00`, 22,520 LUTs (17%), 108 DSPs
+  (45%), 0 BRAM. **This closes silicon evidence for all seven frozen
+  TGR1 admission fixtures, including the equilibrium check** — the
+  equilibrium guard is silicon-proven, not simulation-only. Full evidence
+  and bitstream SHAs: `docs/hardware_evidence.md` §3.2l,
+  `docs/TENSEGRITY_BALANCER_FEASIBILITY.md` (both current as of V:7).
+  Still uncommitted and actively evolving, genuinely not yet silicon-proven:
+  a new host/BRAM transport sidecar (`spu13_tensegrity_sidecar.v`,
+  CRC-32/bounds-checked transactional TGR1 table loader, double-buffered
+  so a bad or aborted write can't corrupt the active table), new SPI
+  opcodes 0xB2/0xB3 on `spu_spi_slave.v`, and a `TENSEGRITYLINK` board
+  target (PnR-clean, bitstream built, not yet board-run) — check
+  `git log`/`git status` before citing this as closed, this paragraph
+  describes fast-moving work as of 2026-07-15. Remaining before this is a
+  full active balancer: silicon proof of the transport sidecar/
+  TENSEGRITYLINK board target, then the active balancing controller
+  itself (rotation/actuation proposals, re-verification, rollback).
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
@@ -385,9 +429,43 @@ Tang 25K or Artix-7.
   remapped 2026-07-13** to J11's bottom row (pins 7-10 / package pins
   J4/G4/B4/B5 — a full 12-pin 2x6 connector, bottom row never previously
   connected to anything), reflected in the XDC and
-  `docs/build_and_bringup_guide.md` §4.2; physical rewiring + reflash/
-  smoke-test on the bench is the next step, not yet done as of this
-  entry. **Source of truth for this unit's
+  `docs/build_and_bringup_guide.md` §4.2. **Remap confirmed working in
+  silicon 2026-07-14**: a standalone electrical loopback probe (bypasses
+  `spu_spi_slave.v` entirely) got 16/16 test bytes bit-exact across 3
+  consecutive runs against a purpose-built RP2350 smoke test. The real
+  core was then brought up on the remapped pins and root-caused layer by
+  layer: CS reaches `spu_spi_slave` fine; a genuine Nyquist violation was
+  found and fixed (RP2350 diag firmware polled SPI at 2 MHz against a
+  1.5625 MHz `clk_fast` sampling clock — `rp2350_spu_diag` now has a
+  `SPU_DIAG_SPI_BAUD_HZ` CMake option, default 250 kHz); the boot FSM
+  genuinely reaches READY quickly (proven via a new `boot_state_dbg`
+  debug port on `spu13_core.v`, not just inferred). What looked all
+  night like "board damage" or a "boot FSM regression" resolved into:
+  pins fine, link fine (once baud was fixed), boot FSM fine — the "board
+  damage" and "nextpnr timing regression" framings from earlier in this
+  entry are superseded, not live theories. One item stayed open at
+  session end: a live SPI `0xAC` status read appeared to report
+  `boot_ready=0` despite `boot_state_dbg` showing READY. **Resolved
+  2026-07-14/15**: two targeted simulations (isolated `spu_spi_slave.v`
+  with a dynamic `boot_ready`, and the real core+slave together via a
+  new committed regression test, `spu13_spi_core_boot_status_tb.v`) both
+  came back clean — `spu_spi_slave.v` is not buggy. The remaining
+  mystery is hardware/sequencing-side (a test-timing gap, or a signal
+  decode question), not RTL, and needs a live cmd-byte diagnostic tap on
+  the real board to pin down further. **Separately found 2026-07-15**: a
+  genuine, reproducible nextpnr-xilinx timing-analysis failure
+  ("ERROR: timing analysis failed due to presence of combinatorial
+  loops...") inside `spu_spi_slave` (`u_spi`) blocks a *fresh* PnR of the
+  IROTC A7 spin from completing — confirmed independent of any RTL
+  change (reproduces identically on the already-committed, previously-
+  working source). `pack()` silently reuses a stale `.fasm` when this
+  happens rather than failing loudly, so a "successful" build can
+  silently ship stale logic — check `.pnr.fasm`'s mtime against the
+  synthesized `.json` if a rebuild's behavior looks unexpectedly
+  unchanged. Not yet fixed; the tensegrity guard hit the same toolchain
+  weakness (see its silicon-proof notes below) and worked around it by
+  running the affected logic on a divided, slower clock domain — the
+  same fix likely applies here once someone applies it. **Source of truth for this unit's
   per-pin damage/health status is now `hardware/boards/artix7/spu_a7_100t.xdc`**
   (comments next to each affected `set_property PACKAGE_PIN`), not this
   bullet — update the XDC first if new inventory changes the picture, this
