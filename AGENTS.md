@@ -19,7 +19,7 @@ Development strategy: Tang Primer 25K for probe/bring-up, Wukong Artix-7 100T fo
 hardware/               FPGA RTL (Verilog)
   rtl/core/shared/      Shared cores — ALU, sequencer, register files, Davis gate, ISA decoder
   rtl/core/spu13/       SPU-13 Cortex: M31/A31 arithmetic, unit inverter, SOM, BTU, register file
-  rtl/core/spu4/        SPU-4 Sentinel (Quadray satellite): Euclidean ALU, boot master, sovereign bus
+  rtl/core/spu4/        SPU-4 Sentinel (Quadray satellite): Euclidean ALU, boot master, sovereign bus (see `knowledge/SPU4_ARCHITECTURE.md`)
   boards/               Per-target synthesis scripts & board tops
   tests/                Verilog testbenches (*_tb.v)
 software/               Host-side tooling
@@ -39,8 +39,6 @@ docs/                   Design guides and bring-up runbooks
 |---|---|
 | `python3 run_all_tests.py` | Discover and run all Verilog `*_tb.v` testbenches via `iverilog`/`vvp`, plus C++ `*_test.cpp` and Python VM tests |
 | `TB_FILTER=spu13 python3 run_all_tests.py` | Run only testbenches matching a prefix for faster triage |
-| `bash build_25k.sh` | Synthesise, place-and-route, and generate bitstream for Tang Primer 25K |
-| `bash build_gw1n1.sh` | Full bitstream for Tang Nano 1K |
 | `python3 software/spu_forge.py simulate <program.sas>` | Simulate a .sas program on the Python VM |
 | `bash build_25k_spu13_math_probe.sh` | Synthesise, P&R, bitstream for SPU-13 math probe on Tang 25K |
 | `bash build_25k_spu13_southbridge.sh` | Full southbridge build (MATH=1 + RPLU_V2=1 — too large for 25K at 89% LUT) |

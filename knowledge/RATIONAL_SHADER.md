@@ -53,7 +53,7 @@ Quadray World Coords (4D)
 
 ## 2. What Is Implemented (✅)
 
-### 2.1 Bresenham Killer (`spu_bresenham_killer.v` v2.0)
+### 2.1 Bresenham Killer (`spu_bresenham_killer.v` v2.0) — 🚧 **Not Built**
 
 Draws a geometrically exact line through the IVM lattice from start to end vertex,
 visiting exactly the right lattice points with zero drift.
@@ -77,7 +77,7 @@ needs one projection step before entering `spu_rasterizer.v` (see §3.1).
 
 ---
 
-### 2.2 Rasterizer (`spu_rasterizer.v` v3.9)
+### 2.2 Rasterizer (`spu_rasterizer.v` v3.9) — 🚧 **Not Built**
 
 Computes coverage and barycentric weights for any pixel coordinate against a triangle.
 
@@ -105,7 +105,7 @@ lambda_i = (edge_i × reciprocal) >> 7   [16.16 fixed-point]
 
 ---
 
-### 2.3 Fragment Pipe (`spu_fragment_pipe.v` v1.0)
+### 2.3 Fragment Pipe (`spu_fragment_pipe.v` v1.0) — 🚧 **Not Built**
 
 Interpolates vertex attributes using the barycentric weights.
 
@@ -118,7 +118,7 @@ version needed.
 
 ---
 
-### 2.4 SDRAM Controller (`HAL_SDRAM_Winbond.v` v1.0)
+### 2.4 SDRAM Controller (`HAL_SDRAM_Winbond.v` v1.0) — 🚧 **Not Built**
 
 Implements the full SDRAM init, refresh, read and write state machine for Winbond
 W9864G6KH-6 (SDR SDRAM). Suitable for the Tang Primer 25K SDRAM module (32MB).

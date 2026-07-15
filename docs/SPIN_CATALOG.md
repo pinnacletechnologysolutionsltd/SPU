@@ -31,7 +31,7 @@ in §4 — "product-candidate" describes intent, not readiness.
 | LUCAS | Wukong A7 100T | Lucas Phinary MAC + CE-paced SPI sidecar | 5,073 LC, 120 DSP, 4.41 MHz | silicon (PSCALE/PCHIRAL/PMUL/PINV over J11) |
 | RPLU2PADE | Wukong A7 100T | A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] | 72 DSP, 34% LUT | silicon (`RPLU2PADE_J11: PASS`) |
 | SU3SHARE | Wukong A7 100T | SU3 sidecar + RPLU2 config/QR, one shared M31 multiplier | see build log | silicon (both paths pass on one bitstream) |
-| SOM-SIDECAR | Tang 25K → smaller fabrics | standalone SOM edge classifier (`build_25k_spu13_som_sidecar.sh`) | fits 25K with headroom | components silicon-proven on Tang; sidecar spin needs its own board run |
+| SOM-SIDECAR | Tang 25K → smaller fabrics | standalone SOM edge classifier (`build_25k_spu13_som_sidecar.sh`, top module `spu13_tang25k_som_sidecar_top.v`) | fits 25K with headroom | SOM/BMU classifier core is silicon-proven on Tang via a different probe; the sidecar's own bespoke SPI write/classify path (`spu_spi_cfg.v`) was simulation-only and found completely non-functional (a one-cycle-stale command-byte comparison meant no write could ever be accepted) — fixed 2026-07-16, simulation-verified (`spu13_tang25k_som_sidecar_top_tb.v`), still needs its own board run to confirm on real silicon |
 | SPU4-SENTINEL | Tang 25K → smallest fabrics | SPU-4 core, Davis gate, whisper v0 | ~400 LUT | silicon (2026-07-08, `SPU4:P A=0000 B=0155 C=0155 D=0155`) |
 
 **First-hour stories:**
@@ -57,7 +57,7 @@ in §4 — "product-candidate" describes intent, not readiness.
 - **SPU4-SENTINEL** — the ~400-LUT edge node: Davis-gate telemetry and
   the whisper `SANE` beacon on the smallest fabrics. Pairs with
   SOM-SIDECAR as the edge tier of the Arlinghaus constellation
-  (`knowledge/ARLINGHAUS_SPATIAL_SYNTHESIS.md` §7).
+  (`knowledge/ARLINGHAUS_SPATIAL_SYNTHESIS.md` §7 and `knowledge/SPU4_ARCHITECTURE.md`).
 
 ## 2. Evidence probes (not products)
 

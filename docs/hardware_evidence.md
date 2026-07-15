@@ -3,10 +3,10 @@
 A boring, reproducible record of what passed, what failed, and what remains
 unproven.  No speculation — only commands, conditions, and results.
 
-*Last updated: 2026-07-11*
+*Last updated: 2026-07-16*
 
 Current regression headline: `python3 run_all_tests.py` reports
-`Total PASS: 151`, `Total FAIL: 0`. ROTC is gated through angles 0-35
+`Total PASS: 161`, `Total FAIL: 0`. ROTC is gated through angles 0-35
 (0-5 silicon-verified; 6-35 testbench/trace-equivalence verified). IROTC uses
 the v0.2 phi-plane typestate contract; Tang 25K silicon scope is the §3.2k
 engine probe vectors (idx 16, idx 36 main catalog, and fault matrix), with the
@@ -29,7 +29,7 @@ full 60 x 2 catalog surface testbench-verified.
 
 | Item | Status | Detail |
 |---|---|---|
-| SDRAM DQ[10] | **Damaged** | Pin stuck high on the Dock board; requires `dq10_masked` build variant. All other SDRAM pins functional. |
+| SDRAM DQ[10] | **Damaged** | Fault confirmed on the external SDRAM module (Winbond W9825G6KH) itself, not the FPGA or Dock PCB — see AGENTS.md; requires `dq10_masked` build variant. All other SDRAM pins functional. |
 | FPGA core | Functional | No known silicon faults |
 | SPI flash J4 | Functional | JEDEC ID `D0EF4018` confirmed |
 | FTDI UART bridge | Functional | Reliable at 115200 baud |
@@ -38,9 +38,12 @@ full 60 x 2 catalog surface testbench-verified.
 
 ### Second FPGA
 
-A replacement / second Tang Primer 25K is in transit. The damaged board remains
-the risky IO and regression target; the replacement board should repeat the
-RPLU/SDRAM/core probe ladder with no SDRAM pin mask.
+**Stale entry, unconfirmed as of 2026-07-16** — a replacement/second Tang
+Primer 25K was reported in transit as of this doc's last real update
+(2026-07-11-era); no later entry in this ledger or in AGENTS.md/
+CURRENT_STATUS.md confirms arrival or an unmasked SDRAM re-run. Treat this
+as an open question to verify, not a live status, until someone confirms
+one way or the other.
 
 ### Open ECP5 Build Targets
 
@@ -1440,8 +1443,9 @@ tools/probe_tang25k_rplu_flash.py \
 ```
 
 **Result:** SDRAM DQ[10] consistently reads as stuck-high. All other 15 data
-pins pass per-bit walk test. Confirmed hardware fault on the Dock PCB, not the
-FPGA or the SDRAM module.
+pins pass per-bit walk test. Confirmed hardware fault on the external SDRAM
+module (Winbond W9825G6KH) itself, not the FPGA or the Dock PCB — see
+AGENTS.md's SDRAM entry (this section previously had the fault backwards).
 
 **Build command (masked):**
 
@@ -1471,8 +1475,12 @@ yosys synth_gowin resource report:
 
 ### 4.2 Tang Nano 1K / ICE40 Targets
 
-*Not yet built on this machine. Scripts exist: `build_gw1n1.sh`,
-`hardware/ice40_nano/`, `hardware/ice40_regular/`.*
+*Not yet built on this machine, and not close to it: `hardware/ice40_nano/`
+and `hardware/ice40_regular/` exist as directories but their `build.py`
+files are empty stubs, not working scripts. No `build_gw1n1.sh` or
+`build_25k.sh` exist anywhere in the repo (verified 2026-07-16) — the Tang
+25K build path is the many `build_25k_spu13_*_probe.sh` scripts
+documented elsewhere in this ledger and in AGENTS.md.*
 
 ---
 
