@@ -23,7 +23,11 @@
 
 #define SPI_PORT     spi0
 #ifndef SPI_BAUD_HZ
-#define SPI_BAUD_HZ  2000000
+// Safe against the slowest clk_fast on divided A7 core spins (1.5625 MHz) --
+// see AGENTS.md boot_ready notes for the Nyquist-violation bug this default
+// exists to prevent. CMakeLists.txt's SPU_DIAG_SPI_BAUD_HZ cache var also
+// defaults to this; override explicitly when a faster clk_fast is known.
+#define SPI_BAUD_HZ  250000
 #endif
 
 #ifndef SPU_SPI_MISO_PIN

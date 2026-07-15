@@ -146,9 +146,12 @@ target_link_libraries(rp2350_spu_diag
     spu_rp_common
 )
 
-set(SPU_DIAG_SPI_BAUD_HZ "" CACHE STRING
-    "Override rp2350_spu_diag's SPI clock (default 2 MHz in-source). Needed \
-below clk_fast on divided A7 core spins -- see AGENTS.md boot_ready notes.")
+set(SPU_DIAG_SPI_BAUD_HZ "250000" CACHE STRING
+    "rp2350_spu_diag's SPI clock. Default 250 kHz is safe against the slowest
+clk_fast on divided A7 core spins (1.5625 MHz) -- see AGENTS.md boot_ready
+notes for the Nyquist-violation bug this exists to prevent. Raise it
+explicitly (e.g. 2000000) only when the target spin's clk_fast is known to
+be fast enough.")
 set(SPU_DIAG_SPI_BAUD_DEFS "")
 if(SPU_DIAG_SPI_BAUD_HZ)
     list(APPEND SPU_DIAG_SPI_BAUD_DEFS SPI_BAUD_HZ=${SPU_DIAG_SPI_BAUD_HZ})
