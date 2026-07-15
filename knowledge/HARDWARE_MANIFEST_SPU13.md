@@ -15,9 +15,15 @@
 > 140.83 MHz" full-core figure (§3, target ladder row 5) appears nowhere
 > else in the repository. §4's `tools/lattice_listener.py` and
 > `tools/laminar_audit.py` do not exist. For current board roles and
-> capability, see `AGENTS.md` and `docs/SPIN_CATALOG.md`. The rest of this
-> document (Davis Law framing, claims in §1-2) has not been re-verified
-> either way and is left as-is pending a decision on rewrite scope.
+> capability, see `AGENTS.md` and `docs/SPIN_CATALOG.md`. §1-2's
+> unprovable physics/biology claims (Navier-Stokes leak-proofing, heat/EMI
+> reduction via "phase conjugation", "bio-coherence") were removed
+> 2026-07-16 per John's direction — the Davis Gate and Fibonacci-dispatch
+> mechanisms themselves are real and documented accurately elsewhere
+> (`AGENTS.md`, `CLAUDE.md`), only the unfounded framing was cut. §§4-5
+> (Lattice Whisper telemetry, sensory interface) have not been
+> re-verified either way and are left as-is pending a decision on
+> rewrite scope.
 
 ## Objective: Geometric Determinism in Silicon
 
@@ -28,14 +34,21 @@ The SPU-13 (Synergetic Processing Unit) is a hardware implementation of Determin
 The Davis Law ($C = \tau/K$) is the fundamental stability arbiter of the SPU-13.
 - **Quadrance Audit (K):** Dedicated DSP slices (UP5K) or bit-serial multipliers (LP1K) monitor manifold tension.
 - **Henosis (Soft Recovery):** If a "Cubic Leak" is detected ($\sum ABCD \neq 0$), a symmetric correction is applied automatically in a single clock cycle.
-- **Result:** Navier-Stokes Watertight simulation where the digital fluid is physically incapable of leaking from the lattice.
+- **Result:** An exact zero-test on $\sum ABCD$ every cycle — not an epsilon
+  comparison — so a nonzero sum is caught and corrected the same cycle it
+  occurs, rather than being allowed to accumulate.
 
-## 2. Biological Heartbeat (Phi-Gated Pulse)
+## 2. Fibonacci-Gated Dispatch (Phi-Gated Pulse)
 
-The SPU-13 replaces rigid "Cubic" metronomes with a recursive pulse governed by the **Golden Ratio ($\phi$)**.
-- **Fibonacci Timing:** Instructions are dispatched at intervals of 8, 13, and 21 clock cycles.
-- **Phase Conjugation:** This non-linear timing minimizes heat and EMI by allowing waves to "nest" rather than scatter.
-- **Bio-Coherence:** Aligns the silicon metabolism with natural rhythmic cycles.
+The SPU-13 replaces rigid "Cubic" metronomes with dispatch timing governed by the **Golden Ratio ($\phi$)**.
+- **Fibonacci Timing:** Instructions are dispatched at intervals of 8, 13, and 21 clock cycles. This is a deliberate design constraint on instruction cadence, not an optimization target.
+
+(Earlier drafts of this section claimed heat/EMI reduction via "phase
+conjugation" and a "bio-coherence" effect aligning "silicon metabolism"
+with biological rhythms. Neither claim has ever been measured or tested,
+and both are removed as of 2026-07-16 — see `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`'s
+caution against claiming exact continuous-physics or biological effects
+without evidence.)
 
 ## 3. Hardware Tiers & Parity (`spu13_pins.vh`)
 
