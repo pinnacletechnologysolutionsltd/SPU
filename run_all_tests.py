@@ -691,7 +691,8 @@ def main():
     # Per-spin demo scripts (tools/*_demo.py, no hardware required).
     # Explicit list rather than a glob so in-flight/unregistered demo tests
     # don't silently join the gate before their author intends them to.
-    spin_demo_tests = ["test_robotics_demo.py", "test_lucas_demo.py"]
+    spin_demo_tests = ["test_robotics_demo.py", "test_lucas_demo.py",
+                       "test_tensegrity_demo.py"]
     robotics_demo_pass = robotics_demo_fail = 0
     for demo_name in spin_demo_tests:
         demo_path = os.path.join(root_dir, "software", "tests", demo_name)
