@@ -6,7 +6,9 @@
 //   sel=5  feat <feat> <hex16>              — write one feature surd
 //   sel=6  classify                          — run BMU, output UART result
 //
-// UART at 115200 baud on uart_tx_telemetry (B11 → USB bridge).
+// UART at 115200 baud on uart_tx (C3 → dock USB-CDC).  The same stream is
+// retained on uart_tx_telemetry (B11 → internal FPGA/BL616 link) for
+// compatibility with the southbridge constraint set.
 //
 // Named distinctly from hardware/rtl/core/spu13/spu_som_sidecar_top.v (an
 // unrelated, unreferenced cfg-bus/QR-commit variant) -- both used to share
@@ -21,9 +23,12 @@ module spu13_tang25k_som_sidecar_top (
     input  wire        spi_sck,
     input  wire        spi_mosi,
     output wire        spi_miso,
+    output wire        uart_tx,
     output reg         uart_tx_telemetry,
     output wire [2:0]  led
 );
+
+    assign uart_tx = uart_tx_telemetry;
 
     localparam CLK_HZ = 50000000;
     localparam CLKS_PER_BIT = CLK_HZ / 115200;

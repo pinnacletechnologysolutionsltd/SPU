@@ -38,6 +38,7 @@ module spu13_tang25k_som_sidecar_top_tb;
     reg  spi_sck;
     reg  spi_mosi;
     wire spi_miso;
+    wire uart_tx;
     wire uart_tx_telemetry;
     wire [2:0] led;
 
@@ -47,6 +48,7 @@ module spu13_tang25k_som_sidecar_top_tb;
         .spi_sck(spi_sck),
         .spi_mosi(spi_mosi),
         .spi_miso(spi_miso),
+        .uart_tx(uart_tx),
         .uart_tx_telemetry(uart_tx_telemetry),
         .led(led)
     );
@@ -138,11 +140,15 @@ module spu13_tang25k_som_sidecar_top_tb;
     task automatic uart_rx_byte(output [7:0] data);
         integer i;
         begin
-            @(negedge uart_tx_telemetry);
+            @(negedge uart_tx);
             #(BIT_PERIOD + BIT_PERIOD / 2);
             for (i = 0; i < 8; i = i + 1) begin
-                data[i] = uart_tx_telemetry;
+                data[i] = uart_tx;
                 #(BIT_PERIOD);
+            end
+            if (uart_tx !== uart_tx_telemetry) begin
+                $display("FAIL C3/B11 UART mirror mismatch");
+                fail_count = fail_count + 1;
             end
         end
     endtask

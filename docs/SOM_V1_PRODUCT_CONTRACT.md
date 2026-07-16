@@ -100,17 +100,19 @@ existing byte.
 | Exact-order adversarial RTL regression | PASS; added after finding the old lexicographic comparator |
 | Tang 25K fixed-map BMU probe | silicon PASS, `SOM:P T:2 B:6 E:00` |
 | Tang 25K writable-BRAM hydration probe | silicon PASS |
-| Tang standalone sidecar SPI/UART path | simulation PASS; board confirmation pending |
+| Tang standalone sidecar SPI/UART path | silicon PASS; SPI `80 A0 B0`, C3 UART `00 14 1E` |
 | Artix-7 identical-fixture probe | built and testbench PASS; board run pending |
-| Exact-order fixed-schedule comparator at HEAD | testbench/trace PASS; Tang sidecar synthesis and PnR clean; renewed silicon proof pending |
+| Exact-order fixed-schedule comparator at HEAD | testbench/trace PASS; renewed Tang sidecar silicon proof PASS |
 
-The rebuilt Tang sidecar uses 12,812/23,040 LUT4 (55%), 8/56 BSRAM, no DSP,
-and closes at 81.06 MHz against its 12 MHz target. Packed bitstream SHA-256:
-`f9cbcc79e87f939bf158cbe235e9cad9f38972aa04cb0ffb2c8b55a0ef74ec87`.
+The rebuilt Tang sidecar uses 12,786/23,040 LUT4 (55%), 8/56 BSRAM, no DSP,
+and closes at 77.61 MHz against its 12 MHz target. Packed bitstream SHA-256:
+`8c6b6f8e2cc10f0668761ccb4e178b71499af5ef7c204b8cd47728ecd81c8e0b`.
 
-The earlier Tang silicon evidence predates the exact-order comparator repair.
-Those fixtures still pass at HEAD, but the repaired ordering must be synthesized
-and rerun before claiming the entire exact-order surface is silicon-proven.
+The 2026-07-16 sidecar run is the renewed HEAD silicon proof after the
+exact-order comparator and SPI repairs. It proves the repaired scheduled
+datapath on three hydrated winner cases; the negative-surd and adversarial
+ordering corpus remains an explicit v1 exit-gate item rather than an implied
+claim from these three vectors.
 
 ## v1 exit gate
 

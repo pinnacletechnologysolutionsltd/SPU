@@ -1068,6 +1068,61 @@ HYD:P T:3 B:6 E:00
   a classifier proof (`SOM:P`) and a storage-hydration proof (`HYD:P`); the
   next integration step is an RP2350-driven write path into this BRAM interface.
 
+### 3.2g.2 Writable SOM Sidecar SPI/UART Silicon Proof
+
+**Date:** 2026-07-16 NZT
+
+**Scope:** renewed Tang Primer 25K board proof of the standalone writable SOM
+sidecar after repairing `spu_spi_cfg.v` command acceptance, changing result
+readback to a two-byte SPI transaction, latching valid/busy/label status, and
+replacing the old ordering shortcut with the exact fixed-schedule
+Q(√3) comparator. The RP2350 diagnostic firmware drove SPI0 at 250 kHz on
+GP0 MISO, GP1 CS, GP2 SCK, and GP3 MOSI. The Tang J4 mapping was G10 CS,
+D10 SCK, B10 MOSI, and C10 MISO with a common ground.
+
+The first loaded image proved all three SPI classifications but exposed a
+board-top telemetry mapping error: `uart_tx_telemetry` was constrained to B11,
+the internal FPGA/BL616 link, rather than the visible dock CDC UART. The top
+now mirrors the result stream onto `uart_tx` at C3 while retaining B11 for
+compatibility. The corrected image was rebuilt, SRAM-loaded, and rerun without
+changing the SOM or SPI datapath.
+
+**Hydrated weights and classification vectors:**
+
+| Case | Non-zero node weight | Input feature | SPI result | C3 UART byte |
+|---|---|---|---|---|
+| 0 | node 0, feature 0 = 2 | feature 0 = 2 | label 0, raw `0x80` | `0x00` |
+| 1 | node 4, feature 2 = 7 | feature 2 = 7 | label 2, raw `0xA0` | `0x14` |
+| 2 | node 6, feature 3 = 4 | feature 3 = 4 | label 3, raw `0xB0` | `0x1E` |
+
+All unspecified node weights and input features were zero. In every case the
+RP2350 console reported `done=1 busy=0`; the UART byte independently packed
+`{3'b000, label[1:0], best_node[2:0]}` and matched the SPI winner.
+
+**Build and bench commands:**
+
+```
+TB_FILTER=spu13_tang25k_som_sidecar_top python3 run_all_tests.py
+bash build_25k_spu13_som_sidecar.sh
+openFPGALoader -b tangprimer25k \
+  build/tang_primer_25k_spu13_som_sidecar.fs
+```
+
+The RP2350 console used `somwrite`, `featwrite`, `classify`, and `result`.
+C3 telemetry was captured at 115200 8N1 from `/dev/ttyUSB1` as `00 14 1e`.
+
+**Result:** PASS. The filtered regression reported 33 total checks and zero
+failures. The rebuilt Tang image uses 12,786/23,040 LUT4 (55%), 1,574 DFF,
+1,190 ALU, 8/56 BSRAM, and 0 DSP. Route closed at 77.61 MHz against the
+12 MHz target. Packed bitstream SHA-256:
+`8c6b6f8e2cc10f0668761ccb4e178b71499af5ef7c204b8cd47728ecd81c8e0b`.
+
+This closes the standalone sidecar's real SPI write/classify/readback path and
+the visible UART result path. It does not by itself close the v1 product gate
+for a checked-in trained map, versioned rich result frame, adversarial
+negative-surd corpus, interrupted hydration handling, or Artix-7 cross-vendor
+equivalence.
+
 ### 3.2h Six-Step Robotics Kinematics Silicon Probe
 
 **Date:** 2026-07-01 NZT
@@ -1583,6 +1638,7 @@ documented elsewhere in this ledger and in AGENTS.md.*
 | ROTC angles 0–5 in silicon | **Verified in Silicon** on Tang 25K with UART `ROTC:P A:5 E:00`; covers canonical trace for all 6 angles plus period closure for angles 1-5. Uses TDM core (`spu13_rotor_core_tdm.v`) with silent `div3` — see Davis Gate entry in `knowledge/SPU_LEXICON.md` for the /3 exactness caveat. |
 | ROTC tagged (deferred-reduction) core | TB-verified (8/8, `spu13_rotor_core_tagged_tb.v`); probe `spu13_tang25k_rotc_tagged_probe.v` built (2026-07-09), awaiting board run. Golden-vector re-verification contract: ROTATE must produce 3× TDM golden at exp=1; REDUCE must recover TDM golden at exp=0. **Fixed 2026-07-09:** REDUCE's `reduce_val64` loaded lane values via zero-extension instead of sign-extension — every negative lane value (routine in this representation) either false-faulted INEXACT or missed a real exact division; `-9` at exp=1 is the regression case (Test 8). |
 | SOM/BMU classifier in silicon | **Verified in Silicon** on Tang 25K with UART `SOM:P T:2 B:6 E:00`; covers 2 weighted BMU oracle scenarios and cluster reduction for the 7-node fixture |
+| Writable SOM sidecar over RP2350 SPI | **Verified in Silicon** on Tang 25K: hydrated winners returned SPI `80 A0 B0` and matching C3 UART `00 14 1E`; exact fixed-434-cycle HEAD datapath, §3.2g.2 |
 | Six-step robotics kinematics harness | **Verified in Silicon** on Tang 25K with UART `KIN:P P:5 E:00`; covers period-6 angle-1 six-step forward phases, angle-4 inverse recovery per phase, early-closure rejection, and exact phase-5 closure |
 | External RP2350 neuro-sidecar opcodes | Tang adapter command path is self-driven silicon-verified; external master transactions through the shared shell are pending |
 | QSUB and DELTA RTL FSMs | Implemented and RTL-verified in `spu13_core_qsub_delta_tb`; QSUB also silicon-verified through RP2350 arithmetic tests |

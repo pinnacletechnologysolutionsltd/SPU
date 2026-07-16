@@ -100,10 +100,13 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   command-byte comparison meant no write could ever be accepted, in
   simulation or on real silicon) and fixed 2026-07-16. Its formerly unusable
   one-byte result read was also corrected to a two-byte command/response with
-  latched valid/busy/label status. Both paths are simulation-verified only so
-  far. The exact-field fixed-434-cycle rebuild is PnR-clean at 12,812 LUT4
-  (55%), 8 BSRAM, 0 DSP, 81.06 MHz routed Fmax at the 12 MHz target; the
-  sidecar still needs its own board run.
+  latched valid/busy/label status. The repaired exact-field fixed-434-cycle
+  sidecar is now silicon-verified over the real RP2350/Tang SPI link: three
+  hydrated single-feature winners returned labels 0/2/3 with raw status bytes
+  `80 A0 B0`, and the corrected C3 dock UART returned matching result bytes
+  `00 14 1E`. The rebuilt image uses 12,786 LUT4 (55%), 8 BSRAM, 0 DSP and
+  closes at 77.61 MHz against the 12 MHz target. Full evidence:
+  `docs/hardware_evidence.md` §3.2g.2.
 
 ## Open-Toolchain Build Evidence
 
