@@ -89,12 +89,15 @@ Wukong Artix-7:
 | TENSEGRITYPROBE (`build_a7.sh 100t tensegrityprobe`) | seven frozen TGR1 admission fixtures, including exact strut intersection and type-uniform Z[phi] equilibrium | silicon PASS 2026-07-14: `TGR:P V:7 E:00` |
 | TENSEGRITYLINK (`build_a7.sh 100t tensegritylink`) | B2 transactional TGR1 BRAM hydration, synchronous guard replay, coherent B3 status, and rollback | Partial silicon 2026-07-16: J11/SD/B2/B3/parser proven and canonical commits with intersection-only or equilibrium-only images; full combined image remains `verify_busy` after all 468 bytes, so atomic combined admission/rollback are not yet proven. Refactor into explicit stages before another full build. |
 
-**Untracked A7 spin names** (`multimedia`, `intelligence`, `full`,
-`sensor`, `rplucfg`, `rplu2core`, `rplu2`, `rplu2live`, `som`, `custom`
-in `build_a7.sh`): not in AGENTS.md's status tables. Action item —
-reconcile each to a status line or delete the option. A spin name that
-can't state its status is exactly the kind of loose vocabulary this
-catalog exists to eliminate.
+**A7 spin names not in the product/probe tables above** (`multimedia`,
+`intelligence`, `full`, `sensor`, `rplucfg`, `rplu2core`, `rplu2`,
+`rplu2live`, `som`, `custom`, plus `su3`): already reconciled in
+`AGENTS.md`'s "A7 spin reconciliation" table (2026-07-08) — `full`/
+`multimedia`/`intelligence`/`sensor` are direction-only aspirational
+spins, `som`/`su3`/`rplucfg`/`rplu2core`/`rplu2`/`rplu2live` are all
+superseded by named spins already in this catalog, `custom` is a
+build-time meta option. This note previously called that reconciliation
+an open action item; it wasn't, as of 2026-07-08.
 
 ## 3. Future spins (direction only — no status claims)
 
