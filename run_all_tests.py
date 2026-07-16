@@ -688,6 +688,21 @@ def main():
     else:
         host_pass = host_fail = 0
 
+    # robotics_demo.py (per-spin example script, no hardware required)
+    robotics_demo_test = os.path.join(root_dir, "software", "tests", "test_robotics_demo.py")
+    if os.path.exists(robotics_demo_test):
+        result_robotics_demo = subprocess.run(
+            [sys.executable, robotics_demo_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_robotics_demo.returncode == 0:
+            robotics_demo_pass, robotics_demo_fail = 1, 0
+        else:
+            robotics_demo_pass, robotics_demo_fail = 0, 1
+            print(f"\n  test_robotics_demo.py FAILED:\n{result_robotics_demo.stdout[-500:]}")
+    else:
+        robotics_demo_pass = robotics_demo_fail = 0
+
     print(f"\nPython Tests: {py_pass + py_fail + cv_pass + cv_fail}")
     print(f"Passed:      {py_pass + cv_pass}")
     print(f"Failed:      {py_fail + cv_fail}")
@@ -699,6 +714,10 @@ def main():
     print(f"\nHost Library Tests: {host_pass + host_fail}")
     print(f"Passed:             {host_pass}")
     print(f"Failed:             {host_fail}")
+
+    print(f"\nRobotics Demo Tests: {robotics_demo_pass + robotics_demo_fail}")
+    print(f"Passed:              {robotics_demo_pass}")
+    print(f"Failed:              {robotics_demo_fail}")
 
     print(f"\nCartesian Bridge Tests: {bridge_pass + bridge_fail}")
     print(f"Passed:                 {bridge_pass}")
@@ -732,8 +751,8 @@ def main():
     print(f"Passed:                 {boot_sequence_pass}")
     print(f"Failed:                 {boot_sequence_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass + tensegrity_pass + boot_sequence_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + tensegrity_fail + boot_sequence_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
+    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + robotics_demo_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass + tensegrity_pass + boot_sequence_pass
+    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + robotics_demo_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + tensegrity_fail + boot_sequence_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")
