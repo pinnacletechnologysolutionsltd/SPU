@@ -1,98 +1,46 @@
 #!/usr/bin/env python3
-"""
-Upload trained SOM weights to FPGA via RP2350 diag console.
+"""Upload a validated SPU_SOM_MAP_V1 JSON artifact through the RP2350 console."""
 
-Usage:
-  python3 tools/upload_som_weights.py [--port /dev/ttyACM0] <weight_file.py>
-
-The weight file must contain a `SOM_WEIGHTS` dict with node_id -> [4 x hex64] entries.
-Use --export-py from iris_som_baseline.py to generate the weight file.
-"""
+from __future__ import annotations
 
 import argparse
-import re
 import sys
-import time
 
-import serial
-
-
-def load_weights(path):
-    """Load SOM_WEIGHTS dict from a Python file."""
-    ns = {}
-    with open(path) as f:
-        code = f.read()
-    exec(compile(code, path, "exec"), ns)
-    w = ns.get("SOM_WEIGHTS")
-    if w is None:
-        print(f"ERROR: {path} must define SOM_WEIGHTS dict")
-        print(f"  Found symbols: {[k for k in ns if not k.startswith('_')]}")
-        sys.exit(1)
-    return w
+from som_map import DiagConsole, PosixSerial, SomMapError, iter_weight_commands, load_map
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Upload SOM weights to FPGA")
-    parser.add_argument("--port", "-p", default="/dev/ttyACM0",
-                        help="Serial port (default: /dev/ttyACM0)")
-    parser.add_argument("--baud", "-b", type=int, default=115200,
-                        help="Baud rate (default: 115200)")
-    parser.add_argument("--dry-run", "-n", action="store_true",
-                        help="Print commands without sending")
-    parser.add_argument("weight_file", help="Python file with SOM_WEIGHTS dict")
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("map_file", help="validated SPU_SOM_MAP_V1 JSON file")
+    parser.add_argument("--port", "-p", default="/dev/ttyACM0")
+    parser.add_argument("--baud", "-b", type=int, default=115200)
+    parser.add_argument("--dry-run", "-n", action="store_true")
     args = parser.parse_args()
 
-    weights = load_weights(args.weight_file)
-    n_nodes = max(weights.keys()) + 1
-    n_feats = 4
-    print(f"Loaded {n_nodes} nodes, {n_feats} features each")
+    try:
+        document = load_map(args.map_file)
+    except SomMapError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
 
-    total = 0
+    commands = list(iter_weight_commands(document))
+    print(
+        f"Validated {document['model']}: {document['node_count']} nodes, "
+        f"{len(commands)} prototype writes, SHA-256 {document['map_sha256']}"
+    )
     if args.dry_run:
-        for node in sorted(weights):
-            for feat, val in enumerate(weights[node]):
-                if val != 0:
-                    print(f"  somwrite {node} {feat} {val:016X}")
-                    total += 1
-        print(f"\nDry run: {total} non-zero features to upload")
-        return
+        print("\n".join(commands))
+        return 0
 
-    ser = serial.Serial(args.port, args.baud, timeout=5)
-    time.sleep(0.5)
-    ser.reset_input_buffer()
-
-    # Wait for prompt
-    buf = b""
-    deadline = time.time() + 5
-    while time.time() < deadline:
-        buf += ser.read(ser.in_waiting or 1)
-        if b"> " in buf or b"OK" in buf:
-            break
-
-    sent = 0
-    errors = 0
-    for node in sorted(weights):
-        for feat, val in enumerate(weights[node]):
-            cmd = f"somwrite {node} {feat} {val:016X}\r\n"
-            ser.write(cmd.encode())
-            sent += 1
-            # Wait for OK or ERR
-            resp = b""
-            deadline = time.time() + 2
-            while time.time() < deadline:
-                resp += ser.read(ser.in_waiting or 1)
-                if b"OK" in resp or b"ERR" in resp:
-                    break
-            if b"ERR" in resp:
-                print(f"  ERROR node={node} feat={feat}: {resp.decode().strip()}")
-                errors += 1
-            if sent % 64 == 0:
-                print(f"  {sent}/{n_nodes * n_feats} written...")
-
-    print(f"\nDone: {sent} writes, {errors} errors")
-    ser.close()
-    return 0 if errors == 0 else 1
+    with PosixSerial(args.port, args.baud) as serial_port:
+        console = DiagConsole(serial_port)
+        for index, command in enumerate(commands, 1):
+            console.command(command)
+            if index % 7 == 0:
+                print(f"  {index}/28 writes accepted")
+    print("Upload complete: 28/28 writes accepted")
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

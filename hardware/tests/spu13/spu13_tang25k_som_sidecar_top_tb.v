@@ -214,6 +214,17 @@ module spu13_tang25k_som_sidecar_top_tb;
         write_feature(2'd3, 18'd4);
         classify_and_check(3'd6, "test3 node6");
 
+        // --- Test 4: uniform-feature-weight packing regression ---
+        // With the current node table, {0,0,-5,-5} ties nodes 0/1/2/5 at
+        // distance 54 and the deterministic lowest-id rule selects node 0.
+        // If feature 0 is accidentally weighted by 2, nodes 0/1 rise to 58
+        // while nodes 2/5 remain 54, so the result incorrectly becomes node 2.
+        write_feature(2'd0, 18'd0);
+        write_feature(2'd1, 18'd0);
+        write_feature(2'd2, -18'sd5);
+        write_feature(2'd3, -18'sd5);
+        classify_and_check(3'd0, "test4 uniform feature weights");
+
         if (fail_count == 0)
             $display("PASS: %0d checks passed", pass_count);
         else

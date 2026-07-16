@@ -33,7 +33,7 @@ module spu13_tang25k_som_sidecar_top (
     localparam CLK_HZ = 50000000;
     localparam CLKS_PER_BIT = CLK_HZ / 115200;
 
-    // ── Reset (200 cycle delay) ───────────────────────────────────────
+    // ── Reset (255 cycle delay) ───────────────────────────────────────
     reg [7:0] rst_cnt = 8'd0;
     wire rst_n = (rst_cnt == 8'hFF);
     always @(posedge sys_clk) begin
@@ -86,7 +86,7 @@ module spu13_tang25k_som_sidecar_top (
 
     // ── Feature weights (uniform for Iris) ────────────────────────────
     wire [143:0] feat_weights = {
-        36'h0_0001, 36'h0_0001, 36'h0_0001, 36'h0_0002
+        36'h0_0001, 36'h0_0001, 36'h0_0001, 36'h0_0001
     };
 
     // ── SOM weight writes (sel=4) → BMU training port ────────────────

@@ -107,6 +107,14 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   `00 14 1E`. The rebuilt image uses 12,786 LUT4 (55%), 8 BSRAM, 0 DSP and
   closes at 77.61 MHz against the 12 MHz target. Full evidence:
   `docs/hardware_evidence.md` §3.2g.2.
+- Tang 25K `SOM-SIDECAR` now also has a reproducible full-corpus Iris proof.
+  `python3 tools/iris_som_demo.py --hardware` regenerates and validates the
+  checksummed seven-node map, performs all 28 prototype writes, and classified
+  all 150 checked-in samples with 150/150 FPGA winners bit-exact to the oracle.
+  The map's semantic labels scored 147/150 (98.0%). This run exposed and fixed
+  a packed board-top metric mismatch (feature 0 was weighted 2 instead of the
+  documented uniform 1); the corrected 50 MHz image closes at 79.38 MHz and is
+  recorded in `docs/hardware_evidence.md` §3.2g.3.
 
 ## Open-Toolchain Build Evidence
 

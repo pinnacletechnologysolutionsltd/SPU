@@ -33,7 +33,8 @@ learning in hardware.
 | Optional winner adaptation | `hardware/rtl/core/spu13/spu_som_train.v` |
 | Core opcodes and host hydration | `hardware/rtl/core/spu13/spu13_core.v` |
 | Small standalone edge target | `hardware/boards/tang_primer_25k/spu13_tang25k_som_sidecar_top.v` |
-| Host console and map uploader | `hardware/rp_common/spu_diag.c`, `tools/upload_som_weights.py` |
+| Reproducible Iris map/demo | `software/models/iris_som_v1.json`, `tools/iris_som_demo.py` |
+| Host console and validated uploader | `hardware/rp_common/spu_diag.c`, `tools/upload_som_weights.py`, `tools/som_map.py` |
 
 The old fully parallel `spu_som_node` / `spu_som_node_array` / cfg-bus
 `spu_som_sidecar_top` implementation is archived under
@@ -48,6 +49,8 @@ research tracks. They are not dependencies of SOM v1.
 - A feature or prototype component is `{Q[17:0], P[17:0]}`, representing
   `P + Q*sqrt(3)` with signed coefficients.
 - A node distance is `sum(r_j * (x_j - w_ij)^2)` in `Q(sqrt(3))`.
+- The four `r_j` feature weights are part of the checksummed map artifact.
+  The Iris v1 map uses four exact unit weights.
 - Distances are ordered with the exact integer-only field comparison, not a
   lexicographic `(P,Q)` comparison and not floating point.
 - Equal distances retain the lower node index because the map is scanned in
@@ -101,26 +104,48 @@ existing byte.
 | Tang 25K fixed-map BMU probe | silicon PASS, `SOM:P T:2 B:6 E:00` |
 | Tang 25K writable-BRAM hydration probe | silicon PASS |
 | Tang standalone sidecar SPI/UART path | silicon PASS; SPI `80 A0 B0`, C3 UART `00 14 1E` |
+| Reproducible seven-node Iris map | PASS; checked JSON equals deterministic regeneration |
+| Iris corpus on Tang sidecar | silicon PASS; 150/150 FPGA winners equal oracle, 147/150 labels correct |
 | Artix-7 identical-fixture probe | built and testbench PASS; board run pending |
 | Exact-order fixed-schedule comparator at HEAD | testbench/trace PASS; renewed Tang sidecar silicon proof PASS |
 
-The rebuilt Tang sidecar uses 12,786/23,040 LUT4 (55%), 8/56 BSRAM, no DSP,
-and closes at 77.61 MHz against its 12 MHz target. Packed bitstream SHA-256:
-`8c6b6f8e2cc10f0668761ccb4e178b71499af5ef7c204b8cd47728ecd81c8e0b`.
+The corpus-proven Tang sidecar uses 12,865/23,040 LUT4 (55%), 1,576 DFF,
+1,192 ALU, 8/56 BSRAM, and no DSP. It closes at 79.38 MHz against the real
+50 MHz board clock. Packed bitstream SHA-256:
+`946574dc25ad7aada168f9f06af101cd0df747230c0fea0ca9dae0ad5d9e7c3c`.
 
-The 2026-07-16 sidecar run is the renewed HEAD silicon proof after the
-exact-order comparator and SPI repairs. It proves the repaired scheduled
-datapath on three hydrated winner cases; the negative-surd and adversarial
-ordering corpus remains an explicit v1 exit-gate item rather than an implied
-claim from these three vectors.
+The one-command proof is:
+
+```
+python3 tools/iris_som_demo.py --hardware
+```
+
+It validates/regenerates the checked map, performs all 28 prototype writes,
+classifies all 150 checked-in Iris samples, requires every FPGA winner to equal
+the exact software oracle, and prints the oracle and FPGA confusion matrices.
+Map SHA-256:
+`3373e851c29450e37fca76281f9ea4dbbdf1b94b34cf1b7bd74f6d83fe8eaa15`;
+dataset SHA-256:
+`6f608b71a7317216319b4d27b4d9bc84e6abd734eda7872b71a458569e2656c0`.
+
+The full corpus exposed a board-top packing error that the earlier three-vector
+smoke test did not: `{F3,F2,F1,F0}` had been initialized as `{1,1,1,2}` while
+the comment and oracle specified uniform weights. Iris sample 101 selected node
+2 in silicon instead of oracle node 1, exactly as the unintended feature-0
+weight of 2 predicts. The top now uses `{1,1,1,1}`; a dedicated RTL vector
+changes winner if feature 0 is ever doubled again.
+
+Semantic labels in this demo come from the checksummed map's node labels on the
+host. The compact sidecar still returns its legacy fixed raw-label LUT as link
+telemetry; writable labels belong in the versioned result-frame tranche.
 
 ## v1 exit gate
 
 SOM v1 is complete only when all of the following are true:
 
 - one checked-in offline-trained and rationally quantized map is reproducible;
-- the map uploader validates dimensions, signed coefficient range, and all 28
-  writes for the seven-node product fixture;
+- the map uploader validates dimensions, metric weights, signed coefficient
+  range, checksum, and all 28 writes for the seven-node product fixture;
 - a versioned result frame carries winner, runner-up, label, best distance,
   second distance, gap, ambiguity, and an error/status field;
 - one host command performs hydrate -> classify corpus -> compare with oracle;

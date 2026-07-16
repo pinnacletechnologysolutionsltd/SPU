@@ -31,7 +31,7 @@ in §4 — "product-candidate" describes intent, not readiness.
 | LUCAS | Wukong A7 100T | Lucas Phinary MAC + CE-paced SPI sidecar | 5,073 LC, 120 DSP, 4.41 MHz | silicon (PSCALE/PCHIRAL/PMUL/PINV over J11) |
 | RPLU2PADE | Wukong A7 100T | A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] | 72 DSP, 34% LUT | silicon (`RPLU2PADE_J11: PASS`) |
 | SU3SHARE | Wukong A7 100T | SU3 sidecar + RPLU2 config/QR, one shared M31 multiplier | see build log | silicon (both paths pass on one bitstream) |
-| SOM-SIDECAR | Tang 25K → smaller fabrics | standalone SOM edge classifier (`build_25k_spu13_som_sidecar.sh`, top module `spu13_tang25k_som_sidecar_top.v`) | 12,812 LUT4 (55%), 8 BSRAM, 0 DSP; 81.06 MHz Fmax @ 12 MHz target | SOM/BMU core is silicon-proven on Tang via a different probe. The sidecar's dead 0xA5 write path and one-byte-zero result read were repaired 2026-07-16; SPI write/classify, two-byte valid/busy/label readback, UART telemetry, exact field order, and fixed 434-clock latency pass simulation. Rebuilt sidecar is PnR-clean; board run pending. |
+| SOM-SIDECAR | Tang 25K → smaller fabrics | standalone SOM edge classifier (`build_25k_spu13_som_sidecar.sh`, top module `spu13_tang25k_som_sidecar_top.v`) | 12,865 LUT4 (55%), 8 BSRAM, 0 DSP; 79.38 MHz Fmax @ 50 MHz target | silicon: writable SPI path, fixed-434-clock exact BMU, and C3 UART proven. Reproducible Iris demo passes 150/150 FPGA/oracle winners and 147/150 semantic labels (98.0%); checked map and one-command runner are `software/models/iris_som_v1.json` and `tools/iris_som_demo.py`. |
 | SPU4-SENTINEL | Tang 25K → smallest fabrics | SPU-4 core, Davis gate, whisper v0 | ~400 LUT | silicon (2026-07-08, `SPU4:P A=0000 B=0155 C=0155 D=0155`) |
 
 **First-hour stories:**

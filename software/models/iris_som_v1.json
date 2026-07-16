@@ -1,0 +1,260 @@
+{
+  "class_names": [
+    "setosa",
+    "versicolor",
+    "virginica"
+  ],
+  "coefficient_bits": 18,
+  "dataset": "Fisher Iris, checked-in 150-sample corpus",
+  "dataset_path": "software/tests/data/iris.csv",
+  "dataset_sha256": "6f608b71a7317216319b4d27b4d9bc84e6abd734eda7872b71a458569e2656c0",
+  "feature_count": 4,
+  "feature_names": [
+    "sepal_length",
+    "sepal_width",
+    "petal_length",
+    "petal_width"
+  ],
+  "feature_weights": [
+    {
+      "p": 1,
+      "q": 0
+    },
+    {
+      "p": 1,
+      "q": 0
+    },
+    {
+      "p": 1,
+      "q": 0
+    },
+    {
+      "p": 1,
+      "q": 0
+    }
+  ],
+  "format": "SPU_SOM_MAP_V1",
+  "map_sha256": "3373e851c29450e37fca76281f9ea4dbbdf1b94b34cf1b7bd74f6d83fe8eaa15",
+  "model": "iris-som-v1",
+  "node_count": 7,
+  "nodes": [
+    {
+      "axial": [
+        0,
+        0
+      ],
+      "class_label": 1,
+      "id": 0,
+      "weights": [
+        {
+          "p": 5009,
+          "q": 0
+        },
+        {
+          "p": 2313,
+          "q": 0
+        },
+        {
+          "p": 3381,
+          "q": 0
+        },
+        {
+          "p": 1070,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        1,
+        0
+      ],
+      "class_label": 2,
+      "id": 1,
+      "weights": [
+        {
+          "p": 7109,
+          "q": 0
+        },
+        {
+          "p": 3121,
+          "q": 0
+        },
+        {
+          "p": 6015,
+          "q": 0
+        },
+        {
+          "p": 2122,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        1,
+        -1
+      ],
+      "class_label": 2,
+      "id": 2,
+      "weights": [
+        {
+          "p": 6176,
+          "q": 0
+        },
+        {
+          "p": 2866,
+          "q": 0
+        },
+        {
+          "p": 5176,
+          "q": 0
+        },
+        {
+          "p": 1908,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        0,
+        -1
+      ],
+      "class_label": 1,
+      "id": 3,
+      "weights": [
+        {
+          "p": 6403,
+          "q": 0
+        },
+        {
+          "p": 2900,
+          "q": 0
+        },
+        {
+          "p": 4585,
+          "q": 0
+        },
+        {
+          "p": 1425,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        -1,
+        0
+      ],
+      "class_label": 0,
+      "id": 4,
+      "weights": [
+        {
+          "p": 5246,
+          "q": 0
+        },
+        {
+          "p": 3652,
+          "q": 0
+        },
+        {
+          "p": 1492,
+          "q": 0
+        },
+        {
+          "p": 273,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        -1,
+        1
+      ],
+      "class_label": 0,
+      "id": 5,
+      "weights": [
+        {
+          "p": 4705,
+          "q": 0
+        },
+        {
+          "p": 3124,
+          "q": 0
+        },
+        {
+          "p": 1403,
+          "q": 0
+        },
+        {
+          "p": 172,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        0,
+        1
+      ],
+      "class_label": 1,
+      "id": 6,
+      "weights": [
+        {
+          "p": 5602,
+          "q": 0
+        },
+        {
+          "p": 2684,
+          "q": 0
+        },
+        {
+          "p": 4070,
+          "q": 0
+        },
+        {
+          "p": 1252,
+          "q": 0
+        }
+      ]
+    }
+  ],
+  "scale": 1000,
+  "trainer": {
+    "epochs": 40,
+    "initial_sample_indices": [
+      64,
+      118,
+      22,
+      148,
+      119,
+      15,
+      50
+    ],
+    "initialization": "mean-nearest-then-farthest-first",
+    "kind": "deterministic-online-hex-som",
+    "neighbor_epochs": 5,
+    "neighbor_shift": 3,
+    "order": "sha256",
+    "order_seed": 188,
+    "winner_shift_schedule": [
+      [
+        0,
+        10,
+        3
+      ],
+      [
+        10,
+        25,
+        4
+      ],
+      [
+        25,
+        40,
+        5
+      ]
+    ]
+  }
+}

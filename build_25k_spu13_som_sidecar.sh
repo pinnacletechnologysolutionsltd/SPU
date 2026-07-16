@@ -15,7 +15,7 @@ nextpnr-himbaechel --device GW5A-LV25MG121NES \
     --json build/spu13_som_sidecar.json \
     --write build/spu13_som_sidecar_pnr.json \
     --log build/spu13_som_sidecar_nextpnr.log \
-    --freq 12
+    --freq 50
 
 echo "--- 3. Package Bitstream ---"
 gowin_pack -d GW5A-25A \

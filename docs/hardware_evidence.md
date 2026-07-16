@@ -1123,6 +1123,69 @@ for a checked-in trained map, versioned rich result frame, adversarial
 negative-surd corpus, interrupted hydration handling, or Artix-7 cross-vendor
 equivalence.
 
+### 3.2g.3 Reproducible Iris SOM Corpus Silicon Proof
+
+**Date:** 2026-07-17 NZT
+
+**Scope:** one-command board proof using a checked, deterministically trained
+seven-node/four-feature Iris SOM map. The artifact includes the training
+recipe, prototype coefficients, semantic node labels, four exact feature
+weights, dataset checksum, and canonical map checksum. The host regenerates
+the map before use, validates all signed 18-bit `Q(sqrt(3))` pairs, uploads
+exactly 28 prototypes through the RP2350 console, streams all 150 samples, and
+requires every FPGA BMU node to equal the exact software oracle.
+
+**Command:**
+
+```
+python3 tools/iris_som_demo.py --hardware
+```
+
+**Result:**
+
+```
+Oracle confusion matrix
+                 predicted
+true             set  ver  vir
+setosa            50    0    0
+versicolor         0   48    2
+virginica          0    1   49
+accuracy: 147/150 (98.0%)
+...
+IRIS_SOM_V1: PASS (150/150 FPGA winners bit-exact to oracle)
+```
+
+The FPGA confusion matrix was identical. Semantic classification uses the
+artifact's node labels on the host; the current compact hardware response still
+contains the sidecar's fixed legacy raw-label LUT and is checked only as
+independent SPI/UART link telemetry.
+
+**Mismatch found and closed:** the first corpus run matched samples 1-100 but
+failed sample 101 (`6300,3300,6000,2500`): FPGA node 2 versus oracle node 1.
+The board top described its metric as uniform but packed
+`{F3,F2,F1,F0}={1,1,1,2}`. With that unintended feature-0 weight, exact
+recalculation selects node 2, reproducing silicon. The corrected top packs
+`{1,1,1,1}`. A dedicated RTL regression uses an input whose winner changes
+from node 0 to node 2 if feature 0 is doubled, preventing recurrence.
+
+**Artifact identity:**
+
+- map: `software/models/iris_som_v1.json`
+- map SHA-256:
+  `3373e851c29450e37fca76281f9ea4dbbdf1b94b34cf1b7bd74f6d83fe8eaa15`
+- dataset: `software/tests/data/iris.csv`
+- dataset SHA-256:
+  `6f608b71a7317216319b4d27b4d9bc84e6abd734eda7872b71a458569e2656c0`
+
+**Corrected build:** 12,865/23,040 LUT4 (55%), 1,576 DFF, 1,192 ALU,
+8/56 BSRAM, 0 DSP. Route closes at 79.38 MHz against the board's real 50 MHz
+clock. Packed bitstream SHA-256:
+`946574dc25ad7aada168f9f06af101cd0df747230c0fea0ca9dae0ad5d9e7c3c`.
+
+This closes the reproducible-map and Tang full-corpus portions of SOM v1.
+The rich versioned result frame, interrupted/partial hydration contract, and
+Artix-7 replay remain open before the complete v1 exit gate.
+
 ### 3.2h Six-Step Robotics Kinematics Silicon Probe
 
 **Date:** 2026-07-01 NZT
@@ -1639,6 +1702,7 @@ documented elsewhere in this ledger and in AGENTS.md.*
 | ROTC tagged (deferred-reduction) core | TB-verified (8/8, `spu13_rotor_core_tagged_tb.v`); probe `spu13_tang25k_rotc_tagged_probe.v` built (2026-07-09), awaiting board run. Golden-vector re-verification contract: ROTATE must produce 3× TDM golden at exp=1; REDUCE must recover TDM golden at exp=0. **Fixed 2026-07-09:** REDUCE's `reduce_val64` loaded lane values via zero-extension instead of sign-extension — every negative lane value (routine in this representation) either false-faulted INEXACT or missed a real exact division; `-9` at exp=1 is the regression case (Test 8). |
 | SOM/BMU classifier in silicon | **Verified in Silicon** on Tang 25K with UART `SOM:P T:2 B:6 E:00`; covers 2 weighted BMU oracle scenarios and cluster reduction for the 7-node fixture |
 | Writable SOM sidecar over RP2350 SPI | **Verified in Silicon** on Tang 25K: hydrated winners returned SPI `80 A0 B0` and matching C3 UART `00 14 1E`; exact fixed-434-cycle HEAD datapath, §3.2g.2 |
+| Reproducible Iris SOM edge classifier | **Verified in Silicon** on Tang 25K: checked seven-node map, 28/28 writes, 150/150 FPGA/oracle BMU winners, 147/150 semantic labels (98.0%), §3.2g.3 |
 | Six-step robotics kinematics harness | **Verified in Silicon** on Tang 25K with UART `KIN:P P:5 E:00`; covers period-6 angle-1 six-step forward phases, angle-4 inverse recovery per phase, early-closure rejection, and exact phase-5 closure |
 | External RP2350 neuro-sidecar opcodes | Tang adapter command path is self-driven silicon-verified; external master transactions through the shared shell are pending |
 | QSUB and DELTA RTL FSMs | Implemented and RTL-verified in `spu13_core_qsub_delta_tb`; QSUB also silicon-verified through RP2350 arithmetic tests |
