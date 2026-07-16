@@ -688,20 +688,24 @@ def main():
     else:
         host_pass = host_fail = 0
 
-    # robotics_demo.py (per-spin example script, no hardware required)
-    robotics_demo_test = os.path.join(root_dir, "software", "tests", "test_robotics_demo.py")
-    if os.path.exists(robotics_demo_test):
-        result_robotics_demo = subprocess.run(
-            [sys.executable, robotics_demo_test],
-            capture_output=True, text=True, timeout=30
+    # Per-spin demo scripts (tools/*_demo.py, no hardware required).
+    # Explicit list rather than a glob so in-flight/unregistered demo tests
+    # don't silently join the gate before their author intends them to.
+    spin_demo_tests = ["test_robotics_demo.py", "test_lucas_demo.py"]
+    robotics_demo_pass = robotics_demo_fail = 0
+    for demo_name in spin_demo_tests:
+        demo_path = os.path.join(root_dir, "software", "tests", demo_name)
+        if not os.path.exists(demo_path):
+            continue
+        result_demo = subprocess.run(
+            [sys.executable, demo_path],
+            capture_output=True, text=True, timeout=60
         )
-        if result_robotics_demo.returncode == 0:
-            robotics_demo_pass, robotics_demo_fail = 1, 0
+        if result_demo.returncode == 0:
+            robotics_demo_pass += 1
         else:
-            robotics_demo_pass, robotics_demo_fail = 0, 1
-            print(f"\n  test_robotics_demo.py FAILED:\n{result_robotics_demo.stdout[-500:]}")
-    else:
-        robotics_demo_pass = robotics_demo_fail = 0
+            robotics_demo_fail += 1
+            print(f"\n  {demo_name} FAILED:\n{result_demo.stdout[-500:]}")
 
     print(f"\nPython Tests: {py_pass + py_fail + cv_pass + cv_fail}")
     print(f"Passed:      {py_pass + cv_pass}")
@@ -715,9 +719,9 @@ def main():
     print(f"Passed:             {host_pass}")
     print(f"Failed:             {host_fail}")
 
-    print(f"\nRobotics Demo Tests: {robotics_demo_pass + robotics_demo_fail}")
-    print(f"Passed:              {robotics_demo_pass}")
-    print(f"Failed:              {robotics_demo_fail}")
+    print(f"\nSpin Demo Tests: {robotics_demo_pass + robotics_demo_fail}")
+    print(f"Passed:          {robotics_demo_pass}")
+    print(f"Failed:          {robotics_demo_fail}")
 
     print(f"\nCartesian Bridge Tests: {bridge_pass + bridge_fail}")
     print(f"Passed:                 {bridge_pass}")
