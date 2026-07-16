@@ -10,22 +10,20 @@ works unmodified against any board the southbridge firmware targets.
 ## Install
 
 ```bash
-pip install pyserial   # already in requirements.txt
+python3 -m pip install -e .
 ```
 
-No package install step yet — import directly from the repo:
+Then import the installed package:
 
 ```python
-import sys
-sys.path.insert(0, "path/to/SPU")
-from software.spu_host import SPUHostClient
+from spu_host import SPUHostClient
 ```
 
 ## Usage
 
 ```python
 import serial
-from software.spu_host import SPUHostClient
+from spu_host import SPUHostClient
 
 ser = serial.Serial("/dev/ttyACM0", 115200, timeout=0.05)
 client = SPUHostClient(ser)
@@ -44,8 +42,8 @@ print(client.tensegrity_status())
 ## CLI
 
 ```bash
-python3 -m software.spu_host --port /dev/ttyACM0 status
-python3 -m software.spu_host --port /dev/ttyACM0 raw sdhydrate
+spu-host --port /dev/ttyACM0 status
+spu-host --port /dev/ttyACM0 raw sdhydrate
 ```
 
 ## Method <-> opcode map
@@ -90,4 +88,4 @@ hardware required, wired into `run_all_tests.py`.
 - Every typed method raises `SPUProtocolError` on an `ERR` response or an
   unparseable reply, rather than returning `None`/partial data.
 
-CC0 1.0 Universal.
+License: MIT. See `software/LICENSE`.

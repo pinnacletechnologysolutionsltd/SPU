@@ -30,6 +30,7 @@ Pick your door:
 ## 🔧 For builders
 
 - **[Build and bring-up guide](build_and_bringup_guide.md)** — commands, wiring, board procedures
+- **[SOM-SIDECAR evaluator quickstart](SOM_SIDECAR_QUICKSTART.md)** — Tang/RP2350 wiring, firmware, bitstream, and the 150-sample proof
 - **[Toolchain setup](toolchain_setup.md)** — OSS CAD Suite + OpenXC7; no vendor IDE
 - **[Southbridge SPI protocol](SOUTHBRIDGE_SPI_PROTOCOL.md)** — the RP2350↔FPGA control plane
 - **[Board scaling strategy](fpga_board_scaling_strategy.md)** — Tang 25K → Artix-7 → ECP5 → Kintex ladder
@@ -41,7 +42,8 @@ Pick your door:
 - `AGENTS.md` (repo root) — living source of truth for test/silicon status
 - `CONTRIBUTING.md` — DCO sign-off required
 - Run everything: `python3 run_all_tests.py` — 100% pass is the merge gate
-- Licensing: hardware CERN-OHL-W-2.0 · software MIT · docs CC0 1.0
+- Licensing: see the repository `LICENSING.md` map; hardware
+  CERN-OHL-W-2.0 · software MIT · docs/knowledge CC0 1.0
 
 ---
 

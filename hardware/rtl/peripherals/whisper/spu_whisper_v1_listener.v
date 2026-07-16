@@ -16,6 +16,7 @@ module spu_whisper_v1_listener #(
     output wire [3:0] node_id,
     output wire [2:0] flags,
     output wire [7:0] dissonance,
+    // Legacy port name: decoded `ss` application-status byte, not sequence.
     output wire [7:0] seq,
     output reg        frame_valid,
     output reg        frame_err,

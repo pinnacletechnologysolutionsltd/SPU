@@ -58,7 +58,7 @@ module spu13_satellite_aggregator #(
             wire [3:0]  rx_node_id;
             wire [2:0]  rx_flags;
             wire [7:0]  rx_dissonance;
-            wire [7:0]  rx_seq;
+            wire [7:0]  rx_status;
             wire        rx_valid;
             wire        rx_err;
             wire        rx_incoherent;
@@ -69,7 +69,7 @@ module spu13_satellite_aggregator #(
                 .clk(clk), .rst_n(rst_n),
                 .rx(whisper_rx[s]),
                 .node_id(rx_node_id), .flags(rx_flags),
-                .dissonance(rx_dissonance), .seq(rx_seq),
+                .dissonance(rx_dissonance), .seq(rx_status),
                 .frame_valid(rx_valid), .frame_err(rx_err),
                 .incoherent(rx_incoherent)
             );
@@ -85,12 +85,12 @@ module spu13_satellite_aggregator #(
                     if (rx_valid) begin
                         // [15]=incoherent [14]=som_valid [13]=reserved
                         // [12:9]=som_label [8]=snap [7:0]=dissonance
-                        // som_label = rx_seq[3:0] (whisper seq carries SOM label in
-                        // Arlinghaus extended frame — bits [3:0] of the 8-bit seq field)
+                        // Whisper `ss` is an application-status byte; the
+                        // Arlinghaus profile assigns its low nibble to label.
                         sat_status <= {rx_incoherent,
                                        1'b1,           // frame_valid → som_valid
                                        1'b0,           // reserved
-                                       rx_seq[3:0],    // SOM label in seq low nibble
+                                       rx_status[3:0],
                                        rx_flags[0],    // snap_locked
                                        rx_dissonance};
                     end else begin

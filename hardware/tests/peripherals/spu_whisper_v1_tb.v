@@ -2,7 +2,7 @@
 //
 // Covers docs/WHISPER_V1_SPEC.md §5 acceptance checklist:
 //   1. Correct 18-byte frame format + XOR verification
-//   2. Emission stops/starts with is_laminar, ss continuity
+//   2. Emission stops/starts with is_laminar, status-byte stability
 //   3. henosis_since_last flag behaviour
 //   4. Governor relay picks max-dd satellite (combinational check)
 //   5. Listener: 3-miss incoherence, corrupted-XOR rejection, recovery
@@ -32,7 +32,7 @@ module spu_whisper_v1_tb;
     wire [3:0]  rx_node_id;
     wire [2:0]  rx_flags;
     wire [7:0]  rx_dissonance;
-    wire [7:0]  rx_seq;
+    wire [7:0]  rx_status;
     wire        rx_valid;
     wire        rx_err;
     wire        incoherent;
@@ -54,7 +54,7 @@ module spu_whisper_v1_tb;
         .clk(clk), .rst_n(rst_n),
         .rx(tx),
         .node_id(rx_node_id), .flags(rx_flags),
-        .dissonance(rx_dissonance), .seq(rx_seq),
+        .dissonance(rx_dissonance), .seq(rx_status),
         .frame_valid(rx_valid), .frame_err(rx_err),
         .incoherent(incoherent)
     );
@@ -125,8 +125,8 @@ module spu_whisper_v1_tb;
                 $display("FAIL: %0s dissonance got=%h exp=%h", msg, rx_dissonance, exp_diss);
                 fail = fail + 1;
             end
-            if (rx_seq !== exp_seq) begin
-                $display("FAIL: %0s seq got=%h exp=%h", msg, rx_seq, exp_seq);
+            if (rx_status !== exp_seq) begin
+                $display("FAIL: %0s status got=%h exp=%h", msg, rx_status, exp_seq);
                 fail = fail + 1;
             end
             if (rx_err) begin
@@ -188,8 +188,8 @@ module spu_whisper_v1_tb;
         frame_count = frame_count + 1;
         check_frame(4'h5, 3'b101, 8'h2A, 8'd0, "T1 frame[0]");
 
-        // ── Test 2: Second frame, same som_label (static) ────────────
-        $display("── Test 2: seq stability ──");
+        // ── Test 2: Second frame, same status byte ───────────────────
+        $display("── Test 2: status stability ──");
         wait_frame_or_die("T2");
         frame_count = frame_count + 1;
         check_frame(4'h5, 3'b101, 8'h2A, 8'd0, "T2 stable");
@@ -206,8 +206,8 @@ module spu_whisper_v1_tb;
             fail = fail + 1;
         end
 
-        // ── Test 4: Resume with ss continuity ────────────────────────
-        $display("── Test 4: resume with ss continuity ──");
+        // ── Test 4: Resume with current status byte ──────────────────
+        $display("── Test 4: resume with status stability ──");
         is_laminar = 1;
         wait_frame_or_die("T4");
         frame_count = frame_count + 1;

@@ -9,7 +9,7 @@ control primitives, not a replacement for conventional AI accelerators.**
 [![CI](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml/badge.svg)](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml)
 [![Hardware: CERN-OHL-W-2.0](https://img.shields.io/badge/Hardware-CERN--OHL--W--2.0-blue.svg)](hardware/LICENSE)
 [![Software: MIT](https://img.shields.io/badge/Software-MIT-green.svg)](software/LICENSE)
-[![Docs: CC0](https://img.shields.io/badge/Docs-CC0_1.0-lightgrey.svg)](LICENSE)
+[![Docs: CC0](https://img.shields.io/badge/Docs-CC0_1.0-lightgrey.svg)](docs/LICENSE)
 
 ## Current Hardware Direction
 
@@ -48,8 +48,11 @@ is an Artix-7 200T / Kintex-class funding target. See
 | Layer | License | Directory |
 |-------|---------|-----------|
 | Hardware (RTL, board files) | [CERN-OHL-W-2.0](hardware/LICENSE) | `hardware/` |
-| Software (VM, tools, firmware) | [MIT](software/LICENSE) | `software/` |
-| Documentation | [CC0 1.0](LICENSE) | `docs/`, `knowledge/` |
+| Software | [MIT](software/LICENSE) | `software/` |
+| Documentation | [CC0 1.0](docs/LICENSE) | `docs/`, `knowledge/` |
+| Root fallback | [Apache-2.0](LICENSE) | root-level files and `tools/` without a nearer notice |
+
+See [LICENSING.md](LICENSING.md) for precedence and mixed-directory details.
 
 ---
 
@@ -60,7 +63,7 @@ The SPU-13 architecture, including the dual-ring arithmetic framework, the Baryc
 Under global patent law (including USPTO, EPO, and JPO guidelines), this public, timestamped disclosure legally bars any third party from obtaining patents on:
 1. **Dual-Ring Execution Topology:** The co-processor coupling of a $\mathbb{Z}/M_{31}$ binary ring with a $\mathbb{Z}[\phi]/L_p$ phinary ring, connected via a spatial routing bridge (BTU).
 2. **Lucas Barrett Reduction in Hardware:** The hardware-native remainder calculation for Lucas prime moduli ($q = (x \cdot \mu) \gg 31$, $r = x - q \cdot L_p$) using elaboration-time precalculated scale constants ($\mu = \lfloor 2^k / L_p \rfloor$).
-3. **Chirality & Scaling Intercepts:** The instruction intercept (`lucas_inst_claimed`) and register commit override path mapped in [spu_a7_top.v](file:///home/john/Projects/hardware/SPU/hardware/boards/artix7/spu_a7_top.v) for `0xD0` (PSCALE) and `0xD1` (PCHIRAL).
+3. **Chirality & Scaling Intercepts:** The instruction intercept (`lucas_inst_claimed`) and register commit override path mapped in [spu_a7_top.v](hardware/boards/artix7/spu_a7_top.v) for `0xD0` (PSCALE) and `0xD1` (PCHIRAL).
 
 All contributions to this project require signing off on the [Developer Certificate of Origin (DCO)](CONTRIBUTING.md) to certify that they are free of patent encumbrances.
 

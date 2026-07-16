@@ -350,7 +350,9 @@ spu_feature_ingest
 
 Several modules from the candidate list were drafted but subsequently archived
 or superseded. The canonical SPU-13 path is the serial, BRAM-backed
-`spu_som_bmu.v`; `spu4_som_edge.v` is a separate SPU-4 edge classifier.
+`spu_som_bmu.v`. `spu4_som_edge.v` is a separate testbench-only SPU-4
+cost-down experiment: it is not instantiated by a core or board top and
+has no hardware weight-upload path.
 
 | Candidate Module | Implemented As | Status |
 |:---|:---|:---|

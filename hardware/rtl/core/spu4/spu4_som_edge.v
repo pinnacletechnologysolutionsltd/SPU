@@ -10,7 +10,13 @@
 //   - Register-backed weights (no BRAM)
 //   - Sequential scan: one node per cycle, combinational quadrance
 //   - Tracks minimum quadrance and its node index
-//   - Output som_label[1:0] feeds into spu4_cluster_bridge.v
+//   - Output is a 2-bit winner node, not a semantic label
+//   - A deployment-specific node→class mapper is required before the
+//     4-bit som_label input of spu4_cluster_bridge.v
+//
+// Lifecycle: RTL/TB experiment only. This module is not instantiated by an
+// SPU-4 core or board top, has no host weight-upload path, and has not been
+// synthesized or proven in silicon.
 //
 // Quadrance of surd (p + q√3): Q = p² + 3q²  (no division, no sqrt)
 

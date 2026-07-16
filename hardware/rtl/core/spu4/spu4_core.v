@@ -195,7 +195,7 @@ module spu4_core (
 
     // ── Whisper v1 coherence-plane emitter ──────────────────────────
     // The emitter continuously broadcasts the node's laminar state,
-    // dissonance, and a sequence number while the core is operational.
+    // dissonance, and application status while the core is operational.
     // Silence means incoherent or dead — the listener's 3-miss rule
     // detects this without any protocol handshake.
     //
@@ -222,7 +222,7 @@ module spu4_core (
         .node_id(4'h1),          // satellite ID: configurable per instance
         .flags_in(whisper_flags),
         .dissonance(dissonance),
-        .som_label(8'h00),       // placeholder — wire edge SOM output here
+        .som_label(8'h00),       // status byte; semantic mapping not integrated
         .tx(whisper_tx),
         .busy()
     );

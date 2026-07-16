@@ -32,7 +32,7 @@ W1 ii ff dd ss xx\n
 | `ii` | 2 hex + space | node id: `00` governor, `01`–`0D` satellites (≤13) |
 | `ff` | 2 hex + space | flags: bit0 `snap_locked`, bit1 `henosis_since_last` (a Henosis pulse fired during the elapsed period), bit2 `relayed` (line reports another node's state), bits 3–7 zero |
 | `dd` | 2 hex + space | dissonance = `min(\|ΣABCD post-Henosis\|, 255)` per the lexicon contract; `00` ⇔ laminar, `FF` ⇔ saturated |
-| `ss` | 2 hex + space | sequence number mod 256 (distinguishes dropped lines from silence) |
+| `ss` | 2 hex + space | application status byte. Current Arlinghaus use: bits 3–0 carry the satellite's semantic SOM label and bits 7–4 are zero. This field is not a sequence counter. |
 | `xx` | 2 hex | XOR of all preceding bytes of the line (spaces included, `xx` and `\n` excluded), rendered as hex |
 | `\n` | 1 | terminator |
 
@@ -51,10 +51,9 @@ of the same information — bridge RTL is reusable.
 1. Period: default 1 s, parameterizable; emission gated on `is_laminar`.
 2. Emission is scheduled by a free-running counter, independent of
    workload and of the dissonance value — no data-dependent timing.
-3. `ss` increments every *emitted* line and does not advance during
-   silence. Sequence and time measure different failures: a `ss` gap with
-   on-time lines means dropped/corrupted frames on the wire; missing
-   lines mean the node itself went silent. Listeners track both.
+3. `ss` is sampled when a frame begins and remains stable for that frame.
+   Missing or corrupt frames are detected by the fixed cadence, checksum, and
+   three-miss rule; v1 does not provide a transport sequence counter.
 4. A node emits **its own line** each period. A governor MAY additionally
    relay at most **one** satellite line per period — the highest-`dd`
    satellite — verbatim except `relayed` bit set. Bandwidth is thus
@@ -74,7 +73,7 @@ of the same information — bridge RTL is reusable.
 - [ ] TB: correct 18-byte line each period while laminar; XOR verified by
       the TB parser, not eyeballed.
 - [ ] TB: emission stops within one period of `is_laminar` dropping;
-      resumes with `ss` continuity after it returns.
+      resumes with the current `ss` status byte after it returns.
 - [ ] TB: `henosis_since_last` set exactly when ≥1 Henosis pulse occurred
       in the elapsed period, clear otherwise.
 - [ ] TB: governor relay picks the max-`dd` satellite, sets bit2,

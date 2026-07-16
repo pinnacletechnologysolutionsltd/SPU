@@ -4,6 +4,10 @@
 // Contract: docs/CARTESIAN_BRIDGE_SPEC.md §7; oracle:
 // software/lib/cartesian_bridge.py quantize_scalar. Floats never exist
 // on the fabric — host/southbridge owns any float->S24.8 conversion.
+//
+// Lifecycle: active shared primitive with oracle-derived TB coverage.
+// It is not yet instantiated by a board top and its signed 16-bit output
+// requires an explicit widening adapter before use with SOM v1's P18/Q18 ABI.
 module spu_cartesian_quantizer (
     input  wire        clk,
     input  wire        rst_n,

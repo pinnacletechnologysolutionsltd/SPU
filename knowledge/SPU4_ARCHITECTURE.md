@@ -38,7 +38,11 @@ The core logic resides in `hardware/rtl/core/spu4/`:
 
 - **Arithmetic & Intelligence:**
   - `spu4_euclidean_alu.v`: The primary execution unit for standard Euclidean math.
-  - `spu4_som_edge.v`: A lightweight 4-node register-backed Self-Organizing Map (SOM) / Best Matching Unit (BMU) classifier tailored for ~400 LUT edge nodes.
+  - `spu4_som_edge.v`: A lightweight 4-node register-backed BMU experiment.
+    It is TB-only: no core/board instantiation, upload path, synthesis record,
+    or silicon evidence. Its 2-bit output is a winner node, while the cluster
+    bridge expects a 4-bit semantic label; a node-to-class mapper is still
+    required.
 
 - **Interconnect & Communication:**
   - `spu4_cluster_bridge.v`: Handles the framing and signaling between an SPU-4 satellite and an SPU-13 governor.
@@ -69,7 +73,11 @@ The SPU-4 design is highly verified in RTL and silicon. The first standalone sil
 | Decoder | RTL | `spu4_decoder_tb.v` |
 | Register File | RTL | `spu4_regfile_tb.v` |
 | Precession | RTL | `spu4_precession_tb.v` |
-| Cluster Bridge | RTL | `spu4_cluster_bridge_tb.v` |
-| SOM Edge Node | RTL | `spu4_som_edge_tb.v` |
+| Cluster Bridge | RTL/TB only; not wired into a board top | `spu4_cluster_bridge_tb.v` |
+| SOM Edge Node | RTL/TB experiment only; no upload/synthesis/silicon path | `spu4_som_edge_tb.v` |
+
+The SPU-13 SOM-SIDECAR is the current small-fabric classifier product path.
+The SPU-4 BMU remains a future cost-down tier and must not be cited as an
+integrated SPU-4 capability.
 
 See `docs/hardware_evidence.md` §3.2j for detailed bitstream records.

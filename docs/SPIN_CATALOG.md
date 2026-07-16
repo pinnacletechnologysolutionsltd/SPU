@@ -116,14 +116,13 @@ A spin becomes a product when all four exist. Current gap table:
 | Requirement | State today |
 |---|---|
 | Southbridge host path (RP2350 or any SPI master) | exists for A7 J11 + Tang spins; protocol versioned as v1 with a compatibility promise, `docs/SOUTHBRIDGE_SPI_PROTOCOL.md` (done 2026-07-08) |
-| Host library (Python wrapper over the 8 SPI opcodes) | **done** (2026-07-08): `software/spu_host/` — typed client + CLI over the console grammar; not yet a `pip install`-able package |
-| Per-spin example program with expected output | golden UART lines exist; user-facing examples do not |
-| Doc page per spin (flash command, wiring, first-hour walkthrough) | this catalog is the index; pages not written |
+| Host library (Python wrapper over the 8 SPI opcodes) | **done**: `software/spu_host/`, installable with `python3 -m pip install -e .`; typed client + `spu-host` CLI |
+| Per-spin example program with expected output | ROBOTICS, LUCAS, TENSEGRITY, and SOM-SIDECAR examples exist under `tools/`; other product candidates remain open |
+| Doc page per spin (flash command, wiring, first-hour walkthrough) | SOM-SIDECAR page complete (`docs/SOM_SIDECAR_QUICKSTART.md`); remaining spins open |
 
-Remaining highest-leverage item: per-spin example scripts built on
-`spu_host` (e.g. a `robotics_demo.py` that drives the ROBOTICS spin's
-six-step closure and prints the exact-arithmetic proof) — these turn the
-library into the "first hour" experience the catalog promises.
+Remaining highest-leverage evaluator item is the physical-sensor SOM path:
+INA226 acquisition, deterministic temporal features, and the versioned `SOM1`
+decision-evidence frame.
 
 ---
 

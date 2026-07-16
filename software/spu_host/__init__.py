@@ -8,7 +8,7 @@ contract in knowledge/INTERCONNECT_ARCHITECTURE.md §2, this library is
 written once against the console grammar and works unmodified against any
 board the southbridge firmware targets (Tang 25K, Wukong A7 J11, ...).
 
-CC0 1.0 Universal.
+License: MIT. See software/LICENSE.
 """
 
 from .client import SPUHostClient, SPUProtocolError

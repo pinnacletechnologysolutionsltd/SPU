@@ -52,6 +52,7 @@ spu13.json
 # Python
 venv/
 __pycache__/
+*.egg-info/
 *.pyc
 *.pyo
 

@@ -26,8 +26,10 @@ module spu4_cluster_bridge (
     input  wire [7:0]   dissonance,
     input  wire [9:0]   status_payload,
 
-    // SOM classification (Arlinghaus micro→meso material labeling)
-    input  wire [3:0]   som_label,       // material class from SPU-4 SOM
+    // SOM classification (Arlinghaus micro→meso material labeling).
+    // This is a semantic class, not spu4_som_edge's 2-bit winner node;
+    // an explicit node→class mapper is required before integration.
+    input  wire [3:0]   som_label,
     input  wire         som_valid,       // high when classification is fresh
 
     // Node link to/from SPU-13

@@ -2,8 +2,8 @@
 //
 // Emits an 18-byte ASCII frame each period while is_laminar holds.
 // Frame: W1 ii ff dd ss xx\n
-// ss = som_label (Arlinghaus SOM integration) — no longer an
-// auto-incrementing counter; the satellite feeds its edge SOM output.
+// ss = application status byte. Current Arlinghaus integration uses the
+// low nibble for a semantic SOM label and reserves the high nibble.
 // XOR checksum covers bytes 0..14 (spaces included).
 //
 // Per docs/WHISPER_V1_SPEC.md §2–3.  Fail-silent while !is_laminar.
@@ -18,7 +18,9 @@ module spu_whisper_v1_emitter #(
     input  wire [3:0] node_id,
     input  wire [2:0] flags_in,
     input  wire [7:0] dissonance,
-    input  wire [7:0] som_label,   // Arlinghaus: edge SOM classification
+    // Legacy port name retained for source compatibility. This is the full
+    // `ss` application-status byte, not a transport sequence counter.
+    input  wire [7:0] som_label,
     output wire       tx,
     output reg        busy
 );

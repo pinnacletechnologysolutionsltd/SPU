@@ -64,7 +64,7 @@ module spu4_dissonance_whisper_tb;
     wire [3:0] rx_node_id;
     wire [2:0] rx_flags;
     wire [7:0] rx_dissonance;
-    wire [7:0] rx_som_label;   // frame field named "seq" in the listener port
+    wire [7:0] rx_status;   // `ss` status byte; listener port keeps legacy name
     wire       rx_valid, rx_err, rx_incoherent;
 
     spu_whisper_v1_listener #(
@@ -72,7 +72,7 @@ module spu4_dissonance_whisper_tb;
     ) u_listener (
         .clk(clk), .rst_n(!reset), .rx(whisper_tx),
         .node_id(rx_node_id), .flags(rx_flags),
-        .dissonance(rx_dissonance), .seq(rx_som_label),
+        .dissonance(rx_dissonance), .seq(rx_status),
         .frame_valid(rx_valid), .frame_err(rx_err), .incoherent(rx_incoherent)
     );
 

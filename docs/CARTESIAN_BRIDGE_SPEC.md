@@ -189,4 +189,12 @@ that special-cases the bound by magnitude alone gets one of them wrong.
 Egress (dequantize) RTL is *not* part of v0.1 — display-side conversion
 happens on the host/southbridge, which is where the consumer lives.
 
+**Lifecycle clarification (2026-07-17):** the quantizer is an active shared
+primitive with an oracle-derived testbench, but it is not instantiated by any
+current board top. Its output is the original signed 16-bit `{P16,Q16}` sensor
+boundary representation. SOM v1 accepts signed 18-bit `{P18,Q18}` components,
+so a future on-fabric sensor path must add and test an explicit sign-extending
+adapter. The present Iris and RP2350 console demos perform their checked
+integer packing on the host/southbridge and do not exercise this RTL module.
+
 *CC0 1.0 Universal, like the rest of `docs/`.*

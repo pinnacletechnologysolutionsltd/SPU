@@ -209,11 +209,12 @@ hierarchy natively:
 Whisper v0 exists in RTL (`spu_whisper_sane.v`): a one-way coherence
 beacon that emits `SANE\n` over UART while the manifold is laminar — a
 node that stops whispering is incoherent or dead, with zero protocol
-overhead. Whisper v1 (direction, not yet designed): extend the beacon to
-carry the 16-bit dissonance frame, making inter-node links the same
-independence-then-aggregation structure as the intra-cluster bridge. The
-southbridge SPI 5-opcode contract remains the command-plane HAL; whisper
-is the coherence plane.
+overhead. Whisper v1 now exists in RTL and testbench form: it carries the
+fixed 18-byte ASCII `W1 ii ff dd ss xx\n` frame, where the low nibble of
+the `ss` status byte is the semantic SOM label. This makes inter-node links the same
+independence-then-aggregation structure as the intra-cluster bridge. It
+has not yet been proven on hardware. The southbridge SPI contract remains
+the command-plane HAL; whisper is the coherence plane.
 
 ### Status honesty table
 
@@ -222,20 +223,21 @@ is the coherence plane.
 | SPU-4 standalone core | **Silicon-verified** (2026-07-08) |
 | SPU-4 resource envelope (~400 LUT) | Measured (yosys, incl. probe fixture) |
 | Hamming SEC prims / ECC regfiles | RTL + TB verified |
-| `spu4_cluster_bridge` | RTL + TB verified; 24-bit frame with SOM label (2026-07-09) |
+| `spu4_cluster_bridge` | RTL + TB verified only; not instantiated by a core/board top. Its 4-bit semantic-label input still needs a mapper from the SPU-4 BMU's 2-bit winner node. |
 | `spu_node_link` | TB verified, **not on hardware** |
 | Whisper v0 (SANE beacon) | RTL, wired in spu4/system tops |
 | Whisper v1 (dissonance + SOM label gossip) | RTL + TB verified (2026-07-09); **not on hardware** |
-| SOM → cluster bridge wiring | Contract defined; SPU-4 edge SOM RTL + TB verified (2026-07-09) |
-| `spu4_som_edge` | RTL + TB verified (2026-07-09); ~61 cells, fits SPU-4 edge budget; 4-node register-backed quadrance BMU |
-| `spu13_satellite_aggregator` (13-satellite whisper array + addressed command bus) | RTL + TB verified (2026-07-09); not instantiated by any board top, not synthesised, not on hardware. Fixed a real status-packing bit-alignment bug (incoherent/som_valid/som_label/dissonance all landed one bit off due to a 15-bit concat assigned to a 16-bit register) and a hardcoded-CLK_HZ bug (module only worked at exactly 50 MHz, untestable at any other simulation clock) — both found by writing the first testbench for this module, not visible from compilation alone. |
+| SOM → cluster bridge wiring | Not implemented. The bridge expects a 4-bit semantic class, while the experimental SPU-4 BMU emits a 2-bit winner node; a node-to-class mapper and real core/board wiring are still required. |
+| `spu4_som_edge` | RTL + TB experiment only (2026-07-09); no core/board instantiation, weight-upload path, synthesis record, or silicon evidence. Deferred cost-down tier. |
+| `spu13_satellite_aggregator` (13-satellite whisper array + addressed command bus) | RTL + TB verified; Tang 25K probe synthesized/P&R/packed at 7,855 LUT4 and 59.2 MHz, but still awaits a board run. |
 
-Next concrete steps, in dependency order: (1) `spu_node_link` on silicon
-(two Tang boards or Tang↔Wukong), (2) a 1-satellite cluster probe (one
-SPU-4 + SPU-13 governor over the cluster bridge, single board) with SOM
-label propagation, (3) whisper v1 probe on silicon (emitter+listener
-loopback, board target ready 2026-07-09), (4) SPU-4 edge SOM — lightweight
-BMU classifier at ~400 LUT edge node.
+Near-term product work remains SPU-13-first: connect a physical sensor
+through the RP2350 and Cartesian boundary into the silicon-proven
+SOM-SIDECAR, then wrap training and evaluation around that end-to-end
+path. Constellation follow-up is whisper v1 silicon proof and a
+one-satellite cluster probe. The SPU-4 BMU is a later cost-down tier,
+after it has a weight-upload path, winner-node-to-class mapper, and real
+core/board integration.
 
 ---
 
