@@ -135,14 +135,15 @@ standard-library POSIX serial transport in `tools/som_map.py`.
 
 ## Current product boundary
 
-- The silicon-proven image documented above predates the SOM1 tranche: semantic
-  labels come from the checksummed host artifact and the compact hardware result
-  carries the fixed legacy label LUT.
-- At current HEAD, the 52-byte `SOM1` frame and seven semantic-label writes are
-  RTL/host and Tang-build verified. They expose winner, runner-up, exact
-  distances, confidence gap, ambiguity, map/result generations, error/status,
-  and CRC-32 without changing the compact byte. Renewed Tang corpus evidence is
-  pending.
+- The renewed 52-byte `SOM1` frame and all seven semantic-label writes are now
+  Tang-silicon verified over the complete 150-sample corpus. Winner, runner-up,
+  exact distances, confidence gap, ambiguity, map/result generations,
+  error/status, and CRC-32 matched the software oracle on every sample. See
+  `docs/hardware_evidence.md` §3.2g.4.
+- The compact result byte remains compatible and retains its legacy label LUT;
+  consumers that need map-owned labels and replay evidence must use `SOM1`.
+- An Artix-7 full-sidecar port and byte-identical replay remain pending. The
+  existing Artix `SOMPROBE` is a fixed fixture, not this writable product path.
 - Physical INA226 sensor acquisition and deterministic temporal feature
   extraction remain the next bench tranche. Their software ABI is now proven
   by `python3 tools/som_sensor_replay.py`; see `docs/SOM_SENSOR_REPLAY.md`.

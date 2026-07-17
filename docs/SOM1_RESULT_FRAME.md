@@ -1,8 +1,8 @@
 # SOM1 decision-evidence frame
 
 Date: 2026-07-17
-Status: RTL, SPI testbench, firmware transport, host parser, and renewed Tang
-25K build verified; silicon proof pending.
+Status: RTL, SPI testbench, firmware transport, host parser, Tang 25K build,
+and 150-sample Tang silicon corpus verified; Artix-7 replay pending.
 
 ## Purpose
 
@@ -105,4 +105,8 @@ packing at 14,068/23,040 LUT4 (61%), 3,251/23,040 DFF (14%), and 8/56 BSRAM
 (14%). The routed maximum frequency was 75.79 MHz against the 50 MHz constraint.
 The generated bitstream SHA-256 is
 `8753c4924ed6952c049a038a80cbe3bfb8b930e038842631665108af4ad1ff92`.
-This is build evidence only; the image has not yet been exercised on the board.
+The image was SRAM-loaded on 2026-07-17 and processed the checked 150-sample
+Iris corpus with all 150 frames matching the exact software oracle across
+winner, runner-up, label, both quadrances, confidence gap, ambiguity, status,
+map/result generations, and CRC-32. Full bench identity and output are in
+`docs/hardware_evidence.md` §3.2g.4.

@@ -1186,6 +1186,77 @@ This closes the reproducible-map and Tang full-corpus portions of SOM v1.
 The rich versioned result frame, interrupted/partial hydration contract, and
 Artix-7 replay remain open before the complete v1 exit gate.
 
+### 3.2g.4 SOM1 Full Decision-Evidence Silicon Proof
+
+**Date:** 2026-07-17 NZT
+
+**Scope:** renewed Tang Primer 25K silicon proof of the complete versioned
+`SOM1` observation-to-decision path. This run used the same checked Iris map
+and corpus as §3.2g.3, but replaced the legacy winner-only evidence boundary
+with the 52-byte CRC-protected frame and hydrated all seven semantic labels in
+addition to the 28 prototype values.
+
+**Bench:** Tang Primer 25K dock plus RP2350/Pico 2. The RP2350 diagnostic
+firmware drove SPI0 at 250 kHz with GP0 MISO, GP1 CS#, GP2 SCK, and GP3 MOSI.
+Tang J4 was J4-1/G10 CS#, J4-2/D10 SCK, J4-3/B10 MOSI, J4-4/C10 MISO, and
+J4-5/common ground. The Tang dock debugger exposed UART on `/dev/ttyUSB1`; the
+RP2350 console was `/dev/ttyACM0`.
+
+**Artifact identity:**
+
+- bitstream SHA-256:
+  `8753c4924ed6952c049a038a80cbe3bfb8b930e038842631665108af4ad1ff92`
+- RP2350 UF2 SHA-256:
+  `51a0f26940464d82d11b392d9a363f218e0a343fa33658c296686dc001f63de1`
+- canonical map SHA-256 recorded by the artifact:
+  `3373e851c29450e37fca76281f9ea4dbbdf1b94b34cf1b7bd74f6d83fe8eaa15`
+- checked JSON file SHA-256:
+  `1288c03dc7f68a8e165906a30921d9b055d58f6799d4759c484baaaf68f19b8e`
+- dataset SHA-256:
+  `6f608b71a7317216319b4d27b4d9bc84e6abd734eda7872b71a458569e2656c0`
+
+**Load and run:**
+
+```bash
+openFPGALoader -b tangprimer25k \
+  build/tang_primer_25k_spu13_som_sidecar.fs
+picotool load -f build/rp2350_som/rp2350_spu_diag.uf2
+python3 tools/iris_som_demo.py --hardware \
+  --console-port /dev/ttyACM0 --uart-port /dev/ttyUSB1
+```
+
+**Result:**
+
+```text
+Uploading iris-som-v1 to /dev/ttyACM0...
+  map upload: 35/35 writes
+  corpus: 150/150 exact SOM1 evidence matches
+Hardware corpus elapsed: 16.9s
+FPGA confusion matrix
+                 predicted
+true             set  ver  vir
+setosa            50    0    0
+versicolor         0   48    2
+virginica          0    1   49
+accuracy: 147/150 (98.0%)
+IRIS_SOM_V1: PASS (150/150 FPGA winners bit-exact to oracle)
+```
+
+For every sample, the host parser validated magic, version, length, reserved
+bytes, and CRC-32. It then required the hardware winner, runner-up, semantic
+label, best quadrance, second quadrance, exact confidence gap, ambiguity bit,
+valid/busy/runner-up/map-valid flags, and zero error code to match the exact
+software oracle. The hydrated map generation was nonzero and stable for the
+whole corpus; result generations were consecutive. The legacy compact SPI
+result and independent C3 UART byte were also checked on every sample.
+
+The renewed image uses 14,068/23,040 LUT4 (61%), 3,251 DFF (14%), and 8/56
+BSRAM (14%), with 0 DSP. Route closes at 75.79 MHz against the real 50 MHz
+clock. This closes Tang silicon evidence for the full `SOM1` frame and
+map-owned semantic-label path. The 147/150 figure is model accuracy; the
+hardware implementation equivalence result is 150/150. Artix-7 full-sidecar
+replay and physical sensor acquisition remain separate open evidence items.
+
 ### 3.2h Six-Step Robotics Kinematics Silicon Probe
 
 **Date:** 2026-07-01 NZT
