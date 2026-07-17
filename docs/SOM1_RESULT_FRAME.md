@@ -2,7 +2,7 @@
 
 Date: 2026-07-17
 Status: RTL, SPI testbench, firmware transport, host parser, Tang 25K build,
-and 150-sample Tang silicon corpus verified; Artix-7 replay pending.
+and 150-sample silicon corpus verified on both Tang 25K and Wukong Artix-7.
 
 ## Purpose
 

@@ -31,7 +31,7 @@ in §4 — "product-candidate" describes intent, not readiness.
 | LUCAS | Wukong A7 100T | Lucas Phinary MAC + CE-paced SPI sidecar | 5,073 LC, 120 DSP, 4.41 MHz | silicon (PSCALE/PCHIRAL/PMUL/PINV over J11) |
 | RPLU2PADE | Wukong A7 100T | A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] | 72 DSP, 34% LUT | silicon (`RPLU2PADE_J11: PASS`) |
 | SU3SHARE | Wukong A7 100T | SU3 sidecar + RPLU2 config/QR, one shared M31 multiplier | see build log | silicon (both paths pass on one bitstream) |
-| SOM-SIDECAR | Tang 25K → smaller fabrics | standalone SOM edge classifier (`build_25k_spu13_som_sidecar.sh`, top module `spu13_tang25k_som_sidecar_top.v`) | 14,068 LUT4 (61%), 8 BSRAM, 0 DSP; 75.79 MHz Fmax @ 50 MHz target | silicon: writable SPI map/labels, fixed-434-clock exact BMU, C3 UART, and 52-byte SOM1 evidence proven. Reproducible Iris demo passes 150/150 complete FPGA/oracle evidence records and 147/150 semantic labels (98.0%); checked map and runner are `software/models/iris_som_v1.json` and `tools/iris_som_demo.py`. |
+| SOM-SIDECAR | Tang 25K / Wukong A7 100T → smaller fabrics | standalone writable SOM edge classifier (`build_25k_spu13_som_sidecar.sh`; `build_a7.sh 100t somsidecar`) | Tang: 14,068 LUT4, 8 BSRAM, 0 DSP, 75.79 MHz; A7: 8,013 SLICE_LUTX, 4 RAMB18, 44 DSP, 65.63 MHz; both at 50 MHz target | silicon on both vendors: writable SPI map/labels, fixed-434-clock exact BMU, UART, compact SPI, and 52-byte SOM1 evidence proven. The same Iris artifact passes 150/150 complete FPGA/oracle evidence records on both boards and 147/150 semantic labels (98.0%). |
 | SPU4-SENTINEL | Tang 25K → smallest fabrics | SPU-4 core, Davis gate, whisper v0 | ~400 LUT | silicon (2026-07-08, `SPU4:P A=0000 B=0155 C=0155 D=0155`) |
 
 **First-hour stories:**
@@ -87,7 +87,7 @@ Wukong Artix-7:
 
 | Spin | Proves | Status |
 |---|---|---|
-| SOMPROBE (`build_a7.sh 100t somprobe`) | Tang-proven SOM fixture on A7 — same golden line `SOM:P T:2 B:6 E:00` on both vendors = cross-vendor determinism proof | built, awaiting board run (~2.6k LUT, 84 DSP, 4 BRAM) |
+| SOMPROBE (`build_a7.sh 100t somprobe`) | Historical fixed fixture; superseded for product evidence by the writable SOM-SIDECAR | built; board run unnecessary for the now-closed full-sidecar cross-vendor proof |
 | TENSEGRITYPROBE (`build_a7.sh 100t tensegrityprobe`) | seven frozen TGR1 admission fixtures, including exact strut intersection and type-uniform Z[phi] equilibrium | silicon PASS 2026-07-14: `TGR:P V:7 E:00` |
 | TENSEGRITYLINK (`build_a7.sh 100t tensegritylink`) | B2 transactional TGR1 BRAM hydration, synchronous guard replay, coherent B3 status, and rollback | Partial silicon 2026-07-16: J11/SD/B2/B3/parser proven and canonical commits with intersection-only or equilibrium-only images; full combined image remains `verify_busy` after all 468 bytes, so atomic combined admission/rollback are not yet proven. Refactor into explicit stages before another full build. |
 

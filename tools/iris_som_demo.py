@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import csv
 import hashlib
 import json
@@ -161,7 +162,7 @@ def run_hardware(
     samples: list[tuple[tuple[int, ...], int]],
     expected_winners: list[int],
     console_path: str,
-    uart_path: str,
+    uart_path: str | None,
 ) -> tuple[list[list[int]], int]:
     nodes_by_id = {node["id"]: node for node in document["nodes"]}
     nodes = map_nodes(document)
@@ -174,7 +175,8 @@ def run_hardware(
     active_map_generation = None
     last_result_generation = None
     started = time.monotonic()
-    with PosixSerial(console_path) as console_serial, PosixSerial(uart_path) as uart:
+    uart_context = PosixSerial(uart_path) if uart_path else nullcontext(None)
+    with PosixSerial(console_path) as console_serial, uart_context as uart:
         console = DiagConsole(console_serial)
         print(f"Uploading {document['model']} to {console_path}...")
         upload_map(console, document)
@@ -185,9 +187,10 @@ def run_hardware(
             for feature_index, value in enumerate(feature):
                 packed = pack_surd(value, 0)
                 console.command(f"featwrite {feature_index} 0x{packed:016X}")
-            uart.drain(0.002)
+            if uart is not None:
+                uart.drain(0.002)
             console.command("classify")
-            telemetry = uart.read_exact(1, 1.0)[0]
+            telemetry = uart.read_exact(1, 1.0)[0] if uart is not None else None
             response = console.command("result")
             done, busy, raw_label, raw = parse_result_response(response)
             som1 = parse_som1_console_response(console.command("som1"))
@@ -198,18 +201,26 @@ def run_hardware(
                 feature_weights,
             )
 
-            node = telemetry & 0x7
-            uart_label = (telemetry >> 3) & 0x3
+            node = som1.winner
             if not done or busy or raw != (0x80 | (raw_label << 4)):
                 raise RuntimeError(
                     f"sample {index}: invalid result state done={done} busy={busy} "
                     f"label={raw_label} raw=0x{raw:02X}"
                 )
-            if uart_label != raw_label or raw_label != SIDECAR_RAW_LABELS[node]:
+            if raw_label != SIDECAR_RAW_LABELS[node]:
                 raise RuntimeError(
-                    f"sample {index}: UART/SPI raw-label mismatch "
-                    f"node={node} uart={uart_label} spi={raw_label}"
+                    f"sample {index}: SPI compact/SOM1 raw-label mismatch "
+                    f"node={node} spi={raw_label}"
                 )
+            if telemetry is not None:
+                uart_node = telemetry & 0x7
+                uart_label = (telemetry >> 3) & 0x3
+                if uart_node != node or uart_label != raw_label:
+                    raise RuntimeError(
+                        f"sample {index}: UART/SPI result mismatch "
+                        f"uart_node={uart_node} som1_node={node} "
+                        f"uart_label={uart_label} spi_label={raw_label}"
+                    )
             if node != expected_node:
                 raise RuntimeError(
                     f"sample {index}: FPGA node {node}, oracle node {expected_node}"
@@ -257,9 +268,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--map", default=str(DEFAULT_MAP), help="checked SOM map JSON")
     parser.add_argument("--emit-map", metavar="PATH", help="write regenerated map JSON")
-    parser.add_argument("--hardware", action="store_true", help="run the connected Tang")
+    parser.add_argument("--hardware", action="store_true", help="run the connected SOM sidecar")
     parser.add_argument("--console-port", default="/dev/ttyACM0")
     parser.add_argument("--uart-port", default="/dev/ttyUSB1")
+    parser.add_argument(
+        "--no-uart",
+        action="store_true",
+        help="skip optional legacy UART telemetry; validate SPI compact and SOM1 results",
+    )
     args = parser.parse_args()
 
     samples = load_iris()
@@ -290,7 +306,7 @@ def main() -> int:
             samples,
             winners,
             args.console_port,
-            args.uart_port,
+            None if args.no_uart else args.uart_port,
         )
         print_confusion("FPGA confusion matrix", hw_confusion, sum(
             hw_confusion[i][i] for i in range(3)

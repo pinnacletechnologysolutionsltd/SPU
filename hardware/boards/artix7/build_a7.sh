@@ -8,7 +8,7 @@
 #   bash build_a7.sh 100t intelligence           # INTELLIGENCE spin on 100T
 #   A7_FREQ=2 bash build_a7.sh 100t lucas all    # Wukong pinned low-speed bring-up
 #
-# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | irotc | som | somprobe | tensegrityprobe | tensegritylink | custom
+# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | irotc | som | somprobe | somsidecar | tensegrityprobe | tensegritylink | custom
 #
 # somprobe is a standalone top (not a spu_a7_top spin): the Tang-25K-proven
 # SOM/BMU fixture on its own synthesis path + minimal XDC.  Golden UART line
@@ -67,7 +67,7 @@ A7_SEED="${A7_SEED:-1}"
 # §3.2e.4, recurred on the IROTC spin's first build — §3.2k.1). An
 # explicit A7_CLK_DIV_LOG2 env var still overrides this default.
 case "$SPIN" in
-    LUCAS|SU3|RPLUCFG|RPLU2LIVE|RPLU2PADE|SOMPROBE|TENSEGRITYPROBE|TENSEGRITYLINK) A7_CLK_DIV_LOG2_DEFAULT=0;;
+    LUCAS|SU3|RPLUCFG|RPLU2LIVE|RPLU2PADE|SOMPROBE|SOMSIDECAR|TENSEGRITYPROBE|TENSEGRITYLINK) A7_CLK_DIV_LOG2_DEFAULT=0;;
     *)                                     A7_CLK_DIV_LOG2_DEFAULT=6;;
 esac
 A7_CLK_DIV_LOG2="${A7_CLK_DIV_LOG2:-$A7_CLK_DIV_LOG2_DEFAULT}"
@@ -101,6 +101,10 @@ if [ "$SPIN" = "SOMPROBE" ]; then
     YS="hardware/boards/artix7/synth_a7_som_probe.ys"
     XDC="hardware/boards/artix7/spu_a7_som_probe.xdc"
     TOP="spu_a7_som_probe_top"
+elif [ "$SPIN" = "SOMSIDECAR" ]; then
+    YS="hardware/boards/artix7/synth_a7_som_sidecar.ys"
+    XDC="hardware/boards/artix7/spu_a7_som_sidecar.xdc"
+    TOP="spu_a7_som_sidecar_top"
 elif [ "$SPIN" = "TENSEGRITYPROBE" ]; then
     YS="hardware/boards/artix7/synth_a7_tensegrity_probe.ys"
     XDC="hardware/boards/artix7/spu_a7_tensegrity_probe.xdc"

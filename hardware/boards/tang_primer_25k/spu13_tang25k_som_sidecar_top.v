@@ -236,6 +236,7 @@ module spu13_tang25k_som_sidecar_top (
     // ── UART TX (bit-banged, proven in SOM BMU probe) ────────────────
     reg [9:0]  tx_shift;
     reg [15:0] tx_count;
+    reg [15:0] tx_baud_count;
     reg [7:0]  tx_byte;
     reg        tx_sending;
     reg        tx_pending;
@@ -244,6 +245,7 @@ module spu13_tang25k_som_sidecar_top (
         if (!rst_n) begin
             tx_shift <= 10'h3FF;
             tx_count <= 0;
+            tx_baud_count <= 0;
             tx_sending <= 1'b0;
             tx_pending <= 1'b0;
             uart_tx_telemetry <= 1'b1;
@@ -253,6 +255,7 @@ module spu13_tang25k_som_sidecar_top (
                 if (tx_pending && tx_count == 0) begin
                     tx_shift <= {1'b1, tx_byte, 1'b0};
                     tx_count <= CLKS_PER_BIT * 10;
+                    tx_baud_count <= CLKS_PER_BIT - 1;
                     tx_sending <= 1'b1;
                     tx_pending <= 1'b0;
                 end
@@ -262,8 +265,16 @@ module spu13_tang25k_som_sidecar_top (
                     uart_tx_telemetry <= 1'b1;
                 end else begin
                     uart_tx_telemetry <= tx_shift[0];
-                    if (tx_count % CLKS_PER_BIT == 1)
+                    // A dedicated baud counter avoids synthesising the
+                    // constant-modulo expression into a deep combinational
+                    // divider on Xilinx.  The previous condition shifted at
+                    // exactly the same 434-cycle boundaries.
+                    if (tx_baud_count == 0) begin
                         tx_shift <= {1'b1, tx_shift[9:1]};
+                        tx_baud_count <= CLKS_PER_BIT - 1;
+                    end else begin
+                        tx_baud_count <= tx_baud_count - 1'b1;
+                    end
                 end
                 tx_count <= tx_count - 1;
             end

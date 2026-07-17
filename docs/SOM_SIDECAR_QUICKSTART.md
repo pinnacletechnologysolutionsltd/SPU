@@ -1,7 +1,7 @@
 # SOM-SIDECAR evaluator quickstart
 
-This is the canonical first-hour procedure for the Tang Primer 25K
-SOM-SIDECAR. It loads a checksummed seven-node Iris map through an RP2350,
+This is the canonical first-hour procedure for the Tang Primer 25K or Wukong
+Artix-7 100T SOM-SIDECAR. It loads a checksummed seven-node Iris map through an RP2350,
 classifies all 150 checked-in samples, and requires every FPGA winner to match
 the exact software oracle.
 
@@ -18,7 +18,7 @@ checked CSV corpus.
 
 ## Required hardware
 
-- Tang Primer 25K with dock;
+- Tang Primer 25K with dock, or Wukong Artix-7 100T plus DirtyJTAG;
 - Raspberry Pi Pico 2 / RP2350 board;
 - four SPI signal wires plus a common ground;
 - one USB connection for the RP2350 console and one USB connection for the
@@ -50,6 +50,20 @@ USB CDC console commonly appears as `/dev/ttyACM0`. Confirm the actual paths:
 ls -l /dev/serial/by-id/
 ```
 
+For Wukong, use only the proven J11 bottom-row remap; the top row on the
+recorded unit is damaged:
+
+| Signal | Wukong J11/package pin | RP2350 |
+|---|---|---|
+| MISO, FPGA to RP2350 | J11-10 / B5 | GP0 |
+| CS#, RP2350 to FPGA | J11-7 / J4 | GP1 |
+| SCK, RP2350 to FPGA | J11-8 / G4 | GP2 |
+| MOSI, RP2350 to FPGA | J11-9 / B4 | GP3 |
+| Ground | J11-11 | GND |
+
+Wukong UART TX is package pin E3. On the recorded bench the RP2350 console
+was `/dev/ttyACM6` and the UART adapter was `/dev/ttyUSB0`.
+
 ## Build and load the RP2350 console
 
 With `PICO_SDK_PATH` configured:
@@ -74,6 +88,18 @@ openFPGALoader -b tangprimer25k \
   build/tang_primer_25k_spu13_som_sidecar.fs
 ```
 
+For Wukong:
+
+```bash
+bash hardware/boards/artix7/build_a7.sh 100t somsidecar synth
+bash hardware/boards/artix7/build_a7.sh 100t somsidecar pnr
+PRJXRAY_ROOT=$HOME/toolchains/prjxray \
+OPENXC7_PYTHON=$HOME/.local/venvs/prjxray/bin/python \
+  bash hardware/boards/artix7/build_a7.sh 100t somsidecar pack
+openFPGALoader -c dirtyJtag --freq 1000000 \
+  build/spu_a7_100t_SOMSIDECAR.bit
+```
+
 The corpus-proven image recorded on 2026-07-17 has SHA-256:
 
 ```text
@@ -90,8 +116,16 @@ The renewed SOM1-capable image built on 2026-07-17 has SHA-256:
 ```
 
 It uses 14,068 LUT4 (61%), 3,251 DFF (14%), and 8 BSRAM (14%), and routes at
-75.79 MHz against the 50 MHz constraint. This newer hash is build-verified but
-not yet silicon-proven.
+75.79 MHz against the 50 MHz constraint. This hash is Tang-silicon proven.
+
+The cross-vendor Wukong image has SHA-256:
+
+```text
+f22a34e78437583efcb6a5a0bafb800c9df6a0803ee8614e8184b170cf5bf180
+```
+
+It uses 8,013 SLICE_LUTX (6%), 3,098 SLICE_FFX (2%), 44 DSP48E1, and four
+RAMB18E1 blocks, and routes at 65.63 MHz against the 50 MHz constraint.
 
 ## Run the reproducible hardware proof
 
@@ -121,6 +155,10 @@ accuracy: 147/150 (98.0%)
 The canonical map is `software/models/iris_som_v1.json`. The runner refuses to
 continue if that artifact differs from deterministic regeneration.
 
+If a deployment exposes only SPI, add `--no-uart`. This still validates the
+compact SPI result and every SOM1 field and CRC; the canonical silicon proof
+above retains UART so all three result surfaces are checked.
+
 ## Optional host-library installation
 
 The general southbridge client is installable from the repository:
@@ -142,8 +180,9 @@ standard-library POSIX serial transport in `tools/som_map.py`.
   `docs/hardware_evidence.md` §3.2g.4.
 - The compact result byte remains compatible and retains its legacy label LUT;
   consumers that need map-owned labels and replay evidence must use `SOM1`.
-- An Artix-7 full-sidecar port and byte-identical replay remain pending. The
-  existing Artix `SOMPROBE` is a fixed fixture, not this writable product path.
+- The complete writable sidecar is silicon-proven on Tang 25K and Wukong
+  Artix-7 with 150/150 exact SOM1 evidence records on both vendors. The older
+  Artix `SOMPROBE` remains only a fixed historical fixture.
 - Physical INA226 sensor acquisition and deterministic temporal feature
   extraction remain the next bench tranche. Their software ABI is now proven
   by `python3 tools/som_sensor_replay.py`; see `docs/SOM_SENSOR_REPLAY.md`.

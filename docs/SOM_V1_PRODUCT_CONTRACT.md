@@ -110,9 +110,9 @@ existing compact byte.
 | Tang standalone sidecar SPI/UART path | silicon PASS; SPI `80 A0 B0`, C3 UART `00 14 1E` |
 | Reproducible seven-node Iris map | PASS; checked JSON equals deterministic regeneration |
 | Iris corpus on Tang sidecar | silicon PASS; 150/150 FPGA winners equal oracle, 147/150 labels correct |
-| Artix-7 identical-fixture probe | built and testbench PASS; board run pending |
+| Artix-7 complete writable sidecar | silicon PASS; 35/35 hydration writes and 150/150 complete SOM1 records equal oracle |
 | Exact-order fixed-schedule comparator at HEAD | testbench/trace PASS; renewed Tang sidecar silicon proof PASS |
-| SOM1 result encoder/SPI/host parser | RTL + malformed-frame host tests + renewed Tang build PASS; silicon replay pending |
+| SOM1 result encoder/SPI/host parser | silicon PASS on Tang 25K and Wukong Artix-7; complete 150-sample replay on both vendors |
 
 The corpus-proven Tang sidecar uses 12,865/23,040 LUT4 (55%), 1,576 DFF,
 1,192 ALU, 8/56 BSRAM, and no DSP. It closes at 79.38 MHz against the real

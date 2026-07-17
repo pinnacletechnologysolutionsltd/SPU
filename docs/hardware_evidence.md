@@ -1257,6 +1257,69 @@ map-owned semantic-label path. The 147/150 figure is model accuracy; the
 hardware implementation equivalence result is 150/150. Artix-7 full-sidecar
 replay and physical sensor acquisition remain separate open evidence items.
 
+### 3.2g.5 Cross-Vendor SOM1 Replay on Wukong Artix-7
+
+**Date:** 2026-07-17 NZT
+
+**Scope:** Wukong Artix-7 100T silicon proof of the complete writable
+SOM-SIDECAR used in §3.2g.4, rather than the older fixed-fixture SOMPROBE.
+The Artix wrapper instantiates the same SPI receiver, map and semantic-label
+storage, fixed-schedule exact BMU, SOM1 encoder, and UART telemetry RTL as the
+Tang image. Only board pins and synthesis plumbing differ.
+
+**Bench:** RP2350 SPI0 at 250 kHz, wired to the undamaged Wukong J11 bottom
+row: GP1/J11-7/J4 CS#, GP2/J11-8/G4 SCK, GP3/J11-9/B4 MOSI,
+GP0/J11-10/B5 MISO, and J11-11/common ground. The RP2350 console was
+`/dev/ttyACM6`; E3 UART telemetry was captured through `/dev/ttyUSB0`.
+Before the product run, the independent J11 electrical-loopback image passed
+all 16 patterns in four consecutive runs at 500 kHz.
+
+**Build and load:**
+
+```bash
+bash hardware/boards/artix7/build_a7.sh 100t somsidecar synth
+bash hardware/boards/artix7/build_a7.sh 100t somsidecar pnr
+PRJXRAY_ROOT=$HOME/toolchains/prjxray \
+OPENXC7_PYTHON=$HOME/.local/venvs/prjxray/bin/python \
+  bash hardware/boards/artix7/build_a7.sh 100t somsidecar pack
+openFPGALoader -c dirtyJtag --freq 1000000 \
+  build/spu_a7_100t_SOMSIDECAR.bit
+picotool load -f build/rp2350_som/rp2350_spu_diag.uf2
+python3 tools/iris_som_demo.py --hardware \
+  --console-port /dev/ttyACM6 --uart-port /dev/ttyUSB0
+```
+
+**Artifact identity:**
+
+- Artix bitstream SHA-256:
+  `f22a34e78437583efcb6a5a0bafb800c9df6a0803ee8614e8184b170cf5bf180`
+- RP2350 UF2 SHA-256:
+  `51a0f26940464d82d11b392d9a363f218e0a343fa33658c296686dc001f63de1`
+- map and dataset identities are unchanged from §3.2g.4.
+
+**Result:** the 35-record map/label upload completed, followed by 150/150
+exact SOM1 evidence matches in 16.3 seconds. The FPGA confusion matrix was
+`[[50,0,0],[0,48,2],[0,1,49]]`, or 147/150 semantic accuracy, and the final
+line was:
+
+```text
+IRIS_SOM_V1: PASS (150/150 FPGA winners bit-exact to oracle)
+```
+
+Every frame passed the same magic/version/length/reserved/CRC checks and exact
+winner, runner-up, label, quadrance, gap, ambiguity, status, map-generation,
+and result-generation comparisons as the Tang corpus. The independent UART
+byte and compact SPI result also agreed for every sample. Because both board
+runs match the same complete exact oracle record, this closes the cross-vendor
+replay-equivalence claim for the SOM1 ABI.
+
+The routed Artix image uses 8,013/126,800 SLICE_LUTX (6%), 3,098/126,800
+SLICE_FFX (2%), 44/240 DSP48E1 (18%), and 4/270 RAMB18E1 (1%). Route closes
+at 65.63 MHz against the 50 MHz constraint. During porting, a legacy
+`tx_count % CLKS_PER_BIT` UART expression was found to synthesize as a 213 ns
+divider chain; replacing it with an equivalent baud down-counter preserved
+the 434-cycle bit interval and removed the non-product timing path.
+
 ### 3.2h Six-Step Robotics Kinematics Silicon Probe
 
 **Date:** 2026-07-01 NZT
@@ -1773,7 +1836,7 @@ documented elsewhere in this ledger and in AGENTS.md.*
 | ROTC tagged (deferred-reduction) core | TB-verified (8/8, `spu13_rotor_core_tagged_tb.v`); probe `spu13_tang25k_rotc_tagged_probe.v` built (2026-07-09), awaiting board run. Golden-vector re-verification contract: ROTATE must produce 3× TDM golden at exp=1; REDUCE must recover TDM golden at exp=0. **Fixed 2026-07-09:** REDUCE's `reduce_val64` loaded lane values via zero-extension instead of sign-extension — every negative lane value (routine in this representation) either false-faulted INEXACT or missed a real exact division; `-9` at exp=1 is the regression case (Test 8). |
 | SOM/BMU classifier in silicon | **Verified in Silicon** on Tang 25K with UART `SOM:P T:2 B:6 E:00`; covers 2 weighted BMU oracle scenarios and cluster reduction for the 7-node fixture |
 | Writable SOM sidecar over RP2350 SPI | **Verified in Silicon** on Tang 25K: hydrated winners returned SPI `80 A0 B0` and matching C3 UART `00 14 1E`; exact fixed-434-cycle HEAD datapath, §3.2g.2 |
-| Reproducible Iris SOM edge classifier | **Verified in Silicon** on Tang 25K: checked seven-node map, 28/28 writes, 150/150 FPGA/oracle BMU winners, 147/150 semantic labels (98.0%), §3.2g.3 |
+| Reproducible Iris SOM edge classifier | **Verified in Silicon** on Tang 25K and Wukong Artix-7: checked seven-node map plus labels, 35/35 writes, 150/150 complete SOM1 evidence records equal the exact oracle on each vendor, 147/150 semantic labels (98.0%), §§3.2g.4–3.2g.5 |
 | Six-step robotics kinematics harness | **Verified in Silicon** on Tang 25K with UART `KIN:P P:5 E:00`; covers period-6 angle-1 six-step forward phases, angle-4 inverse recovery per phase, early-closure rejection, and exact phase-5 closure |
 | External RP2350 neuro-sidecar opcodes | Tang adapter command path is self-driven silicon-verified; external master transactions through the shared shell are pending |
 | QSUB and DELTA RTL FSMs | Implemented and RTL-verified in `spu13_core_qsub_delta_tb`; QSUB also silicon-verified through RP2350 arithmetic tests |
