@@ -688,13 +688,15 @@ def main():
     else:
         host_pass = host_fail = 0
 
-    # SOM product artifact/trainer gates (no hardware required). These pin the
-    # checked Iris artifact and the generalized CSV-to-SPU_SOM_MAP_V1 path.
+    # SOM product artifact/trainer/data gates (no hardware required). These pin
+    # Iris, the generalized CSV path, and the deterministic Paderborn importer.
     som_product_results = {}
     for som_product_name in (
         "test_iris_som_demo.py",
         "test_som_csv_trainer.py",
         "test_som_sensor_replay.py",
+        "test_matlab_v5.py",
+        "test_paderborn_bearing.py",
     ):
         som_product_path = os.path.join(
             root_dir, "software", "tests", som_product_name
