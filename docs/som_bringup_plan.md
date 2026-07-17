@@ -32,12 +32,19 @@ sidecar is silicon-proven over RP2350 SPI.
 Exit: simulation can hydrate a map, classify a corpus, and compare every result
 field against `rational_som.py` through the real SPI/UART boundary.
 
+RTL/host exit achieved 2026-07-17: fixed 52-byte `SOM1` frame, byte-serial
+CRC-32 encoder, sidecar-local SPI `0x02`, RP2350 `som1` command, strict host
+parser, 35-record map-generation gate, semantic-label hydration, malformed
+frame tests, exact board-top evidence vectors, RP2350 firmware build, and a full
+renewed Tang synthesis/P&R/pack all pass. The 150-sample silicon replay remains
+before this tranche is silicon-closed.
+
 ## Tranche 3 — reproducible map and one-command demo (complete)
 
 - Check in a small training corpus and deterministic offline trainer settings.
 - Quantize and range-check four-feature prototypes into 18-bit surd pairs.
 - Make `upload_som_weights.py` reject malformed, incomplete, or out-of-range
-  maps and verify the expected 28 writes.
+  maps and verify the expected 28 prototype plus seven semantic-label writes.
 - Add a host command that uploads, classifies a golden corpus, and prints a
   concise pass/fail/confusion summary.
 
@@ -50,8 +57,10 @@ Achieved 2026-07-17 with `software/models/iris_som_v1.json` and:
 python3 tools/iris_som_demo.py --hardware
 ```
 
-The command regenerated and checksum-validated the seven-node map, issued all
-28 writes, and obtained 150/150 exact FPGA/oracle winner matches. The node-label
+The original silicon command regenerated and checksum-validated the seven-node
+map, issued all 28 prototype writes, and obtained 150/150 exact FPGA/oracle
+winner matches. At current HEAD it also issues the seven semantic-label records
+required by the SOM1 map-generation gate. The node-label
 confusion matrix was `[[50,0,0],[0,48,2],[0,1,49]]`, or 147/150 (98.0%).
 
 ## Tranche 4 — silicon and cross-vendor closure (Tang complete)

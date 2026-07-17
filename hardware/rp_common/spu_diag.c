@@ -177,8 +177,10 @@ static void cmd_help(void) {
     printf("  rplu <sel> <material> <addr> <data64>\r\n");
     printf("  somwrite <node> <feat> <hex16>\r\n");
     printf("  featwrite <feat> <hex16>\r\n");
+    printf("  somlabel <node> <label>\r\n");
     printf("  classify\r\n");
     printf("  result\r\n");
+    printf("  som1\r\n");
     printf("  hydrate\r\n");
     printf("  sdprobe\r\n");
     printf("  sdcmd\r\n");
@@ -391,8 +393,8 @@ static void cmd_somwrite(spu_diag_t *diag, char *args) {
         printf("ERR usage: somwrite <node> <feat> <hex16>\r\n");
         return;
     }
-    if (node > 63 || feat > 3) {
-        printf("ERR node 0-63, feat 0-3\r\n");
+    if (node > 6 || feat > 3) {
+        printf("ERR node 0-6, feat 0-3\r\n");
         return;
     }
     uint16_t addr = (uint16_t)((node << 2) | feat);
@@ -421,6 +423,22 @@ static void cmd_featwrite(spu_diag_t *diag, char *args) {
     printf("OK featwrite feat=%" PRIu32 " data=0x%016" PRIX64 "\r\n", feat, data);
 }
 
+static void cmd_somlabel(spu_diag_t *diag, char *args) {
+    uint32_t node, label;
+    if (!parse_u32_token(&args, &node) ||
+        !parse_u32_token(&args, &label)) {
+        printf("ERR usage: somlabel <node> <label>\r\n");
+        return;
+    }
+    if (node > 6 || label > 0xFFFF) {
+        printf("ERR node 0-6, label 0-65535\r\n");
+        return;
+    }
+    uint64_t header = spu_rplu_header(7, 0, (uint16_t)node);
+    spu_link_write_rplu_cfg(diag->link, header, label);
+    printf("OK somlabel node=%" PRIu32 " label=%" PRIu32 "\r\n", node, label);
+}
+
 static void cmd_classify(spu_diag_t *diag, char *args) {
     (void)args;
     // sel=6 triggers classification (data ignored)
@@ -444,6 +462,14 @@ static void cmd_result(spu_diag_t *diag, char *args) {
     // Result is four MSB-first bits followed by zeros, hence the high nibble.
     printf("OK result done=%u busy=%u label=%u raw=0x%02X\r\n",
            (resp >> 7) & 1, (resp >> 6) & 1, (resp >> 4) & 3, resp);
+}
+
+static void cmd_som1(spu_diag_t *diag, char *args) {
+    (void)args;
+    uint8_t frame[SPU_LINK_SOM1_FRAME_BYTES] = {0};
+    spu_link_read_som1(diag->link, frame);
+    printf("OK som1 raw=");
+    print_bytes(frame, sizeof(frame));
 }
 
 static void cmd_sdprobe(void) {
@@ -723,10 +749,14 @@ static void execute_line(spu_diag_t *diag) {
         cmd_somwrite(diag, cursor);
     } else if (strcmp(cmd, "featwrite") == 0) {
         cmd_featwrite(diag, cursor);
+    } else if (strcmp(cmd, "somlabel") == 0) {
+        cmd_somlabel(diag, cursor);
     } else if (strcmp(cmd, "classify") == 0) {
         cmd_classify(diag, cursor);
     } else if (strcmp(cmd, "result") == 0) {
         cmd_result(diag, cursor);
+    } else if (strcmp(cmd, "som1") == 0) {
+        cmd_som1(diag, cursor);
     } else {
         printf("ERR unknown command: %s\r\n", cmd);
     }

@@ -13,6 +13,7 @@ sys.path.insert(0, str(REPO / "tools"))
 from iris_som_demo import DEFAULT_MAP, build_map_document, evaluate, load_iris
 from som_map import (
     SomMapError,
+    iter_label_commands,
     iter_weight_commands,
     load_map,
     pack_surd,
@@ -52,6 +53,11 @@ def main() -> None:
     commands = list(iter_weight_commands(checked))
     check("exactly 28 prototype writes", len(commands) == 28)
     check("hex writes are explicitly prefixed", all(" 0x" in command for command in commands))
+    label_commands = list(iter_label_commands(checked))
+    check("exactly 7 semantic-label writes", len(label_commands) == 7)
+    check("label writes use sel-7 console command", all(
+        command.startswith("somlabel ") for command in label_commands
+    ))
 
     winners, confusion, correct = evaluate(checked, samples)
     check("150 oracle winners", len(winners) == 150)

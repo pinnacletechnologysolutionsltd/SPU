@@ -20,6 +20,7 @@ TYPED_COMMANDS = {
     "qr_commit": lambda c, _a: c.qr_commit(),
     "hex_projection": lambda c, _a: c.hex_projection(),
     "rplu_config_telemetry": lambda c, _a: c.rplu_config_telemetry(),
+    "som1_result": lambda c, _a: c.som1_result(),
 }
 
 

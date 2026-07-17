@@ -7,7 +7,8 @@ the exact software oracle.
 
 ## What this proves
 
-- all 28 prototype values are accepted over the real RP2350-to-FPGA SPI link;
+- all 28 prototype values and seven semantic labels are accepted over the real
+  RP2350-to-FPGA SPI link;
 - the FPGA executes the fixed-434-clock exact `Q(sqrt(3))` BMU schedule;
 - 150/150 FPGA winner nodes match the oracle;
 - the checked node labels classify 147/150 Iris samples (98.0%).
@@ -82,6 +83,16 @@ The corpus-proven image recorded on 2026-07-17 has SHA-256:
 Rebuilding may produce a different artifact hash as the toolchain or RTL
 changes; record the new hash with any new evidence.
 
+The renewed SOM1-capable image built on 2026-07-17 has SHA-256:
+
+```text
+8753c4924ed6952c049a038a80cbe3bfb8b930e038842631665108af4ad1ff92
+```
+
+It uses 14,068 LUT4 (61%), 3,251 DFF (14%), and 8 BSRAM (14%), and routes at
+75.79 MHz against the 50 MHz constraint. This newer hash is build-verified but
+not yet silicon-proven.
+
 ## Run the reproducible hardware proof
 
 ```bash
@@ -124,10 +135,13 @@ standard-library POSIX serial transport in `tools/som_map.py`.
 
 ## Current product boundary
 
-- Semantic labels come from the checksummed map artifact on the host.
-- The compact hardware result still carries the sidecar's fixed legacy label
-  LUT as independent link telemetry.
-- Runner-up, exact distances, confidence gap, ambiguity, sensor-health flags,
-  and map generation belong in the planned versioned `SOM1` result frame.
+- The silicon-proven image documented above predates the SOM1 tranche: semantic
+  labels come from the checksummed host artifact and the compact hardware result
+  carries the fixed legacy label LUT.
+- At current HEAD, the 52-byte `SOM1` frame and seven semantic-label writes are
+  RTL/host and Tang-build verified. They expose winner, runner-up, exact
+  distances, confidence gap, ambiguity, map/result generations, error/status,
+  and CRC-32 without changing the compact byte. Renewed Tang corpus evidence is
+  pending.
 - Physical INA226 sensor acquisition and deterministic temporal feature
   extraction are the next evaluator tranche.

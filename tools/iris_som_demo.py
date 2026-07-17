@@ -7,6 +7,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 import sys
 import time
 from collections import Counter
@@ -17,10 +18,12 @@ sys.path.insert(0, str(REPO / "software"))
 sys.path.insert(0, str(REPO / "tools"))
 
 from lib.rational_som import RationalSurd, SomNode, find_bmu
+from spu_host.som1 import parse_som1_frame
 from som_map import (
     DiagConsole,
     PosixSerial,
     compute_map_sha256,
+    iter_label_commands,
     iter_weight_commands,
     load_map,
     pack_surd,
@@ -54,6 +57,17 @@ ORDER_SEED = 188
 NEIGHBOR_EPOCHS = 5
 WINNER_SHIFT_SCHEDULE = ((0, 10, 3), (10, 25, 4), (25, 40, 5))
 SIDECAR_RAW_LABELS = (0, 1, 1, 2, 2, 3, 3)
+
+
+def pack_result_surd(value: RationalSurd) -> int:
+    return ((value.p & 0xFFFFFFFF) << 32) | (value.q & 0xFFFFFFFF)
+
+
+def parse_som1_console_response(response: str):
+    match = re.search(r"OK som1 raw=([0-9A-Fa-f ]+)", response)
+    if not match:
+        raise RuntimeError(f"malformed SOM1 console response: {response!r}")
+    return parse_som1_frame(bytes.fromhex(match.group(1)))
 
 
 def parse_scaled_decimal(text: str, scale: int = SCALE) -> int:
@@ -264,13 +278,13 @@ def print_confusion(title: str, confusion: list[list[int]], correct: int) -> Non
 
 
 def upload_map(console: DiagConsole, document: dict, *, progress: bool = True) -> None:
-    commands = list(iter_weight_commands(document))
-    if len(commands) != 28:
-        raise AssertionError(f"expected 28 writes, got {len(commands)}")
+    commands = list(iter_weight_commands(document)) + list(iter_label_commands(document))
+    if len(commands) != 35:
+        raise AssertionError(f"expected 35 writes, got {len(commands)}")
     for index, command in enumerate(commands, 1):
         console.command(command)
         if progress and index % 7 == 0:
-            print(f"  map upload: {index}/28 writes")
+            print(f"  map upload: {index}/35 writes")
 
 
 def run_hardware(
@@ -281,8 +295,15 @@ def run_hardware(
     uart_path: str,
 ) -> tuple[list[list[int]], int]:
     nodes_by_id = {node["id"]: node for node in document["nodes"]}
+    nodes = map_nodes(document)
+    feature_weights = [
+        RationalSurd(value["p"], value["q"])
+        for value in document["feature_weights"]
+    ]
     confusion = [[0, 0, 0] for _ in range(3)]
     exact_winners = 0
+    active_map_generation = None
+    last_result_generation = None
     started = time.monotonic()
     with PosixSerial(console_path) as console_serial, PosixSerial(uart_path) as uart:
         console = DiagConsole(console_serial)
@@ -300,6 +321,13 @@ def run_hardware(
             telemetry = uart.read_exact(1, 1.0)[0]
             response = console.command("result")
             done, busy, raw_label, raw = parse_result_response(response)
+            som1 = parse_som1_console_response(console.command("som1"))
+
+            oracle = find_bmu(
+                [RationalSurd(value, 0) for value in feature],
+                nodes,
+                feature_weights,
+            )
 
             node = telemetry & 0x7
             uart_label = (telemetry >> 3) & 0x3
@@ -317,12 +345,40 @@ def run_hardware(
                 raise RuntimeError(
                     f"sample {index}: FPGA node {node}, oracle node {expected_node}"
                 )
+            if not (som1.valid and not som1.busy and som1.has_second and
+                    som1.map_valid and som1.error == 0):
+                raise RuntimeError(f"sample {index}: invalid SOM1 flags {som1}")
+            if (som1.winner != oracle.best_node_id or
+                    som1.runner_up != oracle.second_node_id or
+                    som1.label != oracle.cluster_label or
+                    som1.best_q != pack_result_surd(oracle.best_q) or
+                    som1.second_q != pack_result_surd(oracle.second_q) or
+                    som1.confidence_gap != pack_result_surd(oracle.confidence_gap) or
+                    som1.ambiguous != oracle.ambiguous):
+                raise RuntimeError(
+                    f"sample {index}: SOM1 evidence differs from oracle: {som1}"
+                )
+            if active_map_generation is None:
+                active_map_generation = som1.map_generation
+                if active_map_generation == 0:
+                    raise RuntimeError("SOM1 map generation did not advance after upload")
+            elif som1.map_generation != active_map_generation:
+                raise RuntimeError(
+                    f"sample {index}: map generation changed during corpus"
+                )
+            if last_result_generation is not None and som1.result_generation != (
+                (last_result_generation + 1) & 0xFFFFFFFF
+            ):
+                raise RuntimeError(
+                    f"sample {index}: non-consecutive result generation"
+                )
+            last_result_generation = som1.result_generation
 
             predicted = nodes_by_id[node]["class_label"]
             confusion[true_label][predicted] += 1
             exact_winners += 1
             if index % 25 == 0:
-                print(f"  corpus: {index}/150 exact winner matches")
+                print(f"  corpus: {index}/150 exact SOM1 evidence matches")
 
     print(f"Hardware corpus elapsed: {time.monotonic() - started:.1f}s")
     return confusion, exact_winners

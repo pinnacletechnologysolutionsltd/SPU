@@ -21,9 +21,11 @@ extern "C" {
 #define SPU_LINK_HEX_BYTES         5
 #define SPU_LINK_SENTINEL_BYTES    64
 #define SPU_LINK_TGR_STATUS_BYTES  16
+#define SPU_LINK_SOM1_FRAME_BYTES  52
 #define SPU_LINK_TGR_MAX_BYTES    508
 
 typedef enum {
+    SPU_CMD_READ_SOM1      = 0x02,
     SPU_CMD_READ_MANIFOLD  = 0xA0,
     SPU_CMD_READ_STATUS    = 0xAC,
     SPU_CMD_READ_SCALE     = 0xAD,
@@ -67,6 +69,8 @@ void spu_link_read_sentinel(spu_link_t *link,
                             uint8_t out[SPU_LINK_SENTINEL_BYTES]);
 void spu_link_read_tgr_status(spu_link_t *link,
                               uint8_t out[SPU_LINK_TGR_STATUS_BYTES]);
+void spu_link_read_som1(spu_link_t *link,
+                        uint8_t out[SPU_LINK_SOM1_FRAME_BYTES]);
 
 bool spu_link_fifo_full(spu_link_t *link);
 void spu_link_wait_artery_ready(spu_link_t *link);

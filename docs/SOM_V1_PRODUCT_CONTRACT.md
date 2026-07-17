@@ -35,6 +35,7 @@ learning in hardware.
 | Small standalone edge target | `hardware/boards/tang_primer_25k/spu13_tang25k_som_sidecar_top.v` |
 | Reproducible Iris map/demo | `software/models/iris_som_v1.json`, `tools/iris_som_demo.py` |
 | Host console and validated uploader | `hardware/rp_common/spu_diag.c`, `tools/upload_som_weights.py`, `tools/som_map.py` |
+| Versioned evidence ABI | `docs/SOM1_RESULT_FRAME.md`, `spu13_som1_frame.v`, `software/spu_host/som1.py` |
 
 The old fully parallel `spu_som_node` / `spu_som_node_array` / cfg-bus
 `spu_som_sidecar_top` implementation is archived under
@@ -82,15 +83,18 @@ The standalone Tang sidecar accepts existing `0xA5` configuration writes:
 | 5 | feature write | `addr[1:0]=feature`; `data[35:0]={Q,P}` |
 | 6 | classify | address and data ignored |
 
-The RP2350 console exposes these as `somwrite`, `featwrite`, `classify`, and
-`result`. `result` is a two-byte SPI transaction: command `0x01`, then a dummy
+The RP2350 console exposes these as `somwrite`, `somlabel`, `featwrite`,
+`classify`, `result`, and `som1`. `result` is a two-byte SPI transaction:
+command `0x01`, then a dummy
 byte that receives `{valid,busy,label[1:0],4'b0000}`. UART telemetry currently
 returns `{3'b000,label[1:0],best_node[2:0]}` as one byte.
 
-That compact sidecar ABI proves live operation, but it does not yet expose the
-runner-up or confidence gap. The v1 demo ABI must add a versioned result frame
-before the product exit gate is complete; it must not silently reinterpret the
-existing byte.
+`somlabel` uses `sel=7` to hydrate the seven semantic labels owned by the map.
+The fixed 52-byte `SOM1` frame is read with sidecar-local SPI command `0x02` and
+contains winner, runner-up, semantic label, exact distances, gap, ambiguity,
+map/result generations, status, error, and CRC-32. The exact layout is
+`docs/SOM1_RESULT_FRAME.md`. It is additive and does not reinterpret the
+existing compact byte.
 
 ## Evidence as of 2026-07-16
 
@@ -108,6 +112,7 @@ existing byte.
 | Iris corpus on Tang sidecar | silicon PASS; 150/150 FPGA winners equal oracle, 147/150 labels correct |
 | Artix-7 identical-fixture probe | built and testbench PASS; board run pending |
 | Exact-order fixed-schedule comparator at HEAD | testbench/trace PASS; renewed Tang sidecar silicon proof PASS |
+| SOM1 result encoder/SPI/host parser | RTL + malformed-frame host tests PASS; renewed Tang synthesis/silicon pending |
 
 The corpus-proven Tang sidecar uses 12,865/23,040 LUT4 (55%), 1,576 DFF,
 1,192 ALU, 8/56 BSRAM, and no DSP. It closes at 79.38 MHz against the real
@@ -135,9 +140,10 @@ the comment and oracle specified uniform weights. Iris sample 101 selected node
 weight of 2 predicts. The top now uses `{1,1,1,1}`; a dedicated RTL vector
 changes winner if feature 0 is ever doubled again.
 
-Semantic labels in this demo come from the checksummed map's node labels on the
-host. The compact sidecar still returns its legacy fixed raw-label LUT as link
-telemetry; writable labels belong in the versioned result-frame tranche.
+The compact sidecar still returns its legacy fixed raw-label LUT as compatibility
+telemetry. The SOM1 tranche adds seven semantic-label hydration records and
+returns the selected map-owned label in the evidence frame. This new path is
+simulation/host and Tang-build verified and awaits renewed silicon evidence.
 
 ## v1 exit gate
 
@@ -145,7 +151,8 @@ SOM v1 is complete only when all of the following are true:
 
 - one checked-in offline-trained and rationally quantized map is reproducible;
 - the map uploader validates dimensions, metric weights, signed coefficient
-  range, checksum, and all 28 writes for the seven-node product fixture;
+  range, checksum, all 28 prototype writes, and all seven semantic-label writes
+  for the seven-node product fixture;
 - a versioned result frame carries winner, runner-up, label, best distance,
   second distance, gap, ambiguity, and an error/status field;
 - one host command performs hydrate -> classify corpus -> compare with oracle;

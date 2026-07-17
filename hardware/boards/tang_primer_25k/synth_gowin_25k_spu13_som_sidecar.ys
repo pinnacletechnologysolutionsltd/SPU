@@ -6,6 +6,7 @@ read_verilog -lib +/gowin/cells_xtra_gw5a.v
 read_verilog -I hardware/rtl/arch \
     hardware/boards/tang_primer_25k/spu13_tang25k_som_sidecar_top.v \
     hardware/rtl/peripherals/io/spu_spi_cfg.v \
+    hardware/rtl/core/spu13/spu13_som1_frame.v \
     hardware/rtl/core/spu13/spu_som_weight_bram.v \
     hardware/rtl/core/spu13/spu_som_bmu.v \
     hardware/rtl/core/spu13/spu_cluster_reduce.v

@@ -6,7 +6,14 @@ from __future__ import annotations
 import argparse
 import sys
 
-from som_map import DiagConsole, PosixSerial, SomMapError, iter_weight_commands, load_map
+from som_map import (
+    DiagConsole,
+    PosixSerial,
+    SomMapError,
+    iter_label_commands,
+    iter_weight_commands,
+    load_map,
+)
 
 
 def main() -> int:
@@ -23,10 +30,13 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    commands = list(iter_weight_commands(document))
+    weight_commands = list(iter_weight_commands(document))
+    label_commands = list(iter_label_commands(document))
+    commands = weight_commands + label_commands
     print(
         f"Validated {document['model']}: {document['node_count']} nodes, "
-        f"{len(commands)} prototype writes, SHA-256 {document['map_sha256']}"
+        f"{len(weight_commands)} prototype writes, {len(label_commands)} label writes, "
+        f"SHA-256 {document['map_sha256']}"
     )
     if args.dry_run:
         print("\n".join(commands))
@@ -37,8 +47,8 @@ def main() -> int:
         for index, command in enumerate(commands, 1):
             console.command(command)
             if index % 7 == 0:
-                print(f"  {index}/28 writes accepted")
-    print("Upload complete: 28/28 writes accepted")
+                print(f"  {index}/{len(commands)} records accepted")
+    print(f"Upload complete: {len(commands)}/{len(commands)} records accepted")
     return 0
 
 

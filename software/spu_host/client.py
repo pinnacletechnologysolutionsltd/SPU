@@ -33,6 +33,7 @@ protocol doc needs the dual-meaning resolved, per its 0xB0 note).
 import re
 
 from .console import DiagConsole
+from .som1 import parse_som1_frame
 
 _KV_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(\S*)$")
 _HEXBYTE_RE = re.compile(r"^[0-9A-Fa-f]{2}$")
@@ -222,6 +223,11 @@ class SPUHostClient:
             "received": int(kv["received"]),
             "expected": int(kv["expected"]),
         }
+
+    # ── SOM1 versioned decision evidence ────────────────────────────
+    def som1_result(self):
+        kv, hex_tokens = self._run("som1")
+        return parse_som1_frame(_bytes_field(kv, hex_tokens, "raw"))
 
     # ── 0xA5 RPLU config write ──────────────────────────────────────
     def write_rplu_cfg(self, sel, material, addr, data):

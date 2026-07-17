@@ -179,6 +179,12 @@ def iter_weight_commands(document: dict) -> Iterator[str]:
             yield f"somwrite {node['id']} {feature} 0x{packed:016X}"
 
 
+def iter_label_commands(document: dict) -> Iterator[str]:
+    validate_map(document)
+    for node in sorted(document["nodes"], key=lambda item: item["id"]):
+        yield f"somlabel {node['id']} {node['class_label']}"
+
+
 def parse_result_response(response: str) -> tuple[int, int, int, int]:
     match = re.search(
         r"OK result done=(\d+) busy=(\d+) label=(\d+) raw=0x([0-9A-Fa-f]{2})",

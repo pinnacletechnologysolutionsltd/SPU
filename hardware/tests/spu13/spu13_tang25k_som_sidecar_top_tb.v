@@ -124,6 +124,48 @@ module spu13_tang25k_som_sidecar_top_tb;
         end
     endtask
 
+    task automatic spi_read_som1(output [415:0] frame);
+        reg [7:0] ignored;
+        reg [7:0] value;
+        integer i;
+        begin
+            spi_cs_n = 1'b0;
+            spi_xfer_byte(8'h02, ignored);
+            for (i = 0; i < 52; i = i + 1) begin
+                spi_xfer_byte(8'h00, value);
+                frame[(51-i)*8 +: 8] = value;
+            end
+            #(SCK_HALF);
+            spi_cs_n = 1'b1;
+            #20;
+        end
+    endtask
+
+    function [31:0] crc32_byte;
+        input [31:0] crc;
+        input [7:0] byte_data;
+        reg [31:0] s;
+        integer b;
+        begin
+            s = crc ^ byte_data;
+            for (b = 0; b < 8; b = b + 1)
+                s = s[0] ? ((s >> 1) ^ 32'hEDB88320) : (s >> 1);
+            crc32_byte = s;
+        end
+    endfunction
+
+    function [31:0] som1_payload_crc;
+        input [415:0] frame;
+        reg [31:0] crc;
+        integer i;
+        begin
+            crc = 32'hFFFFFFFF;
+            for (i = 0; i < 48; i = i + 1)
+                crc = crc32_byte(crc, frame[(51-i)*8 +: 8]);
+            som1_payload_crc = ~crc;
+        end
+    endfunction
+
     task automatic write_weight(input [2:0] node, input [1:0] feat, input [17:0] p);
         begin
             spi_write_rplu(3'd4, 4'd0, {node, feat}, {46'd0, p});
@@ -133,6 +175,20 @@ module spu13_tang25k_som_sidecar_top_tb;
     task automatic write_feature(input [1:0] feat, input [17:0] p);
         begin
             spi_write_rplu(3'd5, 4'd0, {8'd0, feat}, {46'd0, p});
+        end
+    endtask
+
+    task automatic write_feature_surd(
+        input [1:0] feat, input [17:0] p, input [17:0] q
+    );
+        begin
+            spi_write_rplu(3'd5, 4'd0, {8'd0, feat}, {28'd0, q, p});
+        end
+    endtask
+
+    task automatic write_label(input [2:0] node, input [15:0] label_value);
+        begin
+            spi_write_rplu(3'd7, 4'd0, {7'd0, node}, {48'd0, label_value});
         end
     endtask
 
@@ -153,13 +209,26 @@ module spu13_tang25k_som_sidecar_top_tb;
         end
     endtask
 
-    task automatic classify_and_check(input [2:0] expect_node, input [287:0] label_str);
+    task automatic classify_and_check(
+        input [2:0] expect_node,
+        input [2:0] expect_second,
+        input [31:0] expect_best_p,
+        input [31:0] expect_second_p,
+        input [31:0] expect_gap_p,
+        input expect_ambiguous,
+        input [31:0] expect_generation,
+        input [287:0] label_str
+    );
         reg [7:0] tel;
         reg [7:0] status_resp;
+        reg [415:0] som1;
+        reg [7:0] expect_flags;
         begin
             spi_write_rplu(3'd6, 4'd0, 10'd0, 64'd0); // classify
             uart_rx_byte(tel);
             spi_read_status(status_resp); // informational only, see header note
+            wait (dut.som1_frame_ready);
+            spi_read_som1(som1);
             if (tel[2:0] == expect_node) begin
                 $display("PASS %0s: best_node=%0d (telemetry=0x%02X, status_read=0x%02X)",
                           label_str, tel[2:0], tel, status_resp);
@@ -179,6 +248,55 @@ module spu13_tang25k_som_sidecar_top_tb;
                          label_str, status_resp, tel);
                 fail_count = fail_count + 1;
             end
+            expect_flags = {3'b000, 1'b1, expect_ambiguous, 1'b1, 1'b0, 1'b1};
+            if (som1[415:384] == 32'h534F4D31 &&
+                som1[383:376] == 8'd1 && som1[375:368] == 8'd52 &&
+                som1[367:360] == expect_flags && som1[359:352] == 8'd0 &&
+                som1[351:320] == 32'd1 &&
+                som1[319:288] == expect_generation &&
+                som1[287:272] == {13'd0, expect_node} &&
+                som1[271:256] == {13'd0, expect_second} &&
+                som1[255:240] == {11'd0, tel[4:3]} &&
+                som1[239:224] == 16'd0 &&
+                som1[223:160] == {expect_best_p, 32'd0} &&
+                som1[159:96] == {expect_second_p, 32'd0} &&
+                som1[95:32] == {expect_gap_p, 32'd0} &&
+                som1[31:0] == som1_payload_crc(som1)) begin
+                $display("PASS %0s: SOM1 evidence frame", label_str);
+                pass_count = pass_count + 1;
+            end else begin
+                $display("FAIL %0s: malformed SOM1 frame %0104X", label_str, som1);
+                fail_count = fail_count + 1;
+            end
+        end
+    endtask
+
+    task automatic hydrate_test_map;
+        integer node;
+        integer feat;
+        reg signed [17:0] value;
+        begin
+            for (node = 0; node < 7; node = node + 1) begin
+                for (feat = 0; feat < 4; feat = feat + 1) begin
+                    value = 18'sd0;
+                    if (node == 0 && feat == 0) value = 18'sd2;
+                    if (node == 1 && feat == 0) value = 18'sd2;
+                    if (node == 2 && feat == 1) value = 18'sd2;
+                    if (node == 3 && feat == 2) value = 18'sd2;
+                    if (node == 4 && feat == 0) value = -18'sd2;
+                    if (node == 4 && feat == 2) value = 18'sd7;
+                    if (node == 5 && feat == 1) value = -18'sd2;
+                    if (node == 6 && feat == 2) value = -18'sd2;
+                    if (node == 6 && feat == 3) value = 18'sd4;
+                    write_weight(node[2:0], feat[1:0], value);
+                end
+                case (node)
+                    0: write_label(node[2:0], 16'd0);
+                    1, 2: write_label(node[2:0], 16'd1);
+                    3, 4: write_label(node[2:0], 16'd2);
+                    default: write_label(node[2:0], 16'd3);
+                endcase
+            end
         end
     endtask
 
@@ -190,29 +308,31 @@ module spu13_tang25k_som_sidecar_top_tb;
 
         #6000; // clear the DUT's internal 255-cycle power-on reset
 
-        // Node 0: feat0 = 2. Node 4: feat2 = 7. Node 6: feat3 = 4.
+        // Full 28-write hydration makes map generation 1 valid. Node 0:
+        // feat0 = 2. Node 4: feat2 = 7. Node 6: feat3 = 4.
         // Nodes 4 and 6 are exactly the cases that would have aliased to
         // nodes 0 and 2 under the pre-fix 2-bit-truncated telemetry field.
-        write_weight(3'd0, 2'd0, 18'd2);
-        write_weight(3'd4, 2'd2, 18'd7);
-        write_weight(3'd6, 2'd3, 18'd4);
+        hydrate_test_map();
 
         // --- Test 1: feature {2,0,0,0} -> node 0 ---
         write_feature(2'd0, 18'd2);
         write_feature(2'd1, 18'd0);
         write_feature(2'd2, 18'd0);
         write_feature(2'd3, 18'd0);
-        classify_and_check(3'd0, "test1 node0");
+        classify_and_check(3'd0, 3'd1, 32'd0, 32'd0, 32'd0, 1'b1,
+                           32'd1, "test1 node0");
 
         // --- Test 2: feature {0,0,7,0} -> node 4 (the alias-with-0 case) ---
         write_feature(2'd0, 18'd0);
         write_feature(2'd2, 18'd7);
-        classify_and_check(3'd4, "test2 node4 (truncation regression)");
+        classify_and_check(3'd4, 3'd3, 32'd4, 32'd25, 32'd21, 1'b0,
+                           32'd2, "test2 node4 (truncation regression)");
 
         // --- Test 3: feature {0,0,0,4} -> node 6 ---
         write_feature(2'd2, 18'd0);
         write_feature(2'd3, 18'd4);
-        classify_and_check(3'd6, "test3 node6");
+        classify_and_check(3'd6, 3'd0, 32'd4, 32'd20, 32'd16, 1'b0,
+                           32'd3, "test3 node6");
 
         // --- Test 4: uniform-feature-weight packing regression ---
         // With the current node table, {0,0,-5,-5} ties nodes 0/1/2/5 at
@@ -223,7 +343,18 @@ module spu13_tang25k_som_sidecar_top_tb;
         write_feature(2'd1, 18'd0);
         write_feature(2'd2, -18'sd5);
         write_feature(2'd3, -18'sd5);
-        classify_and_check(3'd0, "test4 uniform feature weights");
+        classify_and_check(3'd0, 3'd1, 32'd54, 32'd54, 32'd0, 1'b1,
+                           32'd4, "test4 uniform feature weights");
+
+        // --- Test 5: full {Q,P} feature ingest regression ---
+        // Feature 0 = 2 + sqrt(3), so nodes 0/1 are tied at quadrance 3.
+        // The pre-SOM1 board top silently discarded Q and reported distance 0.
+        write_feature_surd(2'd0, 18'd2, 18'd1);
+        write_feature(2'd1, 18'd0);
+        write_feature(2'd2, 18'd0);
+        write_feature(2'd3, 18'd0);
+        classify_and_check(3'd0, 3'd1, 32'd3, 32'd3, 32'd0, 1'b1,
+                           32'd5, "test5 full surd feature ingest");
 
         if (fail_count == 0)
             $display("PASS: %0d checks passed", pass_count);
@@ -235,7 +366,7 @@ module spu13_tang25k_som_sidecar_top_tb;
 
     // Safety timeout
     initial begin
-        #3_000_000;
+        #10_000_000;
         $display("FAIL: testbench timeout");
         $finish;
     end

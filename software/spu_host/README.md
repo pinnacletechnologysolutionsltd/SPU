@@ -37,6 +37,7 @@ client.write_chord(0x0A00000000000000)          # QLDI-style instruction
 client.write_rplu_cfg(sel=3, material=5, addr=15, data=0xDEADBEEF)
 client.load_tensegrity_sd("/TGR/06_fault_not_in_equilibrium.tgr", vector_id=6)
 print(client.tensegrity_status())
+print(client.som1_result())       # CRC-checked decision evidence
 ```
 
 ## CLI
@@ -59,6 +60,7 @@ spu-host --port /dev/ttyACM0 raw sdhydrate
 | `write_chord(data)` | `0xB1` | Instruction Write |
 | `load_tensegrity_sd(path, vector_id)` | `0xB2` | Transactional TGR1 Load |
 | `tensegrity_status()` | `0xB3` | TGR1 Verdict + Loader Diagnostics |
+| `som1_result()` | sidecar `0x02` | `docs/SOM1_RESULT_FRAME.md` |
 | `write_rplu_cfg(sel, material, addr, data)` | `0xA5` | RPLU Config Write |
 
 `raw(cmd)` is the escape hatch for firmware-specific console commands not

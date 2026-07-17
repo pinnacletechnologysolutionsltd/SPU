@@ -8,11 +8,14 @@ No hardware required. Run: python3 software/tests/test_spu_host_parser.py
 """
 
 import os
+import struct
 import sys
+import zlib
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from software.spu_host.client import SPUHostClient, SPUProtocolError
+from software.spu_host.som1 import SOM1FrameError, parse_som1_frame
 
 BANNER = b"\r\nSPU RP diagnostic console ready\r\nType 'help' for commands.\r\n> "
 
@@ -186,6 +189,51 @@ def test_tensegrity_transport():
           status["expected"] == 468)
 
 
+def make_som1_frame():
+    payload = struct.pack(
+        ">4sBBBBIIHHHHQQQ",
+        b"SOM1", 1, 52, 0x1D, 0, 3, 9, 4, 2, 1, 0,
+        0x0000001100000002,
+        0x0000002200000003,
+        0x0000001100000001,
+    )
+    return payload + struct.pack(">I", zlib.crc32(payload) & 0xFFFFFFFF)
+
+
+def test_som1_result():
+    frame = make_som1_frame()
+    client = make_client({"som1": ["OK som1 raw=" + frame.hex(" ").upper()]})
+    result = client.som1_result()
+    check("som1 generations", result.map_generation == 3 and
+          result.result_generation == 9)
+    check("som1 nodes/label", (result.winner, result.runner_up, result.label) ==
+          (4, 2, 1))
+    check("som1 flags", result.valid and not result.busy and
+          result.has_second and result.ambiguous and result.map_valid)
+    check("som1 evidence", result.best_q == 0x0000001100000002 and
+          result.confidence_gap == 0x0000001100000001)
+
+
+def test_som1_rejects_malformed():
+    good = make_som1_frame()
+    mutations = [
+        good[:-1],
+        b"BAD!" + good[4:],
+        good[:4] + bytes([2]) + good[5:],
+        good[:5] + bytes([51]) + good[6:],
+        good[:6] + bytes([good[6] | 0x80]) + good[7:],
+        good[:22] + b"\x00\x01" + good[24:],
+        good[:30] + bytes([good[30] ^ 1]) + good[31:],
+    ]
+    for index, malformed in enumerate(mutations):
+        raised = False
+        try:
+            parse_som1_frame(malformed)
+        except SOM1FrameError:
+            raised = True
+        check("som1 malformed case %d rejected" % index, raised)
+
+
 def test_err_response_raises():
     client = make_client({"status": ["ERR unknown command: status"]})
     raised = False
@@ -207,6 +255,8 @@ def main():
     test_write_chord()
     test_write_rplu_cfg()
     test_tensegrity_transport()
+    test_som1_result()
+    test_som1_rejects_malformed()
     test_err_response_raises()
 
     print(f"spu_host parser: {checks} checks, {len(failures)} failed")

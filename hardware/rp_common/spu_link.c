@@ -171,6 +171,17 @@ void spu_link_read_tgr_status(spu_link_t *link,
     spu_link_deselect(link);
 }
 
+void spu_link_read_som1(spu_link_t *link,
+                        uint8_t out[SPU_LINK_SOM1_FRAME_BYTES]) {
+    uint8_t cmd = SPU_CMD_READ_SOM1;
+
+    spu_link_select(link);
+    spi_write_blocking(link->spi, &cmd, 1);
+    spu_link_read_turnaround(link);
+    spi_read_blocking(link->spi, 0x00, out, SPU_LINK_SOM1_FRAME_BYTES);
+    spu_link_deselect(link);
+}
+
 bool spu_link_fifo_full(spu_link_t *link) {
     uint16_t dissonance;
     uint8_t flags;
