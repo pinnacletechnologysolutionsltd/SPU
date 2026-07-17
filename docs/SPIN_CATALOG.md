@@ -40,9 +40,11 @@ in §4 — "product-candidate" describes intent, not readiness.
   (ROTC 0–5) and verify the six-step closure returns the bit-identical
   start state. The hook: forward kinematics with *zero* accumulated error,
   demonstrable in an afternoon with a logic analyzer.
-- **LUCAS** — run a million-step φ-scaling loop and read back zero drift;
-  run the same loop in `double` on the host and watch it drift. The hook
-  is the side-by-side.
+- **LUCAS** — run a 200-step φ-scaling feedback loop through the FPGA and
+  compare it with exact integers and `float64`; the latter loses the exact
+  residue at the regression-pinned step 79 while silicon remains bit-exact.
+  The separate software oracle carries the million-step proof. Walkthrough:
+  `docs/LUCAS_QUICKSTART.md`.
 - **RPLU2PADE** — evaluate Padé [4/4] approximants over A₃₁ and check
   results bit-for-bit against `software/lib/a31_field.py`. Weakest
   first-hour story of the six — it needs a killer input table (this is
@@ -118,7 +120,7 @@ A spin becomes a product when all four exist. Current gap table:
 | Southbridge host path (RP2350 or any SPI master) | exists for A7 J11 + Tang spins; protocol versioned as v1 with a compatibility promise, `docs/SOUTHBRIDGE_SPI_PROTOCOL.md` (done 2026-07-08) |
 | Host library (Python wrapper over the 8 SPI opcodes) | **done**: `software/spu_host/`, installable with `python3 -m pip install -e .`; typed client + `spu-host` CLI |
 | Per-spin example program with expected output | ROBOTICS, LUCAS, TENSEGRITY, and SOM-SIDECAR examples exist under `tools/`; other product candidates remain open |
-| Doc page per spin (flash command, wiring, first-hour walkthrough) | SOM-SIDECAR page complete (`docs/SOM_SIDECAR_QUICKSTART.md`); remaining spins open |
+| Doc page per spin (flash command, wiring, first-hour walkthrough) | SOM-SIDECAR and LUCAS pages complete (`docs/SOM_SIDECAR_QUICKSTART.md`, `docs/LUCAS_QUICKSTART.md`); remaining spins open |
 
 Remaining highest-leverage evaluator item is the physical-sensor SOM path:
 INA226 acquisition, deterministic temporal features, and the versioned `SOM1`

@@ -31,6 +31,7 @@ Pick your door:
 
 - **[Build and bring-up guide](build_and_bringup_guide.md)** — commands, wiring, board procedures
 - **[SOM-SIDECAR evaluator quickstart](SOM_SIDECAR_QUICKSTART.md)** — Tang/RP2350 wiring, firmware, bitstream, and the 150-sample proof
+- **[LUCAS evaluator quickstart](LUCAS_QUICKSTART.md)** — Wukong/RP2350 wiring and the exact-integer versus float64 replay
 - **[Toolchain setup](toolchain_setup.md)** — OSS CAD Suite + OpenXC7; no vendor IDE
 - **[Southbridge SPI protocol](SOUTHBRIDGE_SPI_PROTOCOL.md)** — the RP2350↔FPGA control plane
 - **[Board scaling strategy](fpga_board_scaling_strategy.md)** — Tang 25K → Artix-7 → ECP5 → Kintex ladder
