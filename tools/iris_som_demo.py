@@ -10,7 +10,6 @@ import json
 import re
 import sys
 import time
-from collections import Counter
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -22,14 +21,18 @@ from spu_host.som1 import parse_som1_frame
 from som_map import (
     DiagConsole,
     PosixSerial,
-    compute_map_sha256,
     iter_label_commands,
     iter_weight_commands,
     load_map,
     pack_surd,
     parse_result_response,
-    validate_map,
     write_map,
+)
+from som_trainer import (
+    DEFAULT_SCALE as SCALE,
+    build_map_document as build_som_map_document,
+    parse_scaled_decimal,
+    train_map,
 )
 
 
@@ -41,21 +44,6 @@ LABEL_MAP = {
     "Iris-versicolor": 1,
     "Iris-virginica": 2,
 }
-AXIAL_COORDS = (
-    (0, 0),
-    (1, 0),
-    (1, -1),
-    (0, -1),
-    (-1, 0),
-    (-1, 1),
-    (0, 1),
-)
-HEX_DELTAS = ((1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1))
-SCALE = 1000
-EPOCHS = 40
-ORDER_SEED = 188
-NEIGHBOR_EPOCHS = 5
-WINNER_SHIFT_SCHEDULE = ((0, 10, 3), (10, 25, 4), (25, 40, 5))
 SIDECAR_RAW_LABELS = (0, 1, 1, 2, 2, 3, 3)
 
 
@@ -68,18 +56,6 @@ def parse_som1_console_response(response: str):
     if not match:
         raise RuntimeError(f"malformed SOM1 console response: {response!r}")
     return parse_som1_frame(bytes.fromhex(match.group(1)))
-
-
-def parse_scaled_decimal(text: str, scale: int = SCALE) -> int:
-    if scale != 1000:
-        raise ValueError("the Iris v1 parser is pinned to scale=1000")
-    sign = -1 if text.startswith("-") else 1
-    text = text.lstrip("+-")
-    whole, dot, fractional = text.partition(".")
-    if not whole.isdigit() or (dot and not fractional.isdigit()):
-        raise ValueError(f"invalid decimal {text!r}")
-    thousandths = int((fractional + "000")[:3]) if dot else 0
-    return sign * (int(whole) * scale + thousandths)
 
 
 def load_iris(path: Path = DATASET) -> list[tuple[tuple[int, ...], int]]:
@@ -98,137 +74,30 @@ def load_iris(path: Path = DATASET) -> list[tuple[tuple[int, ...], int]]:
     return samples
 
 
-def squared_distance(lhs: tuple[int, ...] | list[int], rhs: tuple[int, ...] | list[int]) -> int:
-    return sum((a - b) * (a - b) for a, b in zip(lhs, rhs))
-
-
-def _initial_indices(samples: list[tuple[tuple[int, ...], int]]) -> list[int]:
-    features = [sample[0] for sample in samples]
-    mean = tuple(sum(row[j] for row in features) // len(features) for j in range(4))
-    indices = [min(range(len(features)), key=lambda i: (squared_distance(features[i], mean), i))]
-    while len(indices) < 7:
-        candidates = (i for i in range(len(features)) if i not in indices)
-        indices.append(
-            max(
-                candidates,
-                key=lambda i: (
-                    min(squared_distance(features[i], features[k]) for k in indices),
-                    -i,
-                ),
-            )
-        )
-    return indices
-
-
-def _epoch_order(epoch: int, count: int) -> list[int]:
-    return sorted(
-        range(count),
-        key=lambda index: hashlib.sha256(
-            f"iris-som-v1:{ORDER_SEED}:{epoch}:{index}".encode("ascii")
-        ).digest(),
-    )
-
-
-def _winner_shift(epoch: int) -> int:
-    for first, last, shift in WINNER_SHIFT_SCHEDULE:
-        if first <= epoch < last:
-            return shift
-    raise AssertionError(f"epoch {epoch} is outside the schedule")
-
-
 def train_iris_map(
     samples: list[tuple[tuple[int, ...], int]]
 ) -> tuple[list[list[int]], list[int], list[int]]:
-    features = [sample[0] for sample in samples]
-    initial_indices = _initial_indices(samples)
-    weights = [list(features[index]) for index in initial_indices]
-
-    for epoch in range(EPOCHS):
-        for sample_index in _epoch_order(epoch, len(samples)):
-            feature = features[sample_index]
-            winner = min(
-                range(7), key=lambda node: (squared_distance(feature, weights[node]), node)
-            )
-            targets = [(winner, _winner_shift(epoch))]
-            if epoch < NEIGHBOR_EPOCHS:
-                q, r = AXIAL_COORDS[winner]
-                for dq, dr in HEX_DELTAS:
-                    coordinate = (q + dq, r + dr)
-                    if coordinate in AXIAL_COORDS:
-                        targets.append((AXIAL_COORDS.index(coordinate), 3))
-            for node, shift in targets:
-                for feature_index in range(4):
-                    delta = feature[feature_index] - weights[node][feature_index]
-                    weights[node][feature_index] += delta >> shift
-
-    votes = [Counter() for _ in range(7)]
-    assignments: list[int] = []
-    for feature, true_label in samples:
-        winner = min(
-            range(7), key=lambda node: (squared_distance(feature, weights[node]), node)
-        )
-        assignments.append(winner)
-        votes[winner][true_label] += 1
-    labels = [
-        min(counts, key=lambda label: (-counts[label], label))
-        if counts
-        else 0
-        for counts in votes
-    ]
-    return weights, labels, initial_indices
+    return train_map(samples, model="iris-som-v1")
 
 
 def build_map_document(
     samples: list[tuple[tuple[int, ...], int]]
 ) -> dict:
-    weights, labels, initial_indices = train_iris_map(samples)
-    document = {
-        "format": "SPU_SOM_MAP_V1",
-        "model": "iris-som-v1",
-        "dataset": "Fisher Iris, checked-in 150-sample corpus",
-        "dataset_path": "software/tests/data/iris.csv",
-        "dataset_sha256": hashlib.sha256(DATASET.read_bytes()).hexdigest(),
-        "node_count": 7,
-        "feature_count": 4,
-        "coefficient_bits": 18,
-        "scale": SCALE,
-        "feature_names": [
+    return build_som_map_document(
+        samples,
+        model="iris-som-v1",
+        dataset="Fisher Iris, checked-in 150-sample corpus",
+        dataset_path="software/tests/data/iris.csv",
+        dataset_sha256=hashlib.sha256(DATASET.read_bytes()).hexdigest(),
+        scale=SCALE,
+        feature_names=[
             "sepal_length",
             "sepal_width",
             "petal_length",
             "petal_width",
         ],
-        "feature_weights": [
-            {"p": 1, "q": 0},
-            {"p": 1, "q": 0},
-            {"p": 1, "q": 0},
-            {"p": 1, "q": 0},
-        ],
-        "class_names": list(LABEL_NAMES),
-        "trainer": {
-            "kind": "deterministic-online-hex-som",
-            "epochs": EPOCHS,
-            "order": "sha256",
-            "order_seed": ORDER_SEED,
-            "initialization": "mean-nearest-then-farthest-first",
-            "initial_sample_indices": initial_indices,
-            "neighbor_epochs": NEIGHBOR_EPOCHS,
-            "neighbor_shift": 3,
-            "winner_shift_schedule": [list(item) for item in WINNER_SHIFT_SCHEDULE],
-        },
-        "nodes": [
-            {
-                "id": node,
-                "axial": list(AXIAL_COORDS[node]),
-                "class_label": labels[node],
-                "weights": [{"p": value, "q": 0} for value in weights[node]],
-            }
-            for node in range(7)
-        ],
-    }
-    document["map_sha256"] = compute_map_sha256(document)
-    validate_map(document)
-    return document
+        class_names=LABEL_NAMES,
+    )
 
 
 def map_nodes(document: dict) -> list[SomNode]:

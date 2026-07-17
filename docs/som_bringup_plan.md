@@ -63,6 +63,13 @@ winner matches. At current HEAD it also issues the seven semantic-label records
 required by the SOM1 map-generation gate. The node-label
 confusion matrix was `[[50,0,0],[0,48,2],[0,1,49]]`, or 147/150 (98.0%).
 
+Generalized dataset entry achieved 2026-07-17: `tools/train_som_csv.py` accepts
+four selected numeric CSV columns plus a categorical label, applies exact
+power-of-ten quantization and the pinned deterministic schedule, emits a
+checksummed `SPU_SOM_MAP_V1` artifact, and reload-validates it. Extraction into
+the shared trainer preserves the checked Iris map SHA-256 exactly. Contract and
+examples: `docs/SOM_CSV_TRAINER.md`.
+
 ## Tranche 4 — silicon and cross-vendor closure (Tang complete)
 
 - Build and run the repaired standalone Tang sidecar.

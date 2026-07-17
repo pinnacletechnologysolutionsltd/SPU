@@ -19,6 +19,10 @@ MAP_FORMAT = "SPU_SOM_MAP_V1"
 EXPECTED_NODES = 7
 EXPECTED_FEATURES = 4
 COEFFICIENT_BITS = 18
+TRAINER_KIND = "deterministic-online-hex-som"
+TRAINER_EPOCHS = 40
+TRAINER_ORDER_SEED = 188
+TRAINER_WINNER_SHIFT_SCHEDULE = [[0, 10, 3], [10, 25, 4], [25, 40, 5]]
 
 
 class SomMapError(ValueError):
@@ -51,6 +55,70 @@ def validate_map(document: dict, *, require_checksum: bool = True) -> dict:
         raise SomMapError(f"coefficient_bits must be {COEFFICIENT_BITS}")
     if not isinstance(document.get("scale"), int) or document["scale"] <= 0:
         raise SomMapError("scale must be a positive integer")
+    if not isinstance(document.get("model"), str) or not document["model"]:
+        raise SomMapError("model must be a nonempty string")
+    if not isinstance(document.get("dataset"), str) or not document["dataset"]:
+        raise SomMapError("dataset must be a nonempty string")
+    if (
+        not isinstance(document.get("dataset_path"), str)
+        or not document["dataset_path"]
+    ):
+        raise SomMapError("dataset_path must be a nonempty string")
+    dataset_hash = document.get("dataset_sha256")
+    if (
+        not isinstance(dataset_hash, str)
+        or re.fullmatch(r"[0-9a-f]{64}", dataset_hash) is None
+    ):
+        raise SomMapError("dataset_sha256 must be 64 lowercase hexadecimal digits")
+
+    feature_names = document.get("feature_names")
+    if (
+        not isinstance(feature_names, list)
+        or len(feature_names) != EXPECTED_FEATURES
+        or any(not isinstance(name, str) or not name for name in feature_names)
+        or len(set(feature_names)) != EXPECTED_FEATURES
+    ):
+        raise SomMapError(
+            f"feature_names must contain {EXPECTED_FEATURES} distinct nonempty strings"
+        )
+    class_names = document.get("class_names")
+    if (
+        not isinstance(class_names, list)
+        or not 1 <= len(class_names) <= EXPECTED_NODES
+        or any(not isinstance(name, str) or not name for name in class_names)
+        or len(set(class_names)) != len(class_names)
+    ):
+        raise SomMapError(
+            f"class_names must contain 1..{EXPECTED_NODES} distinct nonempty strings"
+        )
+
+    trainer = document.get("trainer")
+    if not isinstance(trainer, dict):
+        raise SomMapError("trainer must be an object")
+    pinned_trainer_fields = {
+        "kind": TRAINER_KIND,
+        "epochs": TRAINER_EPOCHS,
+        "order": "sha256",
+        "order_seed": TRAINER_ORDER_SEED,
+        "initialization": "mean-nearest-then-farthest-first",
+        "neighbor_epochs": 5,
+        "neighbor_shift": 3,
+        "winner_shift_schedule": TRAINER_WINNER_SHIFT_SCHEDULE,
+    }
+    for key, expected in pinned_trainer_fields.items():
+        if trainer.get(key) != expected:
+            raise SomMapError(f"trainer {key} must be {expected!r}")
+    initial_indices = trainer.get("initial_sample_indices")
+    if (
+        not isinstance(initial_indices, list)
+        or len(initial_indices) != EXPECTED_NODES
+        or any(not isinstance(index, int) or index < 0 for index in initial_indices)
+        or len(set(initial_indices)) != EXPECTED_NODES
+    ):
+        raise SomMapError(
+            "trainer initial_sample_indices must contain "
+            f"{EXPECTED_NODES} distinct non-negative integers"
+        )
 
     limit_lo = -(1 << (COEFFICIENT_BITS - 1))
     limit_hi = (1 << (COEFFICIENT_BITS - 1)) - 1
@@ -95,8 +163,13 @@ def validate_map(document: dict, *, require_checksum: bool = True) -> dict:
         if node_id in seen_ids:
             raise SomMapError(f"duplicate node id {node_id}")
         seen_ids.add(node_id)
-        if not isinstance(node.get("class_label"), int) or not 0 <= node["class_label"] <= 2:
-            raise SomMapError(f"node {node_id} class_label must be in 0..2")
+        if (
+            not isinstance(node.get("class_label"), int)
+            or not 0 <= node["class_label"] < len(class_names)
+        ):
+            raise SomMapError(
+                f"node {node_id} class_label must index class_names"
+            )
         axial = node.get("axial")
         if (
             not isinstance(axial, list)

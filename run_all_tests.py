@@ -688,6 +688,32 @@ def main():
     else:
         host_pass = host_fail = 0
 
+    # SOM product artifact/trainer gates (no hardware required). These pin the
+    # checked Iris artifact and the generalized CSV-to-SPU_SOM_MAP_V1 path.
+    som_product_results = {}
+    for som_product_name in ("test_iris_som_demo.py", "test_som_csv_trainer.py"):
+        som_product_path = os.path.join(
+            root_dir, "software", "tests", som_product_name
+        )
+        if not os.path.exists(som_product_path):
+            som_product_results[som_product_name] = (0, 0)
+            continue
+        result_som_product = subprocess.run(
+            [sys.executable, som_product_path],
+            capture_output=True, text=True, timeout=60
+        )
+        if result_som_product.returncode == 0:
+            som_product_results[som_product_name] = (1, 0)
+        else:
+            som_product_results[som_product_name] = (0, 1)
+            print(
+                f"\n  {som_product_name} FAILED:\n"
+                f"{result_som_product.stdout[-500:]}"
+                f"{result_som_product.stderr[-500:]}"
+            )
+    som_product_pass = sum(p for p, _ in som_product_results.values())
+    som_product_fail = sum(f for _, f in som_product_results.values())
+
     # Per-spin demo scripts (tools/*_demo.py, no hardware required).
     # Explicit list rather than a glob so in-flight/unregistered demo tests
     # don't silently join the gate before their author intends them to.
@@ -719,6 +745,10 @@ def main():
     print(f"\nHost Library Tests: {host_pass + host_fail}")
     print(f"Passed:             {host_pass}")
     print(f"Failed:             {host_fail}")
+
+    print(f"\nSOM Product Tests: {som_product_pass + som_product_fail}")
+    print(f"Passed:           {som_product_pass}")
+    print(f"Failed:           {som_product_fail}")
 
     print(f"\nSpin Demo Tests: {robotics_demo_pass + robotics_demo_fail}")
     print(f"Passed:          {robotics_demo_pass}")
@@ -756,8 +786,20 @@ def main():
     print(f"Passed:                 {boot_sequence_pass}")
     print(f"Failed:                 {boot_sequence_fail}")
 
-    total_pass = passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass + audio_pass + host_pass + robotics_demo_pass + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass + irotc_pass + tensegrity_pass + boot_sequence_pass
-    total_fail = failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail + audio_fail + host_fail + robotics_demo_fail + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail + irotc_fail + tensegrity_fail + boot_sequence_fail + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
+    total_pass = (
+        passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass
+        + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
+        + audio_pass + host_pass + som_product_pass + robotics_demo_pass
+        + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
+        + irotc_pass + tensegrity_pass + boot_sequence_pass
+    )
+    total_fail = (
+        failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
+        + audio_fail + host_fail + som_product_fail + robotics_demo_fail
+        + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
+        + irotc_fail + tensegrity_fail + boot_sequence_fail
+        + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
+    )
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")

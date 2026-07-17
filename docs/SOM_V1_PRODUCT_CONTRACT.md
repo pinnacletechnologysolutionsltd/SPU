@@ -112,7 +112,7 @@ existing compact byte.
 | Iris corpus on Tang sidecar | silicon PASS; 150/150 FPGA winners equal oracle, 147/150 labels correct |
 | Artix-7 identical-fixture probe | built and testbench PASS; board run pending |
 | Exact-order fixed-schedule comparator at HEAD | testbench/trace PASS; renewed Tang sidecar silicon proof PASS |
-| SOM1 result encoder/SPI/host parser | RTL + malformed-frame host tests PASS; renewed Tang synthesis/silicon pending |
+| SOM1 result encoder/SPI/host parser | RTL + malformed-frame host tests + renewed Tang build PASS; silicon replay pending |
 
 The corpus-proven Tang sidecar uses 12,865/23,040 LUT4 (55%), 1,576 DFF,
 1,192 ALU, 8/56 BSRAM, and no DSP. It closes at 79.38 MHz against the real
@@ -125,7 +125,8 @@ The one-command proof is:
 python3 tools/iris_som_demo.py --hardware
 ```
 
-It validates/regenerates the checked map, performs all 28 prototype writes,
+It validates/regenerates the checked map, performs all 28 prototype writes and
+seven semantic-label writes,
 classifies all 150 checked-in Iris samples, requires every FPGA winner to equal
 the exact software oracle, and prints the oracle and FPGA confusion matrices.
 Map SHA-256:
@@ -175,3 +176,12 @@ SOM v1 is complete only when all of the following are true:
 Robotics integration comes after this contract is closed. It should supply
 features through a versioned observation ABI rather than being wired directly
 into the BMU datapath.
+
+## General CSV trainer
+
+The hardware-independent dataset entry point is now
+`tools/train_som_csv.py`; its exact input, quantization, schedule, and artifact
+rules are documented in `docs/SOM_CSV_TRAINER.md`. It accepts a labeled CSV,
+selects exactly four feature columns, trains the seven-node product map, writes
+a checksummed artifact, and reload-validates it before reporting success. The
+shared trainer reproduces the checked Iris artifact and map SHA-256 bit for bit.
