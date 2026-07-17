@@ -59,6 +59,39 @@ def unpack_quadrance(value):
     return p, q
 
 
+def encode_som1_frame(result):
+    """Encode a SOM1Result for software replay and oracle tests.
+
+    Hardware remains the production encoder. This helper lets an offline
+    sensor replay traverse the same versioned, CRC-protected ABI that a host
+    parses after a silicon classification.
+    """
+    if not isinstance(result, SOM1Result):
+        raise TypeError("result must be SOM1Result")
+    if result.version != SOM1_VERSION:
+        raise SOM1FrameError("cannot encode unsupported SOM1 version")
+    if result.flags & 0xE0:
+        raise SOM1FrameError("cannot encode reserved SOM1 flag bits")
+    payload = struct.pack(
+        ">4sBBBBIIHHHHQQQ",
+        SOM1_MAGIC,
+        result.version,
+        SOM1_FRAME_BYTES,
+        result.flags,
+        result.error,
+        result.map_generation,
+        result.result_generation,
+        result.winner,
+        result.runner_up,
+        result.label,
+        0,
+        result.best_q,
+        result.second_q,
+        result.confidence_gap,
+    )
+    return payload + struct.pack(">I", zlib.crc32(payload) & 0xFFFFFFFF)
+
+
 def parse_som1_frame(raw):
     raw = bytes(raw)
     if len(raw) != SOM1_FRAME_BYTES:

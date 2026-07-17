@@ -12,12 +12,13 @@ License: MIT. See software/LICENSE.
 """
 
 from .client import SPUHostClient, SPUProtocolError
-from .som1 import SOM1FrameError, SOM1Result, parse_som1_frame
+from .som1 import SOM1FrameError, SOM1Result, encode_som1_frame, parse_som1_frame
 
 __all__ = [
     "SPUHostClient",
     "SPUProtocolError",
     "SOM1FrameError",
     "SOM1Result",
+    "encode_som1_frame",
     "parse_som1_frame",
 ]

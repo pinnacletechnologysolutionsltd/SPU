@@ -21,6 +21,7 @@ from lib.cartesian_bridge import (
     dequantize_surd,
     quantize_feature_vector,
     quantize_scalar,
+    widen_sensor_scalar_to_som18,
 )
 from lib.rational_som import RationalSurd, find_bmu, tiny_hex_fixture
 
@@ -125,6 +126,18 @@ def test_invalid_scale_rejected():
         check(f"{fn.__name__} rejects non-positive scale", raised)
 
 
+def test_sensor16_to_som18_adapter():
+    widened = widen_sensor_scalar_to_som18(RationalSurd(-32768, 0))
+    check("P16 minimum survives SOM18 widening", widened == RationalSurd(-32768, 0))
+    for value in (RationalSurd(0, 1), RationalSurd(32768, 0)):
+        raised = False
+        try:
+            widen_sensor_scalar_to_som18(value)
+        except ValueError:
+            raised = True
+        check(f"SOM18 widening rejects invalid sensor scalar {value}", raised)
+
+
 def main():
     test_round_trip_within_half_lsb()
     test_saturation_never_silent_never_raises()
@@ -134,6 +147,7 @@ def main():
     test_round_half_to_even_at_midpoint()
     test_feature_vector_feeds_find_bmu_directly()
     test_invalid_scale_rejected()
+    test_sensor16_to_som18_adapter()
 
     if FAIL:
         print(f"FAIL ({FAIL} failures, {PASS} passes)")

@@ -97,6 +97,8 @@ dequantize_surd(rs: RationalSurd, scale: int) -> float
     # general form, evaluates the √3 term — display-only, documented above
 quantize_feature_vector(values: Sequence[float], scale: int) -> list[QuantizeResult]
     # per-channel convenience; .value list feeds find_bmu() directly
+widen_sensor_scalar_to_som18(value: RationalSurd) -> RationalSurd
+    # validates P16/Q16 scalar input before explicit SOM P18/Q18 sign extension
 ```
 
 ## 5. Acceptance checklist (v0)
@@ -196,5 +198,12 @@ boundary representation. SOM v1 accepts signed 18-bit `{P18,Q18}` components,
 so a future on-fabric sensor path must add and test an explicit sign-extending
 adapter. The present Iris and RP2350 console demos perform their checked
 integer packing on the host/southbridge and do not exercise this RTL module.
+
+The software sign-extension boundary is now pinned by
+`widen_sensor_scalar_to_som18()` and exercised by the synthetic current replay
+(`docs/SOM_SENSOR_REPLAY.md`). Python retains the signed integer numerically;
+the purpose of the explicit adapter is to reject non-scalar/out-of-P16 input
+and specify how a future RTL/RP2350 packer widens both coefficient lanes. This
+is software proof of the adapter contract, not an on-fabric instantiation.
 
 *CC0 1.0 Universal, like the rest of `docs/`.*

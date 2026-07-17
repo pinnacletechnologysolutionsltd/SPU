@@ -144,4 +144,5 @@ standard-library POSIX serial transport in `tools/som_map.py`.
   and CRC-32 without changing the compact byte. Renewed Tang corpus evidence is
   pending.
 - Physical INA226 sensor acquisition and deterministic temporal feature
-  extraction are the next evaluator tranche.
+  extraction remain the next bench tranche. Their software ABI is now proven
+  by `python3 tools/som_sensor_replay.py`; see `docs/SOM_SENSOR_REPLAY.md`.

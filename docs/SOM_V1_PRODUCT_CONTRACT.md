@@ -185,3 +185,13 @@ rules are documented in `docs/SOM_CSV_TRAINER.md`. It accepts a labeled CSV,
 selects exactly four feature columns, trains the seven-node product map, writes
 a checksummed artifact, and reload-validates it before reporting success. The
 shared trainer reproduces the checked Iris artifact and map SHA-256 bit for bit.
+
+## Synthetic sensor replay
+
+`tools/som_sensor_replay.py` now closes the hardware-independent anomaly path:
+deterministic 100 Hz integer current traces become four temporal features,
+cross the Cartesian scalar boundary and explicit SOM18 widening adapter, enter
+the exact BMU, and emerge as parsed `SOM1` frames. The checked holdout result is
+18/18 semantic labels with zero ambiguity. This is a synthetic ABI proof only;
+physical INA226 acquisition and renewed Tang corpus evidence remain open. See
+`docs/SOM_SENSOR_REPLAY.md` for the equations, hashes, and commands.

@@ -70,6 +70,14 @@ checksummed `SPU_SOM_MAP_V1` artifact, and reload-validates it. Extraction into
 the shared trainer preserves the checked Iris map SHA-256 exactly. Contract and
 examples: `docs/SOM_CSV_TRAINER.md`.
 
+Synthetic sensor replay achieved 2026-07-17: deterministic 100 Hz integer
+current windows pass through four temporal features, the Cartesian P16 scalar
+boundary, explicit SOM18 widening, the exact rational BMU, and encoded/parsed
+SOM1 evidence. A distinct 18-window holdout corpus classifies 18/18 with zero
+ambiguity; dataset/map hashes and all result generations are pinned. This is
+software evidence, not physical INA226 or silicon evidence. Contract:
+`docs/SOM_SENSOR_REPLAY.md`.
+
 ## Tranche 4 — silicon and cross-vendor closure (Tang complete)
 
 - Build and run the repaired standalone Tang sidecar.

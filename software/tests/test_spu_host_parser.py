@@ -8,14 +8,17 @@ No hardware required. Run: python3 software/tests/test_spu_host_parser.py
 """
 
 import os
-import struct
 import sys
-import zlib
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from software.spu_host.client import SPUHostClient, SPUProtocolError
-from software.spu_host.som1 import SOM1FrameError, parse_som1_frame
+from software.spu_host.som1 import (
+    SOM1FrameError,
+    SOM1Result,
+    encode_som1_frame,
+    parse_som1_frame,
+)
 
 BANNER = b"\r\nSPU RP diagnostic console ready\r\nType 'help' for commands.\r\n> "
 
@@ -190,18 +193,28 @@ def test_tensegrity_transport():
 
 
 def make_som1_frame():
-    payload = struct.pack(
-        ">4sBBBBIIHHHHQQQ",
-        b"SOM1", 1, 52, 0x1D, 0, 3, 9, 4, 2, 1, 0,
-        0x0000001100000002,
-        0x0000002200000003,
-        0x0000001100000001,
+    return encode_som1_frame(
+        SOM1Result(
+            version=1,
+            flags=0x1D,
+            error=0,
+            map_generation=3,
+            result_generation=9,
+            winner=4,
+            runner_up=2,
+            label=1,
+            best_q=0x0000001100000002,
+            second_q=0x0000002200000003,
+            confidence_gap=0x0000001100000001,
+        )
     )
-    return payload + struct.pack(">I", zlib.crc32(payload) & 0xFFFFFFFF)
 
 
 def test_som1_result():
     frame = make_som1_frame()
+    check("som1 software encoder round trip", encode_som1_frame(
+        parse_som1_frame(frame)
+    ) == frame)
     client = make_client({"som1": ["OK som1 raw=" + frame.hex(" ").upper()]})
     result = client.som1_result()
     check("som1 generations", result.map_generation == 3 and

@@ -691,7 +691,11 @@ def main():
     # SOM product artifact/trainer gates (no hardware required). These pin the
     # checked Iris artifact and the generalized CSV-to-SPU_SOM_MAP_V1 path.
     som_product_results = {}
-    for som_product_name in ("test_iris_som_demo.py", "test_som_csv_trainer.py"):
+    for som_product_name in (
+        "test_iris_som_demo.py",
+        "test_som_csv_trainer.py",
+        "test_som_sensor_replay.py",
+    ):
         som_product_path = os.path.join(
             root_dir, "software", "tests", som_product_name
         )

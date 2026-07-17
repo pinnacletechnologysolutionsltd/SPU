@@ -1,0 +1,260 @@
+{
+  "class_names": [
+    "bearing_drag",
+    "normal",
+    "stall"
+  ],
+  "coefficient_bits": 18,
+  "dataset": "Deterministic synthetic 100 Hz current-signature windows",
+  "dataset_path": "software/tests/data/synthetic_current_v1.csv",
+  "dataset_sha256": "4ed7e02b19c9e6b67116faa3f0d421b3958d3dc4a0098eee304550c44d0fe1ef",
+  "feature_count": 4,
+  "feature_names": [
+    "mean_current_mA",
+    "peak_to_peak_mA",
+    "mean_abs_delta_mA",
+    "mean_abs_deviation_mA"
+  ],
+  "feature_weights": [
+    {
+      "p": 1,
+      "q": 0
+    },
+    {
+      "p": 1,
+      "q": 0
+    },
+    {
+      "p": 1,
+      "q": 0
+    },
+    {
+      "p": 1,
+      "q": 0
+    }
+  ],
+  "format": "SPU_SOM_MAP_V1",
+  "map_sha256": "66bc408abd8111684c039378d4882aebdd77974e272717556c790eb6d8df2614",
+  "model": "synthetic-current-som-v1",
+  "node_count": 7,
+  "nodes": [
+    {
+      "axial": [
+        0,
+        0
+      ],
+      "class_label": 0,
+      "id": 0,
+      "weights": [
+        {
+          "p": 748,
+          "q": 0
+        },
+        {
+          "p": 204,
+          "q": 0
+        },
+        {
+          "p": 68,
+          "q": 0
+        },
+        {
+          "p": 42,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        1,
+        0
+      ],
+      "class_label": 0,
+      "id": 1,
+      "weights": [
+        {
+          "p": 780,
+          "q": 0
+        },
+        {
+          "p": 243,
+          "q": 0
+        },
+        {
+          "p": 78,
+          "q": 0
+        },
+        {
+          "p": 52,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        1,
+        -1
+      ],
+      "class_label": 1,
+      "id": 2,
+      "weights": [
+        {
+          "p": 402,
+          "q": 0
+        },
+        {
+          "p": 15,
+          "q": 0
+        },
+        {
+          "p": 10,
+          "q": 0
+        },
+        {
+          "p": 5,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        0,
+        -1
+      ],
+      "class_label": 0,
+      "id": 3,
+      "weights": [
+        {
+          "p": 551,
+          "q": 0
+        },
+        {
+          "p": 70,
+          "q": 0
+        },
+        {
+          "p": 28,
+          "q": 0
+        },
+        {
+          "p": 13,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        -1,
+        0
+      ],
+      "class_label": 0,
+      "id": 4,
+      "weights": [
+        {
+          "p": 653,
+          "q": 0
+        },
+        {
+          "p": 103,
+          "q": 0
+        },
+        {
+          "p": 46,
+          "q": 0
+        },
+        {
+          "p": 25,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        -1,
+        1
+      ],
+      "class_label": 0,
+      "id": 5,
+      "weights": [
+        {
+          "p": 885,
+          "q": 0
+        },
+        {
+          "p": 284,
+          "q": 0
+        },
+        {
+          "p": 95,
+          "q": 0
+        },
+        {
+          "p": 60,
+          "q": 0
+        }
+      ]
+    },
+    {
+      "axial": [
+        0,
+        1
+      ],
+      "class_label": 2,
+      "id": 6,
+      "weights": [
+        {
+          "p": 1122,
+          "q": 0
+        },
+        {
+          "p": 445,
+          "q": 0
+        },
+        {
+          "p": 145,
+          "q": 0
+        },
+        {
+          "p": 100,
+          "q": 0
+        }
+      ]
+    }
+  ],
+  "scale": 1,
+  "trainer": {
+    "epochs": 40,
+    "initial_sample_indices": [
+      5,
+      29,
+      12,
+      24,
+      33,
+      7,
+      26
+    ],
+    "initialization": "mean-nearest-then-farthest-first",
+    "kind": "deterministic-online-hex-som",
+    "neighbor_epochs": 5,
+    "neighbor_shift": 3,
+    "order": "sha256",
+    "order_seed": 188,
+    "winner_shift_schedule": [
+      [
+        0,
+        10,
+        3
+      ],
+      [
+        10,
+        25,
+        4
+      ],
+      [
+        25,
+        40,
+        5
+      ]
+    ]
+  }
+}

@@ -97,3 +97,18 @@ def quantize_feature_vector(
     the Sequence[RationalSurd] shape find_bmu expects.
     """
     return [quantize_scalar(v, scale) for v in values]
+
+
+def widen_sensor_scalar_to_som18(value: RationalSurd) -> RationalSurd:
+    """Validate P16/Q16 scalar input before SOM P18/Q18 sign extension.
+
+    Python integers carry their sign directly, so the returned value is
+    numerically unchanged. This explicit adapter pins the hardware behavior:
+    reject non-scalar or out-of-P16 input, then sign-extend P and the zero Q
+    lane when packing the value into the SOM's 18-bit coefficients.
+    """
+    if value.q != 0:
+        raise ValueError("sensor scalar widening requires q == 0")
+    if not P_MIN <= value.p <= P_MAX:
+        raise ValueError("sensor scalar widening requires signed 16-bit P")
+    return RationalSurd(value.p, 0)
