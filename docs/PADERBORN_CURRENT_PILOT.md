@@ -61,13 +61,20 @@ The unmeasured third phase is reconstructed as `-(phase_1 + phase_2)`.
 
 ## Feature profiles
 
-Both profiles emit mean absolute current, peak-to-peak current, mean absolute
-successive difference, and mean absolute deviation:
+The two time-domain profiles emit mean absolute current, peak-to-peak current,
+mean absolute successive difference, and mean absolute deviation:
 
 - `native64k`: non-overlapping 4096-sample, three-phase windows at the source
   rate (62 windows per recording);
 - `envelope100`: exact mean-absolute envelope aggregation over 640 source
   samples, then non-overlapping 32-value windows (12 windows per recording).
+
+The follow-up `periodic64k` profile uses 12,800-sample windows and four
+dimensionless integer-ppm features: carrier half-cycle anti-residual, carrier
+cycle residual, shaft-cycle residual, and carrier-cycle envelope deviation.
+The corpus trace pins a 640-sample (100 Hz) current carrier and a 2,560-sample
+(25 Hz) shaft period. No FFT, floating-point coefficient, or transcendental
+approximation enters these lag identities.
 
 `envelope100` is a 100 Hz envelope experiment, not an assertion that a 100 Hz
 INA226 can recover the same information. The block statistics require access
@@ -91,6 +98,9 @@ the harder healthy/inner/outer task.
 | 100 Hz envelope train | 67.64% | 91.39% | 84.31% |
 | 100 Hz envelope validation | 62.76% | 0.00% | 3.49% |
 | 100 Hz envelope test | 63.18% | 51.60% | 43.24% |
+| Periodic 64 kHz train | 99.25% | 98.92% | 97.83% |
+| Periodic 64 kHz validation | 32.89% | 31.46% | 31.55% |
+| Periodic 64 kHz test | 33.47% | 36.90% | 41.76% |
 
 At 64 kHz, validation clips 6,334 feature values and test clips 3,187. At
 100 Hz envelope rate the corresponding counts are 426 and 74. The confusion
@@ -98,8 +108,17 @@ matrices show complete class swaps on the validation bearings, rather than a
 small decision-boundary loss. The result is dominated by physical-bearing
 domain shift and insufficient features/training identities.
 
+The follow-up diagnostic also runs the same trained model with an unclamped
+software affine projection. Native validation remains 0.00%, envelope
+validation falls from 3.49% to 2.51%, and periodic validation changes only
+from 31.55% to 31.46%. Native validation retains 3,547 unique vectors and no
+vector has all four lanes clamped. Clamping concentrates winners but is not
+the root cause.
+
 The seven-node SOM is not the limiting platform resource here. It reproduces
 the model it was given; the model lacks a bearing-invariant representation.
+The larger 15-bearing result is recorded in
+`docs/PADERBORN_CURRENT_CROSS_VALIDATION.md`.
 
 ## Reproduction
 
@@ -120,8 +139,9 @@ python3 tools/paderborn_benchmark.py benchmark \
   --output build/paderborn_benchmark
 ```
 
-The output includes full and training-only normalized feature CSVs, both
-validated `SPU_SOM_MAP_V1` maps, full confusion matrices, clipping counts,
+The output includes full and training-only normalized feature CSVs, three
+validated `SPU_SOM_MAP_V1` maps, full confusion matrices, per-bearing winner
+histograms, directional range diagnostics, clamped-versus-unclamped scores,
 source hashes, and `paderborn_benchmark_v1.json`. Each map's dataset hash names
 its training-only CSV; validation and test rows are not part of that hash.
 
