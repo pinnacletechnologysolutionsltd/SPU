@@ -158,7 +158,7 @@ module spu13_tensegrity_transport_tb;
         if (i == 20000) begin errors = errors + 1; $display("FAIL B2 verify timeout"); end
         read_b3;
         if (response[0] !== 1 || response[1] !== 7 || response[2] !== 4 ||
-            response[3] !== 0 || {response[4],response[5],response[6],response[7]} !== 32'd1 ||
+            response[3] !== 8 || {response[4],response[5],response[6],response[7]} !== 32'd1 ||
             response[8] !== 8'h08 || response[9] !== 0 ||
             response[10] !== 0 || response[11] !== 0 ||
             {response[12],response[13]} !== 16'd12 ||

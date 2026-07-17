@@ -237,6 +237,25 @@ Accordingly, this is partial link silicon evidence, not a complete atomic
 TENSEGRITYLINK proof and not evidence of rollback through the full combined
 guard.
 
+The 2026-07-18 diagnostic revision adds a protocol-stable coarse service stage
+and a one-million-cycle verifier watchdog. A nonreturning service now clears
+`verify_busy`, preserves the previously active bank/verdict, reports loader
+error 10, and leaves `0x80 | stage` in B3 byte 3. The regression forces the
+intersection completion low and proves stage `0x85`, rollback, and subsequent
+recovery. RP2350 firmware and host tooling report the stage. This change is
+RTL/firmware-verified; the full combined board result remains pending.
+
+The same tranche replaces the parallel four-term Z[phi] products in the
+intersection and equilibrium paths with captured-input, four-cycle serial
+services. All exact widths and oracle results are unchanged. Post-route usage
+is 25,120 `SLICE_LUTX` (19%), 8,972 `SLICE_FFX` (7%), 66 DSP48E1 (27%), and
+one RAMB18E1; guard Fmax is 42.23 MHz at the 25 MHz operating cadence. The
+route closes at iteration 41, whereas the instrumented monolith was stopped at
+iteration 38 with 392 conflicts. Bitstream SHA-256 is
+`478e206c65fa5f18c44e7604ca27139e5d65f551ac91a170d8beb78baa4c7c57`.
+A live B3 read on 2026-07-18 reports the new stage field in silicon. Canonical
+combined verification awaits SD-card electrical reconnection.
+
 ## 7. Open Design Items
 
 1. **Strut slenderness ratio (§640.10):** enforce a maximum strut quadrance by
@@ -256,17 +275,22 @@ guard.
 ## 8. Next Steps
 
 1. Keep the exact oracle and the seven-vector TGR1 corpus suite-registered.
-2. Componentize the link verifier into transport, parser, topology/local guard,
-   intersection, equilibrium, and admission-coordinator stages with explicit
-   handshakes, vector IDs, terminal results, and watchdogs. Keep standalone
-   probe builds, but integrate the final verifier over one inactive snapshot.
-3. Share or serialize the exact Z[phi] arithmetic between intersection and
-   equilibrium if the componentized full build remains route-heavy; the two
-   stages never need to execute concurrently.
-4. Decide whether a general nonuniform self-stress solver is required in
+2. Reseat/power the RP2350 SD module and run the stage-instrumented serial image
+   once. A terminal commit closes
+   the link proof; a bounded timeout identifies the exact service requiring
+   refactoring without risking another indefinite run.
+3. If a bounded timeout remains, componentize the identified boundary into transport, parser,
+   topology/local guard, intersection, equilibrium, and admission-coordinator
+   stages with explicit handshakes, vector IDs, terminal results, and
+   per-service watchdogs. Keep standalone probe builds, but integrate the
+   final verifier over one inactive snapshot.
+4. Consider sharing one multiplier service across intersection and equilibrium
+   only if later product integration needs the extra 14-DSP saving; per-engine
+   term serialization is already implemented and routes cleanly.
+5. Decide whether a general nonuniform self-stress solver is required in
    hardware; it is outside the current type-uniform admission contract.
-5. Add strut-slenderness and local-precession guards at the oracle level, then
+6. Add strut-slenderness and local-precession guards at the oracle level, then
    extend TGR1 only with an explicit version bump if their data is needed.
-6. Implement the active balancing controller as a second transactional layer:
+7. Implement the active balancing controller as a second transactional layer:
    propose a bounded rotation/actuation, re-run admission, commit only on a
    balanced verdict, and roll back on fault or timeout.

@@ -179,17 +179,26 @@ def test_tensegrity_transport():
     client = make_client({
         "tgrload /TGR/06.tgr 6": ["OK tgrload bytes=468 vector=6"],
         "tgrstatus": [
-            "OK tgrstatus version=1 state=8 fault=5 vector=6"
+            "OK tgrstatus version=1 state=8 fault=5 stage=8 vector=6"
             " flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468"
         ],
     })
     load = client.load_tensegrity_sd("/TGR/06.tgr", 6)
     check("tgrload byte count", load == {"bytes": 468, "vector": 6})
     status = client.tensegrity_status()
-    check("tgrstatus exact verdict", status["state"] == 8 and status["fault"] == 5)
+    check("tgrstatus exact verdict", status["state"] == 8 and status["fault"] == 5
+          and status["stage"] == 8)
     check("tgrstatus diagnostics", status["flags"] == 8 and
           status["error"] == 0 and status["received"] == 468 and
           status["expected"] == 468)
+
+    legacy = make_client({
+        "tgrstatus": [
+            "OK tgrstatus version=1 state=2 fault=0 vector=1"
+            " flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468"
+        ],
+    }).tensegrity_status()
+    check("tgrstatus legacy console defaults stage to idle", legacy["stage"] == 0)
 
 
 def make_som1_frame():

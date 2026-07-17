@@ -26,7 +26,8 @@ module spu13_tensegrity_guard #(
     output reg [2:0]   fault_code,
     output reg [4:0]   node_count,
     output reg [5:0]   edge_count,
-    output reg [4:0]   intersection_attempts
+    output reg [4:0]   intersection_attempts,
+    output reg [7:0]   service_stage
 );
     localparam EDGE_CABLE = 2'd0, EDGE_STRUT = 2'd1, EDGE_GAP = 2'd2;
     localparam GRID_UNTAGGED = 2'd0;
@@ -51,7 +52,42 @@ module spu13_tensegrity_guard #(
                S_EQ_EDGE = 5'd16, S_EQ_ROW = 5'd17,
                S_EQ_SIGN_C = 5'd18, S_EQ_SIGN_S = 5'd19,
                S_EQ_MUL_LEFT = 5'd20, S_EQ_MUL_RIGHT = 5'd21,
-               S_EQ_COMPARE = 5'd22, S_EQ_ADVANCE = 5'd23;
+               S_EQ_COMPARE = 5'd22, S_EQ_ADVANCE = 5'd23,
+               S_EQ_MUL_WAIT = 5'd24;
+    reg [4:0] fsm;
+
+    // Coarse, protocol-visible service boundary.  This is deliberately more
+    // stable than the private FSM encoding: B3 diagnostics and watchdog
+    // evidence can identify the failing service without exposing microstates.
+    localparam [7:0]
+        SERVICE_IDLE         = 8'd0,
+        SERVICE_TOPOLOGY     = 8'd2,
+        SERVICE_CONNECTIVITY = 8'd3,
+        SERVICE_LOCAL_GUARDS = 8'd4,
+        SERVICE_INTERSECTION = 8'd5,
+        SERVICE_EQUILIBRIUM  = 8'd6,
+        SERVICE_DECISION     = 8'd7,
+        SERVICE_TERMINAL     = 8'd8;
+
+    always @* begin
+        case (fsm)
+            S_IDLE: service_stage = SERVICE_IDLE;
+            S_TOPOLOGY: service_stage = SERVICE_TOPOLOGY;
+            S_CONNECT_INIT, S_CONNECT_SCAN, S_CONNECT_CHECK:
+                service_stage = SERVICE_CONNECTIVITY;
+            S_GUARD_INIT, S_GUARD_SCAN, S_GUARD_NODE, S_GUARD_EVAL:
+                service_stage = SERVICE_LOCAL_GUARDS;
+            S_INTERSECT_INIT, S_INTERSECT_FIND, S_INTERSECT_START,
+            S_INTERSECT_WAIT: service_stage = SERVICE_INTERSECTION;
+            S_EQ_INIT, S_EQ_EDGE, S_EQ_ROW, S_EQ_SIGN_C, S_EQ_SIGN_S,
+            S_EQ_MUL_LEFT, S_EQ_MUL_RIGHT, S_EQ_MUL_WAIT,
+            S_EQ_COMPARE, S_EQ_ADVANCE:
+                service_stage = SERVICE_EQUILIBRIUM;
+            S_DECIDE: service_stage = SERVICE_DECISION;
+            S_FAULT_HOLD: service_stage = SERVICE_TERMINAL;
+            default: service_stage = 8'h7f;
+        endcase
+    end
 
     // The probe needs several independent asynchronous coordinate reads
     // (guard scan, segment predicate, equilibrium row). Keep this bounded
@@ -68,7 +104,6 @@ module spu13_tensegrity_guard #(
     reg [3:0] edge_b [0:MAX_EDGES-1];
     reg [1:0] edge_type [0:MAX_EDGES-1];
 
-    reg [4:0] fsm;
     reg [5:0] edge_i;
     reg [4:0] connect_pass;
     reg [5:0] structural_count;
@@ -90,6 +125,8 @@ module spu13_tensegrity_guard #(
     reg eq_pivot_valid;
     reg [1:0] eq_cable_sign;
     reg signed [79:0] eq_left_a, eq_left_b;
+    reg eq_mul_start;
+    reg eq_mul_left_pending;
     reg reachable [0:MAX_NODES-1];
     reg [1:0] strut_degree [0:MAX_NODES-1];
     integer i;
@@ -146,24 +183,27 @@ module spu13_tensegrity_guard #(
     // One shared 39x39 Z[phi] multiplier. Aggregate coefficients need 39
     // signed bits for MAX_EDGES<=40; 80 bits retain all three-term products.
     reg signed [38:0] eq_mul_xa, eq_mul_xb, eq_mul_ya, eq_mul_yb;
-    wire signed [77:0] eq_mul_ac_raw = eq_mul_xa * eq_mul_ya;
-    wire signed [77:0] eq_mul_bd_raw = eq_mul_xb * eq_mul_yb;
-    wire signed [77:0] eq_mul_ad_raw = eq_mul_xa * eq_mul_yb;
-    wire signed [77:0] eq_mul_bc_raw = eq_mul_xb * eq_mul_ya;
-    wire signed [79:0] eq_mul_ac = {{2{eq_mul_ac_raw[77]}},eq_mul_ac_raw};
-    wire signed [79:0] eq_mul_bd = {{2{eq_mul_bd_raw[77]}},eq_mul_bd_raw};
-    wire signed [79:0] eq_mul_ad = {{2{eq_mul_ad_raw[77]}},eq_mul_ad_raw};
-    wire signed [79:0] eq_mul_bc = {{2{eq_mul_bc_raw[77]}},eq_mul_bc_raw};
-    wire signed [79:0] eq_mul_out_a = eq_mul_ac + eq_mul_bd;
-    wire signed [79:0] eq_mul_out_b = eq_mul_ad + eq_mul_bc + eq_mul_bd;
+    wire eq_mul_busy, eq_mul_done;
+    wire signed [79:0] eq_mul_out_a, eq_mul_out_b;
+    wire eq_mul_select_left = (fsm == S_EQ_MUL_LEFT) ||
+                              (fsm == S_EQ_MUL_WAIT && eq_mul_left_pending);
+
+    spu13_zphi_mul_serial #(
+        .X_W(39), .Y_W(39), .OUT_W(80)
+    ) u_eq_zphi_mul (
+        .clk(clk), .rst_n(rst_n && !clear), .start(eq_mul_start),
+        .xa(eq_mul_xa), .xb(eq_mul_xb), .ya(eq_mul_ya), .yb(eq_mul_yb),
+        .busy(eq_mul_busy), .done(eq_mul_done),
+        .out_a(eq_mul_out_a), .out_b(eq_mul_out_b)
+    );
 
     always @* begin
         eq_mul_xa = 39'sd0; eq_mul_xb = 39'sd0;
         eq_mul_ya = 39'sd0; eq_mul_yb = 39'sd0;
-        if (fsm == S_EQ_MUL_LEFT) begin
+        if (eq_mul_select_left) begin
             eq_mul_xa = eq_cable_a; eq_mul_xb = eq_cable_b;
             eq_mul_ya = eq_pivot_strut_a; eq_mul_yb = eq_pivot_strut_b;
-        end else if (fsm == S_EQ_MUL_RIGHT) begin
+        end else if (fsm == S_EQ_MUL_RIGHT || fsm == S_EQ_MUL_WAIT) begin
             eq_mul_xa = eq_strut_a; eq_mul_xb = eq_strut_b;
             eq_mul_ya = eq_pivot_cable_a; eq_mul_yb = eq_pivot_cable_b;
         end
@@ -251,6 +291,8 @@ module spu13_tensegrity_guard #(
             eq_pivot_valid <= 0;
             eq_cable_sign <= EQ_SG_ZERO;
             eq_left_a <= 0; eq_left_b <= 0;
+            eq_mul_start <= 1'b0;
+            eq_mul_left_pending <= 1'b0;
             for (i = 0; i < MAX_NODES; i = i + 1) begin
                 reachable[i] <= 0;
                 strut_degree[i] <= 0;
@@ -258,6 +300,7 @@ module spu13_tensegrity_guard #(
         end else begin
             done <= 1'b0;
             intersection_start <= 1'b0;
+            eq_mul_start <= 1'b0;
             if (fsm == S_IDLE) begin
                 if (cfg_node_we && cfg_node_index < MAX_NODES) begin
                     node_xa[cfg_node_index] <= cfg_x_a;
@@ -473,15 +516,26 @@ module spu13_tensegrity_guard #(
                     fsm <= S_EQ_ADVANCE;
                 end
             end else if (fsm == S_EQ_MUL_LEFT) begin
-                eq_left_a <= eq_mul_out_a;
-                eq_left_b <= eq_mul_out_b;
-                fsm <= S_EQ_MUL_RIGHT;
+                eq_mul_left_pending <= 1'b1;
+                eq_mul_start <= 1'b1;
+                fsm <= S_EQ_MUL_WAIT;
             end else if (fsm == S_EQ_MUL_RIGHT) begin
-                if (eq_left_a != eq_mul_out_a || eq_left_b != eq_mul_out_b) begin
-                    equilibrium_error <= 1'b1;
-                    fsm <= S_DECIDE;
-                end else begin
-                    fsm <= S_EQ_ADVANCE;
+                eq_mul_left_pending <= 1'b0;
+                eq_mul_start <= 1'b1;
+                fsm <= S_EQ_MUL_WAIT;
+            end else if (fsm == S_EQ_MUL_WAIT) begin
+                if (eq_mul_done) begin
+                    if (eq_mul_left_pending) begin
+                        eq_left_a <= eq_mul_out_a;
+                        eq_left_b <= eq_mul_out_b;
+                        fsm <= S_EQ_MUL_RIGHT;
+                    end else if (eq_left_a != eq_mul_out_a ||
+                                 eq_left_b != eq_mul_out_b) begin
+                        equilibrium_error <= 1'b1;
+                        fsm <= S_DECIDE;
+                    end else begin
+                        fsm <= S_EQ_ADVANCE;
+                    end
                 end
             end else if (fsm == S_EQ_ADVANCE) begin
                 eq_edge_i <= 0;

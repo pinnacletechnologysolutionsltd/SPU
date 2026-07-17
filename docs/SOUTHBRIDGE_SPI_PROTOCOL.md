@@ -583,7 +583,7 @@ bytes are transport/loader diagnostics:
 | 0 | TGR1 ABI version (`1`) |
 | 1 | active balancer state |
 | 2 | active terminal fault |
-| 3 | reserved (`0`) |
+| 3 | verifier service stage; bit 7 marks watchdog timeout |
 | 4–7 | active vector ID, uint32 |
 | 8 | flags: bit 3 active-valid, bit 2 verify-busy, bit 1 RX-busy, bit 0 error-present |
 | 9 | loader error |
@@ -594,7 +594,12 @@ bytes are transport/loader diagnostics:
 
 Loader error values are: `0` none, `1` transport abort/CRC, `2` magic,
 `3` version, `4` flags, `5` bounds, `6` length, `7` payload CRC-32,
-`8` node record, and `9` edge record. A nonzero diagnostic error describes
+`8` node record, `9` edge record, and `10` guard-service watchdog timeout.
+Service stages are: `0` idle, `1` table replay/parser, `2` topology, `3`
+connectivity, `4` local member guards, `5` exact strut intersection, `6`
+exact equilibrium, `7` decision, and `8` terminal result. On timeout byte 3
+is `0x80 | stage`, so the failing service survives after verify-busy clears.
+A nonzero diagnostic error describes
 the rejected staging transaction; bytes 1–7 continue to report the last
 committed active verdict.
 

@@ -11,7 +11,8 @@
 module spu13_tensegrity_sidecar #(
     parameter MAX_NODES = 12,
     parameter MAX_EDGES = 40,
-    parameter MAX_BYTES = 508
+    parameter MAX_BYTES = 508,
+    parameter VERIFY_WATCHDOG_LIMIT = 1000000
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -40,7 +41,8 @@ module spu13_tensegrity_sidecar #(
         ERR_LENGTH     = 8'd6,
         ERR_CRC32      = 8'd7,
         ERR_NODE       = 8'd8,
-        ERR_EDGE       = 8'd9;
+        ERR_EDGE       = 8'd9,
+        ERR_GUARD_TIMEOUT = 8'd10;
 
     localparam integer TOTAL_BYTES = 2 * MAX_BYTES;
     localparam integer ADDR_W = $clog2(TOTAL_BYTES);
@@ -115,6 +117,7 @@ module spu13_tensegrity_sidecar #(
     wire [4:0] guard_node_count;
     wire [5:0] guard_edge_count;
     wire [4:0] guard_intersection_attempts;
+    wire [7:0] guard_service_stage;
 
     spu13_tensegrity_guard #(
         .MAX_NODES(MAX_NODES),
@@ -130,7 +133,8 @@ module spu13_tensegrity_sidecar #(
         .cfg_edge_type(cfg_edge_type), .start(guard_start),
         .done(guard_done), .state_code(guard_state), .fault_code(guard_fault),
         .node_count(guard_node_count), .edge_count(guard_edge_count),
-        .intersection_attempts(guard_intersection_attempts)
+        .intersection_attempts(guard_intersection_attempts),
+        .service_stage(guard_service_stage)
     );
 
     localparam [3:0]
@@ -157,6 +161,8 @@ module spu13_tensegrity_sidecar #(
     reg guard_result_pending;
     reg [3:0] pending_guard_state;
     reg [2:0] pending_guard_fault;
+    reg [23:0] verify_watchdog;
+    reg [7:0] verify_stage;
 
     wire [ADDR_W-1:0] staging_base = staging_bank ? MAX_BYTES : 0;
     wire [ADDR_W-1:0] write_address = staging_base + write_count[ADDR_W-1:0];
@@ -167,7 +173,7 @@ module spu13_tensegrity_sidecar #(
     assign busy = rx_busy || verify_busy;
     assign loader_error = error_code;
     assign transport_status = {
-        8'd1, {4'd0, active_state}, {5'd0, active_fault}, 8'd0,
+        8'd1, {4'd0, active_state}, {5'd0, active_fault}, verify_stage,
         active_vector_id,
         status_flags, error_code,
         active_nodes, active_edges,
@@ -223,6 +229,8 @@ module spu13_tensegrity_sidecar #(
             guard_result_pending <= 1'b0;
             pending_guard_state <= 4'd0;
             pending_guard_fault <= 3'd0;
+            verify_watchdog <= 24'd0;
+            verify_stage <= 8'd0;
         end else begin
             guard_clear <= 1'b0;
             cfg_node_we <= 1'b0;
@@ -252,6 +260,9 @@ module spu13_tensegrity_sidecar #(
                 header_flags <= 8'd0;
                 header_crc <= 32'd0;
                 payload_crc <= 32'hFFFFFFFF;
+                guard_result_pending <= 1'b0;
+                verify_watchdog <= 24'd0;
+                verify_stage <= 8'd0;
                 overflow_seen <= (stream_length > MAX_BYTES);
                 error_code <= ERR_NONE;
                 rx_busy <= 1'b1;
@@ -309,6 +320,8 @@ module spu13_tensegrity_sidecar #(
                     error_code <= ERR_NONE;
                     verify_busy <= 1'b1;
                     parse_state <= P_CLEAR;
+                    verify_stage <= 8'd1;
+                    verify_watchdog <= 24'd0;
                     parse_index <= 8'd0;
                     record_byte <= 6'd0;
                     record_shift <= 224'd0;
@@ -322,6 +335,7 @@ module spu13_tensegrity_sidecar #(
 
                 P_CLEAR: begin
                     guard_clear <= 1'b1;
+                    verify_stage <= 8'd1;
                     if (header_nodes == 0) begin
                         record_base <= 16'd12;
                         parse_index <= 8'd0;
@@ -423,10 +437,13 @@ module spu13_tensegrity_sidecar #(
 
                 P_GUARD_START: begin
                     guard_start <= 1'b1;
+                    verify_stage <= 8'd2;
+                    verify_watchdog <= 24'd0;
                     parse_state <= P_GUARD_WAIT;
                 end
 
                 P_GUARD_WAIT: begin
+                    verify_stage <= guard_service_stage;
                     if (guard_done || guard_result_pending) begin
                         active_bank <= staging_bank;
                         active_valid_reg <= 1'b1;
@@ -440,7 +457,23 @@ module spu13_tensegrity_sidecar #(
                         verify_busy <= 1'b0;
                         error_code <= ERR_NONE;
                         guard_result_pending <= 1'b0;
+                        verify_watchdog <= 24'd0;
+                        verify_stage <= 8'd8;
                         parse_state <= P_IDLE;
+                    end else if (verify_watchdog + 1'b1 >= VERIFY_WATCHDOG_LIMIT) begin
+                        // A mechanically unresponsive service must never make
+                        // the transactional loader permanently busy.  Preserve
+                        // the active bank/verdict and expose the exact service
+                        // that timed out with bit 7 set.
+                        verify_busy <= 1'b0;
+                        error_code <= ERR_GUARD_TIMEOUT;
+                        guard_result_pending <= 1'b0;
+                        guard_clear <= 1'b1;
+                        verify_watchdog <= 24'd0;
+                        verify_stage <= 8'h80 | guard_service_stage;
+                        parse_state <= P_IDLE;
+                    end else begin
+                        verify_watchdog <= verify_watchdog + 1'b1;
                     end
                 end
 

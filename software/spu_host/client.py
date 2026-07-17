@@ -215,6 +215,7 @@ class SPUHostClient:
             "version": int(kv["version"]),
             "state": int(kv["state"]),
             "fault": int(kv["fault"]),
+            "stage": int(kv.get("stage", "0")),
             "vector": int(kv["vector"]),
             "flags": _int_auto(kv["flags"]),
             "error": int(kv["error"]),

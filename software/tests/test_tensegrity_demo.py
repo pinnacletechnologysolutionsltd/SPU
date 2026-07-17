@@ -85,12 +85,13 @@ class FakeTgrSerial:
     with the sidecar semantics from the protocol doc's 0xB3 section."""
 
     def __init__(self, sd_files, lie_balanced_on=None, no_rollback=False,
-                 stuck_busy=False):
+                 stuck_busy=False, watchdog_timeout=False):
         self._out = bytearray(BANNER)
         self._sd = sd_files  # {basename: bytes}
         self._lie_on = lie_balanced_on      # fixture name -> report BALANCED
         self._no_rollback = no_rollback     # corrupt upload clobbers verdict
         self._stuck_busy = stuck_busy
+        self._watchdog_timeout = watchdog_timeout
         # Active (committed) status: state, fault, vector, nodes, edges
         self._active = dict(state=0, fault=0, vector=0, nodes=0, edges=0)
         self._error = 0
@@ -116,6 +117,9 @@ class FakeTgrSerial:
             if self._no_rollback:  # sabotage: clobber committed state anyway
                 self._active = dict(state=0, fault=0, vector=vector_id,
                                     nodes=0, edges=0)
+        elif self._watchdog_timeout:
+            # Bounded combined-service failure: active state is untouched.
+            self._error = td.LOADER_ERR_GUARD_TIMEOUT
         else:
             system = decode_table(blob)
             state, fault = run_oracle(system)
@@ -134,10 +138,13 @@ class FakeTgrSerial:
         if self._error:
             flags |= 0x01
         a = self._active
-        return ["OK tgrstatus version=1 state=%d fault=%d vector=%d"
+        stage = (0x80 | 5) if self._watchdog_timeout else (
+            5 if self._stuck_busy else 8)
+        return ["OK tgrstatus version=1 state=%d fault=%d stage=%d vector=%d"
                 " flags=0x%02X error=%d nodes=%d edges=%d"
                 " received=0 expected=0"
-                % (a["state"], a["fault"], a["vector"], flags,
+                % (a["state"], a["fault"], stage,
+                   a["vector"], flags,
                    self._error, a["nodes"], a["edges"])]
 
     def write(self, data):
@@ -179,6 +186,9 @@ check("sidecar that fails to roll back on corrupt upload exits 1",
 
 check("sidecar stuck verify-busy exits 1 (known combined-image issue)",
       run_demo(stuck_busy=True) == 1)
+
+check("stage-coded verifier watchdog exits 1 without indefinite polling",
+      run_demo(watchdog_timeout=True) == 1)
 
 
 if failures:

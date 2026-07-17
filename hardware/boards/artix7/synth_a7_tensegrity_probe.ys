@@ -1,5 +1,6 @@
 # Standalone UART-only tensegrity admission probe.
 read_verilog -lib +/xilinx/cells_sim.v
+read_verilog hardware/rtl/core/spu13/spu13_zphi_mul_serial.v
 read_verilog hardware/rtl/core/spu13/spu13_tensegrity_intersection.v
 read_verilog hardware/rtl/core/spu13/spu13_tensegrity_guard.v
 read_verilog -D SYNTHESIS hardware/boards/artix7/spu_a7_tensegrity_probe_top.v

@@ -299,10 +299,10 @@ static void cmd_tgrstatus(spu_diag_t *diag) {
     uint8_t status[SPU_LINK_TGR_STATUS_BYTES] = {0};
 
     spu_link_read_tgr_status(diag->link, status);
-    printf("OK tgrstatus version=%u state=%u fault=%u vector=%" PRIu32
+    printf("OK tgrstatus version=%u state=%u fault=%u stage=%u vector=%" PRIu32
            " flags=0x%02X error=%u nodes=%u edges=%u"
            " received=%u expected=%u\r\n",
-           status[0], status[1], status[2], read_be32(&status[4]),
+           status[0], status[1], status[2], status[3], read_be32(&status[4]),
            status[8], status[9], status[10], status[11],
            read_be16(&status[12]), read_be16(&status[14]));
 }

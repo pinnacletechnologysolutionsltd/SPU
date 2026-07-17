@@ -1715,6 +1715,36 @@ the combined guard remain unproven. The agreed next step is componentization
 with explicit stage handshakes/watchdogs and eventual shared Z[phi] arithmetic,
 not further blind place-and-route seed searches.
 
+**Term-serial combined revision, 2026-07-18 (build + live status evidence):**
+the verifier now exposes a coarse B3 service stage and a one-million-cycle
+rollback-safe watchdog. Intersection and equilibrium use separate four-cycle,
+captured-input Z[phi] multiplication services instead of four parallel integer
+products each. Full regression is 170/170 (129/129 Verilog), including a new
+direct signed multiplier/latency bench and a forced intersection-timeout proof
+that returns loader error 10, stage `0x85`, preserves the active transaction,
+and then recovers.
+
+The monolithic diagnostic route was stopped at iteration 38 with 392 conflicts.
+The term-serial image routes cleanly at iteration 41 with 25,120 SLICE_LUTX
+(19%), 8,972 SLICE_FFX (7%), 66 DSP48E1 (27%), one RAMB18E1, guard Fmax
+42.23 MHz, and system Fmax 336.25 MHz. Packed bitstream:
+`build/spu_a7_100t_TENSEGRITYLINK.bit`, SHA-256
+`478e206c65fa5f18c44e7604ca27139e5d65f551ac91a170d8beb78baa4c7c57`.
+
+DirtyJTAG SRAM load completed with `done=1`; the rebuilt RP2350 firmware then
+returned:
+
+```text
+OK tgrstatus version=1 state=0 fault=0 stage=0 vector=0 \
+  flags=0x00 error=0 nodes=0 edges=0 received=0 expected=0
+```
+
+This is silicon evidence for the refactored image, J11 link, and new B3 stage
+field only. The canonical combined verdict could not be run in that session:
+`sdinit` returned `ERR no SD card`, and `sdprobe` showed GP12 MISO floating.
+Do not promote the complete atomic verifier to silicon-proven until the SD
+module is reconnected and the canonical/fault/rollback sequence completes.
+
 ### 3.3 RPLU + Math + SDRAM Proof
 
 **Historical build command:**

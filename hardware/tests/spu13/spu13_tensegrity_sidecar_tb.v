@@ -23,7 +23,9 @@ module spu13_tensegrity_sidecar_tb;
     integer i;
     reg [31:0] crc;
 
-    spu13_tensegrity_sidecar dut (
+    spu13_tensegrity_sidecar #(
+        .VERIFY_WATCHDOG_LIMIT(100000)
+    ) dut (
         .clk(clk), .rst_n(rst_n),
         .stream_start(stream_start), .stream_length(stream_length),
         .stream_vector_id(stream_vector_id),
@@ -196,6 +198,32 @@ module spu13_tensegrity_sidecar_tb;
             errors = errors + 1;
             $display("FAIL canonical diagnostics nodes=%0d edges=%0d error=%0d",
                      transport_status[47:40], transport_status[39:32], loader_error);
+        end
+
+        // If an exact service never returns, the loader must terminate with
+        // an explicit stage-coded timeout and preserve the active transaction.
+        // Hold the intersection service's completion wire so the coordinator
+        // remains at that explicit service boundary until its watchdog fires.
+        build_canonical;
+        force dut.u_guard.intersection_done = 1'b0;
+        send_complete(32'hDEADC0DE);
+        wait_idle;
+        release dut.u_guard.intersection_done;
+        expect_status(2, 0, 32'h12345678, "guard-timeout rollback");
+        if (loader_error !== 10 || transport_status[103:96] !== 8'h85) begin
+            errors = errors + 1;
+            $display("FAIL timeout diagnostics error=%0d stage=%02h",
+                     loader_error, transport_status[103:96]);
+        end
+
+        build_canonical;
+        send_complete(32'h12345678);
+        wait_idle;
+        expect_status(2, 0, 32'h12345678, "post-timeout recovery");
+        if (loader_error !== 0 || transport_status[103:96] !== 8'd8) begin
+            errors = errors + 1;
+            $display("FAIL recovery diagnostics error=%0d stage=%02h",
+                     loader_error, transport_status[103:96]);
         end
 
         // A B3 read may overlap the guard's one-cycle done pulse. Hold the

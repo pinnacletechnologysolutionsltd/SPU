@@ -24,10 +24,12 @@ host-vs-silicon equivalence check, not a scripted light show.
 
 Silicon status honesty (docs/TENSEGRITY_BALANCER_HANDOVER_2026-07-15.md):
 J11/SD/B2/B3/parser and the single-engine guard images are board-proven
-(2026-07-16); the FULL combined guard image still hangs `verify_busy`
-after a complete load -- a refactor is in progress. If this demo stalls
-with verify-busy set, that is the known open issue, not a wiring problem;
-run against an intersection-only or equilibrium-only image meanwhile.
+(2026-07-16); the original FULL combined guard image hangs `verify_busy`
+after a complete load. The 2026-07-18 diagnostic image bounds that failure
+with a stage-coded verifier watchdog and atomic rollback, but still awaits a
+board run. If an older image stalls with verify-busy set, that is the known
+open issue, not a wiring problem; use `stage` on the diagnostic image to
+localize it.
 
 Setup (one-time): the fixtures must be on the RP2350's SD card.
     python3 tools/tensegrity_demo.py --emit-fixtures /path/to/sd/TGR
@@ -66,8 +68,9 @@ from lib.tensegrity_vectors import golden_vectors, run_oracle  # noqa: E402
 FLAG_ACTIVE_VALID = 0x08
 FLAG_VERIFY_BUSY = 0x04
 
-# Loader diagnostic for a corrupt payload CRC-32 (same section)
+# Loader diagnostics used by this demo (same section)
 LOADER_ERR_PAYLOAD_CRC = 7
+LOADER_ERR_GUARD_TIMEOUT = 10
 
 CORRUPT_NAME = "99_corrupt_crc.tgr"
 CORRUPT_VECTOR_ID = 99
@@ -119,7 +122,13 @@ def check_verdict(label, status, expect_state, expect_fault, expect_vector,
                   expect_error=0, expect_nodes=None, expect_edges=None):
     if status["flags"] & FLAG_VERIFY_BUSY:
         print(f"  {label}: STALLED verify-busy -- this is the known combined-"
-              f"image issue (see handover doc), not a demo failure per se.")
+              f"image issue at service-stage={status.get('stage', 0)} "
+              f"(see handover doc), not a wiring failure.")
+        return False
+    if status["error"] == LOADER_ERR_GUARD_TIMEOUT:
+        stage = status.get("stage", 0)
+        print(f"  {label}: VERIFIER WATCHDOG -- service-stage={stage & 0x7f} "
+              f"timed out; the previous committed verdict was preserved.")
         return False
     problems = []
     if status["state"] != expect_state.value:

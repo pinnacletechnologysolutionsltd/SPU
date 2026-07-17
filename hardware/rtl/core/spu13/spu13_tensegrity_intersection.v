@@ -4,8 +4,8 @@
 // The engine solves s*u - t*v = w using the first nonzero 2x2 coordinate
 // minor, checks s,t in [0,1] with exact Q(sqrt(5)) sign predicates, and then
 // verifies the remaining coordinate. Parallel lines take a separate exact
-// collinearity/interval-overlap path. One asymmetric phi multiplier and one
-// sign comparator are shared across the fixed micro-program.
+// collinearity/interval-overlap path. One term-serial asymmetric phi
+// multiplier and one sign comparator are shared across the fixed micro-program.
 module spu13_tensegrity_intersection (
     input  wire clk,
     input  wire rst_n,
@@ -45,9 +45,12 @@ module spu13_tensegrity_intersection (
                      X_DONE       = 5'd22,
                      X_SIGN_EVAL  = 5'd23,
                      X_CAND_EVAL  = 5'd24,
-                     X_EQ_EVAL    = 5'd25;
+                     X_EQ_EVAL    = 5'd25,
+                     X_MUL_WAIT   = 5'd26;
 
     reg [4:0] state;
+    reg [4:0] mul_return_state;
+    reg mul_start;
     reg [1:0] minor_index;
     reg [1:0] col_axis;
 
@@ -124,16 +127,17 @@ module spu13_tensegrity_intersection (
     // difference. Products are retained at 108 bits for the final equality.
     reg signed [71:0] mul_xa, mul_xb;
     reg signed [33:0] mul_ya, mul_yb;
-    wire signed [105:0] mul_ac_raw = mul_xa * mul_ya;
-    wire signed [105:0] mul_bd_raw = mul_xb * mul_yb;
-    wire signed [105:0] mul_ad_raw = mul_xa * mul_yb;
-    wire signed [105:0] mul_bc_raw = mul_xb * mul_ya;
-    wire signed [107:0] mul_ac = {{2{mul_ac_raw[105]}}, mul_ac_raw};
-    wire signed [107:0] mul_bd = {{2{mul_bd_raw[105]}}, mul_bd_raw};
-    wire signed [107:0] mul_ad = {{2{mul_ad_raw[105]}}, mul_ad_raw};
-    wire signed [107:0] mul_bc = {{2{mul_bc_raw[105]}}, mul_bc_raw};
-    wire signed [107:0] mul_out_a = mul_ac + mul_bd;
-    wire signed [107:0] mul_out_b = mul_ad + mul_bc + mul_bd;
+    wire mul_busy, mul_done;
+    wire signed [107:0] mul_out_a, mul_out_b;
+    wire [4:0] mul_operation = (state == X_MUL_WAIT) ? mul_return_state : state;
+
+    spu13_zphi_mul_serial #(
+        .X_W(72), .Y_W(34), .OUT_W(108)
+    ) u_zphi_mul (
+        .clk(clk), .rst_n(rst_n), .start(mul_start),
+        .xa(mul_xa), .xb(mul_xb), .ya(mul_ya), .yb(mul_yb),
+        .busy(mul_busy), .done(mul_done), .out_a(mul_out_a), .out_b(mul_out_b)
+    );
 
     wire signed [107:0] candidate_a = mul_out_a - product0_a;
     wire signed [107:0] candidate_b = mul_out_b - product0_b;
@@ -142,7 +146,7 @@ module spu13_tensegrity_intersection (
     always @* begin
         mul_xa = 72'sd0; mul_xb = 72'sd0;
         mul_ya = 34'sd0; mul_yb = 34'sd0;
-        case (state)
+        case (mul_operation)
             X_D0: begin
                 mul_xa = {{39{ui_a[32]}}, ui_a}; mul_xb = {{39{ui_b[32]}}, ui_b};
                 mul_ya = {{1{vj_a[32]}}, vj_a}; mul_yb = {{1{vj_b[32]}}, vj_b};
@@ -289,8 +293,11 @@ module spu13_tensegrity_intersection (
             sign_in_a <= 72'sd0;
             sign_in_b <= 72'sd0;
             sign_op <= 4'd0;
+            mul_start <= 1'b0;
+            mul_return_state <= X_IDLE;
         end else begin
             done <= 1'b0;
+            mul_start <= 1'b0;
             case (state)
                 X_IDLE: if (start) begin
                     p0a[0]<=p0_xa; p0b[0]<=p0_xb; p0a[1]<=p0_ya; p0b[1]<=p0_yb; p0a[2]<=p0_za; p0b[2]<=p0_zb;
@@ -312,44 +319,73 @@ module spu13_tensegrity_intersection (
                     state <= X_PREP;
                 end
                 X_PREP: state <= X_D0;
-                X_D0: begin product0_a<=mul_out_a; product0_b<=mul_out_b; state<=X_D1; end
-                X_D1: begin
-                    candidate_hold_a<=candidate_a;
-                    candidate_hold_b<=candidate_b;
-                    candidate_op<=2'd0;
-                    state<=X_CAND_EVAL;
-                end
-                X_S0: begin product0_a<=mul_out_a; product0_b<=mul_out_b; state<=X_S1; end
-                X_S1: begin
-                    candidate_hold_a<=candidate_a;
-                    candidate_hold_b<=candidate_b;
-                    candidate_op<=2'd1;
-                    state<=X_CAND_EVAL;
-                end
-                X_T0: begin product0_a<=mul_out_a; product0_b<=mul_out_b; state<=X_T1; end
-                X_T1: begin
-                    t_num_a<=(product0_a-mul_out_a); t_num_b<=(product0_b-mul_out_b); state<=X_SIGN_D;
+                X_D0, X_D1, X_S0, X_S1, X_T0, X_T1,
+                X_EQ0, X_EQ1, X_EQ2, X_COL0, X_COL1: begin
+                    mul_return_state <= state;
+                    mul_start <= 1'b1;
+                    state <= X_MUL_WAIT;
                 end
                 X_SIGN_D: begin sign_in_a<=sign_source_a; sign_in_b<=sign_source_b; sign_op<=4'd0; state<=X_SIGN_EVAL; end
                 X_SIGN_S: begin sign_in_a<=sign_source_a; sign_in_b<=sign_source_b; sign_op<=4'd1; state<=X_SIGN_EVAL; end
                 X_SIGN_DS: begin sign_in_a<=sign_source_a; sign_in_b<=sign_source_b; sign_op<=4'd2; state<=X_SIGN_EVAL; end
                 X_SIGN_T: begin sign_in_a<=sign_source_a; sign_in_b<=sign_source_b; sign_op<=4'd3; state<=X_SIGN_EVAL; end
                 X_SIGN_DT: begin sign_in_a<=sign_source_a; sign_in_b<=sign_source_b; sign_op<=4'd4; state<=X_SIGN_EVAL; end
-                X_EQ0: begin product0_a<=mul_out_a; product0_b<=mul_out_b; state<=X_EQ1; end
-                X_EQ1: begin product1_a<=mul_out_a; product1_b<=mul_out_b; state<=X_EQ2; end
-                X_EQ2: begin
-                    candidate_hold_a <= product0_a-product1_a;
-                    candidate_hold_b <= product0_b-product1_b;
-                    product2_a <= mul_out_a;
-                    product2_b <= mul_out_b;
-                    state <= X_EQ_EVAL;
-                end
-                X_COL0: begin product0_a<=mul_out_a; product0_b<=mul_out_b; state<=X_COL1; end
-                X_COL1: begin
-                    candidate_hold_a<=candidate_a;
-                    candidate_hold_b<=candidate_b;
-                    candidate_op<=2'd2;
-                    state<=X_CAND_EVAL;
+                X_MUL_WAIT: if (mul_done) begin
+                    case (mul_return_state)
+                        X_D0: begin
+                            product0_a<=mul_out_a; product0_b<=mul_out_b;
+                            state<=X_D1;
+                        end
+                        X_D1: begin
+                            candidate_hold_a<=candidate_a;
+                            candidate_hold_b<=candidate_b;
+                            candidate_op<=2'd0;
+                            state<=X_CAND_EVAL;
+                        end
+                        X_S0: begin
+                            product0_a<=mul_out_a; product0_b<=mul_out_b;
+                            state<=X_S1;
+                        end
+                        X_S1: begin
+                            candidate_hold_a<=candidate_a;
+                            candidate_hold_b<=candidate_b;
+                            candidate_op<=2'd1;
+                            state<=X_CAND_EVAL;
+                        end
+                        X_T0: begin
+                            product0_a<=mul_out_a; product0_b<=mul_out_b;
+                            state<=X_T1;
+                        end
+                        X_T1: begin
+                            t_num_a<=product0_a-mul_out_a;
+                            t_num_b<=product0_b-mul_out_b;
+                            state<=X_SIGN_D;
+                        end
+                        X_EQ0: begin
+                            product0_a<=mul_out_a; product0_b<=mul_out_b;
+                            state<=X_EQ1;
+                        end
+                        X_EQ1: begin
+                            product1_a<=mul_out_a; product1_b<=mul_out_b;
+                            state<=X_EQ2;
+                        end
+                        X_EQ2: begin
+                            candidate_hold_a<=product0_a-product1_a;
+                            candidate_hold_b<=product0_b-product1_b;
+                            product2_a<=mul_out_a; product2_b<=mul_out_b;
+                            state<=X_EQ_EVAL;
+                        end
+                        X_COL0: begin
+                            product0_a<=mul_out_a; product0_b<=mul_out_b;
+                            state<=X_COL1;
+                        end
+                        default: begin
+                            candidate_hold_a<=candidate_a;
+                            candidate_hold_b<=candidate_b;
+                            candidate_op<=2'd2;
+                            state<=X_CAND_EVAL;
+                        end
+                    endcase
                 end
                 X_CAND_EVAL: begin
                     case (candidate_op)
