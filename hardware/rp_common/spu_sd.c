@@ -59,6 +59,8 @@
 #define SD_TOKEN_STOP   0xFD
 #define SD_DATA_RESPONSE_MASK  0x1F
 #define SD_DATA_ACCEPTED 0x05
+#define SD_OCR_VOLTAGE_WINDOW 0x00FF8000u
+#define SD_OCR_HCS            0x40000000u
 
 typedef enum {
     SD_TYPE_NONE = 0,
@@ -69,6 +71,8 @@ typedef enum {
 
 static sd_type_t sd_type = SD_TYPE_NONE;
 static bool sd_mounted = false;
+static spu_sd_error_t sd_last_error = SPU_SD_ERR_NONE;
+static uint8_t sd_last_r1 = 0xFF;
 
 static void sd_cs_low(void)  { gpio_put(SD_CS_PIN, 0); }
 static void sd_cs_high(void) { gpio_put(SD_CS_PIN, 1); }
@@ -94,6 +98,26 @@ static uint8_t sd_wait_ready(int timeout_ms) {
     return r;
 }
 
+static uint8_t sd_command_crc(uint8_t cmd, uint32_t arg) {
+    uint8_t packet[5] = {
+        (uint8_t)(0x40 | (cmd & 0x3F)),
+        (uint8_t)(arg >> 24),
+        (uint8_t)(arg >> 16),
+        (uint8_t)(arg >> 8),
+        (uint8_t)arg,
+    };
+    uint8_t crc = 0;
+
+    for (size_t byte = 0; byte < sizeof(packet); byte++) {
+        crc ^= packet[byte];
+        for (int bit = 0; bit < 8; bit++) {
+            if (crc & 0x80) crc ^= 0x89;
+            crc <<= 1;
+        }
+    }
+    return crc | 0x01;
+}
+
 static void sd_send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
     sd_spi_xfer(0xFF);
     sd_spi_xfer(0x40 | (cmd & 0x3F));
@@ -116,15 +140,21 @@ static uint8_t sd_read_r1(void) {
 static uint8_t sd_cmd(uint8_t cmd, uint32_t arg) {
     sd_cs_low();
     sd_wait_ready(SD_CMD_TIMEOUT);
-    sd_send_cmd(cmd, arg, cmd == CMD0 ? 0x95 : (cmd == CMD8 ? 0x87 : 0x01));
+    sd_send_cmd(cmd, arg, sd_command_crc(cmd, arg));
     uint8_t r1 = sd_read_r1();
     if (r1 == 0xFF) sd_cs_high();
     return r1;
 }
 
 static uint8_t sd_acmd(uint8_t cmd, uint32_t arg) {
-    sd_cmd(CMD55, 0);
-    return sd_cmd(cmd, arg);
+    uint8_t r1 = sd_cmd(CMD55, 0);
+    sd_cs_high();
+    sd_spi_xfer(0xFF);
+    if (r1 > SD_R1_IDLE) return r1;
+    r1 = sd_cmd(cmd, arg);
+    sd_cs_high();
+    sd_spi_xfer(0xFF);
+    return r1;
 }
 
 static bool sd_read_data_token(uint8_t *buf, size_t len) {
@@ -144,6 +174,9 @@ static bool sd_read_data_token(uint8_t *buf, size_t len) {
 
 bool spu_sd_init(void) {
     if (sd_mounted) return true;
+
+    sd_last_error = SPU_SD_ERR_NONE;
+    sd_last_r1 = 0xFF;
 
     spi_init(SD_SPI, 400000);
     spi_set_format(SD_SPI, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
@@ -165,7 +198,11 @@ bool spu_sd_init(void) {
     for (int retry = 0; retry < SD_INIT_RETRIES; retry++) {
         uint8_t r1 = sd_cmd(CMD0, 0);
         if (r1 == SD_R1_IDLE) break;
-        if (retry == SD_INIT_RETRIES - 1) return false;
+        if (retry == SD_INIT_RETRIES - 1) {
+            sd_last_error = SPU_SD_ERR_CMD0;
+            sd_last_r1 = r1;
+            return false;
+        }
         sleep_ms(10);
     }
     sd_cs_high();
@@ -189,34 +226,61 @@ bool spu_sd_init(void) {
 
     // ACMD41: Init
     if (is_v2) {
-        absolute_time_t deadline = make_timeout_time_ms(1000);
+        absolute_time_t deadline = make_timeout_time_ms(5000);
         do {
-            r1 = sd_acmd(ACMD41, 0x40000000);
-            if (r1 == 0xFF) { sd_cs_high(); return false; }
-        } while (r1 == SD_R1_IDLE && absolute_time_diff_us(get_absolute_time(), deadline) > 0);
+            r1 = sd_acmd(ACMD41, SD_OCR_HCS | SD_OCR_VOLTAGE_WINDOW);
+            if (r1 == 0xFF) {
+                sd_cs_high();
+                sd_last_error = SPU_SD_ERR_ACMD41;
+                sd_last_r1 = r1;
+                return false;
+            }
+            if (r1 != SD_R1_READY) sleep_ms(1);
+        } while (r1 != SD_R1_READY &&
+                 absolute_time_diff_us(get_absolute_time(), deadline) > 0);
         sd_cs_high();
         sd_spi_xfer(0xFF);
 
-        if (r1 != SD_R1_READY) return false;
+        if (r1 != SD_R1_READY) {
+            sd_last_error = SPU_SD_ERR_ACMD41;
+            sd_last_r1 = r1;
+            return false;
+        }
 
         // CMD58: check OCR CCS bit
         r1 = sd_cmd(CMD58, 0);
-        if (r1 != SD_R1_READY) { sd_cs_high(); return false; }
+        if (r1 != SD_R1_READY) {
+            sd_cs_high();
+            sd_last_error = SPU_SD_ERR_CMD58;
+            sd_last_r1 = r1;
+            return false;
+        }
         uint8_t ocr[4];
         sd_spi_read(ocr, 4);
         sd_cs_high();
         sd_spi_xfer(0xFF);
         sd_type = (ocr[0] & 0x40) ? SD_TYPE_V2HC : SD_TYPE_V2;
     } else {
-        absolute_time_t deadline = make_timeout_time_ms(1000);
+        absolute_time_t deadline = make_timeout_time_ms(5000);
         do {
-            r1 = sd_acmd(ACMD41, 0);
-            if (r1 == 0xFF) { sd_cs_high(); return false; }
-        } while (r1 == SD_R1_IDLE && absolute_time_diff_us(get_absolute_time(), deadline) > 0);
+            r1 = sd_acmd(ACMD41, SD_OCR_VOLTAGE_WINDOW);
+            if (r1 == 0xFF) {
+                sd_cs_high();
+                sd_last_error = SPU_SD_ERR_ACMD41;
+                sd_last_r1 = r1;
+                return false;
+            }
+            if (r1 != SD_R1_READY) sleep_ms(1);
+        } while (r1 != SD_R1_READY &&
+                 absolute_time_diff_us(get_absolute_time(), deadline) > 0);
         sd_cs_high();
         sd_spi_xfer(0xFF);
 
-        if (r1 != SD_R1_READY) return false;
+        if (r1 != SD_R1_READY) {
+            sd_last_error = SPU_SD_ERR_ACMD41;
+            sd_last_r1 = r1;
+            return false;
+        }
         sd_type = SD_TYPE_V1;
     }
 
@@ -227,7 +291,11 @@ bool spu_sd_init(void) {
     r1 = sd_cmd(CMD16, 512);
     sd_cs_high();
     sd_spi_xfer(0xFF);
-    if (r1 != SD_R1_READY) return false;
+    if (r1 != SD_R1_READY) {
+        sd_last_error = SPU_SD_ERR_CMD16;
+        sd_last_r1 = r1;
+        return false;
+    }
 
     sd_mounted = true;
     return true;
@@ -235,6 +303,25 @@ bool spu_sd_init(void) {
 
 bool spu_sd_mounted(void) {
     return sd_mounted;
+}
+
+spu_sd_error_t spu_sd_last_error(void) {
+    return sd_last_error;
+}
+
+uint8_t spu_sd_last_r1(void) {
+    return sd_last_r1;
+}
+
+const char *spu_sd_error_name(spu_sd_error_t error) {
+    switch (error) {
+    case SPU_SD_ERR_NONE: return "none";
+    case SPU_SD_ERR_CMD0: return "CMD0";
+    case SPU_SD_ERR_ACMD41: return "ACMD41";
+    case SPU_SD_ERR_CMD58: return "CMD58";
+    case SPU_SD_ERR_CMD16: return "CMD16";
+    default: return "unknown";
+    }
 }
 
 int spu_sd_read_blocks(uint32_t lba, uint8_t *buf, uint32_t count) {

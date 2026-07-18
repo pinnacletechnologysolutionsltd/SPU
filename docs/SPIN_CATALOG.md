@@ -89,7 +89,7 @@ Wukong Artix-7:
 |---|---|---|
 | SOMPROBE (`build_a7.sh 100t somprobe`) | Historical fixed fixture; superseded for product evidence by the writable SOM-SIDECAR | built; board run unnecessary for the now-closed full-sidecar cross-vendor proof |
 | TENSEGRITYPROBE (`build_a7.sh 100t tensegrityprobe`) | seven frozen TGR1 admission fixtures, including exact strut intersection and type-uniform Z[phi] equilibrium | silicon PASS 2026-07-14: `TGR:P V:7 E:00` |
-| TENSEGRITYLINK (`build_a7.sh 100t tensegritylink`) | B2 transactional TGR1 BRAM hydration, synchronous guard replay, coherent B3 status, bounded verification, and rollback | Partial silicon: J11/SD/B2/B3/parser and each exact service proven separately. 2026-07-18 term-serial combined image routes cleanly at 66 DSP, stage telemetry is live over B3, and watchdog rollback is RTL-proven; canonical combined board verdict awaits SD-card reconnection. |
+| TENSEGRITYLINK (`build_a7.sh 100t tensegritylink`) | B2 transactional TGR1 BRAM hydration, synchronous guard replay, coherent B3 status, bounded verification, and rollback | Silicon-proven 2026-07-19: full combined intersection+equilibrium admission, mechanical-negative verdict, payload-CRC rollback preserving the prior verdict, and recovery repeated three times over SD/RP2350/J11. Bitstream SHA-256 `30381825ed444d92a5474740c0219c84fff449e05ba575d45dcbb409459a1de5`. |
 
 **A7 spin names not in the product/probe tables above** (`multimedia`,
 `intelligence`, `full`, `sensor`, `rplucfg`, `rplu2core`, `rplu2`,

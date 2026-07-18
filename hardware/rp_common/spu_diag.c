@@ -4,6 +4,7 @@
 #include "hardware/spi.h"
 #include "ff.h"
 #include "pico/stdlib.h"
+#include "spu_sd.h"
 #include "spu_storage.h"
 #include <ctype.h>
 #include <inttypes.h>
@@ -172,6 +173,7 @@ static void cmd_help(void) {
     printf("  hex\r\n");
     printf("  cfgtele\r\n");
     printf("  tgrload <path.tgr> [vector_id]\r\n");
+    printf("  tgrloadbadcrc <path.tgr> [vector_id]\r\n");
     printf("  tgrstatus\r\n");
     printf("  chord <16 hex digits>\r\n");
     printf("  rplu <sel> <material> <addr> <data64>\r\n");
@@ -307,7 +309,7 @@ static void cmd_tgrstatus(spu_diag_t *diag) {
            read_be16(&status[12]), read_be16(&status[14]));
 }
 
-static void cmd_tgrload(spu_diag_t *diag, char *args) {
+static void cmd_tgrload(spu_diag_t *diag, char *args, bool corrupt_payload) {
     static uint8_t table[SPU_LINK_TGR_MAX_BYTES];
     char *path = next_token(&args);
     uint32_t vector_id = 0;
@@ -317,7 +319,8 @@ static void cmd_tgrload(spu_diag_t *diag, char *args) {
     FSIZE_t size;
 
     if (path == NULL) {
-        printf("ERR usage: tgrload <path.tgr> [vector_id]\r\n");
+        printf("ERR usage: %s <path.tgr> [vector_id]\r\n",
+               corrupt_payload ? "tgrloadbadcrc" : "tgrload");
         return;
     }
     if (*skip_ws(args) != '\0' && !parse_u32_token(&args, &vector_id)) {
@@ -341,12 +344,18 @@ static void cmd_tgrload(spu_diag_t *diag, char *args) {
     }
     result = f_read(&file, table, (UINT)size, &read_count);
     f_close(&file);
-    if (result != FR_OK || read_count != (UINT)size ||
-        !spu_link_write_tgr1(diag->link, vector_id, table, (uint16_t)size)) {
+    if (result != FR_OK || read_count != (UINT)size) {
         printf("ERR TGR1 read/transport failed\r\n");
         return;
     }
-    printf("OK tgrload bytes=%u vector=%" PRIu32 "\r\n",
+    if (corrupt_payload)
+        table[size - 1] ^= 0xff;
+    if (!spu_link_write_tgr1(diag->link, vector_id, table, (uint16_t)size)) {
+        printf("ERR TGR1 read/transport failed\r\n");
+        return;
+    }
+    printf("OK %s bytes=%u vector=%" PRIu32 "\r\n",
+           corrupt_payload ? "tgrloadbadcrc" : "tgrload",
            (unsigned)size, vector_id);
 }
 
@@ -541,6 +550,8 @@ static void sd_diag_send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
 static void cmd_sdcmd(void) {
     uint8_t r1_cmd0;
     uint8_t r1_cmd8;
+    uint8_t r1_cmd55;
+    uint8_t r1_acmd41;
     uint8_t r7[4];
 
     spi_init(SPU_SD_SPI_PORT, 400000);
@@ -571,8 +582,22 @@ static void cmd_sdcmd(void) {
     gpio_put(SPU_SD_CS_PIN, 1);
     sd_diag_xfer(0xFF);
 
-    printf("OK sdcmd cmd0_r1=0x%02X cmd8_r1=0x%02X r7=%02X %02X %02X %02X\r\n",
-           r1_cmd0, r1_cmd8, r7[0], r7[1], r7[2], r7[3]);
+    gpio_put(SPU_SD_CS_PIN, 0);
+    sd_diag_send_cmd(55, 0, 0x65);
+    r1_cmd55 = sd_diag_r1();
+    gpio_put(SPU_SD_CS_PIN, 1);
+    sd_diag_xfer(0xFF);
+
+    gpio_put(SPU_SD_CS_PIN, 0);
+    sd_diag_send_cmd(41, 0x40FF8000, 0x17);
+    r1_acmd41 = sd_diag_r1();
+    gpio_put(SPU_SD_CS_PIN, 1);
+    sd_diag_xfer(0xFF);
+
+    printf("OK sdcmd cmd0_r1=0x%02X cmd8_r1=0x%02X r7=%02X %02X %02X %02X"
+           " cmd55_r1=0x%02X acmd41_r1=0x%02X\r\n",
+           r1_cmd0, r1_cmd8, r7[0], r7[1], r7[2], r7[3],
+           r1_cmd55, r1_acmd41);
 }
 
 static void cmd_sddrive(char *args) {
@@ -612,7 +637,13 @@ static void cmd_sddrive(char *args) {
 
 static void cmd_sdinit(void) {
     if (!spu_storage_init()) {
-        printf("ERR no SD card\r\n");
+        if (spu_sd_mounted()) {
+            printf("ERR sdinit stage=filesystem\r\n");
+        } else {
+            spu_sd_error_t error = spu_sd_last_error();
+            printf("ERR sdinit stage=%s r1=0x%02X\r\n",
+                   spu_sd_error_name(error), spu_sd_last_r1());
+        }
     } else {
         printf("OK sdinit\r\n");
     }
@@ -709,7 +740,9 @@ static void execute_line(spu_diag_t *diag) {
     } else if (strcmp(cmd, "cfgtele") == 0) {
         cmd_cfgtele(diag);
     } else if (strcmp(cmd, "tgrload") == 0) {
-        cmd_tgrload(diag, cursor);
+        cmd_tgrload(diag, cursor, false);
+    } else if (strcmp(cmd, "tgrloadbadcrc") == 0) {
+        cmd_tgrload(diag, cursor, true);
     } else if (strcmp(cmd, "tgrstatus") == 0) {
         cmd_tgrstatus(diag);
     } else if (strcmp(cmd, "chord") == 0) {

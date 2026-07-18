@@ -1745,6 +1745,35 @@ field only. The canonical combined verdict could not be run in that session:
 Do not promote the complete atomic verifier to silicon-proven until the SD
 module is reconnected and the canonical/fault/rollback sequence completes.
 
+**Complete TENSEGRITYLINK closure, 2026-07-19:** the SD path was restored and
+the parser-bounded term-serial image completed the full transaction on the
+Wukong Artix-7.  The image routed at 25,563 SLICE_LUTX (20%), 8,980
+SLICE_FFX (7%), 66 DSP48E1 (27%), and one RAMB18E1; guard Fmax was 41.54 MHz
+at the 25 MHz operating cadence.  The packed bitstream is
+`build/spu_a7_100t_TENSEGRITYLINK.bit`, SHA-256
+`30381825ed444d92a5474740c0219c84fff449e05ba575d45dcbb409459a1de5`.
+
+The following admission, mechanical-negative, corrupt-payload rollback, and
+recovery sequence was reproduced bit-for-bit on three consecutive runs:
+
+```text
+state=2 fault=0 stage=8 vector=0 flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468
+state=8 fault=5 stage=8 vector=6 flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468
+state=8 fault=5 stage=0 vector=6 flags=0x09 error=7 nodes=12 edges=30 received=468 expected=468
+state=2 fault=0 stage=8 vector=0 flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468
+```
+
+The corrupt-payload case used the bench-only `tgrloadbadcrc` command: firmware
+flipped the final TGR1 payload byte in RAM and then generated a valid SPI
+transport CRC-8, so loader error 7 proves the FPGA's independent payload
+CRC-32 rejection and preservation of the active vector-6 verdict.  The full
+B2/B3 transactional transport and combined intersection+equilibrium admission
+guard are therefore silicon-proven.  The parser telemetry/watchdog changed
+placement as well as observability, so the precise cause of the older stage-1
+stall was not isolated; this closure claim is tied to the bitstream hash
+above.  The remaining tensegrity frontier is the active proposal/actuation
+controller, not table transport or bounded admission.
+
 ### 3.3 RPLU + Math + SDRAM Proof
 
 **Historical build command:**

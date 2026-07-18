@@ -18,6 +18,7 @@ Checks, without a board attached:
      active verdict instead of preserving it);
    - a sidecar stuck verify-busy (the known combined-image issue -- the
      demo must report it and exit nonzero, not hang or false-pass).
+   - stage-coded guard and parser watchdog rollbacks.
 
 No hardware required. Run: python3 software/tests/test_tensegrity_demo.py
 """
@@ -85,13 +86,15 @@ class FakeTgrSerial:
     with the sidecar semantics from the protocol doc's 0xB3 section."""
 
     def __init__(self, sd_files, lie_balanced_on=None, no_rollback=False,
-                 stuck_busy=False, watchdog_timeout=False):
+                 stuck_busy=False, watchdog_timeout=False,
+                 parser_timeout=False):
         self._out = bytearray(BANNER)
         self._sd = sd_files  # {basename: bytes}
         self._lie_on = lie_balanced_on      # fixture name -> report BALANCED
         self._no_rollback = no_rollback     # corrupt upload clobbers verdict
         self._stuck_busy = stuck_busy
         self._watchdog_timeout = watchdog_timeout
+        self._parser_timeout = parser_timeout
         # Active (committed) status: state, fault, vector, nodes, edges
         self._active = dict(state=0, fault=0, vector=0, nodes=0, edges=0)
         self._error = 0
@@ -120,6 +123,9 @@ class FakeTgrSerial:
         elif self._watchdog_timeout:
             # Bounded combined-service failure: active state is untouched.
             self._error = td.LOADER_ERR_GUARD_TIMEOUT
+        elif self._parser_timeout:
+            # Bounded BRAM replay failure: active state is untouched.
+            self._error = td.LOADER_ERR_PARSE_TIMEOUT
         else:
             system = decode_table(blob)
             state, fault = run_oracle(system)
@@ -139,7 +145,8 @@ class FakeTgrSerial:
             flags |= 0x01
         a = self._active
         stage = (0x80 | 5) if self._watchdog_timeout else (
-            5 if self._stuck_busy else 8)
+            (0x90 | 3) if self._parser_timeout else (
+                5 if self._stuck_busy else 8))
         return ["OK tgrstatus version=1 state=%d fault=%d stage=%d vector=%d"
                 " flags=0x%02X error=%d nodes=%d edges=%d"
                 " received=0 expected=0"
@@ -189,6 +196,9 @@ check("sidecar stuck verify-busy exits 1 (known combined-image issue)",
 
 check("stage-coded verifier watchdog exits 1 without indefinite polling",
       run_demo(watchdog_timeout=True) == 1)
+
+check("stage-coded parser watchdog exits 1 and preserves active state",
+      run_demo(parser_timeout=True) == 1)
 
 
 if failures:

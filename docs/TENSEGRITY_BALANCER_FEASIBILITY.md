@@ -245,6 +245,14 @@ intersection completion low and proves stage `0x85`, rollback, and subsequent
 recovery. RP2350 firmware and host tooling report the stage. This change is
 RTL/firmware-verified; the full combined board result remains pending.
 
+The follow-on parser-bounding revision exposes replay substates `0x11` through
+`0x1A` and adds an independent 4096-cycle parser watchdog. A wedged replay now
+rolls back with loader error 11 and stage `0x90 | substate`; the regression
+forces a BRAM-read wait-state stall, proves `0x93`, preserves the active
+transaction, and then recovers. This instrumentation was added after the first
+live canonical run of the term-serial image reached exact B2 receipt but
+remained at coarse stage 1.
+
 The same tranche replaces the parallel four-term Z[phi] products in the
 intersection and equilibrium paths with captured-input, four-cycle serial
 services. All exact widths and oracle results are unchanged. Post-route usage
@@ -253,8 +261,20 @@ one RAMB18E1; guard Fmax is 42.23 MHz at the 25 MHz operating cadence. The
 route closes at iteration 41, whereas the instrumented monolith was stopped at
 iteration 38 with 392 conflicts. Bitstream SHA-256 is
 `478e206c65fa5f18c44e7604ca27139e5d65f551ac91a170d8beb78baa4c7c57`.
-A live B3 read on 2026-07-18 reports the new stage field in silicon. Canonical
-combined verification awaits SD-card electrical reconnection.
+A live B3 read on 2026-07-18 reported the new stage field in silicon. At that
+checkpoint, canonical combined verification awaited SD-card electrical
+reconnection.
+
+That pending item closed on 2026-07-19 with the parser-bounded term-serial
+image.  The canonical table committed `BALANCED/F_NONE`; fixture 6 committed
+`NOT_IN_EQUILIBRIUM`; an intentionally corrupted payload returned loader error
+7 while preserving fixture 6 as the active verdict; and a canonical reload
+recovered.  The four-step sequence passed three consecutive times through the
+real SD/RP2350/B2/B3 path.  The 25 MHz build uses 25,563 SLICE_LUTX, 8,980
+SLICE_FFX, 66 DSP48E1, and one RAMB18E1; bitstream SHA-256 is
+`30381825ed444d92a5474740c0219c84fff449e05ba575d45dcbb409459a1de5`.
+Because the instrumentation changed placement, the exact cause of the older
+stage-1 stall remains unresolved; the silicon claim is bound to that image.
 
 ## 7. Open Design Items
 

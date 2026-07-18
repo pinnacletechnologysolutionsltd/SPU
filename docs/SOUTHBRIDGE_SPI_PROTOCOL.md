@@ -594,11 +594,14 @@ bytes are transport/loader diagnostics:
 
 Loader error values are: `0` none, `1` transport abort/CRC, `2` magic,
 `3` version, `4` flags, `5` bounds, `6` length, `7` payload CRC-32,
-`8` node record, `9` edge record, and `10` guard-service watchdog timeout.
-Service stages are: `0` idle, `1` table replay/parser, `2` topology, `3`
-connectivity, `4` local member guards, `5` exact strut intersection, `6`
-exact equilibrium, `7` decision, and `8` terminal result. On timeout byte 3
-is `0x80 | stage`, so the failing service survives after verify-busy clears.
+`8` node record, `9` edge record, `10` guard-service watchdog timeout, and
+`11` parser watchdog timeout. Guard service stages are: `0` idle, `2`
+topology, `3` connectivity, `4` local member guards, `5` exact strut
+intersection, `6` exact equilibrium, `7` decision, and `8` terminal result.
+Parser substates occupy `0x11` through `0x1A`; their low nibble is the private
+replay substate. A guard timeout leaves `0x80 | service`, while a parser
+timeout leaves `0x90 | substate`, so the exact bounded failure survives after
+verify-busy clears.
 A nonzero diagnostic error describes
 the rejected staging transaction; bytes 1–7 continue to report the last
 committed active verdict.
@@ -788,12 +791,14 @@ For the Wukong `TENSEGRITYLINK` spin, use the remapped J11 bottom row recorded
 in `spu_a7_tensegrity_link.xdc`: GP1/GP2/GP3/GP0 to J11 pins 7/8/9/10, common
 ground, and 100-ohm series resistance on all four signals. Never leave the
 RP2350 powered and driving while the FPGA board is unpowered. The diagnostic
-console commands are `tgrload <path.tgr> [vector_id]` and `tgrstatus`. The
-The commands have now been exercised over this remapped link: the canonical
-468-byte table reaches the parser and B3 reports exact receipt. Reduced
-intersection-only and equilibrium-only images commit it, while the combined
-image remains in verification. This is partial transport silicon evidence,
-not a complete combined-admission or rollback proof.
+console commands are `tgrload <path.tgr> [vector_id]` and `tgrstatus`.
+`tgrloadbadcrc <path.tgr> [vector_id]` is a bench-only negative test: it
+corrupts one payload byte in RP RAM while retaining a valid link CRC-8, so the
+FPGA's independent TGR1 CRC-32 rejection can be observed.  On 2026-07-19 the
+full combined image admitted the canonical table, committed the genuine
+not-in-equilibrium fixture, preserved that active verdict after the corrupt
+payload returned error 7, and recovered on canonical reload.  The complete
+sequence passed three consecutive times over the remapped link.
 
 ---
 

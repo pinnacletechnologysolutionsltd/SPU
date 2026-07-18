@@ -24,6 +24,7 @@ module spu13_tensegrity_sidecar_tb;
     reg [31:0] crc;
 
     spu13_tensegrity_sidecar #(
+        .PARSE_WATCHDOG_LIMIT(2048),
         .VERIFY_WATCHDOG_LIMIT(100000)
     ) dut (
         .clk(clk), .rst_n(rst_n),
@@ -198,6 +199,22 @@ module spu13_tensegrity_sidecar_tb;
             errors = errors + 1;
             $display("FAIL canonical diagnostics nodes=%0d edges=%0d error=%0d",
                      transport_status[47:40], transport_status[39:32], loader_error);
+        end
+
+        // Parsing is transactional too: a wedged BRAM replay substate must
+        // terminate, identify that substate, and preserve the active verdict.
+        build_canonical;
+        send_complete(32'hBAD0C0DE);
+        while (dut.parse_state != 4'd3)
+            @(negedge clk);
+        force dut.parse_state = 4'd3;
+        wait_idle;
+        release dut.parse_state;
+        expect_status(2, 0, 32'h12345678, "parser-timeout rollback");
+        if (loader_error !== 11 || transport_status[103:96] !== 8'h93) begin
+            errors = errors + 1;
+            $display("FAIL parser timeout diagnostics error=%0d stage=%02h",
+                     loader_error, transport_status[103:96]);
         end
 
         // If an exact service never returns, the loader must terminate with

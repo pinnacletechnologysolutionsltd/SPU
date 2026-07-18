@@ -12,6 +12,7 @@ module spu13_tensegrity_sidecar #(
     parameter MAX_NODES = 12,
     parameter MAX_EDGES = 40,
     parameter MAX_BYTES = 508,
+    parameter PARSE_WATCHDOG_LIMIT = 4096,
     parameter VERIFY_WATCHDOG_LIMIT = 1000000
 ) (
     input  wire         clk,
@@ -42,7 +43,8 @@ module spu13_tensegrity_sidecar #(
         ERR_CRC32      = 8'd7,
         ERR_NODE       = 8'd8,
         ERR_EDGE       = 8'd9,
-        ERR_GUARD_TIMEOUT = 8'd10;
+        ERR_GUARD_TIMEOUT = 8'd10,
+        ERR_PARSE_TIMEOUT = 8'd11;
 
     localparam integer TOTAL_BYTES = 2 * MAX_BYTES;
     localparam integer ADDR_W = $clog2(TOTAL_BYTES);
@@ -161,6 +163,7 @@ module spu13_tensegrity_sidecar #(
     reg guard_result_pending;
     reg [3:0] pending_guard_state;
     reg [2:0] pending_guard_fault;
+    reg [15:0] parse_watchdog;
     reg [23:0] verify_watchdog;
     reg [7:0] verify_stage;
 
@@ -229,6 +232,7 @@ module spu13_tensegrity_sidecar #(
             guard_result_pending <= 1'b0;
             pending_guard_state <= 4'd0;
             pending_guard_fault <= 3'd0;
+            parse_watchdog <= 16'd0;
             verify_watchdog <= 24'd0;
             verify_stage <= 8'd0;
         end else begin
@@ -261,6 +265,7 @@ module spu13_tensegrity_sidecar #(
                 header_crc <= 32'd0;
                 payload_crc <= 32'hFFFFFFFF;
                 guard_result_pending <= 1'b0;
+                parse_watchdog <= 16'd0;
                 verify_watchdog <= 24'd0;
                 verify_stage <= 8'd0;
                 overflow_seen <= (stream_length > MAX_BYTES);
@@ -320,7 +325,8 @@ module spu13_tensegrity_sidecar #(
                     error_code <= ERR_NONE;
                     verify_busy <= 1'b1;
                     parse_state <= P_CLEAR;
-                    verify_stage <= 8'd1;
+                    verify_stage <= 8'h11;
+                    parse_watchdog <= 16'd0;
                     verify_watchdog <= 24'd0;
                     parse_index <= 8'd0;
                     record_byte <= 6'd0;
@@ -330,12 +336,31 @@ module spu13_tensegrity_sidecar #(
             end
 
             if (!status_hold) begin
+            if (parse_state != P_IDLE && parse_state != P_GUARD_WAIT &&
+                parse_watchdog + 1'b1 >= PARSE_WATCHDOG_LIMIT) begin
+                // Parsing is part of the admission transaction and must be
+                // bounded just like the exact mechanical services. Preserve
+                // the active bank/verdict and expose the exact parser substate.
+                verify_busy <= 1'b0;
+                error_code <= ERR_PARSE_TIMEOUT;
+                guard_result_pending <= 1'b0;
+                guard_clear <= 1'b1;
+                parse_watchdog <= 16'd0;
+                verify_watchdog <= 24'd0;
+                verify_stage <= 8'h90 | {4'd0, parse_state};
+                parse_state <= P_IDLE;
+            end else begin
+            if (parse_state != P_IDLE && parse_state != P_GUARD_WAIT) begin
+                parse_watchdog <= parse_watchdog + 1'b1;
+                verify_stage <= 8'h10 | {4'd0, parse_state};
+            end else if (parse_state == P_IDLE) begin
+                parse_watchdog <= 16'd0;
+            end
             case (parse_state)
                 P_IDLE: begin end
 
                 P_CLEAR: begin
                     guard_clear <= 1'b1;
-                    verify_stage <= 8'd1;
                     if (header_nodes == 0) begin
                         record_base <= 16'd12;
                         parse_index <= 8'd0;
@@ -367,6 +392,7 @@ module spu13_tensegrity_sidecar #(
                     if (node_record[31:24] > 8'd2 || node_record[23:0] != 0) begin
                         error_code <= ERR_NODE;
                         verify_busy <= 1'b0;
+                        parse_watchdog <= 16'd0;
                         parse_state <= P_IDLE;
                     end else begin
                         cfg_node_index <= parse_index[3:0];
@@ -416,6 +442,7 @@ module spu13_tensegrity_sidecar #(
                         edge_record[23:16] >= header_nodes) begin
                         error_code <= ERR_EDGE;
                         verify_busy <= 1'b0;
+                        parse_watchdog <= 16'd0;
                         parse_state <= P_IDLE;
                     end else begin
                         cfg_edge_index <= parse_index[5:0];
@@ -438,6 +465,7 @@ module spu13_tensegrity_sidecar #(
                 P_GUARD_START: begin
                     guard_start <= 1'b1;
                     verify_stage <= 8'd2;
+                    parse_watchdog <= 16'd0;
                     verify_watchdog <= 24'd0;
                     parse_state <= P_GUARD_WAIT;
                 end
@@ -479,6 +507,7 @@ module spu13_tensegrity_sidecar #(
 
                 default: parse_state <= P_IDLE;
             endcase
+            end
             end
         end
     end

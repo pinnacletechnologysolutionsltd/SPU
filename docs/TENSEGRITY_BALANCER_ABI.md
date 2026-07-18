@@ -46,7 +46,7 @@ The sidecar status record is exactly eight bytes:
 
 ```text
 byte 0 ABI version       byte 1 balancer state
-byte 2 terminal fault    byte 3 reserved = 0
+byte 2 terminal fault    byte 3 verifier stage/watchdog detail
 bytes 4..7 vector id (big-endian uint32)
 ```
 
@@ -62,7 +62,10 @@ bytes 12..13 last received      bytes 14..15 last expected
 ```
 
 Loader errors are `0=NONE`, `1=TRANSPORT`, `2=MAGIC`, `3=VERSION`,
-`4=FLAGS`, `5=BOUNDS`, `6=LENGTH`, `7=CRC32`, `8=NODE`, and `9=EDGE`.
+`4=FLAGS`, `5=BOUNDS`, `6=LENGTH`, `7=CRC32`, `8=NODE`, `9=EDGE`,
+`10=GUARD_TIMEOUT`, and `11=PARSE_TIMEOUT`. Parser progress is exposed as
+`0x10 | substate`; parser timeout is `0x90 | substate`. Guard timeout remains
+`0x80 | service`.
 
 ## Southbridge transport
 

@@ -22,14 +22,11 @@ Every expected value is computed live by the Python oracle
 (software/lib/tensegrity_vectors.py), not hardcoded -- the demo is a
 host-vs-silicon equivalence check, not a scripted light show.
 
-Silicon status honesty (docs/TENSEGRITY_BALANCER_HANDOVER_2026-07-15.md):
-J11/SD/B2/B3/parser and the single-engine guard images are board-proven
-(2026-07-16); the original FULL combined guard image hangs `verify_busy`
-after a complete load. The 2026-07-18 diagnostic image bounds that failure
-with a stage-coded verifier watchdog and atomic rollback, but still awaits a
-board run. If an older image stalls with verify-busy set, that is the known
-open issue, not a wiring problem; use `stage` on the diagnostic image to
-localize it.
+Silicon status (docs/TENSEGRITY_BALANCER_HANDOVER_2026-07-15.md): the full
+combined path -- SD, RP2350, B2/B3 transport, parser, intersection,
+equilibrium, rollback, and recovery -- is board-proven as of 2026-07-19.  Use
+the parser/service `stage` and bounded watchdog errors to localize a stall if
+testing a different build.
 
 Setup (one-time): the fixtures must be on the RP2350's SD card.
     python3 tools/tensegrity_demo.py --emit-fixtures /path/to/sd/TGR
@@ -71,6 +68,7 @@ FLAG_VERIFY_BUSY = 0x04
 # Loader diagnostics used by this demo (same section)
 LOADER_ERR_PAYLOAD_CRC = 7
 LOADER_ERR_GUARD_TIMEOUT = 10
+LOADER_ERR_PARSE_TIMEOUT = 11
 
 CORRUPT_NAME = "99_corrupt_crc.tgr"
 CORRUPT_VECTOR_ID = 99
@@ -121,13 +119,17 @@ def wait_verdict(client):
 def check_verdict(label, status, expect_state, expect_fault, expect_vector,
                   expect_error=0, expect_nodes=None, expect_edges=None):
     if status["flags"] & FLAG_VERIFY_BUSY:
-        print(f"  {label}: STALLED verify-busy -- this is the known combined-"
-              f"image issue at service-stage={status.get('stage', 0)} "
-              f"(see handover doc), not a wiring failure.")
+        print(f"  {label}: STALLED verify-busy at stage="
+              f"0x{status.get('stage', 0):02x}; the active verdict is unchanged.")
         return False
     if status["error"] == LOADER_ERR_GUARD_TIMEOUT:
         stage = status.get("stage", 0)
         print(f"  {label}: VERIFIER WATCHDOG -- service-stage={stage & 0x7f} "
+              f"timed out; the previous committed verdict was preserved.")
+        return False
+    if status["error"] == LOADER_ERR_PARSE_TIMEOUT:
+        stage = status.get("stage", 0)
+        print(f"  {label}: PARSER WATCHDOG -- parser-substate={stage & 0x0f} "
               f"timed out; the previous committed verdict was preserved.")
         return False
     problems = []
@@ -215,6 +217,11 @@ def main(argv=None):
     ser = serial.Serial(ns.port, ns.baud, timeout=0.05)
     client = SPUHostClient(ser)
     try:
+        # A long-running RP2350 prints its banner only once. On a repeated
+        # host invocation there may be no unread prompt to drain, so provoke
+        # one without disturbing any FPGA or SD state.
+        if not ser.in_waiting:
+            ser.write(b"\n")
         client.connect()
         print("TENSEGRITYLINK demo -- transactional structural validation in silicon")
         print("=" * 72)
