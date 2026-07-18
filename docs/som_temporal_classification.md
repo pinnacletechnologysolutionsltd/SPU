@@ -1,100 +1,81 @@
-# SOM + Temporal Opcodes: Bidirectional Phase-Lock Classification
+# Experimental SOM Temporal-Adapter Study
 
-## Current SOM (Serial Scan)
+> **Status:** historical design study for the experimental Wheeler–Feynman
+> adapter profile. It is not the active SOM product datapath, the canonical
+> silicon ISA, or a measured performance result. “Offer” and “Confirmation”
+> below name paired data slots; they are not claims of physical retrocausality.
 
-The existing `spu_som_bmu.v` scans 7 nodes sequentially:
+## Product baseline
 
-```
-IDLE → READ_ADDR → READ_WAIT → START_ACC → WAIT_ACC → EVAL → NEXT_NODE × 7 → DONE
-= ~35+ cycles per classification
-```
+The active SOM v1 path is the writable, BRAM-backed `spu_som_bmu.v`. It scans
+seven nodes in ascending address order, computes exact weighted quadrances in
+Q(sqrt(3)), and retains both the winner and runner-up. Its latency is fixed and
+test-pinned at **434 clocks**. That exact-order path is silicon-proven on Tang
+Primer 25K and Wukong Artix-7, including complete SOM1 result-frame agreement
+with the software oracle.
 
-Each node computes weighted quadrance, tracks best/second, then outputs BMU.
+The older fully parallel `spu_som_node` / `spu_som_node_array` implementation
+is archived under `hardware/boards/tang_primer_25k/archive/`. It is not an
+alternate SOM v1 implementation and does not establish a current five-cycle
+product claim. See [`SOM_V1_PRODUCT_CONTRACT.md`](SOM_V1_PRODUCT_CONTRACT.md)
+for the normative architecture and evidence boundary.
 
-## New Approach: Wheeler-Feynman SOM
+## Studied temporal adapter
 
-Map each SOM cluster to an RPLU material entry. The centroid vector is stored as
-material parameters. Classification becomes a boundary-value resolve:
+This study proposed mapping each SOM prototype to an RPLU material record and
+comparing an input/prototype pair through the adapter's PHSLK operation:
 
-```
-OFFR  R1, [RPLU, input_addr]    ; Load input vector → R1.O (Offer wave)
-CNFM  R1, [RPLU, cluster_addr]  ; Load cluster centroid → R1.C (Confirmation)
-PHSLK R2, R1, R0                ; Resolve: does input belong to this cluster?
-JC    #clustered                 ; Coherent → classification match!
-INVJ  R2, R2                     ; Not coherent → try conjugate domain
-```
-
-### Why This Works
-
-The RPLU material table already stores 64-bit parameter records per material.
-A SOM cluster centroid is a 64-bit vector (4 features × 16-bit Q12.4).
-The RPLU `ratio_cmp` cross-multiplier already computes Offer vs Confirmation
-coherence.
-
-Result: **classification in 3-4 cycles** instead of 35+.
-
-### New Opcode: SOM_CLASSIFY
-
-```
-Mnemonic: SOM_CLASSIFY Rd, Rs, addr
-Format:   R (register)
-Encoding: 0x2A (same opcode as existing SOM, now maps to temporal pipeline)
-
-Operation:
-  1. Read R[Rs].O as input feature vector (Offer)
-  2. Read RPLU material[addr] as cluster centroid (Confirmation)
-  3. RAU computes PHSLK cross-multiplication
-  4. If coherent: Rd = cluster label, FLAGS.C=1
-  5. If not coherent: Rd = nearest mismatch, FLAGS.C=0
+```text
+OFFR  R1, [RPLU, input_addr]    ; paired input slot
+CNFM  R1, [RPLU, cluster_addr]  ; paired prototype slot
+PHSLK R2, R1, R0                ; exact coherence comparison
+JC    #clustered
+INVJ  R2, R2                    ; optional conjugate-domain study
 ```
 
-### HW Integration (Updated for RPLU v2)
+The attraction was reuse of the adapter's rational cross-products. A
+three-to-four-cycle classification was recorded as a design target, but no
+integrated RTL or silicon result demonstrates that target. A single PHSLK
+comparison also does not by itself replace a seven-prototype nearest-neighbor
+search: a complete design would still need a specified scan or parallel
+reduction, exact tie behavior, runner-up retention, and SOM1 evidence output.
 
-| Component | Change |
-|-----------|--------|
-| `spu_rau.v` | Add PHSLK path (already exists) |
-| `spu13_fp4_inverter.v` | Conjugate reduction tower for A₃₁ denominator inversion |
-| `rplu_thimble_pade.v` | [4/4] Padé rational approximant over A₃₁ via Horner + inverter |
-| `spu_som_node_array.v` | Parallel 7-node array with WTA tree (replaces serial scan) |
-| `spu13_btu_core_top.v` | BTU spatial→A₃₁ transmutation (4-lane BRAM) |
-| `spu_btu_collision_resolver.v` | Multi-saddle collision priority encoder + bubble insertion |
-| `spu_isa_decoder.v` | SOM (0x2A) → node array start; SOM_TRAIN (0x2B) → weight update |
+## Proposed opcode mapping
 
-### Assembler Syntax
+The study reused opcode `0x2A` for a proposed `SOM_CLASSIFY` operation:
 
-```asm
-; Load input feature vector
-LOAD    R1, [R0, #input_addr]
-
-; Classify against cluster 3 (stored in RPLU material 3)
-; Uses parallel 7-node array → WTA → BTU → Padé pipeline
-SOM     R2, R1, 3
-JC      #match
-; Not classified → handle unknown
-JMP     #done
-match:
-; R2 contains cluster label
-; FLAGS.V=1 if singularity encountered (zero-norm in Padé denominator)
-done:
+```text
+SOM_CLASSIFY Rd, Rs, addr
 ```
 
-### Performance Comparison
+That mapping is not the active implementation contract. In the canonical core,
+`0x2A` launches the exact-order SOM/BMU path (or the separately selected
+RPLU2 pipeline, depending on the build). The experimental adapter opcodes live
+in a separate encoding selected explicitly by the adapter assembler mode.
 
-| Approach | Cycles | Type |
-|----------|--------|------|
-| Current BMU scan (7 nodes) | 35+ | Serial search |
-| **New parallel node array** | **5** | Parallel quadrance + WTA (3-stage pipeline) |
-| Full Thimble-Padé pipeline | ~120 | SOM + BTU + Padé evaluate + A₃₁ invert + multiply |
-| Temporal PHSLK classify | 3-4 | Boundary resolve |
-| Speedup (vs serial scan) | ~10× | — |
+## Component status
 
-The temporal path doesn't replace SOM_TRAIN — the existing training engine still
-updates weights. The innovation is in how classification is done: not by scanning
-all nodes, but by evaluating all 7 nodes in parallel through the 3-stage quadrance
-pipeline, then selecting the winner via combinational WTA tree in a single cycle.
+| Component | Status and role |
+|---|---|
+| `spu_som_bmu.v` | Active seven-node, exact-order product BMU; fixed 434 clocks |
+| `spu_som_weight_bram.v` | Active writable prototype storage |
+| `spu_cluster_reduce.v` | Active label, confidence-gap, and ambiguity reduction |
+| `spu13_som1_frame.v` | Active 52-byte decision-evidence frame |
+| archived `spu_som_node_array.v` | Historical parallel-array experiment; superseded |
+| `spu_rau.v` PHSLK path | Isolated experimental adapter primitive |
+| temporal SOM integration | Proposed only; no product RTL or silicon evidence |
+| `rplu_thimble_pade.v` | Separate RPLU2 rational-approximation pipeline, not required by SOM v1 classification |
 
-For applications requiring field inversion (Padé denominator evaluation), the
-full Thimble-Padé pipeline adds the conjugate reduction tower (~76 cycles) plus
-the final A₃₁ multiply, for ~120 cycles total. The zero-norm singularity
-guard (FLAGS.V) prevents silent corruption when the classification lands on a
-geometric boundary.
+## Performance boundary
+
+| Path | Cycle statement | Evidence status |
+|---|---:|---|
+| SOM v1 exact-order BMU | 434 fixed clocks | Test-pinned and cross-vendor silicon-proven |
+| Archived parallel array | Historical implementation | Superseded; no product claim |
+| Temporal PHSLK classification | 3–4 clock design target | Unimplemented integration; not measured |
+| Full Thimble–Padé evaluation | Separate pipeline contract | Silicon-proven on Artix-7, but not a SOM v1 latency |
+
+Host-side deterministic training and map hydration remain the product path.
+Any revival of the temporal adapter should begin with a versioned contract that
+preserves exact ordering, tie handling, runner-up distance, ambiguity, and the
+SOM1 ABI before making throughput or resource claims.

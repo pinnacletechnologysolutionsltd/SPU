@@ -234,33 +234,42 @@ SPREAD R4, QR0, QR1     ; R4=numer, R5=denom
 
 ---
 
-## Next-Gen ISA v1.0 — RPLU v2 & SOM Opcodes
+## Canonical extensions and experimental adapter profile
 
-The Wheeler-Feynman Next-Gen ISA (`docs/spu13_isa_spec.md`) adds temporal
-classification and Thimble-Padé rational approximation:
+RPLU2 and SOM are current canonical-core subsystems; they are not evidence that
+the separate Wheeler–Feynman adapter ISA is the active instruction set. The
+canonical extension opcodes documented here are:
 
 | Opcode | Mnemonic | Description |
 |:---|:---|:---|
-| 0x2A | SOM | Classify via parallel 7-node array + WTA tree over A₃₁ |
-| 0x2B | SOM_TRAIN | Update node weights via 36-bit widened multiply |
-| 0x40 | OFFR | Load Offer wave (past boundary constraint) |
-| 0x41 | CNFM | Load Confirmation wave (future boundary constraint) |
-| 0x42 | PHSLK | Phase-lock: solve bidirectional boundary-value problem |
-| 0x43 | INVJ | Invert through Janus point |
-| 0x50 | RCFG | Write RPLU v2 Padé coefficient (A₃₁ 4-tuple) |
+| 0x2A | SOM | Launch the exact-order seven-node BMU (or the selected RPLU2 pipeline in an RPLU2 build) |
+| 0x2B | SOM_TRAIN | Apply the bounded winner-node adaptation implemented by the core SOM path |
+
+The experimental adapter profile in `docs/spu13_isa_spec.md` separately
+defines OFFR (0x40), CNFM (0x41), PHSLK (0x42), INVJ (0x43), and an RCFG
+opcode at 0x50. Those values select paired boundary-data semantics in the
+adapter models; they are not the control interface used by the silicon-tested
+canonical RPLU2 path.
 
 RTL modules (`hardware/rtl/core/spu13/`):
-- `spu13_m31_multiplier.v` — A₃₁ multiplier (16 DSP, 2-stage, Mersenne reduction)
+- `spu13_m31_multiplier.v` — A₃₁ multiplier (16 logical 32×32 products,
+  2-stage Mersenne reduction; physical DSP mapping is target-dependent)
 - `spu13_fp4_inverter.v` — Conjugate reduction tower (~76-cycle A₃₁ inversion)
-- `spu_som_node_array.v` — Parallel 7-node SOM with WTA comparator
+- `spu_som_bmu.v` — writable, exact-order seven-node BMU (fixed 434 clocks)
 - `rplu_thimble_pade.v` — [4/4] Padé rational approximant
 
-Assemble for next-gen ISA:
+The old fully parallel `spu_som_node_array.v` is archived and superseded. The
+SOM product contract and result ABI are documented in
+[`docs/SOM_V1_PRODUCT_CONTRACT.md`](../docs/SOM_V1_PRODUCT_CONTRACT.md).
+
+Assemble for the experimental adapter profile explicitly:
 ```bash
 python3 software/tools/spu13_asm.py --arch wf --hex program.sas
 ```
 
 ---
 
-*See [`docs/spu13_isa_spec.md`](../docs/spu13_isa_spec.md) for the full v1.0 ISA specification.*
+*See [`knowledge/isa_reference.md`](isa_reference.md) for the canonical ISA and
+[`docs/spu13_isa_spec.md`](../docs/spu13_isa_spec.md) for the experimental
+adapter profile.*
 *See [`knowledge/MATHEMATICAL_FOUNDATIONS.md`](MATHEMATICAL_FOUNDATIONS.md) for the full theoretical derivation.*
