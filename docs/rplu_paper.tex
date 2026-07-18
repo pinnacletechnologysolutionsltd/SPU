@@ -23,10 +23,10 @@ github.com/pinnacletechnologysolutionsltd/SPU}
 \maketitle
 
 \begin{abstract}
-Higher-order differentiation in embedded and edge computing is dominated by
-finite-difference approximations and IEEE-754 floating-point accumulators,
-both of which introduce rounding drift, non-deterministic convergence, and
-variable-latency subnormals. This paper presents a hardware jet algebra
+Higher-order differentiation in embedded and edge computing commonly uses
+finite-difference approximations or IEEE-754 floating-point accumulators.
+Their quantization, rounding-mode, and exceptional-value policies complicate
+bit-exact replay across software and hardware boundaries. This paper presents a hardware jet algebra
 coprocessor that evaluates exact Cauchy products over the truncated
 polynomial ring $A_{31}[\varepsilon]/(\varepsilon^3)$ using the
 Mersenne prime $p = 2^{31}-1$ (M31), where
@@ -51,9 +51,9 @@ Artix-7 100T: nextpnr-xilinx reports 20,277/126,800 \texttt{SLICE\_LUTX},
 2\,MHz bring-up clock. A separate Gowin GW5A-25A arithmetic/configuration
 probe is silicon-tested at 9,211 LUT4, 7,926 flip-flops, 822 ALUs, no block
 RAM, and no DSPs. The Gowin result covers configuration, QLDI, and QSUB, not
-the full Pad\'{e} evaluator. The architecture eliminates
-floating-point non-determinism, square roots, and runtime dynamic
-address resolution from the topological classification hot path.
+the full Pad\'{e} evaluator. The architecture removes floating-point
+rounding policy, square roots, and runtime dynamic address resolution from
+the topological classification hot path.
 The repository source is available under Apache-2.0; this paper is released
 under CC BY 4.0.
 \end{abstract}
@@ -110,8 +110,8 @@ feature vector $\mathbf{x}$ and a node weight vector $\mathbf{w}_i$ is:
 d(\mathbf{x}, \mathbf{w}_i) = \sqrt{\sum_j (x_j - w_{ij})^2}
 \end{equation}
 
-The square root is (a) non-deterministic in floating-point, (b)
-power-hungry, and (c) irrelevant for \emph{ordering}, since $\sqrt{a} <
+The square root requires an additional operator and rounding policy in a
+floating-point implementation, and is irrelevant for \emph{ordering}, since $\sqrt{a} <
 \sqrt{b} \iff a < b$. The RPLU replaces this with the rational quadrance
 metric:
 
@@ -256,14 +256,13 @@ names, not a claim of physical retrocausality.
 
 \subsection{From Jets to the RPLU Pipeline}
 
-The RPLU v2 pipeline (Section~\ref{sec:microarch}) is an application of
-this jet algebra substrate. The SOM/BMU classifier produces a spatial
-index; the BTU routes that index into an $A_{31}$
-element; the [4/4] Pad\'{e} approximant evaluates a rational function;
-and the conjugate reduction tower provides the $j_0^{-1}$ required by the
-jet inverse. All four stages operate on the same
-$A_{31}[\varepsilon]/(\varepsilon^3)$ jet representation where the jet path is
-enabled, with the same fixed-latency, bit-identical arithmetic.
+The experimental adapter is designed to compose with the RPLU v2 blocks
+(Section~\ref{sec:microarch}): the SOM/BMU produces a spatial index, the BTU
+routes that index into an $A_{31}$ element, and the [4/4] Pad\'{e} evaluator
+uses the conjugate reduction tower. The routed \texttt{RPLU2PADE} image proves
+that canonical $A_{31}$ path; it does not prove an end-to-end
+$A_{31}[\varepsilon]/(\varepsilon^3)$ jet composition. Jet-adapter and silicon
+claims are kept separate throughout this paper.
 
 % ── SECTION III: Pipeline Microarchitecture ─────────────────────────
 
@@ -358,7 +357,7 @@ offending lanes, which then receive per-lane FLAGS.V semantics while
 unit lanes emerge bit-exact. The crossover at which batch inversion
 breaks even is $k = 2$; the asymptote is $2.86\times$ speedup with a
 $+33\%$ MAC volume ceiling. Table~\ref{tab:batch-inv} quantifies the
-trade-off on representative RPLU2 workload mixes.
+cycle model for illustrative batch sizes.
 
 \subsection{The Execution Layer: Deterministic Issue Control}
 
@@ -459,7 +458,7 @@ leaf jet/adapter evidence so that one cannot be mistaken for the other.
 
 % ── SECTION IV: Benchmarks ─────────────────────────────────────────
 
-\section{Empirical Results}
+\section{Verification and Silicon Results}
 \label{sec:results}
 
 \subsection{Jet MAC Latency and Throughput}
