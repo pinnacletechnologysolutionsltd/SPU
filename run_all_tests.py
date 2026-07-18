@@ -77,6 +77,11 @@ def run_cpp_tests(root_dir):
 def main():
     root_dir = Path(__file__).resolve().parent
     os.chdir(root_dir)
+    # Many TBs $dumpfile into build/; vvp aborts silently (no PASS/FAIL,
+    # nonzero exit) if the directory is missing, which failed 15 TBs on
+    # the FIRST run in any fresh clone — later stages create build/, so
+    # a second run would pass and mask it.
+    (root_dir / "build").mkdir(exist_ok=True)
 
     # Find all testbenches
     patterns = ['*_tb.v', '*tb*.v', 'testbench*.v']
