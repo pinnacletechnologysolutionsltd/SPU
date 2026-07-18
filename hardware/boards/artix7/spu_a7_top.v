@@ -179,12 +179,23 @@ module spu_a7_top #(
     // If this lights up, the physical bit-level link is provably fine and
     // the bug is inside spu_spi_slave's own FSM; if it never lights up,
     // the bug is upstream of command decode (signal integrity/framing).
+    //
+    // diag2_last_cmd_byte is NOT sticky-to-AC like diag2_cmd_ac_seen above:
+    // it always holds whatever the most recently completed 8-bit frame
+    // actually was. diag2_cmd_ac_seen only proves 0xAC was decoded *at
+    // least once, ever* -- it can't catch an intermittent misdecode on a
+    // later transaction. Printing diag2_last_cmd_byte on every diag line
+    // lets the operator confirm the command byte is 0xAC on the *specific*
+    // status read that shows a wrong/stale boot_ready bit, distinguishing
+    // "SPI link genuinely misdecodes on this remapped-pin hardware" from
+    // "the read landed fine and something else is stale."
     reg [2:0] diag2_sck_r = 3'b0;
     reg [2:0] diag2_cs_r  = 3'b111;
     reg [1:0] diag2_mosi_r = 2'b0;
     reg [2:0] diag2_bit_cnt = 3'd0;
     reg [7:0] diag2_cmd_byte = 8'd0;
     reg       diag2_cmd_ac_seen = 1'b0;
+    reg [7:0] diag2_last_cmd_byte = 8'd0;
     wire diag2_sck_rise = (diag2_sck_r[2:1] == 2'b01);
     wire diag2_cs_active = !diag2_cs_r[1];
     wire diag2_cs_fall = (diag2_cs_r[2:1] == 2'b10);
@@ -196,6 +207,7 @@ module spu_a7_top #(
             diag2_bit_cnt <= 3'd0;
             diag2_cmd_byte <= 8'd0;
             diag2_cmd_ac_seen <= 1'b0;
+            diag2_last_cmd_byte <= 8'd0;
         end else begin
             diag2_sck_r  <= {diag2_sck_r[1:0], spi_sck};
             diag2_cs_r   <= {diag2_cs_r[1:0], spi_cs_n};
@@ -206,6 +218,7 @@ module spu_a7_top #(
                 diag2_cmd_byte <= {diag2_cmd_byte[6:0], diag2_mosi_r[1]};
                 if (diag2_bit_cnt == 3'd7) begin
                     diag2_bit_cnt <= 3'd0;
+                    diag2_last_cmd_byte <= {diag2_cmd_byte[6:0], diag2_mosi_r[1]};
                     if ({diag2_cmd_byte[6:0], diag2_mosi_r[1]} == 8'hAC)
                         diag2_cmd_ac_seen <= 1'b1;
                 end else begin
@@ -1024,8 +1037,16 @@ module spu_a7_top #(
             // proves an independently-shifted 8-bit 0xAC frame was seen
             // while CS was active; RDY is core_boot_ready itself.
             localparam BAUD_DIV = 434; // 50MHz/115200, matches the probes
-            localparam MSG_LEN = 33; // includes trailing \r\n in the array
-            reg [7:0] msg [0:MSG_LEN-1];
+            localparam MSG_LEN = 39; // includes trailing \r\n in the array
+            // Force plain FF/LUT implementation -- this array is tiny
+            // (39x8 = 312 bits) and never needs a memory primitive. NOTE:
+            // ruled out as the cause of the u_spi PnR timing failure below
+            // (that failure reproduces identically on the pre-existing,
+            // already-committed spu_a7_top.v with no LC: field at all --
+            // it's the pre-existing "boot_ready/nextpnr regression"
+            // mentioned above, not something this array introduced).
+            // Kept anyway since forcing FF/LUT here is still correct.
+            (* ram_style = "distributed" *) reg [7:0] msg [0:MSG_LEN-1];
             reg [15:0] baud_cnt = 16'd0;
             wire baud_tick = (baud_cnt == BAUD_DIV-1);
             reg [5:0] msg_idx = 6'd0;
@@ -1070,8 +1091,21 @@ module spu_a7_top #(
                             msg[28] <= "T"; msg[29] <= ":";
                             // 0=RESET 1=HYDRATING 2=READY 3=FAULT
                             msg[30] <= 8'h30 + {6'd0, core_boot_state_dbg};
-                            msg[31] <= 8'h0d; // \r
-                            msg[32] <= 8'h0a; // \n
+                            msg[31] <= " "; msg[32] <= "L"; msg[33] <= "C";
+                            msg[34] <= ":";
+                            // Last full 8-bit command frame diag2's own
+                            // independent shifter decoded, live -- NOT
+                            // sticky-to-AC like diag2_cmd_ac_seen above, so
+                            // this catches an intermittent misdecode on a
+                            // later transaction that a sticky flag can't.
+                            msg[35] <= (diag2_last_cmd_byte[7:4] < 4'd10) ?
+                                       (8'h30 + {4'd0, diag2_last_cmd_byte[7:4]}) :
+                                       (8'h41 + {4'd0, diag2_last_cmd_byte[7:4]} - 8'd10);
+                            msg[36] <= (diag2_last_cmd_byte[3:0] < 4'd10) ?
+                                       (8'h30 + {4'd0, diag2_last_cmd_byte[3:0]}) :
+                                       (8'h41 + {4'd0, diag2_last_cmd_byte[3:0]} - 8'd10);
+                            msg[37] <= 8'h0d; // \r
+                            msg[38] <= 8'h0a; // \n
                         end
                         // Only load+shift a real character while msg_idx is
                         // still in range; the out-of-range pass (msg_idx ==
