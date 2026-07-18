@@ -1,15 +1,32 @@
 # SPU-13 Synergetic Processing Unit
 
-**An experimental FPGA coprocessor for exact, deterministic geometric computation.
-Its RPLU2 pipeline combines SOM classification, collision routing, rational Padé
-evaluation, and quadray variety checks over finite algebraic rings.
-A hardware substrate for reproducible spatial reasoning and safety-critical
-control primitives, not a replacement for conventional AI accelerators.**
+**A deterministic FPGA edge-classification sidecar: labeled CSV in,
+checksummed rational SOM map out, followed by bit-exact hardware inference and
+a CRC-protected decision-evidence frame. The same writable seven-node model is
+silicon-proven on Gowin and Xilinx FPGAs with no software-to-hardware accuracy
+loss.**
 
 [![CI](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml/badge.svg)](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml)
 [![Hardware: CERN-OHL-W-2.0](https://img.shields.io/badge/Hardware-CERN--OHL--W--2.0-blue.svg)](hardware/LICENSE)
 [![Software: MIT](https://img.shields.io/badge/Software-MIT-green.svg)](software/LICENSE)
 [![Docs: CC0](https://img.shields.io/badge/Docs-CC0_1.0-lightgrey.svg)](docs/LICENSE)
+
+## Proven SOM Product Path
+
+The current product-shaped artifact is the SPU-13 SOM sidecar:
+
+```text
+labeled CSV -> deterministic integer trainer -> checksummed SOM map
+            -> writable FPGA sidecar -> 52-byte SOM1 evidence frame
+```
+
+The checked Iris model achieves 147/150 semantic classifications. More
+importantly, all 150 complete SOM1 records match the exact software oracle on
+both Tang Primer 25K and Wukong Artix-7 hardware: winner, runner-up,
+quadrances, confidence gap, ambiguity, generations, status, and CRC. The
+synthetic current-signature replay provides the hardware-independent path for
+the first anomaly-monitoring demo; physical INA226 acquisition remains the
+next sensor bench step. See [`docs/SOM_V1_PRODUCT_CONTRACT.md`](docs/SOM_V1_PRODUCT_CONTRACT.md).
 
 ## Current Hardware Direction
 
@@ -29,7 +46,14 @@ board. Full concurrent integration with live RPLU2, sidecars, and safety layers
 is an Artix-7 200T / Kintex-class funding target. See
 [`docs/CURRENT_STATUS.md`](docs/CURRENT_STATUS.md).
 
-## Next-Gen ISA Status (Wheeler-Feynman v1.0)
+## Experimental ISA Profile (Wheeler–Feynman v1.0)
+
+The Wheeler–Feynman twin-register profile is an architecture study with
+isolated model and RTL coverage. It is not the canonical silicon ISA and is not
+a declared replacement for it. Offer/Confirmation terminology denotes paired
+boundary-data slots, not physical retrocausality. The canonical encoding used
+by active Tang/Wukong images is documented in
+[`knowledge/isa_reference.md`](knowledge/isa_reference.md).
 
 | Component | Status | Tests |
 |-----------|--------|-------|
@@ -37,11 +61,10 @@ is an Artix-7 200T / Kintex-class funding target. See
 | Twine-register file (RTL) | ✅ Completed | 16 iverilog PASS |
 | Rational Arithmetic Unit (RTL) | ✅ Completed | 16 iverilog PASS |
 | Pipeline controller (RTL) | ✅ Completed | 10 iverilog PASS |
-| Yosys synthesis | ✅ 11,125 LUTs (46%) | 0 errors |
+| Isolated Yosys build | ✅ 11,125 LUTs (46%) | Not an active core image |
 | Python simulator | ✅ 35 PASS | cross-validated C++ |
 | C++ simulator | ✅ 40 PASS | cross-validated Python |
-| RP2350 SPI firmware | ✅ Silicon-verified | Tang 25K southbridge |
-| SD card hydration | ✅ Silicon-verified | SD→RP2350→FPGA RPLU2 receipt |
+| Active silicon-core dispatch | Not integrated | Canonical ISA remains active |
 
 ## Licensing
 
@@ -56,34 +79,38 @@ See [LICENSING.md](LICENSING.md) for precedence and mixed-directory details.
 
 ---
 
-## Patent Shield & Defensive Prior Art Declaration
+## Defensive Publication Notice
 
 The SPU-13 architecture, including the dual-ring arithmetic framework, the Barycentric Transmutation Unit (BTU) bridge, the $\mathbb{Z}/M_{31}$ Mersenne-ring core, and the $\mathbb{Z}[\phi]/L_p$ Lucas Phinary co-processor, is publicly disclosed in this repository and associated publications as **defensive prior art**.
 
-Under global patent law (including USPTO, EPO, and JPO guidelines), this public, timestamped disclosure legally bars any third party from obtaining patents on:
+The intended disclosure scope includes:
 1. **Dual-Ring Execution Topology:** The co-processor coupling of a $\mathbb{Z}/M_{31}$ binary ring with a $\mathbb{Z}[\phi]/L_p$ phinary ring, connected via a spatial routing bridge (BTU).
 2. **Lucas Barrett Reduction in Hardware:** The hardware-native remainder calculation for Lucas prime moduli ($q = (x \cdot \mu) \gg 31$, $r = x - q \cdot L_p$) using elaboration-time precalculated scale constants ($\mu = \lfloor 2^k / L_p \rfloor$).
 3. **Chirality & Scaling Intercepts:** The instruction intercept (`lucas_inst_claimed`) and register commit override path mapped in [spu_a7_top.v](hardware/boards/artix7/spu_a7_top.v) for `0xD0` (PSCALE) and `0xD1` (PCHIRAL).
 
-All contributions to this project require signing off on the [Developer Certificate of Origin (DCO)](CONTRIBUTING.md) to certify that they are free of patent encumbrances.
+This notice records publication intent; it is not legal advice or a guarantee of
+the treatment any patent office will give a particular claim. Contributions
+require sign-off under the [Developer Certificate of Origin (DCO)](CONTRIBUTING.md).
 
 
 ## Quick Start (30 seconds to proof)
 
 ```bash
-# One command: compile a rational curve program and simulate it
-python3 software/spu_forge.py simulate programs/robot_arm_demo.lith
+# Replay the complete deterministic current-signature classification ABI
+python3 tools/som_sensor_replay.py
 ```
 
-This runs a 2-joint kinematic chain with a 12-step Pell-orbit trajectory through
-the SPU-13 soft-CPU. The `.lith` source compiles to `.sas` assembly, assembles to
-`.bin`, and executes in the Python VM — all exact Q(√3) arithmetic, no float.
+This generates unseen integer-current windows, extracts four temporal features,
+crosses the explicit Cartesian-to-SOM boundary, classifies them with the checked
+map, emits complete SOM1 frames, and parses those frames through the production
+host consumer. Expected result: 18/18 with zero ambiguity.
 
 ```bash
-# Run the full test suite
-python3 software/spu_vm_test.py          # 85 VM tests
-python3 software/rational_curves_test.py # 94 rational curve tests
-python3 software/cross_validate.py       # 5/5 snaps matched (VM vs C++)
+# Deterministic fresh-clone regression
+python3 run_all_tests.py                  # 170/170 at this release
+
+# Rational robotics remains available as a second software demonstration
+python3 software/spu_forge.py simulate programs/robot_arm_demo.lith
 ```
 
 ---
@@ -192,4 +219,7 @@ Math derivation: [`knowledge/MATHEMATICAL_FOUNDATIONS.md`](knowledge/MATHEMATICA
 
 ## License
 
-CC0 1.0 Universal — public domain.
+Licensing is layer-specific: CERN-OHL-W-2.0 for hardware, MIT for software,
+CC0 1.0 for general documentation, and Apache-2.0 as the root fallback. See
+[LICENSING.md](LICENSING.md); individual papers may carry an explicit CC BY
+4.0 notice for deposit.
