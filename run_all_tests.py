@@ -183,7 +183,18 @@ def main():
         for d in scan_dirs:
             absd = root_dir / d
             if absd.exists():
-                for f in absd.rglob('*.v'):
+                # Sorted so first-seen-module-wins dedup below is
+                # deterministic across checkouts: raw rglob order follows
+                # filesystem readdir order, which made duplicate-module
+                # resolution (e.g. spu13_m31_multiplier vs its synth-only
+                # _seq_fallback drop-in) differ between a working tree and
+                # a fresh clone of the same commit.
+                for f in sorted(absd.rglob('*.v')):
+                    # Synth-script-only drop-in alternates redefine an
+                    # existing module name on purpose ("include INSTEAD
+                    # of ..."); they must never reach a simulation compile.
+                    if f.name.endswith('_fallback.v'):
+                        continue
                     # Skip testbench tops in the helper scan; only support
                     # RTL helpers such as sim_sd_card.v should be included.
                     if 'hardware/tests' in d:
