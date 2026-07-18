@@ -353,8 +353,29 @@ def fp4_to_hex(z: tuple) -> str:
 
 def fp4_to_compact(z: tuple) -> str:
     if z is None:
-        return "—"
+        return r"\textendash"
     return f"({z[0]:08X},{z[1]:08X},{z[2]:08X},{z[3]:08X})"
+
+
+def latex_label(label: str) -> str:
+    """Render the fixed vector catalog without Unicode math glyphs."""
+    return (label
+            .replace("√15", r"$\sqrt{15}$")
+            .replace("√5", r"$\sqrt{5}$")
+            .replace("√3", r"$\sqrt{3}$")
+            .replace("×", r"$\times$")
+            .replace("→", r"$\to$")
+            .replace("e^2", r"e$^2$"))
+
+
+def fit_table(latex: str, width: str = r"\columnwidth") -> str:
+    """Keep generated tabular material inside the IEEE column/page width."""
+    latex = latex.replace(
+        r"\begin{tabular}",
+        rf"\resizebox{{{width}}}{{!}}{{%" + "\n" + r"\begin{tabular}",
+        1,
+    )
+    return latex.replace(r"\end{tabular}", r"\end{tabular}" + "\n}%", 1)
 
 
 def generate_fp4_inverter_table() -> str:
@@ -363,22 +384,22 @@ def generate_fp4_inverter_table() -> str:
     for tc in FP4_INVERTER_TESTS:
         inv = fp4_inv_oracle(tc.z)
         if tc.expected is not None:
-            match = "✓" if inv == tc.expected else "✗"
+            match = r"$\checkmark$" if inv == tc.expected else r"$\times$"
         elif tc.flags_v:
-            match = "FLAGS.V" if inv is None else "✗"
+            match = "FLAGS.V" if inv is None else r"$\times$"
         else:
             match = "N/A"
         rows.append(
-            f"  {tc.label} & {fp4_to_compact(tc.z)} & "
+            f"  {latex_label(tc.label)} & {fp4_to_compact(tc.z)} & "
             f"{fp4_to_compact(inv) if inv else 'SINGULARITY'} & "
             f"{match} \\\\"
         )
     header = r"""% Table 1: A31 Conjugate Reduction Tower — Unit Inversion Vectors
 \begin{table}[ht]
 \centering
-\caption{$A_{31}$ conjugate reduction tower unit-inversion vectors. All
-results are verified bit-exact against RTL simulation (iverilog) and Python
-oracle. Input $Z = (z_0, z_1, z_2, z_3) \in A_{31}$ over $p = 2^{31}-1$
+\caption{$A_{31}$ conjugate reduction tower unit-inversion vectors generated
+by the publication oracle. The corresponding inverter bench is included in
+the full RTL gate. Input $Z = (z_0, z_1, z_2, z_3) \in A_{31}$ over $p = 2^{31}-1$
 (M31). Non-units, including nonzero zero-divisors, trap via FLAGS.V.
 $\sim$76 cycle deterministic latency.}
 \label{tab:fp4-inverter}
@@ -389,7 +410,7 @@ Test Case & Input $Z$ & Oracle $Z^{-1}$ & Match \\
     footer = r"""\bottomrule
 \end{tabular}
 \end{table}"""
-    return header + "\n" + "\n".join(rows) + "\n" + footer
+    return fit_table(header + "\n" + "\n".join(rows) + "\n" + footer)
 
 
 def generate_m31_mult_table() -> str:
@@ -397,16 +418,17 @@ def generate_m31_mult_table() -> str:
     rows = []
     for tc in MULT_TESTS:
         got = fp4_mult(tc.a, tc.b)
-        match = "✓" if got == tc.expected else "✗"
+        match = r"$\checkmark$" if got == tc.expected else r"$\times$"
         rows.append(
-            f"  {tc.label} & {fp4_to_compact(tc.a)} & "
+            f"  {latex_label(tc.label)} & {fp4_to_compact(tc.a)} & "
             f"{fp4_to_compact(tc.b)} & {fp4_to_compact(got)} & {match} \\\\"
         )
     header = r"""% Table 2: A31 Multiplication — M31 Mersenne Reduction
 \begin{table}[ht]
 \centering
-\caption{$A_{31}$ split-biquadratic multiplication over M31. 16 parallel
-DSP slices, 2-stage pipeline, fast Mersenne reduction via 72-bit chunk split.}
+\caption{$A_{31}$ split-biquadratic multiplication over M31. Sixteen logical
+$32\times32$ products feed a 2-stage pipeline with Mersenne reduction via
+72-bit chunk splitting. Physical DSP usage is target- and synthesis-dependent.}
 \label{tab:m31-mult}
 \begin{tabular}{lllll}
 \toprule
@@ -415,7 +437,7 @@ Test Case & $A$ & $B$ & $A \cdot B \bmod p$ & Match \\
     footer = r"""\bottomrule
 \end{tabular}
 \end{table}"""
-    return header + "\n" + "\n".join(rows) + "\n" + footer
+    return fit_table(header + "\n" + "\n".join(rows) + "\n" + footer)
 
 
 def generate_m31_inv_table() -> str:
@@ -424,17 +446,17 @@ def generate_m31_inv_table() -> str:
     for label, x, expected in M31_INVERTER_TESTS:
         inv = mod_inv(x)
         if expected is not None:
-            match = "✓" if inv == expected else "✗"
+            match = r"$\checkmark$" if inv == expected else r"$\times$"
         else:
-            match = "✓" if (x * inv) % M31 == 1 else "✗"
+            match = r"$\checkmark$" if (x * inv) % M31 == 1 else r"$\times$"
         rows.append(
             f"  {label} & {x} & {inv:08X} & {match} \\\\"
         )
     header = r"""% Table 3: M31 Scalar Inverter — BEEA Test Vectors
 \begin{table}[ht]
 \centering
-\caption{M31 scalar modular inversion via binary extended Euclidean algorithm.
-Zero divisions, shifts + conditional P-add. \textasciitilde180 LUTs.}
+\caption{M31 scalar modular inversion via binary extended Euclidean algorithm:
+zero divisions, using shifts and conditional $p$ addition.}
 \label{tab:m31-inv}
 \begin{tabular}{llll}
 \toprule
@@ -443,7 +465,7 @@ Test Case & $x$ & $x^{-1} \bmod p$ & Match \\
     footer = r"""\bottomrule
 \end{tabular}
 \end{table}"""
-    return header + "\n" + "\n".join(rows) + "\n" + footer
+    return fit_table(header + "\n" + "\n".join(rows) + "\n" + footer)
 
 
 def generate_singular_absorber_table() -> str:
@@ -453,18 +475,18 @@ def generate_singular_absorber_table() -> str:
         inv = fp4_inv_oracle(tc.z)
         flags = "1" if inv is None else "0"
         exp_flags = "1" if tc.flags_v else "0"
-        match = "✓" if flags == exp_flags else "✗"
+        match = r"$\checkmark$" if flags == exp_flags else r"$\times$"
         rows.append(
-            f"  {tc.label} & {fp4_to_compact(tc.z)} & "
+            f"  {latex_label(tc.label)} & {fp4_to_compact(tc.z)} & "
             f"{fp4_to_compact(inv) if inv else 'TRAP'} & "
             f"{flags} & {match} \\\\"
         )
     header = r"""% Table 4: Singular Absorber — Zero-Norm Exception Path
 \begin{table}[ht]
 \centering
-\caption{Singular absorber stress tests verifying FLAGS.V assertion on
-zero-norm geometric singularities and clean re-arm after exception.
-5 scenarios, all verified bit-exact.}
+\caption{Publication-oracle checks for FLAGS.V behavior on zero-norm
+singularities and clean re-arm after exception. The singular-absorber RTL
+bench is included in the full release gate.}
 \label{tab:singular-absorber}
 \begin{tabular}{lllll}
 \toprule
@@ -473,7 +495,7 @@ Scenario & Input $Z$ & Result & FLAGS.V & Match \\
     footer = r"""\bottomrule
 \end{tabular}
 \end{table}"""
-    return header + "\n" + "\n".join(rows) + "\n" + footer
+    return fit_table(header + "\n" + "\n".join(rows) + "\n" + footer)
 
 
 def generate_collision_table() -> str:
@@ -487,15 +509,15 @@ def generate_collision_table() -> str:
             seq_parts = []
             for i, (k, stall) in enumerate(sc.expected_sequence):
                 seq_parts.append(f"k={k}" + (" (stall)" if stall else ""))
-            seq = " → ".join(seq_parts)
+            seq = r" $\to$ ".join(seq_parts)
         latency = len(sc.expected_sequence)
         rows.append(
-            f"  {sc.name} & {bits} & {latency} & {seq} \\\\"
+            f"  {latex_label(sc.name)} & {bits} & {latency} & {seq} \\\\"
         )
     header = r"""% Table 5: BTU Collision Resolver — Multi-Hot Wave Dispatch
 \begin{table}[ht]
 \centering
-\caption{BTU collision resolver (64→6 priority encoder + backlog queue)
+\caption{BTU collision resolver (64$\to$6 priority encoder + backlog queue)
 serializing multi-hot wave interference into deterministic dispatch.
 Fixed O(n) latency where n = number of simultaneous activations.}
 \label{tab:btu-collision}
@@ -506,7 +528,7 @@ Scenario & Activation bits & Cycles & Dispatch sequence \\
     footer = r"""\bottomrule
 \end{tabular}
 \end{table}"""
-    return header + "\n" + "\n".join(rows) + "\n" + footer
+    return fit_table(header + "\n" + "\n".join(rows) + "\n" + footer)
 
 
 def generate_som_bmu_table() -> str:
@@ -516,9 +538,9 @@ def generate_som_bmu_table() -> str:
     for bm in benchmarks:
         result = find_bmu(bm.features, bm.nodes, bm.feat_weights)
         label, ambiguous = classify(result)
-        match_best = "✓" if result.best_node_id == bm.expected_best else "✗"
-        match_label = "✓" if label == bm.expected_label else "✗"
-        match_amb = "✓" if ambiguous == bm.expected_ambiguous else "✗"
+        match_best = r"$\checkmark$" if result.best_node_id == bm.expected_best else r"$\times$"
+        match_label = r"$\checkmark$" if label == bm.expected_label else r"$\times$"
+        match_amb = r"$\checkmark$" if ambiguous == bm.expected_ambiguous else r"$\times$"
         rows.append(
             f"  {bm.name} & {result.best_node_id} & "
             f"{label} & "
@@ -532,7 +554,7 @@ def generate_som_bmu_table() -> str:
 \caption{BMU classification using weighted rational quadrance metric
 (no square roots, no floating-point). 7-node parallel array with
 combinational winner-take-all tree. 3-stage per-node pipeline:
-subtract→square→accumulate.}
+subtract$\to$square$\to$accumulate.}
 \label{tab:som-bmu}
 \begin{tabular}{llllll}
 \toprule
@@ -541,14 +563,14 @@ Benchmark & Best node & Cluster & Confidence gap & Ambiguous & Match \\
     footer = r"""\bottomrule
 \end{tabular}
 \end{table}"""
-    return header + "\n" + "\n".join(rows) + "\n" + footer
+    return fit_table(header + "\n" + "\n".join(rows) + "\n" + footer)
 
 
 def generate_nsa_dual_table() -> str:
     """Table 7: dual-number arithmetic test vectors."""
     rows = []
     for tc in NSA_TESTS:
-        op = "\\times" if tc.op_mul else "+"
+        op = r"$\times$" if tc.op_mul else "+"
         real_a = fp4_to_compact(tc.a.real)
         eps_a = fp4_to_compact(tc.a.eps)
         real_b = fp4_to_compact(tc.b.real)
@@ -556,7 +578,7 @@ def generate_nsa_dual_table() -> str:
         real_r = fp4_to_compact(tc.expected.real)
         eps_r = fp4_to_compact(tc.expected.eps)
         rows.append(
-            f"  {tc.label} & {op} & {real_a} & {eps_a} & "
+            f"  {latex_label(tc.label)} & {op} & {real_a} & {eps_a} & "
             f"{real_b} & {eps_b} & {real_r} & {eps_r} \\\\"
         )
     header = r"""% Table 7: Dual-Number Arithmetic — A31[epsilon]/(epsilon^2)
@@ -565,7 +587,8 @@ def generate_nsa_dual_table() -> str:
 \caption{Dual-number arithmetic over $\mathbb{A}_{\text{SPU}} =
 A_{31}[\epsilon]/(\epsilon^2)$. Here $\epsilon$ is a nilpotent formal symbol
 in a finite quotient ring, not an analytic infinitesimal. 9 test vectors
-verified bit-exact against RTL simulation (iverilog) and Python oracle.}
+generated by the publication oracle; the corresponding dual-ALU RTL bench is
+included in the full release gate.}
 \label{tab:nsa-dual}
 \begin{tabular}{llllllll}
 \toprule
@@ -574,55 +597,60 @@ Test & $\circ$ & Re($A$) & $\epsilon$($A$) & Re($B$) & $\epsilon$($B$) & Re($R$)
     footer = r"""\bottomrule
 \end{tabular}
 \end{table}"""
-    return header + "\n" + "\n".join(rows) + "\n" + footer
+    return fit_table(header + "\n" + "\n".join(rows) + "\n" + footer)
 
 
 def generate_resource_table() -> str:
-    """Table 7: RPLU v2 resource profile vs legacy."""
-    return r"""% Table 7: RPLU Resource Profile — v2 A31 vs Legacy Morse
-\begin{table}[ht]
+    """Measured whole-artifact resource evidence from hardware_evidence.md."""
+    return r"""% Table 7: measured RPLU implementation artifacts
+\begin{table*}[t]
 \centering
-\caption{Resource comparison between legacy Morse-potential RPLU and
-RPLU v2 Thimble-Pad\'{e} pipeline. 3$\times$ LUT / 4$\times$ DSP increase
-replaces 4 separate subsystems with one unified exact-rational pipeline.}
+\caption{Measured RPLU implementation artifacts. Metrics are reported in
+each backend's native cell vocabulary; the Tang row is an arithmetic/config
+probe and is not a full Pad\'{e} implementation.}
 \label{tab:resource}
-\begin{tabular}{lrrr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llll}
 \toprule
-Resource & Legacy (Morse) & RPLU v2 ($A_{31}$) & Trade \\
+Artifact & Logic / registers & DSP / BRAM & Evidence \\
 \midrule
-LUTs        & $\sim$1,100 & $\sim$3,300 & +3$\times$ for 4$\times$ coverage \\
-BRAMs       & 6--8        & 8           & Parity \\
-DSPs        & 4           & 16          & +4$\times$ for exact arithmetic \\
+Artix-7 \texttt{RPLU2PADE} & 20,277 LUTX; 6,678 FFX & 72 / 0 & routed + silicon \\
+Tang \texttt{rplu2\_arith} & 9,211 LUT4; 7,926 DFF & 0 / 0 & routed + silicon \\
 \midrule
-\multicolumn{4}{l}{\footnotesize Target: Gowin GW5A-25A (Tang Primer 25K).} \\
-\multicolumn{4}{l}{\footnotesize Total with rotor/sequencer: $\sim$5,500 LUTs (\textasciitilde67\% of device).} \\
+\multicolumn{4}{l}{\footnotesize Artix denominator: 126,800 LUTX/FFX cells and 240 DSP48E1; timing max 36.54\,MHz, tested at 2\,MHz.} \\
+\multicolumn{4}{l}{\footnotesize Tang also reports 822 ALUs; timing max 54.42/48.40\,MHz on its two reported clocks, tested at 12\,MHz.} \\
 \bottomrule
 \end{tabular}
-\end{table}"""
+}%
+\end{table*}"""
 
 
 def generate_verification_table() -> str:
-    """Table 8: Verification layers."""
-    total_fp4 = len(FP4_INVERTER_TESTS) + len(SINGULAR_ABSORBER_TESTS) + len(MULT_TESTS) + len(M31_INVERTER_TESTS)
-    return f"""% Table 8: Multi-Layer Verification Stack
+    """Named release checks; avoid hand-maintained aggregate categories."""
+    oracle_total = (len(FP4_INVERTER_TESTS) + len(SINGULAR_ABSORBER_TESTS) +
+                    len(MULT_TESTS) + len(M31_INVERTER_TESTS) +
+                    len(make_som_benchmarks()) + len(NSA_TESTS))
+    return f"""% Table 10: Reproducible verification commands
 \\begin{{table}}[ht]
 \\centering
-\\caption{{Current verification stack: Python oracle, C++ oracle,
-and focused RTL simulation (iverilog). {total_fp4} data vectors cover
-$A_{{31}}$ arithmetic, unit/non-unit trapping, collision resolution, and SOM
-BMU classification; integrated place-and-route remains future work.}}
+\\caption{{Named release checks. Counts are command outputs rather than a
+hand-maintained sum of selected assertions. The publication-data oracle has
+{oracle_total} generated checks; the project-wide gate also compiles and runs
+the named RTL benches.}}
 \\label{{tab:verification}}
-\\begin{{tabular}}{{llll}}
+\\resizebox{{\\columnwidth}}{{!}}{{%
+\\begin{{tabular}}{{lll}}
 \\toprule
-Layer & Language & Tests & Role \\\\
+Command & Result & Scope \\\\
 \\midrule
-Behavioral oracle & Python (rational\\_som.py) & 24 & BMU, quadrance, tie-breaking \\\\
-C++ oracle & C++17 (spu\\_rational\\_som.h) & 24 & Cycle-accurate parity \\\\
-RTL simulation & Verilog (iverilog) & focused & $A_{{31}}$ arithmetic, BTU, Pad\\'e \\\\
-\\midrule
-\\multicolumn{{4}}{{l}}{{\\footnotesize Cross-validation: Python \\textleftrightarrow\\ C++ \\textleftrightarrow\\ Verilog.}} \\\\
+\\texttt{{rplu\\_paper\\_data.py --verify}} & {oracle_total}/{oracle_total} & table vectors \\\\
+\\texttt{{spu13\\_arch\\_sim\\_test.py}} & 35/35 & adapter model \\\\
+\\texttt{{test\\_pade\\_batch\\_inversion.py}} & 25/25 & tower/batch oracle \\\\
+\\texttt{{test\\_rational\\_som.py}} & 24/24 & SOM oracle \\\\
+\\texttt{{run\\_all\\_tests.py}} & 170/170 & full gate; 129 RTL \\\\
 \\bottomrule
 \\end{{tabular}}
+}}%
 \\end{{table}}"""
 
 
@@ -631,9 +659,9 @@ def generate_latency_table() -> str:
     return r"""% Table 9: RPLU v2 Pipeline Stage Latencies
 \begin{table}[ht]
 \centering
-\caption{Deterministic pipeline stage latencies. No runtime-dynamic
-resolution — all paths are fixed-cycle, zero-division.}
+\caption{Contracted stage latencies for the instantiated paths.}
 \label{tab:latency}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lll}
 \toprule
 Pipeline Stage & Module & Latency \\
@@ -645,9 +673,9 @@ $\Phi_3$ & $A_{31}$ conjugate reduction tower & $\sim$76 cycles \\
 $\Phi_4$ & Output latch & 1 cycle \\
 \midrule
 BTU collision queue & 64$\rightarrow$6 priority encoder & O(n) bubble stall \\
-M31 scalar inverter & BEEA shift-subtract & $\sim$30 cycles \\
 \bottomrule
 \end{tabular}
+}%
 \end{table}"""
 
 
@@ -803,6 +831,8 @@ def main():
                         help="Cross-validate oracle vs RTL")
     parser.add_argument("--json", type=str,
                         help="Export structured data to JSON file")
+    parser.add_argument("--output", type=str,
+                        help="Write generated LaTeX to this file")
     parser.add_argument("--run-tb", action="store_true",
                         help="Run actual iverilog testbenches (slow)")
     args = parser.parse_args()
@@ -862,7 +892,12 @@ def main():
             "",
             "% ── End auto-generated data ──",
         ]
-        print("\n\n".join(sections))
+        latex = "\n\n".join(sections) + "\n"
+        if args.output:
+            Path(args.output).write_text(latex)
+            print(f"Wrote generated LaTeX to {args.output}")
+        else:
+            print(latex, end="")
 
     return 0
 
