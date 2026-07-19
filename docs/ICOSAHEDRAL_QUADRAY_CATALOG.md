@@ -1,8 +1,12 @@
 # The Icosahedral Rotation Group in the Quadray Basis
 
-**Status: machine-checked math only** (exact-Fraction oracle,
-`software/tests/test_icosahedral_catalog.py`, 17 checks). No VM opcode, no
-RTL, no silicon. Derived and verified 2026-07-10. This document records the
+**Status: machine-checked math** (exact-Fraction oracle,
+`software/tests/test_icosahedral_catalog.py`, 17 checks at the original
+2026-07-10 freeze). Since then the catalog has been carried through VM
+opcodes, an RTL engine, and a **silicon-proven conjugate-catalog replay
+on Tang Primer 25K** (2026-07-12, `docs/hardware_evidence.md`
+§3.2k/§3.2k.1) — the derivation below is unchanged; only this header's
+scope line has been updated. Derived and verified 2026-07-10. This document records the
 findings that will drive the ISA design; the derivation is kept executable
 in the repository so it cannot silently drift (a previous derivation script
 was deleted after note-taking and its central claim turned out to be wrong —

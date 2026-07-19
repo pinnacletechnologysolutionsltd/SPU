@@ -1,6 +1,10 @@
 # IROTC — Icosahedral Rotation Opcode Specification (v0.2)
 
-**Status: VM implemented and verified; no RTL, no silicon.** The
+**Status: VM implemented and verified; RTL engine and conjugate
+catalog subsequently silicon-proven on Tang Primer 25K (2026-07-12,
+`docs/hardware_evidence.md` §3.2k/§3.2k.1) — the "no RTL, no silicon"
+scope statement below reflects this document's original 2026-07-10
+freeze date, not current status.** The
 mathematical basis is machine-checked
 (`software/tests/test_icosahedral_catalog.py`, 22 checks, catalog checksum
 `aabef37c9c8b0317`); findings in `docs/ICOSAHEDRAL_QUADRAY_CATALOG.md`.
