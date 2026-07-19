@@ -1,6 +1,6 @@
 # Current Project Status
 
-Date: 2026-07-16
+Date: 2026-07-19
 
 This file is the short source of truth for current board roles and near-term
 bring-up direction.
@@ -81,8 +81,8 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   smoke repeatedly reports `RPLU2PADE_J11: PASS` across five rational
   constant Padé cases, with status `raw=7F 2A 13 00`, `crc_error=0`,
   and `busy=0`.
-- Full repository regression on 2026-07-17: `python3 run_all_tests.py` reported
-  `Total PASS: 165`, `Total FAIL: 0`.
+- Full repository regression on 2026-07-19: `python3 run_all_tests.py` reported
+  `Total PASS: 171`, `Total FAIL: 0`.
 - Tang 25K `irotc_spi` southbridge image is silicon-verified over the real
   RP2350 SPI link, 6/6 PASS, including the conjugate-catalog rotation
   (case 3) and CATMIX no-commit (case 4) — first conjugate-icosahedron
@@ -115,6 +115,14 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   a packed board-top metric mismatch (feature 0 was weighted 2 instead of the
   documented uniform 1); the corrected 50 MHz image closes at 79.38 MHz and is
   recorded in `docs/hardware_evidence.md` §3.2g.3.
+- The predeclared UCI hydraulic-pump real-data truth gate is complete. Across
+  1,449 stable physical cycles and five held-out nuisance-condition folds, the
+  frozen four-feature motor-power SOM reached 45.41% aggregate three-class
+  balanced accuracy with a 38.52% worst fold, failing its 70%/50% hardware
+  replay gate. Only 12/23,184 held-out windows clamped any lane, so this is
+  feature insufficiency rather than normalization collapse. No map is promoted
+  to FPGA and the v1 contract will not be tuned. Full reproducible negative:
+  `docs/HYDRAULIC_PUMP_SOM_CASE_STUDY.md`.
 - The renewed `SOM1` image is now silicon-verified on the same 150-sample
   corpus. All 35 prototype/label records hydrated, and every 52-byte result
   passed CRC/structure checks and matched the oracle across winner, runner-up,

@@ -19,6 +19,9 @@ Pick your door:
 
 - **[Current status](CURRENT_STATUS.md)** — board roles, silicon proof level, priorities
 - **[Hardware evidence ledger](hardware_evidence.md)** — every claim tied to a command and a result
+- **[Hydraulic pump SOM truth gate](HYDRAULIC_PUMP_SOM_CASE_STUDY.md)** —
+  predeclared real-data folds, exact features, baselines, and the recorded
+  negative result
 - **Papers (preprints in preparation):** central architecture, RPLU v2 jet algebra,
   Lucas phinary MAC, SU(3) coprocessor — LaTeX sources in `docs/`, built PDFs
   in CI artifacts

@@ -113,3 +113,73 @@ equivalence on Tang and Artix hardware. This case study tests real-signal
 generalization only. It cannot invalidate or strengthen those hardware proofs;
 it determines whether a real map is worth replaying through the already-proven
 sidecar.
+
+## Frozen-contract result
+
+The first run and an immediate independent rerun produced byte-identical
+`hydraulic_pump_som_result_v1.json` output:
+
+- result SHA-256:
+  `010e5155e1a0e33645e73d9359f590709514668df807264598faf8b6616b8c8f`;
+- stable physical cycles: 1,449;
+- evaluated windows: 23,184;
+- held-out nuisance groups: 48 across five folds;
+- SOM1 records checked against the exact oracle: 23,184;
+- exact-tie/ambiguity windows: 0.
+
+Cycle-level aggregate results are:
+
+| Method | Balanced accuracy | Accuracy | Confusion matrix |
+|---|---:|---:|---|
+| Majority, 3-class | 33.33% | 33.75% | `[[489,0,0],[480,0,0],[480,0,0]]` |
+| Nearest centroid, 3-class | 44.61% | 44.93% | `[[470,5,14],[346,36,98],[279,56,145]]` |
+| Seven-node SOM, 3-class | 45.41% | 45.69% | `[[438,0,51],[324,0,156],[256,0,224]]` |
+| Scalar threshold, binary | 50.00% | 66.25% | `[[0,489],[0,960]]` |
+| SOM collapsed to binary | 64.79% | 56.73% | `[[438,51],[576,384]]` |
+
+The five SOM balanced accuracies are 41.33%, 40.00%, 51.67%, 38.52%,
+and 55.56%. Aggregate accuracy therefore fails the predeclared 70% replay
+threshold, and the 38.52% worst fold fails the 50% floor.
+
+The literal baseline-superiority predicate is true: 45.41% exceeds the
+centroid's 44.61%, and binary SOM 64.79% exceeds the scalar threshold's 50%.
+This does not authorize a superiority claim because the hardware-replay gate
+fails and absolute three-class performance is weak. The scalar threshold is
+also degenerate: it predicts leakage for every cycle.
+
+This is not a normalization-collapse result. Across all held-out folds, only
+12 windows clamp any feature, no window clamps all four, and one unique vector
+is lost. Every trained map contains at least one weak-leakage node, but cycle
+plurality never returns the weak class. The four frozen local statistics of a
+single motor-power channel do not separate pump-leakage severity reliably
+across unseen cooler/valve/accumulator combinations.
+
+**Decision:** do not promote or replay these maps on FPGA, and do not tune the
+v1 features or folds. This negative result does not bear on coarse
+normal/load/stall monitoring with the INA226; subtle hydraulic leakage is a
+different task. Any follow-up requires a v2 contract declared before scoring,
+most plausibly with cycle-phase or multi-sensor features.
+
+## Reproduction
+
+Download the source without adding it to Git:
+
+```sh
+mkdir -p build/hydraulic_raw
+curl -L --fail -o build/hydraulic_raw/condition_monitoring_hydraulic_systems.zip \
+  'https://archive.ics.uci.edu/static/public/447/condition%2Bmonitoring%2Bof%2Bhydraulic%2Bsystems.zip'
+```
+
+Verify and extract only the two consumed files, then run the case study:
+
+```sh
+python3 tools/hydraulic_som_case_study.py extract
+python3 tools/hydraulic_som_case_study.py verify
+python3 tools/hydraulic_som_case_study.py run
+```
+
+The final command writes per-fold normalized CSVs, checksummed maps, complete
+diagnostics, and `hydraulic_pump_som_result_v1.json` under
+`build/hydraulic_pump_som/`. A completed negative gate exits successfully;
+`PASS` means the frozen computation was reproduced, not that the accuracy gate
+passed.

@@ -714,6 +714,7 @@ def main():
         "test_matlab_v5.py",
         "test_paderborn_bearing.py",
         "test_paderborn_cross_validation.py",
+        "test_hydraulic_pump.py",
     ):
         som_product_path = os.path.join(
             root_dir, "software", "tests", som_product_name
