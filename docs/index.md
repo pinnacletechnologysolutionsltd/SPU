@@ -24,6 +24,8 @@ Pick your door:
   negative result
 - **[INA226 coarse-monitor contract](INA226_COARSE_MONITOR_CONTRACT.md)** —
   frozen physical-capture protocol, safety boundary, folds, and claim gates
+- **[INA226 capture runbook](INA226_CAPTURE_RUNBOOK.md)** — breadboard wiring,
+  safe session order, validation, scoring, and exact decision explanation
 - **Papers (preprints in preparation):** central architecture, RPLU v2 jet algebra,
   Lucas phinary MAC, SU(3) coprocessor — LaTeX sources in `docs/`, built PDFs
   in CI artifacts

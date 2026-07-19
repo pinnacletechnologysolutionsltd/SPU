@@ -82,7 +82,7 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   constant Padé cases, with status `raw=7F 2A 13 00`, `crc_error=0`,
   and `busy=0`.
 - Full repository regression on 2026-07-19: `python3 run_all_tests.py` reported
-  `Total PASS: 171`, `Total FAIL: 0`.
+  `Total PASS: 172`, `Total FAIL: 0`.
 - Tang 25K `irotc_spi` southbridge image is silicon-verified over the real
   RP2350 SPI link, 6/6 PASS, including the conjugate-catalog rotation
   (case 3) and CATMIX no-commit (case 4) — first conjugate-icosahedron
@@ -123,6 +123,16 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   feature insufficiency rather than normalization collapse. No map is promoted
   to FPGA and the v1 contract will not be tuned. Full reproducible negative:
   `docs/HYDRAULIC_PUMP_SOM_CASE_STUDY.md`.
+- The decisive coarse-state INA226 experiment is frozen before physical data
+  at commit `ed16263`. Its capture tooling now validates thirty SHA-sealed
+  whole sessions (normal/elevated-load/current-limited-stall), materializes
+  exact four-feature windows, enforces five session-safe folds, evaluates
+  threshold/centroid/seven-node SOM baselines, emits SOM1 oracle records, and
+  expands decisions into exact Voronoi inequalities. A 28-check hostile
+  synthetic fixture passes, but this is ingestion evidence only: physical
+  accuracy remains pending the INA226 and safe actuator bench capture. Contract
+  and procedure: `docs/INA226_COARSE_MONITOR_CONTRACT.md` and
+  `docs/INA226_CAPTURE_RUNBOOK.md`.
 - The renewed `SOM1` image is now silicon-verified on the same 150-sample
   corpus. All 35 prototype/label records hydrated, and every 52-byte result
   passed CRC/structure checks and matched the oracle across winner, runner-up,
@@ -152,17 +162,18 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
 ## Current Priority
 
 1. **Drive papers to ArXiv** (central SPU-13, RPLU v2, Lucas MAC, SU3) using existing Artix + Tang silicon evidence. The silicon proof is now good enough for credible preprints; papers are the gate to grant applications and international outreach.
-2. **Acquire Raspberry Pi Pico 2** as the low-cost RP2350 reference southbridge. This gives cleaner headers and room for PIO transport work without disturbing the current RP2350-Zero wiring.
-3. **Acquire Colorlight i9 (ECP5-45F)** when convenient for physical ECP5 smoke. The open-flow RPLU2 build now routes and packs; the remaining i9 gap is board-level programming/LED/SPI proof.
-4. **Defer Kintex-7 K7-480T PCIe board** until budget, host-PC power/slot requirements, and risk tolerance are clear. Buy earlier only if a verified card appears at a price low enough to treat as an experiment.
-5. **Prepare NLnet/open-hardware and MBIE/university grant tracks** after
+2. **Run the frozen INA226 coarse-monitor capture** when the sensor, breadboard, safe rated actuator, and current-limited supply are available. Do not change the v1 task or gates after seeing physical data.
+3. **Acquire Raspberry Pi Pico 2** as the low-cost RP2350 reference southbridge. This gives cleaner headers and room for PIO transport work without disturbing the current RP2350-Zero wiring.
+4. **Acquire Colorlight i9 (ECP5-45F)** when convenient for physical ECP5 smoke. The open-flow RPLU2 build now routes and packs; the remaining i9 gap is board-level programming/LED/SPI proof.
+5. **Defer Kintex-7 K7-480T PCIe board** until budget, host-PC power/slot requirements, and risk tolerance are clear. Buy earlier only if a verified card appears at a price low enough to treat as an experiment.
+6. **Prepare NLnet/open-hardware and MBIE/university grant tracks** after
    papers go live, but verify the active calls first. On 2026-07-05 the MBIE
    Endeavour 2026 round is contract-extension only, and NLnet's regular open
    call is temporarily narrowed while it transitions to the Open Internet Stack.
-6. Keep the Tang 25K probe ladder buildable as a closed regression harness.
-7. Keep the Wukong Artix-7 build regenerating from source without stale artifacts.
-8. Treat `SU3SHARE` as the current Artix integration baseline. `RPLU2PADE` is the current Padé pipeline proof.
-9. Keep SPI/J11 as the known-good control plane while PIO parallel transport is deferred to Pico 2 / evaluator-board work.
+7. Keep the Tang 25K probe ladder buildable as a closed regression harness.
+8. Keep the Wukong Artix-7 build regenerating from source without stale artifacts.
+9. Treat `SU3SHARE` as the current Artix integration baseline. `RPLU2PADE` is the current Padé pipeline proof.
+10. Keep SPI/J11 as the known-good control plane while PIO parallel transport is deferred to Pico 2 / evaluator-board work.
 
 ## Safety / Error-Correcting Layers (added June 2026)
 

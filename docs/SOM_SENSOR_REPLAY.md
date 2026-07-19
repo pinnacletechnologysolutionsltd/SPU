@@ -89,3 +89,5 @@ integration replaces `generate_current_window()` with those samples; the
 window size, feature equations, bridge, map uploader, BMU oracle, and SOM1
 consumer remain unchanged. The first bench run must separately verify sample
 cadence, shunt value, saturation behavior, and FPGA/oracle evidence equality.
+The frozen experiment and bench procedure are
+`INA226_COARSE_MONITOR_CONTRACT.md` and `INA226_CAPTURE_RUNBOOK.md`.
