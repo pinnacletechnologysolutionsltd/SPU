@@ -107,7 +107,7 @@ host consumer. Expected result: 18/18 with zero ambiguity.
 
 ```bash
 # Deterministic fresh-clone regression
-python3 run_all_tests.py                  # 170/170 at this release
+python3 run_all_tests.py                  # 172/172 at this release
 
 # Rational robotics remains available as a second software demonstration
 python3 software/spu_forge.py simulate programs/robot_arm_demo.lith

@@ -647,7 +647,7 @@ Command & Result & Scope \\\\
 \\texttt{{spu13\\_arch\\_sim\\_test.py}} & 35/35 & adapter model \\\\
 \\texttt{{test\\_pade\\_batch\\_inversion.py}} & 25/25 & tower/batch oracle \\\\
 \\texttt{{test\\_rational\\_som.py}} & 24/24 & SOM oracle \\\\
-\\texttt{{run\\_all\\_tests.py}} & 170/170 & full gate; 129 RTL \\\\
+\\texttt{{run\\_all\\_tests.py}} & 172/172 & full gate; 129 RTL \\\\
 \\bottomrule
 \\end{{tabular}}
 }}%
