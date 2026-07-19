@@ -14,28 +14,21 @@
 
 ## Abstract
 
-Traditional spatial transformations rely on transcendental approximations
-(sin/cos, π, √5) that introduce floating-point drift, destroying structural
-exactness over long runtimes.  We present a hardware co-processor operating
-over the golden ring ℤ[φ] modulo a Lucas prime Lₚ that performs chiral
-transformations and φ-scaling through integer shift-and-add operations —
-zero floating-point, bit-exact closure. The PSCALE/PCHIRAL fast paths remain
-zero-DSP shift-add transforms, while the current PMUL/PINV proof maps to
-Artix-7 DSP48E1 slices through a bounded Barrett reducer. PSCALE achieves
-single-cycle φ-multiplication via the identity φ·(a+bφ) = b + (a+b)φ. The
-software oracle verifies exact period closure for PSCALE and an additional
-mixed PSCALE/PMUL/PINV identity sequence over 166,666 identity macros
-(999,996 primitive operations), with exact return at closure boundaries. The
-`PHSLK` predicate checks rational phase coherence by cross multiplication and
-reports zero-divisor denominators without invoking inversion.
-Designed as a companion to the SPU-13 Mersenne-ring core, this work targets
-deterministic exact arithmetic for geometric algebra. The quantum-control
-scope is intentionally narrow: we discuss exact ℤ[φ] phase comparison
-(`PHSLK`) as a potential preprocessing kernel for reduced rational templates
-in Fibonacci-anyon and φ-weighted syndrome-matching applications, not as a
-complete QEC decoder or photonic controller. The current Wukong image is a
-low-MHz bring-up build pending timing closure; this paper does not claim
-sub-100ns full-sidecar latency on current hardware.
+Finite binary floating point cannot represent √5 exactly, so repeated
+floating implementations of golden-ratio transforms require a rounding
+policy. We present a hardware co-processor over ℤ[φ]/L₅₂₁ that instead
+performs φ-scaling, conjugation, multiplication, inversion, and rational phase
+comparison with integer residues. PSCALE implements φ(a+bφ)=b+(a+b)φ in one
+accepted operation without a multiplier. An independent software oracle
+verifies one million PSCALE steps and 166,666 mixed PSCALE/PMUL/PINV identity
+macros (999,996 primitive operations), with bit-exact return at every declared
+closure boundary. Separate FPGA artifacts establish bounded silicon evidence:
+a zero-DSP Tang 25K fast-path probe, a zero-DSP PHSLK microprobe, and an
+SPI-visible Artix-7 sidecar covering all four arithmetic operations. The
+current Artix image routes at only 4.41 MHz and was bench-tested at 2 MHz; it
+is a functional proof, not a real-time quantum-control result. PHSLK is
+therefore presented narrowly as a candidate exact preprocessing predicate for
+reduced φ-native phase templates.
 
 ---
 
@@ -47,7 +40,7 @@ sub-100ns full-sidecar latency on current hardware.
 | Lₚ | General Lucas prime modulus (p prime, Lₚ prime) |
 | L₁₃ = 521 | Concrete instantiated modulus in this co-processor |
 | M31 | Mersenne prime 2³¹−1, base field of the SPU-13 binary core |
-| BTU | Barycentric Transmutation Unit, bridges M31 ↔ ℤ[φ]/Lₚ |
+| BTU | Proposed explicit conversion boundary between M31 and ℤ[φ]/Lₚ; not instantiated by the current LUCAS spin |
 | PSCALE | φ-multiply opcode (1 cycle, 0 DSP) |
 | PCHIRAL | φ-conjugation opcode (1 cycle, 0 DSP) |
 | PMUL | Full ℤ[φ] multiply (3 cycles, DSP) |
@@ -81,15 +74,15 @@ reduction: φᵖ ≡ ±1 (mod Lₚ) enables deterministic period closure.
 
 1. A Verilog RTL implementation of PSCALE/PCHIRAL/PMUL/PINV over ℤ[φ]/L₅₂₁,
    exposed as an Artix-7 sidecar.
-2. Empirical proof of the zero-drift invariant: 38,461 PSCALE period
-   boundaries and 166,666 mixed PSCALE/PMUL/PINV identity macros return to
-   the exact starting bit pattern. Each identity macro is PSCALE, PINV(phi),
-   PMUL by `phi^-1`, PMUL by `g`, PINV(g), and PMUL by `g^-1`, verifying
-   `phi * phi^-1 * g * g^-1 = 1`.
+2. A reproducible software-oracle closure study: 38,461 complete PSCALE
+   periods in one million steps and 166,666 mixed identity macros return to
+   the exact starting pair. This is software evidence, distinct from the
+   shorter bounded FPGA tests.
 3. A PHSLK coherence predicate that checks rational phase equality by
    cross multiplication, avoiding direct denominator inversion.
-4. A physically mapped PMUL/PINV path using compile-time Barrett reduction,
-   synthesized, routed, and packed in the Artix-7 LUCAS spin.
+4. Three physically mapped artifacts with explicit scope boundaries: Tang
+   fast-path and PHSLK probes, and an Artix-7 SPI sidecar whose silicon vectors
+   include PSCALE, PCHIRAL, PMUL, and PINV.
 
 ---
 
@@ -187,78 +180,37 @@ semantics benefit from clean separation at the BTU boundary.
 
 ## 3. Hardware Architecture & The Lucas Mapping
 
-### 3.1 The Barycentric Transmutation Unit (BTU) Bridge
+### 3.1 Representation Boundary and Current Reduction
 
-Data traversing the boundary from the M31 binary core (M31 = 2³¹−1)
-to the ℤ[φ]/Lₚ co-processor must undergo an immediate dimensional and
-bit-width down-sampling.  Elements exiting the primary core are bounded
-by the Mersenne modulus (x ≤ 2³¹−2), whereas the Phinary execution path
-requires inputs natively reduced to a chosen Lucas prime modulus Lₚ
-(e.g., L₁₃ = 521).
-
-In the SPU-13 pipeline, the BTU is a general-purpose router handling multiple
-lanes: the same unit routes SOM/BMU spatial indices to the A₃₁ Padé evaluator
-in the RPLU v2 pipeline, and M31 coefficients to the ℤ[φ] MAC here. The
-routing topology is configurable per lane at synthesis time.
-
-To keep the datapath compatible with future low-latency deterministic SPU-13
-pipeline targets, this macro-modulo transformation must bypass both
-iterative subtraction (which introduces non-deterministic execution
-stalls up to thousands of cycles) and large combinational ROM lookups
-(which exceed the block RAM allocation constraints of low-power edge
-FPGAs).
-
-#### 3.1.1 DSP-Shared Barrett Reduction Execution
-
-The BTU implements a fixed-latency, 3-cycle pipelined **Barrett Reduction**
-engine.  For a runtime-configured Lucas prime Lₚ, a constant scaling
-multiplier mu is precomputed at system boot via the host microcontroller
-(RP2350B) and committed to a localized configuration register via the
-0xA5 interface path:
+The M31 core and Lucas sidecar use different residue domains. A value crossing
+that boundary therefore needs an explicit conversion policy; packing a pair in
+the same 64-bit register does not make the rings interchangeable. The current
+LUCAS proof does **not** instantiate a shared, runtime-configurable BTU
+conversion pipeline. Its MAC is compiled for Lₚ=521 and its reduction helper
+uses the compile-time reciprocal:
 
     mu = floor(2^k / L_p),  where k = 31
 
-For L₁₃ = 521, mu = 4,121,849.  The hardware-native remainder calculation
-executes entirely within the existing core DSP fabric via the following
-sequence:
+For L₁₃=521, mu=4,121,849. The combinational Verilog helper evaluates:
 
-1. **Quotient Estimation (Cycle 1):** The 31-bit intermediate coefficient
-   x is multiplied by the configuration constant mu and logically shifted
-   to isolate the upper fractional bits:
+1. quotient estimate: `q = (x * mu) >> 31`;
+2. remainder: `r = x - q * L_p`;
+3. bounded correction when `r >= L_p`.
 
-       q = (x * mu) >> 31
-
-2. **Remainder Evaluation (Cycle 2):** The estimated quotient is multiplied
-   back by the operational Lucas modulus and subtracted from the original
-   value:
-
-       r = x - (q * L_p)
-
-3. **Boundary Correction (Cycle 3):** Because q is an approximation
-   (floor(x/L_p) <= q <= floor(x/L_p)+1), the intermediate remainder
-   sits strictly within the interval [0, 2L_p-1].  A single-cycle
-   combinational comparison handles the final boundary condition:
-
-       if (r >= L_p)  r := r - L_p
-
-This architecture consumes exactly two 31x31 bit multiplications, one
-shift, and a maximum of two subtractors. The current hardened Artix-7 proof
-maps the full Lucas MAC, including PMUL/PINV reduction, to 92 DSP48E1 slices;
-a Tang 25K profile should keep only the PSCALE/PCHIRAL slice unless those
-DSP/routing costs are explicitly acceptable.
-
-By avoiding involvement of the Southbridge SPI bus for arithmetic casting,
-the data transmutates entirely within the lane-routing fabric.  The SPU-13
-maintains a perfectly flat, deterministic execution cost, transforming a
-potentially devastating bottleneck into a clean, 3-cycle pipeline phase.
+PMUL's three busy cycles come from opcode staging, not a separately
+instantiated three-stage BTU. The SPI sidecar also contains CE-paced PMUL/PINV
+sequencing, so reusable-core latency, whole-sidecar latency, and transport time
+must be reported separately. Runtime modulus configuration and a shared
+M31-to-Lucas conversion block remain future integration work.
 
 ### 3.2 RTL Layout of the Phinary MAC and Chiral Wire-Swaps
 
 The Phinary MAC co-processor (`spu13_lucas_mac.v`) is a self-contained
 Verilog module operating over ℤ[φ]/L₅₂₁. Its PSCALE/PCHIRAL fast paths
 occupy zero DSP slices; the hardened full PMUL/PINV Artix-7 proof maps to
-92 DSP48E1 slices and interfaces with the BTU bridge through a simple
-request/done handshake.
+92 DSP48E1 slices and exposes a simple request/done interface. The current
+LUCAS spin connects it through a dedicated CE-paced SPI sidecar, not a shared
+BTU conversion block.
 
     module spu13_lucas_mac #(L_P=521, L_P_BITS=10) (
         input clk, rst_n, start,
@@ -288,12 +240,10 @@ no lookup table -- one addition and one comparison.
     wire pc_a = (op_a + op_b >= L_P) ? (op_a + op_b - L_P) : (op_a + op_b);
     wire pc_b = (op_b == 0) ? 0 : (L_P - op_b);
 
-Together, PSCALE and PCHIRAL form the chiral basis: spatial permutation
-(via the existing JSCR opcode and janus_screw_lines topology) followed by
-phi-conjugation and phi-scaling.  The entire chirality transform -- spatial
-reordering + algebraic conjugation + geometric scaling -- executes in 3
-cycles with zero DSP slices, compared to hundreds of cycles and multiple
-DSP blocks for an equivalent floating-point quaternion operation.
+Together, PSCALE and PCHIRAL supply exact algebraic primitives that may later
+be composed with a spatial permutation. The present LUCAS spin proves those
+operations individually; it does not instantiate or benchmark an end-to-end
+JSCR/quaternion comparison.
 
 #### 3.2.1 Operation Timing
 
@@ -340,19 +290,20 @@ operator.
 
 ## 4. Integration with SPU-13
 
-### 4.1 Co-Processor Topology
+### 4.1 Current Co-Processor Topology
 
 ```
-              BTU Spatial Router
-               /                \
-    M31 Binary Core        Lucas Phinary MAC
-    (A₃₁/M31, DSP path)      (ℤ[φ]/L₅₂₁, 92 DSP proof)
-              \                /
-       Barrett Reduction (M31 -> Lₚ, 3c)
+       RP2350 host / SPI CMD 0xB1
                     |
-            QR Register File
-         (agnostic 64-bit pairs)
+          CE-paced Lucas sidecar
+             /              \
+      direct fast paths    staged PMUL/PINV
+                    |
+         64-bit result pair via 0xAE
 ```
+
+The QR-shaped result packet is a transport convention. No automatic M31 to
+Lucas-ring conversion is implied by that packing.
 
 ### 4.2 Instruction Encoding
 
@@ -553,27 +504,20 @@ ambiguous template matches before a larger decoder runs.
 
 ### 6.2 Non-Quantum Exact Geometry Baseline
 
-The Jitterbug transformation (VE → octahedron collapse) requires
-non-linear interpolation that, in Cartesian coordinates, demands
-transcendental function evaluation.  In ℤ[φ] this reduces to exact
-rational interpolation — a linear combination of φ-weighted endpoints.
-
-This is the non-quantum baseline use case for the same MAC: deterministic
-φ-scaling, conjugation, and rational phase comparison over finite algebraic
-pairs. The benchmark evidence in this paper is intentionally at that kernel
-level: PSCALE period closure, mixed PSCALE/PMUL/PINV identity closure, and
-PHSLK template equality. An end-to-end geometric animation or robotics
-benchmark would be a separate integration result, not something implied by the
-current Lucas MAC numbers.
+The software oracle includes an illustrative interpolation between two
+φ-weighted endpoints. It shows that the MAC can preserve a chosen finite
+algebraic interpolation exactly; it does not establish that the complete
+Jitterbug motion, its Cartesian embedding, or a robotics trajectory has been
+implemented by this sidecar. Such an end-to-end geometry benchmark remains
+separate work.
 
 ### 6.3 Limitations
 
-- **Modulus configurability:** The Verilog module is parameterized on L_P and
-  L_P_BITS, supporting any Lucas prime up to L₁₉ = 9349 (14-bit operands)
-  with zero RTL changes.  Runtime configurability (changing L_P without
-  resynthesis) requires a configurable Barrett μ register and wider
-  reduction datapath — a straightforward extension of the existing 0xA5
-  boot-config path.
+- **Modulus configurability:** The Verilog interface exposes `L_P` and
+  `L_P_BITS`, but only the default L₁₃=521 instance has the verification and
+  physical evidence reported here. Wider moduli require independent
+  reduction-width, watchdog, timing, oracle, and silicon checks. Runtime
+  modulus configuration is not implemented.
 
   | Lucas prime | L_p | Bits | φ period | Scalar field size |
   |---|---|---|---|---|
@@ -587,8 +531,8 @@ current Lucas MAC numbers.
 - **PINV scalar inverse complexity:** The current RTL uses extended binary
   GCD on the scalar norm modulo Lₚ, avoiding exhaustive search and runtime
   division. For L₁₃=521, the current oracle model reports 3 to 23 busy-phase
-  cycles over all non-zero-norm elements. A Verilog latency histogram should
-  be added before citing this as measured RTL latency.
+  cycles over all non-zero-norm elements. This is not a measured RTL latency
+  histogram, and the SPI sidecar has its own CE-paced sequencer.
 
 - **Finite φ-period and aliasing:** L₁₃ gives a φ-period of 26. This is enough
   to prove the datapath and small template predicates, but it is not enough to
@@ -616,24 +560,20 @@ current Lucas MAC numbers.
 
 ## 7. Conclusion
 
-We have demonstrated a Lucas-prime phinary co-processor that performs
-chiral transformations, φ-scaling, and spatial inversion in the golden
-ring ℤ[φ]/L₅₂₁ with zero floating-point and bit-exact closure. The
-PSCALE/PCHIRAL transforms are zero-multiplier fast paths; the current hardened
-full PMUL/PINV proof spends 92 Artix-7 DSP48E1 slices (120 for the complete
-SPI-visible spin) to preserve bounded, synthesizable reduction. The PSCALE operation (φ-multiplication in a single
-clock cycle with zero multipliers) is the phinary analogue of the Mersenne
-prime's 2³¹≡1 bit-wrap: structural efficiency from algebraic structure.
+We implemented exact PSCALE, PCHIRAL, PMUL, PINV, and PHSLK arithmetic over
+ℤ[φ]/L₅₂₁. The two fast paths require no multiplier in the Tang probe, while
+the complete Artix proof deliberately maps full arithmetic to DSP48E1 slices.
+The evidence is complementary rather than interchangeable: the software
+oracle supplies exhaustive or long-run algebraic checks, the Tang artifacts
+establish fast-path and PHSLK silicon behavior, and the low-MHz Artix sidecar
+establishes external SPI operation for all four arithmetic opcodes. This
+closes a reproducible kernel study; timing closure, wider moduli, and an
+end-to-end application remain future work.
 
-The co-processor is oracle/testbench-proven with 100-period PSCALE closure and
-with a mixed PSCALE/PMUL/PINV identity run of 166,666 macros, or 999,996
-primitive operations.
-It is synthesized, routed, and packed in the Wukong Artix-7 LUCAS profile for
-bench bring-up, while PHSLK has a separate Tang 25K post-route microprobe at
-200.40 MHz with SRAM-load UART proof. The next phase is silicon bring-up beside
-the SPU-13 Mersenne core, followed by timing closure on the integrated
-PMUL/PINV path and replacement of the SPI sidecar with a real-time
-ingress/egress path if quantum-control latency is pursued.
+Hardware RTL is licensed under CERN-OHL-W-2.0, software under MIT, and the
+paper data tooling under Apache-2.0. The paper is released under CC BY 4.0.
+AI-assisted tools were used for drafting, review, and test orchestration; the
+named author selected the claims and remains responsible for the manuscript.
 
 ---
 
