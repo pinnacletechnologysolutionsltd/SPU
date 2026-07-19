@@ -1,7 +1,7 @@
 % ── RPLU v2 Publication Data — Auto-generated ──
 
 % Table 1: A31 Conjugate Reduction Tower — Unit Inversion Vectors
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{$A_{31}$ conjugate reduction tower unit-inversion vectors generated
 by the publication oracle. The corresponding inverter bench is included in
@@ -9,50 +9,50 @@ the full RTL gate. Input $Z = (z_0, z_1, z_2, z_3) \in A_{31}$ over $p = 2^{31}-
 (M31). Non-units, including nonzero zero-divisors, trap via FLAGS.V.
 $\sim$76 cycle deterministic latency.}
 \label{tab:fp4-inverter}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{llll}
 \toprule
 Test Case & Input $Z$ & Oracle $Z^{-1}$ & Match \\
 \midrule
-  Identity & (00000001,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & $\checkmark$ \\
-  Scalar inv(2) & (00000002,00000000,00000000,00000000) & (40000000,00000000,00000000,00000000) & $\checkmark$ \\
-  Pure $\sqrt{3}$ inv & (00000000,00000001,00000000,00000000) & (00000000,55555555,00000000,00000000) & $\checkmark$ \\
-  Pure $\sqrt{5}$ inv & (00000000,00000000,00000001,00000000) & (00000000,00000000,33333333,00000000) & $\checkmark$ \\
-  Zero-norm & (00000000,00000000,00000000,00000000) & SINGULARITY & FLAGS.V \\
+  Identity & (1,0,0,0) & (1,0,0,0) & $\checkmark$ \\
+  Scalar inv(2) & (2,0,0,0) & (40000000,00000000,00000000,00000000) & $\checkmark$ \\
+  Pure $\sqrt{3}$ inv & (0,1,0,0) & (00000000,55555555,00000000,00000000) & $\checkmark$ \\
+  Pure $\sqrt{5}$ inv & (0,0,1,0) & (00000000,00000000,33333333,00000000) & $\checkmark$ \\
+  Zero-norm & (0,0,0,0) & SINGULARITY & FLAGS.V \\
   Nonzero zero-divisor & (2CEE24B2,00000000,00000000,00000001) & SINGULARITY & FLAGS.V \\
   Random self-consistency & (00003039,00010932,00002B67,000056CE) & (7122397B,1212AF65,4D457009,1D8AB3FE) & N/A \\
 \bottomrule
 \end{tabular}
-}%
-\end{table}
+\end{table*}
 
 
 
 % Table 2: A31 Multiplication — M31 Mersenne Reduction
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{$A_{31}$ split-biquadratic multiplication over M31. Sixteen logical
 $32\times32$ products feed a 2-stage pipeline with Mersenne reduction via
 72-bit chunk splitting. Physical DSP usage is target- and synthesis-dependent.}
 \label{tab:m31-mult}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lllll}
 \toprule
 Test Case & $A$ & $B$ & $A \cdot B \bmod p$ & Match \\
 \midrule
-  Identity & (00000001,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & $\checkmark$ \\
-  Scalar 5$\times$3 & (00000005,00000000,00000000,00000000) & (00000003,00000000,00000000,00000000) & (0000000F,00000000,00000000,00000000) & $\checkmark$ \\
-  $\sqrt{3}$ $\times$ $\sqrt{3}$ = 3 & (00000000,00000001,00000000,00000000) & (00000000,00000001,00000000,00000000) & (00000003,00000000,00000000,00000000) & $\checkmark$ \\
-  $\sqrt{5}$ $\times$ $\sqrt{5}$ = 5 & (00000000,00000000,00000001,00000000) & (00000000,00000000,00000001,00000000) & (00000005,00000000,00000000,00000000) & $\checkmark$ \\
-  $\sqrt{15}$ $\times$ $\sqrt{15}$ = 15 & (00000000,00000000,00000000,00000001) & (00000000,00000000,00000000,00000001) & (0000000F,00000000,00000000,00000000) & $\checkmark$ \\
-  $\sqrt{3}$ $\times$ $\sqrt{5}$ = $\sqrt{15}$ & (00000000,00000001,00000000,00000000) & (00000000,00000000,00000001,00000000) & (00000000,00000000,00000000,00000001) & $\checkmark$ \\
-  M31 edge: (P-1)$\times$2 & (7FFFFFFE,00000000,00000000,00000000) & (00000002,00000000,00000000,00000000) & (7FFFFFFD,00000000,00000000,00000000) & $\checkmark$ \\
-  Mixed: (10,2,0,4)$\times$(5,0,1,2) & (0000000A,00000002,00000000,00000004) & (00000005,00000000,00000001,00000002) & (000000AA,0000001E,00000016,0000002A) & $\checkmark$ \\
-  Zero multiply & (00000000,00000000,00000000,00000000) & (0000007B,000001C8,00000315,00018AF8) & (00000000,00000000,00000000,00000000) & $\checkmark$ \\
+  Identity & (1,0,0,0) & (1,0,0,0) & (1,0,0,0) & $\checkmark$ \\
+  Scalar 5$\times$3 & (5,0,0,0) & (3,0,0,0) & (15,0,0,0) & $\checkmark$ \\
+  $\sqrt{3}$ $\times$ $\sqrt{3}$ = 3 & (0,1,0,0) & (0,1,0,0) & (3,0,0,0) & $\checkmark$ \\
+  $\sqrt{5}$ $\times$ $\sqrt{5}$ = 5 & (0,0,1,0) & (0,0,1,0) & (5,0,0,0) & $\checkmark$ \\
+  $\sqrt{15}$ $\times$ $\sqrt{15}$ = 15 & (0,0,0,1) & (0,0,0,1) & (15,0,0,0) & $\checkmark$ \\
+  $\sqrt{3}$ $\times$ $\sqrt{5}$ = $\sqrt{15}$ & (0,1,0,0) & (0,0,1,0) & (0,0,0,1) & $\checkmark$ \\
+  M31 edge: (P-1)$\times$2 & ($p-1$,0,0,0) & (2,0,0,0) & ($p-2$,0,0,0) & $\checkmark$ \\
+  Mixed: (10,2,0,4)$\times$(5,0,1,2) & (10,2,0,4) & (5,0,1,2) & (170,30,22,42) & $\checkmark$ \\
+  Zero multiply & (0,0,0,0) & (0000007B,000001C8,00000315,00018AF8) & (0,0,0,0) & $\checkmark$ \\
 \bottomrule
 \end{tabular}
-}%
-\end{table}
+\end{table*}
 
 
 
@@ -62,7 +62,8 @@ Test Case & $A$ & $B$ & $A \cdot B \bmod p$ & Match \\
 \caption{M31 scalar modular inversion via binary extended Euclidean algorithm:
 zero divisions, using shifts and conditional $p$ addition.}
 \label{tab:m31-inv}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{llll}
 \toprule
 Test Case & $x$ & $x^{-1} \bmod p$ & Match \\
@@ -75,43 +76,43 @@ Test Case & $x$ & $x^{-1} \bmod p$ & Match \\
   inv(65537) & 65537 & 0000FFFF & $\checkmark$ \\
 \bottomrule
 \end{tabular}
-}%
 \end{table}
 
 
 
 % Table 4: Singular Absorber — Zero-Norm Exception Path
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{Publication-oracle checks for FLAGS.V behavior on zero-norm
 singularities and clean re-arm after exception. The singular-absorber RTL
 bench is included in the full release gate.}
 \label{tab:singular-absorber}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lllll}
 \toprule
 Scenario & Input $Z$ & Result & FLAGS.V & Match \\
 \midrule
-  Valid inv(5) & (00000005,00000000,00000000,00000000) & (33333333,00000000,00000000,00000000) & 0 & $\checkmark$ \\
-  Zero $\to$ singularity & (00000000,00000000,00000000,00000000) & TRAP & 1 & $\checkmark$ \\
-  Unity (false positive guard) & (00000001,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & 0 & $\checkmark$ \\
-  Re-arm zero & (00000000,00000000,00000000,00000000) & TRAP & 1 & $\checkmark$ \\
-  Post-exception inv(3) & (00000003,00000000,00000000,00000000) & (55555555,00000000,00000000,00000000) & 0 & $\checkmark$ \\
+  Valid inv(5) & (5,0,0,0) & (33333333,00000000,00000000,00000000) & 0 & $\checkmark$ \\
+  Zero $\to$ singularity & (0,0,0,0) & TRAP & 1 & $\checkmark$ \\
+  Unity (false positive guard) & (1,0,0,0) & (1,0,0,0) & 0 & $\checkmark$ \\
+  Re-arm zero & (0,0,0,0) & TRAP & 1 & $\checkmark$ \\
+  Post-exception inv(3) & (3,0,0,0) & (55555555,00000000,00000000,00000000) & 0 & $\checkmark$ \\
 \bottomrule
 \end{tabular}
-}%
-\end{table}
+\end{table*}
 
 
 
 % Table 5: BTU Collision Resolver — Multi-Hot Wave Dispatch
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{BTU collision resolver (64$\to$6 priority encoder + backlog queue)
 serializing multi-hot wave interference into deterministic dispatch.
 Fixed O(n) latency where n = number of simultaneous activations.}
 \label{tab:btu-collision}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{llll}
 \toprule
 Scenario & Activation bits & Cycles & Dispatch sequence \\
@@ -122,20 +123,20 @@ Scenario & Activation bits & Cycles & Dispatch sequence \\
   Zero activation &  & 0 & idle, no stall \\
 \bottomrule
 \end{tabular}
-}%
-\end{table}
+\end{table*}
 
 
 
 % Table 6: SOM BMU Classification — Rational Quadrance Results
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{BMU classification using weighted rational quadrance metric
 (no square roots, no floating-point). 7-node parallel array with
 combinational winner-take-all tree. 3-stage per-node pipeline:
 subtract$\to$square$\to$accumulate.}
 \label{tab:som-bmu}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{llllll}
 \toprule
 Benchmark & Best node & Cluster & Confidence gap & Ambiguous & Match \\
@@ -145,8 +146,7 @@ Benchmark & Best node & Cluster & Confidence gap & Ambiguous & Match \\
   Stable tie-breaking & 1 & 7 & 0+0$\sqrt{3}$ & yes & $\checkmark$/$\checkmark$/$\checkmark$ \\
 \bottomrule
 \end{tabular}
-}%
-\end{table}
+\end{table*}
 
 
 
@@ -157,7 +157,8 @@ Benchmark & Best node & Cluster & Confidence gap & Ambiguous & Match \\
 each backend's native cell vocabulary; the Tang row is an arithmetic/config
 probe and is not a full Pad\'{e} implementation.}
 \label{tab:resource}
-\resizebox{\textwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{llll}
 \toprule
 Artifact & Logic / registers & DSP / BRAM & Evidence \\
@@ -169,13 +170,12 @@ Tang \texttt{rplu2\_arith} & 9,211 LUT4; 7,926 DFF & 0 / 0 & routed + silicon \\
 \multicolumn{4}{l}{\footnotesize Tang also reports 822 ALUs; timing max 54.42/48.40\,MHz on its two reported clocks, tested at 12\,MHz.} \\
 \bottomrule
 \end{tabular}
-}%
 \end{table*}
 
 
 
 % Table 7: Dual-Number Arithmetic — A31[epsilon]/(epsilon^2)
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{Dual-number arithmetic over $\mathbb{A}_{\text{SPU}} =
 A_{31}[\epsilon]/(\epsilon^2)$. Here $\epsilon$ is a nilpotent formal symbol
@@ -183,24 +183,24 @@ in a finite quotient ring, not an analytic infinitesimal. 9 test vectors
 generated by the publication oracle; the corresponding dual-ALU RTL bench is
 included in the full release gate.}
 \label{tab:nsa-dual}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{llllllll}
 \toprule
 Test & $\circ$ & Re($A$) & $\epsilon$($A$) & Re($B$) & $\epsilon$($B$) & Re($R$) & $\epsilon$($R$) \\
 \midrule
-  Add identity & + & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
-  Add scalar (5+e7)+(3+e2) & + & (00000005,00000000,00000000,00000000) & (00000007,00000000,00000000,00000000) & (00000003,00000000,00000000,00000000) & (00000002,00000000,00000000,00000000) & (00000008,00000000,00000000,00000000) & (00000009,00000000,00000000,00000000) \\
-  Add surd & + & (00000001,00000002,00000000,00000000) & (00000003,00000004,00000000,00000000) & (00000005,00000006,00000000,00000000) & (00000007,00000008,00000000,00000000) & (00000006,00000008,00000000,00000000) & (0000000A,0000000C,00000000,00000000) \\
-  Mul identity & $\times$ & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
-  Mul scalar (3+e0)(5+e0) & $\times$ & (00000003,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000005,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (0000000F,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
-  Mul with deriv (2+e3)(4+e5) & $\times$ & (00000002,00000000,00000000,00000000) & (00000003,00000000,00000000,00000000) & (00000004,00000000,00000000,00000000) & (00000005,00000000,00000000,00000000) & (00000008,00000000,00000000,00000000) & (00000016,00000000,00000000,00000000) \\
-  Mul e$^2$=0: (0+e)(0+e)=0 & $\times$ & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000001,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
-  Mul surd & $\times$ & (00000001,00000002,00000000,00000000) & (00000003,00000004,00000000,00000000) & (00000005,00000006,00000000,00000000) & (00000007,00000008,00000000,00000000) & (00000029,00000010,00000000,00000000) & (0000008E,0000003C,00000000,00000000) \\
-  Mul M31 edge (P-2)(2) & $\times$ & (7FFFFFFD,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (00000002,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) & (7FFFFFFB,00000000,00000000,00000000) & (00000000,00000000,00000000,00000000) \\
+  Add identity & + & (1,0,0,0) & (0,0,0,0) & (0,0,0,0) & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) \\
+  Add scalar (5+e7)+(3+e2) & + & (5,0,0,0) & (7,0,0,0) & (3,0,0,0) & (2,0,0,0) & (8,0,0,0) & (9,0,0,0) \\
+  Add surd & + & (1,2,0,0) & (3,4,0,0) & (5,6,0,0) & (7,8,0,0) & (6,8,0,0) & (10,12,0,0) \\
+  Mul identity & $\times$ & (1,0,0,0) & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) \\
+  Mul scalar (3+e0)(5+e0) & $\times$ & (3,0,0,0) & (0,0,0,0) & (5,0,0,0) & (0,0,0,0) & (15,0,0,0) & (0,0,0,0) \\
+  Mul with deriv (2+e3)(4+e5) & $\times$ & (2,0,0,0) & (3,0,0,0) & (4,0,0,0) & (5,0,0,0) & (8,0,0,0) & (22,0,0,0) \\
+  Mul e$^2$=0: (0+e)(0+e)=0 & $\times$ & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) & (0,0,0,0) \\
+  Mul surd & $\times$ & (1,2,0,0) & (3,4,0,0) & (5,6,0,0) & (7,8,0,0) & (41,16,0,0) & (142,60,0,0) \\
+  Mul M31 edge (P-2)(2) & $\times$ & ($p-2$,0,0,0) & (0,0,0,0) & (2,0,0,0) & (0,0,0,0) & ($p-4$,0,0,0) & (0,0,0,0) \\
 \bottomrule
 \end{tabular}
-}%
-\end{table}
+\end{table*}
 
 
 
@@ -209,12 +209,13 @@ Test & $\circ$ & Re($A$) & $\epsilon$($A$) & Re($B$) & $\epsilon$($B$) & Re($R$)
 \centering
 \caption{Contracted stage latencies for the instantiated paths.}
 \label{tab:latency}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{2pt}
 \begin{tabular}{lll}
 \toprule
 Pipeline Stage & Module & Latency \\
 \midrule
-$\Phi_1$ & Kohonen SOM BMU (7-node WTA) & 5 cycles \\
+$\Phi_1$ & SOM BMU (7-node WTA) & 5 cycles \\
 $\Phi_2$ & BTU spatial router (4-lane BRAM) & 3 cycles \\
 $\Phi_3$ & [4/4] Pad\'{e} Horner evaluator & 12 cycles \\
 $\Phi_3$ & $A_{31}$ conjugate reduction tower & $\sim$76 cycles \\
@@ -223,7 +224,6 @@ $\Phi_4$ & Output latch & 1 cycle \\
 BTU collision queue & 64$\rightarrow$6 priority encoder & O(n) bubble stall \\
 \bottomrule
 \end{tabular}
-}%
 \end{table}
 
 
@@ -236,7 +236,8 @@ hand-maintained sum of selected assertions. The publication-data oracle has
 39 generated checks; the project-wide gate also compiles and runs
 the named RTL benches.}
 \label{tab:verification}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lll}
 \toprule
 Command & Result & Scope \\
@@ -248,7 +249,6 @@ Command & Result & Scope \\
 \texttt{run\_all\_tests.py} & 172/172 & full gate; 129 RTL \\
 \bottomrule
 \end{tabular}
-}%
 \end{table}
 
 

@@ -354,6 +354,11 @@ def fp4_to_hex(z: tuple) -> str:
 def fp4_to_compact(z: tuple) -> str:
     if z is None:
         return r"\textendash"
+    # Small vectors read best in decimal (with p-k for Mersenne edge
+    # values); full-width 31-bit vectors keep unambiguous fixed hex.
+    if all(c < 4096 or c > M31 - 4096 for c in z):
+        parts = [str(c) if c < 4096 else f"$p{c - M31}$" for c in z]
+        return "(" + ",".join(parts) + ")"
     return f"({z[0]:08X},{z[1]:08X},{z[2]:08X},{z[3]:08X})"
 
 
@@ -368,14 +373,21 @@ def latex_label(label: str) -> str:
             .replace("e^2", r"e$^2$"))
 
 
-def fit_table(latex: str, width: str = r"\columnwidth") -> str:
-    """Keep generated tabular material inside the IEEE column/page width."""
+def fit_table(latex: str, size: str = r"\footnotesize") -> str:
+    """Consistent table typography: one fixed font size, no scaling.
+
+    \\resizebox scaled every table by a different factor (up for narrow
+    tables, down for dense ones), which made effective font sizes
+    inconsistent and the vector tables unreadably small. Tables that are
+    genuinely wider than one IEEE column use a table* span instead."""
     latex = latex.replace(
         r"\begin{tabular}",
-        rf"\resizebox{{{width}}}{{!}}{{%" + "\n" + r"\begin{tabular}",
+        size + "\n" + r"\setlength{\tabcolsep}{4pt}" + "\n" + r"\begin{tabular}",
         1,
     )
-    return latex.replace(r"\end{tabular}", r"\end{tabular}" + "\n}%", 1)
+    if r"\begin{table*}" in latex:
+        latex = latex.replace(r"\end{table}", r"\end{table*}", 1)
+    return latex
 
 
 def generate_fp4_inverter_table() -> str:
@@ -395,7 +407,7 @@ def generate_fp4_inverter_table() -> str:
             f"{match} \\\\"
         )
     header = r"""% Table 1: A31 Conjugate Reduction Tower — Unit Inversion Vectors
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{$A_{31}$ conjugate reduction tower unit-inversion vectors generated
 by the publication oracle. The corresponding inverter bench is included in
@@ -424,7 +436,7 @@ def generate_m31_mult_table() -> str:
             f"{fp4_to_compact(tc.b)} & {fp4_to_compact(got)} & {match} \\\\"
         )
     header = r"""% Table 2: A31 Multiplication — M31 Mersenne Reduction
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{$A_{31}$ split-biquadratic multiplication over M31. Sixteen logical
 $32\times32$ products feed a 2-stage pipeline with Mersenne reduction via
@@ -482,7 +494,7 @@ def generate_singular_absorber_table() -> str:
             f"{flags} & {match} \\\\"
         )
     header = r"""% Table 4: Singular Absorber — Zero-Norm Exception Path
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{Publication-oracle checks for FLAGS.V behavior on zero-norm
 singularities and clean re-arm after exception. The singular-absorber RTL
@@ -515,7 +527,7 @@ def generate_collision_table() -> str:
             f"  {latex_label(sc.name)} & {bits} & {latency} & {seq} \\\\"
         )
     header = r"""% Table 5: BTU Collision Resolver — Multi-Hot Wave Dispatch
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{BTU collision resolver (64$\to$6 priority encoder + backlog queue)
 serializing multi-hot wave interference into deterministic dispatch.
@@ -549,7 +561,7 @@ def generate_som_bmu_table() -> str:
             f"{match_best}/{match_label}/{match_amb} \\\\"
         )
     header = r"""% Table 6: SOM BMU Classification — Rational Quadrance Results
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{BMU classification using weighted rational quadrance metric
 (no square roots, no floating-point). 7-node parallel array with
@@ -582,7 +594,7 @@ def generate_nsa_dual_table() -> str:
             f"{real_b} & {eps_b} & {real_r} & {eps_r} \\\\"
         )
     header = r"""% Table 7: Dual-Number Arithmetic — A31[epsilon]/(epsilon^2)
-\begin{table}[ht]
+\begin{table*}[t]
 \centering
 \caption{Dual-number arithmetic over $\mathbb{A}_{\text{SPU}} =
 A_{31}[\epsilon]/(\epsilon^2)$. Here $\epsilon$ is a nilpotent formal symbol
@@ -609,7 +621,8 @@ def generate_resource_table() -> str:
 each backend's native cell vocabulary; the Tang row is an arithmetic/config
 probe and is not a full Pad\'{e} implementation.}
 \label{tab:resource}
-\resizebox{\textwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{llll}
 \toprule
 Artifact & Logic / registers & DSP / BRAM & Evidence \\
@@ -621,7 +634,6 @@ Tang \texttt{rplu2\_arith} & 9,211 LUT4; 7,926 DFF & 0 / 0 & routed + silicon \\
 \multicolumn{4}{l}{\footnotesize Tang also reports 822 ALUs; timing max 54.42/48.40\,MHz on its two reported clocks, tested at 12\,MHz.} \\
 \bottomrule
 \end{tabular}
-}%
 \end{table*}"""
 
 
@@ -638,7 +650,8 @@ hand-maintained sum of selected assertions. The publication-data oracle has
 {oracle_total} generated checks; the project-wide gate also compiles and runs
 the named RTL benches.}}
 \\label{{tab:verification}}
-\\resizebox{{\\columnwidth}}{{!}}{{%
+\\footnotesize
+\\setlength{{\\tabcolsep}}{{4pt}}
 \\begin{{tabular}}{{lll}}
 \\toprule
 Command & Result & Scope \\\\
@@ -650,7 +663,6 @@ Command & Result & Scope \\\\
 \\texttt{{run\\_all\\_tests.py}} & 172/172 & full gate; 129 RTL \\\\
 \\bottomrule
 \\end{{tabular}}
-}}%
 \\end{{table}}"""
 
 
@@ -661,12 +673,13 @@ def generate_latency_table() -> str:
 \centering
 \caption{Contracted stage latencies for the instantiated paths.}
 \label{tab:latency}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{2pt}
 \begin{tabular}{lll}
 \toprule
 Pipeline Stage & Module & Latency \\
 \midrule
-$\Phi_1$ & Kohonen SOM BMU (7-node WTA) & 5 cycles \\
+$\Phi_1$ & SOM BMU (7-node WTA) & 5 cycles \\
 $\Phi_2$ & BTU spatial router (4-lane BRAM) & 3 cycles \\
 $\Phi_3$ & [4/4] Pad\'{e} Horner evaluator & 12 cycles \\
 $\Phi_3$ & $A_{31}$ conjugate reduction tower & $\sim$76 cycles \\
@@ -675,7 +688,6 @@ $\Phi_4$ & Output latch & 1 cycle \\
 BTU collision queue & 64$\rightarrow$6 priority encoder & O(n) bubble stall \\
 \bottomrule
 \end{tabular}
-}%
 \end{table}"""
 
 

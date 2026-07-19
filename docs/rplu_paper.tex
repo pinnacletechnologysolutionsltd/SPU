@@ -533,7 +533,8 @@ in one batch. MAC $\Delta$ is the increase in shared-multiplier
 operations vs.\ the per-element baseline. Values regenerated verbatim
 from the \texttt{test\_pade\_batch\_inversion.py} oracle output.}
 \label{tab:batch-inv}
-\resizebox{\columnwidth}{!}{%
+\footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{lrrrr}
 \toprule
 $k$ & Baseline cycles & Batch cycles & Speedup & MAC $\Delta$ \\
@@ -545,11 +546,11 @@ $k$ & Baseline cycles & Batch cycles & Speedup & MAC $\Delta$ \\
 104 (trajectory)    & 10,712 & 3,811 & 2.81$\times$ & $+33.0\%$ \\
 Asymptote       & ---   & ---   & 2.86$\times$ & $+33.3\%$ \\
 \bottomrule
-\multicolumn{5}{l}{\footnotesize Sensitivity at $k=13$: speedup is
-3.20$\times$/2.50$\times$/2.12$\times$ for multiply costs of
-2/3/4 cycles---the conclusion is robust to FSM handshake overhead.} \\
+\multicolumn{5}{l}{\parbox{0.97\columnwidth}{\footnotesize Sensitivity
+at $k=13$: speedup is 3.20$\times$/2.50$\times$/2.12$\times$ for
+multiply costs of 2/3/4 cycles---the conclusion is robust to FSM
+handshake overhead.}} \\
 \end{tabular}
-}%
 \end{table}
 
 \subsection{Resource Profile}
