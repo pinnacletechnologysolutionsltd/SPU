@@ -47,6 +47,19 @@ result. PHSLK is therefore presented narrowly as a candidate exact
 preprocessing predicate for reduced $\phi$-native phase templates.
 \end{abstract}
 
+\vspace{0.5em}
+\noindent\fbox{\parbox{0.97\columnwidth}{\footnotesize
+\textbf{Reader's map.} This paper describes one arithmetic sidecar of
+the SPU-13, a deterministic FPGA coprocessor family; understanding
+Quadray coordinates or the complete SPU-13 instruction set is not
+required here. Every value is a residue pair $(a, b)$ representing
+$a + b\phi$ with integer arithmetic modulo a Lucas prime, where
+$\phi$ is the golden ratio made \emph{exact} by the ring identity
+$\phi^2 = \phi + 1$ rather than approximated as a float. The
+contribution is the exact FPGA implementation of this arithmetic and
+its measured evidence.}}
+\vspace{0.5em}
+
 \section{Introduction}
 
 \subsection{The Transcendental Drift Problem}

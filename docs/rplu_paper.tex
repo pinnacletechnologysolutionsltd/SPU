@@ -58,6 +58,21 @@ Hardware RTL is licensed under CERN-OHL-W-2.0, software under MIT, and the
 paper's data tooling under Apache-2.0; this paper is CC BY 4.0.
 \end{abstract}
 
+\vspace{0.5em}
+\noindent\fbox{\parbox{0.97\columnwidth}{\footnotesize
+\textbf{Reader's map.} This paper describes one arithmetic engine of
+the SPU-13, a deterministic FPGA coprocessor family; understanding the
+complete SPU-13 instruction set or its Quadray coordinate system is
+not required here. A Pad\'{e} approximant is a ratio of two
+polynomials used to approximate a nonlinear function; evaluating one
+needs only multiplication, addition, and one division-like inversion,
+which is why it suits hardware with no floating point. The
+contribution of this paper is the exact evaluation of such rational
+functions --- and the inversion they require --- over a finite
+algebraic ring on FPGA, with every table regenerable from a committed
+software oracle.}}
+\vspace{0.5em}
+
 % ── SECTION I: Mathematical Foundations ────────────────────────────
 
 \section{Mathematical Foundations}
