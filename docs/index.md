@@ -22,6 +22,8 @@ Pick your door:
 - **[Hydraulic pump SOM truth gate](HYDRAULIC_PUMP_SOM_CASE_STUDY.md)** —
   predeclared real-data folds, exact features, baselines, and the recorded
   negative result
+- **[INA226 coarse-monitor contract](INA226_COARSE_MONITOR_CONTRACT.md)** —
+  frozen physical-capture protocol, safety boundary, folds, and claim gates
 - **Papers (preprints in preparation):** central architecture, RPLU v2 jet algebra,
   Lucas phinary MAC, SU(3) coprocessor — LaTeX sources in `docs/`, built PDFs
   in CI artifacts
