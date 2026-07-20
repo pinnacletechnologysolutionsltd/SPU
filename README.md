@@ -13,6 +13,15 @@ loss.**
 [![RPLU paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21446713.svg)](https://doi.org/10.5281/zenodo.21446713)
 [![LUCAS paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21447441.svg)](https://doi.org/10.5281/zenodo.21447441)
 
+## Start here
+
+- **[Your first hour](docs/FIRST_HOUR.md)** — anonymous clone, full regression,
+  software VM, one small Forge program, then optional Tang hardware
+- **[Quadray for programmers](docs/QUADRAY_FOR_PROGRAMMERS.md)** — four-axis
+  representation, normalization conventions, and a worked exact rotation
+- **[Hardware-free demo tour](docs/DEMO_TOUR.md)** — robotics, LUCAS, Iris SOM,
+  and exact Voronoi decision evidence, each with an explicit claim boundary
+
 ## Proven SOM Product Path
 
 The current product-shaped artifact is the SPU-13 SOM sidecar:
@@ -109,10 +118,10 @@ host consumer. Expected result: 18/18 with zero ambiguity.
 
 ```bash
 # Deterministic fresh-clone regression
-python3 run_all_tests.py                  # 172/172 at this release
+python3 run_all_tests.py                  # 173/173 at this revision
 
 # Rational robotics remains available as a second software demonstration
-python3 software/spu_forge.py simulate programs/robot_arm_demo.lith
+python3 software/tests/test_rational_robotics.py  # PASS (104 checks)
 ```
 
 ---

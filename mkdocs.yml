@@ -39,6 +39,10 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - Getting Started:
+      - Your first hour: FIRST_HOUR.md
+      - Quadray for programmers: QUADRAY_FOR_PROGRAMMERS.md
+      - Hardware-free demo tour: DEMO_TOUR.md
   - Status & Evidence:
       - Current status: CURRENT_STATUS.md
       - Hardware evidence ledger: hardware_evidence.md

@@ -9,6 +9,12 @@ Pick your door:
 
 ## 🧭 New here?
 
+- **[Your first hour](FIRST_HOUR.md)** — anonymous clone, full regression,
+  hardware-free VM, a small Forge program, and an optional Tang SOM proof
+- **[Quadray for programmers](QUADRAY_FOR_PROGRAMMERS.md)** — four-axis data,
+  normalization conventions, one exact rotation, and finite-width caveats
+- **[Hardware-free demo tour](DEMO_TOUR.md)** — one reproducible command and
+  one honest claim boundary for robotics, LUCAS, Iris, and Voronoi evidence
 - **[Glossary & conversions](glossary.md)** — every term in plain English,
   angle↔spread and distance↔quadrance tables, and the reading list
   (Wildberger, Fuller, Urner) the ideas come from
