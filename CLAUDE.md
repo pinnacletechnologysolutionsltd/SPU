@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 An `AGENTS.md` in the repo root also exists and is kept up to date with the current
 hardware test/silicon status and build command list — check it for the latest
 per-board proof status before making claims about what is "verified in silicon"
-vs. "testbench-only." `GEMINI.md` and `.github/copilot-instructions.md` contain
-older architectural notes (some directory paths in them are stale — trust the
-structure documented below and verified with `find`, not those files, when they
-disagree).
+vs. "testbench-only." `GEMINI.md` and `.github/copilot-instructions.md` are
+deliberately thin pointer files, not full architectural notes — their content
+is accurate as far as it goes, but trust the fuller structure documented below
+and verified with `find` if you need detail they don't cover.
 
 ## What this project is
 

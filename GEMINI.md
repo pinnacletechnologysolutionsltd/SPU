@@ -16,7 +16,10 @@ A31/M31, and Z[phi]/L_p arithmetic. It has two active core families:
   gate, interconnect helpers.
 
 Board tops and synthesis scripts live under `hardware/boards/`; software
-oracles, VM, assemblers, and host tools live under `software/`.
+oracles, VM, assemblers, and host tools live under `software/`. ROM
+generators, RPLU table tooling, and bench/flash utilities live under
+`tools/`; architecture specs, ISA reference, and math foundations live under
+`knowledge/` — read that before touching arithmetic RTL.
 
 ## Commands
 
