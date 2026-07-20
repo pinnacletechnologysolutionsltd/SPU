@@ -7,6 +7,11 @@ deterministic latency, bit-exact replay across Python, C++, and RTL.
 
 Pick your door:
 
+## What is SPU-13?
+
+**Not an engineer?** Start with the [two-minute explanation](WHAT_IS_SPU13.md):
+what exactness buys, what has been demonstrated, and what SPU-13 is not.
+
 ## 🧭 New here?
 
 - **[Your first hour](FIRST_HOUR.md)** — anonymous clone, full regression,
