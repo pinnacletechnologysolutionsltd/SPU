@@ -130,7 +130,7 @@ independent probes now split the architecture into testable subsystems:
 | Probe | MATH | RPLU_V2 | LUTs | Build Command | Proves |
 |---|---|---|---|---|---|
 | `southbridge_spi_probe` | 0 | 0 | 1,861 LUT4 | `bash build_25k_southbridge_spi_probe.sh` | SPI electrical/protocol smoke without core |
-| `southbridge_link` | 0 | 0 | 4,054 LUT4 | `bash build_25k_spu13_southbridge_link.sh` | SPI link validation with dormant core attached |
+| `southbridge_link` | 0 | 0 | 4,784 LUT4 (measured 2026-07-20) | `bash build_25k_spu13_southbridge_link.sh` | SPI link validation with dormant core attached |
 | `math_probe` | 1 | 0 | ~4,000 | `bash build_25k_spu13_math_probe.sh` | ROTC, Davis, rotor |
 | `rplu2_arith_probe` | 0 | 1 | 9,211 LUT4 | `bash build_25k_spu13_rplu2_arith_probe.sh` | QLDI, QSUB, RPLU2 config, CRC-8 writes, ECC regfile |
 | `lucas_mac_probe` | 0 | 0 | 696 LUT4 | `bash build_25k_spu13_lucas_mac_probe.sh` | PSCALE/PCHIRAL fast paths, PSCALE zero-drift |
