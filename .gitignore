@@ -106,6 +106,7 @@ tools/rp2040_tooling/repos/
 
 # ─── SymbiYosys output directories (harness .sby/.v files ARE tracked) ───
 hardware/tests/**/*_formal/
+hardware/tests/**/*_formal_*/
 
 # ─── Business strategy — private, stays out of the public repo ───────────
 spu_strategy/
