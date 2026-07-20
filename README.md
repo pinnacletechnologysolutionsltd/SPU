@@ -10,6 +10,7 @@ loss.**
 [![Hardware: CERN-OHL-W-2.0](https://img.shields.io/badge/Hardware-CERN--OHL--W--2.0-blue.svg)](hardware/LICENSE)
 [![Software: MIT](https://img.shields.io/badge/Software-MIT-green.svg)](software/LICENSE)
 [![Docs: CC0](https://img.shields.io/badge/Docs-CC0_1.0-lightgrey.svg)](docs/LICENSE)
+[![RPLU paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21446713.svg)](https://doi.org/10.5281/zenodo.21446713)
 
 ## Proven SOM Product Path
 
