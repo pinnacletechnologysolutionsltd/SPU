@@ -80,7 +80,7 @@ Full credits: `docs/ATTRIBUTION.md`
 - [x] Board spec: `hardware/docs/ecp5_oshwa_carrier_spec.md`
 - [x] Current audit: `hardware/docs/ecp5_oshwa_deliverable_audit.md`
 - [x] Southbridge transport plan: `hardware/docs/parallel_transport_plan.md`
-- [x] EE handoff draft: `docs/ecp5_evaluator_ee_handoff.md`
+- [x] EE handoff draft: `docs/ee_handoff.md`
 - [x] Build/bring-up guide: `docs/build_and_bringup_guide.md`
 - [x] Toolchain setup: `docs/toolchain_setup.md`
 - [x] Top-level README with hardware architectural overview

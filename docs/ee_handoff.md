@@ -1,7 +1,12 @@
 # SPU-13 ECP5 Evaluation Carrier — Electrical Engineer Handoff
 
-**Document version:** 1.0 (2026-07-05)
-**Status:** Evaluation-architecture specification. Ready for EE schematic capture and PCB layout.
+**Document version:** 1.1 (2026-07-21)
+**Status:** Concept specification — EE/funding-dependent, not an active build
+target. `docs/CURRENT_STATUS.md`'s board-roles table and `AGENTS.md` both
+place this custom ECP5-85K carrier after the Kintex-7 full-stack milestone;
+the active open-toolchain ECP5 portability target is the Colorlight i9, not
+this board. The pin-out and BOM below are a completed architectural exercise,
+ready for schematic capture whenever EE time/funding is committed.
 **License:** CERN Open Hardware Licence v2 — Weakly Reciprocal (CERN-OHL-W-2.0)
 
 ---
@@ -589,14 +594,19 @@ handled by the RP2350's native USB interface.
 
 These must be resolved before the board can be sent to fabrication:
 
-### 9.1 ECP5 Ball Assignments (Critical — Datasheet Now Available)
+### 9.1 ECP5 Ball Assignments — resolved
 
-The ECP5 family datasheet is at `FPGA_DS_02012_2_4_ECP5_ECP5G_Family_Data_Sheet-1022822.pdf` in the repo root.
-The Lattice hardware checklist is at `FPGA-TN-02038-2-0-ECP5-and-ECP5-5G-Hardware-Checklist.pdf`.
-
-**Action required:** Open the datasheet **Chapter 2 — Pin Information** and look up the CABGA381 ball
-map. Replace every `# TBD by EE` line in `hardware/boards/ecp5_85k/spu_ecp5_85k.cst` with real
-ball coordinates from the table.
+`hardware/boards/ecp5_85k/spu_ecp5_85k.cst` now carries real CABGA381 ball
+coordinates for every signal (clock, SPI southbridge, PIO bus, config flash,
+JTAG, configuration straps/status) — no `# TBD by EE` lines remain. EE should
+verify these against the datasheet rather than assign from scratch. The ECP5
+family datasheet is at
+`FPGA_DS_02012_2_4_ECP5_ECP5G_Family_Data_Sheet-1022822.pdf` in the repo root;
+the Lattice hardware checklist is at
+`FPGA-TN-02038-2-0-ECP5-and-ECP5-5G-Hardware-Checklist.pdf`. Note the RP2350-side
+GPIO assignments in §3.1.3/§3.1.4 (`GPx (TBD)`) are a separate, still-open item
+— they are RP2350 pin choices, not ECP5 ball assignments, and are unaffected
+by this fix.
 
 | Interface | Bank | ECP5 ball(s) | Source |
 |:---|:---:|:---|:---|
