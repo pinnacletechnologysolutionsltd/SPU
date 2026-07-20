@@ -11,6 +11,7 @@ loss.**
 [![Software: MIT](https://img.shields.io/badge/Software-MIT-green.svg)](software/LICENSE)
 [![Docs: CC0](https://img.shields.io/badge/Docs-CC0_1.0-lightgrey.svg)](docs/LICENSE)
 [![RPLU paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21446713.svg)](https://doi.org/10.5281/zenodo.21446713)
+[![LUCAS paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21447441.svg)](https://doi.org/10.5281/zenodo.21447441)
 
 ## Proven SOM Product Path
 
