@@ -54,6 +54,13 @@ that redundancy is the point: the sum is an always-on integrity check
 (see Davis Gate). From Kirby Urner's development of Buckminster Fuller's
 synergetics; basis matrix by Tom Ace.
 
+**IROTC / conjugate catalog** — the icosahedral extension of ROTC (the
+Quadray rotation catalog): the 60 rotations of the icosahedral symmetry
+group, exact in `½Z[φ]` rather than plain `Z[φ]`. The "conjugate catalog"
+is the Galois-dual table needed alongside the main one because the
+icosahedral basis isn't self-conjugate the way the tetrahedral one is.
+Verified VM-through-silicon (Tang Primer 25K).
+
 **IVM / Vector Equilibrium** — the isotropic vector matrix is Fuller's
 name for the densest packing of spheres (crystallographers say CCP/FCC);
 the cuboctahedron ("vector equilibrium") is one sphere and its 12
@@ -68,6 +75,15 @@ can only mean corruption, overflow, or a bad load. The response is
 *Henosis*: a one-cycle soft recovery instead of a hard reset. Think of it
 as a parity check that falls out of the geometry instead of being bolted
 on.
+
+**Tensegrity guard / force-density** — an admission check for structural
+configurations (nodes/edges/struts), same family as the Davis Gate but for
+whole structures instead of one register: given cable/strut force-density
+ratios, check exact equilibrium and topology (no illegal intersections)
+before committing a configuration as valid, and reject or roll back
+otherwise. Silicon-proven (`TENSEGRITYLINK`) for bounded admission and
+transactional table loading; the active controller that proposes *what*
+structural change to try next is still open work.
 
 **Dissonance** — the 8-bit "how broken is it" number a satellite node
 reports upward: the leftover deviation *after* local recovery was

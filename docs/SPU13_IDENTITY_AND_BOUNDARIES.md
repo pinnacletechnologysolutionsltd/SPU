@@ -1,6 +1,6 @@
 # SPU-13 Identity And Boundaries
 
-Date: 2026-06-30
+Date: 2026-07-21
 
 This document is the canonical semantic boundary for SPU-13. It exists to keep
 the architecture broad enough for its real applications without diluting its
@@ -28,7 +28,8 @@ SPU-13 is:
   geometry, M31/A31 arithmetic, A₃₁ RPLU2 evaluation, and
   `Z[phi]/L_p` Lucas/phinary arithmetic.
 - A geometric and graphics processor for exact rasterization, hex projection,
-  rational rotations, quadrance, spread, and deterministic visual state.
+  rational rotations, quadrance, spread, and deterministic visual state,
+  including the icosahedral IROTC rotation catalog (VM through silicon).
 - A control processor and safety coprocessor for systems that need bounded
   arithmetic, replayable telemetry, invariant checks, and fallback commits.
 - A deterministic simulation substrate for discrete rational lattices,
@@ -36,7 +37,9 @@ SPU-13 is:
   lattice-fluid, particle, and finite-volume experiments.
 - A native topological classification substrate: rational SOM/BMU, weighted
   quadrance, stable tie-breaking, confidence gaps, ambiguity flags, and
-  Nguyen-style laminar/tolerance weighting.
+  Nguyen-style laminar/tolerance weighting — cross-vendor silicon-proven on
+  the Iris corpus (Tang 25K and Wukong Artix-7, complete hardware records
+  bit-exact to the software oracle).
 - A deterministic supervisor for future non-von-Neumann substrates, including
   quantum-control sidecars, neuromorphic/event-driven sidecars, adaptive
   coprocessors, and analog or probabilistic proposal engines.
@@ -126,6 +129,13 @@ boundaries:
 5. Otherwise commit a deterministic fallback.
 
 This keeps future-substrate work aligned with the same architecture thesis.
+The tensegrity admission guard (`TENSEGRITYLINK`) is the concrete,
+silicon-proven instance of this pattern today: a bounded structural
+proposal is frozen, checked against exact equilibrium and topology
+invariants, and either committed or rolled back, with corrupt-payload
+rejection and recovery also silicon-proven. The active proposal/actuation
+controller — deciding *what* structural change to propose, not just
+guarding it — remains outside the current hardware claim.
 
 ## Claim Ladder
 
