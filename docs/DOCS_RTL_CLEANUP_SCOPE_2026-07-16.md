@@ -135,7 +135,8 @@ inflated badge later.
   that actually existed, just outside the directory it searched). Don't
   compound that by trusting a second-hand summary of a summary.
 - Run `python3 run_all_tests.py` before and after any RTL file is
-  archived/deleted — 161/161 is the current baseline (2026-07-16).
+  archived/deleted — 161/161 was the baseline when this scope was written
+  (2026-07-16); re-run first, since it is 173/173 as of 2026-07-20.
 - None of this touches the tensegrity workstream (GTP's in-flight
   TENSEGRITYLINK work) or SOM-SIDECAR's still-pending board run — keep this
   scoped to documentation and dead-code hygiene only.

@@ -3,10 +3,10 @@
 A boring, reproducible record of what passed, what failed, and what remains
 unproven.  No speculation — only commands, conditions, and results.
 
-*Last updated: 2026-07-16*
+*Last updated: 2026-07-20*
 
 Current regression headline: `python3 run_all_tests.py` reports
-`Total PASS: 161`, `Total FAIL: 0`. ROTC is gated through angles 0-35
+`Total PASS: 173`, `Total FAIL: 0`. ROTC is gated through angles 0-35
 (0-5 silicon-verified; 6-35 testbench/trace-equivalence verified). IROTC uses
 the v0.2 phi-plane typestate contract; Tang 25K silicon scope is the §3.2k
 engine probe vectors (idx 16, idx 36 main catalog, and fault matrix), with the
