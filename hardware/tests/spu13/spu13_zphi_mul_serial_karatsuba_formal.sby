@@ -1,0 +1,22 @@
+# Three-product Z[phi] multiplier: reduced-width sequential equivalence.
+# Run from the repository root:
+#   sby -f hardware/tests/spu13/spu13_zphi_mul_serial_karatsuba_formal.sby
+
+[options]
+mode bmc
+depth 9
+expect pass
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal spu13_zphi_mul_serial.v
+read -formal spu13_zphi_mul_serial_karatsuba.v
+read -formal spu13_zphi_mul_serial_karatsuba_formal.v
+prep -top spu13_zphi_mul_serial_karatsuba_formal
+
+[files]
+hardware/rtl/core/spu13/spu13_zphi_mul_serial.v
+hardware/rtl/core/spu13/spu13_zphi_mul_serial_karatsuba.v
+hardware/tests/spu13/spu13_zphi_mul_serial_karatsuba_formal.v
