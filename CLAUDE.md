@@ -50,7 +50,7 @@ Testbenches must print `PASS`/`FAIL` and call `$finish` (otherwise `run_all_test
 
 Python/C++ oracle tests (software-side reference models the RTL must match bit-exactly):
 ```bash
-python3 software/tests/test_rational_robotics.py     # 56 checks, Pell/FGH circulant robotics oracle
+python3 software/tests/test_rational_robotics.py     # 104 checks, Pell/FGH circulant robotics oracle
 python3 software/tests/test_rational_som.py          # 24 checks, SOM/BMU oracle
 python3 software/tests/test_rotc_vm_rtl_trace.py     # VM-vs-RTL trace equivalence, all 12 ROTC angles (0-11)
 python3 software/tests/test_lucas_mac_oracle.py      # Lucas Phinary MAC, 1M-step zero-drift
