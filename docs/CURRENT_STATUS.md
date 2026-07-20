@@ -1,6 +1,6 @@
 # Current Project Status
 
-Date: 2026-07-19
+Date: 2026-07-20
 
 This file is the short source of truth for current board roles and near-term
 bring-up direction.
@@ -81,8 +81,8 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   smoke repeatedly reports `RPLU2PADE_J11: PASS` across five rational
   constant Padé cases, with status `raw=7F 2A 13 00`, `crc_error=0`,
   and `busy=0`.
-- Full repository regression on 2026-07-19: `python3 run_all_tests.py` reported
-  `Total PASS: 172`, `Total FAIL: 0`.
+- Full repository regression on 2026-07-20: `python3 run_all_tests.py` reported
+  `Total PASS: 173`, `Total FAIL: 0`.
 - Tang 25K `irotc_spi` southbridge image is silicon-verified over the real
   RP2350 SPI link, 6/6 PASS, including the conjugate-catalog rotation
   (case 3) and CATMIX no-commit (case 4) — first conjugate-icosahedron
@@ -92,9 +92,15 @@ Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
   fixtures including the type-uniform Z[φ] equilibrium fault. Full
   evidence: `docs/hardware_evidence.md` §3.2l.
 - Wukong Artix-7 `TENSEGRITYLINK` (host/BRAM transport for the tensegrity
-  guard, SPI opcodes 0xB2/0xB3) is PnR-clean with a packed bitstream, but
-  **not yet board-run** — do not cite as silicon-proven until a real bench
-  session exercises B2/B3 and rollback.
+  guard, SPI opcodes 0xB2/0xB3) **closed silicon-proven 2026-07-19**: the
+  full admission, mechanical-negative, corrupt-payload rollback, and
+  recovery sequence reproduced bit-for-bit on three consecutive runs through
+  the real SD card, RP2350 firmware, remapped J11 link, B2 transport, and B3
+  readback. Bitstream SHA-256
+  `30381825ed444d92a5474740c0219c84fff449e05ba575d45dcbb409459a1de5`. Full
+  evidence: `docs/hardware_evidence.md` §3.2l. The remaining tensegrity
+  frontier is the active proposal/actuation controller, not table transport
+  or bounded admission.
 - Tang 25K `SOM-SIDECAR`'s own bespoke SPI write/classify path
   (`spu_spi_cfg.v`) was found completely non-functional (a one-cycle-stale
   command-byte comparison meant no write could ever be accepted, in

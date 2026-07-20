@@ -42,7 +42,7 @@ docs/                   Design guides and bring-up runbooks
 | `python3 software/spu_forge.py simulate <program.sas>` | Simulate a .sas program on the Python VM |
 | `bash build_25k_spu13_math_probe.sh` | Synthesise, P&R, bitstream for SPU-13 math probe on Tang 25K |
 | `bash build_25k_spu13_southbridge.sh` | Full southbridge build (MATH=1 + RPLU_V2=1 — too large for 25K at 89% LUT) |
-| `bash build_25k_spu13_southbridge_link.sh` | SPI link-only probe (~350 LUTs) — validates RP2350↔FPGA SPI |
+| `bash build_25k_spu13_southbridge_link.sh` | SPI link-only probe (4,784 LUT4 post-PnR, measured 2026-07-20) — validates RP2350↔FPGA SPI |
 | `bash build_25k_spu13_rplu2_arith_probe.sh` | RPLU2 arithmetic probe (6,282 LUTs, 27%) — QLDI/QSUB/RPLU2 config |
 | `bash build_25k_spu13_lucas_mac_probe.sh` | Lucas Phinary MAC standalone probe (~200 LUTs) — zero-drift proof |
 | `bash build_25k_spu13_rplu2_consume_probe.sh` | RPLU2 flash consume-probe (149-record table verification) |
@@ -307,17 +307,21 @@ Tang 25K or Artix-7.
   equilibrium guard is silicon-proven, not simulation-only. Full evidence
   and bitstream SHAs: `docs/hardware_evidence.md` §3.2l,
   `docs/TENSEGRITY_BALANCER_FEASIBILITY.md` (both current as of V:7).
-  Still uncommitted and actively evolving, genuinely not yet silicon-proven:
-  a new host/BRAM transport sidecar (`spu13_tensegrity_sidecar.v`,
+  The host/BRAM transport sidecar (`spu13_tensegrity_sidecar.v`,
   CRC-32/bounds-checked transactional TGR1 table loader, double-buffered
   so a bad or aborted write can't corrupt the active table), new SPI
-  opcodes 0xB2/0xB3 on `spu_spi_slave.v`, and a `TENSEGRITYLINK` board
-  target (PnR-clean, bitstream built, not yet board-run) — check
-  `git log`/`git status` before citing this as closed, this paragraph
-  describes fast-moving work as of 2026-07-15. Remaining before this is a
-  full active balancer: silicon proof of the transport sidecar/
-  TENSEGRITYLINK board target, then the active balancing controller
-  itself (rotation/actuation proposals, re-verification, rollback).
+  opcodes 0xB2/0xB3 on `spu_spi_slave.v`, and the `TENSEGRITYLINK` board
+  target **closed silicon-proven 2026-07-19**: the full admission,
+  mechanical-negative, corrupt-payload rollback, and recovery sequence
+  reproduced bit-for-bit on three consecutive runs through the real SD
+  card, RP2350 firmware, remapped J11 link, B2 transport, and B3 readback.
+  Bitstream SHA-256
+  `30381825ed444d92a5474740c0219c84fff449e05ba575d45dcbb409459a1de5`. Full
+  evidence: `docs/hardware_evidence.md` §3.2l,
+  `docs/TENSEGRITY_BALANCER_FEASIBILITY.md` §6. Remaining before this is a
+  full active balancer: the active balancing controller itself
+  (rotation/actuation proposals, re-verification, rollback) — table
+  transport and bounded admission are no longer open items.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
