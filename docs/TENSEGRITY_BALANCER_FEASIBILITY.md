@@ -243,7 +243,8 @@ and a one-million-cycle verifier watchdog. A nonreturning service now clears
 error 10, and leaves `0x80 | stage` in B3 byte 3. The regression forces the
 intersection completion low and proves stage `0x85`, rollback, and subsequent
 recovery. RP2350 firmware and host tooling report the stage. This change is
-RTL/firmware-verified; the full combined board result remains pending.
+RTL/firmware-verified; the full combined board result closed 2026-07-19 (see
+below).
 
 The follow-on parser-bounding revision exposes replay substates `0x11` through
 `0x1A` and adds an independent 4096-cycle parser watchdog. A wedged replay now
@@ -294,16 +295,21 @@ stage-1 stall remains unresolved; the silicon claim is bound to that image.
 
 ## 8. Next Steps
 
+Items 2 and 3 below (SD reseat/reconnection and componentizing the transport
+into staged services with watchdogs) closed on 2026-07-19 — see §6's
+"Complete TENSEGRITYLINK closure" entry. They are kept here, marked done, so
+the numbering stays stable for cross-references.
+
 1. Keep the exact oracle and the seven-vector TGR1 corpus suite-registered.
-2. Reseat/power the RP2350 SD module and run the stage-instrumented serial image
-   once. A terminal commit closes
-   the link proof; a bounded timeout identifies the exact service requiring
-   refactoring without risking another indefinite run.
-3. If a bounded timeout remains, componentize the identified boundary into transport, parser,
-   topology/local guard, intersection, equilibrium, and admission-coordinator
-   stages with explicit handshakes, vector IDs, terminal results, and
-   per-service watchdogs. Keep standalone probe builds, but integrate the
-   final verifier over one inactive snapshot.
+2. ~~Reseat/power the RP2350 SD module and run the stage-instrumented serial
+   image once.~~ **Done 2026-07-19** — the full admission/mechanical-negative/
+   corrupt-payload-rollback/recovery sequence reproduced bit-for-bit on three
+   consecutive runs.
+3. ~~If a bounded timeout remains, componentize the identified boundary into
+   transport, parser, topology/local guard, intersection, equilibrium, and
+   admission-coordinator stages with explicit handshakes.~~ **Done** —
+   the parser-bounded term-serial image with staged watchdogs is the image
+   that closed item 2.
 4. Consider sharing one multiplier service across intersection and equilibrium
    only if later product integration needs the extra 14-DSP saving; per-engine
    term serialization is already implemented and routes cleanly.
@@ -311,6 +317,7 @@ stage-1 stall remains unresolved; the silicon claim is bound to that image.
    hardware; it is outside the current type-uniform admission contract.
 6. Add strut-slenderness and local-precession guards at the oracle level, then
    extend TGR1 only with an explicit version bump if their data is needed.
-7. Implement the active balancing controller as a second transactional layer:
-   propose a bounded rotation/actuation, re-run admission, commit only on a
+7. **Current frontier:** implement the active balancing controller as a
+   second transactional layer: propose a bounded rotation/actuation, re-run
+   admission, commit only on a
    balanced verdict, and roll back on fault or timeout.
