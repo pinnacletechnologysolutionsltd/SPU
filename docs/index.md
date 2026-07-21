@@ -42,8 +42,8 @@ what exactness buys, what has been demonstrated, and what SPU-13 is not.
   in CI artifacts
 - **[Identity and claim boundaries](SPU13_IDENTITY_AND_BOUNDARIES.md)** — what this
   architecture is and deliberately is not
-- **[Mathematical foundations](../knowledge/MATHEMATICAL_FOUNDATIONS.md)** and the
-  **[ISA reference](../knowledge/isa_reference.md)**
+- **[Mathematical foundations](knowledge/MATHEMATICAL_FOUNDATIONS.md)** and the
+  **[ISA reference](knowledge/isa_reference.md)**
 
 ## 🔧 For builders
 

@@ -3,7 +3,7 @@
 This page is the on-ramp: what the words mean, how the numbers convert,
 and where the ideas come from. It is deliberately informal. The normative
 definitions (exact bit conventions, literature citations, divergence
-notes) live in [`knowledge/SPU_LEXICON.md`](../knowledge/SPU_LEXICON.md);
+notes) live in [`knowledge/SPU_LEXICON.md`](knowledge/SPU_LEXICON.md);
 hardware status claims are governed by `AGENTS.md` and the
 [hardware evidence ledger](hardware_evidence.md). If this page and the
 lexicon ever disagree, the lexicon wins.

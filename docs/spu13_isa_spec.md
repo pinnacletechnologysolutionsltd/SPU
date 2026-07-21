@@ -9,7 +9,7 @@
 > and “Wheeler–Feynman” are names for paired boundary-data slots and their
 > algebraic comparison; they do not assert physical retrocausality.
 >
-> **Canonical ISA:** [`knowledge/isa_reference.md`](../knowledge/isa_reference.md),
+> **Canonical ISA:** [`knowledge/isa_reference.md`](knowledge/isa_reference.md),
 > implemented by `software/spu_vm.py`, the default mode of
 > `software/tools/spu13_asm.py`, and the active core RTL. No deprecation or
 > replacement decision has been made.

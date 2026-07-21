@@ -260,7 +260,7 @@ RTL modules (`hardware/rtl/core/spu13/`):
 
 The old fully parallel `spu_som_node_array.v` is archived and superseded. The
 SOM product contract and result ABI are documented in
-[`docs/SOM_V1_PRODUCT_CONTRACT.md`](../docs/SOM_V1_PRODUCT_CONTRACT.md).
+[`docs/SOM_V1_PRODUCT_CONTRACT.md`](../SOM_V1_PRODUCT_CONTRACT.md).
 
 Assemble for the experimental adapter profile explicitly:
 ```bash
@@ -270,6 +270,6 @@ python3 software/tools/spu13_asm.py --arch wf --hex program.sas
 ---
 
 *See [`knowledge/isa_reference.md`](isa_reference.md) for the canonical ISA and
-[`docs/spu13_isa_spec.md`](../docs/spu13_isa_spec.md) for the experimental
+[`docs/spu13_isa_spec.md`](../spu13_isa_spec.md) for the experimental
 adapter profile.*
 *See [`knowledge/MATHEMATICAL_FOUNDATIONS.md`](MATHEMATICAL_FOUNDATIONS.md) for the full theoretical derivation.*

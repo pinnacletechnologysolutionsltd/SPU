@@ -8,7 +8,7 @@
 > uses this encoding; individual opcode evidence levels are noted below and in
 > `docs/hardware_evidence.md`.
 >
-> [`docs/spu13_isa_spec.md`](../docs/spu13_isa_spec.md) describes a separate,
+> [`docs/spu13_isa_spec.md`](../spu13_isa_spec.md) describes a separate,
 > experimental Wheeler–Feynman twin-register adapter profile. Its isolated
 > simulator/RTL tests do not make it the successor to this ISA, and there is no
 > current deprecation decision.
