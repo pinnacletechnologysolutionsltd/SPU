@@ -16,6 +16,8 @@ bring-up context.
 | `build_and_bringup_guide.md` | Commands, wiring, and board bring-up procedures |
 | `fpga_board_scaling_strategy.md` | Board acquisition and scaling ladder |
 | `SPU13_IDENTITY_AND_BOUNDARIES.md` | Claim boundaries and public language |
+| `ZPHI_KARATSUBA_MULTIPLIER.md` | Three-product Z[phi] multiplier contract and current proof-candidate evidence |
+| `ZPHI_KARATSUBA_INTEGRATION_PLAN.md` | Active phased integration, A/B P&R gates, rollback rules, and agent handoff |
 
 ## Active Paper Drafts
 

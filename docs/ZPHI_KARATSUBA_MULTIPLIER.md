@@ -4,6 +4,9 @@ Status: proof candidate; the committed four-product
 `spu13_zphi_mul_serial` remains the production reference until every gate in
 this document passes.
 
+The phased production evaluation, matched P&R gates, rollback rules, and
+coding-agent handoff are in `docs/ZPHI_KARATSUBA_INTEGRATION_PLAN.md`.
+
 ## 1. Scope
 
 For signed integers `xa`, `xb`, `ya`, and `yb`, compute the unreduced product
