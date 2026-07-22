@@ -5,6 +5,7 @@
 [tasks]
 small
 width_plumbing
+reset_semantics
 
 [options]
 mode bmc
@@ -23,6 +24,8 @@ small: prep -top spu13_zphi_mul_serial_karatsuba_formal
 width_plumbing: chparam -set X_W 8 -set Y_W 6 spu13_zphi_mul_serial_karatsuba_formal
 width_plumbing: chparam -set WIDTH_PLUMBING 1 spu13_zphi_mul_serial_karatsuba_formal
 width_plumbing: prep -top spu13_zphi_mul_serial_karatsuba_formal
+reset_semantics: chparam -set X_W 4 -set Y_W 3 spu13_zphi_mul_serial_karatsuba_reset_formal
+reset_semantics: prep -top spu13_zphi_mul_serial_karatsuba_reset_formal
 
 [files]
 hardware/rtl/core/spu13/spu13_zphi_mul_serial.v
