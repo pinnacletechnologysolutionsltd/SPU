@@ -322,6 +322,29 @@ Tang 25K or Artix-7.
   full active balancer: the active balancing controller itself
   (rotation/actuation proposals, re-verification, rollback) — table
   transport and bounded admission are no longer open items.
+- **Z[phi] Karatsuba three-product multiplier candidate**
+  (`spu13_zphi_mul_serial_karatsuba.v`) — a formally and simulation-verified
+  faster replacement candidate for `spu13_zphi_mul_serial` (3 busy cycles
+  vs. the reference's 4), the multiplier used by both tensegrity production
+  consumers above. **Simulation/formal-only — not silicon-verified, and the
+  production default has not changed.** Phased evaluation plan and every
+  gate: `docs/ZPHI_KARATSUBA_INTEGRATION_PLAN.md`. As of 2026-07-22:
+  Phase 0 (standalone formal proof, hardened with two-transaction and
+  width-plumbing coverage), Phase 1 (transaction-semantics hardening at
+  the real 72×34/39×39 production shapes, not just the reduced formal
+  widths), and Phase 2 (default-off `USE_ZPHI_KARATSUBA` selector
+  plumbing through both tensegrity RTL consumers, the sidecar, and both
+  Artix tops, with isolated A/B build-artifact naming) are all complete,
+  independently re-derived (not just read), and pushed. Phase 3
+  (dual-mode integration regression + deterministic cycle reporting)
+  is also complete and pushed — measured simulation-only savings include
+  6–184 cycles depending on fixture, with all 29 tested decisions
+  identical between reference and candidate. Claim ladder currently
+  permits: "Integration-simulation-verified candidate, production
+  default unchanged." Phase 4 (matched three-seed Artix-7 P&R,
+  no hardware) is authorized and in progress. Full detail and audit
+  trail: `spu_strategy/gtp_contract_karatsuba_phase1_2026-07-22.md`
+  and the roadmap's dated status snapshot (private planning doc).
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
