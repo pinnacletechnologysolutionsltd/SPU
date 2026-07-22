@@ -294,14 +294,36 @@ removing the candidate or its evidence.
 all three tensegrity RTL consumers and in `build_a7.sh`'s own selector
 default (both had to change — the build script always explicitly overrides
 the RTL default via `chparam`, so the RTL-only flip would have been a no-op
-for real builds). Full regression: 173/173. "Regenerate both tensegrity
-Artix builds": a plain default invocation (no env vars) uses seed 1 at
-25MHz for both tops, exactly matching one of the three seeds already in
-the Phase 4 matched matrix, so a synthesis-only rerun at the post-switch
-commit (not full P&R) is sufficient to verify the netlist matches the
-existing `TENSEGRITYPROBE_ZK1_S1` / `TENSEGRITYLINK_ZK1_S1` evidence —
-see the verification result recorded immediately below this note once
-complete. Precise end-to-end cycle improvement (not the
+for real builds). Full regression: 173/173.
+
+"Regenerate both tensegrity Artix builds" is satisfied by the existing
+`TENSEGRITYPROBE_ZK1_S1` / `TENSEGRITYLINK_ZK1_S1` Phase 4 P&R evidence
+directly, not by a fresh re-synthesis check. Those were built with
+`ZPHI_KARATSUBA=1 A7_SEED=1 A7_FREQ=25`, parameters that exactly match
+what the new default now resolves to — that parameter match, established
+and independently audited during Phase 4, is what makes them valid
+evidence for the default build; it does not require reproducing the same
+bytes again afterward. Attempting exactly that reproduction (a synthesis-
+only rerun at the post-switch commit) surfaced a real environment
+property worth recording: **synthesis is not bit-reproducible run-to-run
+here** — a fresh `synth` invocation with byte-identical RTL source
+produced a netlist with a different cell count (12655 vs 12736 in the
+main module), most likely from yosys version drift between sessions, not
+from any source or parameter difference (confirmed via `git diff` — only
+the now-irrelevant parameter-default text differs, which `chparam`
+overrides regardless). That rerun also overwrote the original
+`TENSEGRITYPROBE_ZK1_S1.json` / `TENSEGRITYLINK_ZK1_S1.json` synthesis
+snapshots with non-matching content — the P&R evidence itself
+(`.pnr.json`/`.nextpnr.log`/`.timing_summary.json`, confirmed untouched
+by file timestamp) is unaffected and remains exactly what Phase 4's
+independent audit verified, but the standalone synthesis JSON can no
+longer be hash-confirmed against its own original after the fact.
+Lesson for any future phase: do not rerun `synth` against an existing
+`_ZK{n}_S{seed}` artifact name to "double check" it — it will overwrite
+the file being checked, and this environment's yosys does not reproduce
+identical output on a second invocation regardless.
+
+Precise end-to-end cycle improvement (not the
 local 25%/3-vs-4-cycle figure): ranges from 0% (fixtures that terminate
 before reaching multiplier work) to roughly 12.9% (best-case intersection
 fixture), with whole-transaction sidecar admissions around 3.3-3.6% and
