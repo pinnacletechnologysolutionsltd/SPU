@@ -124,10 +124,40 @@ def format_command(item: dict[str, object]) -> str:
     return f"{variables} {argv}"
 
 
-def build_one(spin: str, mode: int, seed: int, base_env: dict[str, str]) -> dict[str, object]:
+def source_state() -> dict[str, object]:
+    return {
+        "commit": git("rev-parse", "HEAD"),
+        "clean": not bool(git("status", "--porcelain")),
+    }
+
+
+def source_lock_error(expected_commit: str) -> str | None:
+    state = source_state()
+    if state["commit"] != expected_commit:
+        return f"HEAD moved from {expected_commit} to {state['commit']}"
+    if not state["clean"]:
+        return f"source tree became dirty at {expected_commit}"
+    return None
+
+
+def build_one(
+    spin: str,
+    mode: int,
+    seed: int,
+    base_env: dict[str, str],
+    expected_commit: str,
+) -> dict[str, object]:
     label = f"{spin}:ZK{mode}:S{seed}"
     step_results = []
     for step in ("synth", "pnr"):
+        lock_error = source_lock_error(expected_commit)
+        if lock_error:
+            return {
+                "label": label,
+                "passed": False,
+                "source_lock_error": f"before {step}: {lock_error}",
+                "steps": step_results,
+            }
         spec = build_command(spin, mode, seed, step)
         env = base_env.copy()
         env.update(spec["environment"])  # type: ignore[arg-type]
@@ -154,16 +184,47 @@ def build_one(spin: str, mode: int, seed: int, base_env: dict[str, str]) -> dict
         )
         if result.returncode != 0:
             return {"label": label, "passed": False, "steps": step_results}
-    return {"label": label, "passed": True, "steps": step_results}
+        lock_error = source_lock_error(expected_commit)
+        if lock_error:
+            return {
+                "label": label,
+                "passed": False,
+                "source_lock_error": f"after {step}: {lock_error}",
+                "steps": step_results,
+            }
+    return {
+        "label": label,
+        "passed": True,
+        "source_commit": expected_commit,
+        "steps": step_results,
+    }
 
 
-def run_builds(jobs: int, env: dict[str, str]) -> list[dict[str, object]]:
+def run_builds(
+    jobs: int,
+    env: dict[str, str],
+    expected_commit: str,
+) -> list[dict[str, object]]:
     configs = configurations()
     results: list[dict[str, object]] = []
+    source_lock_path = RUN_DIR / "source_lock.json"
+    write_json(
+        source_lock_path,
+        {
+            "schema": "spu13.zphi_karatsuba.phase4_source_lock.v1",
+            "status": "running",
+            "expected_commit": expected_commit,
+            "source": source_state(),
+            "configurations": [
+                {"spin": spin, "mode": mode, "seed": seed}
+                for spin, mode, seed in configs
+            ],
+        },
+    )
     print(f"Launching {len(configs)} matched synth/P&R configurations with jobs={jobs}", flush=True)
     with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
         pending = {
-            executor.submit(build_one, spin, mode, seed, env): (spin, mode, seed)
+            executor.submit(build_one, spin, mode, seed, env, expected_commit): (spin, mode, seed)
             for spin, mode, seed in configs
         }
         for future in concurrent.futures.as_completed(pending):
@@ -173,7 +234,18 @@ def run_builds(jobs: int, env: dict[str, str]) -> list[dict[str, object]]:
             verdict = "PASS" if result["passed"] else "FAIL"
             print(f"[{verdict}] {spin} ZK={mode} seed={seed}", flush=True)
     order = {f"{spin}:ZK{mode}:S{seed}": i for i, (spin, mode, seed) in enumerate(configs)}
-    return sorted(results, key=lambda item: order[item["label"]])
+    results = sorted(results, key=lambda item: order[item["label"]])
+    write_json(
+        source_lock_path,
+        {
+            "schema": "spu13.zphi_karatsuba.phase4_source_lock.v1",
+            "status": "complete" if all(item["passed"] for item in results) else "failed",
+            "expected_commit": expected_commit,
+            "source": source_state(),
+            "results": results,
+        },
+    )
+    return results
 
 
 def warning_audit(text: str) -> dict[str, list[str]]:
@@ -616,10 +688,14 @@ def main() -> int:
 
     build_runs = None
     if args.run_builds:
-        build_runs = run_builds(args.jobs, env)
+        build_runs = run_builds(args.jobs, env, commit)
         failures = [item for item in build_runs if not item["passed"]]
         if failures:
             print("Build failures: " + ", ".join(item["label"] for item in failures), file=sys.stderr)
+            return 1
+        lock_error = source_lock_error(commit)
+        if lock_error:
+            print(f"Source lock failed before collection: {lock_error}", file=sys.stderr)
             return 1
     report = collect_report(env, build_runs)
     print(f"Comparison JSON: {REPORT_JSON.relative_to(ROOT)}")
