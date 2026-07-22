@@ -204,26 +204,28 @@ pnr() {
 
     nextpnr-xilinx "${NEXTPNR_ARGS[@]}"
 
-    if [ -f "${JSON}.timing_report.json" ]; then
-        METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}"
-        METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; post-route metrics from nextpnr-xilinx."
-        if [ -n "$TENSEGRITY_VARIANT" ]; then
-            METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; ZPHI_KARATSUBA=${ZPHI_KARATSUBA}; post-route metrics from nextpnr-xilinx."
-        fi
-        python3 tools/collect_fpga_metrics.py \
-            --name "$METRICS_NAME" \
-            --board "QMTech Wukong Artix-7" \
-            --device "$PART" \
-            --toolchain "Yosys + nextpnr-xilinx + Project X-Ray" \
-            --top "$TOP" \
-            --report "${JSON}.timing_report.json" \
-            --log "${JSON}.nextpnr.log" \
-            --out-json "build/metrics/${METRICS_NAME}.json" \
-            --out-md "build/metrics/${METRICS_NAME}.md" \
-            --note "$METRICS_NOTE"
-    else
-        echo "  nextpnr build has no JSON timing report; skipping metrics collection."
+    METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}"
+    METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; post-route metrics from nextpnr-xilinx."
+    if [ -n "$TENSEGRITY_VARIANT" ]; then
+        METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; ZPHI_KARATSUBA=${ZPHI_KARATSUBA}; post-route metrics from nextpnr-xilinx."
     fi
+    METRICS_REPORT_ARGS=()
+    if [ -f "${JSON}.timing_report.json" ]; then
+        METRICS_REPORT_ARGS=(--report "${JSON}.timing_report.json")
+    else
+        echo "  nextpnr build has no native JSON timing report; collecting log-backed metrics."
+    fi
+    python3 tools/collect_fpga_metrics.py \
+        --name "$METRICS_NAME" \
+        --board "QMTech Wukong Artix-7" \
+        --device "$PART" \
+        --toolchain "Yosys + nextpnr-xilinx + Project X-Ray" \
+        --top "$TOP" \
+        "${METRICS_REPORT_ARGS[@]}" \
+        --log "${JSON}.nextpnr.log" \
+        --out-json "build/metrics/${METRICS_NAME}.json" \
+        --out-md "build/metrics/${METRICS_NAME}.md" \
+        --note "$METRICS_NOTE"
 }
 
 pack() {
