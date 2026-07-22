@@ -5,7 +5,9 @@
 // diagnostics. SPI, table replay, and the exact guard all run at the proven
 // 25 MHz cadence; the board oscillator/reset divider remains at 50 MHz.
 
-module spu_a7_tensegrity_link_top (
+module spu_a7_tensegrity_link_top #(
+    parameter USE_ZPHI_KARATSUBA = 0
+) (
     input  wire sys_clk,
     input  wire rst_n,
     input  wire spi_cs_n,
@@ -73,7 +75,9 @@ module spu_a7_tensegrity_link_top (
         .tgr_transport_status(tgr_transport_status)
     );
 
-    spu13_tensegrity_sidecar u_sidecar (
+    spu13_tensegrity_sidecar #(
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
+    ) u_sidecar (
         .clk(guard_clk), .rst_n(rst_n_int),
         .stream_start(tgr_stream_start), .stream_length(tgr_stream_length),
         .stream_vector_id(tgr_stream_vector_id),

@@ -6,7 +6,9 @@
 // verifies the remaining coordinate. Parallel lines take a separate exact
 // collinearity/interval-overlap path. One term-serial asymmetric phi
 // multiplier and one sign comparator are shared across the fixed micro-program.
-module spu13_tensegrity_intersection (
+module spu13_tensegrity_intersection #(
+    parameter USE_ZPHI_KARATSUBA = 0
+) (
     input  wire clk,
     input  wire rst_n,
     input  wire start,
@@ -131,13 +133,27 @@ module spu13_tensegrity_intersection (
     wire signed [107:0] mul_out_a, mul_out_b;
     wire [4:0] mul_operation = (state == X_MUL_WAIT) ? mul_return_state : state;
 
-    spu13_zphi_mul_serial #(
-        .X_W(72), .Y_W(34), .OUT_W(108)
-    ) u_zphi_mul (
-        .clk(clk), .rst_n(rst_n), .start(mul_start),
-        .xa(mul_xa), .xb(mul_xb), .ya(mul_ya), .yb(mul_yb),
-        .busy(mul_busy), .done(mul_done), .out_a(mul_out_a), .out_b(mul_out_b)
-    );
+    generate
+        if (USE_ZPHI_KARATSUBA) begin : gen_zphi_karatsuba
+            spu13_zphi_mul_serial_karatsuba #(
+                .X_W(72), .Y_W(34), .OUT_W(108)
+            ) u_zphi_mul (
+                .clk(clk), .rst_n(rst_n), .start(mul_start),
+                .xa(mul_xa), .xb(mul_xb), .ya(mul_ya), .yb(mul_yb),
+                .busy(mul_busy), .done(mul_done),
+                .out_a(mul_out_a), .out_b(mul_out_b)
+            );
+        end else begin : gen_zphi_reference
+            spu13_zphi_mul_serial #(
+                .X_W(72), .Y_W(34), .OUT_W(108)
+            ) u_zphi_mul (
+                .clk(clk), .rst_n(rst_n), .start(mul_start),
+                .xa(mul_xa), .xb(mul_xb), .ya(mul_ya), .yb(mul_yb),
+                .busy(mul_busy), .done(mul_done),
+                .out_a(mul_out_a), .out_b(mul_out_b)
+            );
+        end
+    endgenerate
 
     wire signed [107:0] candidate_a = mul_out_a - product0_a;
     wire signed [107:0] candidate_b = mul_out_b - product0_b;

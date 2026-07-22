@@ -12,7 +12,8 @@
 module spu_a7_tensegrity_probe_top #(
     parameter CLKS_PER_BIT = 434,
     parameter START_DELAY  = 25000000,
-    parameter LINE_PERIOD  = 10000000
+    parameter LINE_PERIOD  = 10000000,
+    parameter USE_ZPHI_KARATSUBA = 0
 ) (
     input  wire       sys_clk,
     input  wire       rst_n,
@@ -106,7 +107,9 @@ module spu_a7_tensegrity_probe_top #(
     assign guard_clk = guard_clk_div;
 `endif
 
-    spu13_tensegrity_guard u_guard (
+    spu13_tensegrity_guard #(
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
+    ) u_guard (
         .clk(guard_clk),
         .rst_n(rst_n_int),
         .clear(guard_clear),

@@ -7,7 +7,8 @@
 // type-uniform force-density equilibrium over Z[phi].
 module spu13_tensegrity_guard #(
     parameter MAX_NODES = 12,
-    parameter MAX_EDGES = 40
+    parameter MAX_EDGES = 40,
+    parameter USE_ZPHI_KARATSUBA = 0
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -188,14 +189,29 @@ module spu13_tensegrity_guard #(
     wire eq_mul_select_left = (fsm == S_EQ_MUL_LEFT) ||
                               (fsm == S_EQ_MUL_WAIT && eq_mul_left_pending);
 
-    spu13_zphi_mul_serial #(
-        .X_W(39), .Y_W(39), .OUT_W(80)
-    ) u_eq_zphi_mul (
-        .clk(clk), .rst_n(rst_n && !clear), .start(eq_mul_start),
-        .xa(eq_mul_xa), .xb(eq_mul_xb), .ya(eq_mul_ya), .yb(eq_mul_yb),
-        .busy(eq_mul_busy), .done(eq_mul_done),
-        .out_a(eq_mul_out_a), .out_b(eq_mul_out_b)
-    );
+    generate
+        if (USE_ZPHI_KARATSUBA) begin : gen_eq_zphi_karatsuba
+            spu13_zphi_mul_serial_karatsuba #(
+                .X_W(39), .Y_W(39), .OUT_W(80)
+            ) u_eq_zphi_mul (
+                .clk(clk), .rst_n(rst_n && !clear), .start(eq_mul_start),
+                .xa(eq_mul_xa), .xb(eq_mul_xb),
+                .ya(eq_mul_ya), .yb(eq_mul_yb),
+                .busy(eq_mul_busy), .done(eq_mul_done),
+                .out_a(eq_mul_out_a), .out_b(eq_mul_out_b)
+            );
+        end else begin : gen_eq_zphi_reference
+            spu13_zphi_mul_serial #(
+                .X_W(39), .Y_W(39), .OUT_W(80)
+            ) u_eq_zphi_mul (
+                .clk(clk), .rst_n(rst_n && !clear), .start(eq_mul_start),
+                .xa(eq_mul_xa), .xb(eq_mul_xb),
+                .ya(eq_mul_ya), .yb(eq_mul_yb),
+                .busy(eq_mul_busy), .done(eq_mul_done),
+                .out_a(eq_mul_out_a), .out_b(eq_mul_out_b)
+            );
+        end
+    endgenerate
 
     always @* begin
         eq_mul_xa = 39'sd0; eq_mul_xb = 39'sd0;
@@ -236,7 +252,9 @@ module spu13_tensegrity_guard #(
             eq_sign_value = (eq_sign_5s_sq > eq_sign_r_sq) ? EQ_SG_POS : EQ_SG_NEG;
     end
 
-    spu13_tensegrity_intersection u_intersection (
+    spu13_tensegrity_intersection #(
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
+    ) u_intersection (
         .clk(clk), .rst_n(rst_n && !clear), .start(intersection_start),
         .p0_xa(node_xa[edge_a[pair_i]]), .p0_xb(node_xb[edge_a[pair_i]]),
         .p0_ya(node_ya[edge_a[pair_i]]), .p0_yb(node_yb[edge_a[pair_i]]),

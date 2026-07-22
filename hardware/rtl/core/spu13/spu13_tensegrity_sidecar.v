@@ -13,7 +13,8 @@ module spu13_tensegrity_sidecar #(
     parameter MAX_EDGES = 40,
     parameter MAX_BYTES = 508,
     parameter PARSE_WATCHDOG_LIMIT = 4096,
-    parameter VERIFY_WATCHDOG_LIMIT = 1000000
+    parameter VERIFY_WATCHDOG_LIMIT = 1000000,
+    parameter USE_ZPHI_KARATSUBA = 0
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -123,7 +124,8 @@ module spu13_tensegrity_sidecar #(
 
     spu13_tensegrity_guard #(
         .MAX_NODES(MAX_NODES),
-        .MAX_EDGES(MAX_EDGES)
+        .MAX_EDGES(MAX_EDGES),
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
     ) u_guard (
         .clk(clk), .rst_n(rst_n), .clear(guard_clear),
         .cfg_node_we(cfg_node_we), .cfg_node_index(cfg_node_index),
