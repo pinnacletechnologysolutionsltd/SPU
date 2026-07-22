@@ -1,6 +1,8 @@
 `timescale 1ns/1ps
 
-module spu13_tensegrity_intersection_tb;
+module spu13_tensegrity_intersection_tb #(
+    parameter USE_ZPHI_KARATSUBA = 0
+);
     reg clk=0, rst_n=0, start=0;
     reg signed [31:0] p0_xa,p0_xb,p0_ya,p0_yb,p0_za,p0_zb;
     reg signed [31:0] p1_xa,p1_xb,p1_ya,p1_yb,p1_za,p1_zb;
@@ -10,7 +12,9 @@ module spu13_tensegrity_intersection_tb;
     integer errors=0;
     always #5 clk=~clk;
 
-    spu13_tensegrity_intersection dut(.*);
+    spu13_tensegrity_intersection #(
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
+    ) dut(.*);
 
     task set_point;
         output signed [31:0] xa,xb,ya,yb,za,zb;
@@ -20,12 +24,24 @@ module spu13_tensegrity_intersection_tb;
 
     task run_case;
         input expected; input [8*32-1:0] name;
+        integer cycles;
         begin
-            @(negedge clk); start=1; @(posedge clk); @(negedge clk); start=0;
-            @(posedge done); #1;
+            @(negedge clk); start=1; @(posedge clk); #1;
+            @(negedge clk); start=0;
+            cycles = 0;
+            while (!done && cycles < 200000) begin
+                @(posedge clk); #1;
+                cycles = cycles + 1;
+            end
+            if (!done) begin
+                errors=errors+1;
+                $display("FAIL %0s timeout", name);
+            end
             if (contact !== expected) begin
                 errors=errors+1; $display("FAIL %0s contact=%b expected=%b",name,contact,expected);
             end else $display("PASS %0s contact=%b",name,contact);
+            $display("ZPHI_CYCLE kind=intersection fixture=%0s mode=%0d cycles=%0d decision=contact_%0d",
+                     name, USE_ZPHI_KARATSUBA, cycles, contact);
             @(posedge clk);
         end
     endtask

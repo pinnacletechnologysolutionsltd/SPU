@@ -1,6 +1,8 @@
 `timescale 1ns/1ps
 
-module spu13_tensegrity_guard_tb;
+module spu13_tensegrity_guard_tb #(
+    parameter USE_ZPHI_KARATSUBA = 0
+);
     reg clk = 0, rst_n = 0, clear = 0, cfg_node_we = 0, cfg_edge_we = 0, start = 0;
     reg [3:0] cfg_node_index, cfg_edge_a, cfg_edge_b;
     reg [1:0] cfg_grid;
@@ -17,7 +19,9 @@ module spu13_tensegrity_guard_tb;
 
     always #5 clk = ~clk;
 
-    spu13_tensegrity_guard dut (
+    spu13_tensegrity_guard #(
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
+    ) dut (
         .clk(clk), .rst_n(rst_n), .clear(clear),
         .cfg_node_we(cfg_node_we), .cfg_node_index(cfg_node_index),
         .cfg_x_a(cfg_x_a), .cfg_x_b(cfg_x_b), .cfg_y_a(cfg_y_a), .cfg_y_b(cfg_y_b),
@@ -137,14 +141,26 @@ module spu13_tensegrity_guard_tb;
 
     task run_expect;
         input [3:0] expected_state; input [2:0] expected_fault; input [8*24-1:0] name;
+        integer cycles;
     begin
-        @(negedge clk); start=1; @(posedge clk); @(negedge clk); start=0;
-        @(posedge done); #1;
+        @(negedge clk); start=1; @(posedge clk); #1;
+        @(negedge clk); start=0;
+        cycles = 0;
+        while (!done && cycles < 1000000) begin
+            @(posedge clk); #1;
+            cycles = cycles + 1;
+        end
+        if (!done) begin
+            $display("FAIL %0s timeout", name);
+            errors = errors + 1;
+        end
         if (state_code !== expected_state || fault_code !== expected_fault) begin
             $display("FAIL %0s state=%0d fault=%0d expected=%0d/%0d", name, state_code, fault_code, expected_state, expected_fault);
             errors = errors + 1;
         end else
             $display("PASS %0s state=%0d fault=%0d", name, state_code, fault_code);
+        $display("ZPHI_CYCLE kind=guard fixture=%0s mode=%0d cycles=%0d decision=state_%0d_fault_%0d",
+                 name, USE_ZPHI_KARATSUBA, cycles, state_code, fault_code);
         @(posedge clk);
     end endtask
 

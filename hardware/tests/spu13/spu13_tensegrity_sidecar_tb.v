@@ -1,6 +1,8 @@
 `timescale 1ns/1ps
 
-module spu13_tensegrity_sidecar_tb;
+module spu13_tensegrity_sidecar_tb #(
+    parameter USE_ZPHI_KARATSUBA = 0
+);
     reg clk = 0;
     always #5 clk = ~clk;
 
@@ -21,11 +23,18 @@ module spu13_tensegrity_sidecar_tb;
     reg [7:0] blob [0:507];
     integer errors = 0;
     integer i;
+    integer admission_cycles;
+    integer tb_cycle_counter = 0;
+    integer transaction_start_cycle = 0;
     reg [31:0] crc;
+
+    always @(posedge clk)
+        tb_cycle_counter = tb_cycle_counter + 1;
 
     spu13_tensegrity_sidecar #(
         .PARSE_WATCHDOG_LIMIT(2048),
-        .VERIFY_WATCHDOG_LIMIT(100000)
+        .VERIFY_WATCHDOG_LIMIT(100000),
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
     ) dut (
         .clk(clk), .rst_n(rst_n),
         .stream_start(stream_start), .stream_length(stream_length),
@@ -127,6 +136,7 @@ module spu13_tensegrity_sidecar_tb;
         input [31:0] vector_id;
         begin
             @(negedge clk);
+            transaction_start_cycle = tb_cycle_counter;
             stream_length = 468;
             stream_vector_id = vector_id;
             stream_start = 1;
@@ -151,6 +161,7 @@ module spu13_tensegrity_sidecar_tb;
     endtask
 
     task wait_idle;
+        output integer elapsed_cycles;
         integer timeout;
         begin
             timeout = 0;
@@ -162,6 +173,7 @@ module spu13_tensegrity_sidecar_tb;
                 errors = errors + 1;
                 $display("FAIL sidecar timeout");
             end
+            elapsed_cycles = timeout;
         end
     endtask
 
@@ -192,8 +204,11 @@ module spu13_tensegrity_sidecar_tb;
 
         build_canonical;
         send_complete(32'h12345678);
-        wait_idle;
+        wait_idle(admission_cycles);
         expect_status(2, 0, 32'h12345678, "canonical transactional load");
+        $display("ZPHI_CYCLE kind=sidecar fixture=valid_admission mode=%0d cycles=%0d decision=state_%0d_fault_%0d",
+                 USE_ZPHI_KARATSUBA, tb_cycle_counter - transaction_start_cycle,
+                 transport_status[119:112], transport_status[111:104]);
         if (transport_status[47:40] !== 8'd12 ||
             transport_status[39:32] !== 8'd30 || loader_error !== 0) begin
             errors = errors + 1;
@@ -208,7 +223,7 @@ module spu13_tensegrity_sidecar_tb;
         while (dut.parse_state != 4'd3)
             @(negedge clk);
         force dut.parse_state = 4'd3;
-        wait_idle;
+        wait_idle(admission_cycles);
         release dut.parse_state;
         expect_status(2, 0, 32'h12345678, "parser-timeout rollback");
         if (loader_error !== 11 || transport_status[103:96] !== 8'h93) begin
@@ -224,7 +239,7 @@ module spu13_tensegrity_sidecar_tb;
         build_canonical;
         force dut.u_guard.intersection_done = 1'b0;
         send_complete(32'hDEADC0DE);
-        wait_idle;
+        wait_idle(admission_cycles);
         release dut.u_guard.intersection_done;
         expect_status(2, 0, 32'h12345678, "guard-timeout rollback");
         if (loader_error !== 10 || transport_status[103:96] !== 8'h85) begin
@@ -235,8 +250,11 @@ module spu13_tensegrity_sidecar_tb;
 
         build_canonical;
         send_complete(32'h12345678);
-        wait_idle;
+        wait_idle(admission_cycles);
         expect_status(2, 0, 32'h12345678, "post-timeout recovery");
+        $display("ZPHI_CYCLE kind=sidecar fixture=timeout_recovery mode=%0d cycles=%0d decision=state_%0d_fault_%0d",
+                 USE_ZPHI_KARATSUBA, tb_cycle_counter - transaction_start_cycle,
+                 transport_status[119:112], transport_status[111:104]);
         if (loader_error !== 0 || transport_status[103:96] !== 8'd8) begin
             errors = errors + 1;
             $display("FAIL recovery diagnostics error=%0d stage=%02h",
@@ -262,7 +280,7 @@ module spu13_tensegrity_sidecar_tb;
         end
         expect_status(2, 0, 32'h12345678, "B3 hold preserves prior transaction");
         status_hold = 1'b0;
-        wait_idle;
+        wait_idle(admission_cycles);
         expect_status(2, 0, 32'hCAFEBABE, "B3 release commits pending result");
 
         // An aborted write must preserve the prior active bank and verdict.
@@ -271,7 +289,7 @@ module spu13_tensegrity_sidecar_tb;
             stream_data = blob[i]; stream_valid = 1; @(negedge clk);
         end
         stream_valid = 0; stream_abort = 1; @(negedge clk); stream_abort = 0;
-        wait_idle;
+        wait_idle(admission_cycles);
         expect_status(2, 0, 32'hCAFEBABE, "transport abort rollback");
         if (loader_error !== 1) begin
             errors = errors + 1;
@@ -281,8 +299,11 @@ module spu13_tensegrity_sidecar_tb;
         // A payload mutation with the old header CRC must also roll back.
         blob[100] = blob[100] ^ 8'h01;
         send_complete(32'hBBBBBBBB);
-        wait_idle;
+        wait_idle(admission_cycles);
         expect_status(2, 0, 32'hCAFEBABE, "CRC32 rollback");
+        $display("ZPHI_CYCLE kind=sidecar fixture=corrupt_payload_rollback mode=%0d cycles=%0d decision=state_%0d_fault_%0d",
+                 USE_ZPHI_KARATSUBA, tb_cycle_counter - transaction_start_cycle,
+                 transport_status[119:112], transport_status[111:104]);
         if (loader_error !== 7) begin
             errors = errors + 1;
             $display("FAIL CRC32 error code got=%0d", loader_error);
@@ -293,8 +314,26 @@ module spu13_tensegrity_sidecar_tb;
         put32(12, 1);
         finalize_header;
         send_complete(32'd6);
-        wait_idle;
+        wait_idle(admission_cycles);
         expect_status(8, 5, 32'd6, "not-in-equilibrium active verdict");
+        $display("ZPHI_CYCLE kind=sidecar fixture=mechanical_negative_admission mode=%0d cycles=%0d decision=state_%0d_fault_%0d",
+                 USE_ZPHI_KARATSUBA, tb_cycle_counter - transaction_start_cycle,
+                 transport_status[119:112], transport_status[111:104]);
+
+        // Pin reset recovery separately from timeout recovery. A complete
+        // reset must clear the active transaction, after which the same valid
+        // table is admitted independently with the selected multiplier.
+        rst_n = 0;
+        repeat (2) @(negedge clk);
+        rst_n = 1;
+        repeat (2) @(negedge clk);
+        build_canonical;
+        send_complete(32'hC1EA0001);
+        wait_idle(admission_cycles);
+        expect_status(2, 0, 32'hC1EA0001, "reset/reload recovery");
+        $display("ZPHI_CYCLE kind=sidecar fixture=reset_recovery mode=%0d cycles=%0d decision=state_%0d_fault_%0d",
+                 USE_ZPHI_KARATSUBA, tb_cycle_counter - transaction_start_cycle,
+                 transport_status[119:112], transport_status[111:104]);
 
         if (errors == 0)
             $display("SPU13_TENSEGRITY_SIDECAR_TB: PASS");

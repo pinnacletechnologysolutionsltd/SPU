@@ -1,7 +1,9 @@
 `timescale 1ns/1ps
 
 // End-to-end shared-SPI proof for CMD B2 table load and CMD B3 status.
-module spu13_tensegrity_transport_tb;
+module spu13_tensegrity_transport_tb #(
+    parameter USE_ZPHI_KARATSUBA = 0
+);
     reg clk = 0;
     always #10 clk = ~clk;
     reg rst_n = 0;
@@ -25,6 +27,11 @@ module spu13_tensegrity_transport_tb;
     reg [7:0] dummy;
     integer i;
     integer errors = 0;
+    integer tb_cycle_counter = 0;
+    integer b2_start_cycle = 0;
+
+    always @(posedge clk)
+        tb_cycle_counter = tb_cycle_counter + 1;
 
     spu_spi_slave #(
         .ENABLE_TENSEGRITY(1),
@@ -53,7 +60,9 @@ module spu13_tensegrity_transport_tb;
         .tgr_transport_status(tgr_transport_status)
     );
 
-    spu13_tensegrity_sidecar u_sidecar (
+    spu13_tensegrity_sidecar #(
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
+    ) u_sidecar (
         .clk(clk), .rst_n(rst_n),
         .stream_start(tgr_stream_start), .stream_length(tgr_stream_length),
         .stream_vector_id(tgr_stream_vector_id),
@@ -112,6 +121,7 @@ module spu13_tensegrity_transport_tb;
     task send_b2;
         input bad_crc;
         begin
+            b2_start_cycle = tb_cycle_counter;
             crc = 0;
             for (i = 0; i < 19; i = i + 1)
                 crc = crc8_byte(crc, packet[i]);
@@ -156,6 +166,9 @@ module spu13_tensegrity_transport_tb;
         i = 0;
         while (tgr_busy && i < 20000) begin #20; i = i + 1; end
         if (i == 20000) begin errors = errors + 1; $display("FAIL B2 verify timeout"); end
+        $display("ZPHI_CYCLE kind=transport fixture=valid_admission mode=%0d cycles=%0d decision=state_%0d_fault_%0d",
+                 USE_ZPHI_KARATSUBA, tb_cycle_counter - b2_start_cycle,
+                 tgr_transport_status[119:112], tgr_transport_status[111:104]);
         read_b3;
         if (response[0] !== 1 || response[1] !== 7 || response[2] !== 4 ||
             response[3] !== 8 || {response[4],response[5],response[6],response[7]} !== 32'd1 ||

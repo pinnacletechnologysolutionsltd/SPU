@@ -2,7 +2,9 @@
 
 // Artix tensegrity probe: exercise the real table loader, pin all seven TGR1
 // guard verdicts in order, and decode the UART acceptance line.
-module spu_a7_tensegrity_probe_tb;
+module spu_a7_tensegrity_probe_tb #(
+    parameter USE_ZPHI_KARATSUBA = 0
+);
     localparam CLKS_PER_BIT = 8;
     localparam LINE_LEN = 16;
 
@@ -14,7 +16,8 @@ module spu_a7_tensegrity_probe_tb;
     spu_a7_tensegrity_probe_top #(
         .CLKS_PER_BIT(CLKS_PER_BIT),
         .START_DELAY(1),
-        .LINE_PERIOD(4)
+        .LINE_PERIOD(4),
+        .USE_ZPHI_KARATSUBA(USE_ZPHI_KARATSUBA)
     ) dut (
         .sys_clk(clk),
         .rst_n(rst_n),
@@ -26,11 +29,23 @@ module spu_a7_tensegrity_probe_tb;
 
     integer errors = 0;
     integer verdicts_seen = 0;
+    integer guard_clock_cycles = 0;
+    integer guard_start_cycle = 0;
+    reg guard_active = 1'b0;
 
     // Observe each guard completion independently of the wrapper's final
     // PASS decision, preventing a vacuous UART-only pass.
     always @(posedge dut.guard_clk) begin
+        guard_clock_cycles = guard_clock_cycles + 1;
+        if (dut.guard_start) begin
+            guard_start_cycle = guard_clock_cycles;
+            guard_active = 1'b1;
+        end
         if (dut.guard_done) begin
+            if (!guard_active) begin
+                errors = errors + 1;
+                $display("FAIL guard completion without accepted start");
+            end
             case (verdicts_seen)
                 0: if (dut.guard_state !== 4'd2 || dut.guard_fault !== 3'd0) errors = errors + 1;
                 1: if (dut.guard_state !== 4'd7 || dut.guard_fault !== 3'd4) errors = errors + 1;
@@ -41,6 +56,11 @@ module spu_a7_tensegrity_probe_tb;
                 6: if (dut.guard_state !== 4'd8 || dut.guard_fault !== 3'd5) errors = errors + 1;
                 default: errors = errors + 1;
             endcase
+            $display("ZPHI_CYCLE kind=probe fixture=%0d mode=%0d cycles=%0d decision=state_%0d_fault_%0d",
+                     verdicts_seen, USE_ZPHI_KARATSUBA,
+                     guard_clock_cycles - guard_start_cycle,
+                     dut.guard_state, dut.guard_fault);
+            guard_active = 1'b0;
             verdicts_seen = verdicts_seen + 1;
         end
     end
