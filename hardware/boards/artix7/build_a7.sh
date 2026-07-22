@@ -7,6 +7,7 @@
 #   bash build_a7.sh 35t robotics synth          # synth only, ROBOTICS spin on 35T
 #   bash build_a7.sh 100t intelligence           # INTELLIGENCE spin on 100T
 #   A7_FREQ=2 bash build_a7.sh 100t lucas all    # Wukong pinned low-speed bring-up
+#   ZPHI_KARATSUBA=1 A7_SEED=2 bash build_a7.sh 100t tensegrityprobe synth
 #
 # Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | irotc | som | somprobe | somsidecar | tensegrityprobe | tensegritylink | custom
 #
@@ -58,6 +59,26 @@ A7_FREQ="${A7_FREQ_ENV:-$A7_FREQ_DEFAULT}"
 # for deterministic placement exploration without changing the default flow.
 A7_SEED="${A7_SEED:-1}"
 
+# Default-off selector for the two tensegrity A/B spins. Reject invalid values
+# before constructing any artifact path, and reject opt-in use on unrelated
+# spins so a recorded ZPHI_KARATSUBA setting cannot be silently ignored.
+ZPHI_KARATSUBA="${ZPHI_KARATSUBA:-0}"
+case "$ZPHI_KARATSUBA" in
+    0|1) ;;
+    *) echo "Invalid ZPHI_KARATSUBA: $ZPHI_KARATSUBA (use 0|1)"; exit 1;;
+esac
+
+TENSEGRITY_VARIANT=""
+case "$SPIN" in
+    TENSEGRITYPROBE|TENSEGRITYLINK)
+        TENSEGRITY_VARIANT="_ZK${ZPHI_KARATSUBA}_S${A7_SEED}";;
+    *)
+        if [ "$ZPHI_KARATSUBA" != "0" ]; then
+            echo "ZPHI_KARATSUBA applies only to TENSEGRITYPROBE or TENSEGRITYLINK"
+            exit 1
+        fi;;
+esac
+
 # A7_CLK_DIV_LOG2 default, spin-aware — mirrors the _CORE ternary in
 # spu_a7_top.v (keep this list in sync with that one). Coreless sidecar
 # spins (no spu13_core instance) run the raw fabric clock; every
@@ -77,20 +98,20 @@ case "$DEVICE_CHIP" in
         PART="xc7a35tcsg324-1"; XDC="hardware/boards/artix7/spu_a7_35t.xdc"
         DEVICE_PARAM="A7_35T"
         CHIPDB="build/chipdb/xc7a35t.bin"
-        JSON="build/spu_a7_35t_${SPIN}.json"
-        BITSTREAM="build/spu_a7_35t_${SPIN}.bit";;
+        JSON="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}.json"
+        BITSTREAM="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}.bit";;
     100t)
         PART="xc7a100tfgg676-1"; XDC="hardware/boards/artix7/spu_a7_100t.xdc"
         DEVICE_PARAM="A7_100T"
         CHIPDB="build/chipdb/xc7a100tfgg676.bin"
-        JSON="build/spu_a7_100t_${SPIN}.json"
-        BITSTREAM="build/spu_a7_100t_${SPIN}.bit";;
+        JSON="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}.json"
+        BITSTREAM="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}.bit";;
     200t)
         PART="xc7a200tsbg484-1"; XDC="hardware/boards/artix7/spu_a7_200t.xdc"
         DEVICE_PARAM="A7_200T"
         CHIPDB="build/chipdb/xc7a200t.bin"
-        JSON="build/spu_a7_200t_${SPIN}.json"
-        BITSTREAM="build/spu_a7_200t_${SPIN}.bit";;
+        JSON="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}.json"
+        BITSTREAM="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}.bit";;
     *) echo "Unknown device: $DEVICE_CHIP (use 35t|100t|200t)"; exit 1;;
 esac
 
@@ -122,6 +143,10 @@ echo "  Step:   $STEP"
 echo "  Freq:   ${A7_FREQ} MHz"
 echo "  Seed:   ${A7_SEED}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
+if [ -n "$TENSEGRITY_VARIANT" ]; then
+    echo "  ZPHI:   Karatsuba=${ZPHI_KARATSUBA} (0=reference, 1=candidate)"
+    echo "  Tag:    ${TENSEGRITY_VARIANT#_}"
+fi
 if [ "$A7_UART_DIAG" != "0" ]; then
     echo "  UART:   DIAGNOSTIC MODE (real hex telemetry disabled)"
 fi
@@ -130,7 +155,13 @@ echo ""
 synth() {
     echo ">>> Yosys Synthesis <<<"
     mkdir -p build
-    if [ "$TOP" != "spu_a7_top" ]; then
+    if [ "$SPIN" = "TENSEGRITYPROBE" ] || [ "$SPIN" = "TENSEGRITYLINK" ]; then
+        yosys -p "script $YS; \
+            hierarchy -check -top $TOP \
+                      -chparam USE_ZPHI_KARATSUBA $ZPHI_KARATSUBA; \
+            synth_xilinx -family xc7 -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    elif [ "$TOP" != "spu_a7_top" ]; then
         yosys -p "script $YS; \
             synth_xilinx -family xc7 -top $TOP -json \"$JSON\"; \
             stat -top $TOP"
@@ -174,17 +205,22 @@ pnr() {
     nextpnr-xilinx "${NEXTPNR_ARGS[@]}"
 
     if [ -f "${JSON}.timing_report.json" ]; then
+        METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}"
+        METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; post-route metrics from nextpnr-xilinx."
+        if [ -n "$TENSEGRITY_VARIANT" ]; then
+            METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; ZPHI_KARATSUBA=${ZPHI_KARATSUBA}; post-route metrics from nextpnr-xilinx."
+        fi
         python3 tools/collect_fpga_metrics.py \
-            --name "artix7_${DEVICE_CHIP}_${SPIN}" \
+            --name "$METRICS_NAME" \
             --board "QMTech Wukong Artix-7" \
             --device "$PART" \
             --toolchain "Yosys + nextpnr-xilinx + Project X-Ray" \
             --top "$TOP" \
             --report "${JSON}.timing_report.json" \
             --log "${JSON}.nextpnr.log" \
-            --out-json "build/metrics/artix7_${DEVICE_CHIP}_${SPIN}.json" \
-            --out-md "build/metrics/artix7_${DEVICE_CHIP}_${SPIN}.md" \
-            --note "A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; post-route metrics from nextpnr-xilinx."
+            --out-json "build/metrics/${METRICS_NAME}.json" \
+            --out-md "build/metrics/${METRICS_NAME}.md" \
+            --note "$METRICS_NOTE"
     else
         echo "  nextpnr build has no JSON timing report; skipping metrics collection."
     fi
