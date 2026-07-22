@@ -14,7 +14,7 @@ module spu13_tensegrity_sidecar #(
     parameter MAX_BYTES = 508,
     parameter PARSE_WATCHDOG_LIMIT = 4096,
     parameter VERIFY_WATCHDOG_LIMIT = 1000000,
-    parameter USE_ZPHI_KARATSUBA = 0
+    parameter USE_ZPHI_KARATSUBA = 1
 ) (
     input  wire         clk,
     input  wire         rst_n,

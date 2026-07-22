@@ -1,8 +1,11 @@
 # Z[phi] Three-Product Serial Multiplier Contract
 
-Status: proof candidate; the committed four-product
-`spu13_zphi_mul_serial` remains the production reference until every gate in
-this document passes.
+Status: **Phase 5 complete, 2026-07-23** — the three-product
+`spu13_zphi_mul_serial_karatsuba` is now the production default in both
+tensegrity consumers, integrated and routed. This is not a silicon claim;
+the reference `spu13_zphi_mul_serial` remains selectable
+(`USE_ZPHI_KARATSUBA=0` / `ZPHI_KARATSUBA=0`) for rollback. Silicon
+confirmation on real hardware is Phase 6, not yet performed.
 
 The phased production evaluation, matched P&R gates, rollback rules, and
 coding-agent handoff are in `docs/ZPHI_KARATSUBA_INTEGRATION_PLAN.md`.

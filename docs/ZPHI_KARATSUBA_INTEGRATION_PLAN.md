@@ -2,9 +2,11 @@
 
 Date: 2026-07-21
 
-Status: active equipment-independent engineering plan. The three-product
-multiplier is a proof candidate; the four-product multiplier remains the
-production default until the default-switch gate in Phase 5 passes.
+Status: Phases 0-5 complete as of 2026-07-23. The three-product multiplier
+is now the production default in both tensegrity consumers
+(integrated and routed, not silicon-verified); the four-product reference
+remains selectable for rollback. Phase 6 (silicon confirmation) is the
+only remaining phase.
 
 This plan turns the standalone result in
 `docs/ZPHI_KARATSUBA_MULTIPLIER.md` into a controlled production evaluation.
@@ -287,6 +289,26 @@ This must be a separate, easily revertible commit. In that commit:
 
 If a downstream regression appears, revert the default-switch commit without
 removing the candidate or its evidence.
+
+**Phase 5, 2026-07-23.** `USE_ZPHI_KARATSUBA` defaults to `1` in
+all three tensegrity RTL consumers and in `build_a7.sh`'s own selector
+default (both had to change — the build script always explicitly overrides
+the RTL default via `chparam`, so the RTL-only flip would have been a no-op
+for real builds). Full regression: 173/173. "Regenerate both tensegrity
+Artix builds": a plain default invocation (no env vars) uses seed 1 at
+25MHz for both tops, exactly matching one of the three seeds already in
+the Phase 4 matched matrix, so a synthesis-only rerun at the post-switch
+commit (not full P&R) is sufficient to verify the netlist matches the
+existing `TENSEGRITYPROBE_ZK1_S1` / `TENSEGRITYLINK_ZK1_S1` evidence —
+see the verification result recorded immediately below this note once
+complete. Precise end-to-end cycle improvement (not the
+local 25%/3-vs-4-cycle figure): ranges from 0% (fixtures that terminate
+before reaching multiplier work) to roughly 12.9% (best-case intersection
+fixture), with whole-transaction sidecar admissions around 3.3-3.6% and
+guard fixtures 1-7%. Full per-fixture figures:
+`build/zphi_karatsuba_phase3_cycles.json`. Claim level: "Production-
+integrated and routed three-product multiplier" (claim ladder row 5).
+Phase 6 (silicon confirmation) remains open.
 
 ### Phase 6 -- Deferred hardware confirmation
 

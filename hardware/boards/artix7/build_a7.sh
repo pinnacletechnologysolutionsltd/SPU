@@ -59,10 +59,12 @@ A7_FREQ="${A7_FREQ_ENV:-$A7_FREQ_DEFAULT}"
 # for deterministic placement exploration without changing the default flow.
 A7_SEED="${A7_SEED:-1}"
 
-# Default-off selector for the two tensegrity A/B spins. Reject invalid values
-# before constructing any artifact path, and reject opt-in use on unrelated
-# spins so a recorded ZPHI_KARATSUBA setting cannot be silently ignored.
-ZPHI_KARATSUBA="${ZPHI_KARATSUBA:-0}"
+# Selector for the two tensegrity A/B spins, defaulting to the Phase 5
+# production candidate (Karatsuba three-product multiplier). Reject invalid
+# values before constructing any artifact path, and reject opt-in use on
+# unrelated spins so a recorded ZPHI_KARATSUBA setting cannot be silently
+# ignored. The reference implementation remains selectable with ZPHI_KARATSUBA=0.
+ZPHI_KARATSUBA="${ZPHI_KARATSUBA:-1}"
 case "$ZPHI_KARATSUBA" in
     0|1) ;;
     *) echo "Invalid ZPHI_KARATSUBA: $ZPHI_KARATSUBA (use 0|1)"; exit 1;;

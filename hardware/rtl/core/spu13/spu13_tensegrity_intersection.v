@@ -7,7 +7,7 @@
 // collinearity/interval-overlap path. One term-serial asymmetric phi
 // multiplier and one sign comparator are shared across the fixed micro-program.
 module spu13_tensegrity_intersection #(
-    parameter USE_ZPHI_KARATSUBA = 0
+    parameter USE_ZPHI_KARATSUBA = 1
 ) (
     input  wire clk,
     input  wire rst_n,

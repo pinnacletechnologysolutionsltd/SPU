@@ -8,7 +8,7 @@
 module spu13_tensegrity_guard #(
     parameter MAX_NODES = 12,
     parameter MAX_EDGES = 40,
-    parameter USE_ZPHI_KARATSUBA = 0
+    parameter USE_ZPHI_KARATSUBA = 1
 ) (
     input  wire        clk,
     input  wire        rst_n,
