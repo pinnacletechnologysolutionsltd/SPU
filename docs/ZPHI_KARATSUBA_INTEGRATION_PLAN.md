@@ -349,6 +349,25 @@ three times. Do not use the damaged J11 top row.
 Only after this phase may public material say the production Karatsuba-backed
 tensegrity path is silicon-verified.
 
+**Bitstream built and ready, 2026-07-24 — not yet loaded, not a silicon
+claim.** A fresh `TENSEGRITYPROBE` bitstream exists for the standalone
+UART check above: built from clean commit `8aaaeaa` (current
+`origin/master` at build time), seed 2 (deliberately distinct from the
+Phase 4 matrix's seeds 1/7/13, chosen so this build could not collide
+with or overwrite any existing Phase 4 evidence file — see the Phase 5
+note above for why that caution matters here), 25MHz, candidate
+multiplier as production default (`ZPHI_KARATSUBA=1`). Route converged
+cleanly: zero overuse, timing PASS on both clocks (`guard_clk` 43.47MHz,
+`sys_clk` 70.86MHz, both against the 25MHz target), no unconstrained or
+incomplete-timing warnings. Packed bitstream:
+`build/spu_a7_100t_TENSEGRITYPROBE_ZK1_S2.bit` (3,825,936 bytes,
+untracked per this repo's generated-artifact convention), SHA-256
+`07c979daf0da76697c615527620eb2b96c85433438862368db43645550dd4cad`.
+This bitstream has not been loaded onto hardware yet — building and
+routing cleanly is necessary but not sufficient for Phase 6; the
+`TGR:P V:7 E:00` repeated-readback confirmation over UART is the actual
+remaining step, and only that step, once done, licenses a silicon claim.
+
 ## 6. Commit boundaries
 
 Use small reviewable commits in this order:
