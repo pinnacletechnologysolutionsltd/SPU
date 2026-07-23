@@ -3,10 +3,12 @@
 Date: 2026-07-21
 
 Status: Phases 0-5 complete as of 2026-07-23. The three-product multiplier
-is now the production default in both tensegrity consumers
-(integrated and routed, not silicon-verified); the four-product reference
-remains selectable for rollback. Phase 6 (silicon confirmation) is the
-only remaining phase.
+is the production default in both tensegrity consumers; the four-product
+reference remains selectable for rollback. Phase 6's standalone
+`TENSEGRITYPROBE` half closed silicon-proven 2026-07-24 (200x repeated
+`TGR:P V:7 E:00`, zero variance — see `docs/hardware_evidence.md`
+§3.2l). `TENSEGRITYLINK`'s full transactional confirmation remains open,
+gated on the power-ready interlock.
 
 This plan turns the standalone result in
 `docs/ZPHI_KARATSUBA_MULTIPLIER.md` into a controlled production evaluation.
@@ -349,24 +351,23 @@ three times. Do not use the damaged J11 top row.
 Only after this phase may public material say the production Karatsuba-backed
 tensegrity path is silicon-verified.
 
-**Bitstream built and ready, 2026-07-24 — not yet loaded, not a silicon
-claim.** A fresh `TENSEGRITYPROBE` bitstream exists for the standalone
-UART check above: built from clean commit `8aaaeaa` (current
-`origin/master` at build time), seed 2 (deliberately distinct from the
-Phase 4 matrix's seeds 1/7/13, chosen so this build could not collide
-with or overwrite any existing Phase 4 evidence file — see the Phase 5
-note above for why that caution matters here), 25MHz, candidate
-multiplier as production default (`ZPHI_KARATSUBA=1`). Route converged
-cleanly: zero overuse, timing PASS on both clocks (`guard_clk` 43.47MHz,
-`sys_clk` 70.86MHz, both against the 25MHz target), no unconstrained or
-incomplete-timing warnings. Packed bitstream:
-`build/spu_a7_100t_TENSEGRITYPROBE_ZK1_S2.bit` (3,825,936 bytes,
-untracked per this repo's generated-artifact convention), SHA-256
-`07c979daf0da76697c615527620eb2b96c85433438862368db43645550dd4cad`.
-This bitstream has not been loaded onto hardware yet — building and
-routing cleanly is necessary but not sufficient for Phase 6; the
-`TGR:P V:7 E:00` repeated-readback confirmation over UART is the actual
-remaining step, and only that step, once done, licenses a silicon claim.
+**Phase 6 standalone half CLOSED, silicon-proven 2026-07-24.** The
+`TENSEGRITYPROBE` bitstream built from clean commit `8aaaeaa`, seed 2
+(deliberately distinct from the Phase 4 matrix's 1/7/13 so the build
+couldn't collide with that evidence), 25MHz, candidate multiplier as
+production default (`ZPHI_KARATSUBA=1`) — route converged cleanly (zero
+overuse), timing PASS on both clocks (`guard_clk` 43.47MHz, `sys_clk`
+70.86MHz), no unconstrained/incomplete-timing warnings. Packed
+bitstream `build/spu_a7_100t_TENSEGRITYPROBE_ZK1_S2.bit` (3,825,936
+bytes), SHA-256 `07c979daf0da76697c615527620eb2b96c85433438862368db43645550dd4cad`
+was DirtyJTAG SRAM-loaded (`isc_done 1`, `init 1`, `done 1`) and the
+UART returned `TGR:P V:7 E:00` repeated 200 times over 15 seconds with
+zero variance. Full evidence: `docs/hardware_evidence.md` §3.2l. This
+licenses "silicon-verified" for the standalone `TENSEGRITYPROBE` path
+specifically — `TENSEGRITYLINK`'s full transactional confirmation
+remains open, gated on the interlock, and public material must keep
+distinguishing the two rather than generalizing this result to the
+whole tensegrity path.
 
 ## 6. Commit boundaries
 

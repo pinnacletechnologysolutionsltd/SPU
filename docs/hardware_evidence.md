@@ -1673,6 +1673,38 @@ the type-uniform density contract. The oracle's broader nonuniform per-edge
 nullspace fallback and active rotation/actuation control remain outside the
 hardware claim.
 
+**Karatsuba-candidate-as-default silicon confirmation, 2026-07-24.** The
+above proof used the four-product reference multiplier. Following the
+Z[phi] Karatsuba three-product candidate's Phase 0-5 completion
+(`docs/ZPHI_KARATSUBA_INTEGRATION_PLAN.md` — formal proof, transaction-
+semantics hardening at production widths, default-off selector plumbing,
+dual-mode integration regression, matched three-seed P&R, then the
+production-default switch itself), this closes Phase 6's standalone half:
+silicon confirmation of the candidate multiplier as the actual shipped
+default, not just simulation/formal/P&R evidence.
+
+Build: clean commit `8aaaeaa` (current `origin/master` at build time),
+`ZPHI_KARATSUBA=1 A7_SEED=2 A7_FREQ=25`, seed deliberately distinct from
+the Phase 4 matched matrix's 1/7/13 so this build could not collide with
+or overwrite that evidence. `synth`/`pnr`/`pack` all clean: router
+converged to zero overuse, timing PASS on both clocks (`guard_clk`
+43.47 MHz, `sys_clk` 70.86 MHz, both against the 25 MHz target), no
+unconstrained or incomplete-timing warnings. Packed bitstream:
+`build/spu_a7_100t_TENSEGRITYPROBE_ZK1_S2.bit`, 3,825,936 bytes, SHA-256
+`07c979daf0da76697c615527620eb2b96c85433438862368db43645550dd4cad`.
+
+DirtyJTAG SRAM load completed cleanly (`isc_done 1`, `init 1`, `done 1`).
+UART readback over 15 seconds returned exactly `TGR:P V:7 E:00`, repeated
+200 times with zero variance and no other output — the same seven-fixture
+admission verdict as the reference-multiplier proof above, now produced
+by the candidate. This closes the standalone-`TENSEGRITYPROBE` half of
+Phase 6. The `TENSEGRITYLINK` half (full transactional admission,
+mechanical-negative, corrupt-payload rollback, and recovery, per the
+integration plan) remains open, gated on the power-ready interlock —
+unlike this standalone check, `TENSEGRITYLINK` involves live RP2350-to-
+FPGA SPI communication, the exact connection class the interlock exists
+to protect.
+
 **Transactional table-link build evidence (not silicon evidence):** the
 follow-on `TENSEGRITYLINK` spin connects optional southbridge commands B2/B3
 to `spu13_tensegrity_sidecar.v`. Its raw 1,016-byte store is inferred as

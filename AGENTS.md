@@ -323,12 +323,17 @@ Tang 25K or Artix-7.
   (rotation/actuation proposals, re-verification, rollback) — table
   transport and bounded admission are no longer open items.
 - **Z[phi] Karatsuba three-product multiplier**
-  (`spu13_zphi_mul_serial_karatsuba.v`) — **now the production default**
+  (`spu13_zphi_mul_serial_karatsuba.v`) — **the production default**
   (2026-07-23) in both tensegrity consumers above, replacing
-  `spu13_zphi_mul_serial` (3 busy cycles vs. the reference's 4). **This
-  is integrated and routed, not silicon-verified** — the reference
-  remains selectable (`USE_ZPHI_KARATSUBA=0` / `ZPHI_KARATSUBA=0`) for
-  one-parameter rollback. Phased evaluation plan and every gate:
+  `spu13_zphi_mul_serial` (3 busy cycles vs. the reference's 4). **The
+  standalone `TENSEGRITYPROBE` path is silicon-verified with the
+  candidate as default (2026-07-24)** — 200x repeated `TGR:P V:7 E:00`,
+  zero variance, full evidence `docs/hardware_evidence.md` §3.2l.
+  **`TENSEGRITYLINK`'s full transactional confirmation is still open**,
+  gated on the power-ready interlock (unlike the standalone check, it's
+  live RP2350-to-FPGA SPI). The reference remains selectable
+  (`USE_ZPHI_KARATSUBA=0` / `ZPHI_KARATSUBA=0`) for one-parameter
+  rollback. Phased evaluation plan and every gate:
   `docs/ZPHI_KARATSUBA_INTEGRATION_PLAN.md`; contract status:
   `docs/ZPHI_KARATSUBA_MULTIPLIER.md`. Phases 0–5 complete, each
   independently re-derived (not just read) before the next began:
@@ -344,9 +349,7 @@ Tang 25K or Artix-7.
   **synthesis is not bit-reproducible run-to-run here** (yosys version
   drift most likely) — do not rerun `synth` against an existing
   `_ZK{n}_S{seed}` artifact name to spot-check it; that overwrites the
-  file and won't reproduce the same hash anyway. Phase 6 (silicon
-  confirmation) is the only remaining phase, gated on the same
-  interlock-first bench safety rule as the INA226 work. Full detail:
+  file and won't reproduce the same hash anyway. Full detail:
   `docs/ZPHI_KARATSUBA_INTEGRATION_PLAN.md`'s dated Phase 5 note and
   the roadmap's dated status snapshot (private planning doc).
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator

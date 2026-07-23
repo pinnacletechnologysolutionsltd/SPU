@@ -1,11 +1,15 @@
 # Z[phi] Three-Product Serial Multiplier Contract
 
-Status: **Phase 5 complete, 2026-07-23** — the three-product
-`spu13_zphi_mul_serial_karatsuba` is now the production default in both
-tensegrity consumers, integrated and routed. This is not a silicon claim;
-the reference `spu13_zphi_mul_serial` remains selectable
-(`USE_ZPHI_KARATSUBA=0` / `ZPHI_KARATSUBA=0`) for rollback. Silicon
-confirmation on real hardware is Phase 6, not yet performed.
+Status: **Phase 5 complete (2026-07-23); Phase 6's standalone half
+silicon-proven 2026-07-24** — the three-product
+`spu13_zphi_mul_serial_karatsuba` is the production default in both
+tensegrity consumers. The standalone `TENSEGRITYPROBE` path is now
+silicon-verified with the candidate as default (200x repeated
+`TGR:P V:7 E:00`, zero variance — `docs/hardware_evidence.md` §3.2l).
+`TENSEGRITYLINK`'s full transactional confirmation remains open, gated
+on the power-ready interlock. The reference `spu13_zphi_mul_serial`
+remains selectable (`USE_ZPHI_KARATSUBA=0` / `ZPHI_KARATSUBA=0`) for
+rollback.
 
 The phased production evaluation, matched P&R gates, rollback rules, and
 coding-agent handoff are in `docs/ZPHI_KARATSUBA_INTEGRATION_PLAN.md`.
