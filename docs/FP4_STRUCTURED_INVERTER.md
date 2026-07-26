@@ -15,10 +15,13 @@ logical M31 products) with four structure-specific requests totaling exactly
 | **Total** | **20** | **four structured requests** |
 
 The general Padé multiplier remains required. The candidate shared-parallel
-backend will therefore multiplex these operands onto the existing 16-product
-bank; it must not add a second narrow multiplier bank. The sequential backend
-will execute only the declared number of schedule entries. Both candidates
-must retain mod-3 residue checking for every structured result.
+backend therefore expresses each request as a patterned ordinary A31
+transaction and reuses both the existing 16-product bank and its combiner; it
+does not add a narrow multiplier or a second combiner. Its `logical_products`
+count is the unique algebraic schedule above, while the fixed physical bank
+still evaluates the zero/repeated lanes in parallel. The sequential backend
+executes only the declared number of schedule entries. Both candidates retain
+mod-3 residue checking for every structured result.
 
 ## Formal resolution
 
