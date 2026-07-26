@@ -66,7 +66,7 @@ the BTU spatial router which passes discrete binary result pairs.
        ├─────────────────────────┤       ├─────────────────────────┤
        │ Ring:  ℤ / M₃₁          │       │ Ring:  ℤ[φ] / Lₚ        │
        │ Fast reduction: 2³¹≡1   │       │ Fast reduction: φᵖ≡±1  │
-       │ Pipeline: 76-cycle      │       │ Pipeline: φ-shift-add   │
+       │ Pipeline: 83-cycle unit │       │ Pipeline: φ-shift-add   │
        │ Inverter: Fermat chain  │       │ Inverter: Lucas inverse  │
        │ Multiplier: 16 DSP      │       │ Multiplier: φ-MAC       │
        │ Functions: A₃₁ Padé  │       │ Functions: chirality,   │

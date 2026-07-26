@@ -157,7 +157,7 @@ def generate_latency_template() -> Dict:
         },
         "stages": [
             asdict(LatencyMeasurement("M31_MULTIPLIER", 2, 12)),
-            asdict(LatencyMeasurement("FP4_INVERTER", 76, 12)),
+            asdict(LatencyMeasurement("FP4_INVERTER", 83, 12)),
             asdict(LatencyMeasurement("SOM_BMU", 7, 12)),
             asdict(LatencyMeasurement("BTU_ROUTING", 3, 12)),
             asdict(LatencyMeasurement("PADE_EVAL", 4, 12)),

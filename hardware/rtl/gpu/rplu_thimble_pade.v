@@ -12,7 +12,7 @@
 // then multiplies numerator × inverse_denominator.
 //
 // Pipeline:
-//   Horner (NUM_COEFF × mult_latency) → A31 inverter (~76 cycles) → Final multiply
+//   Horner → A31 inverter (parallel v1: 83 unit / 7 singular) → Final multiply
 
 module rplu_thimble_pade #(
     parameter NUM_COEFF    = 5,         // [4/4] Padé = 5 coeffs each

@@ -254,7 +254,8 @@ canonical RPLU2 path.
 RTL modules (`hardware/rtl/core/spu13/`):
 - `spu13_m31_multiplier.v` — A₃₁ multiplier (16 logical 32×32 products,
   2-stage Mersenne reduction; physical DSP mapping is target-dependent)
-- `spu13_fp4_inverter.v` — Conjugate reduction tower (~76-cycle A₃₁ inversion)
+- `spu13_fp4_inverter.v` — Conjugate reduction tower (parallel v1:
+  83-cycle unit / 7-cycle singular; sequential leaf: 314 / 73)
 - `spu_som_bmu.v` — writable, exact-order seven-node BMU (fixed 434 clocks)
 - `rplu_thimble_pade.v` — [4/4] Padé rational approximant
 

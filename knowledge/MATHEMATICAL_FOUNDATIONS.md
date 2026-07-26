@@ -350,7 +350,9 @@ W           →  W·W̄ (conjugate w.r.t. √3)        →  N ∈ F_p
 N_inv       =  N^(p-2) mod p                    (30-bit Fermat chain)
 Z_inv       =  Z̄·W̄·N_inv                        (reconstruct in F_{p^4})
 ```
-76-cycle deterministic latency. Zero-norm detection (N=0) asserts FLAGS.V.
+On the measured parallel v1 backend, unit completion is 83 cycles and
+Stage-B singular termination is 7 cycles, deterministic within each outcome
+class. Zero-norm detection (N=0) asserts FLAGS.V.
 
 ### 8.5 Lefschetz thimble connection
 

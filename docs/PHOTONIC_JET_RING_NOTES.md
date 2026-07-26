@@ -24,7 +24,8 @@ zero at N=2 where the whole product is 6 base multiplies.
 
 - **Mersenne reduction mod 2³¹−1** — nonlinear; needs an O-E-O boundary per
   product, which eats most of the optical latency win.
-- **Tower inversion** (Fermat chain, ~76 cycles) — iterative and stateful.
+- **Tower inversion** (Fermat chain; parallel v1: 83-cycle unit /
+  7-cycle singular) — iterative and stateful.
 - **Control** — type-lattice schedule, FSMs, tag logic.
 
 Any realization is hybrid: photonic Cauchy kernel inside an electronic

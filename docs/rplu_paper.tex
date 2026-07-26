@@ -23,6 +23,27 @@ github.com/pinnacletechnologysolutionsltd/SPU\\
 
 \maketitle
 
+\noindent\fbox{\parbox{0.97\columnwidth}{\footnotesize
+\textbf{Version 0.2 corrigendum (2026-07-26).} Version 0.1
+(DOI 10.5281/zenodo.21446713) is superseded for the following reason:
+\textbf{Corrected inverter latency and Montgomery batch-inversion cycle
+model.} Version 0.1
+understated the historical parallel
+conjugate-tower latency as 76 clocks and propagated that constant into the
+Montgomery batch-inversion model. Measurement against the deposited
+\texttt{f1e4dbf} RTL gives 83 clocks for unit completion and 7 clocks for
+Stage-B singular termination; the complete jet inverse takes 105 clocks for
+units. Table~\ref{tab:corrigendum-delta} gives the old-versus-corrected
+values; Table~\ref{tab:batch-inv} and all dependent latency statements are
+regenerated from those measured constants. Affected locations are the
+abstract; Jet Inverse (Shadow Chain); Stage $\Phi_3$---The Conjugate
+Reduction Tower; Montgomery Batch Inversion Speedup; Scoreboarded Tower
+Overlap; and the conclusion. Arithmetic results, routed resources, and
+silicon evidence are unchanged. The measurement protocol and raw output are
+preserved in
+\texttt{docs/RPLU\_V01\_LATENCY\_CORRIGENDUM\_EVIDENCE.md}.}}
+\vspace{0.5em}
+
 \begin{abstract}
 Higher-order differentiation in embedded and edge computing commonly uses
 finite-difference approximations or IEEE-754 floating-point accumulators.
@@ -36,8 +57,10 @@ implemented by the RTL.  A parameterized jet multiply-accumulate
 (MAC) pipeline computes $R_k = \sum_{i=0}^{k} J_i \cdot K_{k-i}$ for $k \in
 \{0,1,2\}$ in 12 cycles in the time-division-multiplexed RTL; a fully
 unrolled design model targets 3 cycles but is not instantiated in the
-silicon-tested image. A conjugate reduction tower and shadow chain invert unit elements in
-$\sim$88 deterministic cycles total ($\sim$76 for the tower, 12 for the chain). Issue control is deterministic and blocking:
+silicon-tested image. The measured historical parallel conjugate tower
+inverts unit elements in 83 clocks; the complete jet inverse, including
+wrapper control and the six-multiply shadow chain, takes 105 clocks. Issue
+control is deterministic and blocking:
 multi-cycle tower operations gate issue through busy/done clock-enable
 handshakes, while single-cycle arithmetic avoids read-after-write stalls
 through a write-forwarding register-file bypass.
@@ -238,10 +261,11 @@ m_0 &= j_0^{-1} \quad\text{(via conjugate reduction tower)} \\
 	m_2 &= j_1^2 \cdot m_0^3 - j_2 \cdot m_0^2
 \end{align}
 
-where $j_0^{-1}$ is computed by the 76-cycle conjugate reduction tower
+where $j_0^{-1}$ is computed by the 83-cycle parallel conjugate reduction tower
 (Section~\ref{sec:tower}) and $m_0, m_1, m_2$ are the inverse jet
-coefficients. The shadow chain adds $\sim$12 cycles after tower completion,
-for a total inversion latency of $\sim$88 cycles.
+coefficients. Wrapper control and the six-multiply shadow chain add 22 clocks
+after the tower's accepted-start-to-done interval, for a measured total unit
+latency of 105 clocks.
 
 	If $j_0$ is a non-unit (zero norm), the hardware asserts \texttt{err\_zero\_divisor}
 and flags the result as a geometric singularity---no hang, no silent corruption.
@@ -352,13 +376,16 @@ hardwired 30-step square-and-multiply.
 d_1(-u)) \cdot N^{-1}$.
 \end{enumerate}
 
-Total latency: $\sim 76$ cycles, completely deterministic, zero division
-operations. Inversion test vectors are shown in Table~\ref{tab:fp4-inverter}.
+Measured latency on the historical uncontended parallel backend is 83 clocks
+for unit completion and 7 clocks for Stage-B singular termination, with no
+operand-dependent variance inside either outcome class. There are zero
+division operations. Inversion test vectors are shown in
+Table~\ref{tab:fp4-inverter}.
 
 \paragraph{Montgomery batch inversion.}
 When the Pad\'{e} evaluator must invert $k$ denominators---as in a
 multi-lane manifold sweep or trajectory propagation---the per-element
-tower cost of $k \cdot 76$ cycles is dominated by the serial Fermat-chain
+tower cost of $k \cdot 83$ cycles is dominated by the serial Fermat-chain
 latency. Montgomery's product-accumulate/unwind trick~\cite{montgomery1987}
 collapses $k$ inversions to \textbf{1 tower + $3(k-1)$ multiplies} by
 computing a single prefix-product chain over all denominators, inverting
@@ -371,7 +398,7 @@ One tower-norm stage covers the whole batch; on a hit, a per-element norm
 probe ($2$ multiplies each, stages A+B only, no Fermat) isolates the
 offending lanes, which then receive per-lane FLAGS.V semantics while
 unit lanes emerge bit-exact. The crossover at which batch inversion
-breaks even is $k = 2$; the asymptote is $2.86\times$ speedup with a
+breaks even is $k = 2$; the corrected asymptote is $3.06\times$ speedup with a
 $+33\%$ MAC volume ceiling. Table~\ref{tab:batch-inv} quantifies the
 cycle model for illustrative batch sizes.
 
@@ -379,7 +406,7 @@ cycle model for illustrative batch sizes.
 
 The 4R2W multi-port register file (\texttt{spu13\_multi\_port\_regfile.v})
 supports single-cycle integer arithmetic (QADD, QSUB, QMUL) beside the
-76-cycle Conjugate Inversion Tower.
+83-cycle parallel Conjugate Inversion Tower.
 
 \textbf{Key design choice in the adapter execution prototype:} Single-cycle ops may issue every cycle without
 stalling---they write through the register file's combinational
@@ -530,44 +557,18 @@ hang, no watchdog timeout, no silent corruption.
 \subsection{Montgomery Batch Inversion Speedup}
 
 Table~\ref{tab:batch-inv} reports the cycle-model speedup of Montgomery
-batch inversion vs.\ per-element tower runs, using the RTL-documented
-costs of 76 cycles per tower and 3 cycles per shared multiply. The modeled
+batch inversion vs.\ per-element tower runs, using the measured historical
+costs of 83 cycles per unit tower and 3 cycles per shared multiply. The modeled
 batch sizes span single Pad\'{e} evaluations through multi-lane
 manifold sweeps and trajectory propagation. At $k = 13$ (one 13-axis
-manifold sweep), the batch path saves $60.0\%$ of the per-element tower
+manifold sweep), the batch path saves $62.1\%$ of the per-element tower
 cycles at the cost of $+30.8\%$ additional MAC volume on the shared
 multiplier. The MAC-volume ceiling is $\sim 33\%$, and the multiplier is
 shared with the rest of the RPLU2 sidecar. These are cycle-model results; the
 batch controller is RTL-verified but is not present in the silicon-tested
-RPLU2PADE image.
-
-\begin{table}[ht]
-\centering
-\caption{Montgomery batch inversion cycle model: tower = 76 cycles,
-shared multiply = 3 cycles. $k$ is the number of denominators inverted
-in one batch. MAC $\Delta$ is the increase in shared-multiplier
-operations vs.\ the per-element baseline. Values regenerated verbatim
-from the \texttt{test\_pade\_batch\_inversion.py} oracle output.}
-\label{tab:batch-inv}
-\footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lrrrr}
-\toprule
-$k$ & Baseline cycles & Batch cycles & Speedup & MAC $\Delta$ \\
-\midrule
-2 (crossover)    & 206   & 139   & 1.48$\times$ & $+16.7\%$ \\
-4 (quad step)    & 412   & 211   & 1.95$\times$ & $+25.0\%$ \\
-13 (manifold sweep) & 1,339 & 535   & 2.50$\times$ & $+30.8\%$ \\
-26 (2-step sweep)   & 2,678 & 1,003 & 2.67$\times$ & $+32.1\%$ \\
-104 (trajectory)    & 10,712 & 3,811 & 2.81$\times$ & $+33.0\%$ \\
-Asymptote       & ---   & ---   & 2.86$\times$ & $+33.3\%$ \\
-\bottomrule
-\multicolumn{5}{l}{\parbox{0.97\columnwidth}{\footnotesize Sensitivity
-at $k=13$: speedup is 3.20$\times$/2.50$\times$/2.12$\times$ for
-multiply costs of 2/3/4 cycles---the conclusion is robust to FSM
-handshake overhead.}} \\
-\end{tabular}
-\end{table}
+RPLU2PADE image. The table is generated by
+\texttt{tools/rplu\_paper\_data.py} from the same constants used by the
+executable batch-inversion oracle.
 
 \subsection{Resource Profile}
 
@@ -643,7 +644,7 @@ construction through finite algebra alone.
 \subsection{Scoreboarded Tower Overlap}
 
 Issue control is currently blocking during tower operations: the fixed
-$\sim$88-cycle inversion window is idle time for the rest of the pipeline.
+105-cycle unit-inversion window is idle time for the rest of the pipeline.
 A register scoreboard permitting independent single-cycle work to issue
 during tower runs could recover part of that window. The standalone
 \texttt{spu13\_scoreboard\_v2} implements done-coupled busy tracking and has a
@@ -754,8 +755,8 @@ than a routed implementation. The architecture supports:
 \item A parameterized jet MAC computing $R_k = \sum_{i=0}^{k} J_i \cdot
 K_{k-i}$ for $k \in \{0,1,2\}$, covered by a named leaf RTL bench and
 the regenerable publication oracle,
-\item A 76-cycle Conjugate Reduction Tower with zero-norm singularity
-detection, enabling jet inversion via a 12-cycle shadow chain,
+\item An 83-cycle parallel Conjugate Reduction Tower with a 7-cycle
+Stage-B singular path, enabling a 105-cycle complete unit jet inverse,
 \item A combinational BTU collision resolver with $O(n)$ priority-encoded
 serial dispatch,
 \item Deterministic issue control combining a write-forwarding 4R2W

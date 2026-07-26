@@ -7,7 +7,8 @@
 by the publication oracle. The corresponding inverter bench is included in
 the full RTL gate. Input $Z = (z_0, z_1, z_2, z_3) \in A_{31}$ over $p = 2^{31}-1$
 (M31). Non-units, including nonzero zero-divisors, trap via FLAGS.V.
-$\sim$76 cycle deterministic latency.}
+Unit latency is 83 cycles on the measured parallel backend; Stage-B
+singular termination is 7 cycles.}
 \label{tab:fp4-inverter}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -218,11 +219,69 @@ Pipeline Stage & Module & Latency \\
 $\Phi_1$ & SOM BMU (7-node WTA) & 5 cycles \\
 $\Phi_2$ & BTU spatial router (4-lane BRAM) & 3 cycles \\
 $\Phi_3$ & [4/4] Pad\'{e} Horner evaluator & 12 cycles \\
-$\Phi_3$ & $A_{31}$ conjugate reduction tower & $\sim$76 cycles \\
+$\Phi_3$ & $A_{31}$ conjugate reduction tower & 83 unit / 7 singular \\
 $\Phi_4$ & Output latch & 1 cycle \\
 \midrule
 BTU collision queue & 64$\rightarrow$6 priority encoder & O(n) bubble stall \\
 \bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% RPLU v0.2 corrigendum deltas, regenerated from measured
+% historical v1 constants by tools/rplu_paper_data.py.
+\begin{table}[ht]
+\centering
+\caption{RPLU v0.1 latency-model claims and v0.2 corrections. Derived
+batch rows use a 3-cycle shared multiply.}
+\label{tab:corrigendum-delta}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrr}
+\toprule
+Quantity & v0.1 & v0.2 \\
+\midrule
+Parallel unit tower & 76 cycles & 83 cycles \\
+Stage-B singular tower & not stated & 7 cycles \\
+Complete unit jet inverse & 88 cycles & 105 cycles \\
+$k=2$ baseline / batch & 206 / 139 & 220 / 146 \\
+$k=2$ speedup & 1.48$\times$ & 1.51$\times$ \\
+$k=13$ baseline / batch & 1,339 / 535 & 1,430 / 542 \\
+$k=13$ speedup / savings & 2.50$\times$ / 60.0\% & 2.64$\times$ / 62.1\% \\
+Asymptotic speedup & 2.86$\times$ & 3.06$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Montgomery batch-inversion cycle model, regenerated from
+% measured historical v1 constants by tools/rplu_paper_data.py.
+\begin{table}[ht]
+\centering
+\caption{Montgomery batch inversion cycle model: tower = 83
+cycles for a unit on the measured parallel backend, shared multiply =
+3 cycles. $k$ is the number of denominators inverted in one
+batch. MAC $\Delta$ is the increase in shared-multiplier operations vs. the
+per-element baseline.}
+\label{tab:batch-inv}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrr}
+\toprule
+$k$ & Baseline cycles & Batch cycles & Speedup & MAC $\Delta$ \\
+\midrule
+2 (crossover) & 220 & 146 & 1.51$\times$ & $+16.7\%$ \\
+4 (quad step) & 440 & 218 & 2.02$\times$ & $+25.0\%$ \\
+13 (manifold sweep) & 1,430 & 542 & 2.64$\times$ & $+30.8\%$ \\
+26 (2-step sweep) & 2,860 & 1,010 & 2.83$\times$ & $+32.1\%$ \\
+104 (trajectory) & 11,440 & 3,818 & 3.00$\times$ & $+33.0\%$ \\
+Asymptote & --- & --- & 3.06$\times$ & $+33.3\%$ \\
+\bottomrule
+\multicolumn{5}{l}{\parbox{0.97\columnwidth}{\footnotesize
+Sensitivity at $k=13$: speedup is 3.38$\times$/2.64$\times$/2.23$\times$ for multiply
+costs of 2/3/4 cycles.}} \\
 \end{tabular}
 \end{table}
 
@@ -246,7 +305,7 @@ Command & Result & Scope \\
 \texttt{spu13\_arch\_sim\_test.py} & 35/35 & adapter model \\
 \texttt{test\_pade\_batch\_inversion.py} & 25/25 & tower/batch oracle \\
 \texttt{test\_rational\_som.py} & 24/24 & SOM oracle \\
-\texttt{run\_all\_tests.py} & 172/172 & full gate; 129 RTL \\
+\texttt{run\_all\_tests.py} & 175/175 & full gate; 132 RTL \\
 \bottomrule
 \end{tabular}
 \end{table}

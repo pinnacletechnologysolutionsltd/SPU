@@ -5,7 +5,7 @@
 //
 // Algebra stack:
 //   F_p         Mersenne prime M31 = 2^31-1          (base field)
-//   A₃₁         F_p[u,v]/(u²-3, v²-5)                (~76 cycle inversion)
+//   A₃₁         F_p[u,v]/(u²-3, v²-5)                (parallel v1 unit: 83 cycles)
 //   A₃₁[i]      A₃₁[x]/(x²+1)                        (~114 cycle inversion)
 //
 // Uses an external shared spu13_m31_multiplier via TDM (borrowed from the

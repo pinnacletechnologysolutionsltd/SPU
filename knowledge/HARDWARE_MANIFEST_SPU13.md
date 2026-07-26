@@ -122,7 +122,7 @@ rational arithmetic pipeline over the Mersenne prime M31 (p = 2^31−1).
 |:---|:---|:---|:---|
 | `spu13_m31_multiplier.v` | A₃₁ multiplier, 16 parallel 32×32→DSP, fast Mersenne reduction | ~600 | 16 |
 | `spu13_m31_inverter.v` | BEEA scalar modular inverter, division-free | ~200 | 0 |
-| `spu13_fp4_inverter.v` | Conjugate reduction tower, ~76-cycle A₃₁ inversion | ~400 | 0 |
+| `spu13_fp4_inverter.v` | Conjugate reduction tower; parallel v1 83-cycle unit / 7-cycle singular | ~400 | 0 |
 | `spu_btu_collision_resolver.v` | 64→6 priority encoder + backlog queue | ~180 | 0 |
 | `spu13_btu_core_top.v` | BTU spatial→A₃₁ router, 4-lane BRAM | ~50 | 0 |
 | `rplu_thimble_pade.v` | [4/4] Padé Horner evaluator + coefficient storage | ~350 | 0 |

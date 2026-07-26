@@ -15,7 +15,7 @@ instead of k:
 ```
 prefix_0 = d_0                       # (k-1) A31 multiplies
 prefix_i = prefix_{i-1} · d_i
-T        = tower_inv(prefix_{k-1})   # 1 tower (~76 cycles, deterministic)
+T        = tower_inv(prefix_{k-1})   # 1 tower (parallel v1 unit: 83 cycles)
 acc      = T                         # unwind: 2(k-1) A31 multiplies
 inv_i    = acc · prefix_{i-1}        #   for i = k-1 down to 1
 acc      = acc · d_i
@@ -67,17 +67,17 @@ the uniformity of the happy path is the point of the design.
   hot path (control as MUX polynomials / uniform FSM steps), and no
   FIFO/skew-buffer papering over timing.
 
-## 4. Measured budget (from the oracle, tower=76, mult=3 cycles)
+## 4. Measured budget (from the oracle, tower=83, mult=3 cycles)
 
 Batched [4/4] Padé evaluation (Horner + inversion + final multiply):
 
 | k | baseline cyc | batch cyc | speedup | MAC volume |
 |---|---|---|---|---|
-| 1 | 103 | 103 | 1.00x | +0% |
-| 2 | 206 | 139 | 1.48x | +17% |
-| 13 | 1339 | 535 | 2.50x | +31% |
-| 104 | 10712 | 3811 | 2.81x | +33% |
-| asymptote | — | — | 2.86x | +33% |
+| 1 | 110 | 110 | 1.00x | +0% |
+| 2 | 220 | 146 | 1.51x | +17% |
+| 13 | 1430 | 542 | 2.64x | +31% |
+| 104 | 11440 | 3818 | 3.00x | +33% |
+| asymptote | — | — | 3.06x | +33% |
 
 Crossover is k=2: there is no batch size that loses cycles. The +33% MAC
 ceiling matters because the multiplier is shared — batch inversion belongs
@@ -100,7 +100,8 @@ where towers serialize (batched Padé/thimble runs), not as a blanket policy.
 - Oracle: `software/lib/a31_field.py` (`batch_tower_inv`, `a31_norm`,
   `a31_tower_inv`) — op-for-op model of the tower incl. `FLAGS.V`.
 - Oracle tests: `software/tests/test_pade_batch_inversion.py`.
-- Tower RTL: `hardware/rtl/core/spu13/spu13_fp4_inverter.v` (~76 cycles).
+- Tower RTL: `hardware/rtl/core/spu13/spu13_fp4_inverter.v` (parallel v1:
+  83-cycle unit / 7-cycle singular; sequential leaf: 314 / 73).
 - Shared multiplier: `hardware/rtl/core/spu13/spu13_m31_multiplier.v`.
 - Hazard tracking: `hardware/rtl/core/spu13/spu13_scoreboard_v2.v`.
 - Background: batch inversion is a standard primitive in ZK-prover

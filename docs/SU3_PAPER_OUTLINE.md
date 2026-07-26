@@ -31,7 +31,8 @@
 ### 2. Mathematical Foundation
 - A₃₁ split biquadratic algebra over M31 (review)
   - Basis [1, √3, √5, √15], 4-tuple representation
-  - Conjugate reduction tower for inversion (~76 cycles)
+  - Conjugate reduction tower for inversion (parallel v1: 83-cycle unit /
+    7-cycle singular)
 - Complex extension A₃₁[i]
   - i² = −1, degree-8 basis
   - Complex A₃₁ multiplication: 4 A₃₁ base products per complex multiply

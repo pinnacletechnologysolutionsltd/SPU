@@ -362,7 +362,7 @@ has no hardware weight-upload path.
 | BMU→RPLU routing | `spu13_btu_core_top.v` | ✅ BTU spatial→A₃₁ 4-lane BRAM router |
 | Collision safety | `spu_btu_collision_resolver.v` | ✅ 64→6 priority encoder + bubble insertion |
 | Rational arithmetic | `spu13_m31_multiplier.v` | ✅ A₃₁ multiplier over M31 |
-| Rational division | `spu13_fp4_inverter.v` | ✅ Conjugate reduction tower (~76 cycles) |
+| Rational division | `spu13_fp4_inverter.v` | ✅ Conjugate reduction tower (parallel v1: 83 unit / 7 singular) |
 | Polynomial eval | `rplu_thimble_pade.v` | ✅ [4/4] Padé Horner + A₃₁ inverter |
 
 Remaining candidates (`spu_nguyen_cluster.v`, `spu_quadrant_router.v`, `spu_class_emit.v`, `spu_feature_ingest.v`, `spu_nguyen_weight.v`, `spu_som_update.v`) are 💭 **Conceptual / Not Built**.

@@ -7,7 +7,7 @@
 //
 //   prefix[0] = d[0]
 //   prefix[i] = prefix[i-1] * d[i]           [k-1 mults]
-//   total_inv = tower_inv(prefix[k-1])        [1 tower, ~76 cycles]
+//   total_inv = tower_inv(prefix[k-1])        [1 parallel v1 unit tower, 83 cycles]
 //   acc = total_inv
 //   for i = k-1 down to 0:
 //       inv[i] = acc * prefix[i-1]            [k-1 mults]

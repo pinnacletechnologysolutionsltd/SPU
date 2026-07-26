@@ -9,11 +9,13 @@
 //
 // Pipeline:
 //   1. Zero-divisor check: c₀=0 → assert err_zero_divisor, done immediately
-//   2. Conjugate reduction tower: c₀⁻¹ (~76 cycles)
+//   2. Conjugate reduction tower: c₀⁻¹ (parallel v1 unit: 83 cycles)
 //   3. Shadow multiply chain: c₀⁻² → c₀⁻³ → c₁·c₀⁻² → c₁² → c₁²·c₀⁻³ → c₂·c₀⁻²
 //   4. Reassembly: m₀=c₀⁻¹, m₁=−c₁·c₀⁻², m₂=c₁²·c₀⁻³−c₂·c₀⁻²
 //
-// Total latency: ~76 (tower) + ~18 (6 multiplies) = ~94 cycles.
+// Historical parallel v1 measured unit latency: 105 cycles total.
+// The wrapper + 6-multiply shadow chain adds 22 clocks around/after the
+// tower interval. Direct-zero latency is 1; tower-detected singular is 10.
 
 module spu13_jet_inv (
     input  wire         clk,

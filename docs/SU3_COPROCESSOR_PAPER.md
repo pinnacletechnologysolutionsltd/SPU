@@ -125,7 +125,8 @@ the cross-product rules shown in Table 1. The algebra is "split"
 because $15$ is a quadratic residue: $\sqrt{15}$ exists in
 $\mathbb{F}_p$, so the extension contains zero-divisors. The
 conjugate reduction tower [RPLU2] inverts units in approximately
-76 cycles and traps zero-norm elements via FLAGS.V.
+83 cycles on the measured parallel v1 unit path and traps zero-norm elements
+via FLAGS.V after 7 cycles.
 
 ### 2.2 Complex Extension: A₃₁[i]
 

@@ -9,7 +9,7 @@ no division in hot paths.
 | Layer | Extension | Basis | Inversion cost |
 |---|---|---|---|
 | F_p | Base field (M31) | — | — |
-| A₃₁ | F_p[u,v]/(u²−3, v²−5) | [1, √3, √5, √15] | ~76 cycles |
+| A₃₁ | F_p[u,v]/(u²−3, v²−5) | [1, √3, √5, √15] | parallel v1: 83-cycle unit / 7-cycle singular |
 | A₃₁[i] | A₃₁[x]/(x²+1) | [1, √3, √5, √15, i, i√3, i√5, i√15] | ~114 cycles |
 
 ## Implemented Modules

@@ -14,8 +14,10 @@
 //   6. Temp    = Z_conj * W_conj             — F_{p^4} partial result
 //   7. Result  = Temp * N_inv                — scalar × vector final scaling
 //
-// Pipeline: Stage A (×4) → Stage B (×4) → Stage C (Fermat ~62) → Stage D (×8)
-// Total latency: ~76 cycles, deterministic.
+// Historical v1 measured latency (accepted start edge to done edge):
+//   parallel multiplier: 83 cycles unit, 7 cycles Stage-B singular
+//   sequential leaf:    314 cycles unit, 73 cycles Stage-B singular
+// Latency is deterministic within each outcome class.
 //
 // Singularity detection: if N == 0, asserts FLAGS.V and aborts.
 

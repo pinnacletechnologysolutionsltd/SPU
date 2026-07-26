@@ -8,7 +8,7 @@ proves the batch inversion bit-exact against per-element tower runs
 MAC-vs-tower tradeoff on representative RPLU2 workload mixes using the
 cycle costs documented in the RTL:
 
-  tower inversion  ~76 cycles  (spu13_fp4_inverter.v, deterministic)
+  tower inversion   83 cycles  (parallel v1 unit path, measured at f1e4dbf)
   shared multiply   ~3 cycles  (spu13_m31_multiplier.v via launch/wait FSM)
 
 No floating point. All correctness checks assert bit-exact results.

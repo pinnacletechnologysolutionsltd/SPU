@@ -24,12 +24,13 @@ Usage:
 
 P = 2147483647  # M31 = 2^31 - 1
 
-# Cycle costs, from RTL comments (see module headers cited above):
-#   tower: spu13_fp4_inverter.v  "Total latency: ~76 cycles, deterministic"
+# Cycle costs measured against the historical v1 RTL at f1e4dbf (see
+# docs/RPLU_V01_LATENCY_CORRIGENDUM_EVIDENCE.md):
+#   tower: 83 cycles for a unit on the uncontended parallel backend
 #   mult:  spu13_m31_multiplier.v is a 2-stage pipeline; through the shared
 #          launch/wait FSM one multiply costs ~3 cycles (spu13_jet_inv.v:
 #          "6 multiplies = ~18 cycles")
-TOWER_CYCLES = 76
+TOWER_CYCLES = 83
 MULT_CYCLES = 3
 
 
@@ -105,7 +106,7 @@ def a31_tower_inv(z, ctr=None):
     Returns (inverse, flags_v). flags_v mirrors FLAGS.V: set when the
     norm is zero (z is zero or a zero divisor), inverse is None.
     The tower's internal multiplies and Fermat chain are costed as one
-    TOWER_CYCLES unit, matching the RTL's deterministic ~76 cycles.
+    TOWER_CYCLES unit, matching the measured 83-cycle parallel unit path.
     """
     if ctr is not None:
         ctr.towers += 1

@@ -31,6 +31,7 @@ from lib.rational_som import (
     hex_neighbors, tiny_hex_fixture, classify,
     rs as rs_surd, RS_ZERO,
 )
+from lib.a31_field import MULT_CYCLES, TOWER_CYCLES
 
 M31 = 2_147_483_647  # p = 2^31 - 1
 SQRT15 = 1_393_679_181  # SQRT15^2 == 15 mod M31
@@ -86,7 +87,8 @@ def fp4_inv_oracle(z: tuple) -> tuple | None:
     Step 2: Invert D in F_{p^2}: D⁻¹ = (d₀−d₁√3)/(d₀²−3d₁²)
     Step 3: z⁻¹ = (A − B√5) · D⁻¹
 
-    Matches the hardware conjugate reduction tower (76-cycle fixed latency).
+    Matches the hardware conjugate reduction tower (83-cycle parallel unit
+    latency, measured against the v0.1 RTL at f1e4dbf).
     Returns None for non-units, including nonzero zero-divisors (FLAGS.V).
     """
     z0, z1, z2, z3 = z
@@ -413,7 +415,8 @@ def generate_fp4_inverter_table() -> str:
 by the publication oracle. The corresponding inverter bench is included in
 the full RTL gate. Input $Z = (z_0, z_1, z_2, z_3) \in A_{31}$ over $p = 2^{31}-1$
 (M31). Non-units, including nonzero zero-divisors, trap via FLAGS.V.
-$\sim$76 cycle deterministic latency.}
+Unit latency is 83 cycles on the measured parallel backend; Stage-B
+singular termination is 7 cycles.}
 \label{tab:fp4-inverter}
 \begin{tabular}{llll}
 \toprule
@@ -660,7 +663,7 @@ Command & Result & Scope \\\\
 \\texttt{{spu13\\_arch\\_sim\\_test.py}} & 35/35 & adapter model \\\\
 \\texttt{{test\\_pade\\_batch\\_inversion.py}} & 25/25 & tower/batch oracle \\\\
 \\texttt{{test\\_rational\\_som.py}} & 24/24 & SOM oracle \\\\
-\\texttt{{run\\_all\\_tests.py}} & 172/172 & full gate; 129 RTL \\\\
+\\texttt{{run\\_all\\_tests.py}} & 175/175 & full gate; 132 RTL \\\\
 \\bottomrule
 \\end{{tabular}}
 \\end{{table}}"""
@@ -682,13 +685,114 @@ Pipeline Stage & Module & Latency \\
 $\Phi_1$ & SOM BMU (7-node WTA) & 5 cycles \\
 $\Phi_2$ & BTU spatial router (4-lane BRAM) & 3 cycles \\
 $\Phi_3$ & [4/4] Pad\'{e} Horner evaluator & 12 cycles \\
-$\Phi_3$ & $A_{31}$ conjugate reduction tower & $\sim$76 cycles \\
+$\Phi_3$ & $A_{31}$ conjugate reduction tower & 83 unit / 7 singular \\
 $\Phi_4$ & Output latch & 1 cycle \\
 \midrule
 BTU collision queue & 64$\rightarrow$6 priority encoder & O(n) bubble stall \\
 \bottomrule
 \end{tabular}
 \end{table}"""
+
+
+def generate_corrigendum_delta_table() -> str:
+    """v0.1-to-v0.2 latency-model deltas from the measured v1 constants."""
+    old_tower_cycles = 76
+    old_jet_inverse_cycles = 88
+    jet_inverse_cycles = 105
+
+    def batch_metrics(k: int, tower_cycles: int) -> tuple[int, int, float, float]:
+        baseline_mults = 9 * k
+        batch_mults = baseline_mults + 3 * (k - 1)
+        baseline = baseline_mults * MULT_CYCLES + k * tower_cycles
+        batch = batch_mults * MULT_CYCLES + tower_cycles
+        return baseline, batch, baseline / batch, 100.0 * (baseline - batch) / baseline
+
+    old_k2 = batch_metrics(2, old_tower_cycles)
+    new_k2 = batch_metrics(2, TOWER_CYCLES)
+    old_k13 = batch_metrics(13, old_tower_cycles)
+    new_k13 = batch_metrics(13, TOWER_CYCLES)
+    old_asymptote = (9 * MULT_CYCLES + old_tower_cycles) / (12 * MULT_CYCLES)
+    new_asymptote = (9 * MULT_CYCLES + TOWER_CYCLES) / (12 * MULT_CYCLES)
+
+    return rf"""% RPLU v0.2 corrigendum deltas, regenerated from measured
+% historical v1 constants by tools/rplu_paper_data.py.
+\begin{{table}}[ht]
+\centering
+\caption{{RPLU v0.1 latency-model claims and v0.2 corrections. Derived
+batch rows use a {MULT_CYCLES}-cycle shared multiply.}}
+\label{{tab:corrigendum-delta}}
+\footnotesize
+\setlength{{\tabcolsep}}{{3pt}}
+\begin{{tabular}}{{lrr}}
+\toprule
+Quantity & v0.1 & v0.2 \\
+\midrule
+Parallel unit tower & {old_tower_cycles} cycles & {TOWER_CYCLES} cycles \\
+Stage-B singular tower & not stated & 7 cycles \\
+Complete unit jet inverse & {old_jet_inverse_cycles} cycles & {jet_inverse_cycles} cycles \\
+$k=2$ baseline / batch & {old_k2[0]} / {old_k2[1]} & {new_k2[0]} / {new_k2[1]} \\
+$k=2$ speedup & {old_k2[2]:.2f}$\times$ & {new_k2[2]:.2f}$\times$ \\
+$k=13$ baseline / batch & {old_k13[0]:,} / {old_k13[1]} & {new_k13[0]:,} / {new_k13[1]} \\
+$k=13$ speedup / savings & {old_k13[2]:.2f}$\times$ / {old_k13[3]:.1f}\% & {new_k13[2]:.2f}$\times$ / {new_k13[3]:.1f}\% \\
+Asymptotic speedup & {old_asymptote:.2f}$\times$ & {new_asymptote:.2f}$\times$ \\
+\bottomrule
+\end{{tabular}}
+\end{{table}}"""
+
+
+def generate_batch_inversion_table() -> str:
+    """Montgomery batch-inversion cycle model from measured v1 constants."""
+    workloads = [
+        (2, "crossover"),
+        (4, "quad step"),
+        (13, "manifold sweep"),
+        (26, "2-step sweep"),
+        (104, "trajectory"),
+    ]
+    rows = []
+    for k, label in workloads:
+        baseline_mults = 9 * k
+        batch_mults = 9 * k + 3 * (k - 1)
+        baseline_cycles = baseline_mults * MULT_CYCLES + k * TOWER_CYCLES
+        batch_cycles = batch_mults * MULT_CYCLES + TOWER_CYCLES
+        speedup = baseline_cycles / batch_cycles
+        mac_delta = 100.0 * (batch_mults - baseline_mults) / baseline_mults
+        rows.append(
+            f"{k} ({label}) & {baseline_cycles:,} & {batch_cycles:,} & "
+            f"{speedup:.2f}$\\times$ & $+{mac_delta:.1f}\\%$ \\\\"
+        )
+
+    asymptote = (9 * MULT_CYCLES + TOWER_CYCLES) / (12 * MULT_CYCLES)
+    sensitivity = []
+    for mult_cycles in (2, 3, 4):
+        baseline = 13 * (9 * mult_cycles + TOWER_CYCLES)
+        batch = (9 * 13 + 3 * 12) * mult_cycles + TOWER_CYCLES
+        sensitivity.append(f"{baseline / batch:.2f}$\\times$")
+
+    return rf"""% Montgomery batch-inversion cycle model, regenerated from
+% measured historical v1 constants by tools/rplu_paper_data.py.
+\begin{{table}}[ht]
+\centering
+\caption{{Montgomery batch inversion cycle model: tower = {TOWER_CYCLES}
+cycles for a unit on the measured parallel backend, shared multiply =
+{MULT_CYCLES} cycles. $k$ is the number of denominators inverted in one
+batch. MAC $\Delta$ is the increase in shared-multiplier operations vs. the
+per-element baseline.}}
+\label{{tab:batch-inv}}
+\footnotesize
+\setlength{{\tabcolsep}}{{3pt}}
+\begin{{tabular}}{{lrrrr}}
+\toprule
+$k$ & Baseline cycles & Batch cycles & Speedup & MAC $\Delta$ \\
+\midrule
+{chr(10).join(rows)}
+Asymptote & --- & --- & {asymptote:.2f}$\times$ & $+33.3\%$ \\
+\bottomrule
+\multicolumn{{5}}{{l}}{{\parbox{{0.97\columnwidth}}{{\footnotesize
+Sensitivity at $k=13$: speedup is {'/'.join(sensitivity)} for multiply
+costs of 2/3/4 cycles.}}}} \\
+\end{{tabular}}
+\end{{table}}"""
 
 
 # ── Verification ────────────────────────────────────────────────────────
@@ -899,6 +1003,10 @@ def main():
             generate_nsa_dual_table(),
             "",
             generate_latency_table(),
+            "",
+            generate_corrigendum_delta_table(),
+            "",
+            generate_batch_inversion_table(),
             "",
             generate_verification_table(),
             "",

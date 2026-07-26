@@ -203,7 +203,8 @@ The RPLU v2 pipeline is a four-stage rational approximant engine:
   BMU saddle point into 4-lane BRAM for $\mathbb{A}_{31}$ evaluation.
 \item[$\Phi_3$] \textbf{Thimble-Pad\'e} -- $[4/4]$ rational Pad\'e approximant
   evaluated via Horner's method, using the Conjugate Reduction Tower for
-  $\mathbb{A}_{31}$ denominator inversion ($\sim$76 cycles, deterministic).
+  $\mathbb{A}_{31}$ denominator inversion (parallel v1: 83-cycle unit /
+  7-cycle singular, deterministic within outcome class).
 \item[$\Phi_4$] \textbf{Output latch} -- Final thimble contribution, quadray
   variety check, and QR commit.
 \end{enumerate}
