@@ -46,6 +46,7 @@ FP4_STRUCTURED="${FP4_STRUCTURED:-0}"
 FP4_STRUCTURED_SEQUENTIAL="${FP4_STRUCTURED_SEQUENTIAL:-0}"
 FP4_BACKEND_SEQUENTIAL="${FP4_BACKEND_SEQUENTIAL:-$FP4_STRUCTURED_SEQUENTIAL}"
 FP4_EVIDENCE="${FP4_EVIDENCE:-0}"
+A7_SYNTH_ABC9="${A7_SYNTH_ABC9:-0}"
 case "$FP4_STRUCTURED:$FP4_STRUCTURED_SEQUENTIAL" in
     0:0|1:0|1:1) ;;
     *) echo "Invalid FP4 selector: FP4_STRUCTURED=$FP4_STRUCTURED FP4_STRUCTURED_SEQUENTIAL=$FP4_STRUCTURED_SEQUENTIAL"; exit 1;;
@@ -54,6 +55,10 @@ case "$FP4_BACKEND_SEQUENTIAL:$FP4_EVIDENCE" in
     0:0|0:1|1:0|1:1) ;;
     *) echo "Invalid FP4 evidence selector: backend=$FP4_BACKEND_SEQUENTIAL evidence=$FP4_EVIDENCE"; exit 1;;
 esac
+case "$A7_SYNTH_ABC9" in
+    0|1) ;;
+    *) echo "Invalid A7_SYNTH_ABC9: $A7_SYNTH_ABC9 (use 0|1)"; exit 1;;
+esac
 if [ "$FP4_STRUCTURED_SEQUENTIAL" = "1" ] && [ "$FP4_BACKEND_SEQUENTIAL" != "1" ]; then
     echo "Structured sequential requests require FP4_BACKEND_SEQUENTIAL=1"
     exit 1
@@ -61,6 +66,11 @@ fi
 INVERTER_VARIANT=""
 if [ "$FP4_STRUCTURED" = "1" ] || [ "$FP4_EVIDENCE" = "1" ]; then
     INVERTER_VARIANT="_FI${FP4_STRUCTURED}B${FP4_BACKEND_SEQUENTIAL}_S${A7_SEED:-1}"
+fi
+SYNTH_XILINX_FLOW=""
+if [ "$A7_SYNTH_ABC9" = "1" ]; then
+    INVERTER_VARIANT="${INVERTER_VARIANT}_A9"
+    SYNTH_XILINX_FLOW="-abc9"
 fi
 
 # Resolve spin to uppercase
@@ -173,6 +183,7 @@ echo "  Freq:   ${A7_FREQ} MHz"
 echo "  Seed:   ${A7_SEED}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
 echo "  Fp4Inv: structured=${FP4_STRUCTURED} request-sequential=${FP4_STRUCTURED_SEQUENTIAL} backend-sequential=${FP4_BACKEND_SEQUENTIAL}"
+echo "  Synth:  abc9=${A7_SYNTH_ABC9}"
 if [ -n "$TENSEGRITY_VARIANT" ]; then
     echo "  ZPHI:   Karatsuba=${ZPHI_KARATSUBA} (0=reference, 1=candidate)"
     echo "  Tag:    ${TENSEGRITY_VARIANT#_}"
@@ -189,11 +200,11 @@ synth() {
         yosys -p "script $YS; \
             hierarchy -check -top $TOP \
                       -chparam USE_ZPHI_KARATSUBA $ZPHI_KARATSUBA; \
-            synth_xilinx -family xc7 -top $TOP -json \"$JSON\"; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
             stat -top $TOP"
     elif [ "$TOP" != "spu_a7_top" ]; then
         yosys -p "script $YS; \
-            synth_xilinx -family xc7 -top $TOP -json \"$JSON\"; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
             stat -top $TOP"
     else
         yosys -p "script $YS; \
@@ -205,7 +216,7 @@ synth() {
                     -set STRUCTURED_INVERTER_SEQUENTIAL $FP4_STRUCTURED_SEQUENTIAL \
                     spu_a7_top; \
             hierarchy -check -top spu_a7_top; \
-            synth_xilinx -family xc7 -top spu_a7_top -json \"$JSON\"; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top spu_a7_top -json \"$JSON\"; \
             stat -top spu_a7_top"
     fi
 }
