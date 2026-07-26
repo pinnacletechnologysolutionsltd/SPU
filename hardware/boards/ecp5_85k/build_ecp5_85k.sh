@@ -116,11 +116,16 @@ VERILOG_SOURCES=(
 # Exclude known SystemVerilog-heavy modules that Yosys cannot parse directly
 # These will be treated as blackboxes (inferred from instantiations)
 EXCLUDES=(
+    "${SPU13_CORE_RTL_DIR}/spu13_cluster_controller.v"
     "${SPU13_CORE_RTL_DIR}/spu13_jet_mac.v"
+    "${SPU13_CORE_RTL_DIR}/spu13_m31_multiplier_seq_fallback.v"
     "${SPU13_CORE_RTL_DIR}/spu13_phslk_core.v"
     "${SPU13_CORE_RTL_DIR}/spu13_som_classify.v"
+    "hardware/rtl/core/shared/spu_proprioception.v"
     "hardware/rtl/common/prim/spu_gowin_prim.v"
     "hardware/rtl/common/prim/spu_xilinx_prim.v"
+    "hardware/rtl/peripherals/bio/spu_annealer.v"
+    "hardware/rtl/peripherals/io/spu_i2s_out.v"
 )
 
 # Append shared/core/common RTL directories (expand wildcard lists)
