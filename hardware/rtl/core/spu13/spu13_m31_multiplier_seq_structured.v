@@ -192,22 +192,23 @@ module spu13_m31_multiplier_seq_structured #(
         end
     endfunction
 
-    function [71:0] structured_scale72;
-        input [63:0] value;
+    function [31:0] scale_operand;
+        input [31:0] value;
         input [3:0] coefficient;
+        reg [35:0] scaled;
+        reg [32:0] folded;
         begin
             case (coefficient)
-                4'd2:  structured_scale72 = {7'd0,value,1'b0};
-                4'd3:  structured_scale72 = {7'd0,value,1'b0} +
-                                                   {8'd0,value};
-                4'd5:  structured_scale72 = {6'd0,value,2'b0} +
-                                                   {8'd0,value};
-                4'd10: structured_scale72 = {5'd0,value,3'b0} +
-                                                   {7'd0,value,1'b0};
-                4'd15: structured_scale72 = {4'd0,value,4'b0} -
-                                                   {8'd0,value};
-                default: structured_scale72 = {8'd0,value};
+                4'd2:  scaled = {3'd0,value,1'b0};
+                4'd3:  scaled = {3'd0,value,1'b0} + {4'd0,value};
+                4'd5:  scaled = {2'd0,value,2'b0} + {4'd0,value};
+                4'd10: scaled = {1'd0,value,3'b0} + {3'd0,value,1'b0};
+                4'd15: scaled = {value,4'b0} - {4'd0,value};
+                default: scaled = {4'd0,value};
             endcase
+            folded = {2'd0,scaled[30:0]} + {28'd0,scaled[35:31]};
+            if (folded >= {1'b0,P}) folded = folded - {1'b0,P};
+            scale_operand = folded[31:0];
         end
     endfunction
 
@@ -286,15 +287,14 @@ module spu13_m31_multiplier_seq_structured #(
     reg [1:0] expected0, expected1, expected2, expected3;
     wire [7:0] schedule = full_sched(index[3:0]);
     wire [6:0] narrow_schedule = narrow_accum_schedule(op_reg, index[2:0]);
-    // 15*p^2 is congruent to zero mod p and exceeds every scaled product.
-    // It turns a negative contribution into a non-negative 72-bit addend, so
+    // p^2 is congruent to zero mod p and exceeds every product.  Coefficients
+    // are folded into one multiplier operand before issue.  The bias turns a
+    // negative contribution into a non-negative 72-bit addend, so
     // structured and full requests share the existing wide accumulators and
     // final Mersenne reducers.
-    localparam [71:0] NEGATIVE_BIAS = 72'h03BFFFFFF10000000F;
-    wire [71:0] narrow_scaled = structured_scale72(
-        product, narrow_schedule[3:0]);
+    localparam [71:0] NEGATIVE_BIAS = 72'h003FFFFFFF00000001;
     wire [71:0] narrow_contribution = narrow_schedule[4] ?
-        (NEGATIVE_BIAS - narrow_scaled) : narrow_scaled;
+        (NEGATIVE_BIAS - {8'd0,product}) : {8'd0,product};
     wire [71:0] narrow_accumulator =
         (narrow_schedule[6:5] == 0) ? acc0 :
         (narrow_schedule[6:5] == 1) ? acc1 :
@@ -339,7 +339,9 @@ module spu13_m31_multiplier_seq_structured #(
                         mul_b <= select_b(schedule[3:2]);
                     end else begin
                         mul_a <= narrow_lhs(op_reg, index[2:0]);
-                        mul_b <= narrow_rhs(op_reg, index[2:0]);
+                        mul_b <= scale_operand(
+                            narrow_rhs(op_reg, index[2:0]),
+                            narrow_schedule[3:0]);
                     end
                     state <= S_CAPTURE;
                 end
