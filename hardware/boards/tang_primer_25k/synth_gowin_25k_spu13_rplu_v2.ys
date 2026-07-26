@@ -57,6 +57,11 @@ read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu_cluster_reduce.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_multi_port_regfile.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_nsa_core.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_nsa_dual_alu.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_nsa_regfile_wrapper.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_topology6_state.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_janus_dual_mode.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_janus_screw_lines.v
+read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_janus_mirror.v
 read_verilog -I hardware/rtl/arch hardware/rtl/gpu/rplu_thimble_pade.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/spu13_quadray_variety.v
 read_verilog -I hardware/rtl/arch hardware/rtl/core/spu13/rplu_pipeline.v
