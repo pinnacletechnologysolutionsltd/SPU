@@ -27,24 +27,6 @@ module spu13_m31_multiplier_seq_structured #(
     reg [31:0] a0_reg, a1_reg, a2_reg, a3_reg;
     reg [31:0] b0_reg, b1_reg, b2_reg, b3_reg;
 
-    wire [30:0] nlhs0, nlhs1, nlhs2, nlhs3;
-    wire [30:0] nlhs4, nlhs5, nlhs6, nlhs7;
-    wire [30:0] nrhs0, nrhs1, nrhs2, nrhs3;
-    wire [30:0] nrhs4, nrhs5, nrhs6, nrhs7;
-    wire [3:0] narrow_product_count;
-
-    spu13_fp4_structured_operand_map #(.FIELD_W(31)) u_operand_map (
-        .op(op_reg),
-        .a0(a0_reg[30:0]), .a1(a1_reg[30:0]),
-        .a2(a2_reg[30:0]), .a3(a3_reg[30:0]),
-        .b0(b0_reg[30:0]), .b1(b1_reg[30:0]),
-        .lhs0(nlhs0), .lhs1(nlhs1), .lhs2(nlhs2), .lhs3(nlhs3),
-        .lhs4(nlhs4), .lhs5(nlhs5), .lhs6(nlhs6), .lhs7(nlhs7),
-        .rhs0(nrhs0), .rhs1(nrhs1), .rhs2(nrhs2), .rhs3(nrhs3),
-        .rhs4(nrhs4), .rhs5(nrhs5), .rhs6(nrhs6), .rhs7(nrhs7),
-        .product_count(narrow_product_count)
-    );
-
     function [4:0] op_product_count;
         input [2:0] request_op;
         begin
@@ -110,25 +92,64 @@ module spu13_m31_multiplier_seq_structured #(
     endfunction
 
     function [31:0] narrow_lhs;
+        input [2:0] request_op;
         input [2:0] index;
         begin
-            case (index)
-                0: narrow_lhs = {1'b0,nlhs0}; 1: narrow_lhs = {1'b0,nlhs1};
-                2: narrow_lhs = {1'b0,nlhs2}; 3: narrow_lhs = {1'b0,nlhs3};
-                4: narrow_lhs = {1'b0,nlhs4}; 5: narrow_lhs = {1'b0,nlhs5};
-                6: narrow_lhs = {1'b0,nlhs6}; default: narrow_lhs = {1'b0,nlhs7};
+            case (request_op)
+                3'd1: begin
+                    case (index)
+                        0, 4: narrow_lhs = a0_reg;
+                        1:    narrow_lhs = a1_reg;
+                        2, 5: narrow_lhs = a2_reg;
+                        default: narrow_lhs = a3_reg;
+                    endcase
+                end
+                3'd2: narrow_lhs = (index == 0) ? a0_reg : a1_reg;
+                3'd3: begin
+                    case (index)
+                        0, 2: narrow_lhs = a0_reg;
+                        1, 3: narrow_lhs = a1_reg;
+                        4, 6: narrow_lhs = a2_reg;
+                        default: narrow_lhs = a3_reg;
+                    endcase
+                end
+                3'd4: begin
+                    case (index)
+                        0: narrow_lhs = a0_reg;
+                        1: narrow_lhs = a1_reg;
+                        2: narrow_lhs = a2_reg;
+                        default: narrow_lhs = a3_reg;
+                    endcase
+                end
+                default: narrow_lhs = 0;
             endcase
         end
     endfunction
 
     function [31:0] narrow_rhs;
+        input [2:0] request_op;
         input [2:0] index;
         begin
-            case (index)
-                0: narrow_rhs = {1'b0,nrhs0}; 1: narrow_rhs = {1'b0,nrhs1};
-                2: narrow_rhs = {1'b0,nrhs2}; 3: narrow_rhs = {1'b0,nrhs3};
-                4: narrow_rhs = {1'b0,nrhs4}; 5: narrow_rhs = {1'b0,nrhs5};
-                6: narrow_rhs = {1'b0,nrhs6}; default: narrow_rhs = {1'b0,nrhs7};
+            case (request_op)
+                3'd1: begin
+                    case (index)
+                        0: narrow_rhs = a0_reg;
+                        1: narrow_rhs = a1_reg;
+                        2: narrow_rhs = a2_reg;
+                        3: narrow_rhs = a3_reg;
+                        4: narrow_rhs = a1_reg;
+                        default: narrow_rhs = a3_reg;
+                    endcase
+                end
+                3'd2: narrow_rhs = (index == 0) ? a0_reg : a1_reg;
+                3'd3: begin
+                    case (index)
+                        1, 2, 5, 6: narrow_rhs = b1_reg;
+                        default: narrow_rhs = b0_reg;
+                    endcase
+                end
+                3'd4: narrow_rhs = b0_reg;
+                default: narrow_rhs = 0;
             endcase
         end
     endfunction
@@ -171,14 +192,83 @@ module spu13_m31_multiplier_seq_structured #(
         end
     endfunction
 
-    function [30:0] m31_reduce_product;
-        input [61:0] value;
-        reg [31:0] sum;
+    function [71:0] structured_scale72;
+        input [63:0] value;
+        input [3:0] coefficient;
         begin
-            sum = {1'b0,value[30:0]} + {1'b0,value[61:31]};
-            if (sum >= P) sum = sum - P;
-            if (sum >= P) sum = sum - P;
-            m31_reduce_product = sum[30:0];
+            case (coefficient)
+                4'd2:  structured_scale72 = {7'd0,value,1'b0};
+                4'd3:  structured_scale72 = {7'd0,value,1'b0} +
+                                                   {8'd0,value};
+                4'd5:  structured_scale72 = {6'd0,value,2'b0} +
+                                                   {8'd0,value};
+                4'd10: structured_scale72 = {5'd0,value,3'b0} +
+                                                   {7'd0,value,1'b0};
+                4'd15: structured_scale72 = {4'd0,value,4'b0} -
+                                                   {8'd0,value};
+                default: structured_scale72 = {8'd0,value};
+            endcase
+        end
+    endfunction
+
+    function [31:0] madd31;
+        input [31:0] x, y;
+        reg [32:0] sum;
+        begin
+            sum = {1'b0,x} + {1'b0,y};
+            if (sum >= {1'b0,P}) sum = sum - {1'b0,P};
+            madd31 = sum[31:0];
+        end
+    endfunction
+
+    function [31:0] msub31;
+        input [31:0] x, y;
+        begin
+            if (x >= y) msub31 = x - y;
+            else msub31 = x + P - y;
+        end
+    endfunction
+
+    // {destination component, subtract, coefficient}.  The single serial
+    // reduction/adder consumes this schedule one entry at a time; unlike the
+    // shared-parallel backend, it does not instantiate an eight-product
+    // combiner beside the general multiplier.
+    function [6:0] narrow_accum_schedule;
+        input [2:0] request_op;
+        input [2:0] index;
+        begin
+            narrow_accum_schedule = {2'd0,1'b0,4'd1};
+            case (request_op)
+                3'd1: begin
+                    case (index)
+                        0: narrow_accum_schedule = {2'd0,1'b0,4'd1};
+                        1: narrow_accum_schedule = {2'd0,1'b0,4'd3};
+                        2: narrow_accum_schedule = {2'd0,1'b1,4'd5};
+                        3: narrow_accum_schedule = {2'd0,1'b1,4'd15};
+                        4: narrow_accum_schedule = {2'd1,1'b0,4'd2};
+                        default: narrow_accum_schedule = {2'd1,1'b1,4'd10};
+                    endcase
+                end
+                3'd2: begin
+                    if (index == 0)
+                        narrow_accum_schedule = {2'd0,1'b0,4'd1};
+                    else
+                        narrow_accum_schedule = {2'd0,1'b1,4'd3};
+                end
+                3'd3: begin
+                    case (index)
+                        0: narrow_accum_schedule = {2'd0,1'b0,4'd1};
+                        1: narrow_accum_schedule = {2'd0,1'b0,4'd3};
+                        2,3: narrow_accum_schedule = {2'd1,1'b0,4'd1};
+                        4: narrow_accum_schedule = {2'd2,1'b0,4'd1};
+                        5: narrow_accum_schedule = {2'd2,1'b0,4'd3};
+                        default: narrow_accum_schedule = {2'd3,1'b0,4'd1};
+                    endcase
+                end
+                3'd4:
+                    narrow_accum_schedule = {index[1:0],1'b0,4'd1};
+                default: narrow_accum_schedule = {2'd0,1'b0,4'd1};
+            endcase
         end
     endfunction
 
@@ -204,17 +294,6 @@ module spu13_m31_multiplier_seq_structured #(
         end
     endfunction
 
-    reg [30:0] q0, q1, q2, q3, q4, q5, q6, q7;
-    wire [30:0] narrow_r0, narrow_r1, narrow_r2, narrow_r3;
-    spu13_fp4_structured_combine #(.FIELD_W(31), .PRODUCT_W(62)) u_combine (
-        .op(op_reg),
-        .prod0({31'd0,q0}), .prod1({31'd0,q1}),
-        .prod2({31'd0,q2}), .prod3({31'd0,q3}),
-        .prod4({31'd0,q4}), .prod5({31'd0,q5}),
-        .prod6({31'd0,q6}), .prod7({31'd0,q7}),
-        .r0(narrow_r0), .r1(narrow_r1), .r2(narrow_r2), .r3(narrow_r3)
-    );
-
     localparam S_IDLE = 3'd0;
     localparam S_ISSUE = 3'd1;
     localparam S_CAPTURE = 3'd2;
@@ -224,10 +303,13 @@ module spu13_m31_multiplier_seq_structured #(
     reg [71:0] acc0, acc1, acc2, acc3;
     reg [1:0] expected0, expected1, expected2, expected3;
     wire [7:0] schedule = full_sched(index[3:0]);
-    wire [31:0] final0 = (op_reg == OP_FULL) ? m31_reduce_72(acc0) : {1'b0,narrow_r0};
-    wire [31:0] final1 = (op_reg == OP_FULL) ? m31_reduce_72(acc1) : {1'b0,narrow_r1};
-    wire [31:0] final2 = (op_reg == OP_FULL) ? m31_reduce_72(acc2) : {1'b0,narrow_r2};
-    wire [31:0] final3 = (op_reg == OP_FULL) ? m31_reduce_72(acc3) : {1'b0,narrow_r3};
+    wire [6:0] narrow_schedule = narrow_accum_schedule(op_reg, index[2:0]);
+    wire [31:0] narrow_term = m31_reduce_72(
+        structured_scale72(product, narrow_schedule[3:0]));
+    wire [31:0] final0 = (op_reg == OP_FULL) ? m31_reduce_72(acc0) : acc0[31:0];
+    wire [31:0] final1 = (op_reg == OP_FULL) ? m31_reduce_72(acc1) : acc1[31:0];
+    wire [31:0] final2 = (op_reg == OP_FULL) ? m31_reduce_72(acc2) : acc2[31:0];
+    wire [31:0] final3 = (op_reg == OP_FULL) ? m31_reduce_72(acc3) : acc3[31:0];
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -237,8 +319,6 @@ module spu13_m31_multiplier_seq_structured #(
             b0_reg <= 0; b1_reg <= 0; b2_reg <= 0; b3_reg <= 0;
             mul_a <= 0; mul_b <= 0;
             acc0 <= 0; acc1 <= 0; acc2 <= 0; acc3 <= 0;
-            q0 <= 0; q1 <= 0; q2 <= 0; q3 <= 0;
-            q4 <= 0; q5 <= 0; q6 <= 0; q7 <= 0;
             r0 <= 0; r1 <= 0; r2 <= 0; r3 <= 0;
             expected0 <= 0; expected1 <= 0; expected2 <= 0; expected3 <= 0;
             done <= 0; busy <= 0;
@@ -254,8 +334,6 @@ module spu13_m31_multiplier_seq_structured #(
                         product_limit <= op_product_count(op);
                         index <= 0;
                         acc0 <= 0; acc1 <= 0; acc2 <= 0; acc3 <= 0;
-                        q0 <= 0; q1 <= 0; q2 <= 0; q3 <= 0;
-                        q4 <= 0; q5 <= 0; q6 <= 0; q7 <= 0;
                         busy <= 1'b1;
                         state <= S_ISSUE;
                     end
@@ -265,8 +343,8 @@ module spu13_m31_multiplier_seq_structured #(
                         mul_a <= select_a(schedule[5:4]);
                         mul_b <= select_b(schedule[3:2]);
                     end else begin
-                        mul_a <= narrow_lhs(index[2:0]);
-                        mul_b <= narrow_rhs(index[2:0]);
+                        mul_a <= narrow_lhs(op_reg, index[2:0]);
+                        mul_b <= narrow_rhs(op_reg, index[2:0]);
                     end
                     state <= S_CAPTURE;
                 end
@@ -279,15 +357,19 @@ module spu13_m31_multiplier_seq_structured #(
                             3: acc3 <= acc3 + scale72(product, schedule[1:0]);
                         endcase
                     end else begin
-                        case (index[2:0])
-                            0: q0 <= m31_reduce_product(product[61:0]);
-                            1: q1 <= m31_reduce_product(product[61:0]);
-                            2: q2 <= m31_reduce_product(product[61:0]);
-                            3: q3 <= m31_reduce_product(product[61:0]);
-                            4: q4 <= m31_reduce_product(product[61:0]);
-                            5: q5 <= m31_reduce_product(product[61:0]);
-                            6: q6 <= m31_reduce_product(product[61:0]);
-                            7: q7 <= m31_reduce_product(product[61:0]);
+                        case (narrow_schedule[6:5])
+                            0: acc0 <= {40'd0, narrow_schedule[4] ?
+                                msub31(acc0[31:0], narrow_term) :
+                                madd31(acc0[31:0], narrow_term)};
+                            1: acc1 <= {40'd0, narrow_schedule[4] ?
+                                msub31(acc1[31:0], narrow_term) :
+                                madd31(acc1[31:0], narrow_term)};
+                            2: acc2 <= {40'd0, narrow_schedule[4] ?
+                                msub31(acc2[31:0], narrow_term) :
+                                madd31(acc2[31:0], narrow_term)};
+                            3: acc3 <= {40'd0, narrow_schedule[4] ?
+                                msub31(acc3[31:0], narrow_term) :
+                                madd31(acc3[31:0], narrow_term)};
                         endcase
                     end
                     if (index + 1'b1 == product_limit)
