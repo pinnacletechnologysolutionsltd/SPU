@@ -1,0 +1,36 @@
+# Structured A31 stage arithmetic: two distinct field/product width pairs.
+# Run from the repository root:
+#   sby -f hardware/tests/spu13/spu13_fp4_structured_arithmetic_formal.sby
+
+[tasks]
+width_3_6
+width_4_8_stage_a
+width_4_8_stage_b
+width_4_8_stage_d1
+width_4_8_scale
+
+[options]
+mode bmc
+depth 1
+expect pass
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal spu13_fp4_structured_arithmetic.v
+read -formal spu13_fp4_structured_arithmetic_formal.v
+width_3_6: chparam -set FIELD_W 3 -set PRODUCT_W 6 spu13_fp4_structured_arithmetic_formal
+width_3_6: prep -top spu13_fp4_structured_arithmetic_formal
+width_4_8_stage_a: chparam -set FIELD_W 4 -set PRODUCT_W 8 -set FORMAL_OP 1 spu13_fp4_structured_arithmetic_formal
+width_4_8_stage_a: prep -top spu13_fp4_structured_arithmetic_formal
+width_4_8_stage_b: chparam -set FIELD_W 4 -set PRODUCT_W 8 -set FORMAL_OP 2 spu13_fp4_structured_arithmetic_formal
+width_4_8_stage_b: prep -top spu13_fp4_structured_arithmetic_formal
+width_4_8_stage_d1: chparam -set FIELD_W 4 -set PRODUCT_W 8 -set FORMAL_OP 3 spu13_fp4_structured_arithmetic_formal
+width_4_8_stage_d1: prep -top spu13_fp4_structured_arithmetic_formal
+width_4_8_scale: chparam -set FIELD_W 4 -set PRODUCT_W 8 -set FORMAL_OP 4 spu13_fp4_structured_arithmetic_formal
+width_4_8_scale: prep -top spu13_fp4_structured_arithmetic_formal
+
+[files]
+hardware/rtl/core/spu13/spu13_fp4_structured_arithmetic.v
+hardware/tests/spu13/spu13_fp4_structured_arithmetic_formal.v
