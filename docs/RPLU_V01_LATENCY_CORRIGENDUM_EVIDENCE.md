@@ -28,7 +28,15 @@ Both zero and the nonzero zero-divisor `(753804466,0,0,1)` produced the same
 7-clock exception latency and asserted `flags_v`.
 
 The published parallel tower constant is therefore **83 clocks**, not 76.
-The tower-plus-12-clock shadow-chain model is **95 clocks**, not 88.
+
+The paper's dependent "76 + 12 = 88" jet-inverse claim contained a second
+error: the shadow pipeline is not a 12-clock addition under the published
+shared-multiplier implementation.  A separate historical bench measures the
+complete jet inverse at **105 clocks** for units.  Relative to the 83-clock
+tower, the wrapper plus six-multiply shadow chain costs 22 clocks.  Direct
+zero terminates in 1 clock; a nonzero zero-divisor detected by the tower
+terminates in 10 clocks.  The corrigendum must use 105, not the provisional
+95 obtained by changing only the tower constant.
 
 The sequential leaf result is a newly clarified backend-specific number; it
 does not replace the parallel number in the v0.1 cycle model.  The historical
@@ -48,6 +56,10 @@ integrated sequential latency is claimed from that run.
   `hardware/tests/spu13/spu13_fp4_inverter_latency_tb.v`
 - Bench SHA-256:
   `b17087a3c1e0ee3d38130ec69f6db42de1e663b1c8b2527163fd4cf8c7177029`
+- Dependent jet-inverse bench:
+  `hardware/tests/spu13/spu13_jet_inv_latency_tb.v`
+- Jet-inverse bench SHA-256:
+  `dc942598d221afb2a76113ce66cfd8aeb19e8781009366016d166502b4eefa0e`
 - Simulator/compiler: Icarus Verilog and VVP 14.0 (devel),
   `s20251012-123-g49126efa7`
 - Historical RTL was unmodified: `git -C /tmp/spu-f1e4dbf diff --exit-code`
@@ -77,6 +89,13 @@ Sequential-fallback run:
 
 ```sh
 vvp /tmp/spu-f1e4-latency-seq.vvp
+```
+
+Historical jet-inverse compile and run:
+
+```sh
+iverilog -g2012 -o /tmp/spu-f1e4-jet-latency.vvp hardware/tests/spu13/spu13_jet_inv_latency_tb.v /tmp/spu-f1e4dbf/hardware/rtl/core/spu13/spu13_jet_inv.v /tmp/spu-f1e4dbf/hardware/rtl/core/spu13/spu13_fp4_inverter.v /tmp/spu-f1e4dbf/hardware/rtl/core/spu13/spu13_m31_multiplier.v
+vvp /tmp/spu-f1e4-jet-latency.vvp
 ```
 
 ## Raw unedited output — parallel
@@ -129,4 +148,20 @@ LATENCY path=integrated class=singular case=nonzero_zero_divisor accept_edge=300
 SUMMARY leaf_unit=314 leaf_singular=73 integrated_unit=314 integrated_singular=314 arbitration_delta_unit=0 arbitration_delta_singular=241
 FAIL historical_fp4_latency (6 failures)
 hardware/tests/spu13/spu13_fp4_inverter_latency_tb.v:286: $finish called at 33146000 (1ps)
+```
+
+## Raw unedited output — complete jet inverse
+
+```text
+HISTORICAL_RTL_COMMIT f1e4dbf06aa1163cc98005feb063ec8aae7c933a
+CYCLE_CONVENTION done_rising_edge_index - accepted_start_rising_edge_index
+BACKEND parallel shared spu13_m31_multiplier.v uncontended
+JET_LATENCY class=unit case=scalar_five accept_edge=6 done_edge=111 delta=105 error=0
+JET_LATENCY class=unit case=scalar_jet accept_edge=113 done_edge=218 delta=105 error=0
+JET_LATENCY class=unit case=scalar_three accept_edge=220 done_edge=325 delta=105 error=0
+JET_LATENCY class=direct_zero case=direct_zero accept_edge=327 done_edge=328 delta=1 error=1
+JET_LATENCY class=tower_singular case=nonzero_zero_divisor accept_edge=330 done_edge=340 delta=10 error=1
+SUMMARY jet_unit=105 jet_direct_zero=1 jet_tower_singular=10 tower_unit=83 wrapper_shadow_overhead=22
+PASS historical_jet_inv_latency (0 failures)
+hardware/tests/spu13/spu13_jet_inv_latency_tb.v:204: $finish called at 3406000 (1ps)
 ```
