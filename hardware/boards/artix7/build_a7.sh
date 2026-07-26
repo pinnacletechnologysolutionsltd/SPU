@@ -236,8 +236,8 @@ pnr() {
 
     nextpnr-xilinx "${NEXTPNR_ARGS[@]}"
 
-    METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}"
-    METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; post-route metrics from nextpnr-xilinx."
+    METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}"
+    METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; FP4_STRUCTURED=${FP4_STRUCTURED}; FP4_BACKEND_SEQUENTIAL=${FP4_BACKEND_SEQUENTIAL}; post-route metrics from nextpnr-xilinx."
     if [ -n "$TENSEGRITY_VARIANT" ]; then
         METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; ZPHI_KARATSUBA=${ZPHI_KARATSUBA}; post-route metrics from nextpnr-xilinx."
     fi
