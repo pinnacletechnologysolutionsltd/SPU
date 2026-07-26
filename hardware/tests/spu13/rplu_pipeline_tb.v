@@ -2,7 +2,10 @@
 
 // rplu_pipeline_tb.v - integration smoke test for RPLU v2 pipeline control.
 
-module rplu_pipeline_tb;
+module rplu_pipeline_tb #(
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+);
 
     reg clk;
     reg rst_n;
@@ -22,7 +25,9 @@ module rplu_pipeline_tb;
     wire pipeline_stall;
 
     rplu_pipeline #(
-        .SHARE_PADE_INV_MULT(1)
+        .SHARE_PADE_INV_MULT(1),
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
     ) uut (
         .clk(clk),
         .rst_n(rst_n),

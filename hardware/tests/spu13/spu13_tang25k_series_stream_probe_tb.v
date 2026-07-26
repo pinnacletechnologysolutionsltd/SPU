@@ -9,7 +9,10 @@
 // (8 golden vectors from the committed .mem all pass in silicon-identical
 // logic, last normal vector used exactly 0x1A = 26 shared multiplies.)
 
-module spu13_tang25k_series_stream_probe_tb;
+module spu13_tang25k_series_stream_probe_tb #(
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+);
 
     localparam CLKS_PER_BIT = 8;
     localparam LINE_LEN = 22;
@@ -21,7 +24,9 @@ module spu13_tang25k_series_stream_probe_tb;
     spu13_tang25k_series_stream_probe #(
         .CLKS_PER_BIT(CLKS_PER_BIT),
         .START_DELAY(64),
-        .LINE_PERIOD(6000)
+        .LINE_PERIOD(6000),
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
     ) u_dut (
         .sys_clk(clk),
         .led(led),

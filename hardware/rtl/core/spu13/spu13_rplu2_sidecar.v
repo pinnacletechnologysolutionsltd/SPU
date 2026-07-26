@@ -16,7 +16,9 @@
 // SOM node 1.  The Padé result is committed through the existing QR telemetry.
 
 module spu13_rplu2_sidecar #(
-    parameter WIDTH = 18
+    parameter WIDTH = 18,
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -132,7 +134,9 @@ module spu13_rplu2_sidecar #(
 
     rplu_pipeline #(
         .WIDTH(WIDTH),
-        .SHARE_PADE_INV_MULT(1)
+        .SHARE_PADE_INV_MULT(1),
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
     ) u_rplu2 (
         .clk(clk),
         .rst_n(rst_n),

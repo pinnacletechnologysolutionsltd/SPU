@@ -16,6 +16,8 @@ module spu13_core #(
     parameter ENABLE_CORE_RPLU_V2_EXTENSIONS = ENABLE_CORE_RPLU_V2, // NSA/topology6 extension bundle
     parameter EXTERNAL_RPLU_PADE_MULT = 0,
     parameter SHARE_RPLU_PADE_INV_MULT = 0,
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0,
     parameter ENABLE_TORUS = 0, // optional 832-bit manifold snapshot ring buffer
     parameter ENABLE_IROTC = 0, // icosahedral A₅ engine + φ-plane typestate (IROTC_SPEC.md v0.2)
     parameter SOM_HOST_HYDRATION = 0, // 1 = SOM weights arrive via 28 host writes before dispatch
@@ -2007,7 +2009,9 @@ module spu13_core #(
 
             rplu_pipeline #(
                 .EXTERNAL_PADE_MULT(EXTERNAL_RPLU_PADE_MULT),
-                .SHARE_PADE_INV_MULT(SHARE_RPLU_PADE_INV_MULT)
+                .SHARE_PADE_INV_MULT(SHARE_RPLU_PADE_INV_MULT),
+                .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+                .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
             ) u_rplu_v2 (
                 .clk(clk), .rst_n(rst_n),
                 .som_features(rplu2_features),

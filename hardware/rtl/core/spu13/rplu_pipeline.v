@@ -16,7 +16,9 @@ module rplu_pipeline #(
     parameter MAX_NODES    = 7,
     parameter WIDTH        = 18,
     parameter EXTERNAL_PADE_MULT = 0,
-    parameter SHARE_PADE_INV_MULT = 0
+    parameter SHARE_PADE_INV_MULT = 0,
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -259,6 +261,7 @@ module rplu_pipeline #(
 
     // ── A31 inverter multiplier request/response wires ─────────────
     wire        inv_mult_start;
+    wire [2:0]  inv_mult_op;
     wire [31:0] inv_mult_a0, inv_mult_a1, inv_mult_a2, inv_mult_a3;
     wire [31:0] inv_mult_b0, inv_mult_b1, inv_mult_b2, inv_mult_b3;
     wire [31:0] inv_mult_r0, inv_mult_r1, inv_mult_r2, inv_mult_r3;
@@ -286,18 +289,49 @@ module rplu_pipeline #(
             assign shared_b2 = inv_mult_start ? inv_mult_b2 : mult_b2_w;
             assign shared_b3 = inv_mult_start ? inv_mult_b3 : mult_b3_w;
 
-            spu13_m31_multiplier u_mult_shared (
-                .clk(clk), .rst_n(rst_n),
-                .start(shared_start),
-                .a0(shared_a0), .a1(shared_a1),
-                .a2(shared_a2), .a3(shared_a3),
-                .b0(shared_b0), .b1(shared_b1),
-                .b2(shared_b2), .b3(shared_b3),
-                .r0(shared_r0), .r1(shared_r1),
-                .r2(shared_r2), .r3(shared_r3),
-                .done(shared_done), .busy(shared_busy),
-                .rns_error(shared_rns_error)
-            );
+            if (USE_STRUCTURED_INVERTER != 0) begin : gen_structured_shared
+                wire [2:0] shared_op = inv_mult_start ? inv_mult_op : 3'd0;
+                if (STRUCTURED_INVERTER_SEQUENTIAL != 0) begin : gen_sequential
+                    spu13_m31_multiplier_seq_structured u_mult_shared (
+                        .clk(clk), .rst_n(rst_n),
+                        .start(shared_start), .op(shared_op),
+                        .a0(shared_a0), .a1(shared_a1),
+                        .a2(shared_a2), .a3(shared_a3),
+                        .b0(shared_b0), .b1(shared_b1),
+                        .b2(shared_b2), .b3(shared_b3),
+                        .r0(shared_r0), .r1(shared_r1),
+                        .r2(shared_r2), .r3(shared_r3),
+                        .done(shared_done), .busy(shared_busy),
+                        .rns_error(shared_rns_error), .logical_products()
+                    );
+                end else begin : gen_parallel
+                    spu13_m31_multiplier_structured u_mult_shared (
+                        .clk(clk), .rst_n(rst_n),
+                        .start(shared_start), .op(shared_op),
+                        .a0(shared_a0), .a1(shared_a1),
+                        .a2(shared_a2), .a3(shared_a3),
+                        .b0(shared_b0), .b1(shared_b1),
+                        .b2(shared_b2), .b3(shared_b3),
+                        .r0(shared_r0), .r1(shared_r1),
+                        .r2(shared_r2), .r3(shared_r3),
+                        .done(shared_done), .busy(shared_busy),
+                        .rns_error(shared_rns_error), .logical_products()
+                    );
+                end
+            end else begin : gen_reference_shared
+                spu13_m31_multiplier u_mult_shared (
+                    .clk(clk), .rst_n(rst_n),
+                    .start(shared_start),
+                    .a0(shared_a0), .a1(shared_a1),
+                    .a2(shared_a2), .a3(shared_a3),
+                    .b0(shared_b0), .b1(shared_b1),
+                    .b2(shared_b2), .b3(shared_b3),
+                    .r0(shared_r0), .r1(shared_r1),
+                    .r2(shared_r2), .r3(shared_r3),
+                    .done(shared_done), .busy(shared_busy),
+                    .rns_error(shared_rns_error)
+                );
+            end
 
             assign mult_local_r0 = shared_r0;
             assign mult_local_r1 = shared_r1;
@@ -338,39 +372,90 @@ module rplu_pipeline #(
                 assign mult_local_rns_error = 1'b0;
             end
 
-            spu13_m31_multiplier u_mult_inv (
-                .clk(clk), .rst_n(rst_n),
-                .start(inv_mult_start),
-                .a0(inv_mult_a0), .a1(inv_mult_a1),
-                .a2(inv_mult_a2), .a3(inv_mult_a3),
-                .b0(inv_mult_b0), .b1(inv_mult_b1),
-                .b2(inv_mult_b2), .b3(inv_mult_b3),
-                .r0(inv_mult_r0), .r1(inv_mult_r1),
-                .r2(inv_mult_r2), .r3(inv_mult_r3),
-                .done(inv_mult_done), .busy(inv_mult_busy),
-                .rns_error(inv_mult_rns_error)
-            );
+            if (USE_STRUCTURED_INVERTER != 0) begin : gen_structured_inv_mult
+                if (STRUCTURED_INVERTER_SEQUENTIAL != 0) begin : gen_sequential
+                    spu13_m31_multiplier_seq_structured u_mult_inv (
+                        .clk(clk), .rst_n(rst_n),
+                        .start(inv_mult_start), .op(inv_mult_op),
+                        .a0(inv_mult_a0), .a1(inv_mult_a1),
+                        .a2(inv_mult_a2), .a3(inv_mult_a3),
+                        .b0(inv_mult_b0), .b1(inv_mult_b1),
+                        .b2(inv_mult_b2), .b3(inv_mult_b3),
+                        .r0(inv_mult_r0), .r1(inv_mult_r1),
+                        .r2(inv_mult_r2), .r3(inv_mult_r3),
+                        .done(inv_mult_done), .busy(inv_mult_busy),
+                        .rns_error(inv_mult_rns_error), .logical_products()
+                    );
+                end else begin : gen_parallel
+                    spu13_m31_multiplier_structured u_mult_inv (
+                        .clk(clk), .rst_n(rst_n),
+                        .start(inv_mult_start), .op(inv_mult_op),
+                        .a0(inv_mult_a0), .a1(inv_mult_a1),
+                        .a2(inv_mult_a2), .a3(inv_mult_a3),
+                        .b0(inv_mult_b0), .b1(inv_mult_b1),
+                        .b2(inv_mult_b2), .b3(inv_mult_b3),
+                        .r0(inv_mult_r0), .r1(inv_mult_r1),
+                        .r2(inv_mult_r2), .r3(inv_mult_r3),
+                        .done(inv_mult_done), .busy(inv_mult_busy),
+                        .rns_error(inv_mult_rns_error), .logical_products()
+                    );
+                end
+            end else begin : gen_reference_inv_mult
+                spu13_m31_multiplier u_mult_inv (
+                    .clk(clk), .rst_n(rst_n),
+                    .start(inv_mult_start),
+                    .a0(inv_mult_a0), .a1(inv_mult_a1),
+                    .a2(inv_mult_a2), .a3(inv_mult_a3),
+                    .b0(inv_mult_b0), .b1(inv_mult_b1),
+                    .b2(inv_mult_b2), .b3(inv_mult_b3),
+                    .r0(inv_mult_r0), .r1(inv_mult_r1),
+                    .r2(inv_mult_r2), .r3(inv_mult_r3),
+                    .done(inv_mult_done), .busy(inv_mult_busy),
+                    .rns_error(inv_mult_rns_error)
+                );
+            end
         end
     endgenerate
 
     // ── A31 Conjugate Reduction Tower Inverter ─────────────────────
-    spu13_fp4_inverter u_inverter (
-        .clk(clk), .rst_n(rst_n),
-        .start(inv_start_w),
-        .z0(inv_z0_w), .z1(inv_z1_w), .z2(inv_z2_w), .z3(inv_z3_w),
-        .inv0(inv_r0_w), .inv1(inv_r1_w), .inv2(inv_r2_w), .inv3(inv_r3_w),
-        .done(inv_done_w), .busy(inv_busy_w),
-        .flags_v(inv_flags_v),
-        .mult_start(inv_mult_start),
-        .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
-        .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
-        .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
-        .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
-        .mult_r0(inv_mult_r0), .mult_r1(inv_mult_r1),
-        .mult_r2(inv_mult_r2), .mult_r3(inv_mult_r3),
-        .mult_done(inv_mult_done), .mult_busy(inv_mult_busy),
-        .debug_state(), .debug_start_accept()
-    );
+    generate
+        if (USE_STRUCTURED_INVERTER != 0) begin : gen_structured_inverter
+            spu13_fp4_inverter_structured u_inverter (
+                .clk(clk), .rst_n(rst_n),
+                .start(inv_start_w),
+                .z0(inv_z0_w), .z1(inv_z1_w), .z2(inv_z2_w), .z3(inv_z3_w),
+                .inv0(inv_r0_w), .inv1(inv_r1_w), .inv2(inv_r2_w), .inv3(inv_r3_w),
+                .done(inv_done_w), .busy(inv_busy_w), .flags_v(inv_flags_v),
+                .mult_start(inv_mult_start), .mult_op(inv_mult_op),
+                .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
+                .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
+                .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
+                .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
+                .mult_r0(inv_mult_r0), .mult_r1(inv_mult_r1),
+                .mult_r2(inv_mult_r2), .mult_r3(inv_mult_r3),
+                .mult_done(inv_mult_done), .mult_busy(inv_mult_busy),
+                .debug_state(), .debug_start_accept()
+            );
+        end else begin : gen_reference_inverter
+            assign inv_mult_op = 3'd0;
+            spu13_fp4_inverter u_inverter (
+                .clk(clk), .rst_n(rst_n),
+                .start(inv_start_w),
+                .z0(inv_z0_w), .z1(inv_z1_w), .z2(inv_z2_w), .z3(inv_z3_w),
+                .inv0(inv_r0_w), .inv1(inv_r1_w), .inv2(inv_r2_w), .inv3(inv_r3_w),
+                .done(inv_done_w), .busy(inv_busy_w), .flags_v(inv_flags_v),
+                .mult_start(inv_mult_start),
+                .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
+                .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
+                .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
+                .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
+                .mult_r0(inv_mult_r0), .mult_r1(inv_mult_r1),
+                .mult_r2(inv_mult_r2), .mult_r3(inv_mult_r3),
+                .mult_done(inv_mult_done), .mult_busy(inv_mult_busy),
+                .debug_state(), .debug_start_accept()
+            );
+        end
+    endgenerate
 
     assign pade_launch = !btu_fifo_empty && !pade_inflight && !pade_busy && !pade_done;
     assign btu_fifo_push = btu_valid && (!btu_fifo_full || pade_launch);

@@ -2,7 +2,10 @@
 
 // spu13_rplu2_pade_sidecar_tb.v - coreless Artix Padé sidecar smoke test.
 
-module spu13_rplu2_pade_sidecar_tb;
+module spu13_rplu2_pade_sidecar_tb #(
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+);
 
     reg clk = 1'b0;
     reg rst_n = 1'b0;
@@ -42,7 +45,10 @@ module spu13_rplu2_pade_sidecar_tb;
     localparam [2:0] CFG_PADE_NUM = 3'd1;
     localparam [2:0] CFG_BTU_ROW  = 3'd3;
 
-    spu13_rplu2_pade_sidecar uut (
+    spu13_rplu2_pade_sidecar #(
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
+    ) uut (
         .clk(clk),
         .rst_n(rst_n),
         .inst_valid(inst_valid),

@@ -14,7 +14,10 @@
 // Instruction:
 //   2A [55:48]=QR result lane, starts Padé evaluation.
 
-module spu13_rplu2_pade_sidecar (
+module spu13_rplu2_pade_sidecar #(
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+) (
     input  wire        clk,
     input  wire        rst_n,
 
@@ -115,6 +118,7 @@ module spu13_rplu2_pade_sidecar (
     wire        inv_done, inv_busy, inv_flags_v;
 
     wire        inv_mult_start;
+    wire [2:0]  inv_mult_op;
     wire [31:0] inv_mult_a0, inv_mult_a1, inv_mult_a2, inv_mult_a3;
     wire [31:0] inv_mult_b0, inv_mult_b1, inv_mult_b2, inv_mult_b3;
     wire [31:0] inv_mult_r0, inv_mult_r1, inv_mult_r2, inv_mult_r3;
@@ -123,6 +127,7 @@ module spu13_rplu2_pade_sidecar (
     wire        inv_debug_start_accept;
 
     wire        shared_start = inv_mult_start ? inv_mult_start : pade_mult_start;
+    wire [2:0]  shared_op = inv_mult_start ? inv_mult_op : 3'd0;
     wire [31:0] shared_a0 = inv_mult_start ? inv_mult_a0 : pade_mult_a0;
     wire [31:0] shared_a1 = inv_mult_start ? inv_mult_a1 : pade_mult_a1;
     wire [31:0] shared_a2 = inv_mult_start ? inv_mult_a2 : pade_mult_a2;
@@ -202,60 +207,70 @@ module spu13_rplu2_pade_sidecar (
         .debug_state(pade_debug_state)
     );
 
-    spu13_fp4_inverter u_inv (
-        .clk(clk),
-        .rst_n(rst_n),
-        .start(inv_start),
-        .z0(inv_z0),
-        .z1(inv_z1),
-        .z2(inv_z2),
-        .z3(inv_z3),
-        .inv0(inv_r0),
-        .inv1(inv_r1),
-        .inv2(inv_r2),
-        .inv3(inv_r3),
-        .done(inv_done),
-        .busy(inv_busy),
-        .flags_v(inv_flags_v),
-        .mult_start(inv_mult_start),
-        .mult_a0(inv_mult_a0),
-        .mult_a1(inv_mult_a1),
-        .mult_a2(inv_mult_a2),
-        .mult_a3(inv_mult_a3),
-        .mult_b0(inv_mult_b0),
-        .mult_b1(inv_mult_b1),
-        .mult_b2(inv_mult_b2),
-        .mult_b3(inv_mult_b3),
-        .mult_r0(inv_mult_r0),
-        .mult_r1(inv_mult_r1),
-        .mult_r2(inv_mult_r2),
-        .mult_r3(inv_mult_r3),
-        .mult_done(inv_mult_done),
-        .mult_busy(inv_mult_busy),
-        .debug_state(inv_debug_state),
-        .debug_start_accept(inv_debug_start_accept)
-    );
-
-    spu13_m31_multiplier u_shared_mult (
-        .clk(clk),
-        .rst_n(rst_n),
-        .start(shared_start),
-        .a0(shared_a0),
-        .a1(shared_a1),
-        .a2(shared_a2),
-        .a3(shared_a3),
-        .b0(shared_b0),
-        .b1(shared_b1),
-        .b2(shared_b2),
-        .b3(shared_b3),
-        .r0(shared_r0),
-        .r1(shared_r1),
-        .r2(shared_r2),
-        .r3(shared_r3),
-        .done(shared_done),
-        .busy(shared_busy),
-        .rns_error(shared_rns_error)
-    );
+    generate
+        if (USE_STRUCTURED_INVERTER != 0) begin : gen_structured_inverter
+            spu13_fp4_inverter_structured u_inv (
+                .clk(clk), .rst_n(rst_n), .start(inv_start),
+                .z0(inv_z0), .z1(inv_z1), .z2(inv_z2), .z3(inv_z3),
+                .inv0(inv_r0), .inv1(inv_r1), .inv2(inv_r2), .inv3(inv_r3),
+                .done(inv_done), .busy(inv_busy), .flags_v(inv_flags_v),
+                .mult_start(inv_mult_start), .mult_op(inv_mult_op),
+                .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
+                .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
+                .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
+                .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
+                .mult_r0(inv_mult_r0), .mult_r1(inv_mult_r1),
+                .mult_r2(inv_mult_r2), .mult_r3(inv_mult_r3),
+                .mult_done(inv_mult_done), .mult_busy(inv_mult_busy),
+                .debug_state(inv_debug_state),
+                .debug_start_accept(inv_debug_start_accept)
+            );
+            if (STRUCTURED_INVERTER_SEQUENTIAL != 0) begin : gen_sequential
+                spu13_m31_multiplier_seq_structured u_shared_mult (
+                    .clk(clk), .rst_n(rst_n), .start(shared_start), .op(shared_op),
+                    .a0(shared_a0), .a1(shared_a1), .a2(shared_a2), .a3(shared_a3),
+                    .b0(shared_b0), .b1(shared_b1), .b2(shared_b2), .b3(shared_b3),
+                    .r0(shared_r0), .r1(shared_r1), .r2(shared_r2), .r3(shared_r3),
+                    .done(shared_done), .busy(shared_busy),
+                    .rns_error(shared_rns_error), .logical_products()
+                );
+            end else begin : gen_parallel
+                spu13_m31_multiplier_structured u_shared_mult (
+                    .clk(clk), .rst_n(rst_n), .start(shared_start), .op(shared_op),
+                    .a0(shared_a0), .a1(shared_a1), .a2(shared_a2), .a3(shared_a3),
+                    .b0(shared_b0), .b1(shared_b1), .b2(shared_b2), .b3(shared_b3),
+                    .r0(shared_r0), .r1(shared_r1), .r2(shared_r2), .r3(shared_r3),
+                    .done(shared_done), .busy(shared_busy),
+                    .rns_error(shared_rns_error), .logical_products()
+                );
+            end
+        end else begin : gen_reference_inverter
+            assign inv_mult_op = 3'd0;
+            spu13_fp4_inverter u_inv (
+                .clk(clk), .rst_n(rst_n), .start(inv_start),
+                .z0(inv_z0), .z1(inv_z1), .z2(inv_z2), .z3(inv_z3),
+                .inv0(inv_r0), .inv1(inv_r1), .inv2(inv_r2), .inv3(inv_r3),
+                .done(inv_done), .busy(inv_busy), .flags_v(inv_flags_v),
+                .mult_start(inv_mult_start),
+                .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
+                .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
+                .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
+                .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
+                .mult_r0(inv_mult_r0), .mult_r1(inv_mult_r1),
+                .mult_r2(inv_mult_r2), .mult_r3(inv_mult_r3),
+                .mult_done(inv_mult_done), .mult_busy(inv_mult_busy),
+                .debug_state(inv_debug_state),
+                .debug_start_accept(inv_debug_start_accept)
+            );
+            spu13_m31_multiplier u_shared_mult (
+                .clk(clk), .rst_n(rst_n), .start(shared_start),
+                .a0(shared_a0), .a1(shared_a1), .a2(shared_a2), .a3(shared_a3),
+                .b0(shared_b0), .b1(shared_b1), .b2(shared_b2), .b3(shared_b3),
+                .r0(shared_r0), .r1(shared_r1), .r2(shared_r2), .r3(shared_r3),
+                .done(shared_done), .busy(shared_busy), .rns_error(shared_rns_error)
+            );
+        end
+    endgenerate
 
     wire datapath_busy = pade_busy || inv_busy || shared_busy;
     assign busy = start_pending || datapath_busy;

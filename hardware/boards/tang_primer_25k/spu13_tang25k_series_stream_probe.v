@@ -23,7 +23,17 @@ module spu13_tang25k_series_stream_probe #(
     parameter CLK_FREQ     = 50000000,
     parameter CLKS_PER_BIT = 434,
     parameter START_DELAY  = 50000000 / 2,
-    parameter LINE_PERIOD  = 50000000 / 5
+    parameter LINE_PERIOD  = 50000000 / 5,
+`ifdef SPU13_STRUCTURED_INVERTER
+    parameter USE_STRUCTURED_INVERTER = 1,
+`else
+    parameter USE_STRUCTURED_INVERTER = 0,
+`endif
+`ifdef SPU13_STRUCTURED_INVERTER_SEQUENTIAL
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 1
+`else
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+`endif
 ) (
     input  wire       sys_clk,
     output wire [2:0] led,
@@ -66,6 +76,7 @@ module spu13_tang25k_series_stream_probe #(
     wire        inv_done_w, inv_flags_v, inv_busy_w;
 
     wire        t_start;
+    wire [2:0]  t_op;
     wire [31:0] t_a0, t_a1, t_a2, t_a3, t_b0, t_b1, t_b2, t_b3;
     wire        j_start;
     wire [31:0] j_a0, j_a1, j_a2, j_a3, j_b0, j_b1, j_b2, j_b3;
@@ -75,6 +86,7 @@ module spu13_tang25k_series_stream_probe #(
     // ── Shared-mult mux: tower owns the multiplier while inverting ───
     wire sel_tower = inv_start_w | inv_busy_w;
     wire        m_start = sel_tower ? t_start : j_start;
+    wire [2:0]  m_op = sel_tower ? t_op : 3'd0;
     wire [31:0] m_a0 = sel_tower ? t_a0 : j_a0;
     wire [31:0] m_a1 = sel_tower ? t_a1 : j_a1;
     wire [31:0] m_a2 = sel_tower ? t_a2 : j_a2;
@@ -111,25 +123,59 @@ module spu13_tang25k_series_stream_probe #(
         .mult_done(m_done)
     );
 
-    spu13_fp4_inverter u_inverter (
-        .clk(sys_clk), .rst_n(rst_n), .start(inv_start_w),
-        .z0(inv_z0), .z1(inv_z1), .z2(inv_z2), .z3(inv_z3),
-        .inv0(inv_r0), .inv1(inv_r1), .inv2(inv_r2), .inv3(inv_r3),
-        .done(inv_done_w), .busy(inv_busy_w), .flags_v(inv_flags_v),
-        .mult_start(t_start),
-        .mult_a0(t_a0), .mult_a1(t_a1), .mult_a2(t_a2), .mult_a3(t_a3),
-        .mult_b0(t_b0), .mult_b1(t_b1), .mult_b2(t_b2), .mult_b3(t_b3),
-        .mult_r0(m_r0), .mult_r1(m_r1), .mult_r2(m_r2), .mult_r3(m_r3),
-        .mult_done(m_done), .mult_busy(m_busy)
-    );
-
-    spu13_m31_multiplier u_mult (
-        .clk(sys_clk), .rst_n(rst_n), .start(m_start),
-        .a0(m_a0), .a1(m_a1), .a2(m_a2), .a3(m_a3),
-        .b0(m_b0), .b1(m_b1), .b2(m_b2), .b3(m_b3),
-        .r0(m_r0), .r1(m_r1), .r2(m_r2), .r3(m_r3),
-        .done(m_done), .busy(m_busy), .rns_error()
-    );
+    generate
+        if (USE_STRUCTURED_INVERTER != 0) begin : gen_structured_inverter
+            spu13_fp4_inverter_structured u_inverter (
+                .clk(sys_clk), .rst_n(rst_n), .start(inv_start_w),
+                .z0(inv_z0), .z1(inv_z1), .z2(inv_z2), .z3(inv_z3),
+                .inv0(inv_r0), .inv1(inv_r1), .inv2(inv_r2), .inv3(inv_r3),
+                .done(inv_done_w), .busy(inv_busy_w), .flags_v(inv_flags_v),
+                .mult_start(t_start), .mult_op(t_op),
+                .mult_a0(t_a0), .mult_a1(t_a1), .mult_a2(t_a2), .mult_a3(t_a3),
+                .mult_b0(t_b0), .mult_b1(t_b1), .mult_b2(t_b2), .mult_b3(t_b3),
+                .mult_r0(m_r0), .mult_r1(m_r1), .mult_r2(m_r2), .mult_r3(m_r3),
+                .mult_done(m_done), .mult_busy(m_busy),
+                .debug_state(), .debug_start_accept()
+            );
+            if (STRUCTURED_INVERTER_SEQUENTIAL != 0) begin : gen_sequential
+                spu13_m31_multiplier_seq_structured u_mult (
+                    .clk(sys_clk), .rst_n(rst_n), .start(m_start), .op(m_op),
+                    .a0(m_a0), .a1(m_a1), .a2(m_a2), .a3(m_a3),
+                    .b0(m_b0), .b1(m_b1), .b2(m_b2), .b3(m_b3),
+                    .r0(m_r0), .r1(m_r1), .r2(m_r2), .r3(m_r3),
+                    .done(m_done), .busy(m_busy), .rns_error(), .logical_products()
+                );
+            end else begin : gen_parallel
+                spu13_m31_multiplier_structured u_mult (
+                    .clk(sys_clk), .rst_n(rst_n), .start(m_start), .op(m_op),
+                    .a0(m_a0), .a1(m_a1), .a2(m_a2), .a3(m_a3),
+                    .b0(m_b0), .b1(m_b1), .b2(m_b2), .b3(m_b3),
+                    .r0(m_r0), .r1(m_r1), .r2(m_r2), .r3(m_r3),
+                    .done(m_done), .busy(m_busy), .rns_error(), .logical_products()
+                );
+            end
+        end else begin : gen_reference_inverter
+            assign t_op = 3'd0;
+            spu13_fp4_inverter u_inverter (
+                .clk(sys_clk), .rst_n(rst_n), .start(inv_start_w),
+                .z0(inv_z0), .z1(inv_z1), .z2(inv_z2), .z3(inv_z3),
+                .inv0(inv_r0), .inv1(inv_r1), .inv2(inv_r2), .inv3(inv_r3),
+                .done(inv_done_w), .busy(inv_busy_w), .flags_v(inv_flags_v),
+                .mult_start(t_start),
+                .mult_a0(t_a0), .mult_a1(t_a1), .mult_a2(t_a2), .mult_a3(t_a3),
+                .mult_b0(t_b0), .mult_b1(t_b1), .mult_b2(t_b2), .mult_b3(t_b3),
+                .mult_r0(m_r0), .mult_r1(m_r1), .mult_r2(m_r2), .mult_r3(m_r3),
+                .mult_done(m_done), .mult_busy(m_busy)
+            );
+            spu13_m31_multiplier u_mult (
+                .clk(sys_clk), .rst_n(rst_n), .start(m_start),
+                .a0(m_a0), .a1(m_a1), .a2(m_a2), .a3(m_a3),
+                .b0(m_b0), .b1(m_b1), .b2(m_b2), .b3(m_b3),
+                .r0(m_r0), .r1(m_r1), .r2(m_r2), .r3(m_r3),
+                .done(m_done), .busy(m_busy), .rns_error()
+            );
+        end
+    endgenerate
 
     // ── Resource counters (per vector, reset by dut_start) ───────────
     reg [7:0] jcnt, icnt;

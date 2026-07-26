@@ -6,7 +6,10 @@
 // test_pade_batch_inversion.py --emit-mem), feeds them to the DUT,
 // and checks outputs against expected values mechanically.
 
-module spu13_batch_inverter_tb;
+module spu13_batch_inverter_tb #(
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+);
 
     reg         clk;
     reg         rst_n;
@@ -24,7 +27,11 @@ module spu13_batch_inverter_tb;
     wire        busy;
     wire [3:0]  debug_state;
 
-    spu13_batch_inverter #(.MAX_BATCH(16)) u_dut (
+    spu13_batch_inverter #(
+        .MAX_BATCH(16),
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
+    ) u_dut (
         .clk(clk), .rst_n(rst_n),
         .start(start), .batch_size(batch_size),
         .d0(d0), .d1(d1), .d2(d2), .d3(d3),

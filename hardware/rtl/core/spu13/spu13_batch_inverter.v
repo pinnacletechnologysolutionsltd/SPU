@@ -22,7 +22,9 @@
 // inverses stream out sequentially (valid per lane + per-lane singular flag).
 
 module spu13_batch_inverter #(
-    parameter MAX_BATCH = 16
+    parameter MAX_BATCH = 16,
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -97,12 +99,14 @@ module spu13_batch_inverter #(
     wire        batch_mult_busy;
 
     wire        inv_mult_start;
+    wire [2:0]  inv_mult_op;
     wire [31:0] inv_mult_a0, inv_mult_a1, inv_mult_a2, inv_mult_a3;
     wire [31:0] inv_mult_b0, inv_mult_b1, inv_mult_b2, inv_mult_b3;
 
     // Input mux: inverter has priority
     wire        shared_mult_start = inv_mult_start ? inv_mult_start
                                                      : batch_mult_start;
+    wire [2:0]  shared_mult_op = inv_mult_start ? inv_mult_op : 3'd0;
     wire [31:0] shared_mult_a0 = inv_mult_start ? inv_mult_a0 : batch_mult_a0;
     wire [31:0] shared_mult_a1 = inv_mult_start ? inv_mult_a1 : batch_mult_a1;
     wire [31:0] shared_mult_a2 = inv_mult_start ? inv_mult_a2 : batch_mult_a2;
@@ -116,20 +120,50 @@ module spu13_batch_inverter #(
     wire        shared_mult_done;
     wire        shared_mult_busy;
 
-    spu13_m31_multiplier u_shared_mult (
-        .clk  (clk),
-        .rst_n(rst_n),
-        .start(shared_mult_start),
-        .a0(shared_mult_a0), .a1(shared_mult_a1),
-        .a2(shared_mult_a2), .a3(shared_mult_a3),
-        .b0(shared_mult_b0), .b1(shared_mult_b1),
-        .b2(shared_mult_b2), .b3(shared_mult_b3),
-        .r0(shared_mult_r0), .r1(shared_mult_r1),
-        .r2(shared_mult_r2), .r3(shared_mult_r3),
-        .done(shared_mult_done),
-        .busy(shared_mult_busy),
-        .rns_error()
-    );
+    generate
+        if (USE_STRUCTURED_INVERTER != 0) begin : gen_structured_shared_mult
+            if (STRUCTURED_INVERTER_SEQUENTIAL != 0) begin : gen_sequential
+                spu13_m31_multiplier_seq_structured u_shared_mult (
+                    .clk(clk), .rst_n(rst_n),
+                    .start(shared_mult_start), .op(shared_mult_op),
+                    .a0(shared_mult_a0), .a1(shared_mult_a1),
+                    .a2(shared_mult_a2), .a3(shared_mult_a3),
+                    .b0(shared_mult_b0), .b1(shared_mult_b1),
+                    .b2(shared_mult_b2), .b3(shared_mult_b3),
+                    .r0(shared_mult_r0), .r1(shared_mult_r1),
+                    .r2(shared_mult_r2), .r3(shared_mult_r3),
+                    .done(shared_mult_done), .busy(shared_mult_busy),
+                    .rns_error(), .logical_products()
+                );
+            end else begin : gen_parallel
+                spu13_m31_multiplier_structured u_shared_mult (
+                    .clk(clk), .rst_n(rst_n),
+                    .start(shared_mult_start), .op(shared_mult_op),
+                    .a0(shared_mult_a0), .a1(shared_mult_a1),
+                    .a2(shared_mult_a2), .a3(shared_mult_a3),
+                    .b0(shared_mult_b0), .b1(shared_mult_b1),
+                    .b2(shared_mult_b2), .b3(shared_mult_b3),
+                    .r0(shared_mult_r0), .r1(shared_mult_r1),
+                    .r2(shared_mult_r2), .r3(shared_mult_r3),
+                    .done(shared_mult_done), .busy(shared_mult_busy),
+                    .rns_error(), .logical_products()
+                );
+            end
+        end else begin : gen_reference_shared_mult
+            spu13_m31_multiplier u_shared_mult (
+                .clk(clk), .rst_n(rst_n),
+                .start(shared_mult_start),
+                .a0(shared_mult_a0), .a1(shared_mult_a1),
+                .a2(shared_mult_a2), .a3(shared_mult_a3),
+                .b0(shared_mult_b0), .b1(shared_mult_b1),
+                .b2(shared_mult_b2), .b3(shared_mult_b3),
+                .r0(shared_mult_r0), .r1(shared_mult_r1),
+                .r2(shared_mult_r2), .r3(shared_mult_r3),
+                .done(shared_mult_done), .busy(shared_mult_busy),
+                .rns_error()
+            );
+        end
+    endgenerate
 
     // Result fan-out: both clients see results
     assign batch_mult_r0 = shared_mult_r0;
@@ -149,28 +183,44 @@ module spu13_batch_inverter #(
     wire        tower_busy;
     wire        tower_flags_v;
 
-    spu13_fp4_inverter u_tower (
-        .clk  (clk),
-        .rst_n(rst_n),
-        .start(tower_start),
-        .z0(tower_z0), .z1(tower_z1), .z2(tower_z2), .z3(tower_z3),
-        .inv0(tower_inv0), .inv1(tower_inv1),
-        .inv2(tower_inv2), .inv3(tower_inv3),
-        .done(tower_done),
-        .busy(tower_busy),
-        .flags_v(tower_flags_v),
-        .mult_start(inv_mult_start),
-        .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
-        .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
-        .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
-        .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
-        .mult_r0(shared_mult_r0), .mult_r1(shared_mult_r1),
-        .mult_r2(shared_mult_r2), .mult_r3(shared_mult_r3),
-        .mult_done(shared_mult_done),
-        .mult_busy(shared_mult_busy),
-        .debug_state(),
-        .debug_start_accept()
-    );
+    generate
+        if (USE_STRUCTURED_INVERTER != 0) begin : gen_structured_tower
+            spu13_fp4_inverter_structured u_tower (
+                .clk(clk), .rst_n(rst_n), .start(tower_start),
+                .z0(tower_z0), .z1(tower_z1), .z2(tower_z2), .z3(tower_z3),
+                .inv0(tower_inv0), .inv1(tower_inv1),
+                .inv2(tower_inv2), .inv3(tower_inv3),
+                .done(tower_done), .busy(tower_busy), .flags_v(tower_flags_v),
+                .mult_start(inv_mult_start), .mult_op(inv_mult_op),
+                .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
+                .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
+                .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
+                .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
+                .mult_r0(shared_mult_r0), .mult_r1(shared_mult_r1),
+                .mult_r2(shared_mult_r2), .mult_r3(shared_mult_r3),
+                .mult_done(shared_mult_done), .mult_busy(shared_mult_busy),
+                .debug_state(), .debug_start_accept()
+            );
+        end else begin : gen_reference_tower
+            assign inv_mult_op = 3'd0;
+            spu13_fp4_inverter u_tower (
+                .clk(clk), .rst_n(rst_n), .start(tower_start),
+                .z0(tower_z0), .z1(tower_z1), .z2(tower_z2), .z3(tower_z3),
+                .inv0(tower_inv0), .inv1(tower_inv1),
+                .inv2(tower_inv2), .inv3(tower_inv3),
+                .done(tower_done), .busy(tower_busy), .flags_v(tower_flags_v),
+                .mult_start(inv_mult_start),
+                .mult_a0(inv_mult_a0), .mult_a1(inv_mult_a1),
+                .mult_a2(inv_mult_a2), .mult_a3(inv_mult_a3),
+                .mult_b0(inv_mult_b0), .mult_b1(inv_mult_b1),
+                .mult_b2(inv_mult_b2), .mult_b3(inv_mult_b3),
+                .mult_r0(shared_mult_r0), .mult_r1(shared_mult_r1),
+                .mult_r2(shared_mult_r2), .mult_r3(shared_mult_r3),
+                .mult_done(shared_mult_done), .mult_busy(shared_mult_busy),
+                .debug_state(), .debug_start_accept()
+            );
+        end
+    endgenerate
 
     // ── Scalar norm probe for zero-divisor isolation ────────────────
     // Returns 1 if norm(z) == 0 (i.e., z is zero or a zero divisor).
