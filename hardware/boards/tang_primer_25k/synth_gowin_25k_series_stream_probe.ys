@@ -7,7 +7,11 @@ read_verilog -lib +/gowin/cells_xtra_gw5a.v
 read_verilog -I hardware/rtl/arch \
     hardware/boards/tang_primer_25k/spu13_tang25k_series_stream_probe.v \
     hardware/rtl/core/spu13/spu13_series_stream.v \
+    hardware/rtl/core/spu13/spu13_fp4_structured_arithmetic.v \
+    hardware/rtl/core/spu13/spu13_m31_multiplier_structured.v \
+    hardware/rtl/core/spu13/spu13_m31_multiplier_seq_structured.v \
     hardware/rtl/core/spu13/spu13_fp4_inverter.v \
+    hardware/rtl/core/spu13/spu13_fp4_inverter_structured.v \
     hardware/rtl/core/spu13/spu13_m31_multiplier.v
 
 hierarchy -top spu13_tang25k_series_stream_probe

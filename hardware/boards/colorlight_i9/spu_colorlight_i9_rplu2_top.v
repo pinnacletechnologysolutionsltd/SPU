@@ -6,7 +6,18 @@
 // No SPI slave, no sidecars — just feeds constant stimuli so Yosys
 // preserves the RPLU2 logic and gives us real resource numbers.
 
-module spu_colorlight_i9_rplu2_top (
+module spu_colorlight_i9_rplu2_top #(
+`ifdef SPU13_STRUCTURED_INVERTER
+    parameter USE_STRUCTURED_INVERTER = 1,
+`else
+    parameter USE_STRUCTURED_INVERTER = 0,
+`endif
+`ifdef SPU13_STRUCTURED_INVERTER_SEQUENTIAL
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 1
+`else
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+`endif
+) (
     input  wire        clk_25m,
     output wire        led,
     output wire        uart_tx,
@@ -78,6 +89,8 @@ module spu_colorlight_i9_rplu2_top (
         .ENABLE_CORE_RPLU_V2_EXTENSIONS(0),
         .EXTERNAL_RPLU_PADE_MULT(0),
         .SHARE_RPLU_PADE_INV_MULT(1),
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL),
         .ENABLE_TORUS(0),
         .MEM_FILE("hardware/rtl/arch/hw_test.mem")
     ) core_inst (

@@ -43,7 +43,11 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/gpu/rplu_thimble_pade.v \
     hardware/rtl/core/spu13/spu13_quadray_variety.v \
     hardware/rtl/core/spu13/spu13_m31_multiplier.v \
+    hardware/rtl/core/spu13/spu13_fp4_structured_arithmetic.v \
+    hardware/rtl/core/spu13/spu13_m31_multiplier_structured.v \
+    hardware/rtl/core/spu13/spu13_m31_multiplier_seq_structured.v \
     hardware/rtl/core/spu13/spu13_fp4_inverter.v \
+    hardware/rtl/core/spu13/spu13_fp4_inverter_structured.v \
     hardware/rtl/core/spu13/spu13_m31_inverter.v \
     hardware/rtl/core/spu13/spu13_nsa_core.v \
     hardware/rtl/core/spu13/spu13_nsa_dual_alu.v \

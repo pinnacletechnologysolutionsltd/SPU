@@ -53,6 +53,8 @@ module spu_a7_top #(
     parameter ENABLE_RPLU_V2     = 0,
     parameter ENABLE_RPLU_V2_PIPELINE = ENABLE_RPLU_V2,
     parameter ENABLE_RPLU_V2_EXTENSIONS = 0,
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0,
     parameter ENABLE_LUCAS_MAC  = 0,
     parameter ENABLE_SU3        = 0,
     parameter ENABLE_IROTC      = 0,
@@ -698,6 +700,8 @@ module spu_a7_top #(
                 .ENABLE_IROTC(_IROTC),
                 .EXTERNAL_RPLU_PADE_MULT(_SHARED_SU3_MULT),
                 .SHARE_RPLU_PADE_INV_MULT(_SHARED_RPLU2_MULT),
+                .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+                .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL),
                 .ENABLE_TORUS(_T)
             ) u_core (
                 .clk(clk_fast), .rst_n(rst_n),
@@ -898,7 +902,10 @@ module spu_a7_top #(
     // ── RPLU2 Live Evaluator Sidecar ─────────────────────────────
     generate
         if (_R2_LIVE) begin : gen_rplu2_sidecar
-            spu13_rplu2_sidecar u_rplu2_sidecar (
+            spu13_rplu2_sidecar #(
+                .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+                .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
+            ) u_rplu2_sidecar (
                 .clk(clk_fast),
                 .rst_n(rst_n),
                 .inst_valid(spi_inst_valid),
@@ -921,7 +928,10 @@ module spu_a7_top #(
             );
         end else begin : gen_rplu2_pade_or_none
             if (_R2_PADE) begin : gen_rplu2_pade_sidecar
-                spu13_rplu2_pade_sidecar u_rplu2_pade_sidecar (
+                spu13_rplu2_pade_sidecar #(
+                    .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+                    .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
+                ) u_rplu2_pade_sidecar (
                     .clk(clk_fast),
                     .rst_n(rst_n),
                     .inst_valid(spi_inst_valid),

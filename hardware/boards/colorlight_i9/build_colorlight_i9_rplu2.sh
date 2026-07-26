@@ -13,7 +13,24 @@ STEP="${1:-all}"
 BOARD_DIR="hardware/boards/colorlight_i9"
 BUILD_DIR="build"
 
+FP4_STRUCTURED="${FP4_STRUCTURED:-0}"
+FP4_STRUCTURED_SEQUENTIAL="${FP4_STRUCTURED_SEQUENTIAL:-0}"
+case "$FP4_STRUCTURED:$FP4_STRUCTURED_SEQUENTIAL" in
+    0:0|1:0|1:1) ;;
+    *) echo "Invalid FP4 selector: FP4_STRUCTURED=$FP4_STRUCTURED FP4_STRUCTURED_SEQUENTIAL=$FP4_STRUCTURED_SEQUENTIAL"; exit 1;;
+esac
+FP4_DEFINES=""
+FP4_SUFFIX=""
+if [ "$FP4_STRUCTURED" = "1" ]; then
+    FP4_DEFINES="-DSPU13_STRUCTURED_INVERTER"
+    FP4_SUFFIX="_FI1B${FP4_STRUCTURED_SEQUENTIAL}"
+fi
+if [ "$FP4_STRUCTURED_SEQUENTIAL" = "1" ]; then
+    FP4_DEFINES="$FP4_DEFINES -DSPU13_STRUCTURED_INVERTER_SEQUENTIAL"
+fi
+
 TOP_MODULE="spu_colorlight_i9_rplu2_top"
+ARTIFACT_STEM="${TOP_MODULE}${FP4_SUFFIX}"
 DEVICE_FLAG="--45k"
 PACKAGE="CABGA381"
 NEXTPNR_HOME="${SPU_NEXTPNR_HOME:-${PWD}/${BUILD_DIR}/yosyshq_home}"
@@ -55,7 +72,11 @@ SOURCES=(
     "hardware/rtl/core/spu13/spu_btu_collision_resolver.v"
     "hardware/rtl/core/spu13/spu_bram_32x64_array.v"
     "hardware/rtl/core/spu13/spu13_m31_multiplier.v"
+    "hardware/rtl/core/spu13/spu13_fp4_structured_arithmetic.v"
+    "hardware/rtl/core/spu13/spu13_m31_multiplier_structured.v"
+    "hardware/rtl/core/spu13/spu13_m31_multiplier_seq_structured.v"
     "hardware/rtl/core/spu13/spu13_fp4_inverter.v"
+    "hardware/rtl/core/spu13/spu13_fp4_inverter_structured.v"
     "hardware/rtl/core/spu13/spu13_multi_port_regfile.v"
     "hardware/rtl/core/spu13/spu_som_train.v"
     "hardware/rtl/core/spu13/spu13_quadray_variety.v"
@@ -104,16 +125,17 @@ synth() {
     echo ">>> Yosys Synthesis (RPLU2 pipeline) <<<"
     echo "  Target: LFE5U-45F-class ($PACKAGE)"
     echo "  Top:    $TOP_MODULE"
+    echo "  Fp4Inv: structured=$FP4_STRUCTURED sequential=$FP4_STRUCTURED_SEQUENTIAL"
 
     SOURCES_STR="${SOURCES[@]}"
 
     yosys -q -p "
-        read_verilog -Ihardware/rtl/arch -Ihardware/common/rtl/include ${SOURCES_STR}
-        synth_ecp5 -json ${BUILD_DIR}/${TOP_MODULE}.json -top ${TOP_MODULE}
+        read_verilog ${FP4_DEFINES} -Ihardware/rtl/arch -Ihardware/common/rtl/include ${SOURCES_STR}
+        synth_ecp5 -json ${BUILD_DIR}/${ARTIFACT_STEM}.json -top ${TOP_MODULE}
         stat -top ${TOP_MODULE}
     "
 
-    echo "✓ Synthesis complete: ${BUILD_DIR}/${TOP_MODULE}.json"
+    echo "✓ Synthesis complete: ${BUILD_DIR}/${ARTIFACT_STEM}.json"
 }
 
 # Nextpnr place-and-route
@@ -122,10 +144,10 @@ pnr() {
 
     HOME="$NEXTPNR_HOME" nextpnr-ecp5 \
         "$DEVICE_FLAG" \
-        --json "${BUILD_DIR}/${TOP_MODULE}.json" \
+        --json "${BUILD_DIR}/${ARTIFACT_STEM}.json" \
         --lpf "${BOARD_DIR}/colorlight_i9.lpf" \
         --lpf-allow-unconstrained \
-        --textcfg "${BUILD_DIR}/${TOP_MODULE}_out.config" \
+        --textcfg "${BUILD_DIR}/${ARTIFACT_STEM}_out.config" \
         --freq 25 \
         --speed 8 \
         --package "$PACKAGE"
@@ -138,10 +160,10 @@ bitstream() {
     echo ">>> Ecppack Bitstream Generation <<<"
 
     ecppack --compress \
-        --input "${BUILD_DIR}/${TOP_MODULE}_out.config" \
-        --bit "${BUILD_DIR}/${TOP_MODULE}.bit"
+        --input "${BUILD_DIR}/${ARTIFACT_STEM}_out.config" \
+        --bit "${BUILD_DIR}/${ARTIFACT_STEM}.bit"
 
-    echo "✓ Bitstream complete: ${BUILD_DIR}/${TOP_MODULE}.bit"
+    echo "✓ Bitstream complete: ${BUILD_DIR}/${ARTIFACT_STEM}.bit"
 }
 
 case "$STEP" in

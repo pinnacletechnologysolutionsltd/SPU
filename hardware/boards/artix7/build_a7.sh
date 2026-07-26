@@ -40,6 +40,19 @@ A7_FREQ_ENV="${A7_FREQ:-}"
 # see spu_a7_top.v's A7_UART_DIAG parameter doc.
 A7_UART_DIAG="${A7_UART_DIAG:-0}"
 
+# Fp4 tower candidate selector. Default-off preserves the historical v1 path.
+# The sequential setting selects the one-product backend for matched A/B runs.
+FP4_STRUCTURED="${FP4_STRUCTURED:-0}"
+FP4_STRUCTURED_SEQUENTIAL="${FP4_STRUCTURED_SEQUENTIAL:-0}"
+case "$FP4_STRUCTURED:$FP4_STRUCTURED_SEQUENTIAL" in
+    0:0|1:0|1:1) ;;
+    *) echo "Invalid FP4 selector: FP4_STRUCTURED=$FP4_STRUCTURED FP4_STRUCTURED_SEQUENTIAL=$FP4_STRUCTURED_SEQUENTIAL"; exit 1;;
+esac
+INVERTER_VARIANT=""
+if [ "$FP4_STRUCTURED" = "1" ]; then
+    INVERTER_VARIANT="_FI1B${FP4_STRUCTURED_SEQUENTIAL}_S${A7_SEED:-1}"
+fi
+
 # Resolve spin to uppercase
 SPIN=$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')
 
@@ -100,25 +113,29 @@ case "$DEVICE_CHIP" in
         PART="xc7a35tcsg324-1"; XDC="hardware/boards/artix7/spu_a7_35t.xdc"
         DEVICE_PARAM="A7_35T"
         CHIPDB="build/chipdb/xc7a35t.bin"
-        JSON="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}.json"
-        BITSTREAM="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}.bit";;
+        JSON="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.json"
+        BITSTREAM="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.bit";;
     100t)
         PART="xc7a100tfgg676-1"; XDC="hardware/boards/artix7/spu_a7_100t.xdc"
         DEVICE_PARAM="A7_100T"
         CHIPDB="build/chipdb/xc7a100tfgg676.bin"
-        JSON="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}.json"
-        BITSTREAM="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}.bit";;
+        JSON="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.json"
+        BITSTREAM="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.bit";;
     200t)
         PART="xc7a200tsbg484-1"; XDC="hardware/boards/artix7/spu_a7_200t.xdc"
         DEVICE_PARAM="A7_200T"
         CHIPDB="build/chipdb/xc7a200t.bin"
-        JSON="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}.json"
-        BITSTREAM="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}.bit";;
+        JSON="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.json"
+        BITSTREAM="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.bit";;
     *) echo "Unknown device: $DEVICE_CHIP (use 35t|100t|200t)"; exit 1;;
 esac
 
 YS="hardware/boards/artix7/synth_a7.ys"
 TOP="spu_a7_top"
+
+if [ "$FP4_STRUCTURED_SEQUENTIAL" = "1" ]; then
+    YS="hardware/boards/artix7/synth_a7_seq.ys"
+fi
 
 if [ "$SPIN" = "SOMPROBE" ]; then
     YS="hardware/boards/artix7/synth_a7_som_probe.ys"
@@ -145,6 +162,7 @@ echo "  Step:   $STEP"
 echo "  Freq:   ${A7_FREQ} MHz"
 echo "  Seed:   ${A7_SEED}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
+echo "  Fp4Inv: structured=${FP4_STRUCTURED} sequential=${FP4_STRUCTURED_SEQUENTIAL}"
 if [ -n "$TENSEGRITY_VARIANT" ]; then
     echo "  ZPHI:   Karatsuba=${ZPHI_KARATSUBA} (0=reference, 1=candidate)"
     echo "  Tag:    ${TENSEGRITY_VARIANT#_}"
@@ -173,6 +191,8 @@ synth() {
                     -set SPIN \"$SPIN\" \
                     -set A7_CLK_DIV_LOG2 $A7_CLK_DIV_LOG2 \
                     -set A7_UART_DIAG $A7_UART_DIAG \
+                    -set USE_STRUCTURED_INVERTER $FP4_STRUCTURED \
+                    -set STRUCTURED_INVERTER_SEQUENTIAL $FP4_STRUCTURED_SEQUENTIAL \
                     spu_a7_top; \
             hierarchy -check -top spu_a7_top; \
             synth_xilinx -family xc7 -top spu_a7_top -json \"$JSON\"; \

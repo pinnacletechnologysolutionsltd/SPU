@@ -8,7 +8,24 @@ set -e
 BOARD_DIR=$(dirname "$0")
 BUILD_DIR="build"
 
+FP4_STRUCTURED="${FP4_STRUCTURED:-0}"
+FP4_STRUCTURED_SEQUENTIAL="${FP4_STRUCTURED_SEQUENTIAL:-0}"
+case "$FP4_STRUCTURED:$FP4_STRUCTURED_SEQUENTIAL" in
+    0:0|1:0|1:1) ;;
+    *) echo "Invalid FP4 selector: FP4_STRUCTURED=$FP4_STRUCTURED FP4_STRUCTURED_SEQUENTIAL=$FP4_STRUCTURED_SEQUENTIAL"; exit 1;;
+esac
+FP4_DEFINES=""
+FP4_SUFFIX=""
+if [ "$FP4_STRUCTURED" = "1" ]; then
+    FP4_DEFINES="-DSPU13_STRUCTURED_INVERTER"
+    FP4_SUFFIX="_FI1B${FP4_STRUCTURED_SEQUENTIAL}"
+fi
+if [ "$FP4_STRUCTURED_SEQUENTIAL" = "1" ]; then
+    FP4_DEFINES="$FP4_DEFINES -DSPU13_STRUCTURED_INVERTER_SEQUENTIAL"
+fi
+
 TOP_MODULE="spu_ecp5_top"
+ARTIFACT_STEM="${TOP_MODULE}${FP4_SUFFIX}"
 DEVICE_FLAG="--um5g-85k"
 PACKAGE="CABGA381"
 NEXTPNR_HOME="${SPU_NEXTPNR_HOME:-${PWD}/${BUILD_DIR}/yosyshq_home}"
@@ -35,6 +52,8 @@ VERILOG_SOURCES=(
     "${SPU13_CORE_RTL_DIR}/spu13_btu_core_top.v"
     "${SPU13_CORE_RTL_DIR}/spu13_core.v"
     "${SPU13_CORE_RTL_DIR}/spu13_fp4_inverter.v"
+    "${SPU13_CORE_RTL_DIR}/spu13_fp4_inverter_structured.v"
+    "${SPU13_CORE_RTL_DIR}/spu13_fp4_structured_arithmetic.v"
     "${SPU13_CORE_RTL_DIR}/spu13_janus_dual_mode.v"
     "${SPU13_CORE_RTL_DIR}/spu13_janus_mirror.v"
     "${SPU13_CORE_RTL_DIR}/spu13_janus_screw_lines.v"
@@ -45,6 +64,8 @@ VERILOG_SOURCES=(
     "${SPU13_CORE_RTL_DIR}/spu13_lucas_sidecar.v"
     "${SPU13_CORE_RTL_DIR}/spu13_m31_inverter.v"
     "${SPU13_CORE_RTL_DIR}/spu13_m31_multiplier.v"
+    "${SPU13_CORE_RTL_DIR}/spu13_m31_multiplier_structured.v"
+    "${SPU13_CORE_RTL_DIR}/spu13_m31_multiplier_seq_structured.v"
     "${SPU13_CORE_RTL_DIR}/spu13_multi_port_regfile.v"
     "${SPU13_CORE_RTL_DIR}/spu13_neuro_epoch_sidecar.v"
     "${SPU13_CORE_RTL_DIR}/spu13_neuro_sidecar_adapter.v"
@@ -147,18 +168,18 @@ done
 # Combine final unique list into a string for yosys read_verilog
 VERILOG_SOURCES_STR="${VERILOG_SOURCES_UNIQ[@]}"
 
-yosys -q -p "read_verilog -Ihardware/rtl/arch -Ihardware/common/rtl/include -sv ${VERILOG_SOURCES_STR}; synth_ecp5 -json ${BUILD_DIR}/${TOP_MODULE}.json -top ${TOP_MODULE}"
+yosys -q -p "read_verilog ${FP4_DEFINES} -Ihardware/rtl/arch -Ihardware/common/rtl/include -sv ${VERILOG_SOURCES_STR}; synth_ecp5 -json ${BUILD_DIR}/${ARTIFACT_STEM}.json -top ${TOP_MODULE}"
 
 # Nextpnr place-and-route
-HOME="${NEXTPNR_HOME}" nextpnr-ecp5 "${DEVICE_FLAG}" --json "${BUILD_DIR}/${TOP_MODULE}.json" \
+HOME="${NEXTPNR_HOME}" nextpnr-ecp5 "${DEVICE_FLAG}" --json "${BUILD_DIR}/${ARTIFACT_STEM}.json" \
     --lpf "${BOARD_DIR}/spu_ecp5_85k.lpf" \
     --lpf-allow-unconstrained \
-    --textcfg "${BUILD_DIR}/${TOP_MODULE}_out.config" \
+    --textcfg "${BUILD_DIR}/${ARTIFACT_STEM}_out.config" \
     --freq 50 --speed 8 \
     --package "${PACKAGE}"
 
 # Ecppack bitstream generation
-ecppack --compress --input "${BUILD_DIR}/${TOP_MODULE}_out.config" \
-    --bit "${BUILD_DIR}/${TOP_MODULE}.bit"
+ecppack --compress --input "${BUILD_DIR}/${ARTIFACT_STEM}_out.config" \
+    --bit "${BUILD_DIR}/${ARTIFACT_STEM}.bit"
 
-echo "ECP5 build complete. Bitstream: ${BUILD_DIR}/${TOP_MODULE}.bit"
+echo "ECP5 build complete. Bitstream: ${BUILD_DIR}/${ARTIFACT_STEM}.bit"

@@ -14,6 +14,16 @@ module spu13_tang25k_top #(
     parameter ENABLE_CORE_MATH = 0,
     parameter ENABLE_CORE_SOM  = 0,
     parameter ENABLE_CORE_RPLU_V2 = 0,
+`ifdef SPU13_STRUCTURED_INVERTER
+    parameter USE_STRUCTURED_INVERTER = 1,
+`else
+    parameter USE_STRUCTURED_INVERTER = 0,
+`endif
+`ifdef SPU13_STRUCTURED_INVERTER_SEQUENTIAL
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 1,
+`else
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0,
+`endif
     parameter ENABLE_CORE_TORUS = 0,
     parameter ENABLE_RPLU_TELEMETRY = 0,
     parameter ENABLE_SDRAM_SELFTEST = 1,
@@ -838,6 +848,8 @@ module spu13_tang25k_top #(
         .ENABLE_SEQUENCER(1'b0),
         .ENABLE_CORE_SOM(ENABLE_CORE_SOM),
         .ENABLE_CORE_RPLU_V2(ENABLE_CORE_RPLU_V2),
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL),
         .ENABLE_TORUS(ENABLE_CORE_TORUS)
     ) u_core (
         .clk(clk_core),
