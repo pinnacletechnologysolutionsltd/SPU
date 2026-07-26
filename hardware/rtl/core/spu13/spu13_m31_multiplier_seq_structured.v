@@ -211,24 +211,6 @@ module spu13_m31_multiplier_seq_structured #(
         end
     endfunction
 
-    function [31:0] madd31;
-        input [31:0] x, y;
-        reg [32:0] sum;
-        begin
-            sum = {1'b0,x} + {1'b0,y};
-            if (sum >= {1'b0,P}) sum = sum - {1'b0,P};
-            madd31 = sum[31:0];
-        end
-    endfunction
-
-    function [31:0] msub31;
-        input [31:0] x, y;
-        begin
-            if (x >= y) msub31 = x - y;
-            else msub31 = x + P - y;
-        end
-    endfunction
-
     // {destination component, subtract, coefficient}.  The single serial
     // reduction/adder consumes this schedule one entry at a time; unlike the
     // shared-parallel backend, it does not instantiate an eight-product
@@ -304,12 +286,25 @@ module spu13_m31_multiplier_seq_structured #(
     reg [1:0] expected0, expected1, expected2, expected3;
     wire [7:0] schedule = full_sched(index[3:0]);
     wire [6:0] narrow_schedule = narrow_accum_schedule(op_reg, index[2:0]);
-    wire [31:0] narrow_term = m31_reduce_72(
-        structured_scale72(product, narrow_schedule[3:0]));
-    wire [31:0] final0 = (op_reg == OP_FULL) ? m31_reduce_72(acc0) : acc0[31:0];
-    wire [31:0] final1 = (op_reg == OP_FULL) ? m31_reduce_72(acc1) : acc1[31:0];
-    wire [31:0] final2 = (op_reg == OP_FULL) ? m31_reduce_72(acc2) : acc2[31:0];
-    wire [31:0] final3 = (op_reg == OP_FULL) ? m31_reduce_72(acc3) : acc3[31:0];
+    // 15*p^2 is congruent to zero mod p and exceeds every scaled product.
+    // It turns a negative contribution into a non-negative 72-bit addend, so
+    // structured and full requests share the existing wide accumulators and
+    // final Mersenne reducers.
+    localparam [71:0] NEGATIVE_BIAS = 72'h03BFFFFFF10000000F;
+    wire [71:0] narrow_scaled = structured_scale72(
+        product, narrow_schedule[3:0]);
+    wire [71:0] narrow_contribution = narrow_schedule[4] ?
+        (NEGATIVE_BIAS - narrow_scaled) : narrow_scaled;
+    wire [71:0] narrow_accumulator =
+        (narrow_schedule[6:5] == 0) ? acc0 :
+        (narrow_schedule[6:5] == 1) ? acc1 :
+        (narrow_schedule[6:5] == 2) ? acc2 : acc3;
+    wire [71:0] narrow_accumulator_next =
+        narrow_accumulator + narrow_contribution;
+    wire [31:0] final0 = m31_reduce_72(acc0);
+    wire [31:0] final1 = m31_reduce_72(acc1);
+    wire [31:0] final2 = m31_reduce_72(acc2);
+    wire [31:0] final3 = m31_reduce_72(acc3);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -358,18 +353,10 @@ module spu13_m31_multiplier_seq_structured #(
                         endcase
                     end else begin
                         case (narrow_schedule[6:5])
-                            0: acc0 <= {40'd0, narrow_schedule[4] ?
-                                msub31(acc0[31:0], narrow_term) :
-                                madd31(acc0[31:0], narrow_term)};
-                            1: acc1 <= {40'd0, narrow_schedule[4] ?
-                                msub31(acc1[31:0], narrow_term) :
-                                madd31(acc1[31:0], narrow_term)};
-                            2: acc2 <= {40'd0, narrow_schedule[4] ?
-                                msub31(acc2[31:0], narrow_term) :
-                                madd31(acc2[31:0], narrow_term)};
-                            3: acc3 <= {40'd0, narrow_schedule[4] ?
-                                msub31(acc3[31:0], narrow_term) :
-                                madd31(acc3[31:0], narrow_term)};
+                            0: acc0 <= narrow_accumulator_next;
+                            1: acc1 <= narrow_accumulator_next;
+                            2: acc2 <= narrow_accumulator_next;
+                            3: acc3 <= narrow_accumulator_next;
                         endcase
                     end
                     if (index + 1'b1 == product_limit)
