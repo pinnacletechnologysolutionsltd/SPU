@@ -277,6 +277,13 @@ module spu13_m31_multiplier_seq_structured #(
         end
     endfunction
 
+    function [1:0] m31_reduce_72_mod3;
+        input [71:0] value;
+        begin
+            m31_reduce_72_mod3 = mod3_32(m31_reduce_72(value));
+        end
+    endfunction
+
     localparam S_IDLE = 3'd0;
     localparam S_ISSUE = 3'd1;
     localparam S_CAPTURE = 3'd2;
@@ -301,6 +308,12 @@ module spu13_m31_multiplier_seq_structured #(
         (narrow_schedule[6:5] == 2) ? acc2 : acc3;
     wire [71:0] narrow_accumulator_next =
         narrow_accumulator + narrow_contribution;
+    wire [71:0] full_contribution = scale72(product, schedule[1:0]);
+    wire [71:0] full_accumulator =
+        (schedule[7:6] == 0) ? acc0 :
+        (schedule[7:6] == 1) ? acc1 :
+        (schedule[7:6] == 2) ? acc2 : acc3;
+    wire [71:0] full_accumulator_next = full_accumulator + full_contribution;
     wire [31:0] final0 = m31_reduce_72(acc0);
     wire [31:0] final1 = m31_reduce_72(acc1);
     wire [31:0] final2 = m31_reduce_72(acc2);
@@ -329,6 +342,8 @@ module spu13_m31_multiplier_seq_structured #(
                         product_limit <= op_product_count(op);
                         index <= 0;
                         acc0 <= 0; acc1 <= 0; acc2 <= 0; acc3 <= 0;
+                        expected0 <= 0; expected1 <= 0;
+                        expected2 <= 0; expected3 <= 0;
                         busy <= 1'b1;
                         state <= S_ISSUE;
                     end
@@ -348,17 +363,41 @@ module spu13_m31_multiplier_seq_structured #(
                 S_CAPTURE: begin
                     if (op_reg == OP_FULL) begin
                         case (schedule[7:6])
-                            0: acc0 <= acc0 + scale72(product, schedule[1:0]);
-                            1: acc1 <= acc1 + scale72(product, schedule[1:0]);
-                            2: acc2 <= acc2 + scale72(product, schedule[1:0]);
-                            3: acc3 <= acc3 + scale72(product, schedule[1:0]);
+                            0: begin
+                                acc0 <= full_accumulator_next;
+                                expected0 <= m31_reduce_72_mod3(full_accumulator_next);
+                            end
+                            1: begin
+                                acc1 <= full_accumulator_next;
+                                expected1 <= m31_reduce_72_mod3(full_accumulator_next);
+                            end
+                            2: begin
+                                acc2 <= full_accumulator_next;
+                                expected2 <= m31_reduce_72_mod3(full_accumulator_next);
+                            end
+                            3: begin
+                                acc3 <= full_accumulator_next;
+                                expected3 <= m31_reduce_72_mod3(full_accumulator_next);
+                            end
                         endcase
                     end else begin
                         case (narrow_schedule[6:5])
-                            0: acc0 <= narrow_accumulator_next;
-                            1: acc1 <= narrow_accumulator_next;
-                            2: acc2 <= narrow_accumulator_next;
-                            3: acc3 <= narrow_accumulator_next;
+                            0: begin
+                                acc0 <= narrow_accumulator_next;
+                                expected0 <= m31_reduce_72_mod3(narrow_accumulator_next);
+                            end
+                            1: begin
+                                acc1 <= narrow_accumulator_next;
+                                expected1 <= m31_reduce_72_mod3(narrow_accumulator_next);
+                            end
+                            2: begin
+                                acc2 <= narrow_accumulator_next;
+                                expected2 <= m31_reduce_72_mod3(narrow_accumulator_next);
+                            end
+                            3: begin
+                                acc3 <= narrow_accumulator_next;
+                                expected3 <= m31_reduce_72_mod3(narrow_accumulator_next);
+                            end
                         endcase
                     end
                     if (index + 1'b1 == product_limit)
@@ -370,8 +409,6 @@ module spu13_m31_multiplier_seq_structured #(
                 end
                 S_FINAL: begin
                     r0 <= final0; r1 <= final1; r2 <= final2; r3 <= final3;
-                    expected0 <= mod3_32(final0); expected1 <= mod3_32(final1);
-                    expected2 <= mod3_32(final2); expected3 <= mod3_32(final3);
                     done <= 1'b1;
                     busy <= 1'b0;
                     state <= S_IDLE;

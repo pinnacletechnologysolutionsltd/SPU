@@ -24,6 +24,7 @@ module spu13_m31_multiplier_structured_tb;
     reg [31:0] z0, z1, z2, z3;
     reg [31:0] w0, w1;
     reg [31:0] forced_value;
+    reg [71:0] forced_accumulator;
     integer product_total;
 
     always #5 clk = ~clk;
@@ -197,6 +198,28 @@ module spu13_m31_multiplier_structured_tb;
             failures = failures + 1;
         end
         release u_seq_candidate.r0;
+
+        // Corrupt the sequential accumulator after its residue shadow has
+        // advanced but before final reduction. This is the boundary protected
+        // by the production parallel multiplier's registered shadow.
+        @(negedge clk);
+        op = 3'd4;
+        a0 = 32'd9; a1 = 32'd8; a2 = 32'd7; a3 = 32'd6;
+        b0 = 32'd5; b1 = 0; b2 = 0; b3 = 0;
+        start = 1;
+        @(negedge clk);
+        start = 0;
+        wait(u_seq_candidate.state == 3'd3);
+        #1;
+        forced_accumulator = u_seq_candidate.acc0 ^ 72'd1;
+        force u_seq_candidate.acc0 = forced_accumulator;
+        wait(sdone);
+        #1;
+        if (srns_error !== 1'b1) begin
+            $display("FAIL sequential accumulator RNS fault injection was not detected");
+            failures = failures + 1;
+        end
+        release u_seq_candidate.acc0;
 
         if (failures == 0)
             $display("PASS: spu13_m31_multiplier_structured_tb (parallel+sequential, 25 vectors, 20 products/tower shape, RNS covered)");
