@@ -9,7 +9,7 @@
 #   A7_FREQ=2 bash build_a7.sh 100t lucas all    # Wukong pinned low-speed bring-up
 #   ZPHI_KARATSUBA=1 A7_SEED=2 bash build_a7.sh 100t tensegrityprobe synth
 #
-# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | irotc | som | somprobe | somsidecar | tensegrityprobe | tensegritylink | custom
+# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | fp4evidence | irotc | som | somprobe | somsidecar | tensegrityprobe | tensegritylink | custom
 #
 # somprobe is a standalone top (not a spu_a7_top spin): the Tang-25K-proven
 # SOM/BMU fixture on its own synthesis path + minimal XDC.  Golden UART line
@@ -173,6 +173,10 @@ elif [ "$SPIN" = "TENSEGRITYLINK" ]; then
     YS="hardware/boards/artix7/synth_a7_tensegrity_link.ys"
     XDC="hardware/boards/artix7/spu_a7_tensegrity_link.xdc"
     TOP="spu_a7_tensegrity_link_top"
+elif [ "$SPIN" = "FP4EVIDENCE" ]; then
+    YS="hardware/boards/artix7/synth_a7_fp4_inverter_evidence.ys"
+    XDC="hardware/boards/artix7/spu_a7_fp4_inverter_evidence.xdc"
+    TOP="spu_a7_fp4_inverter_evidence_top"
 fi
 
 echo "=== SPU-13 Artix-7 Build ==="
@@ -200,6 +204,13 @@ synth() {
         yosys -p "script $YS; \
             hierarchy -check -top $TOP \
                       -chparam USE_ZPHI_KARATSUBA $ZPHI_KARATSUBA; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    elif [ "$SPIN" = "FP4EVIDENCE" ]; then
+        yosys -p "script $YS; \
+            hierarchy -check -top $TOP \
+                      -chparam USE_STRUCTURED $FP4_STRUCTURED \
+                      -chparam SEQUENTIAL $FP4_BACKEND_SEQUENTIAL; \
             synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
             stat -top $TOP"
     elif [ "$TOP" != "spu_a7_top" ]; then
