@@ -81,3 +81,86 @@ multiplier.
 - `spu13_batch_inverter.v` leaves its multiplier `rns_error` unconnected. This
   pre-existing gap remains recorded and is not silently folded into the
   structured-inverter change.
+
+## Measured candidate results (2026-07-26)
+
+The full-width 25-vector bench measures accepted-start-edge to done-edge
+latency as follows.  Every vector in an outcome class produced the same value:
+
+| Backend | Unit | Stage-B singular | Gate |
+|---|---:|---:|---|
+| Shared parallel | 74 | 7 | PASS (<=77 / <=7) |
+| Sequential | 114 | 23 | PASS (<=160 / <=35) |
+
+The request-level bench also injects independent faults into the parallel
+result register and into both the sequential result register and its stored
+wide accumulator after the registered residue shadow advances.  All three
+faults assert `rns_error`; fault-free full and narrow requests keep it low.
+
+Matched Artix-7 seed runs use the dedicated `FP4EVIDENCE` top, which contains
+the inverter, its selected multiplier, a live operand generator, and a live
+result reduction.  This is the physical subject of the tranche.  The normal
+`RPLU2PADE` top was also attempted first, but both the unchanged v1/classic-ABC
+netlist and an ABC9 retry are rejected before placement by nextpnr 0.8.2 while
+constructing the timing graph for the unrelated `spu_spi_slave` LUT network.
+No `--ignore-loops` result is used.
+
+| Backend | Metric | v1 | v2 | Ratio | Gate |
+|---|---|---:|---:|---:|---|
+| Parallel, seed 17 | packed LUT | 9,415 | 10,120 | 1.0749 | PASS (<=1.08) |
+| | FF | 1,274 | 1,177 | 0.9239 | PASS (<=1.05) |
+| | DSP48E1 | 72 | 72 | 1.0000 | PASS |
+| | post-route Fmax | 66.51 MHz | 76.63 MHz | 1.1522 | PASS (>=0.90) |
+| Sequential, seed 29 | packed LUT | 5,128 | 8,048 | 1.5694 | **FAIL** (<=1.10) |
+| | FF | 1,405 | 1,515 | 1.0783 | PASS (<=1.10) |
+| | DSP48E1 | 12 | 12 | 1.0000 | PASS |
+| | post-route Fmax | 61.52 MHz | 21.85 MHz | 0.3552 | **FAIL** (>=0.90) |
+
+The parallel backend clears every predeclared physical gate.  The sequential
+backend delivers the intended cycle reduction but fails both LUT and Fmax
+gates by a wide margin.  Therefore the production selector remains default-off
+and this tranche does not advance to the default-switch claim-ladder rung.
+
+Exact matched commands were:
+
+```text
+FP4_EVIDENCE=1 FP4_STRUCTURED=0 FP4_BACKEND_SEQUENTIAL=0 A7_SYNTH_ABC9=0 ZPHI_KARATSUBA=0 A7_FREQ=50 A7_SEED=17 bash hardware/boards/artix7/build_a7.sh 100t fp4evidence synth
+FP4_EVIDENCE=1 FP4_STRUCTURED=0 FP4_BACKEND_SEQUENTIAL=0 A7_SYNTH_ABC9=0 ZPHI_KARATSUBA=0 A7_FREQ=50 A7_SEED=17 bash hardware/boards/artix7/build_a7.sh 100t fp4evidence pnr
+FP4_EVIDENCE=1 FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 FP4_BACKEND_SEQUENTIAL=0 A7_SYNTH_ABC9=0 ZPHI_KARATSUBA=0 A7_FREQ=50 A7_SEED=17 bash hardware/boards/artix7/build_a7.sh 100t fp4evidence synth
+FP4_EVIDENCE=1 FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 FP4_BACKEND_SEQUENTIAL=0 A7_SYNTH_ABC9=0 ZPHI_KARATSUBA=0 A7_FREQ=50 A7_SEED=17 bash hardware/boards/artix7/build_a7.sh 100t fp4evidence pnr
+FP4_EVIDENCE=1 FP4_STRUCTURED=0 FP4_BACKEND_SEQUENTIAL=1 A7_SYNTH_ABC9=0 ZPHI_KARATSUBA=0 A7_FREQ=50 A7_SEED=29 bash hardware/boards/artix7/build_a7.sh 100t fp4evidence synth
+FP4_EVIDENCE=1 FP4_STRUCTURED=0 FP4_BACKEND_SEQUENTIAL=1 A7_SYNTH_ABC9=0 ZPHI_KARATSUBA=0 A7_FREQ=50 A7_SEED=29 bash hardware/boards/artix7/build_a7.sh 100t fp4evidence pnr
+FP4_EVIDENCE=1 FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=1 FP4_BACKEND_SEQUENTIAL=1 A7_SYNTH_ABC9=0 ZPHI_KARATSUBA=0 A7_FREQ=50 A7_SEED=29 bash hardware/boards/artix7/build_a7.sh 100t fp4evidence synth
+FP4_EVIDENCE=1 FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=1 FP4_BACKEND_SEQUENTIAL=1 A7_SYNTH_ABC9=0 ZPHI_KARATSUBA=0 A7_FREQ=50 A7_SEED=29 bash hardware/boards/artix7/build_a7.sh 100t fp4evidence pnr
+```
+
+The final sequential candidate P&R command exits nonzero because 21.85 MHz
+misses the requested 50 MHz constraint.  That failure is the gate result, not
+an infrastructure failure.
+
+The matched runs used Yosys 0.63+87 and nextpnr-xilinx 0.8.2-73-gf681eb3a.
+Their synthesis JSON SHA-256 values are:
+
+```text
+parallel v1, seed 17: eeb339587b013d402f953037599688d96f412818cf2a69ba96d1245e6f5c8b0b
+parallel v2, seed 17: 7e066bd0af46bdf3210abfd92d9aa09403455e8d5e117c1be25532ff65d443e3
+sequential v1, seed 29: a6b03be3cbf39cdcd754021515fad6863be755de61c5d7ce24d3d4e335c70b5c
+sequential v2, seed 29: c5592f7e2f3be21ec614c0c782ad6d0d3fb0aba1ec05f6dd89f276c26cac3f51
+```
+
+## Consumer build classification
+
+These are the complete candidate-enabled command lines for all eight source
+list references.  “Dead elaboration” means the source parses but the selected
+top removes it from the active hierarchy; it is not counted as exercising v2.
+
+| Source-list reference | Candidate-enabled command | Classification and evidence |
+|---|---|---|
+| `artix7/synth_a7.ys` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 FP4_BACKEND_SEQUENTIAL=0 ZPHI_KARATSUBA=0 A7_FREQ=2 A7_SEED=31 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth` | exercises v2; synthesized hierarchy contains `spu13_fp4_inverter_structured` and `spu13_m31_multiplier_structured` |
+| `artix7/synth_a7_seq.ys` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=1 FP4_BACKEND_SEQUENTIAL=1 ZPHI_KARATSUBA=0 A7_FREQ=2 A7_SEED=31 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth` | exercises v2; synthesized hierarchy contains the structured controller and sequential multiplier |
+| `tang_primer_25k/synth_gowin_25k_spu13_rplu_v2.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_rplu_v2.ys` | exercises v2; active hierarchy reports both structured modules |
+| `tang_primer_25k/synth_gowin_25k_spu13_southbridge.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_southbridge.ys` | dead elaboration; the southbridge top does not enable the RPLU2 pipeline |
+| `tang_primer_25k/synth_gowin_25k_spu13_irotc_spi.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_irotc_spi.ys` | dead elaboration; `CORE_ENABLE_MATH=0`, IROTC-only hierarchy |
+| `tang_primer_25k/synth_gowin_25k_series_stream_probe.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_series_stream_probe.ys` | exercises v2; the board top directly instantiates the selected inverter |
+| `colorlight_i9/build_colorlight_i9_rplu2.sh` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 bash hardware/boards/colorlight_i9/build_colorlight_i9_rplu2.sh synth` | exercises v2; RPLU2 is active in the Colorlight top |
+| `ecp5_85k/build_ecp5_85k.sh` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 bash hardware/boards/ecp5_85k/build_ecp5_85k.sh` | parse-only; the legacy `spu13_top` hierarchy has no candidate selector propagation |
