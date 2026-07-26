@@ -1,6 +1,7 @@
 # Structured A31 inverter candidate
 
-Status: split formal gate passed; production default unchanged.
+Status: split formal gate passed; seven of eight consumer builds pass;
+production default unchanged.
 
 This tranche replaces the inverter's seven general A31 transactions (112
 logical M31 products) with four structure-specific requests totaling exactly
@@ -156,11 +157,33 @@ top removes it from the active hierarchy; it is not counted as exercising v2.
 
 | Source-list reference | Candidate-enabled command | Classification and evidence |
 |---|---|---|
-| `artix7/synth_a7.ys` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 FP4_BACKEND_SEQUENTIAL=0 ZPHI_KARATSUBA=0 A7_FREQ=2 A7_SEED=31 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth` | exercises v2; synthesized hierarchy contains `spu13_fp4_inverter_structured` and `spu13_m31_multiplier_structured` |
-| `artix7/synth_a7_seq.ys` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=1 FP4_BACKEND_SEQUENTIAL=1 ZPHI_KARATSUBA=0 A7_FREQ=2 A7_SEED=31 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth` | exercises v2; synthesized hierarchy contains the structured controller and sequential multiplier |
-| `tang_primer_25k/synth_gowin_25k_spu13_rplu_v2.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_rplu_v2.ys` | exercises v2; active hierarchy reports both structured modules |
-| `tang_primer_25k/synth_gowin_25k_spu13_southbridge.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_southbridge.ys` | dead elaboration; the southbridge top does not enable the RPLU2 pipeline |
-| `tang_primer_25k/synth_gowin_25k_spu13_irotc_spi.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_irotc_spi.ys` | dead elaboration; `CORE_ENABLE_MATH=0`, IROTC-only hierarchy |
-| `tang_primer_25k/synth_gowin_25k_series_stream_probe.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_series_stream_probe.ys` | exercises v2; the board top directly instantiates the selected inverter |
-| `colorlight_i9/build_colorlight_i9_rplu2.sh` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 bash hardware/boards/colorlight_i9/build_colorlight_i9_rplu2.sh synth` | exercises v2; RPLU2 is active in the Colorlight top |
-| `ecp5_85k/build_ecp5_85k.sh` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 bash hardware/boards/ecp5_85k/build_ecp5_85k.sh` | parse-only; the legacy `spu13_top` hierarchy has no candidate selector propagation |
+| `artix7/synth_a7.ys` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 FP4_BACKEND_SEQUENTIAL=0 ZPHI_KARATSUBA=0 A7_FREQ=2 A7_SEED=31 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth` | **PASS**; exercises v2; synthesized hierarchy contains `spu13_fp4_inverter_structured` and `spu13_m31_multiplier_structured` |
+| `artix7/synth_a7_seq.ys` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=1 FP4_BACKEND_SEQUENTIAL=1 ZPHI_KARATSUBA=0 A7_FREQ=2 A7_SEED=31 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth` | **PASS**; exercises v2; synthesized hierarchy contains the structured controller and sequential multiplier |
+| `tang_primer_25k/synth_gowin_25k_spu13_rplu_v2.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_rplu_v2.ys` | **NON-TERMINATING**; exercises v2 and reaches final ABC9 `&verify`, but produced no verdict in 2:01:51 and was stopped (exit 130) |
+| `tang_primer_25k/synth_gowin_25k_spu13_southbridge.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_southbridge.ys` | **PASS**; dead elaboration; the southbridge top does not enable the RPLU2 pipeline |
+| `tang_primer_25k/synth_gowin_25k_spu13_irotc_spi.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_irotc_spi.ys` | **PASS**; dead elaboration; `CORE_ENABLE_MATH=0`, IROTC-only hierarchy |
+| `tang_primer_25k/synth_gowin_25k_series_stream_probe.ys` | `yosys -D SPU13_STRUCTURED_INVERTER -s hardware/boards/tang_primer_25k/synth_gowin_25k_series_stream_probe.ys` | **PASS**; exercises v2; ABC9 equivalence and final `check` pass; the board top directly instantiates the selected inverter |
+| `colorlight_i9/build_colorlight_i9_rplu2.sh` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 bash hardware/boards/colorlight_i9/build_colorlight_i9_rplu2.sh synth` | **PASS**; exercises v2; RPLU2 is active in the Colorlight top |
+| `ecp5_85k/build_ecp5_85k.sh` | `FP4_STRUCTURED=1 FP4_STRUCTURED_SEQUENTIAL=0 bash hardware/boards/ecp5_85k/build_ecp5_85k.sh` | **PASS**; parse-only; the legacy `spu13_top` hierarchy has no candidate selector propagation |
+
+The active Tang RPLU synthesis is not counted as a pass.  Its source-list
+repair clears `hierarchy -check`, both structured modules are live, and ABC9
+writes its final 7,812,430-byte `output.aig`; the subsequent equivalence
+solver produced no verdict between 21:17:37 and 23:19:28 NZST.  It was then
+stopped cleanly rather than weakening the command or claiming deep
+elaboration as build closure.  The claim ladder therefore remains below
+"integration-verified candidate."
+
+## Regression and reproduction
+
+The final committed RTL was exercised from a clean working tree with:
+
+```text
+python3 run_all_tests.py
+```
+
+It passed **177/177**, exit 0: 134 Verilog tests, 12 C++ tests, and 31
+Python/product checks.  This supersedes the contract's 173-test baseline
+because the tranche adds four discovered tests.  A first run from the fresh
+local clone `/tmp/spu-fp4-fresh.6QaG1T/SPU`, made after the implementation and
+evidence commits, independently passed the same **177/177**, exit 0.
