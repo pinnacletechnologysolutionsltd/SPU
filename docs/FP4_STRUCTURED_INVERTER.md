@@ -1,6 +1,6 @@
 # Structured A31 inverter candidate
 
-Status: arithmetic blocks only; production default unchanged.
+Status: split formal gate passed; production default unchanged.
 
 This tranche replaces the inverter's seven general A31 transactions (112
 logical M31 products) with four structure-specific requests totaling exactly
@@ -28,6 +28,28 @@ an independently written full-product reference at field/product width pairs
 3/6 and 4/8. The complete candidate will additionally be checked at true M31
 width against committed v1, comparing values and `flags_v` at each
 implementation's own `done`.
+
+The gate passed on 2026-07-26:
+
+```text
+sby -f hardware/tests/spu13/spu13_fp4_structured_arithmetic_formal.sby
+  width_3_6 PASS
+  width_4_8_scale PASS
+
+sby -f hardware/tests/spu13/spu13_fp4_inverter_structured_formal.sby
+  engine_0 (smtbmc bitwuzla) returned pass; depth 90
+```
+
+The production-width BMC is compositional at the multiplier transaction
+boundary. Two-cycle symbolic responses obey the request relations proven on
+the new parameterized arithmetic at both reduced widths; the full-width
+extrema testbench separately compares those requests against the real v1
+multiplier. The BMC itself instantiates the committed v1 and candidate v2
+controllers at their real 32-bit ports, traverses one complete 31-bit Fermat
+chain, and proves request operands, sequencing, singular handling, and values
+at each implementation's own `done`. The identical inline Fermat result is an
+explicit scale-request cutpoint; it is not represented as a new arithmetic
+implementation.
 
 ## Predeclared physical and latency gates
 
