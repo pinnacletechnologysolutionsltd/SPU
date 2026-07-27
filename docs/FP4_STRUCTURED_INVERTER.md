@@ -106,19 +106,59 @@ netlist and an ABC9 retry are rejected before placement by nextpnr 0.8.2 while
 constructing the timing graph for the unrelated `spu_spi_slave` LUT network.
 No `--ignore-loops` result is used.
 
+The predeclared five-seed parallel matrix completed on 2026-07-28. Per-seed
+resource results are:
+
+| Seed | v1 LUT | v2 LUT | Ratio | v1 FF | v2 FF | Ratio | v1 DSP | v2 DSP | Ratio |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 17 | 9,415 | 10,120 | 1.074881 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
+| 41 | 9,421 | 10,121 | 1.074302 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
+| 53 | 9,421 | 10,121 | 1.074302 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
+| 67 | 9,421 | 10,121 | 1.074302 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
+| 79 | 9,421 | 10,121 | 1.074302 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
+
+Timing and derived unit-completion time use the measured 83-cycle historical
+v1 latency and 74-cycle v2 latency:
+
+| Seed | v1 Fmax | v2 Fmax | Ratio | v1, 83 clocks | v2, 74 clocks | Time ratio | Per-seed gate |
+|---:|---:|---:|---:|---:|---:|---:|---|
+| 17 | 66.51 MHz | 76.63 MHz | 1.152158 | 1.247933 us | 0.965679 us | 0.773823 | PASS |
+| 41 | 77.16 MHz | 69.60 MHz | 0.902022 | 1.075687 us | 1.063218 us | 0.988409 | PASS |
+| 53 | 70.48 MHz | 68.44 MHz | 0.971056 | 1.177639 us | 1.081239 us | 0.918141 | PASS |
+| 67 | 59.65 MHz | 77.58 MHz | 1.300587 | 1.391450 us | 0.953854 us | 0.685511 | PASS |
+| 79 | 64.11 MHz | 78.24 MHz | 1.220402 | 1.294650 us | 0.945808 us | 0.730551 | PASS |
+
+The seven-clock singular path is unchanged. Its per-seed v1/v2 wall-clock
+times are respectively 0.105247/0.091348, 0.090721/0.100575,
+0.099319/0.102279, 0.117351/0.090229, and 0.109187/0.089468 us for seeds
+17/41/53/67/79.
+
+The required aggregate statistics, with no dropped or added seeds, are:
+
+| Metric | v1 mean | v1 median | v1 min | v1 max | v2 mean | v2 median | v2 min | v2 max | Ratio mean | Ratio median | Ratio min | Ratio max |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| LUT | 9,419.8 | 9,421 | 9,415 | 9,421 | 10,120.8 | 10,121 | 10,120 | 10,121 | 1.074418 | **1.074302** | 1.074302 | 1.074881 |
+| FF | 1,274 | 1,274 | 1,274 | 1,274 | 1,177 | 1,177 | 1,177 | 1,177 | 0.923862 | 0.923862 | 0.923862 | 0.923862 |
+| DSP48E1 | 72 | 72 | 72 | 72 | 72 | 72 | 72 | 72 | 1.000000 | 1.000000 | 1.000000 | 1.000000 |
+| Fmax (MHz) | 67.582 | 66.510 | 59.650 | 77.160 | 74.098 | 76.630 | 68.440 | 78.240 | 1.109245 | **1.152158** | 0.902022 | 1.300587 |
+| Unit time (us) | 1.237472 | 1.247933 | 1.075687 | 1.391450 | 1.001960 | 0.965679 | 0.945808 | 1.081239 | 0.819287 | 0.773823 | 0.685511 | 0.988409 |
+
+The matrix passes both aggregation rules: median LUT ratio 1.074302 is at or
+below 1.08, median Fmax ratio 1.152158 is at or above 0.90, and **5/5** seeds
+individually pass both gates (the requirement was at least 4/5).
+
+The closed sequential negative remains:
+
 | Backend | Metric | v1 | v2 | Ratio | Gate |
 |---|---|---:|---:|---:|---|
-| Parallel, seed 17 | packed LUT | 9,415 | 10,120 | 1.0749 | PASS (<=1.08) |
-| | FF | 1,274 | 1,177 | 0.9239 | PASS (<=1.05) |
-| | DSP48E1 | 72 | 72 | 1.0000 | PASS |
-| | post-route Fmax | 66.51 MHz | 76.63 MHz | 1.1522 | PASS (>=0.90) |
 | Sequential, seed 29 | packed LUT | 5,128 | 8,048 | 1.5694 | **FAIL** (<=1.10) |
 | | FF | 1,405 | 1,515 | 1.0783 | PASS (<=1.10) |
 | | DSP48E1 | 12 | 12 | 1.0000 | PASS |
 | | post-route Fmax | 61.52 MHz | 21.85 MHz | 0.3552 | **FAIL** (>=0.90) |
 
-The parallel backend clears every predeclared physical gate.  The sequential
-backend delivers the intended cycle reduction but fails both LUT and Fmax
+The parallel backend clears every predeclared physical gate across the full
+matrix. The sequential backend delivers the intended cycle reduction but
+fails both LUT and Fmax
 gates by a wide margin.  Therefore the production selector remains default-off
 and this tranche does not advance to the default-switch claim-ladder rung.
 
@@ -145,9 +185,24 @@ Their synthesis JSON SHA-256 values are:
 ```text
 parallel v1, seed 17: eeb339587b013d402f953037599688d96f412818cf2a69ba96d1245e6f5c8b0b
 parallel v2, seed 17: 7e066bd0af46bdf3210abfd92d9aa09403455e8d5e117c1be25532ff65d443e3
+parallel v1, seed 41: feb7b8cdc743ba4e180ff480256a82be1adb360763c60b4f096b70aeab945372
+parallel v2, seed 41: d8be0759ac4a5a446f5f4d5253634338a91551a822a74dbb4f32d1c4e4a6adce
+parallel v1, seed 53: feb7b8cdc743ba4e180ff480256a82be1adb360763c60b4f096b70aeab945372
+parallel v2, seed 53: d8be0759ac4a5a446f5f4d5253634338a91551a822a74dbb4f32d1c4e4a6adce
+parallel v1, seed 67: feb7b8cdc743ba4e180ff480256a82be1adb360763c60b4f096b70aeab945372
+parallel v2, seed 67: d8be0759ac4a5a446f5f4d5253634338a91551a822a74dbb4f32d1c4e4a6adce
+parallel v1, seed 79: feb7b8cdc743ba4e180ff480256a82be1adb360763c60b4f096b70aeab945372
+parallel v2, seed 79: d8be0759ac4a5a446f5f4d5253634338a91551a822a74dbb4f32d1c4e4a6adce
 sequential v1, seed 29: a6b03be3cbf39cdcd754021515fad6863be755de61c5d7ce24d3d4e335c70b5c
 sequential v2, seed 29: c5592f7e2f3be21ec614c0c782ad6d0d3fb0aba1ec05f6dd89f276c26cac3f51
 ```
+
+The repeated hashes across new seeds are expected: the seed is consumed by
+nextpnr, while each matched v1 or v2 synthesis command and source are
+identical. For each new seed `S` in `41 53 67 79`, the exact four commands
+were the seed-17 commands above with `A7_SEED=S`; v1 used
+`FP4_STRUCTURED=0`, and v2 used `FP4_STRUCTURED=1` with
+`FP4_STRUCTURED_SEQUENTIAL=0`, with all other environment settings unchanged.
 
 ## Consumer build classification
 
