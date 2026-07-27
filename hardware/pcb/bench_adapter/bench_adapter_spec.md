@@ -98,18 +98,28 @@ direction. Its four active-low OE pins are tied together as `J2_OE_N`.
 
 `J2_OE_N` is pulled up to **Pico 3V3** with 10 kΩ, so the safe default is all
 four signals disconnected. U2, a Pico-3V3-powered open-drain comparator with
-an independent/fail-safe input (**MAX9063EUK+T** — note this is the
-inverting-input part of the MAX9062/9063 pair; MAX9062 has the opposite
-polarity and must not be substituted here), pulls `J2_OE_N` low only after
-`TARGET_3V3_SENSE` crosses the qualified-on threshold. Use its 0.2 V internal
-reference with a 137 kΩ / 10 kΩ divider (not 100 kΩ — recalculated for this
-part's lower reference) from J2-6 for the same nominal 2.94 V rising
-threshold. Unlike TLV3011B, the MAX9063 does not expose an externally
-accessible noninverting input, so **no external hysteresis footprint is
-possible on this part** — its fixed internal hysteresis (~±0.9 mV at the
-sense pin) must be characterized and confirmed adequate on the breadboard
-before committing to a PCB layout; there is no resistor-value fallback if it
-proves too narrow.
+an independent/fail-safe input (**TLV3011BIDBVR**, TI — open-drain output,
+SOT-23-6; reverted 2026-07-27 from the MAX9063EUK+T substitute once LCSC
+sourcing made the original part available again), pulls `J2_OE_N` low only
+after `TARGET_3V3_SENSE` crosses the qualified-on threshold. Use its 1.242 V
+internal reference with a **137 kΩ / 100 kΩ** divider from J2-6 —
+100k/(137k+100k) × 2.94 V = 1.2405 V — for the nominal 2.94 V rising
+threshold. Do not substitute **TLV3012** (push-pull output); this circuit
+requires the open-drain TLV3011.
+
+TLV3011B exposes an externally accessible noninverting input, so **an
+external hysteresis footprint is possible and shall be provisioned on the
+PCB** — a 1 MΩ-class feedback path from output back to the reference/input
+node, left unpopulated unless breadboard characterization shows chatter near
+the threshold. Size it from the measured chatter band.
+
+*Fallback if TLV3011B is unobtainable:* **MAX9063EUK+T** (SOT-23-5, the
+inverting-input part of the MAX9062/9063 pair — MAX9062 has the opposite
+polarity and must not be substituted). Its 0.2 V reference requires a
+137 kΩ / **10 kΩ** divider instead, and it exposes no noninverting input, so
+the hysteresis footprint is unusable and its fixed internal hysteresis
+(~±0.9 mV at the sense pin) must be characterized and confirmed adequate on
+the breadboard with no resistor-value fallback available.
 
 U1 and U2 are both powered from Pico 3V3.  This deliberately avoids powering
 any safety logic from the target.  U1's `Ioff` rating is required to keep the
@@ -278,8 +288,9 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | JP2 | 2×3 shrouded header + 2× jumper shunt | 1 | 0.5 | Generic 2.54mm 2x3 header + 2× 2.54mm jumper shunts | GP4/GP5: FLASH ⟷ UART select, both poles moved together |
 | R | 100 Ω 1/4 W THT | 4 | 0.5 | Generic carbon/metal film, 5% or better | J2 SPI-to-FPGA series (MISO/CS/SCK/MOSI) — fault-current-limiting value, see §2.1 note |
 | U1 | 74CBTLV3125PGG | 1 | 2 | Renesas/IDT, `Ioff`-rated 4-channel bidirectional bus switch (Active; substitute for obsolete SN74CBTLV3125PW) | Mandatory J2 isolation; TSSOP-14 |
-| U2 | MAX9063EUK+T | 1 | 2 | Analog Devices/Maxim micropower open-drain comparator, inverting input (substitute for TLV3011BIDBVR — do not use MAX9062, opposite polarity) | Pico-powered `TARGET_3V3_SENSE` supervisor; SOT-23-5 |
-| R | 10 kΩ, 137 kΩ, 10 kΩ | 3 | 0.5 | 1% metal-film preferred | U1 OE pull-up and U2 2.94 V sense divider (137k/10k, recalculated for MAX9063's 0.2 V reference) |
+| U2 | TLV3011BIDBVR | 1 | 2 | TI open-drain comparator, 1.242 V integrated reference (do **not** use TLV3012 — push-pull output; fallback MAX9063EUK+T needs a 10 kΩ divider leg, not 100 kΩ) | Pico-powered `TARGET_3V3_SENSE` supervisor; SOT-23-**6** |
+| R | 10 kΩ, 137 kΩ, 100 kΩ | 3 | 0.5 | 1% metal-film preferred | U1 OE pull-up (10k) and U2 2.94 V sense divider (137k/100k for TLV3011B's 1.242 V reference; the MAX9063 fallback needs 10k, not 100k) |
+| R | 1 MΩ | 1 | 0.2 | 1% metal-film preferred | U2 hysteresis feedback — **fit only if** breadboard step 1 shows chatter near the threshold; size from the measured band. Unusable with the MAX9063 fallback |
 | R | 33 Ω 1/4 W THT | 5 | 1 | Generic carbon/metal film, 5% or better | J3 flash-PMOD series termination (4) +1 spare |
 | R | 10 kΩ 1/4 W THT | 3 | 0.5 | Generic carbon/metal film, 5% or better | SPI_CS# + FLASH_CS# pullups (2, WP#/HOLD# pullups removed per §2.2 correction — not physically possible on the 6-pin J3), +1 spare |
 | R | 1 kΩ 1/4 W THT | 2 | 0.5 | Generic carbon/metal film, 5% or better | LED series |
