@@ -489,17 +489,16 @@ Tang 25K or Artix-7.
   the real board to pin down further. **Separately found 2026-07-15**: a
   genuine, reproducible nextpnr-xilinx timing-analysis failure
   ("ERROR: timing analysis failed due to presence of combinatorial
-  loops...") inside `spu_spi_slave` (`u_spi`) blocks a *fresh* PnR of the
-  IROTC A7 spin from completing — confirmed independent of any RTL
-  change (reproduces identically on the already-committed, previously-
-  working source). `pack()` silently reuses a stale `.fasm` when this
-  happens rather than failing loudly, so a "successful" build can
-  silently ship stale logic — check `.pnr.fasm`'s mtime against the
-  synthesized `.json` if a rebuild's behavior looks unexpectedly
-  unchanged. Not yet fixed; the tensegrity guard hit the same toolchain
-  weakness (see its silicon-proof notes below) and worked around it by
-  running the affected logic on a divided, slower clock domain — the
-  same fix likely applies here once someone applies it. **Source of truth for this unit's
+  loops...") inside `spu_spi_slave` (`u_spi`) blocks a *fresh* PnR of some
+  A7 spins.  The earlier claim that it was independent of RTL changes was
+  disproved by a controlled bisection on 2026-07-28: `746d376^` routes,
+  `746d376` has one unschedulable endpoint, and the later RPLU2PADE netlist
+  has 230.  The baseline openXC7 build ignores XDC timing commands and has
+  only one global `--freq` input for a multi-clock design; the bounded source
+  of truth is
+  `spu_strategy/gtp_contract_nextpnr_clkfast_timing_2026-07-28.md`.
+  `pack()` now rejects a `.pnr.fasm` that is not newer than its synthesized
+  `.json`, so a failed fresh PnR cannot silently ship stale logic. **Source of truth for this unit's
   per-pin damage/health status is now `hardware/boards/artix7/spu_a7_100t.xdc`**
   (comments next to each affected `set_property PACKAGE_PIN`), not this
   bullet — update the XDC first if new inventory changes the picture, this

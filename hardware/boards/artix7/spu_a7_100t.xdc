@@ -14,6 +14,9 @@
 # 50 MHz oscillator
 set_property PACKAGE_PIN M21 [get_ports clk_100mhz]
 set_property IOSTANDARD LVCMOS33 [get_ports clk_100mhz]
+# Clock intent is retained for newer backends.  The baseline openXC7
+# nextpnr-xilinx 0.8.2-73 build ignores XDC timing commands and uses only the
+# global --freq supplied by build_a7.sh; see docs/toolchain_setup.md.
 create_clock -period 20.000 -name sys_clk [get_ports clk_100mhz]
 
 # Reset (active low): KEY0 has a board pull-up and shorts low when pressed.

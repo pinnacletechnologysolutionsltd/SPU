@@ -128,6 +128,24 @@ Regenerate with:
 FORCE=1 tools/generate_a7_chipdb.sh 100t
 ```
 
+## Legacy OpenXC7 Timing Constraints
+
+The repository's baseline `nextpnr-xilinx` build
+(`0.8.2-73-gf681eb3a`) uses XDC for physical pin properties, but its timing
+commands are inert.  This was established on 2026-07-28 by both adding an
+invalid timing command (silently ignored) and removing the only
+`create_clock` command (identical timing-graph result).  The legacy Artix-7
+flow therefore has only the single global `--freq` timing input supplied by
+`build_a7.sh`.
+
+Do not add `create_clock`, `create_generated_clock`, false-path, or other
+timing-only XDC commands expecting this baseline backend to honour them.
+Keep real clock intent in the XDC for documentation and for newer backends
+that parse it, but do not cite it as evidence for a legacy-openXC7 timing
+result.  Designs with multiple independently generated clock nets may be
+unanalyzable by this backend; see
+`spu_strategy/gtp_contract_nextpnr_clkfast_timing_2026-07-28.md`.
+
 ## OS Notes
 
 ### Linux

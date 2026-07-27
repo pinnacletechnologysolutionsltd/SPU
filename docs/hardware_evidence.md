@@ -896,6 +896,32 @@ picotool load -f build/rp2350_arithmetic/rp2350_rplu2_pade_j11_smoke.uf2
 explicit `keep` / `fsm_encoding="none"` attributes. This preserves the
 silicon-passing state encodings without depending on debug-port side effects.
 
+### 3.2f.1 Legacy openXC7 XDC timing limitation
+
+**Date:** 2026-07-28 NZT. This is a tooling constraint, not a new hardware
+claim. The repository baseline nextpnr-xilinx 0.8.2-73-gf681eb3a consumes
+the Artix XDC's physical pin properties, but does not execute its timing
+commands. Two independent negative probes established the boundary:
+
+- adding a deliberately invalid timing command produced no warning or error;
+- removing the only `create_clock` command produced an identical timing-graph
+  result, including the same 230 unschedulable nodes in the preserved
+  RPLU2PADE artifact.
+
+The legacy flow therefore has only nextpnr's single global `--freq` input;
+`create_clock`, `create_generated_clock`, false-path, and similar XDC timing
+commands are documentation for this backend, not active constraints. Do not
+claim that a legacy-openXC7 Fmax report covers clocks described only in XDC,
+and do not attempt to repair a legacy timing failure by adding more inert XDC
+commands. `docs/toolchain_setup.md` records the operational rule; the bounded
+P&R evidence and preserved-artifact caveat are in
+`spu_strategy/gtp_contract_nextpnr_clkfast_timing_2026-07-28.md`.
+
+The same investigation separated three failure classes: a real undriven
+core-less `boot_ready` endpoint (fixed independently), an artifact-sensitive
+230-node timing-scheduler rejection, and a fresh-netlist DSP `CARRYCASCIN`
+routing rejection. They are not interchangeable evidence for one cause.
+
 ### 3.2g ROTC 0-5 Silicon Probe
 
 **Date:** 2026-06-30 NZT
