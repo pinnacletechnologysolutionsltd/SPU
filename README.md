@@ -10,8 +10,8 @@ loss.**
 [![Hardware: CERN-OHL-W-2.0](https://img.shields.io/badge/Hardware-CERN--OHL--W--2.0-blue.svg)](hardware/LICENSE)
 [![Software: MIT](https://img.shields.io/badge/Software-MIT-green.svg)](software/LICENSE)
 [![Docs: CC0](https://img.shields.io/badge/Docs-CC0_1.0-lightgrey.svg)](docs/LICENSE)
-[![RPLU paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21446713.svg)](https://doi.org/10.5281/zenodo.21446713)
-[![LUCAS paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21447441.svg)](https://doi.org/10.5281/zenodo.21447441)
+[![RPLU paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21446712.svg)](https://doi.org/10.5281/zenodo.21446712)
+[![LUCAS paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21447440.svg)](https://doi.org/10.5281/zenodo.21447440)
 
 **Not an engineer? [Start with the two-minute explanation.](docs/WHAT_IS_SPU13.md)**
 
