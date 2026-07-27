@@ -311,6 +311,13 @@ pack() {
     fi
 
     [ -f "$FASM" ] || { echo "Missing routed FASM: $FASM"; exit 1; }
+    [ -f "$JSON" ] || { echo "Missing synthesized JSON: $JSON"; exit 1; }
+    [ "$FASM" -nt "$JSON" ] || {
+        echo "Stale routed FASM: $FASM"
+        echo "It is not newer than its synthesized JSON: $JSON"
+        echo "Rerun the pnr step before packing."
+        exit 1
+    }
     [ -f "$PART_FILE" ] || { echo "Missing Project X-Ray part file: $PART_FILE"; exit 1; }
     [ -n "$FASM2FRAMES" ] || {
         echo "Missing fasm2frames.py. Set FASM2FRAMES=/path/to/fasm2frames.py or PRJXRAY_ROOT=/path/to/prjxray."
