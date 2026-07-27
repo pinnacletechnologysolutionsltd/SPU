@@ -805,6 +805,12 @@ module spu_a7_top #(
         end
     endgenerate
 
+    generate
+        if (!_CORE) begin : gen_no_core_boot
+            assign core_boot_ready = 1'b0;
+        end
+    endgenerate
+
     // ── Lucas/Phinary Sidecar ───────────────────────────────────
     generate
         if (_L) begin : gen_lucas_sidecar
