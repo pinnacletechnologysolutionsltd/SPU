@@ -1,4 +1,4 @@
-# Sovereign Processor Unit — Southbridge SPI Protocol v1.2
+# Synergetic Processing Unit — Southbridge SPI Protocol v1.2
 
 **Document:** SPU Southbridge Serial Protocol
 **Version:** 1.2 (2026-07-14)

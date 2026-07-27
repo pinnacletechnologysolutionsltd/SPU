@@ -1,4 +1,4 @@
-# SPU-13 Sovereign Processing Unit — Hardware Platform Specification
+# SPU-13 Synergetic Processing Unit — Hardware Platform Specification
 ## Tier Ladder v1.0
 
 **License:** CC0 1.0 Universal (Public Domain)
@@ -158,4 +158,4 @@ All tiers are phase-locked to the **61.44 kHz Piranha Pulse**:
 
 ---
 
-*SPU-13 Sovereign Processing Unit — CC0 1.0 Universal — Public Domain*
+*SPU-13 Synergetic Processing Unit — CC0 1.0 Universal — Public Domain*
