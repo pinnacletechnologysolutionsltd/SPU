@@ -674,7 +674,9 @@ module spu_a7_top #(
         end
     endgenerate
 
-    // ── Sierpiński Floorplanner (Fibonacci 8/13/21 timing) ──
+    // ── Fibonacci dispatch timing source (not a physical floorplanner) ──
+    // The legacy instance name is retained to avoid gratuitous netlist-name
+    // churn in matched-seed evidence builds.
     wire phi_8, phi_13, phi_21, phi_heart;
     spu_sierpinski_clk u_floorplan (
         .clk(clk_fast), .rst_n(rst_n),
