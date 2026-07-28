@@ -289,6 +289,28 @@ by this sidecar. Such an end-to-end geometry benchmark remains separate work.
     \item \textbf{Finite $\phi$-period:} $L_{13}$ gives a period of 26, sufficient for datapath validation but not for arbitrary long braid words without phase-domain tiling.
     \item \textbf{Interface latency:} 64-bit SPI payload at 2 MHz takes 32 $\mu$s before framing. Real-time variants require parallel GPIO, PIO/DMA, LVDS, or direct RFSoC coupling.
     \item \textbf{PMUL integer multiplication:} Uses four integer multiplies per product; optimal for $\le14$-bit operands. Zeckendorf-encoded positional multiplication is noted as future work.
+    \item \textbf{$\mathbb{Z}[\phi]$ does not span the full Fibonacci anyon
+    data.} $\mathbb{Q}(\phi)$ is the real quadratic subfield of
+    $\mathbb{Q}(\zeta_5)$, so it captures quantum dimensions and the diagonal
+    $\phi^{-1}$ F-symbol entries, but not the model's braid phases: the
+    Fibonacci $R$-matrix eigenvalues $e^{-4\pi i/5}$ and $e^{3\pi i/5}$ are
+    primitive fifth roots of unity and lie in $\mathbb{Z}[\zeta_5]$, a degree-4
+    extension. In the standard \emph{unitary} gauge the off-diagonal F-symbol
+    entries are $\phi^{-1/2}$, which is likewise outside
+    $\mathbb{Q}(\phi)$. Two consequences follow. First, the PHSLK results here
+    should be read as exact tests on \emph{ratios} of $\phi$-valued phase
+    encodings --- a setting in which common $\phi^{-1/2}$ gauge factors cancel,
+    and in which non-unitary gauges with entries in $\mathbb{Q}(\phi)$ are
+    available --- rather than as exact representation of unitary braid
+    amplitudes. Second, no claim is made here that a full Fibonacci braid
+    representation is expressible over $\mathbb{Z}[\phi]/L_p$; it is not.
+    \textbf{Future work:} a degree-4 cyclotomic MAC over
+    $\mathbb{Z}[\zeta_5]/L_p$, which would carry the $R$-matrix phases
+    natively and subsume the present ring as its real subfield. The datapath
+    generalization is structural rather than novel --- $\mathbb{Z}[\zeta_5]$ is
+    a rank-4 module where $\mathbb{Z}[\phi]$ is rank-2 --- but the reduction,
+    zero-divisor, and period analyses of the Mathematical Foundation section
+    would all need redoing for the larger ring.
 \end{itemize}
 
 \section{Conclusion}
