@@ -103,8 +103,34 @@ the inverter, its selected multiplier, a live operand generator, and a live
 result reduction.  This is the physical subject of the tranche.  The normal
 `RPLU2PADE` top was also attempted first, but both the unchanged v1/classic-ABC
 netlist and an ABC9 retry are rejected before placement by nextpnr 0.8.2 while
-constructing the timing graph for the unrelated `spu_spi_slave` LUT network.
+constructing the timing graph for logic inside `u_spi`.
 No `--ignore-loops` result is used.
+
+**Correction (2026-07-28) — that rejection is not a `spu_spi_slave` defect.**
+An earlier revision of this section attributed it to "the unrelated
+`spu_spi_slave` LUT network." Investigation established otherwise:
+`spu_spi_slave.v` is entirely synchronous (three `always @(posedge clk ...)`
+blocks, four `assign`s reading only registered signals, every output port an
+`output reg`), so it has zero combinational input-to-output paths; and a DFS
+cycle detector over its synthesized netlist found 3,543 combinational cells
+with **no cycle**. The failure is nextpnr 0.8.2's, in the
+*"incomplete specification of timing ports"* branch of its generic error
+string. Two causes were separated:
+
+- The **one-node** rejection at `746d376` was a genuine RTL defect — an
+  undriven `core_boot_ready` reaching `u_spi` on all five `_CORE=0` spins,
+  fixed in `05d1709`. That source point then routes at 43.20 MHz.
+- The **230-node** rejection on the preserved July netlist is a nextpnr
+  0.8.2 limitation. Upstream nextpnr 0.10's Himbächel XC7 backend builds the
+  timing graph on the identical netlist with **zero** unschedulable nodes and
+  analyses both clock domains separately (`clk_fast` 23.74 MHz,
+  `clk_100mhz` 119.76 MHz) — something 0.8.2 cannot do, having one global
+  `--freq` and an XDC parser that honours no timing commands at all.
+
+Use of the `FP4EVIDENCE` harness for physical measurement is therefore a
+justified consequence of a toolchain limitation, not a shortcut — but it does
+mean these numbers characterise the inverter in isolation rather than inside
+the production design.
 
 The predeclared five-seed parallel matrix completed on 2026-07-28. Per-seed
 resource results are:
@@ -146,6 +172,33 @@ The required aggregate statistics, with no dropped or added seeds, are:
 The matrix passes both aggregation rules: median LUT ratio 1.074302 is at or
 below 1.08, median Fmax ratio 1.152158 is at or above 0.90, and **5/5** seeds
 individually pass both gates (the requirement was at least 4/5).
+
+### Calibration — what this result does and does not say
+
+The pass is real and measured against rules fixed before the runs. Three
+qualifications belong with it, so it is not quoted more strongly later than
+the data supports:
+
+1. **"5/5 PASS" does not mean uniformly faster.** The Fmax gate was
+   `>= 0.90x` — *not much worse* — not `>= 1.00x`. **Two of five seeds are
+   slower in Fmax**: seed 41 (77.16 -> 69.60 MHz, ratio 0.902022) and seed 53
+   (70.48 -> 68.44 MHz, ratio 0.971056). Seed 41 cleared the gate by 0.2%.
+2. **The wall-clock gain is a range, not a headline.** Per-seed unit-time
+   ratios are 0.773823, 0.988409, 0.918141, 0.685511 and 0.730551 — i.e.
+   between **1.2% and 31% faster** depending on placement. The mean, 0.819287
+   (~18%), is the fairest single figure. Seed 17's 22.6% is above
+   median-typical and should not be used alone.
+3. **Seed 17 is not source-matched to the other four, and it supplies the
+   reported median.** All four 2026-07-28 seeds give identical LUT counts
+   (v1 9,421 / v2 10,121) — expected, since nextpnr's seed drives placement,
+   not synthesis. Seed 17, run 2026-07-26, differs (9,415 / 10,120), which
+   indicates a different source or flow state. Sorted Fmax ratios are
+   0.902022, 0.971056, **1.152158**, 1.220402, 1.300587 — the median *is*
+   seed 17's value. Excluding it, the four-seed median is ~1.096.
+   **The verdict survives either way** (still well above 0.90; the LUT median
+   is unaffected, coming from the identical four), but the headline Fmax
+   figure is sensitive to the one unmatched seed. Re-running seed 17 on
+   current source would close this.
 
 The closed sequential negative remains:
 
