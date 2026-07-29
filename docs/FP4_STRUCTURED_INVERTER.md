@@ -137,7 +137,7 @@ resource results are:
 
 | Seed | v1 LUT | v2 LUT | Ratio | v1 FF | v2 FF | Ratio | v1 DSP | v2 DSP | Ratio |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 17 | 9,415 | 10,120 | 1.074881 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
+| 17 | 9,421 | 10,121 | 1.074302 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
 | 41 | 9,421 | 10,121 | 1.074302 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
 | 53 | 9,421 | 10,121 | 1.074302 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
 | 67 | 9,421 | 10,121 | 1.074302 | 1,274 | 1,177 | 0.923862 | 72 | 72 | 1.000000 |
@@ -148,14 +148,14 @@ v1 latency and 74-cycle v2 latency:
 
 | Seed | v1 Fmax | v2 Fmax | Ratio | v1, 83 clocks | v2, 74 clocks | Time ratio | Per-seed gate |
 |---:|---:|---:|---:|---:|---:|---:|---|
-| 17 | 66.51 MHz | 76.63 MHz | 1.152158 | 1.247933 us | 0.965679 us | 0.773823 | PASS |
+| 17 | 75.02 MHz | 70.51 MHz | 0.939883 | 1.106372 us | 1.049497 us | 0.948593 | PASS |
 | 41 | 77.16 MHz | 69.60 MHz | 0.902022 | 1.075687 us | 1.063218 us | 0.988409 | PASS |
 | 53 | 70.48 MHz | 68.44 MHz | 0.971056 | 1.177639 us | 1.081239 us | 0.918141 | PASS |
 | 67 | 59.65 MHz | 77.58 MHz | 1.300587 | 1.391450 us | 0.953854 us | 0.685511 | PASS |
 | 79 | 64.11 MHz | 78.24 MHz | 1.220402 | 1.294650 us | 0.945808 us | 0.730551 | PASS |
 
 The seven-clock singular path is unchanged. Its per-seed v1/v2 wall-clock
-times are respectively 0.105247/0.091348, 0.090721/0.100575,
+times are respectively 0.093308/0.099277, 0.090721/0.100575,
 0.099319/0.102279, 0.117351/0.090229, and 0.109187/0.089468 us for seeds
 17/41/53/67/79.
 
@@ -163,15 +163,20 @@ The required aggregate statistics, with no dropped or added seeds, are:
 
 | Metric | v1 mean | v1 median | v1 min | v1 max | v2 mean | v2 median | v2 min | v2 max | Ratio mean | Ratio median | Ratio min | Ratio max |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| LUT | 9,419.8 | 9,421 | 9,415 | 9,421 | 10,120.8 | 10,121 | 10,120 | 10,121 | 1.074418 | **1.074302** | 1.074302 | 1.074881 |
+| LUT | 9,421 | 9,421 | 9,421 | 9,421 | 10,121 | 10,121 | 10,121 | 10,121 | 1.074302 | **1.074302** | 1.074302 | 1.074302 |
 | FF | 1,274 | 1,274 | 1,274 | 1,274 | 1,177 | 1,177 | 1,177 | 1,177 | 0.923862 | 0.923862 | 0.923862 | 0.923862 |
 | DSP48E1 | 72 | 72 | 72 | 72 | 72 | 72 | 72 | 72 | 1.000000 | 1.000000 | 1.000000 | 1.000000 |
-| Fmax (MHz) | 67.582 | 66.510 | 59.650 | 77.160 | 74.098 | 76.630 | 68.440 | 78.240 | 1.109245 | **1.152158** | 0.902022 | 1.300587 |
-| Unit time (us) | 1.237472 | 1.247933 | 1.075687 | 1.391450 | 1.001960 | 0.965679 | 0.945808 | 1.081239 | 0.819287 | 0.773823 | 0.685511 | 0.988409 |
+| Fmax (MHz) | 69.284 | 70.480 | 59.650 | 77.160 | 72.874 | 70.510 | 68.440 | 78.240 | 1.066790 | **0.971056** | 0.902022 | 1.300587 |
+| Unit time (us) | 1.209160 | 1.177639 | 1.075687 | 1.391450 | 1.018723 | 1.049497 | 0.945808 | 1.081239 | 0.854241 | 0.918141 | 0.685511 | 0.988409 |
 
 The matrix passes both aggregation rules: median LUT ratio 1.074302 is at or
-below 1.08, median Fmax ratio 1.152158 is at or above 0.90, and **5/5** seeds
+below 1.08, median Fmax ratio 0.971056 is at or above 0.90, and **5/5** seeds
 individually pass both gates (the requirement was at least 4/5).
+
+All five seeds are now source-matched: every one synthesizes to a bit-identical
+netlist, so LUT, FF and DSP have zero variance across the matrix and the only
+per-seed variable is placement. Seed 17 was re-run on matched source on
+2026-07-30; see calibration note 3.
 
 ### Calibration — what this result does and does not say
 
@@ -179,37 +184,64 @@ The pass is real and measured against rules fixed before the runs. Three
 qualifications belong with it, so it is not quoted more strongly later than
 the data supports:
 
-1. **"5/5 PASS" does not mean uniformly faster.** The Fmax gate was
-   `>= 0.90x` — *not much worse* — not `>= 1.00x`. **Two of five seeds are
-   slower in Fmax**: seed 41 (77.16 -> 69.60 MHz, ratio 0.902022) and seed 53
-   (70.48 -> 68.44 MHz, ratio 0.971056). Seed 41 cleared the gate by 0.2%.
-2. **The wall-clock gain is a range, not a headline.** Per-seed unit-time
-   ratios are 0.773823, 0.988409, 0.918141, 0.685511 and 0.730551 — i.e.
-   between **1.2% and 31% faster** depending on placement. The mean, 0.819287
-   (~18%), is the fairest single figure. Seed 17's 22.6% is above
-   median-typical and should not be used alone.
-3. **Seed 17 is not source-matched to the other four, and it supplies the
-   reported median.** All four 2026-07-28 seeds give identical LUT counts
-   (v1 9,421 / v2 10,121) — expected, since nextpnr's seed drives placement,
-   not synthesis. Seed 17, run 2026-07-26, differs (9,415 / 10,120), which
-   indicates a different source or flow state. Sorted Fmax ratios are
-   0.902022, 0.971056, **1.152158**, 1.220402, 1.300587 — the median *is*
-   seed 17's value. Excluding it, the four-seed median is ~1.096.
-   **The verdict survives either way** (still well above 0.90; the LUT median
-   is unaffected, coming from the identical four), but the headline Fmax
-   figure is sensitive to the one unmatched seed. Re-running seed 17 on
-   current source would close this.
+1. **"5/5 PASS" does not mean faster. At the median it is slower.** The Fmax
+   gate was `>= 0.90x` — *not much worse* — not `>= 1.00x`, and the median
+   ratio is **0.971056**, i.e. **~3% slower**. **Three of five seeds are slower
+   in Fmax**: seed 41 (77.16 -> 69.60 MHz, 0.902022), seed 17
+   (75.02 -> 70.51 MHz, 0.939883) and seed 53 (70.48 -> 68.44 MHz, 0.971056).
+   Two are substantially faster: seed 79 (1.220402) and seed 67 (1.300587).
+   Seed 41 cleared the gate by 0.2%. Any phrasing of this result as a clock
+   speed *win* is unsupported; the defensible claim is that v2 is not much
+   worse in Fmax while retiring the work in fewer cycles.
+2. **The wall-clock gain is a range, and it comes from the cycle count, not
+   the clock.** Per-seed unit-time ratios are 0.948593, 0.988409, 0.918141,
+   0.685511 and 0.730551 — i.e. between **1.2% and 31.4% faster** depending on
+   placement. The mean, 0.854241 (~14.6%), is the fairest single figure; the
+   median is 0.918141 (~8.2%). The gain survives the negative Fmax median only
+   because v2 completes a unit in 74 clocks against v1's 83; on a same-clock
+   comparison v2 would be behind at three of five seeds.
+3. **Seed 17 was unmatched, and correcting it moved the headline across 1.0.**
+   Resolved 2026-07-30. This note is kept rather than deleted, because the
+   correction is the most important calibration in this document.
 
-   **Before re-running, note that `build_a7.sh` names its output from the
-   variant and seed alone, so a seed-17 re-run overwrites the 2026-07-26
-   artifacts in place, and `build/` is gitignored with no second copy.** All
-   13 of those files — `FI0B0`, `FI1B0`, `FI0B1` complete, plus a synthesis-only
-   `FI1B1` — were preserved on 2026-07-30 under
+   The four 2026-07-28 seeds gave identical LUT counts (v1 9,421 / v2 10,121)
+   — expected, since nextpnr's seed drives placement, not synthesis. Seed 17,
+   run 2026-07-26, differed (9,415 / 10,120), indicating a different source or
+   flow state, and it supplied the reported median. It was re-synthesized and
+   re-placed on current source on 2026-07-30. Both arms now reproduce the
+   other four seeds' synthesis hashes **bit-identically**
+   (`feb7b8cd...945372` for v1, `d8be0759...4a6adce` for v2), which is the
+   evidence that the source is matched — not the LUT count agreeing.
+
+   The measured effect was large and adverse:
+
+   | | unmatched 2026-07-26 | matched 2026-07-30 |
+   |---|---:|---:|
+   | seed 17 v1 Fmax | 66.51 MHz | 75.02 MHz |
+   | seed 17 v2 Fmax | 76.63 MHz | 70.51 MHz |
+   | seed 17 Fmax ratio | 1.152158 | **0.939883** |
+   | **matrix median Fmax ratio** | **1.152158** | **0.971056** |
+
+   Seed 17 went from the best-looking seed to the second worst, and the matrix
+   median crossed from 1.15 (a 15% apparent gain) to 0.97 (a 3% loss). **Every
+   previously published "median ~15% faster" statement about this result is
+   false and must not be requoted.** The predeclared gate still passes — 0.971
+   is above 0.90 and 5/5 seeds pass individually, in fact an improvement on
+   4/5 — but it passes as *not much worse*, which is what the gate always
+   measured. Seed 17 is no longer the median, so the headline no longer depends
+   on any single seed.
+
+   The 2026-07-26 artifacts were preserved before the re-run, because
+   `build_a7.sh` names its output from the variant and seed alone and `build/`
+   is gitignored with no second copy. All 13 files — `FI0B0`, `FI1B0`, `FI0B1`
+   complete, plus a synthesis-only `FI1B1` — are under
    `build/evidence_archive/` with a `_UNMATCHED_2026-07-26` infix, verified
-   byte-identical by SHA-256. The two load-bearing hashes are the `seed 17`
-   entries listed below, so the archive is checkable against this document.
-   The re-run should replace the *number*, not the record that the original
-   was unmatched.
+   byte-identical by SHA-256. The `seed 17` entries in the hash block below now
+   carry the **matched** values, identical to the other four seeds; the
+   superseded unmatched hashes
+   (`eeb33958...6f5c8b0b` for v1, `7e066bd0...ff65d443e3` for v2) are recorded
+   in `build/evidence_archive/README.md`, so the correction above stays
+   checkable from either side.
 
 The closed sequential negative remains:
 
@@ -247,8 +279,8 @@ The matched runs used Yosys 0.63+87 and nextpnr-xilinx 0.8.2-73-gf681eb3a.
 Their synthesis JSON SHA-256 values are:
 
 ```text
-parallel v1, seed 17: eeb339587b013d402f953037599688d96f412818cf2a69ba96d1245e6f5c8b0b
-parallel v2, seed 17: 7e066bd0af46bdf3210abfd92d9aa09403455e8d5e117c1be25532ff65d443e3
+parallel v1, seed 17: feb7b8cdc743ba4e180ff480256a82be1adb360763c60b4f096b70aeab945372
+parallel v2, seed 17: d8be0759ac4a5a446f5f4d5253634338a91551a822a74dbb4f32d1c4e4a6adce
 parallel v1, seed 41: feb7b8cdc743ba4e180ff480256a82be1adb360763c60b4f096b70aeab945372
 parallel v2, seed 41: d8be0759ac4a5a446f5f4d5253634338a91551a822a74dbb4f32d1c4e4a6adce
 parallel v1, seed 53: feb7b8cdc743ba4e180ff480256a82be1adb360763c60b4f096b70aeab945372

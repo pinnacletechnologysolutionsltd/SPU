@@ -82,6 +82,15 @@ text. Documented in `docs/toolchain_setup.md`, `docs/hardware_evidence.md`
 
 ### Structured inverter seed matrix — PASSED, with calibration
 
+> **SUPERSEDED 2026-07-30 — the Fmax figures below are wrong.** Seed 17 was
+> re-run on matched source. Its ratio moved 1.152158 → **0.939883**, and the
+> **matrix median Fmax ratio moved 1.152158 → 0.971056** — from a 15% apparent
+> gain to a 3% loss. Three of five seeds are slower, not two. Wall-clock mean
+> is ≈14.6%, not ≈18%. The gate still passes (0.971 ≥ 0.90, now 5/5).
+> **Do not quote any Fmax number from this section.** Current figures:
+> `docs/FP4_STRUCTURED_INVERTER.md`. The text below is retained unaltered as
+> the record of what was believed on 2026-07-28.
+
 Predeclared gate met honestly: median LUT ratio 1.074302 (≤1.08), median
 Fmax ratio 1.152158 (≥0.90), 5/5 seeds individually passing (≥4/5 required),
 all statistics reported with no dropped seeds.
@@ -170,10 +179,17 @@ recorded: **TLV3012 is push-pull** where this circuit needs open-drain, and
 
 ## Open / next
 
-- **Seed 17 re-run on matched source** — the last substantive gap before the
-  structured-inverter default-switch decision. Cores are now free.
+- ~~**Seed 17 re-run on matched source**~~ — **DONE 2026-07-30.** Both arms
+  now reproduce the other four seeds' synthesis hashes bit-identically. The
+  result was adverse: matrix median Fmax ratio 1.152158 → **0.971056**. See
+  the superseded banner above and `docs/FP4_STRUCTURED_INVERTER.md`.
 - **Default-switch decision** for the parallel structured inverter. Per
-  project rule, it gets its own commit, separate from evaluation.
+  project rule, it gets its own commit, separate from evaluation. **The case
+  changed materially on 2026-07-30**: it is now "7.4% more LUT for a ~3%
+  median Fmax loss, with 2/5 seeds substantially faster", not "15% faster for
+  7% area". The wall-clock gain survives only via the 74-vs-83 cycle count.
+  Worth understanding why seeds 67/79 gain 22-30% while 17/41/53 lose before
+  deciding.
 - **Tang ABC9 non-termination** — the one v2-exercising consumer build that
   never closed (no verdict after 2:01:51).
 - **DSP `CARRYCASCIN` cascade defect** — the honest next lead on the
