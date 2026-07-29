@@ -31,6 +31,7 @@ from lib.cyclotomic_fibonacci import (
     ZETA5_ZETA,
     Zeta5,
     braid_growth_by_class,
+    braid_storage_bits_by_class,
     braid_growth_profile,
     deterministic_braid_corpus,
     evaluate_braid_word,
@@ -44,6 +45,7 @@ from lib.cyclotomic_fibonacci import (
     pentagon_report,
     phi5_irreducible_over_prime,
     phi5_roots_mod_prime,
+    signed_storage_bits,
     split_zero_divisor_pair,
     structured_pattern_orders,
 )
@@ -178,7 +180,21 @@ max_bits = profile[max_label]
 check(len(corpus) == 100, "declared corpus contains 100 deterministic braid words")
 check(max(len(word) for word in corpus.values()) == 100, "corpus reaches length 100")
 check(max_bits == 55, f"pinned maximum coefficient width is 55 bits ({max_label})")
-check(all(bits <= 64 for bits in profile.values()), "all corpus coefficients fit 64 signed bits")
+# profile values are magnitude widths (abs(v).bit_length()), so a 64-bit signed
+# guarantee needs magnitude <= 63, not <= 64. Check the storage width directly.
+storage = braid_storage_bits_by_class(100)
+check(
+    max(storage.values()) <= 64,
+    f"all corpus coefficients fit signed 64-bit storage: {storage}",
+)
+check(
+    storage["structured"] == 56 and storage["generic"] == 15,
+    f"signed storage widths are pinned at 56/15: {storage}",
+)
+check(
+    signed_storage_bits(-(1 << 55)) == 56 and signed_storage_bits(1 << 55) == 57,
+    "storage-width helper is asymmetric at the two's-complement boundary",
+)
 
 # Growth evidence has to be attributed honestly.  Three structured patterns
 # generate finite cyclic subgroups and cannot grow at any length, so the
@@ -288,8 +304,10 @@ check(g2, "G2 inverses: both signed braid-generator round trips are identity")
 check(g3, "G3 metric: both generators and inverses preserve diag(1,phi)")
 check(
     g4,
-    f"G4 growth: {len(corpus)} words through length 100, maximum {max_bits} bits "
-    f"(structured {by_class['structured']}, generic {by_class['generic']})",
+    f"G4 growth: {len(corpus)} words through length 100, max magnitude "
+    f"{max_bits} bits (structured {by_class['structured']}, generic "
+    f"{by_class['generic']}); signed storage {storage['structured']}/"
+    f"{storage['generic']}",
 )
 check(
     g5,

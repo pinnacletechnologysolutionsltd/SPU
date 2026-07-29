@@ -130,14 +130,21 @@ patterns, and the generic bound rests on the 50 stream words.
 Current measured maxima at length 100:
 
 ```text
-structured  55 signed coefficient bits (inverse_alternating_100)
-generic     14 signed coefficient bits (50 independent stream words)
+structured  55 coefficient-magnitude bits / 56 signed storage bits (inverse_alternating_100)
+generic     14 coefficient-magnitude bits / 15 signed storage bits (50 independent stream words)
 ```
 
-All corpus results fit signed 64-bit coefficients. This is a measured corpus
-bound, not a proof that all length-100 braid words fit 64 bits. The finite
-orders are themselves pinned by the test, so the corpus cannot silently become
-inert if the patterns are edited later.
+Magnitude and storage width are deliberately reported apart.
+`Zeta5.max_coefficient_bits` returns `abs(v).bit_length()`, which excludes the
+sign, so a magnitude figure is not a storage width — quoting "55 bits" as a
+resource number would understate the lane by one. The test pins both, and pins
+the boundary asymmetry (`-2**55` needs 56 bits, `+2**55` needs 57), so the two
+cannot be conflated again.
+
+All corpus results fit signed 64-bit storage, with 8 bits of headroom. This is
+a measured corpus bound, not a proof that all length-100 braid words fit 64
+bits. The finite orders are themselves pinned by the test, so the corpus cannot
+silently become inert if the patterns are edited later.
 
 The test prints explicit `G1`-`G5` verdicts matching the private audit
 contract: coherence, inverses, metric, growth, and modular agreement. A failed

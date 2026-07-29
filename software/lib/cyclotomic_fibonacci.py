@@ -834,6 +834,37 @@ def braid_growth_profile(max_length: int = 100) -> dict[str, int]:
     return profile
 
 
+def signed_storage_bits(value: int) -> int:
+    """Minimum two's-complement width that holds ``value``.
+
+    ``Zeta5.max_coefficient_bits`` reports ``abs(v).bit_length()`` -- a
+    *magnitude* width that excludes the sign.  Storage needs one more bit,
+    except at the exact negative boundary where ``-2**(w-1)`` still fits in
+    ``w``.  Computing it rather than adding one keeps the two quantities from
+    being conflated in a resource claim.
+    """
+
+    width = 1
+    while not -(1 << (width - 1)) <= value <= (1 << (width - 1)) - 1:
+        width += 1
+    return width
+
+
+def braid_storage_bits_by_class(max_length: int = 100) -> dict[str, int]:
+    """Minimum signed storage width per word class over the corpus."""
+
+    worst = {"structured": 1, "generic": 1}
+    for label, word in deterministic_braid_corpus(max_length).items():
+        key = "generic" if is_generic_label(label) else "structured"
+        for row in evaluate_braid_word(word):
+            for value in row:
+                for coefficient in value.coefficients:
+                    width = signed_storage_bits(coefficient)
+                    if width > worst[key]:
+                        worst[key] = width
+    return worst
+
+
 def braid_growth_by_class(max_length: int = 100) -> dict[str, int]:
     """Report structured-word and generic-word growth separately.
 

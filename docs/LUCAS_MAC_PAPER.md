@@ -570,7 +570,7 @@ separate work.
   braid-generator inverses, and 100 deterministic words through length 100.
   Coefficient growth is reported by class, because three of the five
   structured word families generate finite cyclic subgroups and so cannot grow
-  at any length: the maximum is 55 signed coefficient bits on structured words
+  at any length: the maximum is 55 coefficient-magnitude bits (requiring 56 signed storage bits) on structured words
   and 14 on the 50 pseudo-random stream words. For prime `p != 5`,
   Φ₅ is irreducible over F_p exactly when `p == 2 or 3 (mod 5)`. M31
   therefore gives a degree-4 field and agrees with characteristic-zero truth

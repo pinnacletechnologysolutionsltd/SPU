@@ -110,11 +110,14 @@ a floorplanner, do not implement tetrahedral cages.
 
 1. Characteristic-zero rank-4 Fibonacci oracle: **complete**.
 2. Weighted-metric, full Pentagon, and directed Hexagon checks: **complete**.
-3. Declared length-100 growth corpus: **complete**, reported by class —
-   55 signed coefficient bits on structured words, 14 on the 50 generic
-   streams. Three structured patterns are finite-order and contribute no
-   growth evidence; their orders are pinned so the corpus cannot silently
-   become inert.
+3. Declared length-100 growth corpus: **complete**, reported by class — 55
+   coefficient-magnitude bits (56 signed storage bits) on structured words,
+   14 magnitude bits (15 signed storage bits) on the 50 generic streams. The
+   two are distinct: the oracle measures `abs(v).bit_length()`, which excludes
+   the sign, so a magnitude figure is not a storage width and the test pins
+   both. Three structured patterns are finite-order and contribute no growth
+   evidence; their orders are pinned so the corpus cannot silently become
+   inert.
 4. Independent M31 modular-image comparison: **complete**, all 100 words
    agree in the hardened final corpus.
 5. Independent contract audit and mutation testing: **complete**.
