@@ -475,6 +475,35 @@ def main():
         else:
             print(f"\n  test_lucas_mac_harness.py FAILED:\n{result_lh.stdout[-500:]}")
 
+    # Fifth-cyclotomic Fibonacci oracle: characteristic-zero integral gauge,
+    # complete Pentagon/Hexagon coherence, coefficient-growth corpus, and an
+    # independently evaluated M31 modular image. No RTL is implied by this
+    # host-only feasibility gate.
+    cyclotomic_test = os.path.join(
+        root_dir, "software", "tests", "test_cyclotomic_fibonacci.py"
+    )
+    if os.path.exists(cyclotomic_test):
+        result_cyclotomic = subprocess.run(
+            [sys.executable, cyclotomic_test],
+            capture_output=True, text=True, timeout=30
+        )
+        cyclotomic_ok = (
+            result_cyclotomic.returncode == 0
+            and "CYCLOTOMIC FIBONACCI ORACLE: ALL CHECKS PASS"
+            in result_cyclotomic.stdout
+        )
+        if cyclotomic_ok:
+            cyclotomic_pass, cyclotomic_fail = 1, 0
+        else:
+            cyclotomic_pass, cyclotomic_fail = 0, 1
+            print(
+                "\n  test_cyclotomic_fibonacci.py FAILED:\n"
+                f"{result_cyclotomic.stdout[-800:]}"
+                f"{result_cyclotomic.stderr[-800:]}"
+            )
+    else:
+        cyclotomic_pass = cyclotomic_fail = 0
+
     # Icosahedral catalog derivation oracle
     icosa_pass = 0
     icosa_test = os.path.join(root_dir, "software", "tests", "test_icosahedral_catalog.py")
@@ -799,6 +828,10 @@ def main():
     print(f"Passed:                    {icosa_pass}")
     print(f"Failed:                    {1 - icosa_pass}")
 
+    print(f"\nCyclotomic Fibonacci Tests: {cyclotomic_pass + cyclotomic_fail}")
+    print(f"Passed:                      {cyclotomic_pass}")
+    print(f"Failed:                      {cyclotomic_fail}")
+
     print(f"\nIROTC VM Tests: {irotc_pass + irotc_fail}")
     print(f"Passed:         {irotc_pass}")
     print(f"Failed:         {irotc_fail}")
@@ -816,13 +849,13 @@ def main():
         + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
         + audio_pass + host_pass + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
-        + irotc_pass + tensegrity_pass + boot_sequence_pass
+        + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
         + audio_fail + host_fail + som_product_fail + robotics_demo_fail
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
-        + irotc_fail + tensegrity_fail + boot_sequence_fail
+        + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
     )
     print(f"\nTotal PASS:  {total_pass}")
