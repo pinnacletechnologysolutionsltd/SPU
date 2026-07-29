@@ -303,14 +303,26 @@ by this sidecar. Such an end-to-end geometry benchmark remains separate work.
     and in which non-unitary gauges with entries in $\mathbb{Q}(\phi)$ are
     available --- rather than as exact representation of unitary braid
     amplitudes. Second, no claim is made here that a full Fibonacci braid
-    representation is expressible over $\mathbb{Z}[\phi]/L_p$; it is not.
-    \textbf{Future work:} a degree-4 cyclotomic MAC over
-    $\mathbb{Z}[\zeta_5]/L_p$, which would carry the $R$-matrix phases
-    natively and subsume the present ring as its real subfield. The datapath
-    generalization is structural rather than novel --- $\mathbb{Z}[\zeta_5]$ is
-    a rank-4 module where $\mathbb{Z}[\phi]$ is rank-2 --- but the reduction,
-    zero-divisor, and period analyses of the Mathematical Foundation section
-    would all need redoing for the larger ring.
+    representation is expressible over $\mathbb{Z}[\phi]/L_p$; it is not. A
+    full implementation requires a degree-4 cyclotomic datapath over
+    $\mathbb{Z}[\zeta_5]$, which would carry the $R$-matrix phases natively
+    and contain the present ring as its real subfield.
+    \item \textbf{Companion cyclotomic oracle:} A subsequent host-only oracle
+    closes the algebraic-feasibility part of that future direction. In the
+    integral gauge
+    $F=\left[\begin{smallmatrix}\phi^{-1}&1\\
+    \phi^{-1}&-\phi^{-1}\end{smallmatrix}\right]$, the complete Fibonacci
+    $F/R$ representation lies in rank-4 $\mathbb{Z}[\zeta_5]$ and preserves
+    the weighted metric $G=\operatorname{diag}(1,\phi)$. The oracle verifies
+    27 admissible Pentagon sectors, 24 directed Hexagon identities, exact
+    braid-generator inverses, and 100 deterministic words through length 100;
+    its measured maximum is 55 signed coefficient bits. For prime $p\ne5$,
+    $\Phi_5$ is irreducible over $\mathbb{F}_p$ exactly when
+    $p\equiv2$ or $3\pmod 5$. Thus M31 gives a degree-4 field and agrees with
+    characteristic-zero truth on all 100 words, whereas $521\equiv1\pmod5$
+    splits $\Phi_5$ and is unsuitable for a field-valued cyclotomic backend.
+    These are software-oracle results only: no degree-4 RTL, timing, resource,
+    or silicon claim is made.
 \end{itemize}
 
 \section{Conclusion}
@@ -330,7 +342,10 @@ end-to-end application remain future work.
 The paper, generator, RTL, tests, build scripts, and hardware evidence ledger
 are included in the SPU repository. Run
 \texttt{python3 tools/lucas\_paper\_data.py --verify} to regenerate and check
-the publication tables. Hardware RTL is licensed under CERN-OHL-W-2.0,
+the publication tables. Run \texttt{python3}
+\nolinkurl{software/tests/test_cyclotomic_fibonacci.py} to reproduce the
+52-check companion cyclotomic oracle. Hardware RTL is licensed under
+CERN-OHL-W-2.0,
 software under MIT, and the paper's data tooling under Apache-2.0; this paper
 is released under CC BY 4.0.
 

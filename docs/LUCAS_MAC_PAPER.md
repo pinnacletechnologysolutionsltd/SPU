@@ -556,6 +556,25 @@ separate work.
   Zeckendorf-encoded operands) would eliminate integer multiplies for
   large-operand cases and is noted as future work.
 
+- **ℤ[φ] does not span the full Fibonacci anyon data:** ℚ(φ) is the real
+  quadratic subfield of ℚ(ζ₅). It carries quantum dimensions and the
+  diagonal φ⁻¹ F-symbol entries, but not the primitive fifth-root phases of
+  the Fibonacci R-matrix. The implemented ℤ[φ]/L₅₂₁ hardware therefore
+  remains a reduced phase-ratio engine, not a full braid-amplitude engine.
+
+- **Companion cyclotomic oracle:** A host-only oracle closes the
+  algebraic-feasibility part of that future direction. In the integral gauge
+  `F=[[phi^-1,1],[phi^-1,-phi^-1]]`, the complete Fibonacci F/R representation
+  lies in rank-4 ℤ[ζ₅] and preserves `G=diag(1,phi)`. It verifies 27
+  admissible Pentagon sectors, 24 directed Hexagon identities, exact
+  braid-generator inverses, and 100 deterministic words through length 100;
+  the measured maximum is 55 signed coefficient bits. For prime `p != 5`,
+  Φ₅ is irreducible over F_p exactly when `p == 2 or 3 (mod 5)`. M31
+  therefore gives a degree-4 field and agrees with characteristic-zero truth
+  on all 100 words, whereas `521 == 1 (mod 5)` splits Φ₅ and is unsuitable
+  for a field-valued cyclotomic backend. These are software-oracle results
+  only: no degree-4 RTL, timing, resource, or silicon claim is made.
+
 ---
 
 ## 7. Conclusion
@@ -569,6 +588,10 @@ establish fast-path and PHSLK silicon behavior, and the low-MHz Artix sidecar
 establishes external SPI operation for all four arithmetic opcodes. This
 closes a reproducible kernel study; timing closure, wider moduli, and an
 end-to-end application remain future work.
+
+Run `python3 software/tests/test_cyclotomic_fibonacci.py` to reproduce the
+52-check companion cyclotomic oracle. The full algebraic contract and audit
+closure are recorded in `docs/CYCLOTOMIC_FIBONACCI_ORACLE.md`.
 
 Hardware RTL is licensed under CERN-OHL-W-2.0, software under MIT, and the
 paper data tooling under Apache-2.0. The paper is released under CC BY 4.0.
