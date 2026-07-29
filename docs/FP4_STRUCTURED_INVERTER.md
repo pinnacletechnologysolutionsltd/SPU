@@ -200,6 +200,17 @@ the data supports:
    figure is sensitive to the one unmatched seed. Re-running seed 17 on
    current source would close this.
 
+   **Before re-running, note that `build_a7.sh` names its output from the
+   variant and seed alone, so a seed-17 re-run overwrites the 2026-07-26
+   artifacts in place, and `build/` is gitignored with no second copy.** All
+   13 of those files — `FI0B0`, `FI1B0`, `FI0B1` complete, plus a synthesis-only
+   `FI1B1` — were preserved on 2026-07-30 under
+   `build/evidence_archive/` with a `_UNMATCHED_2026-07-26` infix, verified
+   byte-identical by SHA-256. The two load-bearing hashes are the `seed 17`
+   entries listed below, so the archive is checkable against this document.
+   The re-run should replace the *number*, not the record that the original
+   was unmatched.
+
 The closed sequential negative remains:
 
 | Backend | Metric | v1 | v2 | Ratio | Gate |
