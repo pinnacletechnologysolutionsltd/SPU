@@ -567,13 +567,21 @@ separate work.
   `F=[[phi^-1,1],[phi^-1,-phi^-1]]`, the complete Fibonacci F/R representation
   lies in rank-4 ℤ[ζ₅] and preserves `G=diag(1,phi)`. It verifies 27
   admissible Pentagon sectors, 24 directed Hexagon identities, exact
-  braid-generator inverses, and 100 deterministic words through length 100;
-  the measured maximum is 55 signed coefficient bits. For prime `p != 5`,
+  braid-generator inverses, and 100 deterministic words through length 100.
+  Coefficient growth is reported by class, because three of the five
+  structured word families generate finite cyclic subgroups and so cannot grow
+  at any length: the maximum is 55 signed coefficient bits on structured words
+  and 14 on the 50 pseudo-random stream words. For prime `p != 5`,
   Φ₅ is irreducible over F_p exactly when `p == 2 or 3 (mod 5)`. M31
   therefore gives a degree-4 field and agrees with characteristic-zero truth
   on all 100 words, whereas `521 == 1 (mod 5)` splits Φ₅ and is unsuitable
   for a field-valued cyclotomic backend. These are software-oracle results
   only: no degree-4 RTL, timing, resource, or silicon claim is made.
+  **The period analysis is also not carried over.** Agreement between the M31
+  image and characteristic-zero truth on a 100-word corpus does not establish
+  a phase horizon for ℤ[ζ₅]/L_p analogous to the 26-step φ-period of the
+  Mathematical Foundation section; the aliasing constraint discussed there for
+  long braid, fusion, and syndrome histories remains open for the larger ring.
 
 ---
 
@@ -592,6 +600,12 @@ end-to-end application remain future work.
 Run `python3 software/tests/test_cyclotomic_fibonacci.py` to reproduce the
 52-check companion cyclotomic oracle. The full algebraic contract and audit
 closure are recorded in `docs/CYCLOTOMIC_FIBONACCI_ORACLE.md`.
+
+The complete source repository is available at
+<https://github.com/pinnacletechnologysolutionsltd/SPU>. The archival record of
+this paper is maintained under the concept DOI
+<https://doi.org/10.5281/zenodo.21447440>, which always resolves to the latest
+deposited version.
 
 Hardware RTL is licensed under CERN-OHL-W-2.0, software under MIT, and the
 paper data tooling under Apache-2.0. The paper is released under CC BY 4.0.

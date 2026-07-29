@@ -315,14 +315,23 @@ by this sidecar. Such an end-to-end geometry benchmark remains separate work.
     $F/R$ representation lies in rank-4 $\mathbb{Z}[\zeta_5]$ and preserves
     the weighted metric $G=\operatorname{diag}(1,\phi)$. The oracle verifies
     27 admissible Pentagon sectors, 24 directed Hexagon identities, exact
-    braid-generator inverses, and 100 deterministic words through length 100;
-    its measured maximum is 55 signed coefficient bits. For prime $p\ne5$,
-    $\Phi_5$ is irreducible over $\mathbb{F}_p$ exactly when
+    braid-generator inverses, and 100 deterministic words through length 100.
+    Coefficient growth is reported by class, because three of the five
+    structured word families generate finite cyclic subgroups and so cannot
+    grow at any length: the maximum is 55 signed coefficient bits on
+    structured words and 14 on the 50 pseudo-random stream words. For prime
+    $p\ne5$, $\Phi_5$ is irreducible over $\mathbb{F}_p$ exactly when
     $p\equiv2$ or $3\pmod 5$. Thus M31 gives a degree-4 field and agrees with
     characteristic-zero truth on all 100 words, whereas $521\equiv1\pmod5$
     splits $\Phi_5$ and is unsuitable for a field-valued cyclotomic backend.
     These are software-oracle results only: no degree-4 RTL, timing, resource,
-    or silicon claim is made.
+    or silicon claim is made. \textbf{The period analysis is also not carried
+    over.} Agreement between the M31 image and characteristic-zero truth on a
+    100-word corpus does not establish a phase horizon for
+    $\mathbb{Z}[\zeta_5]/L_p$ analogous to the 26-step $\phi$-period of the
+    Mathematical Foundation section; the aliasing constraint discussed there
+    for long braid, fusion, and syndrome histories remains open for the larger
+    ring.
 \end{itemize}
 
 \section{Conclusion}
@@ -340,7 +349,11 @@ end-to-end application remain future work.
 \section*{Availability, Licensing, and Disclosure}
 
 The paper, generator, RTL, tests, build scripts, and hardware evidence ledger
-are included in the SPU repository. Run
+are included in the SPU repository, available at
+\url{https://github.com/pinnacletechnologysolutionsltd/SPU}. The archival
+record of this paper is maintained under the concept DOI
+\url{https://doi.org/10.5281/zenodo.21447440}, which always resolves to the
+latest deposited version. Run
 \texttt{python3 tools/lucas\_paper\_data.py --verify} to regenerate and check
 the publication tables. Run \texttt{python3}
 \nolinkurl{software/tests/test_cyclotomic_fibonacci.py} to reproduce the
