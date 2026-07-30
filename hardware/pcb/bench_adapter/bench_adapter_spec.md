@@ -335,8 +335,31 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | R | 10 kΩ 1/4 W THT | 3 | 0.5 | Generic carbon/metal film, 5% or better | SPI_CS# + FLASH_CS# pullups (2, WP#/HOLD# pullups removed per §2.2 correction — not physically possible on the 6-pin J3), +1 spare |
 | R | 1 kΩ 1/4 W THT | 2 | 0.5 | Generic carbon/metal film, 5% or better | LED series |
 | LED | 3 mm THT, green + red | 2 | 0.5 | Generic 3mm THT LED | PWR (input side), ACT (GP14) |
+| C | 100 nF ceramic X7R, 50 V | 4 | 0.5 | Generic X7R 0.1 µF, THT 2.54 mm or 0603 | **Decoupling — mandatory, one per IC supply pin, placed at the pin.** U1 VCC, U2 V+, +2 spare. Was absent from Rev B until 2026-07-30; see note below |
+| C | 10 µF ceramic or electrolytic, 16 V+ | 2 | 0.5 | Generic | Bulk on the Pico 3V3 rail feeding U1/U2, and on the metered 5 V output |
 | PCB | 2-layer, ~80×60 mm, HASL | 5 pcs | 15 | Any prototype fab (JLCPCB/PCBWay) | |
-| | **Total** | | **~NZ$52** | | including 5 spare PCBs |
+| | **Total** | | **~NZ$53** | | including 5 spare PCBs |
+
+**Decoupling was missing from Rev B and is not optional.** The original BOM
+listed two ICs and zero capacitors. U2 is a comparator with an integrated
+reference: comparators are prone to output chatter and reference disturbance
+without a local bypass, and this is materially worse on a breadboard than on a
+PCB because of lead inductance. Note the interaction with the hysteresis
+footprint above — **if breadboard step 1 shows chatter near the threshold, check
+for a missing or badly placed 100 nF before fitting the 1 MΩ feedback
+resistor.** Fitting hysteresis to suppress chatter caused by absent decoupling
+would treat the symptom and leave the cause on the board.
+
+### Breadboard bring-up tooling (not PCB BOM)
+
+Needed to execute the breadboard acceptance steps below; none of it is
+populated on the board.
+
+| Item | Qty | Est. NZD | Notes |
+|---|---|---|---|
+| TSSOP-14 → DIP breakout adapter | 2 | 6 | **Required for U1** (`74CBTLV3125PGG`, TSSOP-14, 0.65 mm pitch). U1 is mandatory J2 isolation, so without this the breadboard steps cannot run at all. Two, because hand-soldering 0.65 mm pitch has a failure rate |
+| SOT-23-6 → DIP breakout adapter | 2 | 4 | For U2 (`TLV3011BIDBVR`). **SOT-23-6, not SOT-23-5, and not SC70-6** |
+| fx2lafw/sigrok 8-channel USB logic analyzer | 1 | 15 | 24 MHz, `fx2lafw` firmware, driven by sigrok/PulseView. This is the part J8 in §2.6 is sized for. Sourced from AliExpress/Amazon — **do not buy a Digilent or Saleae unit for this**; they cost 10–30× more for bandwidth this bench does not use (SPI runs 25 kHz–2 MHz) |
 
 **Listing discipline:** every "generic" line above is a widely-available part
 category, not a single-source dependency — any listing matching the stated
