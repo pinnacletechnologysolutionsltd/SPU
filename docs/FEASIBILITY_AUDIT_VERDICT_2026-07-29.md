@@ -50,7 +50,7 @@ a floorplanner, do not implement tetrahedral cages.
 - Independent review on 2026-07-30 cleared all five contract gates against
   the 48-check audited baseline. Mutation testing also established that the
   Pentagon and Hexagon checks are non-vacuous. Closure hardening expanded the
-  final suite to 52 checks and the corpus to 100 words, with 50 generic streams
+  final suite to 54 checks and the corpus to 100 words, with 50 generic streams
   reported separately from finite-order patterns.
 - The finite-field success is specific to `Phi_5`: for `p` not dividing `n`,
   `Phi_n` factor degrees equal `ord_n(p)`. The unit groups modulo 8, 12, 16,

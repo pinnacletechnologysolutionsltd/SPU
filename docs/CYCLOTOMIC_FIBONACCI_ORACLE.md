@@ -219,7 +219,8 @@ The review therefore closes the contracted host-oracle tranche. It does not
 authorize a cost model, RTL, synthesis, or board work.
 
 Growth-attribution hardening performed at closure expanded the deterministic
-corpus from 60 to 100 words and the focused suite from 48 to 52 checks. It
+corpus from 60 to 100 words and the focused suite from 48 to 52 checks; a
+later magnitude/storage-width separation took it to 54. It
 pins the finite orders of the inert structured families and reports the 50
 generic streams separately. This strengthens G4's evidence without changing
 the arithmetic, gauge, coherence construction, or modular domain reviewed

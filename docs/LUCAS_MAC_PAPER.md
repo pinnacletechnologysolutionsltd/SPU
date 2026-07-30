@@ -598,7 +598,9 @@ closes a reproducible kernel study; timing closure, wider moduli, and an
 end-to-end application remain future work.
 
 Run `python3 software/tests/test_cyclotomic_fibonacci.py` to reproduce the
-52-check companion cyclotomic oracle. The full algebraic contract and audit
+companion cyclotomic oracle, which prints
+`CYCLOTOMIC FIBONACCI ORACLE: ALL CHECKS PASS` on success. The full algebraic
+contract and audit
 closure are recorded in `docs/CYCLOTOMIC_FIBONACCI_ORACLE.md`.
 
 The complete source repository is available at
