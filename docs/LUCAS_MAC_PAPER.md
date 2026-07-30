@@ -16,7 +16,7 @@
 
 Finite binary floating point cannot represent √5 exactly, so repeated
 floating implementations of golden-ratio transforms require a rounding
-policy. We present a hardware co-processor over ℤ[φ]/L₅₂₁ that instead
+policy. We present a hardware co-processor over ℤ[φ]/(521) that instead
 performs φ-scaling, conjugation, multiplication, inversion, and rational phase
 comparison with integer residues. PSCALE implements φ(a+bφ)=b+(a+b)φ in one
 accepted operation without a multiplier. An independent software oracle
@@ -72,7 +72,7 @@ reduction: φᵖ ≡ ±1 (mod Lₚ) enables deterministic period closure.
 
 ### 1.3 Contributions
 
-1. A Verilog RTL implementation of PSCALE/PCHIRAL/PMUL/PINV over ℤ[φ]/L₅₂₁,
+1. A Verilog RTL implementation of PSCALE/PCHIRAL/PMUL/PINV over ℤ[φ]/(521),
    exposed as an Artix-7 sidecar.
 2. A reproducible software-oracle closure study: 38,461 complete PSCALE
    periods in one million steps and 166,666 mixed identity macros return to
@@ -130,7 +130,7 @@ warning sign for long braid, fusion, or syndrome histories.
 
 ### 2.3 PHSLK Without Denominator Inversion
 
-Given two rational phase encodings over ℤ[φ]/L₅₂₁,
+Given two rational phase encodings over ℤ[φ]/(521),
 
 ```
 A = n1 / d1,   B = n2 / d2
@@ -143,7 +143,7 @@ n1*d2 == n2*d1
 ```
 
 instead of computing `d1^-1` or `d2^-1`. This matters because 521 ≡ 1
-(mod 5), so `x^2 - x - 1` splits modulo 521 and ℤ[φ]/L₅₂₁ contains
+(mod 5), so `x^2 - x - 1` splits modulo 521 and ℤ[φ]/(521) contains
 zero-divisors. Denominators with norm zero do not have a defined
 multiplicative inverse. The RTL therefore reports a denominator
 zero-divisor status bit alongside the coherence predicate rather than
@@ -151,7 +151,7 @@ treating it as a PINV failure.
 
 Consider a concrete Fibonacci anyon fusion amplitude involving φ:
 the F-symbol for the Fibonacci braid group is proportional to
-φ^{-1} ≈ 0.618. Over ℤ[φ]/L₅₂₁, this becomes a rational pair
+φ^{-1} ≈ 0.618. Over ℤ[φ]/(521), this becomes a rational pair
 (1, φ)⁻¹. A template-matching PHSLK check comparing an observed phase
 
 ```
@@ -160,7 +160,7 @@ B = (1+0φ) / (1+0φ)    target identity
 ```
 
 computes n1·d2 = (3+5φ)·1 = 3+5φ and n2·d1 = (1+0φ)·(2+3φ) = 2+3φ.
-These are equal only if (3+5φ) = (2+3φ), which over ℤ[φ]/L₅₂₁ fails
+These are equal only if (3+5φ) = (2+3φ), which over ℤ[φ]/(521) fails
 unless 3≡2 and 5≡3 mod 521 — a contradiction. The non-match correctly
 reports `coherent=0`. If instead the template genuinely matches,
 n1·d2 = n2·d1 exactly and the cross product returns `coherent=1`
@@ -206,7 +206,7 @@ M31-to-Lucas conversion block remain future integration work.
 ### 3.2 RTL Layout of the Phinary MAC and Chiral Wire-Swaps
 
 The Phinary MAC co-processor (`spu13_lucas_mac.v`) is a self-contained
-Verilog module operating over ℤ[φ]/L₅₂₁. Its PSCALE/PCHIRAL fast paths
+Verilog module operating over ℤ[φ]/(521). Its PSCALE/PCHIRAL fast paths
 occupy zero DSP slices; the hardened full PMUL/PINV Artix-7 proof maps to
 92 DSP48E1 slices and exposes a simple request/done interface. The current
 LUCAS spin connects it through a dedicated CE-paced SPI sidecar, not a shared
@@ -559,7 +559,7 @@ separate work.
 - **ℤ[φ] does not span the full Fibonacci anyon data:** ℚ(φ) is the real
   quadratic subfield of ℚ(ζ₅). It carries quantum dimensions and the
   diagonal φ⁻¹ F-symbol entries, but not the primitive fifth-root phases of
-  the Fibonacci R-matrix. The implemented ℤ[φ]/L₅₂₁ hardware therefore
+  the Fibonacci R-matrix. The implemented ℤ[φ]/(521) hardware therefore
   remains a reduced phase-ratio engine, not a full braid-amplitude engine.
 
 - **Companion cyclotomic oracle:** A host-only oracle closes the
@@ -588,7 +588,7 @@ separate work.
 ## 7. Conclusion
 
 We implemented exact PSCALE, PCHIRAL, PMUL, PINV, and PHSLK arithmetic over
-ℤ[φ]/L₅₂₁. The two fast paths require no multiplier in the Tang probe, while
+ℤ[φ]/(521). The two fast paths require no multiplier in the Tang probe, while
 the complete Artix proof deliberately maps full arithmetic to DSP48E1 slices.
 The evidence is complementary rather than interchangeable: the software
 oracle supplies exhaustive or long-run algebraic checks, the Tang artifacts
@@ -721,7 +721,7 @@ always @(posedge clk)
 
 The proposed phase-lock (`PHSLK`) primitive verifies the equivalence or
 coherence of two rational phase encodings over the finite quotient ring
-ℤ[φ]/L₅₂₁ without requiring direct modular inversion.
+ℤ[φ]/(521) without requiring direct modular inversion.
 
 Given two rational elements represented as fractions of ring elements:
 
@@ -729,11 +729,11 @@ Given two rational elements represented as fractions of ring elements:
 A = n1 / d1,   B = n2 / d2
 ```
 
-where `n1`, `d1`, `n2`, and `d2` are in ℤ[φ]/L₅₂₁, a direct equality check
+where `n1`, `d1`, `n2`, and `d2` are in ℤ[φ]/(521), a direct equality check
 would traditionally require computing modular inverses of the denominators
 through the `PINV` block. Because 521 ≡ 1 (mod 5), the characteristic
-polynomial `x^2 - x - 1` splits modulo 521. Consequently, ℤ[φ]/L₅₂₁ contains
-zero-divisors; elements with norm zero modulo L₅₂₁ do not have a defined
+polynomial `x^2 - x - 1` splits modulo 521. Consequently, ℤ[φ]/(521) contains
+zero-divisors; elements with norm zero modulo 521 do not have a defined
 multiplicative inverse.
 
 To bypass this constraint and eliminate the latency of a division pipeline,
@@ -778,7 +778,7 @@ for photonic control feedback and syndrome-like coherence predicates.
 
 PHSLK also provides the algebraic core for a reduced anyon-template predicate
 when an upstream braid/fusion tracker represents both an observed phase ratio
-and a candidate template as rational elements of ℤ[φ]/L₅₂₁:
+and a candidate template as rational elements of ℤ[φ]/(521):
 
 ```
 observed = observed_n / observed_d
@@ -826,7 +826,7 @@ template_n = -1 + phi     template_d = 1
 observed_n * template_d == template_n * observed_d
 ```
 
-Modulo L₅₂₁, those are encoded as `(519,2)/(2,0)` and `(520,1)/(1,0)`.
+Modulo 521, those are encoded as `(519,2)/(2,0)` and `(520,1)/(1,0)`.
 The PHSLK predicate returns coherent with no denominator zero-divisor. This is
 the intended template-matching semantics: a compiled rational template matches
 the observed reduced phase ratio. Larger braid depths still require a larger

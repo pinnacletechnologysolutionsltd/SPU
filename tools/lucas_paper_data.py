@@ -160,7 +160,7 @@ Artifact & Logic/registers & DSP / BRAM & Timing/evidence \\
 \begin{{table}}[ht]
 \centering
 \caption{{Exhaustive software-oracle profile of the RTL-style scalar PINV
-inverse over $\mathbb{{Z}}[\phi]/L_{{521}}$. Counts exclude acceptance.}}
+inverse over $\mathbb{{Z}}[\phi]/(521)$. Counts exclude acceptance.}}
 \label{{tab:pinv-profile}}
 \footnotesize
 \setlength{{\tabcolsep}}{{3pt}}

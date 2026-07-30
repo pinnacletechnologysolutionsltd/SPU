@@ -15,7 +15,14 @@
     backgroundcolor=\color{gray!10}
 }
 
-\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+\hypersetup{
+    colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue,
+    pdftitle={Zero-Drift Lucas-Prime Phinary Arithmetic for Exact Quantum Phase Coherence on FPGA},
+    pdfauthor={John Curley},
+    pdfsubject={Exact Z[phi]/(521) arithmetic on FPGA; version 0.2, source tag v0.2-lucas},
+    pdfkeywords={golden ratio, Lucas prime, phinary arithmetic, exact arithmetic,
+                 FPGA, coprocessor, Fibonacci anyons, cyclotomic, SPU-13}
+}
 
 \title{Zero-Drift Lucas-Prime Phinary Arithmetic for Exact Quantum Phase Coherence on FPGA}
 
@@ -29,10 +36,15 @@ Email: \href{mailto:johncurley@pinnacletechglobal.com}{johncurley@pinnacletechgl
 
 \maketitle
 
+\begin{center}\footnotesize
+Version 0.2 --- 2026-07-30 --- source tag \texttt{v0.2-lucas}\\
+Concept DOI \href{https://doi.org/10.5281/zenodo.21447440}{10.5281/zenodo.21447440}
+\end{center}
+
 \begin{abstract}
 Finite binary floating point cannot represent $\sqrt{5}$ exactly, so repeated
 floating implementations of golden-ratio transforms require a rounding policy.
-We present a hardware co-processor over $\mathbb{Z}[\phi]/L_{521}$ that instead
+We present a hardware co-processor over $\mathbb{Z}[\phi]/(521)$ that instead
 performs $\phi$-scaling, conjugation, multiplication, inversion, and rational
 phase comparison with integer residues. PSCALE implements
 $\phi(a+b\phi)=b+(a+b)\phi$ in one accepted operation without a multiplier.
@@ -73,7 +85,7 @@ The golden ratio $\phi = (1+\sqrt{5})/2$ satisfies $\phi^2 = \phi + 1$. In the r
 \subsection{Contributions}
 
 \begin{enumerate}
-    \item A Verilog RTL implementation of PSCALE/PCHIRAL/PMUL/PINV over $\mathbb{Z}[\phi]/L_{521}$, exposed as an Artix-7 sidecar.
+    \item A Verilog RTL implementation of PSCALE/PCHIRAL/PMUL/PINV over $\mathbb{Z}[\phi]/(521)$, exposed as an Artix-7 sidecar.
     \item A reproducible software-oracle closure study: 38,461 complete
     PSCALE periods in one million steps and 166,666 mixed identity macros
     return to the starting residue pair. This is software evidence, distinct
@@ -102,7 +114,7 @@ $x=a+b\phi$ and $y=c+d\phi$. Then:
 
 \subsection{Lucas Primes as Moduli}
 
-The Lucas sequence $L_n = \phi^n + (-1)^n\phi^{-n}$. When $p$ is prime and $L_p$ is prime:
+The Lucas sequence $L_n = \phi^n + (-1)^n\phi^{-n}$~\cite{lucas}. When $p$ is prime and $L_p$ is prime~\cite{crandall}:
 
 \LucasPrimeTable
 
@@ -114,7 +126,7 @@ For PHSLK, the relevant constraint is whether reduced numerator/denominator pair
 
 \subsection{PHSLK Without Denominator Inversion}
 
-Given two rational phase encodings over $\mathbb{Z}[\phi]/L_{521}$,
+Given two rational phase encodings over $\mathbb{Z}[\phi]/(521)$,
 
 \[
 A = n_1 / d_1,\quad B = n_2 / d_2
@@ -126,16 +138,16 @@ PHSLK checks coherence with the cross product
 n_1 d_2 = n_2 d_1
 \]
 
-instead of computing $d_1^{-1}$ or $d_2^{-1}$. This matters because $521 \equiv 1 \pmod{5}$, so $x^2 - x - 1$ splits modulo 521 and $\mathbb{Z}[\phi]/L_{521}$ contains zero-divisors. Denominators with norm zero do not have a defined multiplicative inverse. The RTL therefore reports a denominator zero-divisor status bit alongside the coherence predicate rather than treating it as a PINV failure.
+instead of computing $d_1^{-1}$ or $d_2^{-1}$. This matters because $521 \equiv 1 \pmod{5}$, so $x^2 - x - 1$ splits modulo 521 and $\mathbb{Z}[\phi]/(521)$ contains zero-divisors. Denominators with norm zero do not have a defined multiplicative inverse. The RTL therefore reports a denominator zero-divisor status bit alongside the coherence predicate rather than treating it as a PINV failure.
 
-Consider a concrete Fibonacci anyon fusion amplitude involving $\phi$: the F-symbol for the Fibonacci braid group is proportional to $\phi^{-1} \approx 0.618$. Over $\mathbb{Z}[\phi]/L_{521}$, this becomes a rational pair $(1,\phi)^{-1}$. A template-matching PHSLK check comparing
+Consider a concrete Fibonacci anyon fusion amplitude involving $\phi$: the F-symbol for the Fibonacci braid group is proportional to $\phi^{-1} \approx 0.618$. Over $\mathbb{Z}[\phi]/(521)$, this becomes a rational pair $(1,\phi)^{-1}$. A template-matching PHSLK check comparing
 
 \begin{align*}
 A &= (3+5\phi) / (2+3\phi) \quad \text{(observed template)} \\
 B &= (1+0\phi) / (1+0\phi) \quad \text{(target identity)}
 \end{align*}
 
-computes $n_1 d_2 = (3+5\phi)\cdot1 = 3+5\phi$ and $n_2 d_1 = (1+0\phi)\cdot(2+3\phi) = 2+3\phi$. These are equal only if $(3+5\phi) = (2+3\phi)$, which over $\mathbb{Z}[\phi]/L_{521}$ fails unless $3\equiv2$ and $5\equiv3 \pmod{521}$ --- a contradiction. The non-match correctly reports $\texttt{coherent}=0$. If instead the template genuinely matches, $n_1 d_2 = n_2 d_1$ exactly and the cross product returns $\texttt{coherent}=1$ without ever needing $\phi^{-1}$.
+computes $n_1 d_2 = (3+5\phi)\cdot1 = 3+5\phi$ and $n_2 d_1 = (1+0\phi)\cdot(2+3\phi) = 2+3\phi$. These are equal only if $(3+5\phi) = (2+3\phi)$, which over $\mathbb{Z}[\phi]/(521)$ fails unless $3\equiv2$ and $5\equiv3 \pmod{521}$ --- a contradiction. The non-match correctly reports $\texttt{coherent}=0$. If instead the template genuinely matches, $n_1 d_2 = n_2 d_1$ exactly and the cross product returns $\texttt{coherent}=1$ without ever needing $\phi^{-1}$.
 
 \subsection{Why Not Merge with Mersenne Rings}
 
@@ -166,7 +178,7 @@ runtime-configurable modulus or shared conversion unit remains future work.
 
 \subsection{RTL Layout}
 
-The Phinary MAC co-processor (\texttt{spu13\_lucas\_mac.v}) is a self-contained Verilog module operating over $\mathbb{Z}[\phi]/L_{521}$.
+The Phinary MAC co-processor (\texttt{spu13\_lucas\_mac.v}) is a self-contained Verilog module operating over $\mathbb{Z}[\phi]/(521)$.
 
 \begin{lstlisting}[language=Verilog]
 module spu13_lucas_mac #(L_P=521, L_P_BITS=10) (
@@ -264,7 +276,7 @@ The quantum-control relevance of this block is narrow: it is not a complete QEC 
 
 Recent preprints report sub-microsecond decode-feedback latencies: 550 ns closed-loop including 124 ns NN decoding for a distance-3 surface code~\cite{yang2026}; 446 ns decode-feedback for distance-3~\cite{liu2026}; and 596 ns average latency per round for a $[\![144,12,12]\!]$ bivariate-bicycle code~\cite{bascones2026}. This paper should be read as a candidate exact-arithmetic kernel study, not as a claim that the current Wukong/SPI image is competitive with integrated QEC controllers.
 
-For bosonic QEC, relevant prior art includes cat-code real-time feedback~\cite{ofek2016, putterman2024}, binomial oscillator codes~\cite{michael2016}, and GKP codes~\cite{gottesman2001}. The $\phi$-specific case is strongest where the upstream model is genuinely Fibonacci/topological: braid or fusion templates whose amplitudes, F-symbols, or phase ratios naturally contain $\phi$~\cite{freedman2002}.
+For bosonic QEC, relevant prior art includes cat-code real-time feedback~\cite{ofek2016, putterman2024}, binomial oscillator codes~\cite{michael2016}, and GKP codes~\cite{gottesman2001}. For the photonic and linear-optical fault-tolerance setting more broadly, see~\cite{knill2001, kok2007, bartolucci2021, bourassa2021, tzitrin2021}. The $\phi$-specific case is strongest where the upstream model is genuinely Fibonacci/topological: braid or fusion templates whose amplitudes, F-symbols, or phase ratios naturally contain $\phi$~\cite{freedman2002}.
 
 \subsection{Non-Quantum Exact Geometry Baseline}
 
@@ -284,7 +296,7 @@ by this sidecar. Such an end-to-end geometry benchmark remains separate work.
     oracle, and silicon checks.
     \item \textbf{PINV complexity:} The exhaustive software model reports
     3--23 busy-phase cycles for the RTL-style scalar inverse over all
-    nonzero-norm $L_{521}$ elements. This is not an RTL latency histogram, and
+    nonzero-norm $\mathbb{Z}[\phi]/(521)$ elements. This is not an RTL latency histogram, and
     the SPI sidecar uses its own CE-paced sequencer.
     \item \textbf{Finite $\phi$-period:} $L_{13}$ gives a period of 26, sufficient for datapath validation but not for arbitrary long braid words without phase-domain tiling.
     \item \textbf{Interface latency:} 64-bit SPI payload at 2 MHz takes 32 $\mu$s before framing. Real-time variants require parallel GPIO, PIO/DMA, LVDS, or direct RFSoC coupling.
@@ -337,7 +349,7 @@ by this sidecar. Such an end-to-end geometry benchmark remains separate work.
 \section{Conclusion}
 
 We implemented exact PSCALE, PCHIRAL, PMUL, PINV, and PHSLK arithmetic over
-$\mathbb{Z}[\phi]/L_{521}$. The two fast paths require no multiplier in the
+$\mathbb{Z}[\phi]/(521)$. The two fast paths require no multiplier in the
 Tang probe, while the complete Artix proof deliberately maps full arithmetic
 to DSP48E1 slices. The evidence is complementary rather than interchangeable:
 the software oracle supplies exhaustive or long-run algebraic checks, the Tang
@@ -372,9 +384,6 @@ artifacts, and remains responsible for the manuscript and reported evidence.
 
 \begin{thebibliography}{18}
 \bibitem{lucas} E. Lucas, ``Th\'eorie des Fonctions Num\'eriques Simplement P\'eriodiques,'' 1878.
-\bibitem{nguyen} H.S. Nguyen, ``Tolerance Rough Sets,'' \textit{Fundamenta Informaticae}, 1999.
-\bibitem{kohonen} T. Kohonen, \textit{Self-Organizing Maps}. Springer, 1995.
-\bibitem{wheeler} J.A. Wheeler and R.P. Feynman, ``Interaction with the Absorber as the Mechanism of Radiation,'' \textit{Rev. Mod. Phys.} 17, 1945.
 \bibitem{crandall} R.E. Crandall and C. Pomerance, \textit{Prime Numbers: A Computational Perspective}, 2nd ed. Springer, 2005.
 \bibitem{ofek2016} N. Ofek et al., ``Extending the lifetime of a quantum bit with error correction in superconducting circuits,'' \textit{Nature}, 2016. \texttt{arXiv:1602.04768}
 \bibitem{michael2016} M.H. Michael et al., ``New class of quantum error-correcting codes for a bosonic mode,'' \textit{Phys. Rev. X}, 2016. \texttt{arXiv:1602.00008}
