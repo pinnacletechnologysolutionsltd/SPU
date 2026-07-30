@@ -604,8 +604,9 @@ contract and audit
 closure are recorded in `docs/CYCLOTOMIC_FIBONACCI_ORACLE.md`.
 
 The complete source repository is available at
-<https://github.com/pinnacletechnologysolutionsltd/SPU>. The archival record of
-this paper is maintained under the concept DOI
+<https://github.com/pinnacletechnologysolutionsltd/SPU>. The exact source state
+described by this version of the paper is tagged `v0.2-lucas`. The archival
+record of this paper is maintained under the concept DOI
 <https://doi.org/10.5281/zenodo.21447440>, which always resolves to the latest
 deposited version.
 
