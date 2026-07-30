@@ -102,10 +102,48 @@ an independent/fail-safe input (**TLV3011BIDBVR**, TI — open-drain output,
 SOT-23-6; reverted 2026-07-27 from the MAX9063EUK+T substitute once LCSC
 sourcing made the original part available again), pulls `J2_OE_N` low only
 after `TARGET_3V3_SENSE` crosses the qualified-on threshold. Use its 1.242 V
-internal reference with a **137 kΩ / 100 kΩ** divider from J2-6 —
-100k/(137k+100k) × 2.94 V = 1.2405 V — for the nominal 2.94 V rising
+internal reference with a **140 kΩ / 102 kΩ** divider from J2-6 —
+102k/(140k+102k) × 2.9467 V = 1.242 V — for the nominal 2.94 V rising
 threshold. Do not substitute **TLV3012** (push-pull output); this circuit
 requires the open-drain TLV3011.
+
+**Order the `DBV` suffix, not `DCK`.** TI ships TLV3011B in two 6-pin
+packages, electrically identical and mechanically not interchangeable:
+
+| Orderable | Suffix | Package | Pitch |
+|---|---|---|---|
+| **TLV3011BIDBVR** | `DBV` | **SOT-23-6** ← specified | 0.95 mm |
+| TLV3011BIDCKR | `DCK` | SC70-6 | 0.65 mm |
+
+`TLV3011BIDCKR` will *not* fit the SOT-23-6 breakout adapter this build
+assumes, and SC70-6 adapters are both scarcer and materially harder to
+hand-solder at 0.65 mm pitch on a ~2 × 1.25 mm body. Verified against TI's
+product page 2026-07-30 after the part was nearly ordered in the wrong
+package.
+
+*Divider value note (2026-07-30).* The original 137 kΩ / 100 kΩ pair gives
+2.9435 V (+0.12% of nominal); 140 kΩ / 102 kΩ gives 2.9467 V (+0.23%). Both
+are E96 values and either is correct. 140k/102k was selected on sourcing
+grounds when the order moved from LCSC to DigiKey. What must be preserved on
+any future substitution is **both** the ratio and the total impedance:
+
+- ratio `R_top/R_bot = 1.36715` sets the threshold
+  (`V_trip = 1.242 × (1 + R_top/R_bot)`); and
+- total ≈ 240 kΩ keeps the deliberately high divider impedance, and keeps the
+  external hysteresis feedback resistor below sized correctly — hysteresis
+  width scales with the feedback resistor *relative to* the divider
+  impedance, so changing the total shifts the hysteresis band proportionally.
+  140k+102k = 242 kΩ is within 2% of the original 237 kΩ; a 150k/110k pair
+  would be a 10% shift.
+
+Note that 137 kΩ, 140 kΩ and 102 kΩ are **E96 values and therefore exist only
+in 1% and tighter** — they are absent from E24/5% listings, which is a common
+sourcing dead end rather than a stock problem.
+
+Do not pay for tighter than 1% here. With ±1% resistors the threshold band is
+2.906–2.974 V, which dominates the ±0.23% ratio error by an order of
+magnitude, and ±1% is entirely adequate for an undervoltage supervisor
+tripping at ~89% of a 3.3 V nominal rail.
 
 TLV3011B exposes an externally accessible noninverting input, so **an
 external hysteresis footprint is possible and shall be provisioned on the
@@ -116,7 +154,9 @@ the threshold. Size it from the measured chatter band.
 *Fallback if TLV3011B is unobtainable:* **MAX9063EUK+T** (SOT-23-5, the
 inverting-input part of the MAX9062/9063 pair — MAX9062 has the opposite
 polarity and must not be substituted). Its 0.2 V reference requires a
-137 kΩ / **10 kΩ** divider instead, and it exposes no noninverting input, so
+140 kΩ / **10.2 kΩ** divider instead (0.2 V × (1 + 140/10.2) = 2.945 V; 10.2 kΩ
+is E96). Keeping `R_top` at 140 kΩ across both options means the fallback costs
+one extra value rather than two. It exposes no noninverting input, so
 the hysteresis footprint is unusable and its fixed internal hysteresis
 (~±0.9 mV at the sense pin) must be characterized and confirmed adequate on
 the breadboard with no resistor-value fallback available.
@@ -288,8 +328,8 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | JP2 | 2×3 shrouded header + 2× jumper shunt | 1 | 0.5 | Generic 2.54mm 2x3 header + 2× 2.54mm jumper shunts | GP4/GP5: FLASH ⟷ UART select, both poles moved together |
 | R | 100 Ω 1/4 W THT | 4 | 0.5 | Generic carbon/metal film, 5% or better | J2 SPI-to-FPGA series (MISO/CS/SCK/MOSI) — fault-current-limiting value, see §2.1 note |
 | U1 | 74CBTLV3125PGG | 1 | 2 | Renesas/IDT, `Ioff`-rated 4-channel bidirectional bus switch (Active; substitute for obsolete SN74CBTLV3125PW) | Mandatory J2 isolation; TSSOP-14 |
-| U2 | TLV3011BIDBVR | 1 | 2 | TI open-drain comparator, 1.242 V integrated reference (do **not** use TLV3012 — push-pull output; fallback MAX9063EUK+T needs a 10 kΩ divider leg, not 100 kΩ) | Pico-powered `TARGET_3V3_SENSE` supervisor; SOT-23-**6** |
-| R | 10 kΩ, 137 kΩ, 100 kΩ | 3 | 0.5 | 1% metal-film preferred | U1 OE pull-up (10k) and U2 2.94 V sense divider (137k/100k for TLV3011B's 1.242 V reference; the MAX9063 fallback needs 10k, not 100k) |
+| U2 | TLV3011BID**BV**R | 1 | 2 | TI open-drain comparator, 1.242 V integrated reference. Three same-family traps: do **not** use TLV3012 (push-pull output); do **not** use TLV3011BID**CK**R (that is SC70-6, not SOT-23-6 — see note below); fallback MAX9063EUK+T needs a 10.2 kΩ bottom divider leg, not 102 kΩ | Pico-powered `TARGET_3V3_SENSE` supervisor; SOT-23-**6** |
+| R | 10 kΩ, 140 kΩ, 102 kΩ | 3 | 0.5 | **1% — 140k and 102k are E96 and do not exist in 5%/E24** | U1 OE pull-up (10k) and U2 2.94 V sense divider (140k/102k for TLV3011B's 1.242 V reference → 2.9467 V; the MAX9063 fallback needs a 10.2 kΩ bottom leg, not 102 kΩ). Preserve ratio **and** ≈240 kΩ total on any substitution — divider impedance sets the external hysteresis scaling. Do not buy tighter than 1%. |
 | R | 1 MΩ | 1 | 0.2 | 1% metal-film preferred | U2 hysteresis feedback — **fit only if** breadboard step 1 shows chatter near the threshold; size from the measured band. Unusable with the MAX9063 fallback |
 | R | 33 Ω 1/4 W THT | 5 | 1 | Generic carbon/metal film, 5% or better | J3 flash-PMOD series termination (4) +1 spare |
 | R | 10 kΩ 1/4 W THT | 3 | 0.5 | Generic carbon/metal film, 5% or better | SPI_CS# + FLASH_CS# pullups (2, WP#/HOLD# pullups removed per §2.2 correction — not physically possible on the 6-pin J3), +1 spare |
