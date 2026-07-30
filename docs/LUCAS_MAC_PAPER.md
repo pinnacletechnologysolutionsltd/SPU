@@ -83,6 +83,12 @@ reduction: φᵖ ≡ ±1 (mod Lₚ) enables deterministic period closure.
 4. Three physically mapped artifacts with explicit scope boundaries: Tang
    fast-path and PHSLK probes, and an Artix-7 SPI sidecar whose silicon vectors
    include PSCALE, PCHIRAL, PMUL, and PINV.
+5. *Added in version 0.2:* a companion host-only oracle showing that the
+   complete Fibonacci F/R representation — which ℤ[φ] cannot carry — is
+   expressible in rank-4 ℤ[ζ₅] under a declared integral gauge and weighted
+   metric, together with the condition on the modulus for a field-valued
+   modular image. This is a software feasibility result for the successor ring;
+   no degree-4 RTL, timing, or resource claim follows from it.
 
 ---
 
