@@ -536,6 +536,17 @@ Tang 25K or Artix-7.
   adapter** (TCK/TMS/TDI/TDO over bare jumper wires — identical exposure
   to the RP2350 SPI link) — see
   `tools/rp2040_tooling/README.md` "Bench safety" note.
+- **STATUS: the resistor half of the rule above is DONE, both sides.**
+  Discrete 100 Ω resistors are spliced inline on the RP2350↔FPGA SPI
+  jumpers and on the RP2040 DirtyJTAG lines (the latter recorded
+  2026-07-13 in `docs/build_and_bringup_guide.md`; the SPI side confirmed
+  installed 2026-07-31). Previously only the *rule* was written down, so
+  the text read as an open prerequisite and blocked a bench session that
+  was in fact already cleared. **The bench is not gated on this.** What
+  remains is not an install but a per-session discipline: never leave one
+  side powered and driving while the other is unpowered. Note also that
+  the INA226 motor interlock is a DIFFERENT subsystem (stall-current
+  abort on the motor rig) and does not gate the SPI link at all.
 
 **RP2040 SPI Flash PMOD Programmer (bench-proven):**
 - Purpose: reliable replacement for bad SOIC clips / ambiguous XGECU ICSP wiring. Use it to program and verify W25Q-style PMOD flash before FPGA-side J4 probes.
