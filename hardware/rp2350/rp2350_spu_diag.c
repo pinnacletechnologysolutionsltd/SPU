@@ -80,11 +80,13 @@ int main(void) {
     }
 
     spu_diag_init(&diag, &link, spu_boot_hydrate_defaults_cb, NULL);
-    spu_diag_print_banner();
-    // Printed after the banner so the achieved rate lands in every capture:
-    // the link speed is the first thing to suspect when a spin returns 0xFF or
-    // silence, and it should not have to be inferred from the build flags.
+    // Before the banner, not after: spu_diag_print_banner() ends with the "> "
+    // prompt, so reporting afterwards prints the SPI line past the prompt and
+    // leaves it orphaned on screen. The link speed is the first thing to
+    // suspect when a spin returns 0xFF or silence, and it should not have to be
+    // inferred from the build flags, so it belongs in every capture.
     spu_link_report_baud(spi_actual_hz, SPI_BAUD_HZ, SPU_CORE_SPIN_SCK_CEILING_HZ);
+    spu_diag_print_banner();
 
     while (true) {
         spu_diag_poll(&diag);
