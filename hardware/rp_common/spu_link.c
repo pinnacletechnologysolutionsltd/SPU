@@ -1,5 +1,6 @@
 #include "spu_link.h"
 
+#include <stdio.h>
 #include <string.h>
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
@@ -74,6 +75,28 @@ void spu_link_set_timing(spu_link_t *link, uint32_t cs_setup_us,
     link->cmd_turnaround_us = cmd_turnaround_us;
     link->crc_hold_us = crc_hold_us;
     link->cs_recovery_us = cs_recovery_us;
+}
+
+void spu_link_report_baud(uint actual_hz, uint requested_hz,
+                          uint core_spin_ceiling_hz) {
+    printf("SPI: %u Hz requested, %u Hz achieved\r\n",
+           requested_hz, actual_hz);
+
+    // Quantization is normal and usually harmless downward. Say so anyway --
+    // the point of this line is that the real rate stops being an assumption.
+    if (actual_hz != requested_hz) {
+        printf("SPI: NOTE rate quantized by %d Hz (PL022 divides clk_peri by "
+               "CPSDVSR*(1+SCR))\r\n", (int)actual_hz - (int)requested_hz);
+    }
+
+    // Upward quantization past the slave's sampling limit is the dangerous
+    // case: it reproduces the 2026-07-14 Nyquist failure with no other symptom.
+    if (core_spin_ceiling_hz && actual_hz > core_spin_ceiling_hz) {
+        printf("SPI: WARNING %u Hz exceeds the %u Hz ceiling for a DIVIDED "
+               "core spin\r\n", actual_hz, core_spin_ceiling_hz);
+        printf("SPI: WARNING safe bound is clk_fast/6; expect no/garbage "
+               "response if this is a core spin\r\n");
+    }
 }
 
 void spu_link_read_manifold(spu_link_t *link,

@@ -68,7 +68,7 @@ int main(void) {
 
     stdio_init_all();
 
-    spi_init(SPI_PORT, SPI_BAUD_HZ);
+    uint spi_actual_hz = spi_init(SPI_PORT, SPI_BAUD_HZ);
     spi_set_format(SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(SPI_SCK_PIN, GPIO_FUNC_SPI);
     gpio_set_function(SPI_MOSI_PIN, GPIO_FUNC_SPI);
@@ -81,6 +81,10 @@ int main(void) {
 
     spu_diag_init(&diag, &link, spu_boot_hydrate_defaults_cb, NULL);
     spu_diag_print_banner();
+    // Printed after the banner so the achieved rate lands in every capture:
+    // the link speed is the first thing to suspect when a spin returns 0xFF or
+    // silence, and it should not have to be inferred from the build flags.
+    spu_link_report_baud(spi_actual_hz, SPI_BAUD_HZ, SPU_CORE_SPIN_SCK_CEILING_HZ);
 
     while (true) {
         spu_diag_poll(&diag);

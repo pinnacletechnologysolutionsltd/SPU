@@ -146,12 +146,20 @@ target_link_libraries(rp2350_spu_diag
     spu_rp_common
 )
 
-set(SPU_DIAG_SPI_BAUD_HZ "250000" CACHE STRING
-    "rp2350_spu_diag's SPI clock. Default 250 kHz is safe against the slowest
-clk_fast on divided A7 core spins (1.5625 MHz) -- see AGENTS.md boot_ready
-notes for the Nyquist-violation bug this exists to prevent. Raise it
-explicitly (e.g. 2000000) only when the target spin's clk_fast is known to
-be fast enough.")
+set(SPU_DIAG_SPI_BAUD_HZ "125000" CACHE STRING
+    "rp2350_spu_diag's SPI clock. spu_spi_slave samples SCK with the fabric
+clock, so the safe bound is SCK <= clk_fast/6 (measured by
+hardware/tests/common/spu_spi_slave_ratio_tb.v). On a DIVIDED A7 core spin
+clk_fast is 781.25 kHz, giving a 130 kHz ceiling -- this 125 kHz default sits
+just under it and is safe on every spin. Raise it (e.g. 2000000) only for
+coreless spins, where clk_fast is the raw 50 MHz and the ceiling is 8.3 MHz.
+
+Was 250000 until 2026-07-31, chosen against an assumed 1.5625 MHz divided
+clk_fast. That assumed a 100 MHz oscillator; the Wukong clock was measured at
+50 MHz (tools/uart_baud_probe.py), making 250 kHz roughly 2x over the bound on
+core spins. Cost of the drop is ~5% of transaction time, because spu_link
+spends ~3 ms per transaction in fixed CS/turnaround delays that dominate SCK.
+See docs/SOUTHBRIDGE_SPI_PROTOCOL.md.")
 set(SPU_DIAG_SPI_BAUD_DEFS "")
 if(SPU_DIAG_SPI_BAUD_HZ)
     list(APPEND SPU_DIAG_SPI_BAUD_DEFS SPI_BAUD_HZ=${SPU_DIAG_SPI_BAUD_HZ})

@@ -24,6 +24,17 @@ extern "C" {
 #define SPU_LINK_SOM1_FRAME_BYTES  52
 #define SPU_LINK_TGR_MAX_BYTES    508
 
+// Safe SCK ceilings for spu_spi_slave, which samples SCK with the fabric clock
+// and so bounds SCK at clk_fast / 6 (measured: hardware/tests/common/
+// spu_spi_slave_ratio_tb.v -- ratio 5 fails at 2 of 4 phase offsets).
+//
+// Wukong A7-100T board clock is 50 MHz, confirmed on hardware 2026-07-31 via
+// tools/uart_baud_probe.py. A7_FREQ is a nextpnr timing constraint and does not
+// divide the clock; A7_CLK_DIV_LOG2 does. The two spin classes differ by 64x,
+// so there is no single safe rate -- pick by the spin you are talking to.
+#define SPU_CORE_SPIN_SCK_CEILING_HZ      130000    // clk_fast 781.25 kHz (/64)
+#define SPU_CORELESS_SPIN_SCK_CEILING_HZ 8300000    // clk_fast 50 MHz (raw)
+
 typedef enum {
     SPU_CMD_READ_SOM1      = 0x02,
     SPU_CMD_READ_MANIFOLD  = 0xA0,
@@ -51,6 +62,25 @@ void spu_link_init(spu_link_t *link, spi_inst_t *spi, uint cs_pin);
 void spu_link_set_timing(spu_link_t *link, uint32_t cs_setup_us,
                          uint32_t cmd_turnaround_us, uint32_t crc_hold_us,
                          uint32_t cs_recovery_us);
+
+// Report the SPI rate actually achieved by spi_init(), which is NOT always the
+// rate requested: the PL022 divides clk_peri by CPSDVSR * (1 + SCR) with
+// CPSDVSR even, so attainable rates are quantized. Every firmware in this tree
+// historically discarded spi_init()'s return value, which meant a rate that
+// quantized upward past the slave's ceiling would look identical to one that
+// did not.
+//
+// That ceiling is a ratio, not a constant: spu_spi_slave samples SCK with the
+// fabric clock, so SCK must be <= clk_fast / 6 (measured by
+// hardware/tests/common/spu_spi_slave_ratio_tb.v). On a divided A7 core spin
+// clk_fast is 781.25 kHz, giving a 130 kHz ceiling; on coreless spins it is
+// 50 MHz, giving 8.3 MHz. See docs/SOUTHBRIDGE_SPI_PROTOCOL.md.
+//
+// Pass the achieved rate (spi_init's return) and what you asked for. Prints
+// both, and warns when they differ or when the achieved rate exceeds
+// core_spin_ceiling_hz. Pass 0 for the ceiling to skip that check.
+void spu_link_report_baud(uint actual_hz, uint requested_hz,
+                          uint core_spin_ceiling_hz);
 
 void spu_link_read_manifold(spu_link_t *link,
                             uint8_t out[SPU_LINK_MANIFOLD_BYTES]);
