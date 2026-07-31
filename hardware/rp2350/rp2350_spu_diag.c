@@ -28,16 +28,19 @@
 // prevent. CMakeLists.txt's SPU_DIAG_SPI_BAUD_HZ cache var also defaults to
 // this; override explicitly when a faster clk_fast is known.
 //
-// CAUTION (2026-07-31): spu_spi_slave_ratio_tb.v measures the safe bound as
-// SCK <= clk_fast / 6. This 250 kHz default was chosen against an assumed
-// 1.5625 MHz divided clk_fast (ratio 6.25, just inside). But that figure
-// implies a 100 MHz oscillator, while the XDC period, surd_uart_tx's
-// CLK_HZ(50_000_000), BAUD_DIV=434 and the 115200 host tools all say 50 MHz
-// -- which puts the divided clock at 781.25 kHz and this default at ratio
-// 3.1, OUTSIDE the measured bound. The two readings differ by exactly 2x and
-// have not been reconciled on hardware. Value left unchanged because it is
-// reported working; confirm the real clk_fast with a scope or counter before
-// trusting it. See docs/SOUTHBRIDGE_SPI_PROTOCOL.md, "Per-spin ceiling".
+// CAUTION (2026-07-31): this 250 kHz default is ~2x OVER the safe bound on a
+// DIVIDED core spin, and is left unchanged only because it is reported
+// working. Do not raise it, and prefer <= 130 kHz on core spins.
+//
+// spu_spi_slave_ratio_tb.v measures the safe bound as SCK <= clk_fast / 6.
+// This default was originally chosen against an assumed 1.5625 MHz divided
+// clk_fast (ratio 6.25, just inside). That assumed a 100 MHz oscillator. The
+// Wukong board clock was measured at 50 MHz on 2026-07-31 (load
+// build/spu_a7_100t_UARTPROBE.bit, run tools/uart_baud_probe.py: UART:P is
+// legible at 115200, which BAUD_DIV=434 only produces from a 50 MHz clock).
+// So the divided clk_fast is 50 MHz/64 = 781.25 kHz and this default is
+// ratio 3.1 -- outside the bound. See docs/SOUTHBRIDGE_SPI_PROTOCOL.md,
+// "Confirming the oscillator".
 #define SPI_BAUD_HZ  250000
 #endif
 

@@ -470,8 +470,15 @@ Tang 25K or Artix-7.
   core was then brought up on the remapped pins and root-caused layer by
   layer: CS reaches `spu_spi_slave` fine; a genuine Nyquist violation was
   found and fixed (RP2350 diag firmware polled SPI at 2 MHz against a
-  1.5625 MHz `clk_fast` sampling clock — `rp2350_spu_diag` now has a
-  `SPU_DIAG_SPI_BAUD_HZ` CMake option, default 250 kHz); the boot FSM
+  **781.25 kHz** `clk_fast` sampling clock — `rp2350_spu_diag` now has a
+  `SPU_DIAG_SPI_BAUD_HZ` CMake option, default 250 kHz. **This entry
+  previously said 1.5625 MHz, which assumed a 100 MHz oscillator. The
+  Wukong clock was measured at 50 MHz on 2026-07-31 via
+  `tools/uart_baud_probe.py`, so the divided clk_fast is 50 MHz/64 =
+  781.25 kHz. Consequence: the safe SPI ceiling on divided core spins is
+  130 kHz, not 260 kHz, and the 250 kHz default above is still ~2× over
+  it — see `docs/SOUTHBRIDGE_SPI_PROTOCOL.md`, "Maximum SCK is a
+  ratio"**); the boot FSM
   genuinely reaches READY quickly (proven via a new `boot_state_dbg`
   debug port on `spu13_core.v`, not just inferred). What looked all
   night like "board damage" or a "boot FSM regression" resolved into:

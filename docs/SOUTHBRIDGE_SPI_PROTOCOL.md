@@ -659,15 +659,53 @@ instantiated with `CLK_HZ(50_000_000)`, the raw UART uses `BAUD_DIV = 434`
 = 50 MHz/115200, and every host tool opens the port at 115200 — four
 independent agreements.)
 
-> **Unreconciled, and it matters by 2×.** `AGENTS.md` records the 2026-07-14
-> Nyquist finding as "2 MHz SPI against a **1.5625 MHz** `clk_fast`". 1.5625 MHz
-> is 100 MHz/64, so that figure assumes a 100 MHz oscillator, whereas the four
-> sources above give 50 MHz/64 = **781.25 kHz**. Both readings agree the link was
-> over-clocked and both agree on the fix; they disagree on the divided clock by
-> exactly 2×, and therefore on the core-spin SCK ceiling (130 kHz vs 260 kHz).
-> This table uses the 50 MHz reading. **Settle it with a scope or a counter on
-> the next board session before raising any core-spin baud**, and do not treat
-> the 130 kHz figure as bench-confirmed until then.
+**Confirmed on hardware 2026-07-31** — see "Confirming the oscillator" below.
+This resolves a 2× discrepancy: `AGENTS.md` recorded the 2026-07-14 Nyquist
+finding as "2 MHz SPI against a **1.5625 MHz** `clk_fast`", which is 100 MHz/64
+and so assumed a 100 MHz oscillator. The measured clock is 50 MHz, making the
+divided `clk_fast` **781.25 kHz**, not 1.5625 MHz. Both readings always agreed
+the link was over-clocked and agreed on the fix; they disagreed on the
+core-spin ceiling by 2× (130 kHz vs 260 kHz). **130 kHz is correct.**
+
+### Confirming the oscillator
+
+The board's own UART is the instrument — no scope, counter, or logic analyzer
+needed. `spu_a7_uart_probe_top.v` divides the raw board clock with
+`BAUD_DIV = 434`, which yields 115200 baud **only** if that clock is 50 MHz
+(a 100 MHz clock would put the line at 230400). So the baud at which its output
+is legible *is* the oscillator measurement.
+
+```sh
+openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_UARTPROBE.bit
+python3 tools/uart_baud_probe.py            # defaults to /dev/ttyUSB0
+```
+
+Result on this unit:
+
+```
+=== 115200 baud: 24 bytes, 100.0% printable ===
+  hex : 55 41 52 54 3a 50 0d 0a 55 41 52 54 3a 50 0d 0a ...
+  text: UART:P..UART:P..UART:P..
+```
+
+Legible `UART:P` at 115200 → **50 MHz**. Garbage at 115200 that cleans up at
+230400 would have meant 100 MHz and a 260 kHz core-spin ceiling.
+
+> **Do not use `stty` followed by `cat` for this.** The termios setting is reset
+> when `cat` opens the port, so every baud returns byte-identical data and the
+> test silently produces the same wrong answer at every rate. The baud must be
+> set and the read performed on the **same file descriptor** —
+> `tools/uart_baud_probe.py` does this, and `probe_tang25k_rplu_flash.py`'s
+> `configure_tty` is the existing in-repo precedent.
+
+A second, independent witness exists if the UART is ever unavailable:
+`heartbeat_ctr` (`spu_a7_top.v:154`) is a 27-bit free-running counter on the raw
+board clock, and bit 26 is emitted as the `HB:` field of the `DIAG HB:` line
+when built with `A7_UART_DIAG=1`. It toggles every 2²⁶ clocks — **1.342 s at
+50 MHz, 0.671 s at 100 MHz** — so ten flips take ~13.4 s versus ~6.7 s, a
+difference a stopwatch resolves easily. Note `led_out` is tied off on this
+particular Wukong (`spu_a7_top.v:1153`, suspect I/O bank), so the LED route is
+not a valid witness on this unit.
 
 `A7_FREQ` is passed to `nextpnr --freq` as a **timing constraint only**. It does
 not divide the clock. The physical `clk_fast` is set by `A7_CLK_DIV_LOG2` in
