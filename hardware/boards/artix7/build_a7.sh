@@ -97,6 +97,20 @@ A7_SEED="${A7_SEED:-1}"
 # values before constructing any artifact path, and reject opt-in use on
 # unrelated spins so a recorded ZPHI_KARATSUBA setting cannot be silently
 # ignored. The reference implementation remains selectable with ZPHI_KARATSUBA=0.
+# Distinguish "user asked for this" from "we defaulted it". The rejection below
+# is meant to stop a *recorded* setting being silently ignored on a spin that
+# cannot honour it -- but applying it to the default made every non-tensegrity
+# spin unbuildable, because the default is 1 and only the tensegrity spins
+# accept a non-zero value. That broke `build_a7.sh 100t lucas all` and every
+# other documented non-tensegrity build command from 2026-07-23 (c1fe58f, which
+# moved the default 0 -> 1) until 2026-07-31. It surfaced only when someone next
+# tried to rebuild a non-tensegrity spin, which is why it went unnoticed: the
+# stale bitstreams on disk kept working for load-only bench sessions.
+if [ -n "${ZPHI_KARATSUBA+x}" ]; then
+    ZPHI_KARATSUBA_EXPLICIT=1
+else
+    ZPHI_KARATSUBA_EXPLICIT=0
+fi
 ZPHI_KARATSUBA="${ZPHI_KARATSUBA:-1}"
 case "$ZPHI_KARATSUBA" in
     0|1) ;;
@@ -108,10 +122,15 @@ case "$SPIN" in
     TENSEGRITYPROBE|TENSEGRITYLINK)
         TENSEGRITY_VARIANT="_ZK${ZPHI_KARATSUBA}_S${A7_SEED}";;
     *)
-        if [ "$ZPHI_KARATSUBA" != "0" ]; then
-            echo "ZPHI_KARATSUBA applies only to TENSEGRITYPROBE or TENSEGRITYLINK"
+        # Only reject an EXPLICIT non-zero request. A defaulted 1 on a spin that
+        # ignores the setting is not a user error and must not block the build.
+        if [ "$ZPHI_KARATSUBA_EXPLICIT" = "1" ] && [ "$ZPHI_KARATSUBA" != "0" ]; then
+            echo "ZPHI_KARATSUBA=$ZPHI_KARATSUBA applies only to TENSEGRITYPROBE or TENSEGRITYLINK (spin is $SPIN)"
             exit 1
-        fi;;
+        fi
+        # Not applicable to this spin; normalise so it cannot reach an artifact
+        # name or a metrics note and imply the option was in effect.
+        ZPHI_KARATSUBA=0;;
 esac
 
 # A7_CLK_DIV_LOG2 default, spin-aware — mirrors the _CORE ternary in

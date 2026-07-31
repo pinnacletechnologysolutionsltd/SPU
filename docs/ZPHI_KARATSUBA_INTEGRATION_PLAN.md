@@ -325,6 +325,39 @@ Lesson for any future phase: do not rerun `synth` against an existing
 the file being checked, and this environment's yosys does not reproduce
 identical output on a second invocation regardless.
 
+**The same hazard recurred on 2026-08-01, and this time the P&R log did not
+survive.** While validating a `build_a7.sh` argument-handling fix, a check of
+the form `bash build_a7.sh 100t tensegrityprobe` was run to confirm the
+`ZPHI_KARATSUBA` default still resolved to `ZK1`. With no stage argument that
+invocation does not merely print the resolved tag — it starts a real build. It
+reached synthesis and entered P&R before being stopped. Losses, verified by
+re-hashing against the SHA-256 values recorded inside
+`spu_a7_100t_TENSEGRITYPROBE_ZK1_S1.json.timing_summary.json`:
+
+| Artifact | State |
+|---|---|
+| `..._ZK1_S1.json.nextpnr.log` | **DESTROYED** — overwritten by a truncated log (10 KB vs ~129 KB) from the aborted run. Original `sha256 fc2340da...` is unrecoverable; `build/` is gitignored. |
+| `..._ZK1_S1.json` (synthesis) | mismatched — but **already** so since the 2026-07-23 rerun above, so no additional loss |
+| `..._ZK1_S1.json.pnr.json` | intact (2026-07-22, 111 MB full routed design) |
+| `..._ZK1_S1.json.pnr.fasm` | intact (2026-07-22) |
+| `..._ZK1_S1.json.timing_summary.json` | intact (2026-07-23) |
+
+Impact is bounded but real. The paragraph above explicitly recorded the
+`.nextpnr.log` as "confirmed untouched" and load-bearing for Phase 4; that is no
+longer true. What remains is the derived summary — which still carries the
+extracted metrics (LUT 22797, FF 7482, CARRY4 1064, DSP48E1 66, seed 1,
+25 MHz requested) and the original hashes — plus the complete routed design, from
+which those metrics could be re-derived if ever challenged. The Phase 4 numbers
+are therefore still supported; the raw log backing one of them can no longer be
+produced on demand.
+
+**Strengthened lesson.** The earlier wording warned against rerunning `synth` to
+double-check an artifact. That is too narrow. The operative rule is: **never
+invoke `build_a7.sh` against an existing `_ZK{n}_S{seed}` name for any reason,
+including argument validation, and never omit the stage argument on an
+exploratory run** — the default stage builds. To inspect resolved variables, read
+the script or use a spin/seed combination with no artifacts on disk.
+
 Precise end-to-end cycle improvement (not the
 local 25%/3-vs-4-cycle figure): ranges from 0% (fixtures that terminate
 before reaching multiplier work) to roughly 12.9% (best-case intersection
