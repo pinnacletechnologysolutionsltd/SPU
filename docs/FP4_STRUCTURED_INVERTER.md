@@ -173,6 +173,13 @@ The matrix passes both aggregation rules: median LUT ratio 1.074302 is at or
 below 1.08, median Fmax ratio 0.971056 is at or above 0.90, and **5/5** seeds
 individually pass both gates (the requirement was at least 4/5).
 
+> **This five-seed matrix is superseded as the headline.** It remains the record
+> of the predeclared gate and its verdict, both of which still stand, but the
+> sample was widened to twenty seeds on 2026-07-31 — see "Widened to twenty
+> seeds" below. **Quote the twenty-seed median (0.964448), not 0.971056**, and do
+> not describe the seed split as 2-fast/3-slow: that reading did not survive the
+> larger sample.
+
 All five seeds are now source-matched: every one synthesizes to a bit-identical
 netlist, so LUT, FF and DSP have zero variance across the matrix and the only
 per-seed variable is placement. Seed 17 was re-run on matched source on
@@ -242,6 +249,62 @@ the data supports:
    (`eeb33958...6f5c8b0b` for v1, `7e066bd0...ff65d443e3` for v2) are recorded
    in `build/evidence_archive/README.md`, so the correction above stays
    checkable from either side.
+
+### Widened to twenty seeds — the 2-fast/3-slow split was an n=5 artifact
+
+Measured 2026-07-31 against a predeclared seed list
+(`37, 43, 47, 59, 61, 71, 73, 83, 89, 97, 101, 103, 107, 109, 113`), all fifteen
+routed in both arms on the **frozen** netlists — copied to new seed names and
+`pnr` only, never re-synthesized, so the matched-source property that seed 17
+broke could not recur. 30/30 runs returned exit 0 with zero overuse; no seed was
+dropped. Independently audited: all 40 Fmax values re-extracted from the raw
+`.nextpnr.log` files and every derived statistic recomputed, with no mismatch.
+
+| Metric | 5 seeds | **20 seeds** |
+|---|---:|---:|
+| Fmax ratio mean | 1.066790 | **1.007939** |
+| Fmax ratio median | 0.971056 | **0.964448** |
+| Fmax ratio range | 0.902–1.301 | **0.683598–1.300587** |
+| Unit-time ratio mean | 0.854241 | **0.902037** |
+| Unit-time ratio median | 0.918141 | **0.924475** |
+
+**There is no bimodality.** The only adjacent gap reaching the predeclared 0.10
+threshold is 0.212139, between seed 59 (0.683598) and seed 89 (0.895737), and it
+divides the sample 1/19 rather than into two groups each holding 25%. The
+correct description is **dispersion, not two populations**, and the original
+"seeds 67/79 gain while 17/41/53 lose" reading does not survive more data.
+
+The median sits inside [0.95, 1.05], so the predeclared summary applies: **v2 is
+Fmax-neutral at the median with high placement variance.** "Neutral" is the
+gate's word for that interval — the median is a ~3.6% loss, not zero.
+
+**Mechanism: routing delay, not logic.** Ratio versus v1-minus-v2 critical-path
+routing advantage gives Pearson **r = 0.906** (independently recomputed:
+0.9061); against route-iteration count it is only r = 0.144. Twenty of twenty v2
+runs and eighteen of twenty v1 runs are critical inside the parallel M31
+multiplier, on FF-to-FF paths through LUT/CARRY4 arithmetic. On those runs logic
+delay stays in a narrow band (v1 3.9–4.9 ns, v2 3.6–4.9 ns) while routing spans
+7.9–12.2 ns and 7.9–15.7 ns respectively. The two exceptions are v1 seeds 53 and
+67, which move to a `mult_start`-to-clock-enable control path; they do not form a
+population — 53 is near the median and 67 is the maximum.
+
+### Two calibrations that must travel with the twenty-seed result
+
+4. **The mean and the median tell opposite stories, and the mean is the
+   misleading one.** Fmax mean 1.007939 reads as a small win; median 0.964448 is
+   a small loss. The gap is right-skew from three large gains (1.300, 1.220,
+   1.177) pulling the mean up. **Twelve of twenty seeds have a slower v2 clock.**
+   Quote the median, or quote both — the mean alone overstates the result in
+   exactly the way the retracted "~15% faster" claim did.
+
+5. **The wall-clock case is strong but carries a real tail.** v2 is faster in
+   unit time on **19 of 20** seeds — mean 9.8%, median 7.6% — and that gain comes
+   from completing a unit in 74 clocks against 83, not from the clock. But **seed
+   59 is 30.4% slower** (unit-time ratio 1.304226), caused by a 15.7 ns routing
+   critical path in its v2 placement. One seed in twenty landing ~30% worse is a
+   placement-lottery exposure, not measurement noise. It would present as an
+   unexplained regression after an unrelated rebuild, so anyone adopting v2
+   should expect it as a known failure mode rather than diagnose it fresh.
 
 The closed sequential negative remains:
 
