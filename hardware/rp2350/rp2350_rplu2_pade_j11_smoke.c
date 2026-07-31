@@ -19,6 +19,15 @@
 #include <stdio.h>
 
 #define SPI_PORT     spi0
+// This firmware drives the link by bitbang (bitbang_spi_init), so SPI_BAUD_HZ
+// is nominal only -- the real rate comes from the bitbang delay loop and
+// spi_init is never called. No spu_link_report_baud call for that reason.
+//
+// Target RPLU2PADE is a CORELESS spin (A7_CLK_DIV_LOG2=0): clk_fast is the
+// raw 50 MHz and the ceiling is 8.3 MHz (SCK <= clk_fast/6, measured by
+// hardware/tests/common/spu_spi_slave_ratio_tb.v). 25 kHz is ~333x
+// conservative -- bring-up caution carried over from the 2026-07-14 Nyquist
+// debugging, not a limit. See docs/SOUTHBRIDGE_SPI_PROTOCOL.md.
 #ifndef SPI_BAUD_HZ
 #define SPI_BAUD_HZ  25000
 #endif

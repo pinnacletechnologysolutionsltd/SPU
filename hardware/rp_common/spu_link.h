@@ -35,6 +35,15 @@ extern "C" {
 #define SPU_CORE_SPIN_SCK_CEILING_HZ      130000    // clk_fast 781.25 kHz (/64)
 #define SPU_CORELESS_SPIN_SCK_CEILING_HZ 8300000    // clk_fast 50 MHz (raw)
 
+// Tang Primer 25K clocks its southbridge at 50 MHz on the standard spin, so it
+// shares the coreless ceiling above; TENSEGRITYLINK runs 25 MHz -> ~4.16 MHz.
+#define SPU_TANG_SCK_CEILING_HZ          8300000    // 50 MHz southbridge clock
+#define SPU_TANG_LINK_SCK_CEILING_HZ     4160000    // 25 MHz (TENSEGRITYLINK)
+
+// Designs that bypass spu_spi_slave entirely have NO such ceiling -- e.g.
+// spu_a7_j11_loopback_top.v clocks on posedge spi_sck directly and drives MISO
+// combinationally, so nothing samples SCK with a fabric clock. Pass 0.
+
 typedef enum {
     SPU_CMD_READ_SOM1      = 0x02,
     SPU_CMD_READ_MANIFOLD  = 0xA0,

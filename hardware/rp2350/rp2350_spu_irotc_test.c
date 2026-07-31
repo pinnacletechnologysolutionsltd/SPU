@@ -301,7 +301,7 @@ int main(void) {
 
     stdio_init_all();
 
-    spi_init(SPI_PORT, SPI_BAUD_HZ);
+    uint spi_actual_hz = spi_init(SPI_PORT, SPI_BAUD_HZ);
     spi_set_format(SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(SPI_SCK_PIN, GPIO_FUNC_SPI);
     gpio_set_function(SPI_MOSI_PIN, GPIO_FUNC_SPI);
@@ -314,7 +314,10 @@ int main(void) {
     }
 
     printf("\n=== SPU-13 Arithmetic/ROTC Test Driver ===\n");
-    printf("SPI baud: %u Hz\n", (unsigned)SPI_BAUD_HZ);
+    // IROTC is a CORE spin (A7_CLK_DIV_LOG2=6): clk_fast 781.25 kHz, ceiling
+    // 130 kHz, so 25 kHz here is ratio 5.2.
+    spu_link_report_baud(spi_actual_hz, SPI_BAUD_HZ,
+                         SPU_CORE_SPIN_SCK_CEILING_HZ);
     printf("Tests: %u\n\n", (unsigned)ARITHMETIC_TEST_COUNT);
 
     if (!wait_boot_ready(&link)) {

@@ -136,7 +136,7 @@ int main(void) {
 
     stdio_init_all();
 
-    spi_init(SPI_PORT, SPI_BAUD_HZ);
+    uint spi_actual_hz = spi_init(SPI_PORT, SPI_BAUD_HZ);
     spi_set_format(SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(SPU_SPI_SCK_PIN, GPIO_FUNC_SPI);
     gpio_set_function(SPU_SPI_MOSI_PIN, GPIO_FUNC_SPI);
@@ -154,7 +154,11 @@ int main(void) {
         printf("\r\n=== Wukong J11 Lucas smoke run %" PRIu32 " ===\r\n", run++);
         printf("pins miso=GP%d cs=GP%d sck=GP%d mosi=GP%d spi_baud=%u\r\n",
                SPU_SPI_MISO_PIN, SPU_SPI_CS_PIN, SPU_SPI_SCK_PIN,
-               SPU_SPI_MOSI_PIN, (unsigned)SPI_BAUD_HZ);
+               SPU_SPI_MOSI_PIN, (unsigned)spi_actual_hz);
+        // LUCAS is a CORELESS spin (A7_CLK_DIV_LOG2=0), so clk_fast is the raw
+        // 50 MHz and the ceiling is 8.3 MHz -- 2 MHz here is ratio 25.
+        spu_link_report_baud(spi_actual_hz, SPI_BAUD_HZ,
+                             SPU_CORELESS_SPIN_SCK_CEILING_HZ);
         print_status(&link, "before");
 
         for (size_t i = 0; i < sizeof(lucas_cases) / sizeof(lucas_cases[0]); i++) {

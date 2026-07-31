@@ -30,6 +30,13 @@
 #include <stdio.h>
 
 #define SPI_PORT     spi0
+// NO SCK ceiling applies here, unlike every other firmware in this tree.
+// The design under test (spu_a7_j11_loopback_top.v) bypasses spu_spi_slave
+// entirely: it clocks on posedge spi_sck directly and drives MISO
+// combinationally, so nothing samples SCK with a fabric clock and the
+// SCK <= clk_fast/6 bound has nothing to bind. 500 kHz is a wiring-probe
+// choice, not a limit. This is also why this firmware does not link
+// spu_rp_common and has no spu_link_report_baud call.
 #ifndef SPI_BAUD_HZ
 #define SPI_BAUD_HZ  500000
 #endif

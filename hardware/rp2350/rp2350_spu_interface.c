@@ -47,6 +47,7 @@
 #include <stdbool.h>
 #include "rplu_default_tables.h"
 #include "spu_sd.h"
+#include "spu_link.h"   // SCK ceiling constants + spu_link_report_baud
 
 // ── Pin assignments ────────────────────────────────────────────────────────
 #define SPI_MISO_PIN    0
@@ -60,12 +61,21 @@
 
 // ── Peripherals ───────────────────────────────────────────────────────────
 #define SPI_PORT        spi0
-// 2 MHz SPI clock. CORELESS SPINS ONLY (clk_fast = 50 MHz raw, ratio 25).
-// spu_spi_slave samples SCK with the fabric clock, so the safe bound is
-// SCK <= clk_fast / 6 (measured by spu_spi_slave_ratio_tb.v). On a DIVIDED
-// core spin (A7_CLK_DIV_LOG2=6) clk_fast is ~781 kHz and this default is
-// ratio 0.39 -- an order of magnitude over, and the same class of failure as
-// the 2026-07-14 Wukong bring-up bug. Drop to <= 130 kHz for core spins.
+// 2 MHz SPI clock. Safe here: this firmware targets the Tang Primer 25K (see
+// the Role line above), whose southbridge runs at 50 MHz, giving an 8.3 MHz
+// ceiling -- ratio 25.
+//
+// spu_spi_slave samples SCK with the fabric clock, so the bound is
+// SCK <= clk_fast / 6 (measured by spu_spi_slave_ratio_tb.v). That bound is
+// per-target, and 2 MHz is NOT portable: on a DIVIDED A7 core spin
+// (A7_CLK_DIV_LOG2=6) clk_fast is 781.25 kHz and the ceiling is 130 kHz, so
+// reusing this rate against one would reproduce the 2026-07-14 bring-up
+// failure. If this firmware is ever retargeted, re-pick the rate and the
+// ceiling constant together.
+//
+// (An earlier revision of this comment asserted the 2 MHz default was already
+// over the bound. That was wrong -- it read the A7 core-spin ceiling onto a
+// Tang-targeted firmware.)
 // See docs/SOUTHBRIDGE_SPI_PROTOCOL.md, "Maximum SCK is a ratio".
 #define SPI_BAUD_HZ     2000000
 #define VIS_UART        uart1
@@ -229,7 +239,7 @@ int main(void) {
     gpio_set_function(VIS_UART_RX_PIN, GPIO_FUNC_UART);
 
     // SPI0 → Tang 25K FPGA (Mode 0, CS active-low)
-    spi_init(SPI_PORT, SPI_BAUD_HZ);
+    uint spi_actual_hz = spi_init(SPI_PORT, SPI_BAUD_HZ);
     spi_set_format(SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(SPI_SCK_PIN,  GPIO_FUNC_SPI);
     gpio_set_function(SPI_MOSI_PIN, GPIO_FUNC_SPI);
@@ -237,6 +247,9 @@ int main(void) {
     gpio_init(SPI_CS_PIN);
     gpio_set_dir(SPI_CS_PIN, GPIO_OUT);
     gpio_put(SPI_CS_PIN, 1);   // CS idle-high
+    // Tang 25K southbridge runs at 50 MHz -> 8.3 MHz ceiling, so 2 MHz is
+    // ratio 25. Reported rather than assumed: spi_init quantizes.
+    spu_link_report_baud(spi_actual_hz, SPI_BAUD_HZ, SPU_TANG_SCK_CEILING_HZ);
     sd_ok = spu_sd_init();
 
     // PIO SM0: Piranha Pulse (61.44 kHz heartbeat) on GP6

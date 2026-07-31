@@ -537,10 +537,15 @@ int main(void) {
     stdio_init_all();
 
     spu_link_init(&link, SPI_PORT, SPU_SPI_CS_PIN);
+    // 0 means "bitbang, no hardware SPI rate to report" -- the bitbang path's
+    // rate comes from its own delay loop, not from SPI_BAUD_HZ, so spi_init's
+    // achieved rate is not merely unknown there but inapplicable. Note
+    // RPLU2_BITBANG_SPI defaults to 1, so that is the usual build.
+    uint spi_actual_hz = 0;
 #if RPLU2_BITBANG_SPI
     bitbang_spi_init();
 #else
-    spi_init(SPI_PORT, SPI_BAUD_HZ);
+    spi_actual_hz = spi_init(SPI_PORT, SPI_BAUD_HZ);
     spi_set_format(SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(SPU_SPI_SCK_PIN, GPIO_FUNC_SPI);
     gpio_set_function(SPU_SPI_MOSI_PIN, GPIO_FUNC_SPI);
@@ -572,6 +577,14 @@ int main(void) {
                (unsigned)RPLU2_LINK_CMD_TURNAROUND_US,
                (unsigned)RPLU2_LINK_CRC_HOLD_US,
                (unsigned)RPLU2_LINK_CS_RECOVERY_US);
+        // RPLU2CORE is a CORE spin (A7_CLK_DIV_LOG2=6): clk_fast is 781.25 kHz
+        // and the ceiling is 130 kHz, so 25 kHz here is ratio 5.2. Only
+        // meaningful on the hwspi path; the bitbang rate is set by its own
+        // delay loop and is not measured here.
+        if (spi_actual_hz) {
+            spu_link_report_baud(spi_actual_hz, SPI_BAUD_HZ,
+                                 SPU_CORE_SPIN_SCK_CEILING_HZ);
+        }
         print_status(&link, "before");
 
         cfgtele_t before = read_cfgtele_retry(&link, 4, 20);
