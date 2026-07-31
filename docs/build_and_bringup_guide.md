@@ -557,8 +557,43 @@ Active on the bench for silicon proofs.
    Current bench result, 2026-07-03: the replacement image is routed to the
    J11 PMOD SPI pins, SRAM-loads with `done 1`, and passes RP2350 smoke
    PSCALE/PCHIRAL/PMUL/PINV commands over J11.
+   **A loaded spin emitting NOTHING on UART is expected, not a fault.** The
+   default UART (`A7_UART_DIAG=0`) is instantiated in `spu_a7_top.v` as
+   `surd_uart_tx ... .start(hex_valid)` — it is **event-driven**, transmitting
+   only when the core produces a HEX projection. With no SPI master attached
+   nothing generates events, so a perfectly healthy `LUCAS` (or any other spin)
+   sits silent at every baud rate. This is indistinguishable from a dead board
+   by inspection, and it misled the 2026-07-31 bench checkpoint until the
+   instantiation was read. **Do not use spin UART silence as evidence of a
+   fault, and do not escalate to damage theories on the strength of it** —
+   this board already has a documented history (§5.3a) of symptoms being
+   attributed to damage that turned out to be configuration.
+
+   To prove the board is alive independently of any master, use a free-running
+   witness instead:
+
+   ```bash
+   # Fastest: a known-good free-running probe, no rebuild needed
+   openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_UARTPROBE.bit
+   python3 tools/uart_baud_probe.py        # expect: UART:P at 115200
+   ```
+
+   `UARTPROBE` transmits unconditionally, so legible output proves clock, reset,
+   configuration and fabric logic in one shot — and, because its `BAUD_DIV=434`
+   only yields 115200 from a 50 MHz clock, it doubles as an oscillator check
+   (see `docs/SOUTHBRIDGE_SPI_PROTOCOL.md`, "Confirming the oscillator").
+   The other free-running option is an `A7_UART_DIAG=1` build, whose `DIAG HB:`
+   heartbeat is deliberately independent of `clk_fast`, `rst_n` and the boot
+   FSM — better diagnostics, but it costs a synthesis run.
+
+   Verified on the bench 2026-07-31: `LUCAS` SRAM-loaded with `done 1` and was
+   silent at 57600/115200/230400/460800; `UARTPROBE` on the same board, same
+   session, returned `UART:P` at 115200 with 100% printable bytes.
+
 7. After JTAG/reset/UART smoke passes, flash `rp2350_spu_interface.uf2` or a
-   focused smoke image to the RP2350 southbridge.
+   focused smoke image to the RP2350 southbridge. Note that "UART smoke" here
+   means the free-running check above — it does **not** mean waiting for output
+   from the loaded spin, which cannot speak until a master drives it.
 8. Wire RP2350 -> FPGA SPI pins (see §4.2).
 9. Insert SD card with `.sas` programs, manifests, configs, and table packs.
 10. RP2350 boots, mounts SD, loads RPLU tables, hydrates manifold.
