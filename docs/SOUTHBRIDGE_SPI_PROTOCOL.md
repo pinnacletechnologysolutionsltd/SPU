@@ -646,10 +646,56 @@ Ratio 5 passing at *some* phases is why an over-clocked link can look healthy on
 the bench and then fail intermittently: the margin is phase-dependent. Use 6 as
 the floor, and prefer more.
 
-> This bound is **simulation-derived**. It accounts for the synchronizer and the
-> Mode-0 MISO turnaround only — not PMOD ribbon skew, connector loading, or
-> RP2350 output timing, all of which erode it further on real hardware. Treat
+### Confirmed in silicon, 2026-08-01
+
+The bound above was simulation-derived when written. It has now been measured on
+the bench, and both halves of it reproduced.
+
+**Setup.** Wukong `TENSEGRITYLINK` over the J11 southbridge link, driven by
+`rp2350_spu_diag` rebuilt at each rate. Probe was `0xB3` `tgrstatus`, whose byte 0
+is a constant `1` in RTL: `version=1` means the read path works, `0` means it
+does not. Binary, no interpretation. Ratios below are against this spin's **real**
+25 MHz slave clock (see the caution after the table), and use the rate
+`spi_init()` actually achieved, not the rate requested.
+
+| SCK achieved | ratio | result |
+|---:|---:|---|
+| 125 kHz – 1.97 MHz | ≥ 12.7 | PASS |
+| 3.947 MHz | 6.33 | PASS |
+| 4.167 MHz | 6.00 | PASS |
+| 4.412 MHz | 5.67 | **FAIL, then PASS ×3 on a later session** |
+| 5.000 MHz | 5.00 | **PASS, then FAIL ×3 on a later session** |
+| 5.357 MHz | 4.67 | FAIL |
+| 5.77 – 10.7 MHz | ≤ 4.33 | FAIL |
+
+**Every observation at ratio ≥ 6 passed. Every rate below 6 was unreliable** —
+stable within one configuration cycle, but inverting between them. 4.412 MHz and
+5.000 MHz each flipped verdict across sessions while repeating 3/3 within one.
+
+That is not noise and not a frequency threshold: it is the phase relationship
+between SCK and the sampling clock, fixed at configuration and re-rolled on the
+next load. It is the same effect
+`hardware/tests/common/spu_spi_slave_ratio_tb.v` reports when it fails ratio 5 at
+2 of 4 phase offsets — which is why that bench sweeps phase instead of testing a
+single alignment, and why a single-phase test would have called ratio 5 safe.
+
+**Practical consequence: never operate below ratio 6.** A link at ratio 5 can pass
+an entire bench session convincingly and then fail after an unrelated reconfigure,
+with nothing in between to explain it.
+
+> The bound still accounts for the synchronizer and Mode-0 MISO turnaround only —
+> not PMOD ribbon skew or connector loading. On this bench, with 100 Ω series
+> resistors on all four signal lines, signal integrity did **not** bind before the
+> synchronizer did: the failure arrived exactly where the ratio predicted. Treat
 > `clk_fast / 6` as a ceiling to stay well under, not a target to hit.
+
+> **Check which top a spin uses before applying the per-spin table below.**
+> `TENSEGRITYLINK` does not instantiate `spu_a7_top.v` at all — it has its own top,
+> `spu_a7_tensegrity_link_top.v`, which clocks `u_spi` from `guard_clk`, a
+> divide-by-2 of the 50 MHz `sys_clk`. Its slave therefore runs at **25 MHz** with
+> a **4.17 MHz** ceiling, and `A7_CLK_DIV_LOG2` never enters into it. Reasoning
+> from `spu_a7_top.v`'s spin lists gave the wrong answer here and was corrected by
+> the sweep.
 
 ### Per-spin ceiling on the Wukong Artix-7 100T
 
