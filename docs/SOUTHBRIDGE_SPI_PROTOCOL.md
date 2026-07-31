@@ -3,7 +3,9 @@
 **Document:** SPU Southbridge Serial Protocol
 **Version:** 1.2 (2026-07-14)
 **Hardware:** Tang Primer 25K and Wukong Artix-7 (`spu_spi_slave.v`)
-**Master:** RP2350 Microcontroller (SPI0 @ 2 MHz, Mode 0)
+**Master:** RP2350 Microcontroller (SPI0, Mode 0). **SCK is spin-dependent —
+`clk_fast / 6` is the measured ceiling, not a fixed 2 MHz.** See "Maximum SCK is
+a ratio, not a fixed frequency" under Protocol Timing before choosing a baud.
 **Status:** base RTL testbench PASS; Tang 25K/RP2350 `0xAC` status read
 verified; optional B2/B3 TGR1 extension RTL/host verified. Artix-7 board work
 proves J11/SD/B2/B3 and each exact guard engine separately, while the full
@@ -348,7 +350,9 @@ Byte  Bits        Content
           [2]   Turbulence (Davis Gate anomaly detected)
           [1]   Janus point (dual-polarity transition)
           [0]   Satellite snap lock (SPU-4 phase lock)
-3         [7:1] Reserved (0)
+3         [7:3] Reserved (0)
+          [2]   Boot FSM READY (see BOOT_SEQUENCE_FSM.md §3.6)
+          [1]   CRC error (sticky, cleared on read)
           [0]   RPLU mode bank (0=Smooth, 1=Turbulent)
 ```
 
@@ -618,7 +622,80 @@ committed active verdict.
 | **Response load** | 1 × selected southbridge clock |
 | **MISO setup** | < 50 ns (combinational) |
 | **MISO hold** | 0 ns (already stable) |
-| **Max freq** | ~5 MHz conservative (2 MHz recommended) |
+| **Max freq** | **`clk_fast / 6`** — a ratio, not a constant. See below. |
+
+### Maximum SCK is a ratio, not a fixed frequency
+
+`spu_spi_slave` treats SCK as *data*: it is sampled by the fabric clock through
+a 3-deep shift register and edge-detected on `sck_r[2:1]`. The usable SCK
+therefore scales with whatever `clk_fast` the spin actually runs at, and there
+is no single safe frequency for the protocol as a whole.
+
+**Measured bound: `SCK <= clk_fast / 6`.** Established by
+`hardware/tests/common/spu_spi_slave_ratio_tb.v`, which sweeps the SCK:fabric
+ratio against a known 0xAC response at four sub-clock phase offsets and requires
+every offset to pass:
+
+| Ratio `N` | Result |
+|---|---|
+| `>= 6` | PASS at all four phase offsets |
+| `5` | FAIL at 2 of 4 phase offsets |
+| `<= 4` | FAIL at all four phase offsets |
+
+Ratio 5 passing at *some* phases is why an over-clocked link can look healthy on
+the bench and then fail intermittently: the margin is phase-dependent. Use 6 as
+the floor, and prefer more.
+
+> This bound is **simulation-derived**. It accounts for the synchronizer and the
+> Mode-0 MISO turnaround only — not PMOD ribbon skew, connector loading, or
+> RP2350 output timing, all of which erode it further on real hardware. Treat
+> `clk_fast / 6` as a ceiling to stay well under, not a target to hit.
+
+### Per-spin ceiling on the Wukong Artix-7 100T
+
+The Wukong board oscillator is **50 MHz**. (The port is named `clk_100mhz`; the
+name is a misnomer. The XDC declares `-period 20.000`, `surd_uart_tx` is
+instantiated with `CLK_HZ(50_000_000)`, the raw UART uses `BAUD_DIV = 434`
+= 50 MHz/115200, and every host tool opens the port at 115200 — four
+independent agreements.)
+
+> **Unreconciled, and it matters by 2×.** `AGENTS.md` records the 2026-07-14
+> Nyquist finding as "2 MHz SPI against a **1.5625 MHz** `clk_fast`". 1.5625 MHz
+> is 100 MHz/64, so that figure assumes a 100 MHz oscillator, whereas the four
+> sources above give 50 MHz/64 = **781.25 kHz**. Both readings agree the link was
+> over-clocked and both agree on the fix; they disagree on the divided clock by
+> exactly 2×, and therefore on the core-spin SCK ceiling (130 kHz vs 260 kHz).
+> This table uses the 50 MHz reading. **Settle it with a scope or a counter on
+> the next board session before raising any core-spin baud**, and do not treat
+> the 130 kHz figure as bench-confirmed until then.
+
+`A7_FREQ` is passed to `nextpnr --freq` as a **timing constraint only**. It does
+not divide the clock. The physical `clk_fast` is set by `A7_CLK_DIV_LOG2` in
+`spu_a7_top.v`:
+
+| Spin class | `A7_CLK_DIV_LOG2` | actual `clk_fast` | **SCK ceiling** |
+|---|---|---|---|
+| Coreless (`LUCAS`, `SU3`, `RPLUCFG`, `RPLU2LIVE`, `RPLU2PADE`, `SOM*`, `TENSEGRITY*`) | 0 (raw) | 50 MHz | **8.3 MHz** |
+| Core spins (all others, incl. `IROTC`) | 6 (`/64`) | 781.25 kHz | **130 kHz** |
+
+The two classes differ by **64×**. A baud rate that is safe on a coreless spin
+can be an order of magnitude over the limit on a core spin, which is exactly the
+2026-07-14 Wukong bring-up failure: 2 MHz SCK against a divided fabric clock.
+
+Current firmware defaults measured against these ceilings:
+
+| Firmware | baud | target spin class | ratio | verdict |
+|---|---|---|---|---|
+| `rp2350_lucas_j11_smoke.c` | 2 MHz | coreless | 25 | safe |
+| `rp2350_su3_j11_smoke.c` | 25 kHz | coreless | 2000 | safe, **333× conservative** |
+| `rp2350_rplu2_pade_j11_smoke.c` | 25 kHz | coreless | 2000 | safe, **333× conservative** |
+| `rp2350_spu_irotc_test.c` | 25 kHz | core (`/64`) | 31 | safe |
+| `rp2350_spu_diag.c` | 250 kHz | core (`/64`) | **3.1** | **OVER — below the ratio-6 floor** |
+| `rp2350_spu_interface.c` | 2 MHz | either | 0.39 on core | **OVER on core spins** |
+
+The 25 kHz defaults are bring-up conservatism carried over from the 07-14
+Nyquist debugging, not measured limits. On coreless spins they leave two orders
+of magnitude of headroom.
 
 ### Clock Synchronization
 - All SCK edges are **metastability-hardened** with 2-stage synchronizers (`sck_r[2:0]`)

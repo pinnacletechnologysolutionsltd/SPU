@@ -23,10 +23,21 @@
 
 #define SPI_PORT     spi0
 #ifndef SPI_BAUD_HZ
-// Safe against the slowest clk_fast on divided A7 core spins (1.5625 MHz) --
-// see AGENTS.md boot_ready notes for the Nyquist-violation bug this default
-// exists to prevent. CMakeLists.txt's SPU_DIAG_SPI_BAUD_HZ cache var also
-// defaults to this; override explicitly when a faster clk_fast is known.
+// Safe against the slowest clk_fast on divided A7 core spins -- see AGENTS.md
+// boot_ready notes for the Nyquist-violation bug this default exists to
+// prevent. CMakeLists.txt's SPU_DIAG_SPI_BAUD_HZ cache var also defaults to
+// this; override explicitly when a faster clk_fast is known.
+//
+// CAUTION (2026-07-31): spu_spi_slave_ratio_tb.v measures the safe bound as
+// SCK <= clk_fast / 6. This 250 kHz default was chosen against an assumed
+// 1.5625 MHz divided clk_fast (ratio 6.25, just inside). But that figure
+// implies a 100 MHz oscillator, while the XDC period, surd_uart_tx's
+// CLK_HZ(50_000_000), BAUD_DIV=434 and the 115200 host tools all say 50 MHz
+// -- which puts the divided clock at 781.25 kHz and this default at ratio
+// 3.1, OUTSIDE the measured bound. The two readings differ by exactly 2x and
+// have not been reconciled on hardware. Value left unchanged because it is
+// reported working; confirm the real clk_fast with a scope or counter before
+// trusting it. See docs/SOUTHBRIDGE_SPI_PROTOCOL.md, "Per-spin ceiling".
 #define SPI_BAUD_HZ  250000
 #endif
 

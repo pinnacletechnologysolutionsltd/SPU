@@ -60,7 +60,14 @@
 
 // ── Peripherals ───────────────────────────────────────────────────────────
 #define SPI_PORT        spi0
-#define SPI_BAUD_HZ     2000000   // 2 MHz SPI clock
+// 2 MHz SPI clock. CORELESS SPINS ONLY (clk_fast = 50 MHz raw, ratio 25).
+// spu_spi_slave samples SCK with the fabric clock, so the safe bound is
+// SCK <= clk_fast / 6 (measured by spu_spi_slave_ratio_tb.v). On a DIVIDED
+// core spin (A7_CLK_DIV_LOG2=6) clk_fast is ~781 kHz and this default is
+// ratio 0.39 -- an order of magnitude over, and the same class of failure as
+// the 2026-07-14 Wukong bring-up bug. Drop to <= 130 kHz for core spins.
+// See docs/SOUTHBRIDGE_SPI_PROTOCOL.md, "Maximum SCK is a ratio".
+#define SPI_BAUD_HZ     2000000
 #define VIS_UART        uart1
 #define VIS_BAUD        921600
 
