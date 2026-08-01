@@ -72,8 +72,20 @@ if [ "$FP4_STRUCTURED_SEQUENTIAL" = "1" ] && [ "$FP4_BACKEND_SEQUENTIAL" != "1" 
     echo "Structured sequential requests require FP4_BACKEND_SEQUENTIAL=1"
     exit 1
 fi
+# Artifact tagging exists so evaluation runs cannot collide with production
+# builds. It must therefore tag whatever is NOT production -- which inverted on
+# 2026-08-01 when FP4_STRUCTURED's default moved 0 -> 1. Tagging on
+# "FP4_STRUCTURED = 1" then meant every default build emitted
+# spu_a7_100t_<SPIN>_FI1B0_S1.bit instead of spu_a7_100t_<SPIN>.bit, which
+# breaks every documented build/load path in docs/ and AGENTS.md and bakes the
+# burned seed 1 into the production name.
+#
+# Correct rule: the production configuration gets the canonical name; explicit
+# evidence runs and the non-default v1 tower get tagged.
+FP4_PRODUCTION_STRUCTURED=1
 INVERTER_VARIANT=""
-if [ "$FP4_STRUCTURED" = "1" ] || [ "$FP4_EVIDENCE" = "1" ]; then
+if [ "$FP4_EVIDENCE" = "1" ] || [ "$FP4_STRUCTURED" != "$FP4_PRODUCTION_STRUCTURED" ] \
+   || [ "$FP4_BACKEND_SEQUENTIAL" != "0" ]; then
     INVERTER_VARIANT="_FI${FP4_STRUCTURED}B${FP4_BACKEND_SEQUENTIAL}_S${A7_SEED:-1}"
 fi
 SYNTH_XILINX_FLOW=""
