@@ -40,9 +40,18 @@ A7_FREQ_ENV="${A7_FREQ:-}"
 # see spu_a7_top.v's A7_UART_DIAG parameter doc.
 A7_UART_DIAG="${A7_UART_DIAG:-0}"
 
-# Fp4 tower candidate selector. Default-off preserves the historical v1 path.
-# The sequential setting selects the one-product backend for matched A/B runs.
-FP4_STRUCTURED="${FP4_STRUCTURED:-0}"
+# Fp4 tower candidate selector. Default-ON since 2026-08-01: the parallel
+# structured inverter (v2) is the production path. Set FP4_STRUCTURED=0 to build
+# the historical v1 tower.
+#
+# Basis, from the twenty-seed matrix in docs/FP4_STRUCTURED_INVERTER.md: v2 costs
+# ~7.4% LUT and ~3.6% median Fmax, and buys 7-10% median wall-clock because it
+# retires a unit in 74 clocks against v1's 83. It wins on 19 of 20 seeds. The
+# known exception is seed 59, which is ~30% SLOWER on a 15.7 ns routing critical
+# path -- a placement-lottery tail, not noise, so expect it rather than diagnose
+# it fresh. The sequential setting selects the one-product backend for matched
+# A/B runs and stays default-off (it failed its gate at 1.57x LUT).
+FP4_STRUCTURED="${FP4_STRUCTURED:-1}"
 FP4_STRUCTURED_SEQUENTIAL="${FP4_STRUCTURED_SEQUENTIAL:-0}"
 FP4_BACKEND_SEQUENTIAL="${FP4_BACKEND_SEQUENTIAL:-$FP4_STRUCTURED_SEQUENTIAL}"
 FP4_EVIDENCE="${FP4_EVIDENCE:-0}"

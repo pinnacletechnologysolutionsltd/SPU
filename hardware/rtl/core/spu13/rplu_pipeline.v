@@ -17,7 +17,10 @@ module rplu_pipeline #(
     parameter WIDTH        = 18,
     parameter EXTERNAL_PADE_MULT = 0,
     parameter SHARE_PADE_INV_MULT = 0,
-    parameter USE_STRUCTURED_INVERTER = 0,
+    // Default-ON since 2026-08-01; build_a7.sh always -sets this, so this
+    // default only governs direct instantiation (testbenches, other tops).
+    // Kept in step with the script so the two cannot disagree.
+    parameter USE_STRUCTURED_INVERTER = 1,
     parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
 ) (
     input  wire         clk,
