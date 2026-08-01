@@ -102,6 +102,28 @@ def main():
         test_files = [f for f in test_files if tb_filter in f.name]
     print(f"Found {len(test_files)} Verilog test files to execute.")
 
+    # Parameterised benches that must also run with the non-default value of a
+    # parameter. Added 2026-08-01 with the FP4 structured-inverter default
+    # switch: each of these declares its own `parameter USE_STRUCTURED_INVERTER
+    # = 0` and passes it down, so before this the regression exercised v1 only —
+    # flipping the RTL default changed nothing any test could see, and v2 (now
+    # the production path) had no functional coverage anywhere in the tree.
+    PARAM_VARIANTS = {
+        "rplu_pipeline_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
+        "spu13_batch_inverter_collision_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
+        "spu13_rplu2_pade_sidecar_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
+    }
+    test_variants = [(f, "", None) for f in test_files]
+    for f in test_files:
+        spec = PARAM_VARIANTS.get(f.name)
+        if spec:
+            param, value, label = spec
+            test_variants.append((f, label, (param, value)))
+    extra = len(test_variants) - len(test_files)
+    if extra:
+        print(f"Adding {extra} parameter-variant runs (non-default parameter values).")
+
+
     # Directories for auto-discovery (-y) and includes (-I)
     inc_dirs = [
         "hardware/rtl",
@@ -147,9 +169,11 @@ def main():
     timeouts = 0
     compile_errors = 0
 
-    for tb in test_files:
-        print(f"\n--- Running Test: {tb.name} ---")
-        out_vvp = root_dir / f"tmp_{tb.stem}.vvp"
+    for tb, variant, param_override in test_variants:
+        disp = f"{tb.name} [{variant}]" if variant else tb.name
+        print(f"\n--- Running Test: {disp} ---")
+        suffix = f"_{variant}" if variant else ""
+        out_vvp = root_dir / f"tmp_{tb.stem}{suffix}.vvp"
 
         # Compile
         # Gather all source files from include directories so iverilog sees every module
@@ -276,21 +300,25 @@ def main():
         except Exception:
             top_mod = None
 
-        cmd = iverilog_args + (["-s", top_mod] if top_mod else []) + ["-o", str(out_vvp)] + src_unique + [str(tb)]
+        param_args = []
+        if param_override and top_mod:
+            _pname, _pval = param_override
+            param_args = [f"-P{top_mod}.{_pname}={_pval}"]
+        cmd = iverilog_args + (["-s", top_mod] if top_mod else []) + param_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
 
         if compile_result.returncode != 0:
             # If GPU sources are in the source set, attempt a Verilator simulation fallback
             gpu_present = any('/hardware/rtl/gpu/' in s for s in src_unique)
             if gpu_present:
-                print(f"[{tb.name}] iverilog failed; attempting Verilator simulation fallback...")
+                print(f"[{disp}] iverilog failed; attempting Verilator simulation fallback...")
                 # Determine TB top module name
                 try:
                     if not top_mod:
                         raise Exception('Top module not found')
                 except Exception as e:
-                    print(f"[{tb.name}] Verilator fallback: cannot determine top module: {e}")
-                    print(f"[{tb.name}] COMPILE ERROR:")
+                    print(f"[{disp}] Verilator fallback: cannot determine top module: {e}")
+                    print(f"[{disp}] COMPILE ERROR:")
                     print(compile_result.stderr.strip())
                     compile_errors += 1
                     if out_vvp.exists():
@@ -323,7 +351,7 @@ def main():
 
                 vcr = subprocess.run(verilator_cmd, capture_output=True, text=True)
                 if vcr.returncode != 0:
-                    print(f"[{tb.name}] Verilator PREPROCESS ERROR:\n{vcr.stderr}\n{vcr.stdout}")
+                    print(f"[{disp}] Verilator PREPROCESS ERROR:\n{vcr.stderr}\n{vcr.stdout}")
                     compile_errors += 1
                     if out_vvp.exists():
                         out_vvp.unlink()
@@ -332,7 +360,7 @@ def main():
                 make_cmd = ["make", "-C", str(build_dir), "-f", f"V{top_mod}.mk", f"V{top_mod}", "-j"]
                 mcr = subprocess.run(make_cmd, capture_output=True, text=True)
                 if mcr.returncode != 0:
-                    print(f"[{tb.name}] Verilator make error:\n{mcr.stderr}\n{mcr.stdout}")
+                    print(f"[{disp}] Verilator make error:\n{mcr.stderr}\n{mcr.stdout}")
                     compile_errors += 1
                     if out_vvp.exists():
                         out_vvp.unlink()
@@ -343,20 +371,20 @@ def main():
                     rr = subprocess.run([str(exe)], capture_output=True, timeout=5)
                     output = rr.stdout.decode('utf-8', errors='replace') + rr.stderr.decode('utf-8', errors='replace')
                     if "FAIL" in output or "FAIL:" in output:
-                        print(f"[{tb.name}] FAILED")
+                        print(f"[{disp}] FAILED")
                         print(output.strip())
                         failed += 1
                     elif "PASS" in output or "PASS:" in output:
-                        print(f"[{tb.name}] PASSED")
+                        print(f"[{disp}] PASSED")
                         passed += 1
                     else:
-                        print(f"[{tb.name}] EXECUTED (No explicit PASS/FAIL)")
+                        print(f"[{disp}] EXECUTED (No explicit PASS/FAIL)")
                         if rr.returncode == 0:
                             passed += 1
                         else:
                             failed += 1
                 except subprocess.TimeoutExpired:
-                    print(f"[{tb.name}] TIMEOUT (Verilator run)")
+                    print(f"[{disp}] TIMEOUT (Verilator run)")
                     timeouts += 1
                     failed += 1
 
@@ -364,7 +392,7 @@ def main():
                     out_vvp.unlink()
                 continue
             else:
-                print(f"[{tb.name}] COMPILE ERROR:")
+                print(f"[{disp}] COMPILE ERROR:")
                 print(compile_result.stderr.strip())
                 compile_errors += 1
                 if out_vvp.exists():
@@ -384,20 +412,20 @@ def main():
             except UnicodeDecodeError:
                 output = run_result.stdout.decode('latin-1', errors='replace')
             if "FAIL" in output or "FAIL:" in output:
-                print(f"[{tb.name}] FAILED")
+                print(f"[{disp}] FAILED")
                 print(output.strip())
                 failed += 1
             elif "PASS" in output or "PASS:" in output:
-                print(f"[{tb.name}] PASSED")
+                print(f"[{disp}] PASSED")
                 passed += 1
             else:
-                print(f"[{tb.name}] EXECUTED (No explicit PASS/FAIL)")
+                print(f"[{disp}] EXECUTED (No explicit PASS/FAIL)")
                 if run_result.returncode == 0:
                     passed += 1
                 else:
                     failed += 1
         except subprocess.TimeoutExpired:
-            print(f"[{tb.name}] TIMEOUT (Testbench hung, likely no $finish)")
+            print(f"[{disp}] TIMEOUT (Testbench hung, likely no $finish)")
             timeouts += 1
             # Fails in simulation logic
             failed += 1
@@ -406,7 +434,7 @@ def main():
             out_vvp.unlink()
 
     print("\n================== SUMMARY ==================")
-    print(f"Verilog Tests: {len(test_files)}")
+    print(f"Verilog Tests: {len(test_variants)}")
     print(f"Passed:      {passed}")
     print(f"Failed:      {failed}")
     print(f"Timeouts:    {timeouts}")
