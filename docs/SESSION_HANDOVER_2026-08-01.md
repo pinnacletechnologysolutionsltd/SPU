@@ -2,13 +2,14 @@
 
 ## Stop state
 
-- **`origin/master` = `master` = `eee1df1`, in sync, tree clean.** Verified with
+- **`origin/master` = `master` = `a12d220`, in sync, tree clean.** Verified with
   `git status --short --branch`, not assumed. (The 2026-07-24 handover claimed
   "nothing unpushed" when two commits were local-only. Check, don't trust this
-  line either.)
-- **Regression is now 182/182, not 179.** Three FP4 parameter-variant runs were
-  added (`b24413c`). A run reporting 182 is current and correct.
-- 17 commits this session, all pushed. `spu_strategy/` remains gitignored with
+  line either — this document was itself stale for several hours before being
+  brought current at `a12d220`.)
+- **Regression is now 183/183.** Three FP4 parameter-variant runs (`b24413c`)
+  took it 179 → 182; the LUCAS SPI integration bench (`c69a7d5`) took it to 183.
+- 21 commits this session, all pushed. `spu_strategy/` remains gitignored with
   **0 tracked files**.
 - **Bench is live and at a known-good resting state:** Wukong holding
   `TENSEGRITYLINK`, Pico 2 running `rp2350_spu_diag` at 125 kHz, link answering
@@ -130,28 +131,80 @@ port on that module to present as a toolchain symptom.
 > **The fix's diff is in `c932127`, whose message describes only CARRYCASCIN.**
 > It was swept in by a `git add -A`. Recorded in `hardware_evidence.md` rather
 > than rewriting pushed history.
+>
+> **This happened twice.** `4dddb50` likewise carries a
+> `TENSEGRITY_BALANCER_FEASIBILITY.md` scope note written concurrently by a
+> collaborator. Both landed intact and stay discoverable via
+> `git log -- <file>`, so neither was rewritten. **The remedy is procedural:
+> stage explicit paths, never `git add -A`, while this worktree is shared.**
 
-**Not fixed:** LUCAS still fails on silicon. `LUCAS_TGRTIE_S307.bit` loads clean
-and fails every case of `rp2350_lucas_j11_smoke` — **identical to the
-Himbächel-routed bitstream**, a different backend via a different fix. Two build
-paths, one failure, while `TENSEGRITYLINK` answers on the same wiring minutes
-either side. **The toolchain is exonerated.**
+**Not fixed, and it is not LUCAS-specific.** `SU3` (`_CORE=0`) and `ROBOTICS`
+(`_CORE=1`) were both rebuilt from current source and fail identically —
+`ROBOTICS` returns `ARITHMETIC_BLAZE: FAIL 0/13`, every `rotc_commit valid=0`.
 
-Ruled out by direct comparison: SPI pins byte-identical between the two XDCs
-(J4/G4/B4/B5); `rst_n` identical (H7, LVCMOS33); `boot_ready` does not gate chord
-acceptance.
+| Board top | Spins tested | `_CORE` | Silicon |
+|---|---|---|---|
+| `spu_a7_top` | LUCAS (2 builds, 2 backends), SU3 | 0 | **fail** |
+| `spu_a7_top` | ROBOTICS | 1 | **fail** |
+| standalone tops | `TENSEGRITYLINK`, `SOMSIDECAR` | — | **work** |
 
-**Live hypothesis:** nothing simulates SPI `0xB1` → `spu_a7_top` wiring →
-sidecar → `0xAE` QR. The LUCAS benches drive `inst_word` directly. A wiring
-regression there since 2026-07-03 passes 182/182 and appears only on the bench.
-Contract written: `spu_strategy/gtp_contract_lucas_spi_integration_2026-08-01.md`.
+**The discriminator is `spu_a7_top` itself, and no narrower.**
 
 **Himbächel 0.10 is closed.** It routes LUCAS but the bitstream fails on
 silicon, and it **crashes on `TENSEGRITYLINK`** (`assertion_failure` in
 `relptr.h:56`, reproduced on two seeds) — a design 0.8.2 builds and ships. Not a
 default-backend candidate. Note Himbächel *is* upstream's successor to
-nextpnr-xilinx, not an alternative vendor; there is no third open-source option,
-and `build_a7.sh:308` points at a `pack_a7.tcl` that **does not exist**.
+nextpnr-xilinx, not an alternative vendor; there is no third open-source option.
+
+## Where the fault actually is — localised on silicon
+
+This supersedes the earlier "live hypothesis" that RTL wiring was at fault.
+
+**The integration bench was built and it passes.**
+`spu13_a7_lucas_spi_integration_tb.v` (`c69a7d5`) drives real SPI `0xB1`+CRC →
+`0xAE` through an actual `spu_a7_top #(.SPIN("LUCAS"))` and matches all four
+oracle vectors. Audited independently here — real top, real SPI, oracle matching
+`rp2350_lucas_j11_smoke.c:44` exactly, and it reproduces. **The behavioural RTL
+is exonerated.** Its one modelling boundary: `sim_xilinx_bufg.v` is
+`assign O = I;`, so no clock-network behaviour is modelled.
+
+**An `A7_UART_DIAG=1` build then localised the break directly**, which is why no
+`spu_a7_top` bisection was needed:
+
+| Signal | Evidence | Status |
+|---|---|---|
+| `clk_100mhz` | `HB` toggles | alive |
+| **`clk_fast`** | `diag2` block is clocked by `clk_fast` (`spu_a7_top.v:204`) and decoded correctly | **alive** |
+| CS at the pin | `CS:1` | arrives |
+| `0xAC` decode | `AC:1`, in the `clk_fast` domain | works |
+| Chord bytes | `LC:36` = trailing CRC of `D0200C05…` | all arrive |
+| CRC accept | `crc_error_sticky` clear | accepted |
+| **QR commit** | `0xAE` returns `valid=0` | **never fires** |
+
+**The SPI slave is fully functional on silicon.** The break is strictly between
+`u_spi` accepting the chord and the sidecar committing QR.
+
+Note `HB` alone proves nothing about `clk_fast` — it is deliberately free-running
+off raw `clk_100mhz`. It was `AC`/`LC`, both in the `clk_fast` domain, that
+established the fabric clock is live.
+
+Also ruled out by direct comparison: SPI pins byte-identical between the XDCs
+(J4/G4/B4/B5); `rst_n` identical (H7); clock input pin identical (M21 in every
+XDC); BUFG placement identical (`BUFGCTRL_X0Y0` in both a failing and the
+working build); `core_boot_ready` gates nothing functional
+(`spu_a7_top.v:348/750/812/1033` — status byte and diagnostics only).
+
+**Next step is observability, not bisection.** Contract written:
+`spu_strategy/gtp_contract_a7_inst_observability_2026-08-01.md` — add sticky
+`clk_fast` latches for `spi_inst_valid` (`IV:`), `qr_commit_valid` (`QC:`) and
+the latched `inst_word` (`IW:`) to the DIAG line. Those three partition the
+remaining space with no ambiguous outcome.
+
+> A caution for whoever reads the `spu_a7_top.v:241` comment: it claims the
+> fabric-derived clock BUFG is "pinned to the BUFG site used by the
+> silicon-proven image". **No such constraint exists in any XDC.** It is a
+> comment describing an unimplemented mitigation. It did not turn out to explain
+> this failure, but it will send you down a dead end.
 
 ## Stale bitstreams — still open
 
@@ -162,8 +215,37 @@ spin: `LUCAS`, `SU3`, `SU3SHARE`, `RPLUCFG`, `RPLU2CORE`, `RPLU2PADE`,
 are post-remap.
 
 A stale bitstream fails by returning zeros — indistinguishable from a dead link,
-a damaged pin, or a boot FSM that never reaches READY. The `tgr_transport_status`
-fix now makes rebuilding possible; the bulk rebuild has not been done.
+a damaged pin, or a boot FSM that never reaches READY.
+
+**Two were rebuilt (`SU3`, `ROBOTICS`) and both fail on silicon, so the
+remaining five were deliberately left alone** — they would produce five more
+non-working bitstreams. Finish the `spu_a7_top` fault first, then the bulk
+rebuild is mechanical.
+
+**All eight originals are preserved** in
+`build/evidence_archive/prerebuild_2026-08-01/` with a `MANIFEST.sha256`,
+verified 15/15 `OK`. Spot-checked against `hardware_evidence.md`: `RPLU2CORE`
+`71319fbb…` and `SU3SHARE` `0f886350…` match their cited hashes, so the evidence
+survived the rebuild.
+
+**Packing now works without hand-set environment variables** (`a12d220`). Three
+gaps each masked the next: fasm2frames discovery needed `PRJXRAY_ROOT` exported;
+the script needs the `fasm`/`textx` venv rather than system python3; and
+fasm2frames also imports `prjxray` from its own checkout root, which needed to
+be on `PYTHONPATH`. Now:
+
+```sh
+source tools/env_openxc7.sh
+A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t <spin> all
+```
+
+Budget real time for `pack`: fasm falls back to its slow pure-Python textX
+parser because the antlr accelerator ships as an uncompiled `.pyx`. Rebuilding
+fasm from source does **not** compile it — that was attempted and reverted, and
+the venv restored to the exact `fasm 0.0.2.post66` that packed the verified
+bitstreams. Roughly 5 minutes for `ROBOTICS`' 35 MB FASM, well under 1 for
+`LUCAS`' 12 MB. Also: repacking an unchanged route produced a **different
+bitstream hash**, so do not assume the pack step is bit-reproducible.
 
 ## Damage report — artifacts lost
 
@@ -191,16 +273,20 @@ pass an unburned `A7_SEED` if that configuration genuinely needs rebuilding.
   output as a failure.** Benches that legitimately report sub-failures must use
   other labels.
 - **Fresh-clone run is the only honest check after touching `run_all_tests.py`.**
-  Done this session for `b24413c`: 182/182.
+  Done this session for `b24413c`: 182/182 at that commit (the gate reached 183
+  later, at `c69a7d5`).
 - Paper build paths differ: `rplu_paper.tex` builds from the repo root,
   `LUCAS_MAC_PAPER.tex` from `docs/`.
 
 ## Open / next
 
-1. **LUCAS silicon failure** — the integration bench contract above. Board-free,
-   bounded, both outcomes useful.
-2. **Bulk rebuild of the nine stale spins**, now unblocked by the
-   `tgr_transport_status` fix. Mechanical.
+1. **The `spu_a7_top` silicon failure** — the observability contract
+   (`gtp_contract_a7_inst_observability_2026-08-01.md`). Add `IV:`/`QC:`/`IW:`
+   to the DIAG line; the three outcomes partition the space completely. GTP
+   builds, the bench run happens here.
+2. **Bulk rebuild of the remaining five stale spins** — deliberately deferred.
+   `SU3` and `ROBOTICS` were rebuilt and fail, so the rest would too. Mechanical
+   once item 1 lands.
 3. **INA226 capture — fully unblocked.** Motor (Tamiya 75026), ZK-5KX, INA226
    (`R100` confirmed), breadboard and RP2350 all in hand. **The interlock BOM is
    NOT required** — it gates a different subsystem. Manifest generated at
@@ -219,7 +305,19 @@ pass an unburned `A7_SEED` if that configuration genuinely needs rebuilding.
 
 ```sh
 git status --short --branch
-python3 run_all_tests.py                     # expect 182/182
+python3 run_all_tests.py                     # expect 183/183
 openFPGALoader -c dirtyJtag --detect
 python3 tools/uart_baud_probe.py             # oscillator / liveness check
+
+# Rebuild a spin (packing needs no extra env vars since a12d220):
+source tools/env_openxc7.sh
+A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t <spin> all
+
+# Read the chain diagnostic (needs an A7_UART_DIAG=1 build loaded):
+#   DIAG HB:<clk_100mhz> CS:<cs seen> AC:<0xAC decoded> RDY:<boot_ready>
+#        BST:<boot state> LC:<last cmd byte>
 ```
+
+Bench resting state, for comparison next session: Wukong holding
+`TENSEGRITYLINK`, Pico 2 running `rp2350_spu_diag` at 125 kHz, `0xB3` returning
+`version=1`. Anything that fails against that is new, not baseline.
