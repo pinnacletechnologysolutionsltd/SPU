@@ -969,11 +969,25 @@ all-zero symptom.
 | `spu_a7_top` | LUCAS (2 builds, 2 backends), SU3 | **all fail** |
 | standalone tops | `TENSEGRITYLINK`, `SOMSIDECAR` | **work** |
 
-**Stated precisely:** every *coreless* (`_CORE = 0`) `spu_a7_top` spin tested
-fails; the spins that work use their own board tops. Whether `_CORE = 1` spins
-are affected is **untested** — `ROBOTICS` or `IROTC` would separate "all of
-`spu_a7_top`" from "the coreless path within it", and that is the next
-experiment.
+**`ROBOTICS` answered that question the same day: it fails too.** Rebuilt from
+current source (routing `overused=0 archfail=0`, `clk_fast` max 4.12 MHz against
+the 781.25 kHz it actually runs at), packed, SRAM-loaded with `done 1`, then
+`rp2350_spu_arithmetic_test` returned **`ARITHMETIC_BLAZE: FAIL`, 0/13**, every
+`rotc_commit valid=0` and every status `00 00 00 00`.
+
+`ROBOTICS` is `_CORE = 1`, so the fault is **not** confined to the coreless
+path. Final tally:
+
+| Board top | Spins tested | `_CORE` | Silicon |
+|---|---|---|---|
+| `spu_a7_top` | LUCAS (2 builds, 2 backends), SU3 | 0 | **fail** |
+| `spu_a7_top` | ROBOTICS | 1 | **fail** |
+| standalone tops | `TENSEGRITYLINK`, `SOMSIDECAR` | — | **work** |
+
+Four bitstreams across three spins, both `_CORE` settings, two backends, three
+of them freshly built from current source with correct pins — all produce the
+same all-zero symptom. Every spin with its own board top works. **The
+discriminator is `spu_a7_top` itself**, and no narrower.
 
 What this rules out, each by direct evidence rather than inference:
 
