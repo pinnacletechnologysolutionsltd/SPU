@@ -203,9 +203,11 @@ def main():
             "hardware/rtl/peripherals/memory",
             "hardware/rtl/peripherals/storage",
             "hardware/rtl/peripherals/video",
+            # Behavioral primitive models must be seen before board sources:
+            # board tops intentionally declare BUFG as a synthesis blackbox.
+            "hardware/tests/common",
             "hardware/boards/tang_primer_25k",
             "hardware/boards/tang25k",
-            "hardware/tests/common",  # behavioral test helpers (e.g., sim_sd_card)
         ]
         src_files = []
         module_map = {}
