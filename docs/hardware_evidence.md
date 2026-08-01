@@ -922,6 +922,40 @@ core-less `boot_ready` endpoint (fixed independently), an artifact-sensitive
 230-node timing-scheduler rejection, and a fresh-netlist DSP `CARRYCASCIN`
 routing rejection. They are not interchangeable evidence for one cause.
 
+**The 230-node rejection is FIXED — `spu_a7_top.v`, 2026-08-01.** The
+`spu_spi_slave` instantiation omitted `tgr_transport_status`, leaving a 128-bit
+input undriven; the resulting X/Z-fed decode cone is what nextpnr-xilinx 0.8.2
+rejected. Tying it explicitly — `.tgr_transport_status(128'd0)`, TGR transport
+being disabled on every `spu_a7_top` spin — takes the build from 230 nodes and
+no FASM to **zero nodes, clean route, post-route Fmax 76.08 MHz**. Matched
+unmodified control still fails at 230. `spu_spi_slave.v` was not edited and the
+full command decode is unchanged. This is the same defect class as the earlier
+undriven `core_boot_ready`, and it is the third instance of an omitted input
+port on this module producing a misleading toolchain-level symptom.
+
+**The fix's diff landed in commit `c932127`, whose message describes only the
+CARRYCASCIN finding.** It was swept in by a `git add -A` during an overlapping
+edit and is recorded here because the commit message will not lead anyone to it.
+
+**Board acceptance of that fix FAILED, and the failure is not the toolchain.**
+`build/spu_a7_100t_LUCAS_TGRTIE_S307.bit` (SHA-256 `09097c2a...671a358`)
+SRAM-loads clean (`isc_done 1 / init 1 / done 1`) and then fails every case of
+`rp2350_lucas_j11_smoke` at 2 MHz — the firmware and rate recorded passing on
+2026-07-03. That is **identical to the failure of the Himbächel-routed LUCAS
+bitstream**, produced by a different backend via a different fix. Two
+independent build paths yielding the same silicon failure, while the
+0.8.2-built `TENSEGRITYLINK` answers on the same wiring minutes either side,
+points at LUCAS's current source rather than any backend.
+
+Ruled out by direct comparison: the SPI pin constraints are byte-identical
+between `spu_a7_100t.xdc` and `spu_a7_tensegrity_link.xdc` (J4/G4/B4/B5), as is
+the `rst_n` pin (H7, LVCMOS33). The open candidate is that the LUCAS spin's
+SPI-to-sidecar-to-QR integration inside `spu_a7_top.v` has no simulation
+coverage — the existing LUCAS benches exercise the MAC and the sidecar, not the
+`0xB1` chord to `0xAE` QR chain through the board top — so a wiring regression
+there since 2026-07-03 would pass the full regression and appear only on the
+bench.
+
 **`CARRYCASCIN` is a backend defect, not an SPU defect — established
 2026-08-01 by netlist inspection.** The handover listed it as "the honest next
 lead on the production top", which implied a design-side bug to chase. It is
