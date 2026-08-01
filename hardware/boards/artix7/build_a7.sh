@@ -325,8 +325,9 @@ pnr() {
 pack() {
     echo ">>> Bitstream Generation <<<"
     command -v xc7frames2bit &>/dev/null || {
-        echo "  Install Project X-Ray tools for bitstream generation."
-        echo "  Or open Vivado and run: source hardware/boards/artix7/pack_a7.tcl"
+        echo "  xc7frames2bit not found. Source the toolchain first:"
+        echo "    source tools/env_openxc7.sh"
+        echo "  (This adds \$OPENXC7_ROOT/bin to PATH; default ~/.local/openxc7.)"
         exit 1
     }
 
@@ -347,7 +348,38 @@ pack() {
             FASM2FRAMES="$PRJXRAY_ROOT/tools/fasm2frames.py"
         elif [ -n "${PRJXRAY_ROOT:-}" ] && [ -f "$PRJXRAY_ROOT/utils/fasm2frames.py" ]; then
             FASM2FRAMES="$PRJXRAY_ROOT/utils/fasm2frames.py"
+        elif [ -f "$HOME/toolchains/prjxray/utils/fasm2frames.py" ]; then
+            # Bench default. Discovery previously required PRJXRAY_ROOT to be
+            # exported, so `pack` failed on this machine with "Missing
+            # fasm2frames.py" despite a complete install being present.
+            FASM2FRAMES="$HOME/toolchains/prjxray/utils/fasm2frames.py"
         fi
+    fi
+
+    # fasm2frames.py needs the `fasm` and `textx` modules, which live in a
+    # dedicated venv rather than the system interpreter. Without this, packing
+    # fails with ModuleNotFoundError even after fasm2frames.py itself is found.
+    # An explicit OPENXC7_PYTHON always wins.
+    if [ "$OPENXC7_PYTHON" = "python3" ] \
+       && [ -x "$HOME/.local/venvs/prjxray/bin/python" ] \
+       && ! python3 -c "import fasm" >/dev/null 2>&1; then
+        OPENXC7_PYTHON="$HOME/.local/venvs/prjxray/bin/python"
+    fi
+
+    # fasm2frames.py also imports the `prjxray` package from its own checkout
+    # root, which is not installed into any interpreter. Put that root on
+    # PYTHONPATH when the script we resolved lives inside one; without it
+    # packing fails with "No module named 'prjxray'" after clearing the `fasm`
+    # import.
+    if [ -n "$FASM2FRAMES" ]; then
+        _f2f_root="$(cd "$(dirname "$FASM2FRAMES")/.." && pwd)"
+        if [ -d "$_f2f_root/prjxray" ]; then
+            case ":${PYTHONPATH:-}:" in
+                *":$_f2f_root:"*) ;;
+                *) export PYTHONPATH="$_f2f_root${PYTHONPATH:+:$PYTHONPATH}" ;;
+            esac
+        fi
+        unset _f2f_root
     fi
 
     [ -f "$FASM" ] || { echo "Missing routed FASM: $FASM"; exit 1; }
