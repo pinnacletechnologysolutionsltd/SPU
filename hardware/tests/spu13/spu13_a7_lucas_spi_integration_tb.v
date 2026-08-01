@@ -4,6 +4,13 @@
 // the board top's physical SPI pins: B1 + CRC must cross spu_spi_slave, reach
 // the Lucas sidecar, return through the top-level QR mux, and be observable via
 // an AE response.  The four vectors are the rp2350_lucas_j11_smoke oracle.
+//
+// It also reads the AC status frame after each case, which pins the golden
+// value of the chord-dispatch breadcrumbs the board top has always latched
+// (spu_a7_top.v:409-451) and the slave has always published.  A healthy case
+// leaves "5A <opcode> 13 00" -- opcode latched from spi_inst_valid, sidecar
+// claim and commit both set, no error.  That frame is what the bench firmware
+// already prints, so a silicon capture compares byte for byte.
 module spu13_a7_lucas_spi_integration_tb;
     localparam integer SCK_HALF_NS = 40; // 100 MHz clk, 12.5 MHz SCK: ratio 8
     // Production sidecar uses MAC_CE_DIV=64.  This exceeds the standalone
@@ -25,6 +32,7 @@ module spu13_a7_lucas_spi_integration_tb;
     wire fault_led;
 
     reg [7:0] rx_buf [0:33];
+    reg [7:0] status_buf [0:3];
     integer errors = 0;
 
     always #5 clk_100mhz = ~clk_100mhz;
@@ -136,6 +144,32 @@ module spu13_a7_lucas_spi_integration_tb;
         end
     endtask
 
+    // CMD 0xAC status read, byte-for-byte what rp2350_lucas_j11_smoke's
+    // print_status() emits.  On a LUCAS spin sidecar_status is 1, so the four
+    // bytes carry the chord-dispatch breadcrumbs directly:
+    //   [0] 0x5A                       — sidecar_status_hi literal
+    //   [1] debug_last_spi_opcode      — latched on spi_inst_valid
+    //   [2] {su3_state[2:0], ratio_valid, fifo_full, error, claim, commit}
+    //   [3] {5'h0, boot_ready, crc_error_sticky, rplu_mode(busy)}
+    // Byte 2 bit1 is debug_sidecar_claim_seen, bit0 debug_sidecar_commit_seen.
+    task automatic spi_read_status;
+        reg [7:0] ignored;
+        reg [7:0] value;
+        integer byte_index;
+        begin
+            spi_cs_n = 1'b0;
+            #(2*SCK_HALF_NS);
+            spi_xfer_byte(8'hAC, ignored);
+            for (byte_index = 0; byte_index < 4; byte_index = byte_index + 1) begin
+                spi_xfer_byte(8'h00, value);
+                status_buf[byte_index] = value;
+            end
+            #(2*SCK_HALF_NS);
+            spi_cs_n = 1'b1;
+            repeat (32) @(posedge clk_100mhz);
+        end
+    endtask
+
     task automatic run_case;
         input [63:0] word;
         input [3:0] expected_lane;
@@ -143,9 +177,11 @@ module spu13_a7_lucas_spi_integration_tb;
         input [8*16-1:0] label;
         reg [63:0] got_a, got_b, got_c, got_d;
         reg case_ok;
+        reg status_ok;
         begin
             spi_write_chord(word);
             spi_read_qr();
+            spi_read_status();
             got_a = {rx_buf[2],  rx_buf[3],  rx_buf[4],  rx_buf[5],
                      rx_buf[6],  rx_buf[7],  rx_buf[8],  rx_buf[9]};
             got_b = {rx_buf[10], rx_buf[11], rx_buf[12], rx_buf[13],
@@ -158,11 +194,25 @@ module spu13_a7_lucas_spi_integration_tb;
                       rx_buf[1][3:0] === expected_lane &&
                       got_a === expected_a && got_b === 64'd0 &&
                       got_c === 64'd0 && got_d === 64'd0;
-            if (!case_ok)
+            // A healthy dispatch leaves 0x5A <opcode> 0x13 in the status frame:
+            // opcode latched from spi_inst_valid, claim and commit both sticky
+            // high, error low.  This is the same frame the bench firmware
+            // already prints, so a silicon capture is directly comparable.
+            status_ok = status_buf[0] === 8'h5A &&
+                        status_buf[1] === word[63:56] &&
+                        status_buf[2][2] === 1'b0 &&
+                        status_buf[2][1] === 1'b1 &&
+                        status_buf[2][0] === 1'b1;
+            if (!case_ok || !status_ok)
                 errors = errors + 1;
             $display("case %0s %0s valid=%0d lane=%0d A=%016h",
                      label, case_ok ? "ok" : "bad",
                      rx_buf[0][0], rx_buf[1][3:0], got_a);
+            $display("  status %0s raw=%02h %02h %02h %02h (IV/IW=%02h claim=%0d commit=%0d err=%0d)",
+                     status_ok ? "ok" : "bad",
+                     status_buf[0], status_buf[1], status_buf[2], status_buf[3],
+                     status_buf[1], status_buf[2][1], status_buf[2][0],
+                     status_buf[2][2]);
         end
     endtask
 
