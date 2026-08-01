@@ -338,9 +338,30 @@ re-hashing against the SHA-256 values recorded inside
 |---|---|
 | `..._ZK1_S1.json.nextpnr.log` | **DESTROYED** — overwritten by a truncated log (10 KB vs ~129 KB) from the aborted run. Original `sha256 fc2340da...` is unrecoverable; `build/` is gitignored. |
 | `..._ZK1_S1.json` (synthesis) | mismatched — but **already** so since the 2026-07-23 rerun above, so no additional loss |
-| `..._ZK1_S1.json.pnr.json` | intact (2026-07-22, 111 MB full routed design) |
-| `..._ZK1_S1.json.pnr.fasm` | intact (2026-07-22) |
-| `..._ZK1_S1.json.timing_summary.json` | intact (2026-07-23) |
+| `..._ZK1_S1.json.pnr.json` | ~~intact~~ **also lost — see update below** |
+| `..._ZK1_S1.json.pnr.fasm` | ~~intact~~ **also lost — see update below** |
+| `..._ZK1_S1.json.timing_summary.json` | intact (2026-07-23) — now the **only** surviving original |
+
+**Update, same day 11:44.** A further place-and-route ran against this artifact
+name after the assessment above was written, rewriting `.nextpnr.log` (now
+178,805 bytes), `.pnr.fasm` and `.pnr.json`. **Nothing in the Phase 4 artifact
+set for `TENSEGRITYPROBE_ZK1_S1` now matches its original**, and the two entries
+the summary carries hashes for both re-verify as MISMATCH. The row above saying
+the routed design survived is superseded: it did not.
+
+What still stands is the derived record. `timing_summary.json` (2026-07-23) is
+untouched and self-describing — it carries the extracted metrics (LUT 22,797,
+FF 7,482, CARRY4 1,064, DSP48E1 66, seed 1, 25 MHz requested) **and** the
+SHA-256s of the originals, so the Phase 4 figures remain quotable and the loss
+remains provable. What can no longer be done is re-deriving those figures from
+a raw artifact, or hash-confirming any of them.
+
+The practical lesson is unchanged but now twice-demonstrated in one day: this
+artifact name is a magnet for accidental rebuilds because it is the default
+`A7_SEED=1` tag for the default `ZPHI_KARATSUBA=1` spin, so *any* bare
+`build_a7.sh 100t tensegrityprobe` lands on it. **Treat `_ZK1_S1` as
+write-protected.** If a run against that configuration is genuinely needed, pass
+an unburned `A7_SEED` so it cannot collide.
 
 Impact is bounded but real. The paragraph above explicitly recorded the
 `.nextpnr.log` as "confirmed untouched" and load-bearing for Phase 4; that is no
