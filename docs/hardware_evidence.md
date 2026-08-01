@@ -956,6 +956,46 @@ coverage — the existing LUCAS benches exercise the MAC and the sidecar, not th
 there since 2026-07-03 would pass the full regression and appear only on the
 bench.
 
+**The silicon fault is not LUCAS-specific — it tracks `spu_a7_top` itself
+(2026-08-01).** `SU3` was rebuilt from current source with the
+`tgr_transport_status` fix: P&R clean (`overused=0 archfail=0`, `clk_fast` max
+58.30 MHz), packed to a fresh bitstream, SRAM-loaded with `done 1`. It then
+failed `rp2350_su3_j11_smoke` at 25 kHz on every element — `checked write
+failed`, status `00 00 00 00`. A different sidecar, a different build, the same
+all-zero symptom.
+
+| Board top | Spins tested | Silicon |
+|---|---|---|
+| `spu_a7_top` | LUCAS (2 builds, 2 backends), SU3 | **all fail** |
+| standalone tops | `TENSEGRITYLINK`, `SOMSIDECAR` | **work** |
+
+**Stated precisely:** every *coreless* (`_CORE = 0`) `spu_a7_top` spin tested
+fails; the spins that work use their own board tops. Whether `_CORE = 1` spins
+are affected is **untested** — `ROBOTICS` or `IROTC` would separate "all of
+`spu_a7_top`" from "the coreless path within it", and that is the next
+experiment.
+
+What this rules out, each by direct evidence rather than inference:
+
+- **the toolchain** — two backends produce the same failure, and 0.8.2 builds
+  working bitstreams from other tops;
+- **the pin mapping** — SPI constraints are byte-identical between
+  `spu_a7_100t.xdc` and `spu_a7_tensegrity_link.xdc`;
+- **BUFG placement** — the failing LUCAS build and the working `TENSEGRITYLINK`
+  both land the clock buffer on `BUFGCTRL_X0Y0`;
+- **the behavioural RTL wiring** — `spu13_a7_lucas_spi_integration_tb.v`
+  (`c69a7d5`) drives real SPI `0xB1`/`0xAE` through an actual
+  `spu_a7_top #(.SPIN("LUCAS"))` and passes all four vectors exactly;
+- **an undriven sibling of `tgr_transport_status`** — the SU3 build log reports
+  zero undriven-net warnings;
+- **MISO gating** — `spi_miso` is driven directly by `u_spi` with no
+  spin-conditional logic.
+
+The bisection space is **10 commits** to `spu_a7_top.v` since the 2026-07-03
+LUCAS J11 proof. The residual candidates are things RTL simulation does not
+model: synthesis/implementation divergence, physical clock or reset behaviour
+(the sim's BUFG is `assign O = I;`), or the FASM/frames path.
+
 **`CARRYCASCIN` is a backend defect, not an SPU defect — established
 2026-08-01 by netlist inspection.** The handover listed it as "the honest next
 lead on the production top", which implied a design-side bug to chase. It is

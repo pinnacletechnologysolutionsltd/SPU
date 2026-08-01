@@ -37,13 +37,36 @@ positive density, struts require negative density.
 | Icosahedral A5 rotations | `IROTC` opcode (1/2 Z[phi] matrix, 60-entry catalog) | Tang 25K silicon for probe vectors idx 16, idx 36 main, and fault matrix; full 60 x 2 surface testbench-verified |
 | Tetrahedral rotations | `ROTC` opcode (36-angle catalog, Q(sqrt3) circulant/permutation/octahedral paths) | Angles 0-5 silicon-verified on Artix-7/Tang probe path; 6-35 testbench-verified |
 | Quadray coordinates | QR register file (4 x 32-bit RationalSurd per lane) | Silicon-verified for QLDI/QSUB/readback paths |
-| Sphere-packing adjacency | Davis Gate zero-sum/quadrance identities | Silicon-verified as the existing Davis/VE invariant layer |
+| Exact node adjacency and quadrance | Davis Gate zero-sum/quadrance identities | Silicon-verified as the existing Davis/VE invariant layer |
 | MAIN/CONJ grid alternation | phi-plane 4-state typestate | Testbench-verified in core integration; IROTC engine probe has Tang silicon scope above |
 | Exact quadrance | `QSUB`/Davis-style exact arithmetic | Silicon-verified for existing arithmetic probes |
 
 The balancer is a control-plane FSM around existing arithmetic primitives. A
 bounded admission-guard subset now has RTL and a first-tranche board proof;
 this document does not claim a complete silicon-verified active balancer.
+
+### 2.1 High-dimensional sphere packing — scope boundary
+
+The 2026 result *Exponential Growth Rate of the Cohn–Elkies Sphere Packing
+Linear Program* determines the asymptotic strength of that Fourier-analytic
+method: if `LP_d` is its best upper bound for packing congruent balls in
+Euclidean `R^d`, then
+`lim_(d->infinity) LP_d^(1/d) = sqrt(e/(2 pi))`, equivalently an upper-bound
+exponent `0.6044...`. See Chapter 1 of the
+[released manuscript](https://cdn.openai.com/pdf/ten-proofs-oai.pdf).
+
+This does **not** apply directly to the present guard. TGR1 describes a
+bounded 12-node structure in physical three-space, with typed point/segment
+incidence and force-density equilibrium; it neither packs congruent balls nor
+maximizes occupied volume. The Davis/VE mapping above is therefore exact node
+geometry, not a claim that SPU-13 implements a classical sphere-packing bound.
+
+Revisit this result only when future work represents whole configurations or
+codewords as points in a genuinely high-dimensional Euclidean space, imposes
+a mutual-distance exclusion radius, and asks for packing density or codebook
+cardinality. Such an application would require an explicit reduction from the
+constrained tensegrity state manifold to that packing problem; counting the
+coordinates of the current fixture alone is not sufficient.
 
 ## 3. Dual-Grid Interpenetration
 
