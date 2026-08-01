@@ -1031,7 +1031,11 @@ module spu_a7_top #(
         .turbulence(spi_status_turbulence),
         .rplu_mode(spi_status_mode),
         .boot_ready(core_boot_ready),
-        .sentinel_telemetry(southbridge_telemetry)
+        .sentinel_telemetry(southbridge_telemetry),
+        // TGR transport is disabled on every spu_a7_top spin.  Tie its status
+        // input explicitly: leaving this input omitted synthesizes an X/Z-fed
+        // decode cone that nextpnr-xilinx 0.8.2 rejects during timing analysis.
+        .tgr_transport_status(128'd0)
     );
 
     // ── UART TX ─────────────────────────────────────────────

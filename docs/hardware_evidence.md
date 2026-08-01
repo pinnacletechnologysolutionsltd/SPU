@@ -922,6 +922,50 @@ core-less `boot_ready` endpoint (fixed independently), an artifact-sensitive
 230-node timing-scheduler rejection, and a fresh-netlist DSP `CARRYCASCIN`
 routing rejection. They are not interchangeable evidence for one cause.
 
+**`CARRYCASCIN` is a backend defect, not an SPU defect — established
+2026-08-01 by netlist inspection.** The handover listed it as "the honest next
+lead on the production top", which implied a design-side bug to chase. It is
+not one, and the RTL needs no change.
+
+No SPU source instantiates `DSP48E1`; `spu13_m31_multiplier.v` uses behavioural
+`*` operators and `synth_xilinx` infers the blocks. In every synthesized netlist
+on disk, **`CARRYCASCIN` appears only as a port declaration inside the Yosys
+blackbox library modules (`DSP48E`, `DSP48E1`, `DSP48E2`) and is connected by
+zero instantiated cells**:
+
+| netlist | DSP48E1 cells | cells with `CARRYCASCIN` connected |
+|---|---:|---:|
+| `RPLU2PADE` (the design that failed routing) | 72 | **0** |
+| `FP4EVIDENCE_FI1B0_S17` (routes cleanly) | 72 | **0** |
+| `RPLU2CORE` | 0 | 0 |
+
+So the pin is left unconnected by synthesis, in the design that fails *and* in
+one that succeeds. The "tied-low `CARRYCASCIN` sink" that nextpnr reports is
+therefore **materialised by nextpnr itself** — its packer drives unconnected DSP
+inputs from the global constant network, and the router then cannot reach
+`CARRYCASCIN`, which on DSP48E1 is a dedicated cascade input with no general
+routing path (it is drivable only by the `CARRYCASCOUT` of the DSP directly
+below). That is also why the failing site moves with placement
+(`DSP48_X0Y71`, `X0Y79`, `X1Y74`) and why some placements route fine.
+
+Yosys does tie *other* unused cascade inputs to constant 0 — in
+`FP4EVIDENCE_FI1B0_S17`, `BCIN` is tied on all 72 cells and `ACIN`/`PCIN` on 36
+each, with the other 36 genuinely cascaded — and those route without incident.
+The defect is specific to how the backend handles the one pin it cannot reach.
+
+Consequences:
+
+- **Do not look for an RTL or synthesis fix.** There is nothing in the source or
+  the netlist to correct.
+- The A7 legacy backend therefore carries **two independent defects** — this and
+  the 230-node timing-graph rejection — and the Himbächel alternative is not
+  viable either (it fails gate 3 on silicon and aborts on `TENSEGRITYLINK`; see
+  `spu_strategy/bench_findings_a7_build_blocker_2026-08-01.md`).
+- The only design-side lever is to stop inferring DSPs for the shared M31
+  multiplier, trading area and timing to avoid the pin entirely. That is a real
+  cost and should not be spent before the 230-node blocker is understood, since
+  it does not address that one.
+
 ### 3.2g ROTC 0-5 Silicon Probe
 
 **Date:** 2026-06-30 NZT
