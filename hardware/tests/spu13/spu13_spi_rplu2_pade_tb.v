@@ -1,6 +1,8 @@
 `timescale 1ns/1ps
 
-module spu13_spi_rplu2_pade_tb;
+module spu13_spi_rplu2_pade_tb #(
+    parameter USE_STRUCTURED_INVERTER = 0
+);
     localparam [7:0] OP_RPLU2_START = 8'h2A;
 
     reg clk = 1'b0;
@@ -54,7 +56,9 @@ module spu13_spi_rplu2_pade_tb;
         end
     end
 
-    spu13_rplu2_pade_sidecar u_sidecar (
+    spu13_rplu2_pade_sidecar #(
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER)
+    ) u_sidecar (
         .clk(clk),
         .rst_n(rst_n),
         .inst_valid(spi_inst_valid),
@@ -270,6 +274,8 @@ module spu13_spi_rplu2_pade_tb;
     endtask
 
     task expect_qr;
+        input [8*24-1:0] case_name;
+        input [63:0] expected_A;
         reg [63:0] got_A, got_B, got_C, got_D;
         begin
             spi_read_qr();
@@ -282,14 +288,41 @@ module spu13_spi_rplu2_pade_tb;
             got_D = {rx_buf[26], rx_buf[27], rx_buf[28], rx_buf[29],
                      rx_buf[30], rx_buf[31], rx_buf[32], rx_buf[33]};
             if (rx_buf[0] !== 8'h01 || rx_buf[1][3:0] !== 4'd4 ||
-                got_A !== 64'd2 || got_B !== 64'd0 ||
+                got_A !== expected_A || got_B !== 64'd0 ||
                 got_C !== 64'd0 || got_D !== 64'd0) begin
-                $display("FAIL: QR valid=%02h lane=%02h", rx_buf[0], rx_buf[1]);
-                $display("      got A=%h B=%h C=%h D=%h",
-                         got_A, got_B, got_C, got_D);
+                $display("FAIL: %0s QR valid=%02h lane=%02h expected_A=%h",
+                         case_name, rx_buf[0], rx_buf[1], expected_A);
+                $display("      got A=%h B=%h C=%h D=%h", got_A, got_B, got_C, got_D);
                 errors = errors + 1;
             end else begin
-                $display("PASS: SPI RPLU2PADE QR lane 4");
+                $display("RESULT: %0s A=%h", case_name, got_A);
+            end
+        end
+    endtask
+
+    task run_pade_case;
+        input [8*24-1:0] case_name;
+        input [31:0] numerator;
+        input [31:0] denominator;
+        input [31:0] expected;
+        begin
+            spi_cfg_write(3'd1, 10'd0, {32'd0, numerator});
+            spi_cfg_write(3'd1, 10'd8, 64'd0);
+            spi_cfg_write(3'd2, 10'd0, {32'd0, denominator});
+            spi_cfg_write(3'd2, 10'd8, 64'd0);
+
+            spi_inst_write({OP_RPLU2_START, 8'd4, 48'd0});
+            repeat (4000) @(posedge clk);
+            expect_status(8'h07);
+            expect_qr(case_name, {32'd0, expected});
+
+            if (sidecar_error) begin
+                $display("FAIL: %0s sidecar error asserted", case_name);
+                errors = errors + 1;
+            end
+            if (sidecar_busy) begin
+                $display("FAIL: %0s sidecar still busy", case_name);
+                errors = errors + 1;
             end
         end
     endtask
@@ -300,27 +333,24 @@ module spu13_spi_rplu2_pade_tb;
         rst_n = 1'b1;
         repeat (32) @(posedge clk);
 
-        spi_cfg_write(3'd1, 10'd0, 64'h00000000_00000002);
-        spi_cfg_write(3'd1, 10'd8, 64'h00000000_00000000);
-        spi_cfg_write(3'd2, 10'd0, 64'h00000000_00000001);
-        spi_cfg_write(3'd2, 10'd8, 64'h00000000_00000000);
+        if (USE_STRUCTURED_INVERTER != 0 && USE_STRUCTURED_INVERTER != 1) begin
+            $display("FAIL: invalid USE_STRUCTURED_INVERTER=%0d", USE_STRUCTURED_INVERTER);
+            errors = errors + 1;
+        end
+        if (u_sidecar.USE_STRUCTURED_INVERTER != USE_STRUCTURED_INVERTER) begin
+            $display("FAIL: USE_STRUCTURED_INVERTER did not reach sidecar");
+            errors = errors + 1;
+        end
+
         spi_cfg_write(3'd3, 10'd1, 64'h00000000_00000001);
         spi_cfg_write(3'd3, 10'd65, 64'h00000000_00000000);
         expect_status(8'h01);
 
-        spi_inst_write({OP_RPLU2_START, 8'd4, 48'd0});
-        repeat (4000) @(posedge clk);
-        expect_status(8'h07);
-        expect_qr();
-
-        if (sidecar_error) begin
-            $display("FAIL: RPLU2PADE sidecar error asserted");
-            errors = errors + 1;
-        end
-        if (sidecar_busy) begin
-            $display("FAIL: RPLU2PADE sidecar still busy");
-            errors = errors + 1;
-        end
+        run_pade_case("two_over_one",      32'd2,     32'd1,    32'h00000002);
+        run_pade_case("two_over_two",      32'd2,     32'd2,    32'h00000001);
+        run_pade_case("five_over_two",     32'd5,     32'd2,    32'h40000002);
+        run_pade_case("seven_over_three",  32'd7,     32'd3,    32'h55555557);
+        run_pade_case("wide_constants",    32'd12345, 32'd6789, 32'h2FCB82AA);
 
         if (errors == 0)
             $display("PASS: spu13_spi_rplu2_pade_tb");

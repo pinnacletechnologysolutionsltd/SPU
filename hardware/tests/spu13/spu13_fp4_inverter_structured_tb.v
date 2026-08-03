@@ -5,7 +5,8 @@
 // equivalence is checked at each implementation's own done edge; latency is
 // separately pinned per unit/singular outcome class.
 module spu13_fp4_inverter_structured_tb;
-    localparam MAX_WORDS = 1 + 25 * 9;
+    localparam VECTOR_COUNT = 31;
+    localparam MAX_WORDS = 1 + VECTOR_COUNT * 9;
 
     reg clk, rst_n, start;
     reg [31:0] z0, z1, z2, z3;
@@ -288,18 +289,19 @@ module spu13_fp4_inverter_structured_tb;
         repeat (3) @(negedge clk);
         rst_n = 1;
 
-        if (golden[0] !== 25) begin
-            $display("FAIL golden vector count expected=25 got=%0d", golden[0]);
+        if (golden[0] !== VECTOR_COUNT) begin
+            $display("FAIL golden vector count expected=%0d got=%0d",
+                     VECTOR_COUNT, golden[0]);
             failures = failures + 1;
         end
 
-        for (vector_index = 0; vector_index < 25; vector_index = vector_index + 1)
+        for (vector_index = 0; vector_index < VECTOR_COUNT; vector_index = vector_index + 1)
             run_vector(vector_index, vector_index == 0);
 
         $display("MEASURED v2 shared-parallel: unit=%0d singular=%0d", p_unit_latency, p_singular_latency);
         $display("MEASURED v2 sequential:      unit=%0d singular=%0d", s_unit_latency, s_singular_latency);
         if (failures == 0)
-            $display("PASS: spu13_fp4_inverter_structured_tb (25 vectors, own-done equivalence, deterministic latency, handshake, 20 products)");
+            $display("PASS: spu13_fp4_inverter_structured_tb (%0d vectors, own-done equivalence, deterministic latency, handshake, 20 products)", VECTOR_COUNT);
         else
             $display("FAIL: spu13_fp4_inverter_structured_tb (%0d failures)", failures);
         $finish;

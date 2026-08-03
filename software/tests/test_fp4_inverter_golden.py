@@ -38,6 +38,12 @@ def build_inputs() -> list[tuple[str, tuple[int, int, int, int]]]:
     inputs = [
         ("identity", (1, 0, 0, 0)),
         ("scalar_two", (2, 0, 0, 0)),
+        ("scalar_three", (3, 0, 0, 0)),
+        ("scalar_five", (5, 0, 0, 0)),
+        ("scalar_six", (6, 0, 0, 0)),
+        ("scalar_seven", (7, 0, 0, 0)),
+        ("scalar_nine", (9, 0, 0, 0)),
+        ("scalar_eleven", (11, 0, 0, 0)),
         ("scalar_p_minus_one", (P - 1, 0, 0, 0)),
         ("pure_sqrt3", (0, 1, 0, 0)),
         ("pure_sqrt5", (0, 0, 1, 0)),

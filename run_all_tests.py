@@ -112,6 +112,7 @@ def main():
         "rplu_pipeline_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
         "spu13_batch_inverter_collision_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
         "spu13_rplu2_pade_sidecar_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
+        "spu13_spi_rplu2_pade_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
     }
     test_variants = [(f, "", None) for f in test_files]
     for f in test_files:

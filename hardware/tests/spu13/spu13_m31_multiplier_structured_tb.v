@@ -5,7 +5,8 @@
 // cancellation-heavy values, units, zero, and nonzero zero divisors.
 module spu13_m31_multiplier_structured_tb;
     localparam [31:0] P = 32'h7FFFFFFF;
-    localparam MAX_WORDS = 1 + 25 * 9;
+    localparam VECTOR_COUNT = 31;
+    localparam MAX_WORDS = 1 + VECTOR_COUNT * 9;
 
     reg clk, rst_n, start;
     reg [2:0] op;
@@ -125,14 +126,15 @@ module spu13_m31_multiplier_structured_tb;
         repeat (3) @(negedge clk);
         rst_n = 1;
 
-        if (golden[0] !== 32'd25) begin
-            $display("FAIL golden vector count expected=25 got=%0d", golden[0]);
+        if (golden[0] !== VECTOR_COUNT) begin
+            $display("FAIL golden vector count expected=%0d got=%0d",
+                     VECTOR_COUNT, golden[0]);
             failures = failures + 1;
         end
 
-        for (vector_index = 0; vector_index < 25; vector_index = vector_index + 1) begin
+        for (vector_index = 0; vector_index < VECTOR_COUNT; vector_index = vector_index + 1) begin
             base = 1 + vector_index * 9;
-            next_base = 1 + ((vector_index + 1) % 25) * 9;
+            next_base = 1 + ((vector_index + 1) % VECTOR_COUNT) * 9;
             z0 = golden[base+0]; z1 = golden[base+1];
             z2 = golden[base+2]; z3 = golden[base+3];
 
@@ -222,7 +224,7 @@ module spu13_m31_multiplier_structured_tb;
         release u_seq_candidate.acc0;
 
         if (failures == 0)
-            $display("PASS: spu13_m31_multiplier_structured_tb (parallel+sequential, 25 vectors, 20 products/tower shape, RNS covered)");
+            $display("PASS: spu13_m31_multiplier_structured_tb (parallel+sequential, %0d vectors, 20 products/tower shape, RNS covered)", VECTOR_COUNT);
         else
             $display("FAIL: spu13_m31_multiplier_structured_tb (%0d failures)", failures);
         $finish;
