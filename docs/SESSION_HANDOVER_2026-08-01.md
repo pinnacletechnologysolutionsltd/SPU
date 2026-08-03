@@ -1,5 +1,13 @@
 # SPU-13 Session Handover — 2026-07-31 → 2026-08-01
 
+> **SUPERSEDED IN PART, 2026-08-03.** The section "Where the fault actually is
+> — localised on silicon" is **wrong**. The break was not between chord-accept
+> and QR-commit; `u_spi` was never running at all. Root cause: `spu_a7_top` fed
+> the raw `rst_n` pad into every async reset. Fixed in `0eec6f4`; all eight
+> spins rebuilt and bench-tested, seven pass. See `hardware_evidence.md`
+> §3.2m. Items 1 and 2 under "Open / next" are **done**. Everything else in
+> this document still stands.
+
 ## Stop state
 
 - **`origin/master` = `master` = `a12d220`, in sync, tree clean.** Verified with
