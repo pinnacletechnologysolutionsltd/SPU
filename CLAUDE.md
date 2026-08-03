@@ -67,7 +67,7 @@ bash build_25k_spu13_math_probe.sh                  # Tang Primer 25K, math-only
 bash build_25k_spu13_rplu2_arith_probe.sh           # Tang Primer 25K, RPLU2 arithmetic probe (~27% LUT)
 bash build_25k_spu13_lucas_mac_probe.sh             # Tang Primer 25K, Lucas MAC standalone
 bash build_25k_spu13_southbridge_link.sh            # Tang Primer 25K, SPI link-only probe
-A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack   # Wukong Artix-7 100T
+A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack   # Wukong Artix-7 100T (A7_FREQ is a constraint, not a divider — keep it, see AGENTS.md)
 ```
 The full RPLU2 pipeline (MATH=1 + RPLU_V2=1) does not fit on the Tang 25K (89% LUT) — that's why probes
 are split; the Wukong Artix-7 100T is the target for full concurrent integration. Synthesis uses the

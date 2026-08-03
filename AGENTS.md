@@ -60,9 +60,9 @@ docs/                   Design guides and bring-up runbooks
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
 | `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 36 ROTC angles (0-35), 336 bit-exact checks across both rotor datapaths |
 | `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` | Set up Python environment |
-| `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Synthesise RPLU2PADE pipeline for Wukong Artix-7 |
+| `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Synthesise RPLU2PADE pipeline for Wukong Artix-7. `A7_FREQ` is a nextpnr constraint, not a divider — keep the `=2`, see note below |
 || `openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_RPLU2PADE.bit` | SRAM-load RPLU2PADE bitstream via DirtyJTAG |
-| `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Build RPLU2PADE Padé pipeline for Wukong Artix-7 (72 DSP, 34% LUT) |
+| `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Build RPLU2PADE Padé pipeline for Wukong Artix-7 (72 DSP, 34% LUT). Duplicate of the row above |
 || `python3 software/tests/test_lucas_mac_oracle.py` | Run Lucas Phinary MAC oracle (PSCALE/PCHIRAL/PMUL/PINV + 1M-step zero-drift) |
 | `iverilog -I hardware/rtl/arch -o build/lucas_mac_tb.vvp hardware/rtl/core/spu13/spu13_lucas_mac.v hardware/tests/spu13/spu13_lucas_mac_tb.v && vvp build/lucas_mac_tb.vvp` | Run Lucas MAC RTL testbench (11 ops + 100-period zero-drift) |
 | `python3 software/tests/test_pade_batch_inversion.py` | Run Montgomery batch inversion oracle (25 checks, tower/MAC cost tables) |
@@ -75,6 +75,20 @@ docs/                   Design guides and bring-up runbooks
 | `iverilog -g2012 -I hardware/rtl/arch -o build/irotc_tb.vvp hardware/rtl/core/spu13/spu13_irotc_engine.v hardware/tests/spu13/spu13_irotc_engine_tb.v && vvp build/irotc_tb.vvp` | Run IROTC engine RTL testbench (120 golden cases + chain + fault matrix) |
 
 Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) (Yosys + nextpnr-himbaechel). No vendor IDE required.
+
+**`A7_FREQ` is a nextpnr `--freq` timing constraint, not a clock divider — do
+not delete it from these commands.** `build_a7.sh:122-127` already defaults it
+to 50 (except `IROTC`=2, tensegrity=25), so an explicit `A7_FREQ=2` *lowers*
+the bar the router must clear. On the coreless spins (`LUCAS`, `SU3`,
+`RPLUCFG`, `RPLU2LIVE`, `RPLU2PADE`, `SOM*`, `TENSEGRITY*`) `A7_CLK_DIV_LOG2`
+is 0, so `clk_fast` is the 50 MHz board clock in silicon and these builds are
+knowingly unclosed, reporting `PASS at 2.00 MHz` while running at 50. Dropping
+the flag does not fix that — a build that misses its constraint is a nextpnr
+`ERROR` under `set -euo pipefail` (`build_a7.sh:20`) and emits no bitstream, and
+no coreless spin has been built against a 50 MHz constraint to see if it closes.
+Core spins (`A7_CLK_DIV_LOG2=6`, 781.25 kHz) are over-constrained at 2 MHz and
+are fine as written. Full note:
+[`docs/SOUTHBRIDGE_SPI_PROTOCOL.md`](docs/SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check--it-does-not-slow-anything-down).
 
 ## Hardware Test Status (July 2026)
 

@@ -766,6 +766,51 @@ The two classes differ by **64×**. A baud rate that is safe on a coreless spin
 can be an order of magnitude over the limit on a core spin, which is exactly the
 2026-07-14 Wukong bring-up failure: 2 MHz SCK against a divided fabric clock.
 
+### `A7_FREQ=2` suppresses the timing check — it does not slow anything down
+
+Nearly every documented Artix-7 build command passes `A7_FREQ=2`, while
+`build_a7.sh:122-127` already defaults it to 50 for all spins except `IROTC`
+(2) and the tensegrity pair (25). The consequence is worth stating plainly,
+because the combination is easy to misread as a low-speed profile:
+
+- For every coreless spin in the table above, `A7_CLK_DIV_LOG2 = 0`, so
+  **`clk_fast` is the 50 MHz board clock on silicon** regardless of `A7_FREQ`.
+- `--freq 2` therefore does not produce a 2 MHz design. It lowers the bar the
+  router must clear, so nextpnr stops optimising early and reports
+  `PASS at 2.00 MHz` for a design that will run at 50 MHz.
+- These spins are consequently **unclosed at their real operating frequency**
+  and work on margin. Measured on the two Padé builds: v1 routes at
+  38.18 MHz and v2 at 29.64 MHz, both reported as `PASS at 2.00 MHz`, and the
+  silicon pass/fail split follows that ordering (`SESSION_HANDOVER_2026-08-03.md`).
+
+This applies to the **coreless** class only. Core spins run
+`A7_CLK_DIV_LOG2 = 6`, so `clk_fast` is 781.25 kHz and `--freq 2` is an
+*over*-constraint — correct, and stricter than the hardware needs. The
+`A7_FREQ=2 A7_CLK_DIV_LOG2=6` commands documented for `rplu2core` and
+`su3share` are sound as written and want no change. nextpnr constrains the
+generated `clk_fast` by name, which is why the figure is comparable to the
+divided clock rather than to the 50 MHz pad.
+
+**Do not "fix" this by deleting `A7_FREQ=2` from the build commands.** A routed
+timing *miss* is an `ERROR` in nextpnr, not a warning, and `build_a7.sh:20` runs
+`set -euo pipefail`, so a build that fails to close produces no bitstream at all
+— observed on `FP4EVIDENCE` seeds 23 and 29, which ended `0 warnings, 1 error`
+at `--freq 50`.
+
+Whether any given spin *would* close at 50 is untested and not predictable from
+the numbers above: a build constrained at 2 MHz stops optimising as soon as it
+clears 2 MHz, so its reported figure is a floor, not a measurement of what the
+router could reach. The same `FP4EVIDENCE` design ranged from 21.85 MHz to
+68.04 MHz at `--freq 50` across seeds. Raising a spin's constraint is therefore
+a per-spin experiment — rebuild, check it closes, then re-test on silicon —
+never a docs edit.
+
+Caveat in the other direction: nextpnr's absolute numbers are demonstrably
+pessimistic on this board — the 2026-07-03 LUCAS build reported `clk_fast` max
+**4.79 MHz** and has passed on silicon at 50 MHz ever since. What the Padé
+result makes suggestive is the *ordering* between two builds of the same design,
+not the absolute figure.
+
 Current firmware defaults measured against these ceilings:
 
 | Firmware | baud | target spin class | ratio | verdict |

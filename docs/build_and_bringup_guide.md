@@ -277,6 +277,14 @@ PMUL/PINV norm checks. The packed image is `build/spu_a7_100t_LUCAS.bit`.
 Treat it as a bench SRAM-load artifact for JTAG/reset/UART/SPI proof, not as
 final timing closure.
 
+`A7_FREQ=2` here is a timing **constraint**, not a clock divider. `LUCAS`
+defaults to `A7_CLK_DIV_LOG2 = 0`, so the packed image runs `clk_fast` at the
+full 50 MHz board clock while having been routed against a 2 MHz bar — it is
+unclosed at its operating frequency and passes on margin. Keep the flag: a build
+that misses its constraint is a nextpnr `ERROR` and packs nothing, and this spin
+has never been built against a 50 MHz constraint to find out. Full explanation in
+[the `A7_FREQ` note](SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check--it-does-not-slow-anything-down).
+
 ### 3.4 Artix-7 — Full Spin
 ```bash
 bash hardware/boards/artix7/build_a7.sh 100t full

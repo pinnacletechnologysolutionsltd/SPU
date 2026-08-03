@@ -54,10 +54,17 @@ openFPGALoader -c dirtyJtag --freq 1000000 \
   build/spu_a7_100t_LUCAS.bit
 ```
 
-The `A7_FREQ=2` setting is intentional. This CE-paced evaluator routed at
-4.41 MHz in the recorded build; it is a low-speed bring-up profile, not a
-50 MHz timing-closure claim. A successful SRAM load ends with `isc_done 1`,
-`init 1`, and `done 1`.
+The `A7_FREQ=2` setting is required, and it is not a low-speed profile. `LUCAS`
+builds with `A7_CLK_DIV_LOG2 = 0`, so **`clk_fast` is the 50 MHz board clock on
+silicon**; `A7_FREQ` only sets the constraint nextpnr routes against, and does
+not divide anything. The recorded build routed at 4.41 MHz and reports
+`PASS at 2.00 MHz` — so this spin is unclosed at the frequency it actually runs
+at, and passes on margin. Leave the flag in: a build that misses its constraint
+is a nextpnr `ERROR` and emits no bitstream, and whether this spin would close
+at 50 has never been tested. See
+[the `A7_FREQ` note](SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check--it-does-not-slow-anything-down).
+
+A successful SRAM load ends with `isc_done 1`, `init 1`, and `done 1`.
 
 ## 4. Build and load the RP2350 console
 
