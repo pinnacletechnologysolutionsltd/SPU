@@ -20,8 +20,14 @@ set_property IOSTANDARD LVCMOS33 [get_ports clk_100mhz]
 create_clock -period 20.000 -name sys_clk [get_ports clk_100mhz]
 
 # Reset (active low): KEY0 has a board pull-up and shorts low when pressed.
+# rst_n (H7) has no external pull on this board. Without a pull it floats,
+# and the design that fed it straight into async resets was dead on silicon
+# for three weeks (hardware_evidence.md 3.2m). spu_a7_top now debounces the
+# pin, so this is belt-and-braces -- it removes the floating condition
+# instead of only surviving it. Active-low reset, so PULLUP = not reset.
 set_property PACKAGE_PIN H7 [get_ports rst_n]
 set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
+set_property PULLTYPE PULLUP [get_ports rst_n]
 
 # ── RP2350 SPI Slave ──────────────────────────────────────
 # Wukong J11 PMOD, VCCO_35 = 3V3. J11 is a 12-pin (2x6) connector, per the
