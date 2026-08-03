@@ -2034,6 +2034,22 @@ All four match the `rp2350_lucas_j11_smoke.c:44` oracle, and every status frame
 matches the simulated golden value byte for byte. **This is the first working
 `spu_a7_top` bitstream since the J11 remap.**
 
+> **That artifact no longer exists.** It was overwritten later the same day by
+> a rebuild into the same canonical name — the exact hazard recorded below
+> under "never invoke `build_a7.sh` against an existing artifact name."
+> Synthesis is not bit-reproducible here, so it cannot be re-derived, and the
+> hash above is no longer verifiable against anything on disk.
+>
+> The replacement, built from the same committed source plus the `rst_n`
+> `PULLUP` constraint, is
+> `07cb3d7e2c77726120a0cfca96b461cf56d7f256c53c9008d46142d66302c07c`. It was
+> re-verified on silicon — idle `5A 00 10 00`, PSCALE `lane=2
+> A=0x0000000800000005`, PINV `lane=4 A=0x0000000500000201`, status frames
+> `5A D0 13 00` and `5A D3 13 00` — and archived with a manifest at
+> `build/evidence_archive/lucas_pullup_2026-08-03/`. **Quote that hash, not the
+> one above.** The behavioural claim is unaffected and rebuildable from
+> `0eec6f4`; only the original artifact is gone.
+
 **Neither defect produces a diagnostic** at synthesis, place-and-route or pack,
 and neither is observable in simulation — `sim_xilinx_bufg.v` is
 `assign O = I;`, and simulation drives a clean reset. Standing rules: never
@@ -2052,7 +2068,7 @@ own firmware at 25 kHz (LUCAS and SU3 from the `rp2350_spu_diag` console at
 
 | Spin | Bitstream SHA-256 (first 16) | Result |
 |---|---|---|
-| LUCAS | `41df24aa145c192d` | PASS — 4/4 oracle vectors |
+| LUCAS | `41df24aa145c192d` (lost; superseded by `07cb3d7e2c777261`) | PASS — 4/4 oracle vectors |
 | SU3 | `a8b9f661892fd052` | live — `00 EA 32 01`, opcode latched, sidecar claimed |
 | ROBOTICS | `fa1e3c7c4fa9589c` | PASS — `13/13 PASSED`, `ARITHMETIC_BLAZE: PASS` |
 | SU3SHARE | `dd061f5a6acfa246` | PASS — `SU3_J11: PASS`, 9 lanes |
@@ -2064,21 +2080,34 @@ own firmware at 25 kHz (LUCAS and SU3 from the `rp2350_spu_diag` console at
 SU3 received a liveness-and-dispatch probe rather than its full oracle;
 SU3SHARE exercises the same sidecar and passes all 9 lanes.
 
-**RPLU2PADE `seven_over_three` — an unrelated, still-open defect.** It returns
-`A=0x000000000CA45881` where the oracle is `0x55555557` (7·3⁻¹ mod M31). The
-other four cases, including `wide_constants` (12345/6789), are exact, so the
-evaluator, config transport and readback all work; this is not the reset or
-clock fault. The FP4 structured inverter is **ruled out** despite the
-suggestive timing (`5399b4c` flipped it default-on on 2026-08-01, after this
-spin last passed on 2026-07-05): a direct v1-vs-v2 sweep over inputs 1..12
-agrees on every value with 3⁻¹ = 1431655765 correct in both, and driving 7/3
-through `spu13_spi_rplu2_pade_tb`'s full SPI path returns `0x55555557` at
-`USE_STRUCTURED_INVERTER` = 0 **and** 1. Two coverage gaps were exposed and
-should be closed regardless: `spu13_fp4_inverter_golden.mem`'s only small
-pure-rational vectors are 1 and 2 — there is none for 3 — and
-`spu13_spi_rplu2_pade_tb.v` is absent from `run_all_tests.py`'s
-`PARAM_VARIANTS`, so the SPI-level Padé path has never run against v2. §3.2f
-records this case passing on 2026-07-05, so it is a regression.
+**RPLU2PADE `seven_over_three` — the FP4 structured inverter, in synthesis
+only.** The default build returns `A=0x000000000CA45881` where the oracle is
+`0x55555557` (7·3⁻¹ mod M31). The other four cases, including `wide_constants`
+(12345/6789), are exact, so the evaluator, config transport and readback all
+work; this is not the reset or clock fault.
+
+A same-day A/B settles it. `spu_a7_100t_RPLU2PADE_FI0B0_S1.bit`
+(`225459d24cf058c5…`), identical source built with `FP4_STRUCTURED=0`, passes
+**all five cases** with `seven_over_three` = `0x55555557` — `RPLU2PADE_J11:
+PASS` on 41 consecutive runs. The default v2 build fails that case just as
+consistently.
+
+**The inverter's logic is exonerated; its v2 synthesis path is implicated.**
+Both implementations are correct in simulation, and the coverage that was
+missing has since been added: the frozen corpus went 25 → 31 vectors with the
+small-scalar family 3, 5, 6, 7, 9, 11 (regenerated from `software/lib/a31_field.py`,
+which was not modified), and `spu13_spi_rplu2_pade_tb.v` now covers all five
+firmware cases under `USE_STRUCTURED_INVERTER` 0 **and** 1 — both pass,
+`seven_over_three` included, with a hierarchical assertion proving the
+parameter reaches the DUT. So this is a behaviourally-correct design that is
+wrong once synthesised, i.e. synthesis or timing on the v2 path, not arithmetic.
+
+`5399b4c` flipped v2 default-on on 2026-08-01; §3.2f records this case passing
+on 2026-07-05. The regression window matches the flip exactly.
+
+**Operational consequence:** `FP4_STRUCTURED=0` is the known-good setting for
+`RPLU2PADE` on silicon today. The v2 default is not safe for this spin until
+the synthesis divergence is understood.
 
 ### 3.3 RPLU + Math + SDRAM Proof
 
