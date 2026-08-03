@@ -136,12 +136,40 @@ module spu_a7_top #(
     localparam _T = (SPIN == "CUSTOM") ? ENABLE_TORUS :
         (SPIN == "FULL") ? 1 : 0;
 
+    // ── Reset conditioning ─────────────────────────────────────
+    // The rst_n pad drives no async reset directly. Everything internal
+    // resets on rst_n_int instead: two-flop synchronised, then held
+    // asserted until the pin has read high for 256 consecutive clk_100mhz
+    // cycles.
+    //
+    // This is not defensive style, it is the idiom the silicon-proven
+    // standalone tops already use (spu_a7_tensegrity_link_top.v:18-27) and
+    // spu_a7_top did not. TENSEGRITYLINK and SOMSIDECAR answer over J11 on
+    // this board; every spu_a7_top spin returned all zeros with the raw pin
+    // driving async resets directly. rst_n (H7) carries no PULLTYPE in any
+    // XDC, so a marginal or bouncing level re-asserts every async reset in
+    // the design continuously while leaving the reset-free heartbeat counter
+    // visibly toggling -- exactly the observed signature.
+    //
+    // Keep the conditioner itself reset-free and initialised, so it starts
+    // from a known state at configuration.
+    reg [1:0] rst_sync = 2'b00;
+    reg [7:0] rst_count = 8'd0;
+    wire rst_n_int = (rst_count == 8'hff);
+    always @(posedge clk_100mhz) begin
+        rst_sync <= {rst_sync[0], rst_n};
+        if (!rst_sync[1])
+            rst_count <= 8'd0;
+        else if (!rst_n_int)
+            rst_count <= rst_count + 1'b1;
+    end
+
     reg [7:0] clk_div = 8'd0;
     wire clk_fast_pre;
     wire clk_fast;
 
-    always @(posedge clk_100mhz or negedge rst_n) begin
-        if (!rst_n)
+    always @(posedge clk_100mhz or negedge rst_n_int) begin
+        if (!rst_n_int)
             clk_div <= 8'd0;
         else
             clk_div <= clk_div + 8'd1;
@@ -162,8 +190,8 @@ module spu_a7_top #(
     // get recognized by this pin" from everything inside spu_spi_slave.
     reg [1:0] diag_cs_sync = 2'b11;
     reg       diag_cs_ever_seen = 1'b0;
-    always @(posedge clk_100mhz or negedge rst_n) begin
-        if (!rst_n) begin
+    always @(posedge clk_100mhz or negedge rst_n_int) begin
+        if (!rst_n_int) begin
             diag_cs_sync <= 2'b11;
             diag_cs_ever_seen <= 1'b0;
         end else begin
@@ -201,8 +229,8 @@ module spu_a7_top #(
     wire diag2_sck_rise = (diag2_sck_r[2:1] == 2'b01);
     wire diag2_cs_active = !diag2_cs_r[1];
     wire diag2_cs_fall = (diag2_cs_r[2:1] == 2'b10);
-    always @(posedge clk_fast or negedge rst_n) begin
-        if (!rst_n) begin
+    always @(posedge clk_fast or negedge rst_n_int) begin
+        if (!rst_n_int) begin
             diag2_sck_r <= 3'b0;
             diag2_cs_r  <= 3'b111;
             diag2_mosi_r <= 2'b0;
@@ -232,10 +260,30 @@ module spu_a7_top #(
 
     generate
         if (A7_CLK_DIV_LOG2 == 0) begin : gen_raw_clk
-            BUFG u_clk_fast_buf (
-                .I(clk_100mhz),
-                .O(clk_fast)
-            );
+            // Deliberately NOT a BUFG. clk_100mhz is already a clock port, so
+            // yosys' clkbufmap inserts a BUFG on it; a second BUFG here asked
+            // nextpnr-xilinx 0.8.2 for a BUFG-to-BUFG cascade, and it produced
+            // a bitstream in which clk_fast is driven by nothing at all.
+            //
+            // Measured on 2026-08-02 from build/spu_a7_100t_LUCAS.json.pnr.fasm
+            // (archived under build/evidence_archive/bufg_cascade_2026-08-02/):
+            //
+            //   CLK_BUFG_BUFGCTRL15_I0 <- CLK_BUFG_BOT_R_CK_MUXED30
+            //   CLK_HROW_BOT_R_CK_BUFG_CASCO30 <- CLK_HROW_CK_IN_R0
+            //
+            // CK_IN_R0 is a clock-capable *input* track on the right edge.
+            // This design's only clock source is clk_100mhz at IOB_X0Y76, on
+            // the left, arriving as CK_IN_L13. Nothing drives CK_IN_R0, so the
+            // whole clk_fast domain -- u_spi, every sidecar, every debug
+            // breadcrumb -- never clocks on silicon. The 0xAC status frame
+            // comes back 00 00 00 00 on a board whose SPI wiring is provably
+            // good. The working standalone tops all feed their second BUFG
+            // from a fabric flop (CLK_BUFG_IMUX*) and are unaffected, as is
+            // the A7_CLK_DIV_LOG2 > 0 branch below for the same reason.
+            //
+            // Sharing the input BUFG's global costs nothing: this branch only
+            // exists to pass the board clock through unchanged.
+            assign clk_fast = clk_100mhz;
         end else begin : gen_div_clk
             assign clk_fast_pre = clk_div[A7_CLK_DIV_LOG2-1];
             // Pin the fabric-derived clock to the BUFG site used by the
@@ -406,8 +454,8 @@ module spu_a7_top #(
     //   status[1] = {rotor_state[3:0], rotc_angle[3:0]}
     // Flag bits: [0]=accepted, [1]=active consumed, [2]=start emitted,
     //            [3]=rotor done seen, [4]=writeback, [5]=commit, [6]=busy.
-    always @(posedge clk_fast or negedge rst_n) begin
-        if (!rst_n) begin
+    always @(posedge clk_fast or negedge rst_n_int) begin
+        if (!rst_n_int) begin
             debug_last_spi_opcode <= 8'h00;
             debug_last_core_opcode <= 8'h00;
             debug_active_core_opcode <= 8'h00;
@@ -516,8 +564,8 @@ module spu_a7_top #(
         end
     endfunction
 
-    always @(posedge clk_fast or negedge rst_n) begin
-        if (!rst_n) begin
+    always @(posedge clk_fast or negedge rst_n_int) begin
+        if (!rst_n_int) begin
             rplu_cfg_count <= 16'd0;
             rplu_cfg_checksum <= 32'd0;
             rplu2_cfg_sum_checksum <= 32'd0;
@@ -645,7 +693,7 @@ module spu_a7_top #(
         if (_SHARED_SU3_MULT) begin : gen_shared_su3_mult
             spu13_m31_multiplier u_shared_m31_mult (
                 .clk(clk_fast),
-                .rst_n(rst_n),
+                .rst_n(rst_n_int),
                 .start(shared_mult_start),
                 .a0(shared_mult_a0),
                 .a1(shared_mult_a1),
@@ -679,7 +727,7 @@ module spu_a7_top #(
     // churn in matched-seed evidence builds.
     wire phi_8, phi_13, phi_21, phi_heart;
     spu_sierpinski_clk u_floorplan (
-        .clk(clk_fast), .rst_n(rst_n),
+        .clk(clk_fast), .rst_n(rst_n_int),
         .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),
         .heartbeat(phi_heart)
     );
@@ -706,7 +754,7 @@ module spu_a7_top #(
                 .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL),
                 .ENABLE_TORUS(_T)
             ) u_core (
-                .clk(clk_fast), .rst_n(rst_n),
+                .clk(clk_fast), .rst_n(rst_n_int),
                 .phi_8(phi_8), .phi_13(phi_13), .phi_21(phi_21),
                 .dec_fast_cfg_wr_en(rplu_cfg_wr_en),
                 .dec_fast_cfg_sel(rplu_cfg_sel),
@@ -818,7 +866,7 @@ module spu_a7_top #(
         if (_L) begin : gen_lucas_sidecar
             spu13_lucas_sidecar u_lucas_sidecar (
                 .clk(clk_fast),
-                .rst_n(rst_n),
+                .rst_n(rst_n_int),
                 .inst_valid(spi_inst_valid),
                 .inst_word(spi_inst_word),
                 .inst_claimed(lucas_inst_claimed),
@@ -853,7 +901,7 @@ module spu_a7_top #(
                 .EXTERNAL_MULT(_SHARED_SU3_MULT)
             ) u_su3_sidecar (
                 .clk(clk_fast),
-                .rst_n(rst_n),
+                .rst_n(rst_n_int),
                 .inst_valid(spi_inst_valid),
                 .inst_word(spi_inst_word),
                 .inst_claimed(su3_inst_claimed),
@@ -915,7 +963,7 @@ module spu_a7_top #(
                 .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
             ) u_rplu2_sidecar (
                 .clk(clk_fast),
-                .rst_n(rst_n),
+                .rst_n(rst_n_int),
                 .inst_valid(spi_inst_valid),
                 .inst_word(spi_inst_word),
                 .inst_claimed(rplu2_sidecar_inst_claimed),
@@ -941,7 +989,7 @@ module spu_a7_top #(
                     .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
                 ) u_rplu2_pade_sidecar (
                     .clk(clk_fast),
-                    .rst_n(rst_n),
+                    .rst_n(rst_n_int),
                     .inst_valid(spi_inst_valid),
                     .inst_word(spi_inst_word),
                     .inst_claimed(rplu2_sidecar_inst_claimed),
@@ -1002,7 +1050,7 @@ module spu_a7_top #(
         (lucas_busy || su3_busy || rplu2_sidecar_busy) : core_rotc_debug_status[3];
 
     spu_spi_slave u_spi (
-        .clk(clk_fast), .rst_n(rst_n),
+        .clk(clk_fast), .rst_n(rst_n_int),
         .spi_cs_n(spi_cs_n), .spi_sck(spi_sck),
         .spi_mosi(spi_mosi), .spi_miso(spi_miso),
         .manifold_state(manifold_state),
@@ -1043,7 +1091,7 @@ module spu_a7_top #(
         if (A7_UART_DIAG == 0) begin : gen_uart_real
             surd_uart_tx #(.BAUD(115200), .CLK_HZ(50_000_000)) u_uart (
                 .clk(clk_fast),
-                .reset(!rst_n),
+                .reset(!rst_n_int),
                 .data_in({32'd0, hex_q, hex_r}),
                 .start(hex_valid),
                 .tx(uart_tx),

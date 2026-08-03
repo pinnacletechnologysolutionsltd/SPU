@@ -219,7 +219,10 @@ module spu13_a7_lucas_spi_integration_tb;
     initial begin
         repeat (16) @(posedge clk_100mhz);
         rst_n = 1'b1;
-        repeat (32) @(posedge clk_100mhz);
+        // spu_a7_top debounces the reset pin: rst_n_int stays asserted until
+        // rst_n has read high for 256 consecutive clk_100mhz cycles. Wait out
+        // that release before driving SPI, or the first chord lands in reset.
+        repeat (512) @(posedge clk_100mhz);
 
         run_case(64'hD0200C0500000000, 4'd2,
                  64'h0000000800000005, "PSCALE");
