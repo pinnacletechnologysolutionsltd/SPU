@@ -1964,6 +1964,87 @@ stall was not isolated; this closure claim is tied to the bitstream hash
 above.  The remaining tensegrity frontier is the active proposal/actuation
 controller, not table transport or bounded admission.
 
+### 3.2m Wukong `spu_a7_top` Outage — Root Cause and Silicon Re-Proof
+
+**Date:** 2026-08-02 → 2026-08-03.
+
+**Scope:** every `spu_a7_top` spin rebuilt after the 2026-07-13 J11 remap
+returned all zeros over SPI — `LUCAS` (two builds, two backends), `SU3`, and
+`ROBOTICS` — while the standalone tops `TENSEGRITYLINK` and `SOMSIDECAR` kept
+answering on the same board, wiring and firmware. The failure had been
+localised in the 2026-08-01 handover to "between chord-accept and QR-commit."
+**That localisation was wrong**; the fault was upstream of the SPI slave
+entirely.
+
+**How it was found.** The `0xAC` status frame already carried the answer. On a
+sidecar spin (`spu_a7_top.v:980`) it decodes as:
+
+| Byte | Content |
+|---|---|
+| 0 | `0x5A` literal (`sidecar_status_hi`) |
+| 1 | `debug_last_spi_opcode`, latched on `spi_inst_valid` |
+| 2 | `{su3_state[2:0], ratio_valid, fifo_full, error_seen, claim_seen, commit_seen}` |
+| 3 | `{5'h0, boot_ready, crc_error_sticky, busy}` |
+
+Byte 0 is hard-wired and byte 2 bit 4 is a hard-wired `1'b1`, so **a live
+slave on this spin can never return `00 00 00 00`**. The board returned exactly
+that for `0xAC`, `0xA0`, `0xAE`, `0xAF` and the scale read — the response path
+had never run. Golden frames were established in simulation first
+(`spu13_a7_lucas_spi_integration_tb.v`): idle `5A 00 10 00`, live
+`5A <opcode> 13 00`.
+
+**Ruled out by direct comparison** against `TENSEGRITYLINK`'s artifacts:
+SPI package pins (J4/G4/B4/B5), IOB sites (`spi_miso` at `IOB_X1Y120` in both),
+every SPI IOB's FASM features (byte-identical), the clock input pin (M21), the
+`rst_n` IOB configuration, and the MISO driver (a real FF at
+`SLICE_X80Y130/B5FF` in the failing build).
+
+**Two defects, both in `spu_a7_top.v`, fixed in `0eec6f4`:**
+
+1. **The reset pin — the operative fault.** `spu_a7_top` fed the raw `rst_n`
+   pad straight into every async reset. `rst_n` (H7) carries no `PULLTYPE` in
+   any XDC. The silicon-proven standalone tops two-flop synchronise it and hold
+   reset until it reads high for 256 consecutive clocks
+   (`spu_a7_tensegrity_link_top.v:18-27`); `spu_a7_top` did not. The
+   reset-free heartbeat counter kept toggling throughout, which is why the
+   board read as half-alive.
+2. **A BUFG cascade.** With `A7_CLK_DIV_LOG2 = 0` the raw branch instantiated a
+   BUFG fed from the BUFG `clkbufmap` already places on the clock port.
+   nextpnr-xilinx 0.8.2 accepted it and emitted
+   `BUFGCTRL15_I0 <- CK_MUXED30 <- CK_IN_R0` — a right-edge clock **input**
+   track that nothing in the design drives, i.e. an undriven `clk_fast`.
+   Verified in `build/spu_a7_100t_LUCAS.json.pnr.fasm`, archived at
+   `build/evidence_archive/bufg_cascade_2026-08-02/`. Fixing this alone did not
+   restore function; it is a real defect that would have surfaced next.
+
+**Silicon re-proof.** `build/spu_a7_100t_LUCAS.bit`, SHA-256
+`41df24aa145c192d6b2dff223443802684c84fbcd3ba90e54e9c5dda315e88d3`, SRAM-loaded
+over RP2040 DirtyJTAG (`isc_done 1 / init 1 / done 1`), driven from
+`rp2350_spu_diag` at 250 kHz over J11:
+
+```
+status                    -> raw=5A 00 10 00      (live, idle)
+chord D0200C0500000000    -> qr valid=1 lane=2  A=0x0000000800000005   raw=5A D0 13 00
+chord D1C00C0500000000    -> qr valid=1 lane=12 A=0x0000020400000008   raw=5A D1 13 00
+chord D2300C0500807000    -> qr valid=1 lane=3  A=0x0000004200000029   raw=5A D2 13 00
+chord D3400C0500000000    -> qr valid=1 lane=4  A=0x0000000500000201   raw=5A D3 13 00
+```
+
+All four match the `rp2350_lucas_j11_smoke.c:44` oracle, and every status frame
+matches the simulated golden value byte for byte. **This is the first working
+`spu_a7_top` bitstream since the J11 remap.**
+
+**Neither defect produces a diagnostic** at synthesis, place-and-route or pack,
+and neither is observable in simulation — `sim_xilinx_bufg.v` is
+`assign O = I;`, and simulation drives a clean reset. Standing rules: never
+instantiate a BUFG whose input is another BUFG's output, and never feed a raw
+pad into an async reset on this board.
+
+**Calibration on nextpnr's reported Fmax:** the 2026-07-03 LUCAS build that
+passed on silicon reports `clk_fast` max **4.79 MHz**; the 2026-08-01 build
+that failed reports **68.71 MHz**. Both ran the same board clock. These numbers
+are not evidence a design will or will not work.
+
 ### 3.3 RPLU + Math + SDRAM Proof
 
 **Historical build command:**

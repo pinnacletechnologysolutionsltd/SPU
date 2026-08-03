@@ -104,6 +104,30 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 - **RPLU2PADE Thimble-Padé pipeline** — full A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] over J11 SPI. 72 DSP, 34% LUT, route closed iteration 5 (`RPLU2PADE_J11: PASS`)
 - **LUCAS sidecar** — PSCALE/PCHIRAL/PMUL/PINV all verified over J11
 
+> **`spu_a7_top` outage, 2026-07-13 → 2026-08-03 — root-caused and fixed.**
+> Every `spu_a7_top` spin rebuilt after the J11 remap returned all zeros over
+> SPI while the standalone tops (`TENSEGRITYLINK`, `SOMSIDECAR`) kept working.
+> Two defects, both in `spu_a7_top.v`, both now fixed in `0eec6f4`:
+> the raw `rst_n` pad drove every async reset directly (H7 has no `PULLTYPE`
+> in any XDC; the standalone tops synchronise and debounce it), and with
+> `A7_CLK_DIV_LOG2 = 0` a redundant BUFG asked nextpnr-xilinx 0.8.2 for a
+> BUFG-to-BUFG cascade, which it emitted as an **undriven** `clk_fast`
+> (`BUFGCTRL15_I0 <- CK_MUXED30 <- CK_IN_R0`, a right-edge clock input track
+> nothing drives). LUCAS re-verified on silicon 2026-08-03, all four oracle
+> vectors, status frames matching simulation byte for byte. Details and the
+> full ruled-out list: `spu_strategy/bench_findings_a7_clk_fast_undriven_2026-08-02.md`.
+>
+> Neither defect produces a diagnostic at synth, PnR or pack, and neither is
+> visible in simulation — `sim_xilinx_bufg.v` is `assign O = I;`. **Never
+> instantiate a BUFG fed by another BUFG**, and never feed a raw pad into an
+> async reset on this board.
+>
+> The `0xAC` status frame is the cheapest silicon witness for this class of
+> failure. On a sidecar spin a live frame is `5A <opcode> 13 00` and an idle
+> one `5A 00 10 00`; byte 0 is a hard-wired literal, so `00 00 00 00` proves
+> the response path never ran. Golden values are asserted in
+> `hardware/tests/spu13/spu13_a7_lucas_spi_integration_tb.v`.
+
 **A7 spin reconciliation (2026-07-08):** `build_a7.sh` accepts 16 spin names;
 `docs/SPIN_CATALOG.md` catalogues all. The following appear in
 `spu_a7_top.v`'s parameter table but not in the status lists above:
