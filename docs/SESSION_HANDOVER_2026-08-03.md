@@ -147,6 +147,35 @@ The two Padé builds, measured:
 | v2 (was default) | **29.64 MHz** | `PASS at 2.00 MHz` | 50 MHz | 4/5 |
 | v1 (now default) | **38.18 MHz** | `PASS at 2.00 MHz` | 50 MHz | 5/5 |
 
+> **RETRACTED 2026-08-04. This table is wrong — it is one build read as two.**
+>
+> nextpnr prints `Max frequency` **twice** per run: a post-placement estimate
+> right after `SA placement time …`, then the final figure after `Routing
+> complete.` Both numbers above come from a single file,
+> `build/spu_a7_100t_RPLU2PADE.json.nextpnr.log` — line 268 (post-place) and
+> line 1428 (post-route) — and that file is the **v1** build (mtime
+> `2026-08-03 23:56`, matching its `.bit` at `23:58`). `grep -rl` over `build/`
+> finds `29.64 MHz` and `38.18 MHz` in that one log and nowhere else.
+>
+> So "v2 has 29% less margin" is not a measurement; the 29% is v1's routing
+> gain. **v2's routed Fmax has never been measured** — v2 and v1 both wrote the
+> canonical name, so the v1 rebuild overwrote v2's log, and the
+> `pade_v2_fail_2026-08-03/` archive saved the `.bit` and `.fasm` but not the
+> `.nextpnr.log`. Second instance of the artifact-overwrite hazard in two days.
+> **Archive the `.nextpnr.log` with the `.bit`.**
+>
+> The claim below about LUCAS is **also wrong**: the 4.79 MHz figure is
+> `LUCAS.j11.nextpnr.log` from 2026-07-03, a superseded build. The current
+> silicon-proven LUCAS routes at **79.90 MHz** and closes at 50 with 60% margin.
+> The pessimism argument survives but relocates — `RPLU2PADE` **v1** itself
+> routes at 38.18 MHz, runs at 50 MHz and passes 5/5, which is a current,
+> same-design example of an unclosed spin working.
+>
+> Survey and consequences: `spu_strategy/claude_findings_a7_timing_survey_2026-08-04.md`.
+> The conclusion that the Padé pipeline is the timing outlier **still holds** —
+> of the coreless spins with routed data, only SU3 (45.51) and RPLU2PADE (38.18)
+> are under 50 MHz. The reasoning was wrong; the target was right.
+
 Neither closes at its operating frequency. v2 has **29% less margin** than v1,
 and that is the axis the pass/fail splits on. So "v2 miscompiles" is probably
 the wrong framing: more likely both are unclosed, and v2's larger critical path
@@ -233,7 +262,17 @@ Archives created this session, each with a `MANIFEST.sha256`:
   flips between configuration cycles.
 - **nextpnr's reported Fmax is not a health signal here.** The LUCAS build that
   passed on silicon reports `clk_fast` max **4.79 MHz**; the one that failed
-  reports **68.71 MHz**. Same board clock.
+  reports **68.71 MHz**. Same board clock. *(Still true, but note both figures
+  are post-route and the failing build failed for the BUFG/reset defect, not on
+  timing — Fmax was simply orthogonal to that fault. The 4.79 build is also
+  superseded; current LUCAS routes at 79.90 MHz.)*
+- **Read the LAST `Max frequency` line, never the first.** nextpnr prints one
+  post-placement estimate and one post-route result per clock; routing improves
+  the number by 16-96% in the logs on disk. Reading the first as if it were the
+  result produced the retracted v1/v2 margin table above.
+- **Archive the `.nextpnr.log` alongside the `.bit` and `.fasm`.** It is small,
+  and it is the only record of what the router achieved. The v2 Padé log was
+  lost this way and its Fmax is now unrecoverable.
 - `run_all_tests.py` treats any `FAIL` substring anywhere in a bench's output
   as a failure.
 - Never use `--ignore-loops` or `--timing-allow-fail` to obtain a pass.
