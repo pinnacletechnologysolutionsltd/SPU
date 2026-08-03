@@ -40,18 +40,34 @@ A7_FREQ_ENV="${A7_FREQ:-}"
 # see spu_a7_top.v's A7_UART_DIAG parameter doc.
 A7_UART_DIAG="${A7_UART_DIAG:-0}"
 
-# Fp4 tower candidate selector. Default-ON since 2026-08-01: the parallel
-# structured inverter (v2) is the production path. Set FP4_STRUCTURED=0 to build
-# the historical v1 tower.
+# Fp4 tower candidate selector. Default-OFF again since 2026-08-03: the
+# historical v1 tower is the production path. Set FP4_STRUCTURED=1 to build the
+# parallel structured inverter (v2).
 #
-# Basis, from the twenty-seed matrix in docs/FP4_STRUCTURED_INVERTER.md: v2 costs
-# ~7.4% LUT and ~3.6% median Fmax, and buys 7-10% median wall-clock because it
-# retires a unit in 74 clocks against v1's 83. It wins on 19 of 20 seeds. The
-# known exception is seed 59, which is ~30% SLOWER on a 15.7 ns routing critical
-# path -- a placement-lottery tail, not noise, so expect it rather than diagnose
-# it fresh. The sequential setting selects the one-product backend for matched
-# A/B runs and stays default-off (it failed its gate at 1.57x LUT).
-FP4_STRUCTURED="${FP4_STRUCTURED:-1}"
+# v2 was default-ON from 2026-08-01 (5399b4c) on the twenty-seed matrix in
+# docs/FP4_STRUCTURED_INVERTER.md: ~7.4% LUT and ~3.6% median Fmax for 7-10%
+# median wall-clock, because it retires a unit in 74 clocks against v1's 83,
+# winning on 19 of 20 seeds. That evaluation still stands and none of it is
+# withdrawn.
+#
+# It is reverted because v2 is wrong on silicon, which the matrix did not
+# measure. RPLU2PADE's seven_over_three case returns 0x0CA45881 against an
+# oracle of 0x55555557 on a v2 build, and 0x55555557 on a v1 build from
+# identical source -- 41 consecutive RPLU2PADE_J11: PASS. See
+# hardware_evidence.md 3.2m.
+#
+# The divergence is NOT in the inverter's logic. v1 and v2 agree in simulation
+# on every vector, including the small-scalar family added in 66217ed and all
+# five Padé cases at both parameter values. It is behaviourally-correct RTL
+# that is wrong once synthesised, so the fault is in synthesis or timing on the
+# v2 path and remains unexplained. Restore the default only when that is
+# understood, not when the benchmarks look good again -- they already do.
+#
+# The known Fmax exception is seed 59, ~30% SLOWER on a 15.7 ns routing
+# critical path: a placement-lottery tail, not noise, so expect it rather than
+# diagnose it fresh. The sequential setting selects the one-product backend for
+# matched A/B runs and stays default-off (it failed its gate at 1.57x LUT).
+FP4_STRUCTURED="${FP4_STRUCTURED:-0}"
 FP4_STRUCTURED_SEQUENTIAL="${FP4_STRUCTURED_SEQUENTIAL:-0}"
 FP4_BACKEND_SEQUENTIAL="${FP4_BACKEND_SEQUENTIAL:-$FP4_STRUCTURED_SEQUENTIAL}"
 FP4_EVIDENCE="${FP4_EVIDENCE:-0}"
@@ -73,16 +89,17 @@ if [ "$FP4_STRUCTURED_SEQUENTIAL" = "1" ] && [ "$FP4_BACKEND_SEQUENTIAL" != "1" 
     exit 1
 fi
 # Artifact tagging exists so evaluation runs cannot collide with production
-# builds. It must therefore tag whatever is NOT production -- which inverted on
-# 2026-08-01 when FP4_STRUCTURED's default moved 0 -> 1. Tagging on
-# "FP4_STRUCTURED = 1" then meant every default build emitted
-# spu_a7_100t_<SPIN>_FI1B0_S1.bit instead of spu_a7_100t_<SPIN>.bit, which
+# builds. It must therefore tag whatever is NOT production. This value tracks
+# the FP4_STRUCTURED default above and must be changed with it -- it inverted
+# on 2026-08-01 when the default moved 0 -> 1, and back on 2026-08-03 when it
+# moved 1 -> 0. Getting it wrong does not fail the build: it silently emits
+# spu_a7_100t_<SPIN>_FI?B0_S1.bit instead of spu_a7_100t_<SPIN>.bit, which
 # breaks every documented build/load path in docs/ and AGENTS.md and bakes the
 # burned seed 1 into the production name.
 #
 # Correct rule: the production configuration gets the canonical name; explicit
-# evidence runs and the non-default v1 tower get tagged.
-FP4_PRODUCTION_STRUCTURED=1
+# evidence runs and the non-production tower get tagged.
+FP4_PRODUCTION_STRUCTURED=0
 INVERTER_VARIANT=""
 if [ "$FP4_EVIDENCE" = "1" ] || [ "$FP4_STRUCTURED" != "$FP4_PRODUCTION_STRUCTURED" ] \
    || [ "$FP4_BACKEND_SEQUENTIAL" != "0" ]; then

@@ -1,7 +1,30 @@
 # Structured A31 inverter candidate
 
 Status: split formal gate passed; seven of eight consumer builds pass;
-production default unchanged.
+production default **off**.
+
+> **Default history — read this before quoting anything below.** The selector
+> was switched **on** on 2026-08-01 (`5399b4c`) on the strength of the
+> twenty-seed matrix in this document, and switched back **off** on 2026-08-03
+> (`b48b6f6`'s follow-up) because **v2 is wrong on silicon**. This document was
+> never updated for the first change, so its "default unchanged" line was
+> stale for two days and is now correct again only by coincidence.
+>
+> The silicon fault: `RPLU2PADE`'s `seven_over_three` case returns
+> `0x0CA45881` against an oracle of `0x55555557` on a v2 build, and the correct
+> value on a v1 build from identical source — 41 consecutive
+> `RPLU2PADE_J11: PASS`. See `hardware_evidence.md` §3.2m.
+>
+> **None of the measurements in this document are withdrawn.** They remain
+> accurate about area, Fmax and cycle count. What they do not cover is
+> functional correctness after synthesis, which is the axis v2 fails on: v1 and
+> v2 agree in *simulation* on every vector, including the small-scalar family
+> added in `66217ed` and all five Padé cases at both parameter values. So this
+> is behaviourally-correct RTL that miscompiles, and the twenty-seed matrix was
+> never designed to catch that.
+>
+> **Restoring the default requires explaining the synthesis divergence**, not
+> re-running these benchmarks. They already pass.
 
 This tranche replaces the inverter's seven general A31 transactions (112
 logical M31 products) with four structure-specific requests totaling exactly
