@@ -94,42 +94,68 @@ routed measurement.
 
 Full working: `spu_strategy/claude_findings_a7_timing_survey_2026-08-04.md`.
 
-## GTP tranche — IN FLIGHT, not a result yet
+## GTP tranche — COMPLETE. The margin hypothesis is dead.
 
 `spu_strategy/gtp_contract_a7_timing_closure_2026-08-04.md`, rewritten this
-session after Part C invalidated its premise.
+session after Part C invalidated its premise. Parts A1 and B both landed.
 
-**Part A1 complete — v2 does not close at 50 MHz on any seed:**
+**Paired result, `--freq 50`, routed `clk_fast` Fmax:**
 
-| Seed | post-place | routed | Verdict |
-|---|---|---|---|
-| 127 | 31.30 | **35.48** | FAIL at 50 |
-| 131 | 28.97 | **33.44** | FAIL at 50 |
-| 137 | 30.96 | **37.98** | FAIL at 50 |
+| Seed | v1 (control) | v2 (structured) | v1 − v2 | Faster |
+|---|---|---|---|---|
+| 127 | 34.46 | **35.48** | −1.02 | **v2** |
+| 131 | **42.17** | 33.44 | +8.73 | v1 |
+| 137 | 37.44 | **37.98** | −0.54 | **v2** |
+| mean | 38.02 | 35.63 | +2.39 | — |
+| range | 34.46–42.17 | 33.44–37.98 | — | — |
 
-All three ended `0 warnings, 1 error`. nextpnr writes `.pnr.fasm` and
-`.pnr.json` *before* raising the timing error, which is why the numbers exist
-despite the stage failing. No `.bit` — `pack` never ran.
+**All six builds FAIL at 50 MHz.** Every one ended `0 warnings, 1 error`.
+nextpnr writes `.pnr.fasm`/`.pnr.json` *before* raising the timing error, which
+is why numbers exist despite the stage failing. No `.bit` was packed.
 
-**Part B (v1 control, same three seeds) was running at 11:01.** Not yet
-readable.
+### Two conclusions, both negative for the timing story
 
-> **Do not conclude "the revert stands permanently" from A1 alone.** That
-> reading requires v1 to *close*. v1's 38.18 came from a `--freq 2` build and is
-> a **floor**, not a measurement — under a 2 MHz constraint the router stops
-> optimising as soon as it clears 2 MHz. v1 at `--freq 50` could land anywhere
-> at or above 38.18. If v1 also fails to close, "doesn't close" stops
-> discriminating and the paired numbers are the entire answer.
+**1. The arms interleave — v2 is *faster* than v1 on two of three seeds.** The
++2.39 MHz mean gap is carried entirely by seed 131; the median paired difference
+is **−0.54 MHz, favouring v2**. The ranges overlap heavily. At n=3 the arms are
+indistinguishable, and what separation exists points the wrong way for the
+hypothesis. This is precisely the outcome the amended contract predicted as
+fatal: *"the original two-build comparison was measuring placement luck."*
 
-Encouraging for decisiveness: v2's seed spread is 33.44–37.98, about ±7%. The
-3× scatter that motivated the three-seed design came from `FP4EVIDENCE`, a
-different design. For this spin scatter is modest, so a v1/v2 gap of more than a
-few MHz will be meaningful.
+**2. v1 does not close at 50 MHz either — and v1 passes 5/5 on silicon.** This
+is the stronger of the two. It is direct, same-design, same-constraint evidence
+that **failing to close at 50 MHz does not predict silicon failure on this
+board.** So "v2 doesn't close" cannot explain `seven_over_three`, because the
+control that works perfectly doesn't close either.
 
-Still outstanding in the tranche: **Part A0** (rebuild v2 at `A7_FREQ=2` to
-recover the lost measurement of the actual failing configuration, ~4 min,
-directly comparable to v1's 38.18), Part B, and Part A2 only if something
-closes.
+**Timing is exonerated. The miscompile hypothesis is earned** — the contract's
+reading 2. The netlist/FASM diff is now the right next move, and it was right to
+refuse it up front: it is expensive, and this tranche is what licenses it.
+
+### What this does not establish
+
+**None of the six builds has been benched.** The tranche measured routing, not
+behaviour. The `seven_over_three` failure was observed on the *original* v2
+build (`A7_FREQ=2`, default seed), which is not among these.
+
+**Part A0 is now low value** — recovering the original v2's `--freq 2` Fmax
+mattered when a margin gap was live. With the arms shown comparable it would
+only complete the record. Deprioritised, not withdrawn.
+
+### The decisive follow-up, cheaper than a netlist diff
+
+Bench a **v2 build that is faster than a v1 build known to work**:
+
+- v2 seed 137 routes at **37.98 MHz**
+- v1 seed 127 routes at **34.46 MHz**
+
+Pack both and bench them. If v2@37.98 still fails `seven_over_three` while
+v1@34.46 passes, timing is conclusively excluded on a same-constraint,
+same-seed-family, *adverse-to-the-hypothesis* comparison — and the netlist diff
+starts from certainty rather than inference. Two `pack` invocations plus one
+bench session.
+
+Use `FP4_EVIDENCE=1` on the v1 pack or it writes the canonical production name.
 
 ## `A7_FREQ` is documented, not deleted
 
@@ -241,8 +267,13 @@ resting state.
 
 ## Open / next
 
-1. **Finish the GTP tranche** — Part B is the decider, then A0, then A2 only if
-   something closes. Audit against the contract's outcome table.
+1. **Bench the adverse pair** — pack v2 seed 137 (37.98 MHz) and v1 seed 127
+   (34.46 MHz) and run both. A v2 that is *faster* than a working v1 and still
+   fails `seven_over_three` excludes timing conclusively. This supersedes the
+   remainder of the tranche; A0 and A2 are deprioritised.
+2. **Then the netlist/FASM diff** — now licensed by the paired result. Both v1
+   and v2 FASM exist for all three seeds. This is the externally interesting
+   finding if it holds up: an openXC7 miscompile, not just a project bug.
 2. **INA226 block 0** — fully unblocked. Capture the three sessions, confirm
    mean current ascends across the classes, then commit to blocks 1-9. Phase A
    of the SOM product roadmap and the lead commercial wedge.
