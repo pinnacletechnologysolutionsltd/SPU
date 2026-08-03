@@ -2045,6 +2045,41 @@ passed on silicon reports `clk_fast` max **4.79 MHz**; the 2026-08-01 build
 that failed reports **68.71 MHz**. Both ran the same board clock. These numbers
 are not evidence a design will or will not work.
 
+**Full spin sweep, 2026-08-03.** Every `spu_a7_top` spin rebuilt from fixed
+source and bench-tested in the same session, on the same wiring, each with its
+own firmware at 25 kHz (LUCAS and SU3 from the `rp2350_spu_diag` console at
+250 kHz — both coreless, so `clk_fast` is 50 MHz and that is ratio 200):
+
+| Spin | Bitstream SHA-256 (first 16) | Result |
+|---|---|---|
+| LUCAS | `41df24aa145c192d` | PASS — 4/4 oracle vectors |
+| SU3 | `a8b9f661892fd052` | live — `00 EA 32 01`, opcode latched, sidecar claimed |
+| ROBOTICS | `fa1e3c7c4fa9589c` | PASS — `13/13 PASSED`, `ARITHMETIC_BLAZE: PASS` |
+| SU3SHARE | `dd061f5a6acfa246` | PASS — `SU3_J11: PASS`, 9 lanes |
+| RPLUCFG | `82a87d1190657a2c` | PASS — `RPLU2_J11: PASS`, count=149, checksum `0xBA708FD4` |
+| RPLU2CORE | `94741644e56c8063` | PASS — transport, `RPLU2CORE_QR`, `RPLU2CORE_QSUB` |
+| RPLU2PADE | `626e2260e86e1043` | **4/5** — `seven_over_three` fails, see below |
+| IROTC | `f0ff82f3232f5ff0` | PASS — `6/6 PASSED` |
+
+SU3 received a liveness-and-dispatch probe rather than its full oracle;
+SU3SHARE exercises the same sidecar and passes all 9 lanes.
+
+**RPLU2PADE `seven_over_three` — an unrelated, still-open defect.** It returns
+`A=0x000000000CA45881` where the oracle is `0x55555557` (7·3⁻¹ mod M31). The
+other four cases, including `wide_constants` (12345/6789), are exact, so the
+evaluator, config transport and readback all work; this is not the reset or
+clock fault. The FP4 structured inverter is **ruled out** despite the
+suggestive timing (`5399b4c` flipped it default-on on 2026-08-01, after this
+spin last passed on 2026-07-05): a direct v1-vs-v2 sweep over inputs 1..12
+agrees on every value with 3⁻¹ = 1431655765 correct in both, and driving 7/3
+through `spu13_spi_rplu2_pade_tb`'s full SPI path returns `0x55555557` at
+`USE_STRUCTURED_INVERTER` = 0 **and** 1. Two coverage gaps were exposed and
+should be closed regardless: `spu13_fp4_inverter_golden.mem`'s only small
+pure-rational vectors are 1 and 2 — there is none for 3 — and
+`spu13_spi_rplu2_pade_tb.v` is absent from `run_all_tests.py`'s
+`PARAM_VARIANTS`, so the SPI-level Padé path has never run against v2. §3.2f
+records this case passing on 2026-07-05, so it is a regression.
+
 ### 3.3 RPLU + Math + SDRAM Proof
 
 **Historical build command:**
