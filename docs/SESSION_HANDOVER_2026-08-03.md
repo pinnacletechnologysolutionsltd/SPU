@@ -211,8 +211,24 @@ Archives created this session, each with a `MANIFEST.sha256`:
   GTP. Uncommitted edits also leak into anyone else's build — GTP correctly
   refused to build Part B from a dirty tree this session and pinned to the
   contract's commit instead.
-- Synthesis is not bit-reproducible. Burned seeds: **1, 2, 3, 5, 7, 11, 13, 17,
-  19, 23, 29, 31, 41, 53, 67, 79, 211, 233, 307**.
+- Synthesis is not bit-reproducible. Burned seeds, **corrected 2026-08-04** —
+  this list previously named 19 and was wrong by 15:
+
+  ```
+  1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67,
+  71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 211, 233, 307
+  ```
+
+  The missing 15 were the seeds `gtp_contract_fp4_seed_split_2026-07-31.md`
+  nominated as safe to draw from; they were consumed on 2026-07-31 and never
+  folded back, so the "draw from these" list silently became burned. Two agents
+  then picked seeds from it believing them fresh. **Do not hand-maintain this
+  list — regenerate it**, and treat the output as a lower bound, since only
+  variant-tagged artifacts carry `_S<n>` in the filename:
+
+  ```sh
+  ls build/ | grep -o '_S[0-9]\+' | sort -u -t S -k2 -n | tr '\n' ' '
+  ```
 - **SCK ≤ clk_fast / 6**, silicon-confirmed. Below 6 is phase-dependent and
   flips between configuration cycles.
 - **nextpnr's reported Fmax is not a health signal here.** The LUCAS build that
