@@ -149,12 +149,19 @@ distinguishable and no amount of downstream scoring will fix it — re-establish
 the loads rather than continuing. Observe the stall rules in the paragraph
 below: ≤1.5 s, at or under 280 mA, then ≥30 s unblocked to cool.
 
-> **The Pico 2 cannot be both the SPI southbridge and the MicroPython logger.**
-> Flashing `ina226_logger.py` as `main.py` displaces `rp2350_spu_diag`. Use the
-> RP2350-Zero for logging, or restore `rp2350_spu_diag.uf2` afterwards — the
-> documented bench resting state expects `0xB3` to return `version=1` at
-> 125 kHz, and anything that fails against that afterwards is this, not a new
-> fault.
+> **One RP2350 cannot be both the SPI southbridge and the MicroPython logger.**
+> Flashing `ina226_logger.py` as `main.py` displaces `rp2350_spu_diag`.
+>
+> Current bench assignment (2026-08-04): **RP2350-Zero = southbridge, Pico 2 =
+> logger**, so the two roles never collide and no re-flash is needed. If you
+> ever collapse them onto one device, restore `rp2350_spu_diag.uf2` afterwards —
+> the documented resting state expects `0xB3` to return `version=1` at 125 kHz,
+> and a failure against that is this, not a new fault.
+>
+> Note the southbridge must be built with `-DSPU_RP2350_ZERO_HEADER_SPI=ON` for
+> the GP0-3 wiring; the compiled-in defaults are GP16-19
+> (`rp2350_spu_diag.c:47-57`). Irrelevant to logging, but it is the same pair of
+> boards, so it is easy to conflate the two builds.
 
 Elevated load must remain out of current limit. Stall capture is allowed only
 at or below the documented continuous-current rating, lasts no more than 1.5

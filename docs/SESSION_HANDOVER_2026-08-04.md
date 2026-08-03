@@ -282,15 +282,30 @@ resting state.
 5. **Rebuild remaining spins against the `PULLUP` XDCs** — hygiene only.
 6. **Show HN timing** — still the project owner's call.
 
-> **Items 1 and 2 contend for the same Pico 2.** The adverse-pair read needs it
-> running `rp2350_spu_diag` as SPI southbridge; INA226 needs
-> `ina226_logger.py` flashed as `main.py`, which displaces it. Either use the
-> **RP2350-Zero** for logging and keep the Pico 2 as southbridge — in which case
-> both proceed independently — or accept a `rp2350_spu_diag.uf2` re-flash
-> between them. Decide before wiring, not after.
+> **Device assignment for the 2026-08-04 evening session, confirmed with the
+> project owner: RP2350-Zero = SPI southbridge, Pico 2 = INA226 logger.**
+> Two devices, two roles, so items 1 and 2 do **not** contend and both proceed
+> independently. No `rp2350_spu_diag.uf2` re-flash is needed.
 >
-> The packing half of item 1 needs neither bench nor Pico 2 and can be done on
-> the box at any time.
+> This is the natural assignment: the firmware carries explicit RP2350-Zero SPI
+> pinsets (`CMakeLists.txt:39-55`), while the logger is a MicroPython `main.py`
+> that any RP2350 runs.
+>
+> **Build the southbridge with `-DSPU_RP2350_ZERO_HEADER_SPI=ON`.** Without it
+> `SPU_SPI_PIN_DEFS` is empty and the compiled-in defaults are **GP16-19**
+> (`rp2350_spu_diag.c:47-57`), not the GP0-3 the header is wired to. The result
+> is a silent total failure that looks exactly like the all-zeros symptom which
+> cost three weeks in July. The alternative pinset,
+> `SPU_RP2350_ZERO_G25_SPI`, is GP20-23; setting both is a `FATAL_ERROR`.
+> Already documented in `LUCAS_QUICKSTART.md:77`,
+> `SOM_SIDECAR_QUICKSTART.md:74` and `SOUTHBRIDGE_SPI_PROTOCOL.md:116`.
+>
+> `PICO_BOARD` is hardcoded to `pico2` at `CMakeLists.txt:4` — a plain `set()`,
+> so `-DPICO_BOARD=` on the command line is ignored. Harmless here: the RP2350
+> is the same silicon, stdio is USB CDC, and no firmware target references a
+> board-specific pin (no `PICO_DEFAULT_LED_PIN` usage anywhere).
+>
+> The packing half of item 1 needs neither bench nor either device.
 
 **Done this session, previously listed:** `AGENTS.md` table hygiene (`d399cd4`).
 
