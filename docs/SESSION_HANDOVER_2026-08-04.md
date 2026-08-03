@@ -271,17 +271,28 @@ resting state.
    (34.46 MHz) and run both. A v2 that is *faster* than a working v1 and still
    fails `seven_over_three` excludes timing conclusively. This supersedes the
    remainder of the tranche; A0 and A2 are deprioritised.
-2. **Then the netlist/FASM diff** — now licensed by the paired result. Both v1
-   and v2 FASM exist for all three seeds. This is the externally interesting
-   finding if it holds up: an openXC7 miscompile, not just a project bug.
-2. **INA226 block 0** — fully unblocked. Capture the three sessions, confirm
-   mean current ascends across the classes, then commit to blocks 1-9. Phase A
-   of the SOM product roadmap and the lead commercial wedge.
-3. **`AGENTS.md` table hygiene** — rows 63/65 are duplicate `rplu2pade` entries;
-   rows 64/66 start with `||`, which breaks the table render.
+2. **INA226 block 0** — fully unblocked, runbook corrected. Capture the three
+   sessions, confirm mean current ascends across the classes, then commit to
+   blocks 1-9. Phase A of the SOM product roadmap and the lead commercial wedge.
+3. **Then the netlist/FASM diff** — licensed by the paired result, and sharper
+   still once the adverse pair has been benched. Both v1 and v2 FASM exist for
+   all three seeds. The externally interesting finding if it holds up: an
+   openXC7 miscompile, not just a project bug.
 4. **SU3's full oracle** — the one soft cell in the eight-spin sweep. Bench work.
 5. **Rebuild remaining spins against the `PULLUP` XDCs** — hygiene only.
 6. **Show HN timing** — still the project owner's call.
+
+> **Items 1 and 2 contend for the same Pico 2.** The adverse-pair read needs it
+> running `rp2350_spu_diag` as SPI southbridge; INA226 needs
+> `ina226_logger.py` flashed as `main.py`, which displaces it. Either use the
+> **RP2350-Zero** for logging and keep the Pico 2 as southbridge — in which case
+> both proceed independently — or accept a `rp2350_spu_diag.uf2` re-flash
+> between them. Decide before wiring, not after.
+>
+> The packing half of item 1 needs neither bench nor Pico 2 and can be done on
+> the box at any time.
+
+**Done this session, previously listed:** `AGENTS.md` table hygiene (`d399cd4`).
 
 ## Useful restart commands
 
