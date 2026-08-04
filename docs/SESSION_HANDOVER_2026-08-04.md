@@ -267,10 +267,42 @@ resting state.
 
 ## Open / next
 
-1. **Bench the adverse pair** — pack v2 seed 137 (37.98 MHz) and v1 seed 127
-   (34.46 MHz) and run both. A v2 that is *faster* than a working v1 and still
-   fails `seven_over_three` excludes timing conclusively. This supersedes the
-   remainder of the tranche; A0 and A2 are deprioritised.
+1. **Bench the adverse pair — BITSTREAMS ARE PACKED AND WAITING.** A v2 that is
+   *faster* than a working v1 and still fails `seven_over_three` excludes timing
+   conclusively. This supersedes the remainder of the tranche; A0 and A2 are
+   deprioritised.
+
+   | Build | Routed | Bitstream | SHA-256 (first 16) |
+   |---|---|---|---|
+   | **v2** seed 137 | **37.98 MHz** | `build/spu_a7_100t_RPLU2PADE_FI1B0_S137.bit` | `1c0e5556afedd00d` |
+   | **v1** seed 127 | **34.46 MHz** | `build/spu_a7_100t_RPLU2PADE_FI0B0_S127.bit` | `5c36ad0a592584fb` |
+
+   Both archived with their `.pnr.fasm` **and** `.nextpnr.log` at
+   `build/evidence_archive/pade_adverse_pair_2026-08-04/` with a
+   `MANIFEST.sha256`. Canonical `RPLU2PADE.bit` verified `d411692c…` unchanged
+   before and after packing; it was held read-only for the duration.
+
+   ```sh
+   openFPGALoader -c dirtyJtag --freq 1000000 \
+     build/spu_a7_100t_RPLU2PADE_FI1B0_S137.bit          # the FASTER v2
+   # then over the rp2350_spu_diag console, run the five Padé cases.
+   # seven_over_three: expect 0x55555557 (= 7·3⁻¹ mod M31)
+   #                   the recorded failure returned 0x0CA45881
+   ```
+
+   Then repeat with the v1 image. **Read the outcomes as a pair:**
+
+   | v2@37.98 | v1@34.46 | Reading |
+   |---|---|---|
+   | fails | passes | **Timing conclusively excluded.** The faster build fails and the slower one works — margin cannot be the mechanism. Go to the netlist diff. |
+   | fails | fails | Not a v1/v2 discriminator at all. Something about these seeds or `--freq 50`; re-test the canonical v1 to separate it. |
+   | passes | passes | The defect does not reproduce at these seeds. `seven_over_three` may be placement-specific — a much narrower and more interesting problem. |
+
+   > Both designs **failed timing** at `--freq 50`. Packing them is deliberate,
+   > not a workaround: v1 already fails to close *and* passes 5/5 on silicon, so
+   > non-closure demonstrably does not predict behaviour on this board. No
+   > `--timing-allow-fail` was used and nothing was coerced into reporting a
+   > pass.
 2. **INA226 block 0** — fully unblocked, runbook corrected. Capture the three
    sessions, confirm mean current ascends across the classes, then commit to
    blocks 1-9. Phase A of the SOM product roadmap and the lead commercial wedge.
