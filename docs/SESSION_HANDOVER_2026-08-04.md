@@ -291,20 +291,50 @@ Per the contract's own N≥20 bar, **no 10/10 build is called clean.**
    **13 of 25**, with **23 distinct A words**. It is real but not invariant, and
    it was five samples talking.
 
-### The live lead — readiness, not timing
+### The "readiness" lead was also wrong — retracted before it cost anything
 
-The procedural difference between my failing runs and GTP's passing ones is
-that **GTP's harness waits 1 second after reboot before capturing; mine
-connected as soon as the CDC port appeared.**
+I proposed that my failing runs differed from GTP's by reading the console too
+early, making this a readiness/sequencing defect. **Checked before spending
+bench time on it, and it is false:**
 
-If that delay is what separates them, then querying the sidecar too soon after
-configuration returns wrong answers — a **readiness/sequencing** defect, not a
-timing one. It would also explain the apparent intermittency, and it is
-consistent with GTP's Part C finding that output-only captures cannot
-discriminate between Horner, inverter handoff, and final multiply.
+| | Settle | Port selection |
+|---|---|---|
+| Claude's capture | `sleep 1` + 0.5 s poll = **≥1.5 s** | `ls -t /dev/ttyACM* \| head -1` |
+| `bench_pade_campaign.py` | `--reboot-settle` default **1.0 s** | **fixed named port** |
 
-**Cheap decisive test:** re-run a 10/10 build with the settle removed. If it
-fails, the bug is real and was found by measuring badly.
+My settle was *longer*. The real difference is that I selected "whichever
+ttyACM was touched most recently" with **three** ttyACM devices present, so the
+capture could read the wrong device. **My single-shot results are discarded
+entirely**, including the failure words derived from them. Use only the
+campaign CSV.
+
+### Where the fault actually is — narrowed, not located
+
+Free algebraic analysis over the 23 distinct `seven_over_three` lane-A failure
+words in `pade_intermittency_signature_words_2026-08-05.csv`. Back-solving what
+the inverter would have had to return:
+
+```
+X = A · 7⁻¹ mod M31          (correct X is 3⁻¹ = 0x55555555)
+popcount(X ⊕ 3⁻¹):   min 4,  max 21,  mean 12.6
+random 31-bit words average ~15.5
+```
+
+The competing explanation — inverter correct, final multiply fed a bad
+multiplicand — requires `Y = A·3` to be 7. Observed `Y` values are unstructured
+and nowhere near it.
+
+**Reading:** a weak but real pull toward *"the inverter's output is
+corrupted"* over *"the final multiply got a bad operand"*. The 4–21 spread is
+far too wide to localise, which confirms GTP's Part C: output-only captures
+cannot separate Horner, inverter handoff and final multiply.
+
+**Next tranche:** `spu_strategy/gtp_contract_pade_localisation_2026-08-05.md` —
+instrument the **deterministic** 0/10 build (`FI0B0_S127`) and find the first
+stage that diverges from the `a31_field.py` oracle. Its Part C is a
+reproduction gate: prove the instrumented build *still fails* before trusting
+any trace, because adding observability moves placement, and a trace from a
+build that no longer reproduces the fault is worse than no data.
 
 ### Tranche status
 
