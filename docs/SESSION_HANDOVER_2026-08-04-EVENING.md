@@ -257,10 +257,29 @@ conditions written into speculative tranches.
 1. **INA226 block 0** — the priority. Lead commercial wedge, Phase A of the SOM
    roadmap, no further spend required. Everything verified ready;
    `INA226_SESSION_HANDOFF.md` is self-contained.
-2. ~~The divided-clock test~~ — **DONE, and it resolved the defect.** See above.
-   Optional follow-ups, none blocking: reconsider the `21bdfde` inverter revert
-   on the new evidence; localise the violated net from the banked SDF; pipeline
-   the datapath if 50 MHz is ever required.
+2. ~~The divided-clock test~~ — **DONE, and it resolved the defect.** Landed in
+   the build system on 2026-08-05:
+   - `74381b7` — RPLU2PADE defaults to `A7_CLK_DIV_LOG2=1` (25 MHz). **Costs
+     half throughput for that spin**; quote it wherever the pipeline is
+     presented. Marked a deliberate exception in *both* `build_a7.sh` and
+     `spu_a7_top.v` so nobody re-syncs the lists and reintroduces the fault.
+   - `95cdaf5` — FP4 structured inverter back to default-on, with
+     `FP4_PRODUCTION_STRUCTURED` moved with it. The revert's premise was
+     disproved; note v2 costs ~7.4% *more* LUT and wins on throughput
+     (74 clocks vs 83), and is **not** the Karatsuba multiplier — that is
+     `ZPHI_KARATSUBA` in the tensegrity path, already default-on.
+   - `6177c55` — DirtyJTAG reset on by default; it stalls under sustained load
+     and silently voided three campaigns.
+
+   Remaining, none blocking: localise the violated net from the banked SDF
+   (`build/pade_sdf_study/FI0B0_S127.sdf`); pipeline the Padé datapath if
+   50 MHz is ever required, after which the clock default can go back to 0.
+
+   **No production build has yet been made under the new defaults.** The
+   canonical `spu_a7_100t_RPLU2PADE.bit` on disk is still the 2026-08-03 v1
+   build at 50 MHz (`d411692c…`, 20/20). The first rebuild will produce a v2
+   image at 25 MHz under that name — archive the old one first, and bench the
+   new one before treating it as proven.
 3. **SU3's full oracle** — the one soft cell in the eight-spin sweep.
 4. **Rebuild remaining spins against the `PULLUP` XDCs** — hygiene only.
 5. **Ecosystem work** — tooling and demonstrations, per the agreed sequence:
