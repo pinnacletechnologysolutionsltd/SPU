@@ -251,11 +251,69 @@ value when the same logical bit is mis-captured, and simultaneous corruption of
 lanes B and D. That would be a **design** defect that neither toolchain would
 catch and that closure would not fix.
 
-**Next tranche:** `spu_strategy/gtp_contract_pade_intermittency_2026-08-05.md`.
-Leading hypothesis is that the **`A7_FREQ` constraint** is the variable — the
-only build with a long clean record is the only one built at `A7_FREQ=2` — but
-`FI1B0_S137` is a `--freq 50` counterexample at 4/4, so it needs measuring, not
-asserting.
+## The campaign — 120 measurements, and Fmax is not the mechanism
+
+Run by GTP with `tools/bench_pade_campaign.py` (`84a510e`). Campaign
+`build/pade_campaigns/20260804_214716/`. **Canonical control 20/20, zero
+infrastructure errors** — the run is valid.
+
+Sorted by routed Fmax:
+
+| Routed | Build | `A7_FREQ` | Rate |
+|---|---|---|---|
+| 25.38 | v1 S139 | 2 | 10/10 |
+| 26.88 | v2 S139 | 2 | 10/10 |
+| 29.75 | v1 S149 | 2 | **8/10** |
+| 33.44 | v2 S131 | 50 | 10/10 |
+| **34.46** | **v1 S127** | 50 | **0/10** |
+| 35.48 | v2 S127 | 50 | 10/10 |
+| 37.44 | v1 S137 | 50 | 10/10 |
+| 37.98 | v2 S137 | 50 | 10/10 |
+| 38.18 | canonical | 2 | 20/20 |
+| **40.35** | **v2 S149** | 2 | **0/10** |
+| 42.17 | v1 S131 | 50 | 10/10 |
+
+**Zero correlation with Fmax.** The slowest build is perfect; the
+second-fastest is 0/10; the failing freq-50 build sits between two perfect ones
+one MHz either side. **`A7_FREQ` is dead too** — failures appear in both groups.
+
+Per the contract's own N≥20 bar, **no 10/10 build is called clean.**
+
+### Three things this retracts
+
+1. **The timing hypothesis, in every form tried.** Fmax, closure at 50 MHz, and
+   the `A7_FREQ` constraint are all ruled out by direct measurement.
+2. **My single-shot bench results from earlier the same evening.** I recorded
+   v2 S131, v2 S127 and v1 S137 as FAIL. All three are **10/10**. Only v1 S127
+   agreed. Three of four wrong is systematic, not luck.
+3. **The `D5` signature, which I overstated.** I claimed every failure carried
+   `D5` where the correct value has `55`. Across GTP's larger sample it is
+   **13 of 25**, with **23 distinct A words**. It is real but not invariant, and
+   it was five samples talking.
+
+### The live lead — readiness, not timing
+
+The procedural difference between my failing runs and GTP's passing ones is
+that **GTP's harness waits 1 second after reboot before capturing; mine
+connected as soon as the CDC port appeared.**
+
+If that delay is what separates them, then querying the sidecar too soon after
+configuration returns wrong answers — a **readiness/sequencing** defect, not a
+timing one. It would also explain the apparent intermittency, and it is
+consistent with GTP's Part C finding that output-only captures cannot
+discriminate between Horner, inverter handoff, and final multiply.
+
+**Cheap decisive test:** re-run a 10/10 build with the settle removed. If it
+fails, the bug is real and was found by measuring badly.
+
+### Tranche status
+
+- `gtp_contract_pade_intermittency_2026-08-05.md` — **complete.** Findings in
+  `gtp_findings_pade_intermittency_2026-08-05.md`, signature words in
+  `pade_intermittency_signature_words_2026-08-05.csv`.
+- `gtp_contract_rns_check_pipeline_2026-08-05.md` — **STOPPED BY ITS OWN ENTRY
+  GATE.** It required Fmax to correlate with reliability. It does not. Do not
+  build it. The gate worked exactly as intended and saved the effort.
 
 ## `A7_FREQ` is documented, not deleted
 
