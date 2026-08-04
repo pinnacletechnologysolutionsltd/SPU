@@ -155,6 +155,7 @@ module spu13_rplu2_pade_sidecar #(
     assign inv_mult_busy = shared_busy;
     assign inv_mult_rns_error = shared_rns_error;
 
+
     rplu_thimble_pade u_pade (
         .clk(clk),
         .rst_n(rst_n),
@@ -274,6 +275,39 @@ module spu13_rplu2_pade_sidecar #(
 
     wire datapath_busy = pade_busy || inv_busy || shared_busy;
     assign busy = start_pending || datapath_busy;
+
+    // --- pipeline cut on the RNS error path ---------------------------------
+    // The routed critical path of the RPLU2PADE spin ran from deep inside
+    // u_shared_mult's RNS checker, across the die, to the clock enable of the
+    // sticky error flops in the FSM below: 6.1 ns logic + 20.1 ns routing on
+    // the A7-100T, i.e. ~26 ns against a 20 ns period at clk_fast = 50 MHz.
+    // Routing was 75-80% of it, so the fix is to give that haul a cycle of its
+    // own rather than to shorten logic.
+    //
+    // Safe because rns_error is *observability only* -- it drives no datapath,
+    // no handshake and no control decision. Its sole consumer is the sticky
+    // flag below, read over SPI at 25 kHz, so one 20 ns cycle of extra latency
+    // is unobservable.
+    //
+    // The consumer's condition was
+    //   (inv_mult_start ? 1'b0 : shared_rns_error) || shared_rns_error
+    // which collapses to shared_rns_error -- the client mux is redundant there
+    // -- so registering the raw signal loses no attribution.
+    //
+    // The clear replicates the FSM's own start condition so the flag keeps its
+    // "cleared at the start of each operation" semantics exactly; a late error
+    // from the previous operation cannot bleed into the next one.
+    //
+    // Placement note: this block must sit below datapath_busy's declaration.
+    reg shared_rns_error_q;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            shared_rns_error_q <= 1'b0;
+        else if (start_pending && !datapath_busy)
+            shared_rns_error_q <= 1'b0;
+        else
+            shared_rns_error_q <= shared_rns_error;
+    end
     assign debug_status = {
         rns_error_seen,
         inv_start_accept_seen,
@@ -407,7 +441,9 @@ module spu13_rplu2_pade_sidecar #(
             if (shared_done)
                 shared_done_seen <= 1'b1;
 
-            if (pade_mult_rns_error || inv_mult_rns_error) begin
+            // Registered one cycle upstream to break the routed critical path
+            // out of u_shared_mult -- see the pipeline cut above.
+            if (shared_rns_error_q) begin
                 error <= 1'b1;
                 rns_error_seen <= 1'b1;
             end
