@@ -128,9 +128,14 @@ that **failing to close at 50 MHz does not predict silicon failure on this
 board.** So "v2 doesn't close" cannot explain `seven_over_three`, because the
 control that works perfectly doesn't close either.
 
-**Timing is exonerated. The miscompile hypothesis is earned** — the contract's
-reading 2. The netlist/FASM diff is now the right next move, and it was right to
-refuse it up front: it is expensive, and this tranche is what licenses it.
+> **SUPERSEDED THE SAME EVENING — see "The bench result" below.** I wrote here
+> that timing was exonerated and the miscompile hypothesis earned, and
+> recommended a netlist diff. **Both conclusions were wrong**, and the netlist
+> diff would have been the wrong move. What the paired Fmax data actually killed
+> was "v2 is systematically slower than v1"; I over-extended that to "timing is
+> not the mechanism." The bench then showed the fault is **intermittent** and
+> affects **both** inverter arms, which no amount of routing data could have
+> settled.
 
 ### What this does not establish
 
@@ -156,6 +161,67 @@ starts from certainty rather than inference. Two `pack` invocations plus one
 bench session.
 
 Use `FP4_EVIDENCE=1` on the v1 pack or it writes the canonical production name.
+
+## The bench result — the fault is intermittent, and the inverter is exonerated
+
+Ran on the evening of 2026-08-04. **This supersedes both of the day's earlier
+conclusions.**
+
+| Bitstream | `A7_FREQ` | Routed | Runs | Passes |
+|---|---|---|---|---|
+| **canonical** (seed 1) | **2** | 38.18 | 3 (+41 hist.) | **3** |
+| `FI1B0_S137` (v2) | 50 | 37.98 | 4 | **4** |
+| `FI0B0_S131` (v1) | 50 | 42.17 | 2 | **1** |
+| `FI0B0_S127` (v1) | 50 | 34.46 | 1 | 0 |
+| `FI0B0_S137` (v1) | 50 | 37.44 | 1 | 0 |
+| `FI1B0_S127` (v2) | 50 | 35.48 | 1 | 0 |
+| `FI1B0_S131` (v2) | 50 | 33.44 | 1 | 0 |
+
+### What is established
+
+**The FP4 structured inverter is not the cause.** v1, the reference inverter and
+current default, fails too. **The 2026-08-03 attribution behind the revert in
+`21bdfde` was wrong** — `seven_over_three` is not a v2 defect.
+
+**The fault is intermittent.** `FI0B0_S131` failed, then passed — same
+bitstream, same wiring, twenty minutes apart.
+
+**The bench is sound.** The canonical image passed 3/3 the same evening on the
+same firmware and wiring, so the failures are real properties of the builds.
+
+**Closure at 50 MHz is not the discriminator.** All six new builds miss it; so
+does the flawless canonical. `FI0B0_S131` routes highest of the six at
+42.17 MHz and still failed.
+
+### The signature — the strongest clue we have
+
+Correct is `0x55555557`. Observed: `0x19D57157`, `0x19D5711F`, `0x47D55D37`,
+`0x7FD5701A`, `0x19D57157`.
+
+**Every failure has `D5` where the correct value has `55`** — same nibble, one
+extra bit — then diverges. **Two different builds returned byte-identical
+`0x19D57157`.** A shared mechanism, not placement luck. `wide_constants`
+failures also put nonzero data in lanes B and D, which are zero in every
+passing run and must be zero.
+
+### The methodological lesson, which cost three wrong conclusions in one day
+
+> **A single bench run is not a result. An intermittent fault can only be
+> characterised by pass RATES over N runs.**
+
+The 08-03 margin table, "timing is exonerated", and "v2 passes / v1 fails" all
+came from reading one number per condition. The next tranche mandates N ≥ 10,
+and N ≥ 20 before any build may be called clean — the canonical build's
+reputation rests on 41 consecutive passes.
+
+All six bitstreams, their `.nextpnr.log`s and every bench log are archived at
+`build/evidence_archive/pade_intermittency_2026-08-04/`.
+
+**Next tranche:** `spu_strategy/gtp_contract_pade_intermittency_2026-08-05.md`.
+Leading hypothesis is that the **`A7_FREQ` constraint** is the variable — the
+only build with a long clean record is the only one built at `A7_FREQ=2` — but
+`FI1B0_S137` is a `--freq 50` counterexample at 4/4, so it needs measuring, not
+asserting.
 
 ## `A7_FREQ` is documented, not deleted
 
@@ -267,10 +333,12 @@ resting state.
 
 ## Open / next
 
-1. **Bench the adverse pair — BITSTREAMS ARE PACKED AND WAITING.** A v2 that is
-   *faster* than a working v1 and still fails `seven_over_three` excludes timing
-   conclusively. This supersedes the remainder of the tranche; A0 and A2 are
-   deprioritised.
+1. **DONE — the adverse pair was benched, and then some.** All six builds ran;
+   see "The bench result" above. Outcome: the inverter is exonerated and the
+   fault is intermittent. Next work is
+   `spu_strategy/gtp_contract_pade_intermittency_2026-08-05.md` — a freq-2 build
+   matrix and, more importantly, a **committed bench harness** that reports pass
+   rates over N runs instead of single shots.
 
    | Build | Routed | Bitstream | SHA-256 (first 16) |
    |---|---|---|---|
@@ -306,10 +374,10 @@ resting state.
 2. **INA226 block 0** — fully unblocked, runbook corrected. Capture the three
    sessions, confirm mean current ascends across the classes, then commit to
    blocks 1-9. Phase A of the SOM product roadmap and the lead commercial wedge.
-3. **Then the netlist/FASM diff** — licensed by the paired result, and sharper
-   still once the adverse pair has been benched. Both v1 and v2 FASM exist for
-   all three seeds. The externally interesting finding if it holds up: an
-   openXC7 miscompile, not just a project bug.
+3. **~~Netlist/FASM diff~~ — DROPPED.** It was licensed by a conclusion the
+   bench then overturned. The fault is intermittent and hits both inverter
+   arms, so a static netlist comparison cannot explain it. Do not spend on this
+   until Part C's signature analysis says which stage to look at.
 4. **SU3's full oracle** — the one soft cell in the eight-spin sweep. Bench work.
 5. **Rebuild remaining spins against the `PULLUP` XDCs** — hygiene only.
 6. **Show HN timing** — still the project owner's call.
