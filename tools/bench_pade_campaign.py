@@ -37,6 +37,17 @@ DEFAULT_OUTPUT_ROOT = REPO / "build/pade_campaigns"
 DEFAULT_PORT = Path(
     "/dev/serial/by-id/usb-Raspberry_Pi_Pico_CB81353DCE678119-if00"
 )
+# This bench's DirtyJTAG. Reset before every load by DEFAULT, because the
+# adapter stalls under sustained use: a campaign is ~110 back-to-back bitstream
+# loads, and openFPGALoader then fails with "usb bulk write failed -9"
+# (LIBUSB_ERROR_PIPE, a stalled endpoint) and "Fail to get version". That voided
+# three campaign attempts on 2026-08-04/05 while the adapter itself stayed
+# healthy -- `--detect` returned the A7-100T IDCODE cleanly throughout, and a
+# `usbreset` cleared it every time.
+#
+# Cost is ~0.5 s per load, under a minute across a full campaign. Set
+# --dirtyjtag-usb-id '' to disable.
+DEFAULT_DIRTYJTAG_USB_ID = "1209:c0ca"
 MIN_RUNS = 10
 EXPECTED_CASES = [
     "two_over_one",
@@ -416,7 +427,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--picotool", default="picotool")
     parser.add_argument(
         "--dirtyjtag-usb-id",
-        help="optional usbreset VID:PID (for example 1209:c0ca) before each load",
+        default=DEFAULT_DIRTYJTAG_USB_ID,
+        help=(
+            "usbreset VID:PID to reset before each bitstream load "
+            f"(default {DEFAULT_DIRTYJTAG_USB_ID}); pass '' to disable. "
+            "On by default because the adapter stalls under sustained load "
+            "and silently voids campaigns"
+        ),
     )
     parser.add_argument("--usbreset", default="usbreset")
     parser.add_argument("--jtag-reset-settle", type=float, default=0.5)
