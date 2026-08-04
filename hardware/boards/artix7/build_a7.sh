@@ -187,15 +187,31 @@ case "$SPIN" in
 esac
 
 # A7_CLK_DIV_LOG2 default, spin-aware — mirrors the _CORE ternary in
-# spu_a7_top.v (keep this list in sync with that one). Coreless sidecar
+# spu_a7_top.v (keep this list in sync with that one, EXCEPT for the
+# RPLU2PADE exception documented below). Coreless sidecar
 # spins (no spu13_core instance) run the raw fabric clock; every
 # core-based spin needs clk_fast divided down to the Piranha Pulse
 # dispatch cadence or QR telemetry corrupts silently with no synthesis
 # or sim-side warning (root-caused in docs/hardware_evidence.md
 # §3.2e.4, recurred on the IROTC spin's first build — §3.2k.1). An
 # explicit A7_CLK_DIV_LOG2 env var still overrides this default.
+#
+# RPLU2PADE is the exception among the coreless spins: it defaults to /2
+# (clk_fast 25 MHz) since 2026-08-05, because its datapath does not meet 50 MHz
+# and fails FUNCTIONALLY there. Measured, campaign 20260805_083400: at 50 MHz
+# builds land 0/10 or 10/10 with no correlation to reported Fmax -- a placement
+# lottery, because Fmax describes the worst path rather than the path the test
+# exercises. At 25 MHz all four measured builds pass 10/10, against a positive
+# control that failed 0/10 in the same session. Both inverter towers behave
+# identically, so this is the datapath, not the inverter.
+#
+# The cost is real and must be quoted wherever the Pade pipeline is presented:
+# HALF THROUGHPUT for this spin. A correct slow build beats a fast unreliable
+# one; the proper fix is to pipeline the Pade datapath, after which this line
+# can go back to 0. See docs/SESSION_HANDOVER_2026-08-04-EVENING.md.
 case "$SPIN" in
-    LUCAS|SU3|RPLUCFG|RPLU2LIVE|RPLU2PADE|SOMPROBE|SOMSIDECAR|TENSEGRITYPROBE|TENSEGRITYLINK) A7_CLK_DIV_LOG2_DEFAULT=0;;
+    RPLU2PADE)                             A7_CLK_DIV_LOG2_DEFAULT=1;;
+    LUCAS|SU3|RPLUCFG|RPLU2LIVE|SOMPROBE|SOMSIDECAR|TENSEGRITYPROBE|TENSEGRITYLINK) A7_CLK_DIV_LOG2_DEFAULT=0;;
     *)                                     A7_CLK_DIV_LOG2_DEFAULT=6;;
 esac
 A7_CLK_DIV_LOG2="${A7_CLK_DIV_LOG2:-$A7_CLK_DIV_LOG2_DEFAULT}"

@@ -129,6 +129,16 @@ module spu_a7_top #(
     // default case statement — coreless spins here must match the
     // 0-default spins there, or clk_fast comes up undivided on a core
     // spin (silent QR telemetry corruption, no synth/sim warning).
+    //
+    // DELIBERATE EXCEPTION since 2026-08-05: RPLU2PADE is coreless here
+    // (_CORE = 0) but build_a7.sh defaults it to A7_CLK_DIV_LOG2 = 1,
+    // not 0. Its datapath does not meet 50 MHz and fails functionally
+    // there; at 25 MHz it passes 10/10. The invariant this comment
+    // protects is one-directional — a CORE spin must never run
+    // undivided — and a coreless spin running divided is safe, just
+    // slower. Do NOT "re-sync" the lists by forcing RPLU2PADE back to
+    // 0; that silently reintroduces the fault. See
+    // docs/SESSION_HANDOVER_2026-08-04-EVENING.md.
     localparam _CORE = (SPIN == "LUCAS" || SPIN == "SU3" ||
                         SPIN == "RPLUCFG" || SPIN == "RPLU2LIVE" ||
                         SPIN == "RPLU2PADE") ? 0 : 1;
