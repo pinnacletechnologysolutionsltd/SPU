@@ -327,6 +327,28 @@ pico_enable_stdio_usb(rp2350_rplu2_pade_j11_smoke 1)
 pico_enable_stdio_uart(rp2350_rplu2_pade_j11_smoke 0)
 pico_add_extra_outputs(rp2350_rplu2_pade_j11_smoke)
 
+# Same fixed-port campaign firmware with read-only B4/B5/B6 trace capture.
+# Kept as a separate target so the ordinary smoke image and output are
+# unchanged when the FPGA instrumentation parameter is off.
+add_executable(rp2350_rplu2_pade_trace_j11_smoke
+    rp2350_rplu2_pade_j11_smoke.c
+)
+
+target_link_libraries(rp2350_rplu2_pade_trace_j11_smoke
+    pico_stdlib
+    hardware_spi
+    spu_rp_common
+)
+
+target_compile_definitions(rp2350_rplu2_pade_trace_j11_smoke PRIVATE
+    ${SPU_SPI_PIN_DEFS}
+    RPLU2_PADE_DEBUG_TRACE=1
+)
+
+pico_enable_stdio_usb(rp2350_rplu2_pade_trace_j11_smoke 1)
+pico_enable_stdio_uart(rp2350_rplu2_pade_trace_j11_smoke 0)
+pico_add_extra_outputs(rp2350_rplu2_pade_trace_j11_smoke)
+
 # Wukong J11 electrical loopback smoke test. Talks raw SPI bytes to
 # spu_a7_j11_loopback_top.v (no southbridge protocol -- that design
 # bypasses spu_spi_slave.v entirely), verifying the bottom-row pin remap

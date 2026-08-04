@@ -39,6 +39,13 @@ A7_FREQ_ENV="${A7_FREQ:-}"
 # TEMPORARY bring-up aid, explicit opt-in only, no spin defaults this to 1 --
 # see spu_a7_top.v's A7_UART_DIAG parameter doc.
 A7_UART_DIAG="${A7_UART_DIAG:-0}"
+# Capture-only RPLU2PADE pipeline observability. Default off and artifact-
+# tagged when enabled so it cannot overwrite a production/evidence image.
+PADE_DEBUG_TRACE="${PADE_DEBUG_TRACE:-0}"
+case "$PADE_DEBUG_TRACE" in
+    0|1) ;;
+    *) echo "Invalid PADE_DEBUG_TRACE: $PADE_DEBUG_TRACE (use 0|1)"; exit 1;;
+esac
 
 # Fp4 tower candidate selector. Default-OFF again since 2026-08-03: the
 # historical v1 tower is the production path. Set FP4_STRUCTURED=1 to build the
@@ -110,9 +117,16 @@ if [ "$A7_SYNTH_ABC9" = "1" ]; then
     INVERTER_VARIANT="${INVERTER_VARIANT}_A9"
     SYNTH_XILINX_FLOW="-abc9"
 fi
+if [ "$PADE_DEBUG_TRACE" = "1" ]; then
+    INVERTER_VARIANT="${INVERTER_VARIANT}_PT1"
+fi
 
 # Resolve spin to uppercase
 SPIN=$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')
+if [ "$PADE_DEBUG_TRACE" = "1" ] && [ "$SPIN" != "RPLU2PADE" ]; then
+    echo "PADE_DEBUG_TRACE=1 applies only to RPLU2PADE (spin is $SPIN)"
+    exit 1
+fi
 
 # A7_FREQ default, spin-aware.  IROTC's current routed timing closes at low
 # bring-up speed. TENSEGRITYPROBE and TENSEGRITYLINK have a 50 MHz board domain
@@ -244,7 +258,9 @@ echo "  Freq:   ${A7_FREQ} MHz"
 echo "  Seed:   ${A7_SEED}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
 echo "  Fp4Inv: structured=${FP4_STRUCTURED} request-sequential=${FP4_STRUCTURED_SEQUENTIAL} backend-sequential=${FP4_BACKEND_SEQUENTIAL}"
+echo "  Trace:  PADE_DEBUG_TRACE=${PADE_DEBUG_TRACE}"
 echo "  Synth:  abc9=${A7_SYNTH_ABC9}"
+echo "  Artifact: ${BITSTREAM}"
 if [ -n "$TENSEGRITY_VARIANT" ]; then
     echo "  ZPHI:   Karatsuba=${ZPHI_KARATSUBA} (0=reference, 1=candidate)"
     echo "  Tag:    ${TENSEGRITY_VARIANT#_}"
@@ -282,6 +298,7 @@ synth() {
                     -set A7_UART_DIAG $A7_UART_DIAG \
                     -set USE_STRUCTURED_INVERTER $FP4_STRUCTURED \
                     -set STRUCTURED_INVERTER_SEQUENTIAL $FP4_STRUCTURED_SEQUENTIAL \
+                    -set PADE_DEBUG_TRACE $PADE_DEBUG_TRACE \
                     spu_a7_top; \
             hierarchy -check -top spu_a7_top; \
             synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top spu_a7_top -json \"$JSON\"; \
@@ -316,7 +333,7 @@ pnr() {
     nextpnr-xilinx "${NEXTPNR_ARGS[@]}"
 
     METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}"
-    METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; FP4_STRUCTURED=${FP4_STRUCTURED}; FP4_BACKEND_SEQUENTIAL=${FP4_BACKEND_SEQUENTIAL}; post-route metrics from nextpnr-xilinx."
+    METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; FP4_STRUCTURED=${FP4_STRUCTURED}; FP4_BACKEND_SEQUENTIAL=${FP4_BACKEND_SEQUENTIAL}; PADE_DEBUG_TRACE=${PADE_DEBUG_TRACE}; post-route metrics from nextpnr-xilinx."
     if [ -n "$TENSEGRITY_VARIANT" ]; then
         METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; ZPHI_KARATSUBA=${ZPHI_KARATSUBA}; post-route metrics from nextpnr-xilinx."
     fi

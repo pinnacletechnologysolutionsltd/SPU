@@ -18,6 +18,9 @@
 //   CMD 0xB1 → write one 64-bit SPU instruction/chord, big-endian.
 //   CMD 0xB2 → write one TGR1 table: len16, vector_id32, table bytes, CRC-8.
 //   CMD 0xB3 → read 16-byte TGR1 verdict + loader diagnostics.
+//   CMD 0xB4 → optional Padé trace valid + inverter input/output (33 bytes).
+//   CMD 0xB5 → optional Padé final-multiply operands (32 bytes).
+//   CMD 0xB6 → optional Padé final-multiply result (16 bytes).
 //   CMD 0xA5 → write two 64-bit RPLU config chords: HEADER, DATA.
 //
 // Manifold layout (manifold_state[831:0], 26 × 32-bit RationalSurd):
@@ -29,7 +32,9 @@ module spu_spi_slave #(
     // Standalone TGR sidecar builds may remove the legacy response/write
     // surface at synthesis time. Default zero preserves the frozen base
     // protocol and all existing instantiations.
-    parameter TENSEGRITY_ONLY = 0
+    parameter TENSEGRITY_ONLY = 0,
+    // Capture transport is removed by constant folding unless explicitly on.
+    parameter ENABLE_PADE_TRACE = 0
 ) (
     input  wire        clk,            // Selected southbridge fabric clock
     input  wire        rst_n,
@@ -97,7 +102,16 @@ module spu_spi_slave #(
     output reg          tgr_stream_commit,
     output reg          tgr_stream_abort,
     output reg          tgr_status_hold,
-    input  wire [127:0] tgr_transport_status
+    input  wire [127:0] tgr_transport_status,
+
+    // Optional stable post-evaluation Padé snapshot. Each 128-bit A31 word
+    // is ordered {c0,c1,c2,c3}; B4/B5/B6 stream it big-endian.
+    input  wire         pade_trace_valid,
+    input  wire [127:0] pade_trace_inv_input,
+    input  wire [127:0] pade_trace_inv_output,
+    input  wire [127:0] pade_trace_final_a,
+    input  wire [127:0] pade_trace_final_b,
+    input  wire [127:0] pade_trace_final_result
 );
 
     // --- 2-stage synchronisers for async SPI signals ---
@@ -623,6 +637,48 @@ module spu_spi_slave #(
                                 spi_miso <= tgr_transport_status[127];
                                 state <= S_RESP;
                             end
+
+                        end else if (!TENSEGRITY_ONLY && ENABLE_PADE_TRACE &&
+                                     cmd_byte == 8'hB4) begin
+                            // Valid byte, denominator presented to inverter,
+                            // then the inverter-returned A31 word.
+                            resp_buf[0] <= {7'd0, pade_trace_valid};
+                            for (k = 0; k < 16; k = k + 1) begin
+                                resp_buf[1+k] <= pade_trace_inv_input[127-k*8 -: 8];
+                                resp_buf[17+k] <= pade_trace_inv_output[127-k*8 -: 8];
+                            end
+                            resp_len <= 7'd33;
+                            shift_out <= {7'd0, pade_trace_valid};
+                            byte_idx <= 7'd0;
+                            resp_bit <= 3'd7;
+                            spi_miso <= 1'b0;
+                            state <= S_RESP;
+
+                        end else if (!TENSEGRITY_ONLY && ENABLE_PADE_TRACE &&
+                                     cmd_byte == 8'hB5) begin
+                            // Final multiplier A and B operands.
+                            for (k = 0; k < 16; k = k + 1) begin
+                                resp_buf[k] <= pade_trace_final_a[127-k*8 -: 8];
+                                resp_buf[16+k] <= pade_trace_final_b[127-k*8 -: 8];
+                            end
+                            resp_len <= 7'd32;
+                            shift_out <= pade_trace_final_a[127:120];
+                            byte_idx <= 7'd0;
+                            resp_bit <= 3'd7;
+                            spi_miso <= pade_trace_final_a[127];
+                            state <= S_RESP;
+
+                        end else if (!TENSEGRITY_ONLY && ENABLE_PADE_TRACE &&
+                                     cmd_byte == 8'hB6) begin
+                            // Final multiplier result.
+                            for (k = 0; k < 16; k = k + 1)
+                                resp_buf[k] <= pade_trace_final_result[127-k*8 -: 8];
+                            resp_len <= 7'd16;
+                            shift_out <= pade_trace_final_result[127:120];
+                            byte_idx <= 7'd0;
+                            resp_bit <= 3'd7;
+                            spi_miso <= pade_trace_final_result[127];
+                            state <= S_RESP;
 
                         end else begin
                             // Unknown command — respond with one 0x00

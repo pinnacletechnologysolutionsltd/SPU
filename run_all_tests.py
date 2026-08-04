@@ -109,17 +109,28 @@ def main():
     # flipping the RTL default changed nothing any test could see, and v2 (now
     # the production path) had no functional coverage anywhere in the tree.
     PARAM_VARIANTS = {
-        "rplu_pipeline_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
-        "spu13_batch_inverter_collision_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
-        "spu13_rplu2_pade_sidecar_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
-        "spu13_spi_rplu2_pade_tb.v": ("USE_STRUCTURED_INVERTER", "1", "v2"),
+        "rplu_pipeline_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "1"),
+        ], "v2"),
+        "spu13_batch_inverter_collision_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "1"),
+        ], "v2"),
+        "spu13_rplu2_pade_sidecar_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "1"),
+        ], "v2"),
+        # Keep the regression count at 184 by covering both non-default
+        # parameters in the existing SPI-sidecar variant run.
+        "spu13_spi_rplu2_pade_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "1"),
+            ("PADE_DEBUG_TRACE", "1"),
+        ], "v2_trace"),
     }
     test_variants = [(f, "", None) for f in test_files]
     for f in test_files:
         spec = PARAM_VARIANTS.get(f.name)
         if spec:
-            param, value, label = spec
-            test_variants.append((f, label, (param, value)))
+            overrides, label = spec
+            test_variants.append((f, label, overrides))
     extra = len(test_variants) - len(test_files)
     if extra:
         print(f"Adding {extra} parameter-variant runs (non-default parameter values).")
@@ -305,8 +316,10 @@ def main():
 
         param_args = []
         if param_override and top_mod:
-            _pname, _pval = param_override
-            param_args = [f"-P{top_mod}.{_pname}={_pval}"]
+            param_args = [
+                f"-P{top_mod}.{pname}={pval}"
+                for pname, pval in param_override
+            ]
         cmd = iverilog_args + (["-s", top_mod] if top_mod else []) + param_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
 

@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 
 module spu13_spi_rplu2_pade_tb #(
-    parameter USE_STRUCTURED_INVERTER = 0
+    parameter USE_STRUCTURED_INVERTER = 0,
+    parameter PADE_DEBUG_TRACE = 0
 );
     localparam [7:0] OP_RPLU2_START = 8'h2A;
 
@@ -34,6 +35,12 @@ module spu13_spi_rplu2_pade_tb #(
     wire [63:0] qr_commit_D;
     wire [7:0] debug_status;
     wire [2:0] debug_state;
+    wire trace_valid;
+    wire [127:0] trace_inv_input;
+    wire [127:0] trace_inv_output;
+    wire [127:0] trace_final_a;
+    wire [127:0] trace_final_b;
+    wire [127:0] trace_final_result;
 
     reg [7:0] last_opcode = 8'h00;
     reg sidecar_claim_seen = 1'b0;
@@ -57,7 +64,8 @@ module spu13_spi_rplu2_pade_tb #(
     end
 
     spu13_rplu2_pade_sidecar #(
-        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER)
+        .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
+        .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE)
     ) u_sidecar (
         .clk(clk),
         .rst_n(rst_n),
@@ -77,10 +85,18 @@ module spu13_spi_rplu2_pade_tb #(
         .qr_commit_C(qr_commit_C),
         .qr_commit_D(qr_commit_D),
         .debug_status(debug_status),
-        .debug_state(debug_state)
+        .debug_state(debug_state),
+        .trace_valid(trace_valid),
+        .trace_inv_input(trace_inv_input),
+        .trace_inv_output(trace_inv_output),
+        .trace_final_a(trace_final_a),
+        .trace_final_b(trace_final_b),
+        .trace_final_result(trace_final_result)
     );
 
-    spu_spi_slave u_spi (
+    spu_spi_slave #(
+        .ENABLE_PADE_TRACE(PADE_DEBUG_TRACE)
+    ) u_spi (
         .clk(clk),
         .rst_n(rst_n),
         .spi_cs_n(spi_cs_n),
@@ -116,7 +132,14 @@ module spu13_spi_rplu2_pade_tb #(
         .turbulence(sidecar_error),
         .rplu_mode(sidecar_busy),
         .boot_ready(1'b1),  // no boot FSM in this top — always ready
-        .sentinel_telemetry(512'd0)
+        .sentinel_telemetry(512'd0),
+        .tgr_transport_status(128'd0),
+        .pade_trace_valid(trace_valid),
+        .pade_trace_inv_input(trace_inv_input),
+        .pade_trace_inv_output(trace_inv_output),
+        .pade_trace_final_a(trace_final_a),
+        .pade_trace_final_b(trace_final_b),
+        .pade_trace_final_result(trace_final_result)
     );
 
     task spi_byte_send;
@@ -254,6 +277,115 @@ module spu13_spi_rplu2_pade_tb #(
         end
     endtask
 
+    task spi_read_trace_head;
+        integer b;
+        reg [7:0] dummy;
+        begin
+            spi_cs_n = 1'b0;
+            #20000;
+            spi_byte_send(8'hB4, dummy);
+            for (b = 0; b < 33; b = b + 1)
+                spi_byte_send(8'h00, rx_buf[b]);
+            #50000;
+            spi_cs_n = 1'b1;
+            repeat (32) @(posedge clk);
+        end
+    endtask
+
+    task spi_read_trace_operands;
+        integer b;
+        reg [7:0] dummy;
+        begin
+            spi_cs_n = 1'b0;
+            #20000;
+            spi_byte_send(8'hB5, dummy);
+            for (b = 0; b < 32; b = b + 1)
+                spi_byte_send(8'h00, rx_buf[b]);
+            #50000;
+            spi_cs_n = 1'b1;
+            repeat (32) @(posedge clk);
+        end
+    endtask
+
+    task spi_read_trace_result;
+        integer b;
+        reg [7:0] dummy;
+        begin
+            spi_cs_n = 1'b0;
+            #20000;
+            spi_byte_send(8'hB6, dummy);
+            for (b = 0; b < 16; b = b + 1)
+                spi_byte_send(8'h00, rx_buf[b]);
+            #50000;
+            spi_cs_n = 1'b1;
+            repeat (32) @(posedge clk);
+        end
+    endtask
+
+    task expect_seven_over_three_trace;
+        reg got_valid;
+        reg [127:0] got_inv_input;
+        reg [127:0] got_inv_output;
+        reg [127:0] got_final_a;
+        reg [127:0] got_final_b;
+        reg [127:0] got_final_result;
+        begin
+            spi_read_trace_head();
+            got_valid = rx_buf[0][0];
+            got_inv_input = {
+                rx_buf[1], rx_buf[2], rx_buf[3], rx_buf[4],
+                rx_buf[5], rx_buf[6], rx_buf[7], rx_buf[8],
+                rx_buf[9], rx_buf[10], rx_buf[11], rx_buf[12],
+                rx_buf[13], rx_buf[14], rx_buf[15], rx_buf[16]
+            };
+            got_inv_output = {
+                rx_buf[17], rx_buf[18], rx_buf[19], rx_buf[20],
+                rx_buf[21], rx_buf[22], rx_buf[23], rx_buf[24],
+                rx_buf[25], rx_buf[26], rx_buf[27], rx_buf[28],
+                rx_buf[29], rx_buf[30], rx_buf[31], rx_buf[32]
+            };
+
+            spi_read_trace_operands();
+            got_final_a = {
+                rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3],
+                rx_buf[4], rx_buf[5], rx_buf[6], rx_buf[7],
+                rx_buf[8], rx_buf[9], rx_buf[10], rx_buf[11],
+                rx_buf[12], rx_buf[13], rx_buf[14], rx_buf[15]
+            };
+            got_final_b = {
+                rx_buf[16], rx_buf[17], rx_buf[18], rx_buf[19],
+                rx_buf[20], rx_buf[21], rx_buf[22], rx_buf[23],
+                rx_buf[24], rx_buf[25], rx_buf[26], rx_buf[27],
+                rx_buf[28], rx_buf[29], rx_buf[30], rx_buf[31]
+            };
+
+            spi_read_trace_result();
+            got_final_result = {
+                rx_buf[0], rx_buf[1], rx_buf[2], rx_buf[3],
+                rx_buf[4], rx_buf[5], rx_buf[6], rx_buf[7],
+                rx_buf[8], rx_buf[9], rx_buf[10], rx_buf[11],
+                rx_buf[12], rx_buf[13], rx_buf[14], rx_buf[15]
+            };
+
+            if (!got_valid ||
+                got_inv_input !== 128'h00000003_00000000_00000000_00000000 ||
+                got_inv_output !== 128'h55555555_00000000_00000000_00000000 ||
+                got_final_a !== 128'h00000007_00000000_00000000_00000000 ||
+                got_final_b !== 128'h55555555_00000000_00000000_00000000 ||
+                got_final_result !== 128'h55555557_00000000_00000000_00000000) begin
+                $display("FAIL: seven_over_three trace valid=%0d", got_valid);
+                $display("      den=%h inv=%h", got_inv_input, got_inv_output);
+                $display("      mul_a=%h mul_b=%h mul_r=%h",
+                         got_final_a, got_final_b, got_final_result);
+                errors = errors + 1;
+            end else begin
+                $display("TRACE: seven_over_three den=%h inv=%h mul_a=%h mul_b=%h mul_r=%h",
+                         got_inv_input, got_inv_output, got_final_a,
+                         got_final_b, got_final_result);
+            end
+        end
+    endtask
+
     task expect_status;
         input [7:0] min_dbg_mask;
         begin
@@ -341,6 +473,10 @@ module spu13_spi_rplu2_pade_tb #(
             $display("FAIL: USE_STRUCTURED_INVERTER did not reach sidecar");
             errors = errors + 1;
         end
+        if (u_sidecar.PADE_DEBUG_TRACE != PADE_DEBUG_TRACE) begin
+            $display("FAIL: PADE_DEBUG_TRACE did not reach sidecar");
+            errors = errors + 1;
+        end
 
         spi_cfg_write(3'd3, 10'd1, 64'h00000000_00000001);
         spi_cfg_write(3'd3, 10'd65, 64'h00000000_00000000);
@@ -350,6 +486,14 @@ module spu13_spi_rplu2_pade_tb #(
         run_pade_case("two_over_two",      32'd2,     32'd2,    32'h00000001);
         run_pade_case("five_over_two",     32'd5,     32'd2,    32'h40000002);
         run_pade_case("seven_over_three",  32'd7,     32'd3,    32'h55555557);
+        if (PADE_DEBUG_TRACE != 0)
+            expect_seven_over_three_trace();
+        else if (trace_valid !== 1'b0 || trace_inv_input !== 128'd0 ||
+                 trace_inv_output !== 128'd0 || trace_final_a !== 128'd0 ||
+                 trace_final_b !== 128'd0 || trace_final_result !== 128'd0) begin
+            $display("FAIL: default-off trace outputs are not zero");
+            errors = errors + 1;
+        end
         run_pade_case("wide_constants",    32'd12345, 32'd6789, 32'h2FCB82AA);
 
         if (errors == 0)

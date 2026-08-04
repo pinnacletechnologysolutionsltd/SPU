@@ -16,7 +16,8 @@
 
 module rplu_thimble_pade #(
     parameter NUM_COEFF    = 5,         // [4/4] Padé = 5 coeffs each
-    parameter COEFF_ADDR_W = 3          // ceil(log2(NUM_COEFF))
+    parameter COEFF_ADDR_W = 3,         // ceil(log2(NUM_COEFF))
+    parameter PADE_DEBUG_TRACE = 0      // capture-only observability, default off
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -51,7 +52,17 @@ module rplu_thimble_pade #(
     input  wire         inv_busy,
     input  wire         inv_flags_v,
 
-    output wire [2:0]   debug_state
+    output wire [2:0]   debug_state,
+
+    // Optional post-evaluation trace. Component order in every A31 word is
+    // {c0,c1,c2,c3}. These registers only observe existing handshake points;
+    // no trace signal is inserted in series with the compute datapath.
+    output wire         trace_valid,
+    output wire [127:0] trace_inv_input,
+    output wire [127:0] trace_inv_output,
+    output wire [127:0] trace_final_a,
+    output wire [127:0] trace_final_b,
+    output wire [127:0] trace_final_result
 );
 
     // ── Coefficient storage ─────────────────────────────────────────
@@ -112,6 +123,75 @@ module rplu_thimble_pade #(
     reg        inv_start_pending;
 
     assign debug_state = state;
+
+    generate
+        if (PADE_DEBUG_TRACE != 0) begin : gen_debug_trace
+            reg         trace_valid_q;
+            reg [127:0] trace_inv_input_q;
+            reg [127:0] trace_inv_output_q;
+            reg [127:0] trace_final_a_q;
+            reg [127:0] trace_final_b_q;
+            reg [127:0] trace_final_result_q;
+
+            assign trace_valid        = trace_valid_q;
+            assign trace_inv_input    = trace_inv_input_q;
+            assign trace_inv_output   = trace_inv_output_q;
+            assign trace_final_a      = trace_final_a_q;
+            assign trace_final_b      = trace_final_b_q;
+            assign trace_final_result = trace_final_result_q;
+
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    trace_valid_q        <= 1'b0;
+                    trace_inv_input_q    <= 128'd0;
+                    trace_inv_output_q   <= 128'd0;
+                    trace_final_a_q      <= 128'd0;
+                    trace_final_b_q      <= 128'd0;
+                    trace_final_result_q <= 128'd0;
+                end else begin
+                    if (start)
+                        trace_valid_q <= 1'b0;
+
+                    // Same edge that presents the completed denominator to
+                    // inv_z*. Observe the existing expressions directly.
+                    if (state == S_HORNER && mult_done && horner_is_den &&
+                        horner_idx == 0) begin
+                        trace_inv_input_q <= {
+                            m31_add(mult_r0, den_coeff[0][0]),
+                            m31_add(mult_r1, den_coeff[0][1]),
+                            m31_add(mult_r2, den_coeff[0][2]),
+                            m31_add(mult_r3, den_coeff[0][3])
+                        };
+                    end
+
+                    // Same edge that hands the inverter result toward the
+                    // final multiply. Capture the returned word here.
+                    if (state == S_INVERT && inv_done) begin
+                        trace_inv_output_q <= {inv_r0, inv_r1, inv_r2, inv_r3};
+                    end
+
+                    // Observe the actual registered operands presented to the
+                    // shared multiplier, not merely their assignment sources.
+                    // This keeps the inverter-to-multiplier handoff measurable.
+                    if (state == S_MULTIPLY) begin
+                        trace_final_a_q <= {mult_a0, mult_a1, mult_a2, mult_a3};
+                        trace_final_b_q <= {mult_b0, mult_b1, mult_b2, mult_b3};
+                        if (mult_done) begin
+                            trace_final_result_q <= {mult_r0, mult_r1, mult_r2, mult_r3};
+                            trace_valid_q <= 1'b1;
+                        end
+                    end
+                end
+            end
+        end else begin : gen_no_debug_trace
+            assign trace_valid        = 1'b0;
+            assign trace_inv_input    = 128'd0;
+            assign trace_inv_output   = 128'd0;
+            assign trace_final_a      = 128'd0;
+            assign trace_final_b      = 128'd0;
+            assign trace_final_result = 128'd0;
+        end
+    endgenerate
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

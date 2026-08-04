@@ -55,6 +55,7 @@ module spu_a7_top #(
     parameter ENABLE_RPLU_V2_EXTENSIONS = 0,
     parameter USE_STRUCTURED_INVERTER = 0,
     parameter STRUCTURED_INVERTER_SEQUENTIAL = 0,
+    parameter PADE_DEBUG_TRACE = 0,
     parameter ENABLE_LUCAS_MAC  = 0,
     parameter ENABLE_SU3        = 0,
     parameter ENABLE_IROTC      = 0,
@@ -335,6 +336,12 @@ module spu_a7_top #(
     wire [63:0] rplu2_sidecar_qr_commit_D;
     wire [7:0] rplu2_sidecar_debug_status;
     wire [2:0] rplu2_sidecar_debug_state;
+    wire rplu2_pade_trace_valid;
+    wire [127:0] rplu2_pade_trace_inv_input;
+    wire [127:0] rplu2_pade_trace_inv_output;
+    wire [127:0] rplu2_pade_trace_final_a;
+    wire [127:0] rplu2_pade_trace_final_b;
+    wire [127:0] rplu2_pade_trace_final_result;
     wire        su3_ext_mult_start;
     wire [31:0] su3_ext_mult_a0, su3_ext_mult_a1, su3_ext_mult_a2, su3_ext_mult_a3;
     wire [31:0] su3_ext_mult_b0, su3_ext_mult_b1, su3_ext_mult_b2, su3_ext_mult_b3;
@@ -982,11 +989,18 @@ module spu_a7_top #(
                 .debug_status(rplu2_sidecar_debug_status),
                 .debug_state(rplu2_sidecar_debug_state)
             );
+            assign rplu2_pade_trace_valid = 1'b0;
+            assign rplu2_pade_trace_inv_input = 128'd0;
+            assign rplu2_pade_trace_inv_output = 128'd0;
+            assign rplu2_pade_trace_final_a = 128'd0;
+            assign rplu2_pade_trace_final_b = 128'd0;
+            assign rplu2_pade_trace_final_result = 128'd0;
         end else begin : gen_rplu2_pade_or_none
             if (_R2_PADE) begin : gen_rplu2_pade_sidecar
                 spu13_rplu2_pade_sidecar #(
                     .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
-                    .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
+                    .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL),
+                    .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE)
                 ) u_rplu2_pade_sidecar (
                     .clk(clk_fast),
                     .rst_n(rst_n_int),
@@ -1006,7 +1020,13 @@ module spu_a7_top #(
                     .qr_commit_C(rplu2_sidecar_qr_commit_C),
                     .qr_commit_D(rplu2_sidecar_qr_commit_D),
                     .debug_status(rplu2_sidecar_debug_status),
-                    .debug_state(rplu2_sidecar_debug_state)
+                    .debug_state(rplu2_sidecar_debug_state),
+                    .trace_valid(rplu2_pade_trace_valid),
+                    .trace_inv_input(rplu2_pade_trace_inv_input),
+                    .trace_inv_output(rplu2_pade_trace_inv_output),
+                    .trace_final_a(rplu2_pade_trace_final_a),
+                    .trace_final_b(rplu2_pade_trace_final_b),
+                    .trace_final_result(rplu2_pade_trace_final_result)
                 );
             end else begin : gen_no_rplu2_sidecar
                 assign rplu2_sidecar_inst_claimed = 1'b0;
@@ -1020,6 +1040,12 @@ module spu_a7_top #(
                 assign rplu2_sidecar_qr_commit_D = 64'd0;
                 assign rplu2_sidecar_debug_status = 8'd0;
                 assign rplu2_sidecar_debug_state = 3'd0;
+                assign rplu2_pade_trace_valid = 1'b0;
+                assign rplu2_pade_trace_inv_input = 128'd0;
+                assign rplu2_pade_trace_inv_output = 128'd0;
+                assign rplu2_pade_trace_final_a = 128'd0;
+                assign rplu2_pade_trace_final_b = 128'd0;
+                assign rplu2_pade_trace_final_result = 128'd0;
             end
         end
     endgenerate
@@ -1049,7 +1075,9 @@ module spu_a7_top #(
     wire spi_status_mode = sidecar_status ?
         (lucas_busy || su3_busy || rplu2_sidecar_busy) : core_rotc_debug_status[3];
 
-    spu_spi_slave u_spi (
+    spu_spi_slave #(
+        .ENABLE_PADE_TRACE(_R2_PADE && (PADE_DEBUG_TRACE != 0))
+    ) u_spi (
         .clk(clk_fast), .rst_n(rst_n_int),
         .spi_cs_n(spi_cs_n), .spi_sck(spi_sck),
         .spi_mosi(spi_mosi), .spi_miso(spi_miso),
@@ -1083,7 +1111,13 @@ module spu_a7_top #(
         // TGR transport is disabled on every spu_a7_top spin.  Tie its status
         // input explicitly: leaving this input omitted synthesizes an X/Z-fed
         // decode cone that nextpnr-xilinx 0.8.2 rejects during timing analysis.
-        .tgr_transport_status(128'd0)
+        .tgr_transport_status(128'd0),
+        .pade_trace_valid(rplu2_pade_trace_valid),
+        .pade_trace_inv_input(rplu2_pade_trace_inv_input),
+        .pade_trace_inv_output(rplu2_pade_trace_inv_output),
+        .pade_trace_final_a(rplu2_pade_trace_final_a),
+        .pade_trace_final_b(rplu2_pade_trace_final_b),
+        .pade_trace_final_result(rplu2_pade_trace_final_result)
     );
 
     // ── UART TX ─────────────────────────────────────────────

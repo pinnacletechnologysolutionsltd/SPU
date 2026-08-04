@@ -49,6 +49,10 @@
 #define RPLU2_PADE_BB_HALF_PERIOD_US 20
 #endif
 
+#ifndef RPLU2_PADE_DEBUG_TRACE
+#define RPLU2_PADE_DEBUG_TRACE 0
+#endif
+
 #ifndef SPU_SPI_MISO_PIN
 #define SPU_SPI_MISO_PIN 16
 #endif
@@ -85,6 +89,15 @@ typedef struct {
     uint32_t expected;
 } pade_case_t;
 
+typedef struct {
+    bool valid;
+    uint32_t inv_input[4];
+    uint32_t inv_output[4];
+    uint32_t final_a[4];
+    uint32_t final_b[4];
+    uint32_t final_result[4];
+} pade_trace_t;
+
 static const pade_case_t PADE_CASES[] = {
     {"two_over_one", 2u, 1u, 2u},
     {"two_over_two", 2u, 2u, 1u},
@@ -100,6 +113,13 @@ static uint64_t read_be64(const uint8_t *bytes) {
         value = (value << 8) | bytes[i];
     }
     return value;
+}
+
+static uint32_t read_be32(const uint8_t *bytes) {
+    return ((uint32_t)bytes[0] << 24) |
+           ((uint32_t)bytes[1] << 16) |
+           ((uint32_t)bytes[2] << 8) |
+           (uint32_t)bytes[3];
 }
 
 static void bitbang_spi_init(void) {
@@ -252,6 +272,50 @@ static void print_qr(const char *tag, const qrtele_t *qr) {
            qr->a, qr->b, qr->c, qr->d);
 }
 
+
+#if RPLU2_PADE_DEBUG_TRACE
+static pade_trace_t read_pade_trace(void) {
+    uint8_t head[SPU_LINK_PADE_TRACE_HEAD_BYTES] = {0};
+    uint8_t operands[SPU_LINK_PADE_TRACE_OPERAND_BYTES] = {0};
+    uint8_t result[SPU_LINK_PADE_TRACE_RESULT_BYTES] = {0};
+    pade_trace_t trace = {0};
+
+    bus_read_command(SPU_CMD_READ_PADE_TRACE_HEAD, head, sizeof(head));
+    bus_read_command(SPU_CMD_READ_PADE_TRACE_OPERANDS,
+                     operands, sizeof(operands));
+    bus_read_command(SPU_CMD_READ_PADE_TRACE_RESULT, result, sizeof(result));
+
+    trace.valid = (head[0] & 0x01u) != 0u;
+    for (size_t lane = 0; lane < 4; lane++) {
+        trace.inv_input[lane] = read_be32(&head[1 + lane * 4]);
+        trace.inv_output[lane] = read_be32(&head[17 + lane * 4]);
+        trace.final_a[lane] = read_be32(&operands[lane * 4]);
+        trace.final_b[lane] = read_be32(&operands[16 + lane * 4]);
+        trace.final_result[lane] = read_be32(&result[lane * 4]);
+    }
+    return trace;
+}
+
+static void print_a31_word(const uint32_t word[4]) {
+    printf("%08" PRIX32 ":%08" PRIX32 ":%08" PRIX32 ":%08" PRIX32,
+           word[0], word[1], word[2], word[3]);
+}
+
+static void print_pade_trace(const char *case_name, const pade_trace_t *trace) {
+    printf("trace case=%s valid=%u den=", case_name, trace->valid ? 1u : 0u);
+    print_a31_word(trace->inv_input);
+    printf(" inv=");
+    print_a31_word(trace->inv_output);
+    printf(" mul_a=");
+    print_a31_word(trace->final_a);
+    printf(" mul_b=");
+    print_a31_word(trace->final_b);
+    printf(" mul_r=");
+    print_a31_word(trace->final_result);
+    printf("\r\n");
+}
+#endif
+
 static void hydrate_fixture(uint32_t numerator, uint32_t denominator) {
     write_rplu_cfg(RPLU2_CFG_PADE_NUM, 0, (uint64_t)numerator);
     write_rplu_cfg(RPLU2_CFG_PADE_NUM, 8, 0x0000000000000000ull);
@@ -317,6 +381,10 @@ static bool run_smoke_case(const pade_case_t *tc) {
 
     ok = poll_result(&qr, 3000);
     print_qr("result", &qr);
+#if RPLU2_PADE_DEBUG_TRACE
+    pade_trace_t trace = read_pade_trace();
+    print_pade_trace(tc->name, &trace);
+#endif
     read_status(status);
     print_status("after_eval", status);
 
@@ -369,6 +437,7 @@ int main(void) {
                (unsigned)RPLU2_PADE_LINK_CRC_HOLD_US,
                (unsigned)RPLU2_PADE_LINK_CS_RECOVERY_US,
                (unsigned)RPLU2_PADE_BB_HALF_PERIOD_US);
+        printf("pade_debug_trace=%u\r\n", (unsigned)RPLU2_PADE_DEBUG_TRACE);
 
         pass = run_smoke_once();
         printf("RPLU2PADE_J11: %s\r\n", pass ? "PASS" : "FAIL");

@@ -16,7 +16,8 @@
 
 module spu13_rplu2_pade_sidecar #(
     parameter USE_STRUCTURED_INVERTER = 0,
-    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0,
+    parameter PADE_DEBUG_TRACE = 0
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -40,7 +41,13 @@ module spu13_rplu2_pade_sidecar #(
     output reg  [63:0] qr_commit_D,
 
     output wire [7:0]  debug_status,
-    output wire [2:0]  debug_state
+    output wire [2:0]  debug_state,
+    output wire        trace_valid,
+    output wire [127:0] trace_inv_input,
+    output wire [127:0] trace_inv_output,
+    output wire [127:0] trace_final_a,
+    output wire [127:0] trace_final_b,
+    output wire [127:0] trace_final_result
 );
     localparam [7:0] OP_RPLU2_START = 8'h2A;
     localparam [2:0] CFG_PADE_NUM   = 3'd1;
@@ -156,7 +163,9 @@ module spu13_rplu2_pade_sidecar #(
     assign inv_mult_rns_error = shared_rns_error;
 
 
-    rplu_thimble_pade u_pade (
+    rplu_thimble_pade #(
+        .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE)
+    ) u_pade (
         .clk(clk),
         .rst_n(rst_n),
         .start(pade_start),
@@ -205,7 +214,13 @@ module spu13_rplu2_pade_sidecar #(
         .inv_done(inv_done),
         .inv_busy(inv_busy),
         .inv_flags_v(inv_flags_v),
-        .debug_state(pade_debug_state)
+        .debug_state(pade_debug_state),
+        .trace_valid(trace_valid),
+        .trace_inv_input(trace_inv_input),
+        .trace_inv_output(trace_inv_output),
+        .trace_final_a(trace_final_a),
+        .trace_final_b(trace_final_b),
+        .trace_final_result(trace_final_result)
     );
 
     generate
