@@ -47,34 +47,35 @@ case "$PADE_DEBUG_TRACE" in
     *) echo "Invalid PADE_DEBUG_TRACE: $PADE_DEBUG_TRACE (use 0|1)"; exit 1;;
 esac
 
-# Fp4 tower candidate selector. Default-OFF again since 2026-08-03: the
-# historical v1 tower is the production path. Set FP4_STRUCTURED=1 to build the
-# parallel structured inverter (v2).
+# Fp4 tower candidate selector. Default-ON again since 2026-08-05: the parallel
+# structured inverter (v2) is the production path. Set FP4_STRUCTURED=0 to build
+# the historical v1 tower.
 #
-# v2 was default-ON from 2026-08-01 (5399b4c) on the twenty-seed matrix in
-# docs/FP4_STRUCTURED_INVERTER.md: ~7.4% LUT and ~3.6% median Fmax for 7-10%
-# median wall-clock, because it retires a unit in 74 clocks against v1's 83,
-# winning on 19 of 20 seeds. That evaluation still stands and none of it is
-# withdrawn.
+# The case for v2, from the twenty-seed matrix in
+# docs/FP4_STRUCTURED_INVERTER.md: it costs ~7.4% MORE LUT (10,121 vs 9,421) and
+# ~3.6% median Fmax, and wins 7-10% median WALL-CLOCK because it retires a unit
+# in 74 clocks against v1's 83 -- ahead on 19 of 20 seeds. The trade is area and
+# Fmax for throughput. That evaluation always stood and none of it was withdrawn.
 #
-# It is reverted because v2 is wrong on silicon, which the matrix did not
-# measure. RPLU2PADE's seven_over_three case returns 0x0CA45881 against an
-# oracle of 0x55555557 on a v2 build, and 0x55555557 on a v1 build from
-# identical source -- 41 consecutive RPLU2PADE_J11: PASS. See
-# hardware_evidence.md 3.2m.
+# WHY IT WAS REVERTED ON 2026-08-03, AND WHY THAT REASON IS NOW VOID:
+# v2 was blamed for RPLU2PADE's seven_over_three returning a wrong value on
+# silicon. That attribution was WRONG. The 2026-08-05 divided-clock campaign
+# (build/pade_campaigns/20260805_083400) showed BOTH towers fail at
+# clk_fast = 50 MHz and BOTH pass 10/10 at 25 MHz, against a positive control
+# that failed 0/10 in the same session. The fault was a setup violation on the
+# Padé datapath, not a property of either inverter -- reported Fmax was a poor
+# proxy because it describes the worst path, not the path the test exercises.
+# See docs/SESSION_HANDOVER_2026-08-04-EVENING.md.
 #
-# The divergence is NOT in the inverter's logic. v1 and v2 agree in simulation
-# on every vector, including the small-scalar family added in 66217ed and all
-# five Padé cases at both parameter values. It is behaviourally-correct RTL
-# that is wrong once synthesised, so the fault is in synthesis or timing on the
-# v2 path and remains unexplained. Restore the default only when that is
-# understood, not when the benchmarks look good again -- they already do.
+# At the RPLU2PADE spin's operating point (A7_CLK_DIV_LOG2=1, clk_fast 25 MHz)
+# v2's Fmax cost is immaterial -- v2 builds closed at 35.53 and 40.81 MHz -- so
+# the throughput win applies with the penalty absorbed by margin.
 #
 # The known Fmax exception is seed 59, ~30% SLOWER on a 15.7 ns routing
 # critical path: a placement-lottery tail, not noise, so expect it rather than
 # diagnose it fresh. The sequential setting selects the one-product backend for
 # matched A/B runs and stays default-off (it failed its gate at 1.57x LUT).
-FP4_STRUCTURED="${FP4_STRUCTURED:-0}"
+FP4_STRUCTURED="${FP4_STRUCTURED:-1}"
 FP4_STRUCTURED_SEQUENTIAL="${FP4_STRUCTURED_SEQUENTIAL:-0}"
 FP4_BACKEND_SEQUENTIAL="${FP4_BACKEND_SEQUENTIAL:-$FP4_STRUCTURED_SEQUENTIAL}"
 FP4_EVIDENCE="${FP4_EVIDENCE:-0}"
@@ -106,7 +107,7 @@ fi
 #
 # Correct rule: the production configuration gets the canonical name; explicit
 # evidence runs and the non-production tower get tagged.
-FP4_PRODUCTION_STRUCTURED=0
+FP4_PRODUCTION_STRUCTURED=1
 INVERTER_VARIANT=""
 if [ "$FP4_EVIDENCE" = "1" ] || [ "$FP4_STRUCTURED" != "$FP4_PRODUCTION_STRUCTURED" ] \
    || [ "$FP4_BACKEND_SEQUENTIAL" != "0" ]; then
