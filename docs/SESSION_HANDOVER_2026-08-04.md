@@ -217,6 +217,40 @@ reputation rests on 41 consecutive passes.
 All six bitstreams, their `.nextpnr.log`s and every bench log are archived at
 `build/evidence_archive/pade_intermittency_2026-08-04/`.
 
+### The critical path is routing, not logic — and that reframes "is it the tools?"
+
+| Spin | Logic | Routing | Total |
+|---|---|---|---|
+| **RPLU2PADE** | 5.7–6.6 ns | **17.9–23.9 ns** | ~24–30 ns |
+| LUCAS | 3.6 ns | 8.9 ns | 12.5 ns |
+| RPLUCFG | 2.1 ns | 10.3 ns | 12.4 ns |
+
+**Routing is 75–80% of Padé's critical path.** Six ns of logic would meet
+50 MHz with 14 ns to spare; twenty ns of *wire* does not. That is placement
+quality — logic spread across the die rather than clustered — which is where
+openXC7 is weakest against Vivado, whose placer and silicon-correlated timing
+model are substantially better. **On the narrow question of why this design
+will not close, the toolchain is a real part of the answer**, and Vivado would
+likely close it.
+
+Three things that follow, worth keeping separate:
+
+- **It is not the board.** The canonical image passes 44/44 on this unit.
+- **It is not a miscompile.** A miscompile is deterministic; this is not.
+- **It would not hit every design on this flow.** LUCAS and RPLUCFG sit near
+  80 MHz routed against a 50 MHz clock — 60% headroom, never a problem. Padé is
+  the only design in the project pushing the flow's limits. The honest framing
+  is not "openXC7 is broken" but "openXC7 gives up perhaps 40% of placement
+  quality, and exactly one design needs it."
+
+**Still unproven, and the thing to guard against asserting:** that timing is the
+mechanism *at all*. A CDC or handshake soundness bug between the SPI domain and
+`clk_fast` would produce every symptom on record — intermittent on identical
+bitstreams, placement-sensitive through metastability resolution, the same wrong
+value when the same logical bit is mis-captured, and simultaneous corruption of
+lanes B and D. That would be a **design** defect that neither toolchain would
+catch and that closure would not fix.
+
 **Next tranche:** `spu_strategy/gtp_contract_pade_intermittency_2026-08-05.md`.
 Leading hypothesis is that the **`A7_FREQ` constraint** is the variable — the
 only build with a long clean record is the only one built at `A7_FREQ=2` — but
