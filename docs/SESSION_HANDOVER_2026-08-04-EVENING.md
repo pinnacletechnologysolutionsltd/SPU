@@ -127,6 +127,70 @@ reproducing this session"*, and nothing in the divided builds separates those.
 The canonical control proves the bench works; this one proves the fault still
 exists. Without it a clean sweep is unreadable.
 
+## RESOLVED — the divided clock fixes it, and the whole dataset now fits
+
+Campaign `build/pade_campaigns/20260805_083400/`, verified independently.
+**Zero infrastructure errors across 60 runs.**
+
+| Bitstream | Runs | Rate |
+|---|---|---|
+| **Canonical control** | 20 | **1.0** |
+| **Positive control — v1 S127 @ 50 MHz** | 10 | **0.0** |
+| v1 S127 @ 25 MHz | 10 | **1.0** |
+| v2 S149 @ 25 MHz | 10 | **1.0** |
+| v1 S149 @ 25 MHz | 10 | **1.0** |
+| v2 S137 @ 25 MHz | 10 | **1.0** |
+
+**The positive control is what makes this a result.** It failed 0/10 in the same
+session, so the divided builds passing cannot be explained by "the fault wasn't
+reproducing". Same design, same seed, same arm: 50 MHz fails 0/10, 25 MHz passes
+10/10.
+
+### The account that fits every observation
+
+**The mechanism is timing — setup violations on specific datapath nets — and
+reported Fmax was a bad proxy for it.** Fmax summarises the *single worst path*,
+whether or not that path carries data the test exercises. Functional failure
+depends on whether a *used* net is violated. Those are different questions, and
+we spent two days conflating them.
+
+That reconciles everything previously contradictory:
+
+| Observation | Explanation |
+|---|---|
+| No correlation between Fmax and pass rate | worst path ≠ the path that matters functionally |
+| Placement-sensitive | which nets get violated depends on placement |
+| Deterministic per build (0/10, not flaky) | a setup violation on fixed input data is deterministic |
+| Observation-only instrumentation "fixed" it | it moved placement, shifting violations off exercised nets |
+| Both inverter arms affected | the inverter was never the variable |
+| Every build passes at 25 MHz | at a 40 ns period nothing is violated |
+
+### The fix, and its cost
+
+**`A7_CLK_DIV_LOG2=1` for the RPLU2PADE spin.** A build setting, not an RTL
+change, available today. Artifacts in `build/pade_clkdiv_study/`.
+
+**It halves throughput for this spin.** That is a real cost and must be stated
+wherever the Padé pipeline is presented — it is honest because it is documented,
+and it stops being honest the moment it is quietly omitted from a performance
+claim.
+
+The proper fix, if 50 MHz is ever required, is to pipeline the Padé datapath —
+not the `rns_error` path already cut in `130ac0f`, which was a genuine 7.6% but
+addressed an observability net rather than the datapath.
+
+### Consequences worth acting on separately
+
+- **The `21bdfde` revert of the FP4 structured inverter rested on a false
+  attribution** and can now be reconsidered on evidence: both arms fail at
+  50 MHz and both pass at 25 MHz, so the inverter was never the discriminator.
+  That is its own decision with its own testing, not a change to make in
+  passing.
+- **Which specific net is violated is still unknown.** The SDF for the failing
+  placement is banked at `build/pade_sdf_study/FI0B0_S127.sdf` (52 MB,
+  placement reproduced at exactly 34.46 MHz) if anyone wants to localise it. Not
+  needed to ship the workaround.
+
 ## What is established, and what is not
 
 **Established:**
@@ -193,8 +257,10 @@ conditions written into speculative tranches.
 1. **INA226 block 0** — the priority. Lead commercial wedge, Phase A of the SOM
    roadmap, no further spend required. Everything verified ready;
    `INA226_SESSION_HANDOFF.md` is self-contained.
-2. **The divided-clock test** on the Padé fault — cheap, decisive, never
-   finished.
+2. ~~The divided-clock test~~ — **DONE, and it resolved the defect.** See above.
+   Optional follow-ups, none blocking: reconsider the `21bdfde` inverter revert
+   on the new evidence; localise the violated net from the banked SDF; pipeline
+   the datapath if 50 MHz is ever required.
 3. **SU3's full oracle** — the one soft cell in the eight-spin sweep.
 4. **Rebuild remaining spins against the `PULLUP` XDCs** — hygiene only.
 5. **Ecosystem work** — tooling and demonstrations, per the agreed sequence:
