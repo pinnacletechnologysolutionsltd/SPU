@@ -86,6 +86,47 @@ Note: neither `A7_FREQ` nor `A7_CLK_DIV_LOG2` appears in the artifact name
 (`build_a7.sh:106`), so a divided-clock rebuild at an existing seed **silently
 overwrites**. Use a fresh seed or copy aside first.
 
+## A timing-closed Padé configuration now exists (2026-08-05)
+
+The divided-clock builds landed. At **`A7_CLK_DIV_LOG2=1`** (`clk_fast` = 25 MHz)
+**all four close**, independently verified from the last `Max frequency` line of
+each archived log:
+
+| Build | `clk_fast` | Verdict |
+|---|---|---|
+| v1 S127 (was 0/10 at 50 MHz) | **38.00 MHz** | `PASS at 25.00 MHz` |
+| v2 S149 (was 0/10) | **35.53 MHz** | `PASS at 25.00 MHz` |
+| v1 S149 (was 8/10) | **30.25 MHz** | `PASS at 25.00 MHz` |
+| v2 S137 (control, 10/10) | **40.81 MHz** | `PASS at 25.00 MHz` |
+
+**Every previous Padé build on record missed its constraint. These meet it with
+20–60% margin.** Artifacts in `build/pade_clkdiv_study/` with `.nextpnr.log` and
+`.pnr.fasm` alongside each `.bit`.
+
+That is a real deliverable independent of the bench result — but note the cost:
+a divided clock **halves throughput** for this spin. Acceptable for a
+demonstration, and honest because it is documented rather than hidden, but it
+matters if the Padé pipeline ever becomes a performance claim.
+
+**The bench campaign has not run yet.** Two attempts were voided at the
+canonical control with `usb bulk write failed -9` / `Fail to get version`.
+Voiding was correct.
+
+- The adapter is **not dead** — `--detect` returns the A7-100T IDCODE cleanly
+  before and after a `usbreset`. `-9` is `LIBUSB_ERROR_PIPE`, a stalled
+  endpoint, and `1209:c0ca` has not re-enumerated all session. The trigger is
+  sustained load: a campaign is ~110 back-to-back loads.
+- **The harness already carries the fix, opt-in**
+  (`bench_pade_campaign.py:344`): pass **`--dirtyjtag-usb-id 1209:c0ca`** and it
+  resets the adapter before every load. `usbreset` is installed and verified.
+
+**The re-run must include a POSITIVE control** — the un-divided v1 S127
+(`5c36ad0a…`, 0/10 at 50 MHz). If the four divided builds pass, that is equally
+consistent with *"the divided clock fixed it"* and *"the fault is not
+reproducing this session"*, and nothing in the divided builds separates those.
+The canonical control proves the bench works; this one proves the fault still
+exists. Without it a clean sweep is unreadable.
+
 ## What is established, and what is not
 
 **Established:**
