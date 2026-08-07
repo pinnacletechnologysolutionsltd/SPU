@@ -89,11 +89,19 @@ dense A/B fixture over SPI and reads exact 256-bit QR commits from hardware.
 
 All three cases reported `PASS` and the run ended with `SU3_J11: PASS`.
 After the first slow proof, the smoke default was raised to 100 kHz SPI. The
-link layer now supports per-link timing overrides; the SU3 smoke image uses
-20 us CS setup, read turnaround, CRC hold, and CS recovery delays. A
-40-second capture at 20 us showed thirteen complete three-case passes before
-timing out mid-run 13. A 5 us probe produced an intermittent invalid QR read,
-so 20 us is the current practical margin setting.
+link layer now supports per-link timing overrides via `spu_link_set_timing()`,
+fed from compile-time defaults. A 40-second capture showed thirteen complete
+three-case passes before timing out mid-run 13.
+
+**Corrected 2026-08-07.** The committed defaults are **25 kHz with 1000 us**
+guards, not 20 us; no build-time override exists in the repository, so the
+20 us figure described an uncommitted local build. The claim that a 5 us probe
+produces intermittent invalid QR reads, and that 20 us is therefore the
+practical margin, **did not reproduce**: 44 consecutive complete runs at
+100 kHz with 5 us guards returned no invalid read. Most likely resolved by the
+reset conditioning applied to the Artix XDCs after 2026-07-04. Full sweep and
+caveats in `hardware_evidence.md` §3.2e.6. Do not quote a guard-delay margin
+as a design constraint.
 The RP2350 checker uses per-chunk status polling and treats final `LOAD_B`
 completion as durable `SIDE_IDLE + result_ready`, because internal
 `SIDE_WAIT` can be too brief to observe from the host.

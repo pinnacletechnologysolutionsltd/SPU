@@ -370,14 +370,47 @@ commit path:
 | 8 | 8 | `0x7FFBF6DF7FF7DE5F` | `0x7FFEB5277FFD653F` | `0x0004CAA00009C0F0` | `0x00018250000312E0` |
 
 The initial firmware reported exact matches for all three cases and ended with
-`SU3_J11: PASS`. A 40-second capture at 100 kHz and 20 us guards showed
-thirteen complete three-case passes before timing out mid-run 13. A 5 us
-guard-delay probe produced an intermittent invalid QR read, so 20 us is the
-current practical margin setting.
+`SU3_J11: PASS`. A 40-second capture showed thirteen complete three-case
+passes before timing out mid-run 13.
 
 On 2026-07-06, the SU3SHARE smoke was expanded to all nine dense-product
 result elements, read through QR lanes 0 through 8. Two complete capture loops
 reported exact matches for every element and ended with `SU3_J11: PASS`.
+
+**Re-proof and correction, 2026-08-07.** The 2026-07-04 run above was never
+entered in the project's hardware evidence ledger, and its exact conditions
+are not reproducible from committed artifacts: the smoke firmware's SPI rate
+and its four guard delays are compile-time defaults of 25 kHz and 1000 us,
+and no build-time override exists in the repository. The 100 kHz / 20 us
+figures therefore describe a local build that was not committed. The run was
+repeated to settle what is actually reproducible; it is logged in full as
+`docs/hardware_evidence.md` §3.2e.6.
+
+Using the unchanged `build/spu_a7_100t_SU3.bit`, SHA-256
+`a8b9f661892fd052...`, the standalone spin returned all **nine** dense-product
+elements exactly, on identity lane mapping (element *n* to lane *n*), across
+twelve consecutive complete runs with no failed element and no invalid QR
+read. The three elements tabulated above reproduce character for character,
+so Table 3's values are confirmed on silicon rather than transcribed from the
+oracle — a distinction that matters here, because those same constants are
+compiled into the smoke firmware and the Python oracle and were therefore
+available without running anything.
+
+The lane assignments in Table 3 were correct for the 2026-07-04 firmware,
+which selected three elements onto lanes 2, 5 and 8; the current firmware
+returns all nine on identity mapping.
+
+A guard-delay sweep was run on the same bitstream, rebuilding the firmware to
+reach each configuration:
+
+| Configuration | Runs | `SU3_J11: PASS` | Failures | Invalid reads |
+|---|---:|---:|---:|---:|
+| 25 kHz / 1000 us (as committed) | 12 | 12 | 0 | 0 |
+| 100 kHz / 20 us | 27 | 27 | 0 | 0 |
+| 100 kHz / 5 us | 44 | 44 | 0 | 0 |
+
+83 complete runs produced no failed element and no invalid QR read at any
+setting.
 
 ---
 
@@ -427,10 +460,18 @@ field, without floating-point drift.
 
 ### 6.2 Limitations
 
-- **Guarded bring-up link**: The functional silicon proof currently uses a
-  100 kHz SPI stream with 20 us guard delays. A 5 us probe showed intermittent
-  QR read invalidity, so further host-link tuning should raise SPI speed from
-  the 20 us baseline rather than treating 5 us as stable.
+- **Guarded bring-up link**: The functional silicon proof runs over a guarded
+  SPI stream; the committed firmware defaults are 25 kHz with 1000 us guard
+  delays. An earlier 5 us probe, on the 2026-07-04 pre-reset-fix bitstream,
+  reported intermittent QR read invalidity. That observation **did not
+  reproduce** on 2026-08-07: 44 consecutive complete runs at 100 kHz with 5 us
+  guards returned no invalid read (§3.2e.6). The most likely explanation is
+  that it was resolved by the reset conditioning applied to every Artix XDC
+  after that date, which removed an unconditioned `rst_n` pad — a credible
+  source of intermittent reads at tight guard timings. Confirming this would
+  require reloading a pre-fix bitstream, which has not been done. The link has
+  therefore not been characterised for a minimum guard interval, and no margin
+  figure should be quoted as a design constraint.
 - **Small field**: M31 is a 32-bit prime. SU(3) operations over this
   field are exact but low-precision. Larger applications require
   multiple residues or larger Mersenne primes.

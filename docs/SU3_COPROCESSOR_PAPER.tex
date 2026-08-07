@@ -294,14 +294,40 @@ matrix fixture over the Wukong J11 SPI path (command \texttt{0xB1}) at
 CS-recovery guard delays. Three independent result elements, read back
 through the QR commit path, matched the oracle exactly
 (Table~\ref{tab:silicon}); the capture ended with \texttt{SU3\_J11: PASS},
-and a 40-second capture completed thirteen three-case passes. A 5\,$\mu$s
-guard-delay probe produced an intermittent invalid QR read, so 20\,$\mu$s
-is the current practical margin.
+and a 40-second capture completed thirteen three-case passes.
 
 On 2026-07-06, the SU3SHARE smoke was expanded to all nine dense-product
 result elements, read through QR lanes 0--8. Two complete capture loops
 reported exact matches for every element, and the same bitstream then
 passed the RPLU2 config/QR regression.
+
+\subsection{Re-proof and Correction (2026-08-07)}
+
+The 2026-07-04 run above was never entered in the project's hardware
+evidence ledger, and its exact conditions are not reproducible from
+committed artifacts: the smoke firmware's SPI rate and its four guard
+delays are compile-time defaults of 25\,kHz and 1000\,$\mu$s, with no
+build-time override anywhere in the repository. The 100\,kHz /
+20\,$\mu$s figures therefore describe an uncommitted local build. The run
+was repeated to establish what is reproducible; it is logged in full as
+\S3.2e.6 of the project hardware evidence ledger.
+
+On the unchanged bitstream (SHA-256 \texttt{a8b9f661892fd052}\ldots), the
+standalone spin returned all \emph{nine} dense-product elements exactly, on
+identity lane mapping, across twelve consecutive complete runs with no failed
+element and no invalid QR read. The three elements in
+Table~\ref{tab:silicon} reproduce character for character, confirming those
+values on silicon rather than by transcription --- a distinction that matters
+here, since the same constants are compiled into both the smoke firmware and
+the Python oracle and were available without running anything. The lane
+assignments in Table~\ref{tab:silicon} were correct for the 2026-07-04
+firmware, which mapped three selected elements onto lanes 2, 5 and 8; the
+current firmware returns all nine on identity mapping.
+
+A guard-delay sweep on the same bitstream, rebuilding the firmware for each
+configuration, gave 12/12 passes at 25\,kHz with 1000\,$\mu$s guards, 27/27 at
+100\,kHz with 20\,$\mu$s, and 44/44 at 100\,kHz with 5\,$\mu$s: 83 complete
+runs with no failed element and no invalid QR read at any setting.
 
 \begin{table}[ht]
 \centering
@@ -353,10 +379,18 @@ floating-point drift.
 \subsection{Limitations}
 
 \begin{itemize}
-\item \textbf{Guarded bring-up link:} the silicon proof uses a 100\,kHz SPI
-stream with 20\,$\mu$s guard delays; a 5\,$\mu$s probe showed intermittent
-QR read invalidity, so link tuning should proceed from the 20\,$\mu$s
-baseline.
+\item \textbf{Guarded bring-up link:} the silicon proof runs over a guarded
+SPI stream, with committed firmware defaults of 25\,kHz and 1000\,$\mu$s guard
+delays. An earlier 5\,$\mu$s probe on the 2026-07-04 pre-reset-fix bitstream
+reported intermittent QR read invalidity; that observation did \emph{not}
+reproduce on 2026-08-07, where 44 consecutive complete runs at 100\,kHz with
+5\,$\mu$s guards returned no invalid read. It was most likely resolved by the
+reset conditioning subsequently applied to every Artix constraint file, which
+removed an unconditioned \texttt{rst\_n} pad --- a credible source of
+intermittent reads at tight guard timings. Confirming that would require
+reloading a pre-fix bitstream, which has not been done. The link therefore has
+no characterised minimum guard interval, and no margin figure should be quoted
+as a design constraint.
 \item \textbf{Small field:} M31 is a 32-bit prime; operations are exact but
 low-precision. Larger applications require multiple residues or larger
 Mersenne primes.
