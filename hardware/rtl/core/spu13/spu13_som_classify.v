@@ -2,6 +2,24 @@
 
 // spu13_som_classify.v — SOM Classifier with PHSLK Fast Path
 //
+// ─── SUPERSEDED — NOT THE PRODUCTION SOM PATH (noted 2026-08-06) ───────────
+// This module is instantiated nowhere: no board .ys, no other RTL. Every
+// shipped SOM build wires spu_som_bmu.v (quadrance WTA) behind the SOM1
+// result frame instead.
+//
+// Do not wire this in without a versioned composition policy that explicitly
+// permits selection-by-coherence. The fast path below classifies immediately
+// when a centroid pair is coherent, which BYPASSES the quadrance scan — so it
+// produces no ordered quadrances, no confidence gap and no runner-up, and
+// therefore cannot populate a SOM1 evidence frame. The adopted rule is "BMU
+// selects; PHSLK may annotate, admit, hold, or escalate; it must not
+// re-rank," and this path re-ranks by construction.
+//
+// Note also that the PHSLK here is PHSLK-A31 (A31[ε]/(ε³) jets, ~12 cycles),
+// NOT the one-cycle Lucas MAC OP_PHSLK over Z[φ]/(521). The two share a name
+// and nothing else.
+// ──────────────────────────────────────────────────────────────────────────
+//
 // Behavioral model for SOM classification using jet algebra over
 // A_SPU = GF(p⁴)[ε]/(ε³).  Two classification paths:
 //
