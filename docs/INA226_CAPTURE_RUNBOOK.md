@@ -243,6 +243,22 @@ Run it a second time to a separate output directory and byte-compare
 `ina226_coarse_monitor_result_v1.json`. Only a map that passes the predeclared
 replay gate proceeds to Tang and Artix SOM1 hardware replay.
 
+### Rehearse the chain without a bench
+
+`tools/generate_ina226_synthetic_capture.py` writes a complete synthetic
+30-session set using the profiles measured on 2026-08-06, so seal → verify →
+run → byte-comparison can be exercised before any physical capture. It is also
+the end-to-end test of the v2 stall exemption: its stall sessions carry a
+collapsed rail that every v1 row would have rejected.
+
+On the frozen seed the run reports `som_balanced=100.00% replay_eligible=True`
+and result SHA-256 `d989e8d1…`. If that hash changes, the pipeline changed.
+
+Expect `baseline_superiority_claim_authorized: False` — a plain threshold ties
+the SOM on separable data. That is the contract working correctly, and the
+physical capture should be expected to reproduce it. Synthetic data proves the
+machinery, never the science.
+
 ## 6. Explain one decision exactly
 
 Every normalized four-coordinate decision can be reduced to its exact
