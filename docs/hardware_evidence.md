@@ -829,6 +829,108 @@ RPLU2CORE_QSUB: PASS
   It validates shared topology and coexistence, not simultaneous live Padé/SU3
   arbitration.
 
+### 3.2e.6 Wukong J11 Standalone SU3 Full-Oracle Proof
+
+**Date:** 2026-08-07 NZT
+
+**Scope:** QMTech Wukong Artix-7 100T standalone `SU3` spin — the dedicated
+multiplier instance, not the shared one proven in §3.2e.5. This section exists
+because the standalone spin had never been logged here: the 2026-08-03
+eight-spin sweep gave it only a liveness-and-dispatch probe
+(`00 EA 32 01`, opcode latched, sidecar claimed), and
+`SESSION_HANDOVER_2026-08-04.md` carried "SU3's full oracle" as open bench
+work. This run closes that item.
+
+**Build/load:**
+
+```bash
+usbreset 1209:c0ca && sleep 1
+openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_SU3.bit
+picotool load -f hardware/rp2350/build/rp2350_su3_j11_smoke.uf2
+picotool reboot -f
+```
+
+No rebuild: the bitstream is the artifact already on disk from 2026-08-03,
+SHA-256
+`a8b9f661892fd0520afa5e685e40757d3edadcde97c206ba086f1c2018b77d96`.
+Smoke firmware `rp2350_su3_j11_smoke.uf2`, SHA-256
+`d2dabc0b6d7639de63a42136bf14d68a965a118d08a36d89dab2df5a81ffde91`.
+
+SRAM load completed with `Load SRAM 100%`, `isc_done 1`, `isc_ena 0`,
+`init 1`, and `done 1`.
+
+**Link configuration, as reported by the firmware itself:**
+
+```text
+pins miso=GP0 cs=GP1 sck=GP2 mosi=GP3 spi_baud=25000
+SPI: 25000 Hz requested, 25000 Hz achieved
+timing cs_setup=1000us turnaround=1000us crc_hold=1000us recovery=1000us
+status_checks=1 word_delay=250us result_wait=1500ms
+```
+
+**Proof lines** (run 3 of 13, verbatim; status lines elided):
+
+```text
+=== Wukong J11 SU3 smoke run 3 ===
+case elem=0 lane=0
+  qr valid=1 lane=0 A=0x7FFE271F7FFC43EF B=0x7FFF6B677FFED36F C=0x00021510000446A0 D=0x0000A30000014F30 PASS
+case elem=1 lane=1
+  qr valid=1 lane=1 A=0x7FFDA5EF7FFB3FBB B=0x7FFF41F77FFE7FF3 C=0x0002AE0400057E04 D=0x0000D3240001B14C PASS
+case elem=2 lane=2
+  qr valid=1 lane=2 A=0x7FFD24BF7FFA3B87 B=0x7FFF18877FFE2C77 C=0x000346F80006B568 D=0x0001034800021368 PASS
+case elem=3 lane=3
+  qr valid=1 lane=3 A=0x7FFDC7077FFB830B B=0x7FFF4BFF7FFE9463 C=0x00028DC400053A24 D=0x0000CA2400019E2C PASS
+case elem=4 lane=4
+  qr valid=1 lane=4 A=0x7FFD2A6B7FFA47FF B=0x7FFF196B7FFE2E9F C=0x00034B480006BAA8 D=0x00010678000218A8 PASS
+case elem=5 lane=5
+  qr valid=1 lane=5 A=0x7FFC8DCF7FF90CF3 B=0x7FFEE6D77FFDC8DB C=0x000408CC00083B2C D=0x000142CC00029324 PASS
+case elem=6 lane=6
+  qr valid=1 lane=6 A=0x7FFD66EF7FFAC227 B=0x7FFF2C977FFE5557 C=0x0003067800062DA8 D=0x0000F1480001ED28 PASS
+case elem=7 lane=7
+  qr valid=1 lane=7 A=0x7FFCAEE77FF95043 B=0x7FFEF0DF7FFDDD4B C=0x0003E88C0007F74C D=0x000139CC00028004 PASS
+case elem=8 lane=8
+  qr valid=1 lane=8 A=0x7FFBF6DF7FF7DE5F B=0x7FFEB5277FFD653F C=0x0004CAA00009C0F0 D=0x00018250000312E0 PASS
+SU3_J11: PASS
+```
+
+**Aggregate over one continuous 280-second capture**
+(`build/su3_reproof/run_a_defaultclk.log`):
+
+| Quantity | Value |
+|---|---|
+| Runs started | 13 |
+| Runs completed | 12 (the 13th was truncated by the capture window) |
+| `SU3_J11: PASS` | 12 |
+| `SU3_J11: FAIL` | 0 |
+| Per-element `PASS` lines | 120 |
+| Any line containing `FAIL` | 0 |
+| Distinct QR quadruples across lanes 0-8 | 9 (all elements distinct) |
+
+**Interpretation:**
+
+- The standalone `SU3` spin computes the full nine-element dense 3×3 product
+  in `A31[i]` on silicon and commits every element exactly, matching the
+  Python oracle's `dense_expected` constants. It is no longer a
+  liveness-probe-only spin.
+- Twelve consecutive complete runs with zero failures. No intermittency was
+  observed at this link configuration, despite the spin's post-route
+  `clk_fast` of 45.51 MHz being under the 50 MHz target
+  (`SESSION_HANDOVER_2026-08-04.md`).
+- **Three corrections to `SU3_COPROCESSOR_PAPER` follow from this run.** Its
+  Table 3 hex values are confirmed correct and are now silicon-verified. But
+  the paper describes the link as *"100 kHz with 20 us guard delays"*, whereas
+  the committed firmware reports **25 kHz with 1000 us guards** — and
+  `git log -S` shows those four guard defines have been 1000 us since
+  `a71635c`, the commit that introduced the paper, with no build-time override
+  anywhere. The paper also maps elements 0/4/8 to lanes 2/5/8, where the
+  current firmware uses an identity mapping, element *n* to lane *n*, across
+  all nine.
+- The paper's Limitations claim that a 5 us guard-delay probe produced
+  intermittent invalid reads **remains unreproduced**. No firmware state in
+  the repository has ever used 5 us guards, so the claim cannot be rebuilt
+  from committed artifacts. It should be re-established by experiment or
+  withdrawn.
+
 ### 3.2f Wukong J11 RPLU2PADE Padé Pipeline Proof
 
 **Date:** 2026-07-05 NZT
