@@ -925,11 +925,40 @@ SU3_J11: PASS
   anywhere. The paper also maps elements 0/4/8 to lanes 2/5/8, where the
   current firmware uses an identity mapping, element *n* to lane *n*, across
   all nine.
-- The paper's Limitations claim that a 5 us guard-delay probe produced
-  intermittent invalid reads **remains unreproduced**. No firmware state in
-  the repository has ever used 5 us guards, so the claim cannot be rebuilt
-  from committed artifacts. It should be re-established by experiment or
-  withdrawn.
+- The paper's Limitations claim about 5 us guards was tested directly; see the
+  guard-delay sweep below.
+
+**Guard-delay sweep, 2026-08-07 NZT.** The committed firmware fixes both the
+SPI rate and the four guard delays as `#ifndef` defaults, so the paper's
+configuration was rebuilt by temporarily overriding them and restoring the
+source from git afterwards. Same bitstream throughout
+(`a8b9f661892fd052...`), each variant flashed with `picotool` and captured to
+`build/su3_reproof/`:
+
+| Configuration | Firmware | Runs | `SU3_J11: PASS` | `FAIL` | `valid=0` |
+|---|---|---:|---:|---:|---:|
+| 25 kHz / 1000 us | as committed | 12 | 12 | 0 | 0 |
+| 100 kHz / 20 us | rebuilt | 27 | 27 | 0 | 0 |
+| 100 kHz / 5 us | rebuilt | 44 | 44 | 0 | 0 |
+
+83 complete runs, no failed element, no invalid QR read at any setting.
+
+- **The 5 us intermittency does not reproduce.** The paper's Limitations
+  section reports that a 5 us guard probe produced an intermittent invalid QR
+  read, concluding that "20 us is the current practical margin". 44 consecutive
+  clean runs at 5 us — against the paper's own 13-run capture — do not support
+  that margin claim on current silicon.
+- **A likely reconciliation, not a refutation.** This bitstream postdates the
+  reset root-cause fix (`b48b6f6` pulls `rst_n` up in every XDC that
+  constrains it; `0eec6f4` conditions the reset pin and stops cascading BUFG
+  into BUFG). An unconditioned reset pad is a credible cause of intermittent
+  invalid reads at tight guard timings. The July observation was plausibly
+  real and has since been designed out. Testing that would require reloading a
+  pre-fix bitstream, which has not been done.
+- Recommended paper wording: retain the observation as a dated, historical
+  finding against the pre-reset-fix image, and drop the standing claim that
+  20 us is a required margin. Do not restate it as a current limitation
+  without a fresh reproduction.
 
 ### 3.2f Wukong J11 RPLU2PADE Padé Pipeline Proof
 
