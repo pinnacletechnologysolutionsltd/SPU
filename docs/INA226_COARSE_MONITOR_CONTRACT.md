@@ -1,12 +1,38 @@
-# INA226 coarse anomaly monitor v1 contract
+# INA226 coarse anomaly monitor v2 contract
 
-Date frozen: 2026-07-19
+Date frozen: 2026-07-19 (v1) — amended 2026-08-06 (v2)
 
 ## Status and question
 
 This contract was frozen before an INA226 was available and before any
 physical capture was ingested or scored. Its machine-readable source of truth
-is `software/datasets/ina226_coarse_monitor_v1.json`.
+is `software/datasets/ina226_coarse_monitor_v2.json`.
+
+### What changed in v2, and why v1 is still on disk
+
+v1 (`ina226_coarse_monitor_v1.json`, SHA-256 `58b37ec5…`) applied the
+50000 ppm bus-voltage tolerance to **every** row of **every** class. Current
+limiting works by collapsing supply voltage, so a genuine
+`current_limited_stall` cannot hold bus voltage within 5 % of nominal on any
+bench — the two clauses were mutually exclusive as written.
+
+Block 0 measured it on 2026-08-06: with the supply regulating in
+constant-current at 307.4 mA, bus voltage collapsed to 1478–1501 mV and
+**0 of 145 rows** fell inside the window, while `normal` and `elevated_load`
+passed the same gate at 2995–3017 mV and 2897–2937 mV. Mean current ascended
+98.3 → 240.8 → 307.4 mA, so the physical classes separated cleanly and only
+this clause failed.
+
+v2 scopes the bus-voltage check to `normal` and `elevated_load`. Every other
+clause — shunt scaling, shunt headroom, cadence, row count, session rejection
+policy — still applies to the stall class in full.
+
+**v1 is deliberately left unmodified.** The claim that this study was
+pre-registered rests on v1 being byte-identical to what entered Git at
+`ed16263`; amending it in place would have destroyed that. This correction was
+made before any session was sealed and before any score existed, so it is not
+tuning against held-out results — the `failure_policy` prohibition on that
+remains in force and unchanged.
 
 The experiment asks one narrow product question: can the existing seven-node
 SPU SOM distinguish **normal**, **elevated load**, and a safely bounded

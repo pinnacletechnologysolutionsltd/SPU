@@ -54,10 +54,20 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
 
     ser = serial.Serial(args.port, args.baud, timeout=1)
+    # The logger free-runs, so the OS buffer holds rows captured before this
+    # invocation. Reading them replays old device timestamps and then jumps to
+    # the present, and that discontinuity trips the validator's 8..12 ms
+    # cadence gate (software/lib/ina226_capture.py:308-313) — rejecting the
+    # session at seal, long after the bench work is done. Flush, then drop one
+    # possibly-partial line so capture starts on a row boundary.
+    ser.reset_input_buffer()
+    ser.readline()
     phase = args.label
     t_end = time.monotonic() + args.seconds if args.seconds else None
     interactive = sys.stdin.isatty() and not args.seconds
     n = 0
+    prev_t = None
+    anomalies = []
 
     with open(args.out, "w") as out:
         out.write(HEADER + "\n")
@@ -84,6 +94,17 @@ def main():
                     [int(p) for p in parts]
                 except ValueError:
                     continue
+                # Motor brush noise can split a CDC line and rejoin it mid-field,
+                # producing a row that still parses as four integers but carries a
+                # corrupted t_ms (e.g. "1894" prepended to "18947855"). That trips
+                # the validator's 8..12 ms cadence gate at seal, long after the
+                # bench session is over. Flag it here instead, while the condition
+                # can still be re-run.
+                t_ms = int(parts[0])
+                if prev_t is not None and not 5 <= t_ms - prev_t <= 20:
+                    anomalies.append((n + 1, prev_t, t_ms))
+                prev_t = t_ms
+
                 iso = datetime.datetime.now().isoformat(timespec="milliseconds")
                 out.write(f"{iso},{args.probe},{phase},{line}\n")
                 n += 1
@@ -91,6 +112,12 @@ def main():
             pass
 
     print(f"done: {n} samples -> {args.out}")
+    if anomalies:
+        print(f"WARNING: {len(anomalies)} corrupted timestamp(s) -- this session "
+              f"would be REJECTED at seal. Re-run the capture.")
+        for row, before, after in anomalies[:5]:
+            print(f"  row {row}: t_ms {before} -> {after} (gap {after - before})")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

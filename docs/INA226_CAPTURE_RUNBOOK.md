@@ -10,17 +10,31 @@ any synthetic/physical score existed.
 
 ## 1. Prepare the manifest
 
-> **The manifest for the current bench already exists — do not run `init`.**
+> **A one-time re-`init` against the v2 contract is required (2026-08-06).**
 >
-> It is `build/ina226_capture/manifest.json` (**not** `capture_manifest.json`,
-> which earlier revisions of this runbook named and which does not exist). It is
-> pinned to probe `tamiya_75026_v1`, Tamiya 75026, 3000 mV bus, 280 mA
-> continuous, 280 mA supply limit, and its `contract.sha256` was re-verified
-> against `software/datasets/ina226_coarse_monitor_v1.json` on 2026-08-04.
+> The manifest is `build/ina226_capture/manifest.json` (**not**
+> `capture_manifest.json`, which earlier revisions named and which does not
+> exist). The existing one is pinned to the **v1** contract and now fails with
+> *"capture contract format mismatch"* — that is expected, not a fault. Re-run
+> `init` once against v2, then treat the manifest as frozen again.
 >
-> `init` performs a bare `write_bytes` with **no existence check**
-> (`tools/ina226_capture_pipeline.py:390`) — running it silently replaces the
-> manifest, and the 30 `csv_sha256` fields with it. Skip to §2.
+> This is safe only because **no session has been sealed**: all 30
+> `csv_sha256` fields are null. Confirm that before running it:
+>
+> ```sh
+> python3 -c "import json;m=json.load(open('build/ina226_capture/manifest.json'));\
+> print(sum(1 for s in m['sessions'] if s['csv_sha256']), 'sealed of', len(m['sessions']))"
+> ```
+>
+> If that prints anything other than `0 sealed of 30`, **stop** — `init`
+> performs a bare `write_bytes` with **no existence check**
+> (`tools/ina226_capture_pipeline.py:390`) and will silently discard sealed
+> hashes.
+>
+> Use the **measured** supply limit, not the front-panel setting. A supply
+> displaying 280 mA was measured regulating at 307.4 mA on 2026-08-06; `init`
+> refuses a limit above the actuator's continuous rating, and recording an
+> unverified number defeats the check.
 
 Only for a *new* actuator on a fresh manifest: choose a low-voltage replaceable
 fan or motor whose continuous-current rating is documented and below the
@@ -51,17 +65,37 @@ INA226 breadboard wiring:
 
 | INA226 | RP2350/Pico 2 | Purpose |
 |---|---|---|
-| VCC | 3V3 | sensor logic power |
-| GND | GND | common reference |
-| SDA | GP8 | I2C0 data |
-| SCL | GP9 | I2C0 clock |
-| ALERT | GP15 or open | reserved; v1 polls |
+| VCC | 3V3 (pin 36) | sensor logic power |
+| GND | GND (pin 13) | common reference |
+| SDA | GP8 (pin 11) | I2C0 data |
+| SCL | GP9 (pin 12) | I2C0 clock |
+| ALERT / ALE | GP15 or open | reserved; v1 polls |
+| VBS | VIN− node | **bus-voltage sense — required** |
 | VIN+ | bench-supply positive | high side before shunt |
 | VIN- | actuator positive | high side after shunt |
 
 The actuator negative returns directly to bench-supply ground. Do not put an
 FPGA board's supply through the INA226 for this experiment. Confirm the module
-is marked `R100`; a different shunt invalidates the v1 current scaling.
+is marked `R100`; a different shunt invalidates the current scaling.
+
+> **`VIN−` is not a negative terminal.** It is the downstream side of the
+> shunt and sits within ~30 mV of `VIN+` — a positive node. The actuator's
+> **positive** lead goes there. This wording has caused wiring errors twice.
+
+> **`VBS` must be jumpered to the `VIN−` node** (the same net as the actuator's
+> positive lead), **not** to supply negative. VBUS is measured against the
+> INA226's own ground, so tying `VBS` to ground reads exactly 0 mV on every
+> row and every `normal`/`elevated_load` session is rejected at seal. Earlier
+> revisions of this table omitted `VBS` entirely.
+
+> **Bench-supply ground must be common with the logger ground**, or `bus_mV` is
+> meaningless. Run the actuator's return current **directly to the supply
+> terminal** and take a separate thin reference wire from that terminal to the
+> Pico's GND. Do not let actuator current share a breadboard rail with logic
+> ground: at 200–300 mA the contact resistance both shifts the ground reference
+> (observed corrupting the CDC stream during stalls) and drops enough voltage
+> to push `bus_mV` below tolerance. A breadboarded power path measured 0.96 Ω
+> and degraded to 1.44 Ω within one session on 2026-08-06.
 
 Before enabling the output:
 
@@ -82,6 +116,18 @@ and `power_log.py` exits with `pyserial required` without it:
 ```sh
 source .venv/bin/activate     # pyserial 3.5 lives here, not in system python3
 ```
+
+> **Do not trust a fixed `/dev/ttyACM*` number.** It is assigned in enumeration
+> order and moves whenever the DirtyJTAG programmer, the southbridge, or the
+> logger is replugged — the logger has appeared as both `ttyACM0` and `ttyACM3`
+> in one session, and `ttyACM0` was the *programmer* for part of it. Identify
+> the board by its USB serial before every capture:
+>
+> ```sh
+> for d in /dev/ttyACM*; do
+>   echo "$d $(udevadm info -q property -n $d | sed -n 's/^ID_SERIAL_SHORT=//p')"
+> done
+> ```
 
 On the host, capture each file with the exact probe and phase names from the
 manifest:

@@ -34,7 +34,7 @@ from som_map import write_map  # noqa: E402
 from som_trainer import build_map_document, squared_distance  # noqa: E402
 
 
-DEFAULT_CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v1.json"
+DEFAULT_CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v2.json"
 
 
 def round_ratio_half_even(numerator: int, denominator: int) -> int:

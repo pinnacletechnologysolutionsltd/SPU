@@ -19,7 +19,14 @@ from lib.som_current_monitor import (
 )
 
 
-CONTRACT_FORMAT = "SPU_INA226_COARSE_MONITOR_V1"
+CONTRACT_FORMAT = "SPU_INA226_COARSE_MONITOR_V2"
+CONTRACT_PATH = "software/datasets/ina226_coarse_monitor_v2.json"
+# Bus voltage is validated only where a stable supply rail is expected. Current
+# limiting works by collapsing supply voltage, so current_limited_stall cannot
+# satisfy a tolerance band around nominal on any bench — the v1 contract's two
+# clauses were mutually exclusive. See the "supersedes" block in the v2 contract
+# for the block-0 measurement that established this.
+BUS_VOLTAGE_CHECKED_CLASSES = ("normal", "elevated_load")
 MANIFEST_FORMAT = "SPU_INA226_CAPTURE_MANIFEST_V1"
 CLASS_NAMES = ("normal", "elevated_load", "current_limited_stall")
 CSV_COLUMNS = (
@@ -146,7 +153,7 @@ def build_manifest(
         "format": MANIFEST_FORMAT,
         "contract": {
             "format": CONTRACT_FORMAT,
-            "path": "software/datasets/ina226_coarse_monitor_v1.json",
+            "path": CONTRACT_PATH,
             "sha256": sha256_file(contract_path),
         },
         "sensor": {
@@ -181,7 +188,7 @@ def validate_manifest(document: dict) -> None:
     contract = document.get("contract", {})
     if contract.get("format") != CONTRACT_FORMAT:
         raise CaptureDataError("capture contract format mismatch")
-    if contract.get("path") != "software/datasets/ina226_coarse_monitor_v1.json":
+    if contract.get("path") != CONTRACT_PATH:
         raise CaptureDataError("capture contract path mismatch")
     digest = contract.get("sha256")
     if (
@@ -316,9 +323,12 @@ def parse_capture_csv(
             raise CaptureDataError(f"{path}: row {row_number} violates shunt scaling")
         if abs(shunt_uV) > 75_000:
             raise CaptureDataError(f"{path}: row {row_number} exceeds shunt headroom")
-        tolerance = nominal_bus_mV * 50_000 // 1_000_000
-        if not nominal_bus_mV - tolerance <= bus_mV <= nominal_bus_mV + tolerance:
-            raise CaptureDataError(f"{path}: row {row_number} bus voltage out of range")
+        if class_name in BUS_VOLTAGE_CHECKED_CLASSES:
+            tolerance = nominal_bus_mV * 50_000 // 1_000_000
+            if not nominal_bus_mV - tolerance <= bus_mV <= nominal_bus_mV + tolerance:
+                raise CaptureDataError(
+                    f"{path}: row {row_number} bus voltage out of range"
+                )
         samples.append(CaptureSample(
             host_iso=row["host_iso"],
             t_ms=t_ms,

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import tempfile
@@ -33,7 +34,7 @@ from som_map import load_map  # noqa: E402
 from som_voronoi_explain import explain  # noqa: E402
 
 
-CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v1.json"
+CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v2.json"
 
 
 def fixture_rows(class_name: str, block: int, probe: str = "dc_fan_v1") -> list[str]:
@@ -206,6 +207,41 @@ def main() -> None:
             ),
         )
 
+        # v2 exemption: a collapsed rail is the defining feature of a
+        # current-limited stall, so that class must validate despite it.
+        def collapsed_fixture(class_name: str, name: str) -> Path:
+            lines = fixture_rows(class_name, 0)
+            out = [lines[0]]
+            for row in lines[1:]:
+                fields = row.split(",")
+                fields[4] = "1490"      # far outside 5000 +/- 250
+                out.append(",".join(fields))
+            target = root / name
+            target.write_text("\n".join(out) + "\n", encoding="ascii")
+            return target
+
+        stall_samples = parse_capture_csv(
+            collapsed_fixture("current_limited_stall", "stall_collapsed.csv"),
+            class_name="current_limited_stall",
+            probe="dc_fan_v1",
+            nominal_bus_mV=5000,
+        )
+        check("stall exempt from bus band", len(stall_samples) == ACCEPTED_ROWS)
+        check("stall exemption keeps the collapsed reading", stall_samples[0].bus_mV == 1490)
+
+        # The exemption must be scoped, not a blanket removal: the same
+        # collapsed rail under a checked class still has to be rejected.
+        normal_collapsed = collapsed_fixture("normal", "normal_collapsed.csv")
+        rejects(
+            "checked class still rejects collapsed bus",
+            lambda: parse_capture_csv(
+                normal_collapsed,
+                class_name="normal",
+                probe="dc_fan_v1",
+                nominal_bus_mV=5000,
+            ),
+        )
+
         unsealed = json.loads(json.dumps(manifest))
         unsealed["sessions"][0]["csv_sha256"] = None
         rejects("unsealed session rejected", lambda: manifest_windows(unsealed, manifest_path))
@@ -241,7 +277,19 @@ def main() -> None:
         check("Voronoi winner inequality holds", explanation["inequality"]["lhs"] <= explanation["inequality"]["rhs"])
 
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
-    check("contract format pinned", contract["format"] == "SPU_INA226_COARSE_MONITOR_V1")
+    check("contract format pinned", contract["format"] == "SPU_INA226_COARSE_MONITOR_V2")
+    check(
+        "v2 records the v1 hash it supersedes",
+        contract["supersedes"]["sha256"]
+        == hashlib.sha256(
+            (REPO / "software/datasets/ina226_coarse_monitor_v1.json").read_bytes()
+        ).hexdigest(),
+    )
+    check(
+        "bus gate scoped to non-stall classes",
+        tuple(contract["validation"]["bus_voltage_checked_classes"])
+        == ("normal", "elevated_load"),
+    )
     check("contract features pin implementation", tuple(contract["features"]) == (
         "mean_current_mA",
         "peak_to_peak_mA",

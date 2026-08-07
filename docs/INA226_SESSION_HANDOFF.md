@@ -12,7 +12,85 @@ delete it from here.
 
 ---
 
-## Verified ready (checked 2026-08-04, re-check before starting)
+## 2026-08-06/07 — a failing SDA jumper masqueraded as a dead module
+
+Read this before anything below it; several statements further down are now
+stale.
+
+**Resolved.** The module is healthy: 300/300 reads at 400 kHz, zero failures,
+`MFG=0x5449 DIE=0x2260`, shunt offset back to −5 µV. **The cause was a single
+bad SDA jumper wire.** Replacing it fixed everything.
+
+**The diagnostic trap, because it cost hours and will recur.** When the
+failures began, both SDA and SCL showed pull-ups, so a disconnected SDA was
+ruled out — wrongly. **A pull-up probe is a DC, high-impedance test; a wire can
+pass it while being far too resistive or intermittent to carry signalling.**
+The wire only revealed itself much later by going fully open (`GP8=00000000`
+while `GP9=11111111`).
+
+Symptoms it produced, all of which look like damaged silicon:
+
+- address scan succeeds while every `readfrom_mem` fails — SDA is bidirectional
+  and driven by both ends, so a short ACK survives where a longer transfer does
+  not;
+- failure rate swinging between ~10 % and 100 % across minutes;
+- identical failures at 400/200/100/50 kHz, on hardware *and* soft I2C, and on a
+  second pin pair (I2C1 GP6/GP7);
+- unaffected by a module power-cycle or by disconnecting the entire power side;
+- one nonsense analog reading (`shunt_uV = 6095` with the supply off) that was
+  simply a corrupted transaction.
+
+**Rule for next time: if the address ACKs but register reads fail, replace the
+SDA wire before concluding anything about the part.** Swap the wire, don't
+reseat it — several failures today clustered on specific jumpers.
+
+**Not established:** the earlier back-EMF/damage theory has no evidence behind
+it. A flyback diode across the motor remains sensible practice for an inductive
+load, but it is hygiene, not a fix for an observed fault.
+
+### What is already done and needs no repeating
+
+- MicroPython v1.28.0 flashed on the Pico 2; `ina226_logger.py` installed as
+  `main.py`, hash-verified. Full chain proven: identity check, 100 Hz stream,
+  cadence 9–11 ms against the 8–12 ms gate.
+- **Two `power_log.py` defects found and fixed**, each of which would have
+  silently rejected every one of the 30 sessions at seal:
+  stale-serial-buffer rows producing a bogus first cadence interval, and
+  motor-noise line-splitting that yields a corrupted `t_ms` which still parses.
+  The second is now caught at capture time with a nonzero exit.
+- **Contract v2** (`ina226_coarse_monitor_v2.json`) supersedes v1; v1 left
+  byte-identical for provenance. Manifest needs a one-time re-`init`.
+- Runbook corrected: missing `VBS` row, `VIN−` is a positive node, star-ground
+  requirement, unstable `/dev/ttyACM*` numbering.
+
+### Bench numbers measured before the failure (for the rebuild)
+
+| Quantity | Value |
+|---|---|
+| Open-circuit bus | 3100 mV |
+| Breadboarded power path | 0.96 Ω, degrading to 1.44 Ω within one session |
+| Free-running motor | 95–98 mA |
+| `elevated_load` (hands-off mechanical) | 240 mA |
+| Stall, supply in CC | 307.4 mA — **supply displayed 280 mA** |
+| Block-0 ascending-means gate | **passed**: 98.3 → 240.8 → 307.4 mA |
+
+The supply's ~10 % current-limit error must be re-measured, not read off the
+dial, before the manifest re-`init`.
+
+### Resume sequence
+
+1. Logic-only soak (300 reads at 400 kHz) — the gate is **zero** failures, not
+   "the scan works." A single successful scan proves almost nothing; that is
+   what hid the bad SDA wire for hours.
+2. Reconnect the power side: VIN+, VIN−, and **VBS to the VIN− node**.
+3. Star-ground power path: motor return direct to the supply terminal.
+4. Measure series R (open-circuit vs loaded); target < 0.1 Ω.
+5. Measure the true current limit; trim supply so `bus_mV` ≈ 3000 at load.
+6. Re-`init` the manifest against **v2** with measured values.
+7. Fresh block 0 — the three captures on disk were taken through the old
+   breadboard path against the v1 manifest and must be discarded.
+
+## Verified ready (checked 2026-08-04 — SUPERSEDED, see the block above)
 
 | Check | State |
 |---|---|
