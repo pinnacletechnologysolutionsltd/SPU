@@ -15,6 +15,23 @@ delivered by this repository.
 
 Canonical semantic boundary: `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
 
+## Service Composition Boundary
+
+The processor is composed from explicitly typed services rather than a fused
+accelerator.  `SOM1` is the stable decision service: its v1 ABI and exact
+`Q(sqrt(3))` ordering semantics are normative in `docs/SOM1_RESULT_FRAME.md`
+and `docs/SOM_V1_PRODUCT_CONTRACT.md`.  PHSLK/Lucas and RPLU/Padé are separate
+algebra services in their own declared domains; PHSLK is a coherence predicate,
+not a total order or a substitute for BMU selection.
+
+No implicit conversion is permitted between SOM `Q(sqrt(3))` values, phinary
+`Z[phi]/(521)` values, and RPLU A31 values.  A cross-domain adapter must state
+its encoding, range, error/singularity behavior, latency, and oracle.  In a
+composed decision, BMU evidence remains unchanged; an algebra predicate may
+only annotate it and drive an explicit accept/hold/escalate policy.  Shared
+datapaths are considered only after this policy and an oracle-backed
+composition trace exist.
+
 ## Board Roles
 
 | Board | Role | Use for | Do not use for |
@@ -331,10 +348,30 @@ Current Artix-7 SU3 build proof:
   completion as `SIDE_IDLE + result_ready`.
 - Silicon QR readback matched oracle constants for three result elements:
   elem 0/lane 2, elem 4/lane 5, and elem 8/lane 8. The capture ended with
-  `SU3_J11: PASS`; a 40-second capture at 20 us showed thirteen complete
-  three-case passes before timing out mid-run 13. A 5 us probe produced an
-  intermittent invalid QR read, so 20 us is the current practical margin
-  setting.
+  `SU3_J11: PASS`; a 40-second capture showed thirteen complete three-case
+  passes before timing out mid-run 13.
+
+**Superseded 2026-08-07 — re-proven, and two claims corrected.** The
+standalone SU3 spin now has a ledger entry, `hardware_evidence.md` §3.2e.6.
+On the unchanged bitstream it returned all **nine** dense-product elements
+exactly, on identity lane mapping, over twelve consecutive complete runs with
+no failed element and no invalid QR read. The three hex quadruples above are
+confirmed on silicon rather than transcribed from the oracle.
+
+- **Link configuration.** The 100 kHz / 20 us figures above describe an
+  uncommitted local build. The smoke firmware's SPI rate and its four guard
+  delays are compile-time defaults of **25 kHz and 1000 us**, unchanged since
+  the commit that introduced them, with no build-time override in the
+  repository.
+- **The 5 us margin claim is withdrawn.** 44 consecutive complete runs at
+  100 kHz with 5 us guards returned no invalid read. The original observation
+  was plausibly real on the pre-reset-fix bitstream and designed out by the
+  reset conditioning applied to the Artix XDCs afterwards; that reconciliation
+  is untested, since it needs a pre-fix bitstream reloaded. The link has **no
+  characterised minimum guard interval** — do not quote a margin figure as a
+  design constraint.
+- The 2026-07-04 lane assignments were correct for that firmware; the current
+  firmware returns all nine elements on identity mapping.
 
 Current Artix-7 SU3SHARE shared-multiplier proof:
 
