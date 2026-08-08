@@ -97,6 +97,35 @@ is marked `R100`; a different shunt invalidates the current scaling.
 > to push `bus_mV` below tolerance. A breadboarded power path measured 0.96 Ω
 > and degraded to 1.44 Ω within one session on 2026-08-06.
 
+### Flyback diode across the actuator
+
+Fit a 1N4001-class diode **anti-parallel across the actuator's own terminals**,
+cathode to the positive lead, mounted at the motor rather than back at the
+supply so the loop it clamps is short.
+
+> **Never put a diode in series with the measured path.** A series drop of
+> ~0.7 V changes both the load current and `bus_mV`, which shifts the very
+> quantities the three classes are separated by. The flyback is anti-parallel
+> and carries no current in normal operation.
+
+Honest framing: this is standard practice for switching an inductive load, and
+it is **not** a fix for a diagnosed fault. The back-EMF damage theory was
+investigated on 2026-08-06/07 and not supported. It is cheap insurance, and the
+first module's failure was confined to the channel most exposed to rail
+transients — suggestive, untested, and not a reason to claim a mechanism.
+
+### Freeze the electrical path before block 0
+
+**Every physical and electrical change — soldered harness, star ground, flyback
+diode, supply trim — must be complete before the first block-0 capture, and
+nothing may change after it.** The contract has no partial-redo path: altering
+the rig mid-campaign makes later blocks incomparable with earlier ones, and the
+only remedy is re-running all thirty sessions.
+
+This is why the three captures already on disk are discarded rather than
+reused: they were taken through the old breadboard path against the v1
+manifest. Changing the rig is free right now and ruinous in a week.
+
 Before enabling the output:
 
 1. set the supply voltage with the output disabled;
@@ -109,6 +138,37 @@ Before enabling the output:
 
 Copy `tools/bench_metrics/ina226_logger.py` to the RP2350 as `main.py`. Its
 startup identity check must not print `FAIL`.
+
+### Bus-voltage channel check — run before every capture campaign
+
+**The identity check and the 300-read soak do not test this.** They exercise
+the I2C link and register access; they pass on a module whose bus-voltage
+channel is dead. That is exactly the fault that ended the first module on
+2026-08-07, and it would have passed every gate in this runbook. Since the
+contract requires a `bus_mV` column on every row and applies a per-class
+bus-voltage tolerance, such a module fails at seal — after the bench work.
+
+Two points, not one, because a stuck channel can read a plausible constant:
+
+1. With the actuator disconnected, set the supply to ~3000 mV and read
+   `bus_mV`.
+2. Change the supply to ~2500 mV and read again.
+
+**Use a DMM at the `VBS`/`VIN−` node as the reference, not the supply's own
+display.** That display is not a reference instrument: it read 280 mA against
+a true 307.4 mA in block 0, a ~10 % error.
+
+| Check | Gate |
+|---|---|
+| Each point vs DMM | within **1 %** of the DMM reading |
+| Tracking between the points | the `bus_mV` delta matches the DMM delta within **2 %** |
+| Either point | not `0` and not identical to the other |
+
+The 1 % allows for DMM error and lead drop; the INA226's own bus-voltage gain
+error is ±0.1 % max with a 1.25 mV LSB, so a healthy channel sits far inside
+it. A reading of exactly `0 mV` on every row is the specific signature of `VBS`
+tied to ground rather than to the `VIN−` node — check the wiring before
+condemning the part.
 
 **Activate the venv first — `pyserial` is not installed in the system Python**,
 and `power_log.py` exits with `pyserial required` without it:
