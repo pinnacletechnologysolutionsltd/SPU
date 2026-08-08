@@ -115,7 +115,47 @@ distributions are quoted.
 
 Ordered by what unblocks the most. Items 1 and 3 need no bench; item 2 does.
 
-### 1. Close out the P&R sweep (desk, ~30 min)
+### 1. ~~Close out the P&R sweep~~ — DONE overnight, results below
+
+**Campaign finished 2026-08-08T18:57Z, 40/40 runs, one deliberate failure**
+(`PROBE ZK1 S1`, killed, `rc=143`). Wall clock ~11 h; the two longest LINK
+routes took 16449 s and 14500 s.
+
+**A stale-metrics trap was caught and fixed — check this before trusting any
+rerun.** A killed build leaves the *previous* campaign's metrics file on disk
+under the same name, so the first analyser pass silently absorbed the 07-31
+`PROBE ZK1 S1` build (commit `15b3118`) and reported `n=10 complete` for a cell
+that has 9. Seed-number completeness cannot see this; the seed is present, just
+two weeks stale. The analyser now filters on the campaign's `started_utc` and
+declares what it drops. The contamination warning fired correctly and is what
+caught it. Corrected figures: PROBE candidate min 34.37 → **37.36**, worst
+margin 9.37 → **12.36**.
+
+| Cell | n | min | median | max | spread | worst margin | all PASS |
+|---|---|---|---|---|---|---|---|
+| LINK reference | 10 | 39.28 | 42.53 | 50.11 | 10.83 | +14.28 | yes |
+| LINK candidate | 10 | 31.46 | 44.75 | 52.42 | 20.96 | +6.46 | yes |
+| PROBE reference | 10 | 41.78 | 47.82 | 50.79 | 9.01 | +16.78 | yes |
+| **PROBE candidate** | **9** (missing seed 1) | 37.36 | 44.58 | 47.21 | 9.85 | +12.36 | yes |
+
+Area, deterministic per arm: **LINK** LUTX +32 (+0.13 %), FFX −176, DSP ±0.
+**PROBE** LUTX −44, FFX −176, DSP ±0.
+
+**Against the pre-registered criteria:** 1 (timing) **MET** — every candidate
+build clears 25 MHz. 2 (routing reliability) **MET at the limit** — PROBE
+candidate 1 non-convergence against reference 0, which is the allowed +1; LINK
+0 vs 0. 3 (area) **MET** on both spins. **4 and 5 remain**: re-run formal plus
+`spu13_zphi` regression at the swap commit, and the four-act bench with N ≥ 10
+and a positive control.
+
+**No Fmax claim, exactly as pre-registered.** Ranges overlap heavily — LINK
+candidate alone spans 31.5–52.4 MHz across seeds, dwarfing the ~2 MHz median
+difference.
+
+So the swap is no longer a measurement question. It is criterion 4 (cheap, desk)
+and criterion 5 (one bench session).
+
+### Original plan for item 1, retained for reference
 
 The campaign should be finished overnight. Before reading any number, check
 what actually completed:
