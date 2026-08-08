@@ -12,20 +12,39 @@ delete it from here.
 
 ---
 
-## 2026-08-08 — SCL path failed; capture parked on a replacement part
+## 2026-08-08 — VBUS channel failed; capture parked on a replacement part
 
-**Read this first. Everything below is currently unrunnable.** The SCL path has
-failed and the module cannot read currents. A replacement is roughly a week
-out, so Phase B physical acquisition is parked until then. Nothing else in the
-project is blocked by this: INA226 uses the Pico 2, while the Wukong and
-RP2350-Zero tracks are untouched.
+**Read this first. Everything below is currently unrunnable.** The module's
+**bus-voltage (VBUS) channel has failed**, while I2C and the shunt channel
+remain good. A replacement is roughly a week out, so Phase B physical
+acquisition is parked until then. Nothing else in the project is blocked by
+this: INA226 uses the Pico 2, while the Wukong and RP2350-Zero tracks are
+untouched.
 
-**The part is dead — this was checked properly.** Jumpers were swapped several
-times and the failure followed the module, not the wiring, so unlike 08-06/07
-this is not a cable fault. Do not repeat the wire-swap hunt on this module.
+> **Correction.** An earlier version of this block — and commit `136ce1c`,
+> already pushed — said the *SCL path* failed and the module could not read
+> currents. That was wrong on both counts: the link works and current readings
+> are fine. The fault is confined to the bus-voltage channel. Corrected
+> 2026-08-08 on John's account of the bench.
 
-The asymmetry below is retained because it is diagnostic for the *next*
-occurrence:
+**The part is unusable for this capture even so, and that is not a judgement
+call.** The contract requires a `bus_mV` column on every row and applies a
+bus-voltage tolerance per class (`ina226_coarse_monitor_v2.json`); the v2
+amendment exists precisely because that tolerance was unsatisfiable for
+`current_limited_stall`. A module that cannot measure bus voltage cannot
+satisfy the contract on any class. Jumpers were also swapped several times and
+the failure followed the module rather than the wiring, so this is not a cable
+fault — do not repeat the wire-swap hunt on this module.
+
+**A hypothesis, explicitly untested.** The channel that died is the one
+directly exposed to rail transients from switching an inductive load. That is
+suggestive, not evidence — the back-EMF damage theory was investigated on
+08-06/07 and *not* supported, and one failure is not a mechanism. It is a
+further cheap reason to fit the flyback diode during the rebuild, and a thing
+to watch if the replacement loses the same channel.
+
+The SDA/SCL asymmetry below is unrelated to this failure. It is retained
+because it is diagnostic for the *next* wiring fault:
 
 - **SDA is driven at both ends**, so a marginal SDA wire produces the confusing
   partial signature recorded below: address ACKs succeed while longer register
@@ -34,14 +53,30 @@ occurrence:
   *total* failure — no ACK at all. If the address scan still ACKs, SCL is not
   fully open and the fault is somewhere else.
 
-**Open question, and it matters for the replacement.** The 08-06/07 "300/300
-reads, zero failures" soak was a genuine recovery that has since died. So a
-clean soak did *not* predict survival across a week of handling. Treat a
-passing soak as a necessary precondition for starting the 30-session capture,
-never as evidence the part will survive it — and prefer to lose a session
-mid-block to a dead part than to discover it after sealing. What killed this
-module is not established; if the replacement dies the same way, that becomes
-the finding and the bench setup itself is suspect.
+**Decision, 2026-08-08 (John):** order the spare INA226 and solder the sensor
+power path. Rev B PCB and the power-ready interlock stay deferred. Rationale
+and the ordering constraint (same R100 variant, or the contract's
+`shunt_equation` check rejects every session) are in
+[`BENCH_BOM.md`](BENCH_BOM.md) §2.
+
+**Conflicting record resolved 2026-08-08.** `BENCH_BOM.md` §2 was right all
+along — *"failed its VBUS channel 2026-08-07 with I2C and shunt both perfect"*
+— and this block was the one that was wrong. The two records now agree.
+
+**What this costs us as evidence.** The 08-06/07 "300/300 reads, zero failures"
+soak was a genuine recovery, but note what it actually exercised: the I2C link
+and register reads. It is an **I2C-health soak, not a channel-health soak**,
+and the channel that later died is one it never checked. So it did not fail to
+predict the failure so much as never test for it.
+
+Two consequences for the replacement:
+
+1. Treat a passing I2C soak as a necessary precondition for starting the
+   30-session capture, never as evidence the part will survive it. Prefer
+   losing a session mid-block to a dead part over discovering it after sealing.
+2. **Add a bus-voltage sanity check to the pre-capture gate** — a known supply
+   voltage read back within tolerance. The current soak would pass a module
+   with exactly this fault, which is the gap that let it through.
 
 ## 2026-08-06/07 — a failing SDA jumper masqueraded as a dead module
 

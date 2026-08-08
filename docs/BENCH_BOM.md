@@ -23,6 +23,21 @@ than prices — see §4, and note the interlock is **LCSC**, not DigiKey.
 
 ## 2. Need — buy now
 
+**Decided 2026-08-08 (John): the spare INA226 is being ordered, and the sensor
+harness will be soldered rather than Dupont.** Both were already on this list;
+this records that they are now actioned rather than proposed. The custom Rev B
+PCB and the power-ready interlock remain deferred — see §5 — because the damage
+class they address has not recurred since the 100 Ω resistors went in, while
+the failures that *have* cost sessions are connector- and module-side, which is
+what these two items address at a fraction of the cost.
+
+**Order the same variant.** The capture contract hard-codes `rshunt_mohm: 100`,
+`shunt_lsb_uV: 5/2`, `current_lsb_uA: 25` and I2C address `0x40`
+(`software/datasets/ina226_coarse_monitor_v2.json`). A module with a different
+shunt does not merely read differently — every row fails the contract's
+`shunt_equation` residual check, and the validator rejects the whole session.
+Check the `R100` marking before wiring anything.
+
 | Item | Qty | ~NZD | Why |
 |---|---|---|---|
 | **INA226 breakout (R100 shunt)** | **2** | 24 | One failed its VBUS channel 2026-08-07 with I2C and shunt both perfect. `SESSION_HANDOVER_2026-07-28.md` already advised a spare on cost grounds: the frozen contract has **no partial-redo path**, so a module failure mid-capture costs all thirty sessions |
