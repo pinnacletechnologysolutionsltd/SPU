@@ -97,6 +97,49 @@ Core spins (`A7_CLK_DIV_LOG2=6`, 781.25 kHz) are over-constrained at 2 MHz and
 are fine as written. Full note:
 [`docs/SOUTHBRIDGE_SPI_PROTOCOL.md`](docs/SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check--it-does-not-slow-anything-down).
 
+## Claim discipline — read before writing any status claim
+
+`GEMINI.md` states the rule; this is how to apply it. **A statement that
+something was observed on physical hardware cites a `docs/hardware_evidence.md`
+section inline, or it is not made.** No exceptions for drafts, walkthroughs,
+papers or READMEs — those are exactly where an unbacked claim does damage,
+because they are what a reader meets first.
+
+A ledger entry backs a claim only if it carries the §3.2e.6 shape: date, scope,
+build/load commands, bitstream SHA-256, **raw** proof lines, interpretation. An
+entry that merely mentions the same subsystem is not backing. Same board, same
+spin, same operation, or the claim is only partly backed and must say so.
+
+Three failure modes, all observed in this repository:
+
+1. **Narrative without a log** — the SU3 paper described a 2026-07-04 bench run
+   whose configuration matched no committed firmware and left no capture. It
+   took a full silicon re-run on 2026-08-07 to settle, and two claims were
+   withdrawn (§3.2e.6). Unevidenced is not the same as false; it is just
+   unusable.
+2. **Sample output read as a result** — `docs/LUCAS_QUICKSTART.md` §5 shows a
+   transcript asserting *"silicon: bit-exact against ground truth for all 200
+   steps"*, and no 200-step entry exists in the ledger. **Label expected
+   output as expected**, or a walkthrough becomes an evidence claim by
+   accident. Still open as of 2026-08-09.
+3. **Dated handovers cited as evidence** — a handover records what was believed
+   on its date and is routinely superseded. It is history, not backing. Cite
+   the ledger, never the handover.
+
+To find claims that need checking, this census is reproducible and deliberately
+over-inclusive (228 hits across 54 files at `d6a6a0a`):
+
+    PAT='verified in silicon|silicon-verified|Silicon-verified|is (SRAM-load/UART |bench-)?verified|proven in silicon|proven on the|bench-tested|bench run|on silicon|in silicon|_J11: (PASS|FAIL)|: PASS|: FAIL|[0-9]+/[0-9]+ (PASS|pass)|route closed|post-route|SHA-256'
+    grep -rnE "$PAT" docs/*.md knowledge/*.md AGENTS.md README.md \
+        GEMINI.md CLAUDE.md .github/copilot-instructions.md \
+      | grep -v "^docs/hardware_evidence.md" | grep -v SESSION_HANDOVER
+
+Two attempts to delegate a repo-wide claim audit against this census failed on
+2026-08-08/09 — the first under-reported, the second returned 141 rows marked
+`BACKED` while naming no ledger section at all. Both real gaps found to date
+were found by hand while doing other work. **Check claims as you write them;
+do not batch it.**
+
 ## Hardware Test Status (July 2026)
 
 **Proven in silicon on Tang Primer 25K:**
