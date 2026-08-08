@@ -33,11 +33,22 @@ an unmet criterion more urgent, not less.
 | 2 | Routing reliability within +1 of reference | **MET at the limit** — PROBE 1 non-convergence vs 0; LINK 0 vs 0 |
 | 3 | Area: LUTX ≤ +1 %, FFX ≤ ref, DSP equal | **MET** — LINK +32 (+0.13 %), PROBE −44, both −176 FFX, DSP ±0 |
 | 4 | Formal + regression at the swap commit | **MET 2026-08-09** at `a6e462d` — the swap tree is master. All three SymbiYosys tasks PASS, `spu13_zphi` 46/46, tensegrity 48/48 |
-| 5 | Four-act bench, N ≥ 10 + positive control | **OUTSTANDING — and its stated blocker is stale, see below** |
+| 5 | Four-act bench, N ≥ 10 + positive control | **MET 2026-08-09** — 10/10 runs, zero deviations, `hardware_evidence.md` §3.2l.1 |
 
 Criterion 4's clause *"passing today does not count"* assumed the flipped tree
 did not yet exist. It has existed since 07-23, so HEAD **is** the swap tree and
 the re-run is valid.
+
+## All five criteria are now met — 2026-08-09
+
+**The Karatsuba candidate, shipping as the production default since
+2026-07-23, has a complete evidence chain as of 2026-08-09.** Nothing in this
+document was amended after seeing results; criteria 1-3 were met by the
+2026-08-08 P&R sweep, 4 by the formal/regression re-run at `a6e462d`, and 5 by
+the four-act bench recorded in `hardware_evidence.md` §3.2l.1.
+
+The history below is retained because it explains why criterion 5 sat unmet for
+sixteen days.
 
 ## Criterion 5 — the blocker was removed five days ago and nobody noticed
 
