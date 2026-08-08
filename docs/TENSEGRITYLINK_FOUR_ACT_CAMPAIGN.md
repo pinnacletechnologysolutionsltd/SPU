@@ -53,7 +53,39 @@ defaults to 125 kHz — far below the `clk_fast/6` ceiling, leave it alone.
 **Rebuild rather than reusing a stale `.uf2`.** The same trap applies here as
 to the LUCAS demo: an old build in a stale directory carries old defaults.
 
-## SD card
+## SD card — four traps found on 2026-08-09, all of them cost time
+
+The RP2350's microSD is `spi1`: **GP10 SCK, GP11 MOSI/DI, GP12 MISO/DO,
+GP13 CS/DAT3**, separate from the J11 link on GP0-GP3. Verified in the built
+firmware's `flags.make`, not just the CMake defaults.
+
+1. **`ERR no SD card` says nothing about the J11 wiring.** The two buses are
+   independent; the link can be perfectly healthy (`ping` → `OK pong`) while SD
+   fails.
+2. **Supply voltage: check the module type before connecting.** A *bare passive*
+   adapter is 3V3-native. A *module with chips on it* (regulator + level
+   shifter) needs 5 V. Getting this backwards can destroy the card, and on a
+   bare adapter it also puts 5 V onto a **non-5V-tolerant** RP2350 GPIO via the
+   card's DO line — the same damage class as the J11 backfeed that retired pins
+   1-3, with no series resistors on these lines. On 2026-08-09 a 3V3 bare
+   adapter was briefly run at 5 V; the card survived, but treat that as luck.
+3. **`sdinit` passing does not mean reads work.** Init runs at 400 kHz
+   (`spu_sd.c:181`) and only then switches to `SPU_SD_BAUD_HZ`, 8 MHz by default
+   (`spu_sd.c:288`). Init-passes-then-reads-fail is the signature of wiring that
+   cannot sustain the post-init rate. Rebuild lower to test:
+   `-DSPU_SD_BAUD_HZ=1000000`.
+4. **Read the FatFs code, not the message.** `sdcat` reports the raw `FRESULT`:
+   `1 = FR_DISK_ERR` (I/O failure), `4 = FR_NO_FILE`, `5 = FR_NO_PATH`. A
+   `res=1` is *not* a missing file, and `tgrload`'s friendlier
+   `ERR TGR1 file not found` collapses every one of these into one string.
+
+**Console diagnostics available:** `sdprobe` (reports the pin map and MISO
+float/pullup/pulldown state), `sdinit`, `sdcat [path]`, `sddrive <cs> <sck>
+<mosi>` for metering continuity at the card's pins.
+
+**Fixture path:** the fixtures live under a `TGR/` directory on the bench card,
+so the command is `tgrload TGR/00_canonical_balanced.tgr 0`, not a bare
+filename. Confirm the actual names on the card before the run.
 
 `tgrload` reads fixtures from SD. Copy both required fixtures:
 
