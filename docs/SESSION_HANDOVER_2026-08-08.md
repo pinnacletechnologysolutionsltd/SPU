@@ -11,9 +11,11 @@ The 08-07 SU3 work landed in commits `8b58629`…`616bc44` and is summarised in
 
 ## One-line state
 
-The SU3 track is closed; INA226 Phase B is parked on a dead module; the
-Karatsuba swap is down to one P&R sweep, running overnight against a
-pre-registered gate.
+The SU3 track is closed; INA226 Phase B is parked on a dead module; and the
+Karatsuba swap turns out to have **shipped on 2026-07-23** — criteria 1-4 of
+its (later) pre-registered gate are now met, leaving one bench session,
+`TENSEGRITYLINK`'s four acts, as the only missing evidence for code already in
+production.
 
 ## What landed
 
@@ -24,6 +26,14 @@ pre-registered gate.
 | `8d722fd` | 20:25 | Runbook: bus-voltage channel check, flyback diode, electrical freeze rule |
 | `d1fe2c1` | 22:46 | Pre-registered Karatsuba swap criteria |
 | `d56c9a9` | 22:48 | AGENTS.md corrected against the Padé divided clock and the SU3 re-proof |
+| `67cb518` | 23:0x | This handover created |
+| `73132f1` | 23:1x | SOM-SIDECAR carried item closed without board time |
+| `a9e4b0c` | 23:3x | LUCAS session ready; its 200-step claim recorded as unbacked |
+| `18136fd` | 23:5x | Tomorrow's plan written into this handover |
+| `d6a6a0a` | 00:1x | Non-converging `PROBE ZK1 S1` terminated and recorded |
+| `89b875d` | 01:0x | Batch claim audit dropped; ledger discipline added to AGENTS.md |
+| `a6e462d` | 09:0x | Sweep complete: criteria 1-3 met, stale-metrics trap fixed |
+| `125aabf` | 09:1x | Criterion 4 met; swap found to have shipped 2026-07-23 |
 
 `136ce1c` was pushed before it was known to be wrong; `a6f1bf0` corrects it in
 place rather than rewriting history.
@@ -59,7 +69,7 @@ contract has no partial-redo path.
 `rshunt_mohm: 100`, `shunt_lsb_uV: 5/2`, `current_lsb_uA: 25`, address `0x40`.
 A different shunt fails the `shunt_equation` check on every row.
 
-## Karatsuba — the swap is down to one sweep
+## Karatsuba — the swap already shipped; the sweep was evidence, not a decision
 
 **Re-verified from scratch, not from the write-up:** all three SymbiYosys tasks
 pass (`small` 4×3 exhaustive, `width_plumbing` 8×6, `reset_semantics`), and
@@ -78,7 +88,9 @@ spans three commits — `5449055`, `8aaaeaa`, `15b3118` — and LUTX moved
 also swamps the arm difference: within LINK reference alone, seeds 1/7/13 gave
 46.45 / 46.54 / 38.02 MHz.
 
-**Sweep now running** (*in flight*): 2 spins × 2 arms × 10 seeds = 40 P&R runs,
+**Sweep** — *completed overnight; results in "Plan item 1" below, which
+supersedes the interim figures in this section*: 2 spins × 2 arms × 10 seeds =
+40 P&R runs,
 all at commit `616bc44`, 3-way parallel, campaign
 `build/zk_pnr_campaign/20260808_194219/`.
 
@@ -113,7 +125,9 @@ distributions are quoted.
 
 ## Plan for 2026-08-09
 
-Ordered by what unblocks the most. Items 1 and 3 need no bench; item 2 does.
+Ordered by what unblocks the most. Items 2 and 3 need the Wukong; items 1, 4
+and 5 are desk work. **Item 2 is new and outranks everything else on the bench
+list** — it is missing evidence for a shipped default, not for a proposal.
 
 ### 1. ~~Close out the P&R sweep~~ — DONE overnight, results below
 
@@ -193,7 +207,43 @@ record and the overuse trajectory:
 analyser now prints a completeness line per cell so a missing build cannot pass
 as a smaller sample.
 
-### 2. LUCAS 200-step bench session (Wukong + RP2350-Zero)
+### 2. TENSEGRITYLINK four-act bench — unblocked five days ago, nobody noticed
+
+**This is now the highest-priority bench item, ahead of LUCAS**, because it is
+missing evidence for a configuration that has been *shipping since 2026-07-23*,
+not for a proposal.
+
+The Karatsuba candidate is the production default — `c1fe58f` set
+`USE_ZPHI_KARATSUBA = 1` in all three consumers, and `build_a7.sh:167` defaults
+`ZPHI_KARATSUBA=1` and passes `-chparam` at synthesis, overriding the board
+tops' `parameter … = 0`. Ordinary builds have carried it for sixteen days.
+
+What exists: `hardware_evidence.md` §3.2l, *Karatsuba-candidate-as-default
+silicon confirmation, 2026-07-24* — standalone `TENSEGRITYPROBE`, bitstream
+`07c979da…`, `TGR:P V:7 E:00` ×200 over 15 s, zero variance.
+
+What is missing: the `TENSEGRITYLINK` half — full transactional admission,
+mechanical negative, corrupt-payload rollback, recovery. §3.2l says it *"remains
+open, gated on the power-ready interlock."*
+
+**The interlock stopped gating anything on 2026-08-04, reaffirmed 08-07.** The
+backfeed class is covered by the 100 Ω series resistors plus power sequencing;
+the interlock is explicitly not a purchase and gates nothing
+(`BENCH_BOM.md` §2). The blocker lives in the ledger while its removal lives in
+the roadmap and BOM, which is why it went unnoticed — worth remembering as a
+pattern, not just this instance.
+
+Deliverable: the four acts reproduced bit-identically, **N ≥ 10 with a positive
+control**, per criterion 5 of
+[`ZPHI_KARATSUBA_SWAP_CRITERIA.md`](ZPHI_KARATSUBA_SWAP_CRITERIA.md). Note
+§3.2l's standalone confirmation is a single build at one seed — sound for what
+it claims, below what criterion 5 requires. Same power sequencing as every J11
+session: FPGA up first, RP2350 after, reverse coming down, bottom row only.
+
+Criteria 1-4 are already met, so this is the **only** thing standing between
+the shipped default and a complete evidence chain.
+
+### 3. LUCAS 200-step bench session (Wukong + RP2350-Zero)
 
 Prerequisites are verified (see Open, below). This closes an **unbacked silicon
 claim**, which is why it outranks the other carried bench items.
@@ -208,7 +258,7 @@ Interpretation. Then either confirm `LUCAS_QUICKSTART.md` §5's transcript
 against what the bench actually printed, or correct the document to match the
 bench. Not the other way round.
 
-### 3. Gemini claim-ledger audit — receive and verify
+### 4. Gemini claim-ledger audit — receive and verify
 
 Contract issued 2026-08-08:
 `spu_strategy/gtp_contract_claim_ledger_audit_2026-08-08.md`. When findings
@@ -220,7 +270,7 @@ backing, and `git status` clean with the campaign intact.
 Remediation is a **separate** tranche, scoped after the size of the problem is
 known.
 
-### 4. If time remains — composition/adapter policy
+### 5. If time remains — composition/adapter policy
 
 The 08-07 service-composition boundary in `CURRENT_STATUS.md` defers shared
 datapaths until a cross-domain adapter policy and an oracle-backed composition
@@ -248,12 +298,15 @@ by DMM — **before** the part arrives, so the runbook's freeze rule holds.
 
 ## Open
 
-- **Sweep results** — run
-  `python3 <scratchpad>/zk_analyse.py` when it finishes. Driver and analyser are
-  still in the session scratchpad, not the repo; they belong in `tools/` if this
-  becomes a repeatable check.
-- **Three commits unpushed** at time of writing: `8d722fd`, `d1fe2c1`,
-  `d56c9a9`.
+- **`TENSEGRITYLINK` four-act bench** — the one criterion (5) still unmet for
+  the Karatsuba default that has been shipping since 2026-07-23. Unblocked
+  since 2026-08-04, when the power-ready interlock stopped gating anything;
+  §3.2l still names it as the blocker. Details in Plan item 2. **This is the
+  top bench item.**
+- **Sweep results** — done. Analyser and its output are archived in
+  `build/zk_pnr_campaign/20260808_194219/` (`ANALYSIS.txt`, `zk_analyse.py`).
+  The driver is still in the session scratchpad; both belong in `tools/` if
+  this becomes a repeatable check.
 - ~~**SOM-SIDECAR dead-write-path fix**~~ — **CLOSED, no board time needed.**
   The fix is `d5a17e6` (07-16 06:54, `spu_spi_cfg.v` + Tang sidecar top). The
   silicon proof is `hardware_evidence.md` §3.2g.2, added by `28e5c81`
