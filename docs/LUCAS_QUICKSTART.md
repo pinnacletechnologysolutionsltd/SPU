@@ -94,7 +94,9 @@ python3 -m pip install -e .
 python3 tools/lucas_demo.py --port /dev/ttyACM0 --steps 200
 ```
 
-The important output is:
+The important output is (**this is now backed by a silicon run** —
+`hardware_evidence.md` §3.2e.7, 10/10 runs on 2026-08-09; before that date the
+transcript below asserted a result the evidence ledger did not carry):
 
 ```text
 Act 1: the four Z[phi]/L_521 sidecar ops (silicon-proven vectors)

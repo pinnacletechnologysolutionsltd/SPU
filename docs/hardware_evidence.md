@@ -960,6 +960,76 @@ source from git afterwards. Same bitstream throughout
   20 us is a required margin. Do not restate it as a current limitation
   without a fresh reproduction.
 
+### 3.2e.7 Wukong J11 LUCAS 200-Step Zero-Drift Silicon Proof
+
+**Date:** 2026-08-09 NZT.
+
+**Scope:** the 200-step φ-scaling feedback loop on the `LUCAS` spin, with each
+step's hardware result fed back as the next step's operand, compared against
+exact-integer ground truth and against the same recurrence in IEEE-754.
+
+**Why this entry exists.** `docs/LUCAS_QUICKSTART.md` §5 has shown a transcript
+asserting *"silicon: bit-exact against ground truth for all 200 steps"* since
+2026-07-17, while the ledger carried no 200-step entry at all — §3.2e.2 covers
+the four sidecar ops on 2026-07-03, before the J11 remap. The claim was
+therefore **unbacked** when audited on 2026-08-08, in the same shape as the SU3
+gap closed on 08-07. This run backs it.
+
+**Build & load:**
+
+```
+usbreset 1209:c0ca
+openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_LUCAS.bit
+# isc_done 1  init 1  done 1  ;  console `status` -> raw=5A 00 10 00, ratio_valid=1
+
+.venv/bin/python3 tools/lucas_demo.py --port /dev/serial/by-id/... --steps 200
+```
+
+Bitstream `build/spu_a7_100t_LUCAS.bit`, 3,825,919 bytes, SHA-256
+`07cb3d7e2c77726120a0cfca96b461cf56d7f256c53c9008d46142d66302c07c` — the
+post-reset-fix image built 2026-08-03, unchanged. RP2350 diagnostic console at
+125 kHz SPI.
+
+**Result: PASS, 10/10 runs, zero failures.** Raw captures in
+`build/lucas_200step/run{1..10}.log`. Representative run:
+
+```text
+Act 1: the four Z[phi]/L_521 sidecar ops (silicon-proven vectors)
+  PINV    (3+5*phi)^-1           -> 513 +   5 phi   expected 513 +   5 phi   [ok]
+
+Act 2: 200-step phi-scaling loop -- silicon vs exact vs float64
+  step      1: silicon =   0 +   1 phi   [exact]   (~1 bits unreduced)
+  step     10: silicon =  34 +  55 phi   [exact]   (~6 bits unreduced)
+  step     50: silicon =   2 + 520 phi   [exact]   (~34 bits unreduced)
+  step     79: float64 diverged -- double now claims 0 + 0 phi, exact is 0 + 1 phi
+  step    100: silicon =   5 + 518 phi   [exact]   (~69 bits unreduced)
+  step    200: silicon =  34 + 500 phi   [exact]   (~138 bits unreduced)
+
+  silicon: bit-exact against ground truth for all 200 steps.
+  float64: lost the exact value at step 79 and never recovers.
+PASS: silicon matched exact-integer ground truth on every check.
+```
+
+Across the ten runs: 10 × "bit-exact ... for all 200 steps", 10 × float64
+divergence at step 79, and the step-200 value `34 + 500 phi` identical in every
+run.
+
+**On the positive control.** As with §3.2l.1 it is **internal**: the float64 arm
+must diverge. If the double-precision recurrence ever tracked the exact one for
+all 200 steps, the comparison would not be discriminating and the silicon
+result would carry no information. It diverged at step 79 on all ten runs, at
+the point the regression pins.
+
+**Interpretation.** The `Z[φ]/L_521` MAC sustains 200 chained feedback steps on
+silicon with no drift, against an operand that grows to ~138 unreduced bits,
+while IEEE-754 doubles lose the exact residue at step 79 and never recover.
+This is the claim `LUCAS_QUICKSTART.md` has been making; it is now evidenced.
+
+**Limitation.** One bitstream, one board, one session — this establishes the
+zero-drift behaviour, not a reliability rate across images or thermal
+conditions. The separate software oracle carries the million-step proof
+(`software/tests/test_lucas_mac_oracle.py`); this entry covers silicon only.
+
 ### 3.2f Wukong J11 RPLU2PADE Padé Pipeline Proof
 
 **Date:** 2026-07-05 NZT
