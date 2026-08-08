@@ -8,6 +8,63 @@ contract's `gates.failure_policy`.
 Decision this governs: whether `USE_ZPHI_KARATSUBA` may become the production
 default in the tensegrity consumers, currently plumbed but default-off.
 
+## Correction to this document's premise — 2026-08-09
+
+**The swap already happened.** This document was written believing the
+candidate was "plumbed but default-off" and that the criteria governed a future
+decision. They do not. `c1fe58f` (2026-07-23, *"switch tensegrity production
+default to Karatsuba candidate"*) set `USE_ZPHI_KARATSUBA = 1` as the parameter
+default in all three consumers, and `build_a7.sh:167` defaults
+`ZPHI_KARATSUBA=1`, passing `-chparam` at synthesis — which overrides the board
+tops' `parameter USE_ZPHI_KARATSUBA = 0`. **Any ordinary build has shipped the
+candidate for the last sixteen days.**
+
+**The criteria below are unchanged** — amending them after seeing results is
+prohibited by this document's own failure policy, and nothing here is amended.
+What changes is their function: they are no longer a gate on a future swap,
+they are the **evidence standard for an already-shipped default**. That makes
+an unmet criterion more urgent, not less.
+
+## Status against the criteria — 2026-08-09
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | Timing: every candidate build meets 25 MHz | **MET** — 40-run sweep, worst LINK candidate 31.46 MHz (+6.46) |
+| 2 | Routing reliability within +1 of reference | **MET at the limit** — PROBE 1 non-convergence vs 0; LINK 0 vs 0 |
+| 3 | Area: LUTX ≤ +1 %, FFX ≤ ref, DSP equal | **MET** — LINK +32 (+0.13 %), PROBE −44, both −176 FFX, DSP ±0 |
+| 4 | Formal + regression at the swap commit | **MET 2026-08-09** at `a6e462d` — the swap tree is master. All three SymbiYosys tasks PASS, `spu13_zphi` 46/46, tensegrity 48/48 |
+| 5 | Four-act bench, N ≥ 10 + positive control | **OUTSTANDING — and its stated blocker is stale, see below** |
+
+Criterion 4's clause *"passing today does not count"* assumed the flipped tree
+did not yet exist. It has existed since 07-23, so HEAD **is** the swap tree and
+the re-run is valid.
+
+## Criterion 5 — the blocker was removed five days ago and nobody noticed
+
+`hardware_evidence.md` §3.2l already carries a **Karatsuba-candidate-as-default
+silicon confirmation** dated 2026-07-24, one day after the flip: build
+`8aaaeaa`, `ZPHI_KARATSUBA=1 A7_SEED=2 A7_FREQ=25`, bitstream SHA-256
+`07c979da…`, UART returning `TGR:P V:7 E:00` 200 times over 15 s with zero
+variance. That closes the **standalone `TENSEGRITYPROBE`** half.
+
+The same entry states the `TENSEGRITYLINK` half — full transactional
+admission, mechanical-negative, corrupt-payload rollback, recovery, i.e.
+exactly criterion 5's four acts — **"remains open, gated on the power-ready
+interlock."**
+
+**That gate no longer exists.** The interlock was superseded on 2026-08-04 and
+reaffirmed on 2026-08-07: the backfeed damage class is mitigated by the 100 Ω
+series resistors on all four SPI lines plus power-sequencing discipline, and
+the interlock is explicitly *"not a current purchase and does not gate
+anything"* (`som_product_roadmap_2026-07.md`; `BENCH_BOM.md` §2).
+
+So the four-act bench is **unblocked and has been since 2026-08-04**. It is not
+future work for a hypothetical swap; it is the missing evidence for the
+configuration already shipping. Note also that §3.2l's standalone confirmation
+is a **single build at one seed** — sound for what it claims, but below the
+N ≥ 10 plus positive-control standard adopted after the 2026-08-04/05
+retractions, which criterion 5 requires.
+
 ## What this sweep can and cannot decide
 
 **Can:** whether the candidate holds the 25 MHz `guard_clk` constraint across
