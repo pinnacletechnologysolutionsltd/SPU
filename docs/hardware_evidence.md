@@ -1989,10 +1989,18 @@ admission verdict as the reference-multiplier proof above, now produced
 by the candidate. This closes the standalone-`TENSEGRITYPROBE` half of
 Phase 6. The `TENSEGRITYLINK` half (full transactional admission,
 mechanical-negative, corrupt-payload rollback, and recovery, per the
-integration plan) remains open, gated on the power-ready interlock —
-unlike this standalone check, `TENSEGRITYLINK` involves live RP2350-to-
-FPGA SPI communication, the exact connection class the interlock exists
-to protect.
+integration plan) **is CLOSED as of 2026-08-09 — see §3.2l.1** (10/10
+runs on bitstream `40373ab8…`).
+
+*Superseded text, kept for the record:* this entry previously said that
+half "remains open, gated on the power-ready interlock". Both halves of
+that were stale. The interlock stopped gating anything on 2026-08-04
+(reaffirmed 08-07) — the 100 ohm series resistors on all four SPI lines
+plus power-sequencing discipline cover that damage class — so the work
+was runnable for five days before anyone noticed. The blocker was
+recorded here while its removal was recorded in the roadmap and BOM,
+with nothing connecting the two. When retiring a gate, search for what
+cites it.
 
 **Transactional table-link build evidence (not silicon evidence):** the
 follow-on `TENSEGRITYLINK` spin connects optional southbridge commands B2/B3
@@ -2094,6 +2102,97 @@ placement as well as observability, so the precise cause of the older stage-1
 stall was not isolated; this closure claim is tied to the bitstream hash
 above.  The remaining tensegrity frontier is the active proposal/actuation
 controller, not table transport or bounded admission.
+
+### 3.2l.1 TENSEGRITYLINK Four-Act Proof on the Karatsuba Candidate
+
+**Date:** 2026-08-09 NZT.
+
+**Scope:** the `TENSEGRITYLINK` half that §3.2l left open. That entry proved the
+four acts on 2026-07-19 with the **four-product reference** multiplier
+(bitstream `30381825…`), and `c1fe58f` made the **three-product Karatsuba
+candidate** the production default four days later, on 2026-07-23. The shipped
+configuration therefore had no transactional-half evidence until this run.
+Closes criterion 5 of `docs/ZPHI_KARATSUBA_SWAP_CRITERIA.md`; criteria 1-4 were
+met by the 2026-08-08 P&R sweep and the 2026-08-09 formal/regression re-run.
+
+**Build & load:**
+
+```
+ZPHI_KARATSUBA=1 A7_SEED=1 bash hardware/boards/artix7/build_a7.sh 100t tensegritylink pack
+usbreset 1209:c0ca
+openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_TENSEGRITYLINK_ZK1_S1.bit
+# isc_done 1  init 1  done 1
+
+cmake -S hardware/rp2350 -B build/rp2350_tgr -DPICO_BOARD=pico2 \
+  -DSPU_RP2350_ZERO_HEADER_SPI=ON -DSPU_SD_BAUD_HZ=1000000
+cmake --build build/rp2350_tgr --target rp2350_spu_diag -j4
+```
+
+Packed from the routed artifact of the 2026-08-08 sweep, so the routed design
+is bit-identical to the measured one. `A7_SEED=1` is the build default — this
+evidences what an ordinary build ships, not a selected seed. Post-route guard
+Fmax 46.63 MHz against the 25 MHz constraint.
+
+Bitstream `build/spu_a7_100t_TENSEGRITYLINK_ZK1_S1.bit`, 3,825,935 bytes,
+SHA-256 `40373ab866aa4cdc8a5b563a4f378436e99989b3220d3e73e7f1a7e2f2fe5e0b`.
+
+**Result: PASS, 10/10 complete four-act runs, zero deviations.** Driven over
+the RP2350 diagnostic console; full raw capture in
+`build/tgr_four_act/campaign.log`. Run 1 verbatim:
+
+```text
+> tgrload TGR/00_canonical_balanced.tgr 0
+OK tgrload bytes=468 vector=0
+OK tgrstatus version=1 state=2 fault=0 stage=8 vector=0 flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468
+> tgrload TGR/06_fault_not_in_equilibrium.tgr 6
+OK tgrload bytes=468 vector=6
+OK tgrstatus version=1 state=8 fault=5 stage=8 vector=6 flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468
+> tgrloadbadcrc TGR/06_fault_not_in_equilibrium.tgr 6
+OK tgrloadbadcrc bytes=468 vector=6
+OK tgrstatus version=1 state=8 fault=5 stage=0 vector=6 flags=0x09 error=7 nodes=12 edges=30 received=468 expected=468
+> tgrload TGR/00_canonical_balanced.tgr 0
+OK tgrload bytes=468 vector=0
+OK tgrstatus version=1 state=2 fault=0 stage=8 vector=0 flags=0x08 error=0 nodes=12 edges=30 received=468 expected=468
+```
+
+Across the 40 status reads: 20 × `state=2 fault=0` (admission and recovery),
+20 × `state=8 fault=5` (mechanical negative, and its preservation under
+rejection), 10 × `error=7` (payload-CRC rejection). Every field was compared
+per act by the driver, not eyeballed.
+
+**On the positive control.** The bench-evidence standard requires one. Here it
+is **internal**: acts 2 and 3 are the control. If act 2 stopped returning
+`state=8 fault=5`, or act 3 stopped returning `error=7`, the rig would not be
+discriminating and a run of clean passes would carry no information. Both fired
+on all ten runs. This differs from the Padé campaign, where the control had to
+be a separate known-bad bitstream, because there the failure signal was absent
+by construction.
+
+**Interpretation.** The candidate multiplier sustains the full B2/B3
+transactional path: atomic admission of a valid table, commit of a genuine
+mechanical-negative verdict, independent TGR1 CRC-32 rejection of a corrupted
+payload carrying a *valid* transport CRC-8 with the prior verdict preserved,
+and recovery on canonical reload. Combined with §3.2l's 2026-07-24 standalone
+`TENSEGRITYPROBE` confirmation, the Karatsuba candidate as shipped default now
+has both halves proven in silicon.
+
+**Limitations, stated rather than omitted.**
+
+- The SD fixtures were **not** hash-verified against their repository
+  references; the card reader would not enumerate. Verification is partial but
+  strong by another route: the card's file header matches the repo fixture
+  byte-for-byte including the embedded CRC-32 (`e750a663`), the size matches at
+  468 bytes, and the FPGA independently validates that payload CRC-32 on every
+  load — which is precisely the mechanism act 3 exercises. A substituted table
+  would have to collide on both the CRC field and the byte count.
+- SD ran at 1 MHz rather than the committed 8 MHz default. At 8 MHz on jumper
+  wiring, `sdinit` passed at its 400 kHz init rate while reads returned
+  `FR_DISK_ERR`. This concerns the RP2350's own microSD bus and is unrelated to
+  the J11 link or the FPGA.
+- During bring-up a 3V3 bare microSD adapter was briefly powered at 5 V. The
+  card survived and read correctly afterwards, but the excursion is recorded
+  because it also placed 5 V on a non-5V-tolerant RP2350 GPIO through the
+  card's DO line.
 
 ### 3.2m Wukong `spu_a7_top` Outage — Root Cause and Silicon Re-Proof
 
