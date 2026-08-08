@@ -12,10 +12,41 @@ delete it from here.
 
 ---
 
+## 2026-08-08 — SCL path failed; capture parked on a replacement part
+
+**Read this first. Everything below is currently unrunnable.** The SCL path has
+failed and the module cannot read currents. A replacement is roughly a week
+out, so Phase B physical acquisition is parked until then. Nothing else in the
+project is blocked by this: INA226 uses the Pico 2, while the Wukong and
+RP2350-Zero tracks are untouched.
+
+**The part is dead — this was checked properly.** Jumpers were swapped several
+times and the failure followed the module, not the wiring, so unlike 08-06/07
+this is not a cable fault. Do not repeat the wire-swap hunt on this module.
+
+The asymmetry below is retained because it is diagnostic for the *next*
+occurrence:
+
+- **SDA is driven at both ends**, so a marginal SDA wire produces the confusing
+  partial signature recorded below: address ACKs succeed while longer register
+  reads fail.
+- **SCL is driven only by the master**, so a genuinely open SCL produces
+  *total* failure — no ACK at all. If the address scan still ACKs, SCL is not
+  fully open and the fault is somewhere else.
+
+**Open question, and it matters for the replacement.** The 08-06/07 "300/300
+reads, zero failures" soak was a genuine recovery that has since died. So a
+clean soak did *not* predict survival across a week of handling. Treat a
+passing soak as a necessary precondition for starting the 30-session capture,
+never as evidence the part will survive it — and prefer to lose a session
+mid-block to a dead part than to discover it after sealing. What killed this
+module is not established; if the replacement dies the same way, that becomes
+the finding and the bench setup itself is suspect.
+
 ## 2026-08-06/07 — a failing SDA jumper masqueraded as a dead module
 
 Read this before anything below it; several statements further down are now
-stale.
+stale — and see the 08-08 block above, which supersedes its "resolved" state.
 
 **Resolved.** The module is healthy: 300/300 reads at 400 kHz, zero failures,
 `MFG=0x5449 DIE=0x2260`, shunt offset back to −5 µV. **The cause was a single
@@ -189,8 +220,14 @@ remaining Padé work despite that being the more interesting puzzle.
 
 ## Open, not blocking this session
 
-The Padé `seven_over_three` defect is contained (structured inverter reverted
-to default-off) and under investigation in
-`spu_strategy/gtp_contract_pade_localisation_2026-08-05.md`. It needs the
-Wukong and the RP2350-Zero, not the Pico 2, so it does **not** contend with
-INA226 capture. See `SESSION_HANDOVER_2026-08-04.md` for where that stands.
+**The Padé `seven_over_three` defect is RESOLVED (2026-08-05), superseding the
+"contained, structured inverter default-off" state described here earlier.** A
+bracketed campaign with a 50 MHz positive control (0/10 PASS) and canonical
+brackets (20/20 PASS) showed the divided clock clean at 40/40 across four
+candidate images; `A7_CLK_DIV_LOG2=1` with `A7_FREQ=25` is a shippable
+timing-closed configuration, the FP4 structured inverter is back to default-on
+(`95cdaf5`), and no RTL changed. Evidence:
+`spu_strategy/gtp_findings_pade_divided_clock_2026-08-05.md`. What remains is
+datapath pipelining toward a 50 MHz product target — an optimisation, not a
+defect. It needs the Wukong and the RP2350-Zero, not the Pico 2, so it does
+**not** contend with INA226 capture.
