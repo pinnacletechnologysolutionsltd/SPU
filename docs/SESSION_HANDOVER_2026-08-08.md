@@ -111,6 +111,77 @@ settled by John before the data: the full four-act bench bar stands, and a
 non-converging seed does not block the swap but must be stated wherever
 distributions are quoted.
 
+## Plan for 2026-08-09
+
+Ordered by what unblocks the most. Items 1 and 3 need no bench; item 2 does.
+
+### 1. Close out the P&R sweep (desk, ~30 min)
+
+The campaign should be finished overnight. Before reading any number, check
+what actually completed:
+
+    D=build/zk_pnr_campaign/20260808_194219
+    wc -l < $D/pnr_status.txt          # expect 40, or 39 + a killed straggler
+    grep -v 'rc=0' $D/pnr_status.txt   # any non-zero exit is a failed cell
+    cat $D/provenance.txt
+
+Then run the analyser (currently in the session scratchpad,
+`zk_analyse.py`). It reports per-arm Fmax distributions, constraint margins and
+area deltas, and it checks whether the differing `git_commit` stamps came from
+commits that touched source — they did not, all three were docs-only.
+
+**Judge against [`ZPHI_KARATSUBA_SWAP_CRITERIA.md`](ZPHI_KARATSUBA_SWAP_CRITERIA.md),
+which was pre-registered before the LINK data existed. Do not amend it to fit
+the result.** Expected outcome on the PROBE evidence: criteria 1-3 met, leaving
+criterion 4 (re-run formal + regression at the swap commit) and criterion 5
+(four-act bench, N ≥ 10 with a positive control) as the remaining work. If so,
+the swap becomes a scheduling decision, not a measurement one.
+
+Remember `PROBE ZK1 S1` diverged rather than converged. Per criterion 2 it does
+not block, but it must be stated wherever the PROBE candidate distribution is
+quoted — n=9, not n=10.
+
+### 2. LUCAS 200-step bench session (Wukong + RP2350-Zero)
+
+Prerequisites are verified (see Open, below). This closes an **unbacked silicon
+claim**, which is why it outranks the other carried bench items.
+
+Power sequencing: FPGA powered first, RP2350 connected after; reverse on the
+way down. J11 **bottom row only**. `usbreset 1209:c0ca` before every
+DirtyJTAG load.
+
+Deliverable: a `hardware_evidence.md` section in the §3.2e.6 format — Date,
+Scope, build/load commands, bitstream SHA-256, **raw** proof lines,
+Interpretation. Then either confirm `LUCAS_QUICKSTART.md` §5's transcript
+against what the bench actually printed, or correct the document to match the
+bench. Not the other way round.
+
+### 3. Gemini claim-ledger audit — receive and verify
+
+Contract issued 2026-08-08:
+`spu_strategy/gtp_contract_claim_ledger_audit_2026-08-08.md`. When findings
+land, run the contract's five acceptance gates before believing any of it:
+citations resolve at HEAD, all three calibration items correct, ten random
+`BACKED` rows re-checked, ten random `UNBACKED` rows re-checked for missed
+backing, and `git status` clean with the campaign intact.
+
+Remediation is a **separate** tranche, scoped after the size of the problem is
+known.
+
+### 4. If time remains — composition/adapter policy
+
+The 08-07 service-composition boundary in `CURRENT_STATUS.md` defers shared
+datapaths until a cross-domain adapter policy and an oracle-backed composition
+trace exist, and nothing currently produces either. The repo blocks its own
+next integration step. Needs John's judgement on product claims, not
+file-reading.
+
+### Not tomorrow, but this week
+
+Order the spare INA226 (same R100 variant) and complete the electrical rebuild
+— soldered harness, star ground, flyback, series R < 0.1 Ω, true current limit
+by DMM — **before** the part arrives, so the runbook's freeze rule holds.
+
 ## Traps found this session
 
 - **`collect_fpga_metrics.py` stamps `git_commit` with HEAD at *collection*
