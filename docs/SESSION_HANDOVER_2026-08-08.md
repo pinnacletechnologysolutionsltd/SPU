@@ -140,8 +140,27 @@ distributions are quoted.
   28e5c81 -- hardware/rtl/peripherals/io/spu_spi_cfg.v` is **empty**, so the
   proven bitstream was built from the byte-identical fixed file. The roadmap's
   guess that the 07-*17* runs might cover it was close but a day late.
-- **LUCAS 200-step ledger entry** and **ROBOTICS spin synth re-check** — carried,
-  need the Wukong.
+- **LUCAS 200-step ledger entry** — **prerequisites verified 2026-08-08, the
+  session is ready to run.** Bitstream `build/spu_a7_100t_LUCAS.bit` (Aug 3,
+  post-reset-fix, passed the 08-03 sweep); evaluator `tools/lucas_demo.py
+  --steps 200`; firmware rebuilt by the documented cmake step at 250 kHz, far
+  under the `clk_fast/6` ceiling; procedure in `LUCAS_QUICKSTART.md` §4-5.
+  Note the diag SPI default was 2 MHz before `db55c94` (07-31) and is 250 kHz
+  now — do not flash the stale Jul 17 `.uf2` left in
+  `build/rp2350_lucas_demo/`; run the cmake step, which regenerates it.
+
+  **It closes an evidence gap, not just a bookkeeping item — this is the SU3
+  pattern again.** `LUCAS_QUICKSTART.md` §5 shows a transcript asserting
+  *"silicon: bit-exact against ground truth for all 200 steps"*, but
+  `hardware_evidence.md` has **no 200-step entry**: its LUCAS entries are
+  §3.2e, §3.2e.1 and §3.2e.2, the last covering the four sidecar ops on 07-03,
+  before the J11 remap. Line 2354 verifies PMUL/PINV, not the loop. The
+  transcript is formally sample output in a walkthrough, so it is not a false
+  claim — but a reader takes it as an achieved silicon result and nothing in
+  the evidence base backs it. Treat the 200-step silicon claim as
+  **unbacked pending this run**.
+
+- **ROBOTICS spin synth re-check** — carried, needs the Wukong.
 - **Composition/adapter policy** — the 08-07 service-composition boundary defers
   shared datapaths until a cross-domain adapter policy and an oracle-backed
   composition trace exist. Nothing is currently producing either; the repo
