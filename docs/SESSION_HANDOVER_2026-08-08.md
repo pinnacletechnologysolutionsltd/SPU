@@ -137,9 +137,21 @@ criterion 4 (re-run formal + regression at the swap commit) and criterion 5
 (four-act bench, N ≥ 10 with a positive control) as the remaining work. If so,
 the swap becomes a scheduling decision, not a measurement one.
 
-Remember `PROBE ZK1 S1` diverged rather than converged. Per criterion 2 it does
-not block, but it must be stated wherever the PROBE candidate distribution is
-quoted — n=9, not n=10.
+**`PROBE ZK1 S1` was terminated at 03:31:00 on 2026-08-09** after diverging —
+router overuse worsened monotonically from 30 at iteration 101 to 87 at
+iteration 442. It recorded `rc=143`. It was killed because twenty LINK builds
+were still queued at over an hour each, making that worker slot worth roughly
+seven completed builds; the earlier plan to let it grind assumed ~2 hours of
+work remained, not ~12.
+
+Per criterion 2 it does not block the swap — the reference arm also produced
+hour-long routes (`PROBE ZK0 S23`, 3935 s), so routing difficulty belongs to
+the design under nextpnr rather than to the multiplier. But **the PROBE
+candidate cell is n=9, missing seed 1, and must be quoted that way.** Full
+record and the overuse trajectory:
+`build/zk_pnr_campaign/20260808_194219/NONCONVERGED_PROBE_ZK1_S1.md`. The
+analyser now prints a completeness line per cell so a missing build cannot pass
+as a smaller sample.
 
 ### 2. LUCAS 200-step bench session (Wukong + RP2350-Zero)
 
