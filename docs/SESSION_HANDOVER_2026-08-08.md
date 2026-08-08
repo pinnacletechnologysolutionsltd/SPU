@@ -131,8 +131,15 @@ distributions are quoted.
   becomes a repeatable check.
 - **Three commits unpushed** at time of writing: `8d722fd`, `d1fe2c1`,
   `d56c9a9`.
-- **SOM-SIDECAR dead-write-path fix** — still unclear whether the 07-17 silicon
-  runs already cover it. Next item this session.
+- ~~**SOM-SIDECAR dead-write-path fix**~~ — **CLOSED, no board time needed.**
+  The fix is `d5a17e6` (07-16 06:54, `spu_spi_cfg.v` + Tang sidecar top). The
+  silicon proof is `hardware_evidence.md` §3.2g.2, added by `28e5c81`
+  (07-16 20:24), which explicitly describes the run as following the
+  `spu_spi_cfg.v` command-acceptance repair. Verified structurally, not from
+  the prose: `d5a17e6` is an ancestor of `28e5c81`, and `git diff d5a17e6
+  28e5c81 -- hardware/rtl/peripherals/io/spu_spi_cfg.v` is **empty**, so the
+  proven bitstream was built from the byte-identical fixed file. The roadmap's
+  guess that the 07-*17* runs might cover it was close but a day late.
 - **LUCAS 200-step ledger entry** and **ROBOTICS spin synth re-check** — carried,
   need the Wukong.
 - **Composition/adapter policy** — the 08-07 service-composition boundary defers
