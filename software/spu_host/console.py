@@ -51,7 +51,17 @@ class DiagConsole:
         """Drain the startup banner up to its first prompt. Call once after
         opening the port; harmless to call again (returns whatever is
         pending, which may be empty)."""
-        return self._read_until_prompt(timeout_s or self._timeout_s)
+        timeout_s = timeout_s or self._timeout_s
+        try:
+            return self._read_until_prompt(timeout_s)
+        except ConsoleTimeoutError:
+            # An already-booted board has emitted its banner and prompt long
+            # ago, so nothing is pending and there is no prompt to wait for.
+            # Nudge with a bare newline, which the firmware answers with a
+            # fresh prompt. Without this, connecting to a running board always
+            # failed -- i.e. every session except the one right after a reset.
+            self._ser.write(b"\n")
+            return self._read_until_prompt(timeout_s)
 
     def command(self, line, timeout_s=None):
         """Send one command line, return its response as a list of decoded
