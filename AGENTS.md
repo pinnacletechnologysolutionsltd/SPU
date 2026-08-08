@@ -60,7 +60,7 @@ docs/                   Design guides and bring-up runbooks
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
 | `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 36 ROTC angles (0-35), 336 bit-exact checks across both rotor datapaths |
 | `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` | Set up Python environment |
-| `A7_FREQ=2 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Build the RPLU2PADE Padé pipeline for Wukong Artix-7 (72 DSP, 34% LUT). `A7_FREQ` is a nextpnr constraint, not a divider — keep the `=2`, see note below |
+| `A7_FREQ=25 bash hardware/boards/artix7/build_a7.sh 100t rplu2pade synth/pnr/pack` | Build the RPLU2PADE Padé pipeline for Wukong Artix-7 (72 DSP, 34% LUT). **Constrain at 25, not 2, since 2026-08-05:** this spin now defaults to `A7_CLK_DIV_LOG2=1`, so `clk_fast` really is 25 MHz and the constraint is both meaningful and met — measured 30.25 / 35.53 / 40.81 MHz post-route. Omitting `A7_FREQ` inherits the 50 MHz default and the build **fails** (measured 33.83 MHz against a 50 MHz constraint), emitting no bitstream |
 | `openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_RPLU2PADE.bit` | SRAM-load RPLU2PADE bitstream via DirtyJTAG |
 | `python3 software/tests/test_lucas_mac_oracle.py` | Run Lucas Phinary MAC oracle (PSCALE/PCHIRAL/PMUL/PINV + 1M-step zero-drift) |
 | `iverilog -I hardware/rtl/arch -o build/lucas_mac_tb.vvp hardware/rtl/core/spu13/spu13_lucas_mac.v hardware/tests/spu13/spu13_lucas_mac_tb.v && vvp build/lucas_mac_tb.vvp` | Run Lucas MAC RTL testbench (11 ops + 100-period zero-drift) |
@@ -79,9 +79,17 @@ Synthesis uses the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-buil
 not delete it from these commands.** `build_a7.sh:122-127` already defaults it
 to 50 (except `IROTC`=2, tensegrity=25), so an explicit `A7_FREQ=2` *lowers*
 the bar the router must clear. On the coreless spins (`LUCAS`, `SU3`,
-`RPLUCFG`, `RPLU2LIVE`, `RPLU2PADE`, `SOM*`, `TENSEGRITY*`) `A7_CLK_DIV_LOG2`
+`RPLUCFG`, `RPLU2LIVE`, `SOM*`, `TENSEGRITY*`) `A7_CLK_DIV_LOG2`
 is 0, so `clk_fast` is the 50 MHz board clock in silicon and these builds are
-knowingly unclosed, reporting `PASS at 2.00 MHz` while running at 50. Dropping
+knowingly unclosed, reporting `PASS at 2.00 MHz` while running at 50.
+
+> **`RPLU2PADE` is no longer in that list.** Since `74381b7` (2026-08-05) it
+> defaults to `A7_CLK_DIV_LOG2=1` — `clk_fast` is 25 MHz — because the Padé
+> datapath does not merely miss timing at 50 MHz, it fails *functionally*
+> there: 0/10 against a 10/10 divided-clock candidate in the same bracketed
+> campaign. Build it with `A7_FREQ=25`, which it meets. The cost is half
+> throughput on this spin and must be quoted wherever the pipeline is
+> presented; pipelining the datapath is the route back to 50 MHz. Dropping
 the flag does not fix that — a build that misses its constraint is a nextpnr
 `ERROR` under `set -euo pipefail` (`build_a7.sh:20`) and emits no bitstream, and
 no coreless spin has been built against a 50 MHz constraint to see if it closes.
@@ -152,7 +160,7 @@ are fine as written. Full note:
 | `INTELLIGENCE` | SOM+GATEKEEPER+RPLU_V2+pipeline+CORE | direction (aspirational product spin) |
 | `SENSOR` | MATH+CORE | direction (minimal sensor-only spin) |
 | `SOM` | MATH+SOM+GATEKEEPER+CORE | superseded by SOMPROBE/SOM-SIDECAR |
-| `SU3` | SU3 sidecar, coreless | superseded by SU3SHARE |
+| `SU3` | SU3 sidecar, coreless | independently proven in silicon 2026-08-07 (`hardware_evidence.md` §3.2e.6, all nine dense-product elements over twelve runs); SU3SHARE remains the preferred integration |
 | `RPLUCFG` | nothing enabled, coreless stub | superseded |
 | `RPLU2CORE` | RPLU_V2+CORE | superseded by RPLU2 |
 | `RPLU2` | RPLU_V2+pipeline+SHARED_RPLU2_MULT+CORE | superseded by RPLU2PADE |
