@@ -126,6 +126,46 @@ This is why the three captures already on disk are discarded rather than
 reused: they were taken through the old breadboard path against the v1
 manifest. Changing the rig is free right now and ruinous in a week.
 
+### Characterise the bench supply — needed before the manifest re-`init`
+
+**The front panel is not an instrument.** It displayed 280 mA while regulating
+at 307.4 mA on 2026-08-06 — roughly 10 % out. `init` writes
+`--supply-limit-ma` into the frozen manifest, so a wrong number there is
+inherited by all thirty sessions and cannot be corrected afterwards without
+re-running them.
+
+This needs only a DMM and the actuator. **It does not need the INA226**, so it
+can be done while the replacement part is in transit — and it should be,
+because it is a prerequisite for the re-`init`.
+
+| # | Measure | How | Record |
+|---|---|---|---|
+| 1 | Open-circuit voltage | DMM at the terminals, output on, no load | mV |
+| 2 | Loaded voltage | DMM at the `VIN−`/actuator node, motor free-running | mV |
+| 3 | Regulating current at the CC clamp | DMM in series, **10 A jack**, actuator stalled ≤ 1.5 s | mA |
+| 4 | Front-panel readings for the same three | read off the display | mV / mA |
+
+**Repeat each at least five times.** A single reading is not a result — the
+same rule that produced six retractions on 2026-08-04/05 — and CC circuits
+drift with temperature, which is exactly the regime a stall test enters.
+Report min / median / max, not a single figure.
+
+**Two measurement cautions:**
+
+- **DMM burden voltage.** On a current range the meter inserts its own shunt,
+  dropping voltage and changing the load it is measuring. Use the 10 A jack,
+  which has the lowest burden, and record that you did. This is also why the
+  measured limit may differ slightly from what the INA226 later reports through
+  its own R100 — the two are not measuring an identical circuit.
+- **Stall duty cycle.** ≤ 1.5 s stalled, then ≥ 30 s unblocked to cool. The
+  supply limit must stay at or below the actuator's 280 mA continuous rating;
+  `init` refuses a limit above it.
+
+Then trim the supply so the loaded rail sits near 3000 mV and feed the
+**measured** limit into `init`. Record the numbers in
+[`INA226_SESSION_HANDOFF.md`](INA226_SESSION_HANDOFF.md) so the next session can
+see what was measured rather than re-deriving it.
+
 Before enabling the output:
 
 1. set the supply voltage with the output disabled;

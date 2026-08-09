@@ -151,7 +151,24 @@ dial, before the manifest re-`init`.
 2. Reconnect the power side: VIN+, VIN−, and **VBS to the VIN− node**.
 3. Star-ground power path: motor return direct to the supply terminal.
 4. Measure series R (open-circuit vs loaded); target < 0.1 Ω.
-5. Measure the true current limit; trim supply so `bus_mV` ≈ 3000 at load.
+5. **Characterise the bench supply** — procedure now in
+   [`INA226_CAPTURE_RUNBOOK.md`](INA226_CAPTURE_RUNBOOK.md) §2. Needs only a
+   DMM and the actuator, **not** the INA226, so do it while the replacement
+   part is in transit. Five readings minimum per quantity; record min/median/max
+   below rather than a single figure. Then trim so the loaded rail sits near
+   3000 mV and feed the measured limit into `init`.
+
+   Recorded measurements (fill in):
+
+   | Quantity | Front panel | DMM min | DMM median | DMM max |
+   |---|---|---|---|---|
+   | Open-circuit voltage | | | | |
+   | Loaded voltage (free-running) | | | | |
+   | Regulating current at CC clamp | 280 mA | | | |
+
+   The 2026-08-06 single-shot figures were 3100 mV open-circuit and 307.4 mA
+   regulating against a 280 mA display. Treat those as prior estimates to be
+   replaced, not as the answer.
 6. Re-`init` the manifest against **v2** with measured values.
 7. Fresh block 0 — the three captures on disk were taken through the old
    breadboard path against the v1 manifest and must be discarded.
