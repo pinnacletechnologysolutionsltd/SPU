@@ -42,9 +42,22 @@ A7_UART_DIAG="${A7_UART_DIAG:-0}"
 # Capture-only RPLU2PADE pipeline observability. Default off and artifact-
 # tagged when enabled so it cannot overwrite a production/evidence image.
 PADE_DEBUG_TRACE="${PADE_DEBUG_TRACE:-0}"
+PADE_PIPELINED="${PADE_PIPELINED:-0}"
 case "$PADE_DEBUG_TRACE" in
     0|1) ;;
     *) echo "Invalid PADE_DEBUG_TRACE: $PADE_DEBUG_TRACE (use 0|1)"; exit 1;;
+esac
+case "$PADE_PIPELINED" in
+    0|1) ;;
+    *) echo "Invalid PADE_PIPELINED: $PADE_PIPELINED (use 0|1)"; exit 1;;
+esac
+# Per-lane RNS residue check inside the shared structured multiplier. Default
+# off; at 1 rns_error is one cycle later than done (audited safe for the Pade
+# sidecar only -- see spu13_rplu2_pade_sidecar.v).
+PIPELINED_RNS_CHECK="${PIPELINED_RNS_CHECK:-0}"
+case "$PIPELINED_RNS_CHECK" in
+    0|1) ;;
+    *) echo "Invalid PIPELINED_RNS_CHECK: $PIPELINED_RNS_CHECK (use 0|1)"; exit 1;;
 esac
 
 # Fp4 tower candidate selector. Default-ON again since 2026-08-05: the parallel
@@ -120,6 +133,15 @@ if [ "$A7_SYNTH_ABC9" = "1" ]; then
 fi
 if [ "$PADE_DEBUG_TRACE" = "1" ]; then
     INVERTER_VARIANT="${INVERTER_VARIANT}_PT1"
+fi
+# Same rule as _PT1: a non-production datapath option must tag the artifact, or
+# an A/B pair silently overwrites itself. On 2026-08-09 an untagged
+# PADE_PIPELINED run destroyed its own baseline netlist, log and FASM.
+if [ "$PADE_PIPELINED" = "1" ]; then
+    INVERTER_VARIANT="${INVERTER_VARIANT}_PP1"
+fi
+if [ "$PIPELINED_RNS_CHECK" = "1" ]; then
+    INVERTER_VARIANT="${INVERTER_VARIANT}_RC1"
 fi
 
 # Resolve spin to uppercase
@@ -276,6 +298,7 @@ echo "  Seed:   ${A7_SEED}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
 echo "  Fp4Inv: structured=${FP4_STRUCTURED} request-sequential=${FP4_STRUCTURED_SEQUENTIAL} backend-sequential=${FP4_BACKEND_SEQUENTIAL}"
 echo "  Trace:  PADE_DEBUG_TRACE=${PADE_DEBUG_TRACE}"
+echo "  Pipelined: PADE_PIPELINED=${PADE_PIPELINED} PIPELINED_RNS_CHECK=${PIPELINED_RNS_CHECK}"
 echo "  Synth:  abc9=${A7_SYNTH_ABC9}"
 echo "  Artifact: ${BITSTREAM}"
 if [ -n "$TENSEGRITY_VARIANT" ]; then
@@ -316,6 +339,8 @@ synth() {
                     -set USE_STRUCTURED_INVERTER $FP4_STRUCTURED \
                     -set STRUCTURED_INVERTER_SEQUENTIAL $FP4_STRUCTURED_SEQUENTIAL \
                     -set PADE_DEBUG_TRACE $PADE_DEBUG_TRACE \
+                    -set PADE_PIPELINED $PADE_PIPELINED \
+                    -set PIPELINED_RNS_CHECK $PIPELINED_RNS_CHECK \
                     spu_a7_top; \
             hierarchy -check -top spu_a7_top; \
             synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top spu_a7_top -json \"$JSON\"; \

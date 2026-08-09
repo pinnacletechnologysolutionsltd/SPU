@@ -17,7 +17,9 @@
 module spu13_rplu2_pade_sidecar #(
     parameter USE_STRUCTURED_INVERTER = 0,
     parameter STRUCTURED_INVERTER_SEQUENTIAL = 0,
-    parameter PADE_DEBUG_TRACE = 0
+    parameter PADE_DEBUG_TRACE = 0,
+    parameter PADE_PIPELINED = 0,
+    parameter PIPELINED_RNS_CHECK = 0
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -164,7 +166,8 @@ module spu13_rplu2_pade_sidecar #(
 
 
     rplu_thimble_pade #(
-        .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE)
+        .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE),
+        .PADE_PIPELINED(PADE_PIPELINED)
     ) u_pade (
         .clk(clk),
         .rst_n(rst_n),
@@ -251,7 +254,9 @@ module spu13_rplu2_pade_sidecar #(
                     .rns_error(shared_rns_error), .logical_products()
                 );
             end else begin : gen_parallel
-                spu13_m31_multiplier_structured u_shared_mult (
+                spu13_m31_multiplier_structured #(
+                    .PIPELINED_RNS_CHECK(PIPELINED_RNS_CHECK)
+                ) u_shared_mult (
                     .clk(clk), .rst_n(rst_n), .start(shared_start), .op(shared_op),
                     .a0(shared_a0), .a1(shared_a1), .a2(shared_a2), .a3(shared_a3),
                     .b0(shared_b0), .b1(shared_b1), .b2(shared_b2), .b3(shared_b3),
@@ -314,6 +319,18 @@ module spu13_rplu2_pade_sidecar #(
     // from the previous operation cannot bleed into the next one.
     //
     // Placement note: this block must sit below datapath_busy's declaration.
+    //
+    // PIPELINED_RNS_CHECK consumer audit (2026-08-09): at 1 the multiplier's
+    // rns_error arrives one cycle after done. This sidecar is safe. The
+    // observation below is not done-relative and not state-gated -- it runs
+    // every cycle and sets a sticky flag -- so a later flag is still seen. The
+    // only clear is `start_pending && !datapath_busy`, driven by an SPI
+    // instruction accept at ~25 kHz against a 25-50 MHz clk_fast, so a stale
+    // error cannot race a new operation's clear in any realistic sequence.
+    // rplu_pipeline.v and spu13_rplu2_sidecar.v were NOT audited and their
+    // multipliers deliberately keep the parameter at 0 -- spu13_rplu2_sidecar.v
+    // line ~287 folds rns_error into a stall decision, which is not
+    // observability-only and would need its own analysis.
     reg shared_rns_error_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)

@@ -56,6 +56,8 @@ module spu_a7_top #(
     parameter USE_STRUCTURED_INVERTER = 0,
     parameter STRUCTURED_INVERTER_SEQUENTIAL = 0,
     parameter PADE_DEBUG_TRACE = 0,
+    parameter PADE_PIPELINED = 0,
+    parameter PIPELINED_RNS_CHECK = 0,
     parameter ENABLE_LUCAS_MAC  = 0,
     parameter ENABLE_SU3        = 0,
     parameter ENABLE_IROTC      = 0,
@@ -1010,7 +1012,9 @@ module spu_a7_top #(
                 spu13_rplu2_pade_sidecar #(
                     .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
                     .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL),
-                    .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE)
+                    .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE),
+                    .PADE_PIPELINED(PADE_PIPELINED),
+                    .PIPELINED_RNS_CHECK(PIPELINED_RNS_CHECK)
                 ) u_rplu2_pade_sidecar (
                     .clk(clk_fast),
                     .rst_n(rst_n_int),
