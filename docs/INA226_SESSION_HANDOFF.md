@@ -158,17 +158,81 @@ dial, before the manifest re-`init`.
    below rather than a single figure. Then trim so the loaded rail sits near
    3000 mV and feed the measured limit into `init`.
 
-   Recorded measurements (fill in):
+   **Measured 2026-08-09. Voltage column resolved; current column is NOT.**
 
-   | Quantity | Front panel | DMM min | DMM median | DMM max |
-   |---|---|---|---|---|
-   | Open-circuit voltage | | | | |
-   | Loaded voltage (free-running) | | | | |
-   | Regulating current at CC clamp | 280 mA | | | |
+   | Quantity | Front panel | Measured | Note |
+   |---|---|---|---|
+   | Open-circuit voltage | 3.000 V | **3.06 V** | panel reads ~60 mV low (+2.0 %) |
+   | Loaded, breadboarded path | 3.000 V | **2.80 V** | 260 mV droop — see below |
+   | Loaded, soldered direct | 3.000 V | **3.05 V** | 10 mV droop |
+   | Regulating current at CC clamp | 280 mA | **UNRESOLVED** | see "current column" below |
 
-   The 2026-08-06 single-shot figures were 3100 mV open-circuit and 307.4 mA
-   regulating against a 280 mA display. Treat those as prior estimates to be
-   replaced, not as the answer.
+   **The power path was the whole problem, and it is fixed.** At ~96 mA
+   free-running, the breadboarded path dropped 260 mV — an implied **~2.7 Ω**,
+   nearly double the 1.44 Ω measured on 08-06 and 27x the <0.1 Ω target. Soldered
+   directly to the supply terminals the same load drops 10 mV: **~0.10 Ω**, at
+   target. The breadboard alone accounted for ~2.6 of the 2.7 Ω.
+
+   That decides the capture budget. At 0.1 Ω the non-stall classes sit within
+   ~25 mV of each other (`normal` 3.050 V, `elevated_load` ~3.036 V) against a
+   ±5 % band of roughly ±150 mV. At 2.7 Ω, `elevated_load` would have landed
+   ~400 mV out and failed the bus-voltage gate on physics alone, whatever
+   nominal was declared.
+
+   **Trim and nominal.** Set the panel to ~2.95 V to land a loaded rail near
+   3.000 V, then declare `nominal_bus_mV = 3000` at `init`. `nominal_bus_mV` is
+   a *choice made at init*, not a contract constant, and it must be set from the
+   measured **loaded** rail — declaring 3000 against a rail that sits at 2900
+   spends a third of the ±5 % budget before any noise.
+
+   **Discard the old stall-voltage figures.** Block 0 measured the stall rail at
+   1478-1501 mV; it now collapses to **680-800 mV**. Both are correct for their
+   own rig: with 2.7 Ω in series much of the supply's voltage never reached the
+   motor, and at 0.1 Ω the stalled winding draws harder before the clamp
+   engages. **Stall bus voltage is rig-dependent**, so the 08-06 numbers describe
+   a rig that no longer exists. It also confirms the v2 exemption independently:
+   at 0.7 V the stall class is nowhere near ±5 % of nominal on any bench.
+
+   ### The current column — unresolved, and why
+
+   Two measurements of the same quantity disagree by 40 %:
+
+   | Date | Instrument | Panel | Measured |
+   |---|---|---|---|
+   | 2026-08-06 | INA226 (R100) | 280 mA | 307.4 mA (+10 %) |
+   | 2026-08-09 | DMM, current range | 280 mA | 185 mA (−34 %) |
+
+   **The DMM is the prime suspect, not the supply.** It intermittently stops
+   reading on its amp ranges — the classic signature of a blown or high-resistance
+   fuse in the current path, which under-reads, in the direction observed. A
+   failing meter explains both readings; a supply wandering 40 % between sessions
+   explains only one. The ZK-5KX is probably stable at ~280-307 mA when set to
+   280.
+
+   **Do not write 185 mA into the manifest.** `init` freezes
+   `--supply-limit-ma` across all thirty sessions and it cannot be corrected
+   without re-running them.
+
+   **Resolve it with the R100 shunt method**, which avoids the meter's current
+   path entirely by using its voltage function — the one that has been
+   self-consistent all session:
+
+   1. Wire a known 0.1 Ω in series. **The dead INA226's R100 is intact** — its
+      failure was confined to the bus-voltage channel — so it serves as a
+      calibrated shunt.
+   2. Measure the drop in millivolts during stall; current is `V / 0.1`.
+      Expect ~28 mV at 280 mA.
+   3. Five-plus readings, 1.5 s stalled / 30 s cooling.
+
+   This has a second payoff: it is the same measurement principle the
+   replacement INA226 uses, so it cross-validates the sensor path. If the new
+   module later disagrees with this figure, you will know which to doubt.
+
+   **A clamp below ~240 mA would break the study**, so this must be settled
+   before block 0: `elevated_load` (~240 mA) and `current_limited_stall` would
+   both sit against the clamp and the three classes would collapse to two. That
+   failure would present as "the SOM cannot separate the classes" — the exact
+   shape of the three prior negatives — when the real cause was the bench.
 6. Re-`init` the manifest against **v2** with measured values.
 7. Fresh block 0 — the three captures on disk were taken through the old
    breadboard path against the v1 manifest and must be discarded.
