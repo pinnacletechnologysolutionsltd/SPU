@@ -124,6 +124,24 @@ demonstrating that composition preserves both services' semantics:
 Absent this trace, "composed decision" is a design intention, not a capability,
 and must not appear in public material as the latter.
 
+**Software oracle and reference trace exist as of 2026-08-09.** The oracle is
+`software/lib/composition_policy.py`; the trace is generated and checked by
+`software/tests/test_composition_trace.py` (48 checks) and written to
+`build/composition_trace/composition_trace_v1.json`. It exercises all three
+outcomes and asserts frame identity — not equality — so a re-encoded lookalike
+cannot pass as untouched evidence.
+
+**The policy introduces no new threshold.** Ambiguity is read from SOM1 flag
+bit 3, the classifier's own determination, already proven in silicon. That is
+what makes "thresholds fixed in RTL" cost nothing to re-prove: there is no new
+constant to prove.
+
+**What remains for §5 to be satisfied in full:** an RTL implementation matching
+this oracle bit-exactly, and a trace captured from silicon rather than from
+software. Until then the oracle defines the acceptance standard, exactly as
+`software/lib/a31_field.py` does for the RPLU datapath — and shared datapaths
+stay deferred.
+
 ## 6. Shared datapaths — still deferred, and why
 
 Sharing multipliers or storage between services is an *optimisation*. It can
