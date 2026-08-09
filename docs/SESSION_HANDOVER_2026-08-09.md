@@ -159,17 +159,22 @@ by review.
   harness, star ground, flyback, series R < 0.1 Ω, true current limit by DMM)
   **before** the part arrives, because the runbook's freeze rule forbids
   changing the rig after block 0.
-- **Padé 50 MHz** — works at 25 MHz with half throughput; datapath pipelining
-  is the route back. **Contract issued to GTP 2026-08-09:**
-  `spu_strategy/gtp_contract_pade_pipelining_2026-08-09.md`. Chosen because
-  every gate is machine-checkable from artifacts — a missed 50 MHz constraint
-  is a hard nextpnr error under `set -euo pipefail`, so completion *is* the
-  proof — which is the opposite of the judgement-heavy audits that failed.
-  Silicon validation stays with us; GTP delivers to P&R evidence and leaves the
-  tree uncommitted. Requires five seeds, not one, and says explicitly that "it
-  cannot close without unacceptable cost" is a legitimate result.
-  **Handed over 2026-08-09.** Audit against the contract's six gates when the
-  findings land; do not read the prose first.
+- ~~**Padé 50 MHz**~~ — **CLOSED 2026-08-10, negative result. Do not reopen as a
+  timing tranche.** Both cuts were built and measured across five seeds each at
+  a 50 MHz constraint. `PADE_PIPELINED` costs +9 evaluator cycles and was never
+  on the critical path in any of ten builds. `PIPELINED_RNS_CHECK` did move the
+  critical path off the cross-die haul — the mechanism worked, confirmed on
+  every arm-B build — but Fmax 37.42 ± 4.60 → 40.54 ± 5.23 MHz is not
+  significant at five seeds, and **0 of 10 closed 50 MHz** (best 46.55). Both
+  ship at default 0, committed `0130c28`/`5b4b3ea`/`7dc14c8`. Separating a
+  +3 MHz effect needs ~40 seeds per arm (~9 h of P&R), and the 2026-08-05 entry
+  gate already showed routed Fmax does not predict functional reliability here.
+  The spin stays at `A7_CLK_DIV_LOG2=1` / 25 MHz with half throughput, and that
+  cost still must be quoted wherever the pipeline is presented.
+  Findings: `spu_strategy/claude_findings_rns_gather_cut_2026-08-09.md`.
+  The contract's own premise — "completion *is* the proof" — was **wrong** and
+  is corrected in the evening section: nextpnr writes the netlist and FASM
+  before the final timing check, then exits non-zero.
 
 - **Composition silicon trace** — the last piece of policy §5. Needs
   `spu13_composition_policy.v` integrated into a spin, driven with real SOM1

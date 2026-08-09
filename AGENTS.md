@@ -92,12 +92,30 @@ knowingly unclosed, reporting `PASS at 2.00 MHz` while running at 50.
 > there: 0/10 against a 10/10 divided-clock candidate in the same bracketed
 > campaign. Build it with `A7_FREQ=25`, which it meets. The cost is half
 > throughput on this spin and must be quoted wherever the pipeline is
-> presented; pipelining the datapath is the route back to 50 MHz. Dropping
+> presented. **Pipelining was measured on 2026-08-09/10 and is not the route
+> back** — see below. Dropping
 the flag does not fix that — a build that misses its constraint is a nextpnr
-`ERROR` under `set -euo pipefail` (`build_a7.sh:20`) and emits no bitstream, and
+`ERROR` under `set -euo pipefail` (`build_a7.sh:20`), and
 no coreless spin has been built against a 50 MHz constraint to see if it closes.
 Core spins (`A7_CLK_DIV_LOG2=6`, 781.25 kHz) are over-constrained at 2 MHz and
-are fine as written. Full note:
+are fine as written.
+
+> **Pipelining measured and closed out, 2026-08-09/10.** Two cuts were built
+> and measured across five nextpnr seeds each at a 50 MHz constraint.
+> `PADE_PIPELINED` (registered multiplier-result handoff) costs +9 cycles of
+> evaluator latency and was **never on the critical path** in any of ten
+> builds. `PIPELINED_RNS_CHECK` (per-lane mod-3 residue check) **did** move the
+> critical path off the cross-die haul into the sidecar's error flop — the
+> mechanism worked — but Fmax went 37.42 ± 4.60 → 40.54 ± 5.23 MHz, which is
+> not significant at five seeds: three seeds improved, two got worse, and
+> **0 of 10 builds closed 50 MHz** (best 46.55). Both options ship at default 0.
+> Separating a +3 MHz effect from this spread needs ~40 seeds per arm, and
+> `gtp_contract_rns_check_pipeline_2026-08-05.md`'s entry gate already showed
+> routed Fmax does not predict functional reliability on this board. **Do not
+> reopen this as a reliability fix.** Findings:
+> `spu_strategy/claude_findings_rns_gather_cut_2026-08-09.md`.
+
+Full note:
 [`docs/SOUTHBRIDGE_SPI_PROTOCOL.md`](docs/SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check--it-does-not-slow-anything-down).
 
 ## Claim discipline — read before writing any status claim
