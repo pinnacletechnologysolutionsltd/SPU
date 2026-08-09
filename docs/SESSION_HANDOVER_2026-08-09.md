@@ -190,3 +190,138 @@ by review.
   sessions. Five readings minimum per quantity; the 2026-08-06 figures
   (3100 mV, 307.4 mA against a 280 mA display) are single-shot priors to be
   replaced.
+
+---
+
+## Evening session, 2026-08-09 — Padé pipelining audited, RNS gather cut, A/B sweep
+
+Written incrementally as work landed. **The tree is uncommitted** — 11 modified
+files plus one new vector file, spanning four separate pieces of work. See
+"staging plan" below before any commit.
+
+### Correction to the pipelining contract's premise (above)
+
+The line "a missed 50 MHz constraint is a hard nextpnr error … so completion
+*is* the proof" is **wrong**. nextpnr writes `.pnr.json`/`.pnr.fasm` *before*
+the final timing check, then exits non-zero with `0 warnings, 1 error`.
+Artifact presence proves nothing; the exit code and the `ERROR: Max frequency`
+line are the evidence. A side effect: `collect_fpga_metrics.py` never runs on a
+failing build, so there is no `build/metrics/` entry for any of them.
+
+### PADE_PIPELINED — audited, works, and is on the wrong signal
+
+`spu_strategy/claude_audit_of_pade_pipelining_2026-08-09.md`. Verified
+independently: latency 112→121 and 33→41 cycles, the five-seed Fmax table, that
+the builds really had the option on, and area-after. The negative result stands.
+
+But the registered handoff **is not on the critical path**. The routed path runs
+from the shared multiplier's `s1` result registers, through the mod-3 residue
+check, into `shared_rns_error_q` — 24.5 ns, 5.9 logic / 18.7 routing. The
++9-cycle option should be **shelved**, not landed.
+
+### PIPELINED_RNS_CHECK — the actual cut, default 0
+
+Implements Part A of `gtp_contract_rns_check_pipeline_2026-08-05.md` (that
+tranche was stopped by its entry gate as a *reliability* fix; it is revived here
+only as a *throughput* question — see the audit's Finding 6). Each lane's mod-3
+compare is computed next to its own registers; 4 bits make the long trip instead
+of 136. Scoped to `spu13_m31_multiplier_structured` and plumbed only through the
+Padé sidecar → `spu_a7_top` → `build_a7.sh`. Cost measured: **+86 LUTX, +5 FFX.**
+
+**Consumer audit, completed 2026-08-09 evening — safe everywhere it terminates:**
+
+- `spu13_rplu2_pade_sidecar.v` — not done-relative, not state-gated, sticky flag,
+  SPI-paced clear. Safe.
+- `spu13_rplu2_sidecar.v:287` — earlier caution that this "folds rns_error into a
+  stall decision" was **too pessimistic**. `rns_error` shares an `if` with
+  `pipeline_stall` but only sets the `error` status pulse and the sticky
+  `rns_error_seen`; it never suppresses a QR commit. Safe. One nuance: a
+  final-multiply error is now reported one cycle *after* the commit rather than
+  concurrent with it — ordering, not behaviour.
+- `spu13_core.v` → `spu_a7_top.v:1086` — terminates in `spi_status_turbulence`,
+  a status bit latched into `resp_buf[2]` and read over SPI. **Not** a Henosis
+  trigger, not a datapath gate. Observability only.
+- **Blocker for enabling it beyond the Padé sidecar:** `rplu_pipeline.v` takes
+  `rns_error` from `spu13_m31_multiplier` and `spu13_m31_multiplier_seq_structured`,
+  neither of which has the parameter. Adding it there is a cone edit, deferred.
+
+### Artifact tagging fixed — and why it mattered
+
+`build_a7.sh` now appends `_PP1` / `_RC1`, matching the existing `_PT1` rule.
+Without it the 2026-08-09 pipelining run **overwrote its own baseline**, and
+because `FP4_EVIDENCE=1` was set for seeds 2/3/5/7 but not seed 1, the seed-1
+build wrote the **canonical production name**. The `.bit` survived only because
+`pack` never ran; the `.json`/`.fasm`/`.pnr.json` under that name are now from
+a pipelined, non-closing design. **Do not `pack` `spu_a7_100t_RPLU2PADE` until
+it is rebuilt.**
+
+### Baseline Fmax is a distribution, not a number
+
+Five-seed baseline at `A7_FREQ=50 A7_CLK_DIV_LOG2=0`, current RTL:
+
+| seed | 1 | 2 | 3 | 5 | 7 |
+|---|---|---|---|---|---|
+| Fmax (MHz) | 34.98 | 31.12 | 37.51 | 42.58 | 40.91 |
+| routing (ns) | 22.5 | 26.4 | 20.9 | 17.2 | 18.1 |
+
+Logic is pinned at 5.7–6.2 ns; **routing carries all 11.5 MHz of the spread.**
+Any single-seed Fmax comparison on this design is noise.
+
+### Sweep result — gather broken, 50 MHz not closed
+
+Full findings: `spu_strategy/claude_findings_rns_gather_cut_2026-08-09.md`.
+
+| seed | A Fmax | B Fmax | A routing | B routing |
+|---:|---:|---:|---:|---:|
+| 1 | 34.98 | 46.55 | 22.5 | 15.8 |
+| 2 | 31.12 | 41.97 | 26.4 | 18.2 |
+| 3 | 37.51 | 36.70 | 20.9 | 21.4 |
+| 5 | 42.58 | 33.73 | 17.2 | 24.2 |
+| 7 | 40.91 | 43.74 | 18.1 | 16.6 |
+
+Fmax 37.42±4.60 → 40.54±5.23 (delta +3.12, SE 3.11); routing 21.02±3.68 →
+19.24±3.51 (delta −1.78, SE 2.27). **Neither is significant**; 3 of 5 seeds
+improved, 2 got worse. **0 of 10 builds closed 50 MHz** (best 46.55).
+
+**The mechanism did work**, and this part does not rest on the statistic: the
+critical-path sink moved from `u_rplu2_pade_sidecar`'s `shared_rns_error_q`
+(across the die) to the new per-lane `rns_lane_q` **inside `u_shared_mult`**, on
+every arm-B build checked. The 136-bit haul is off the critical path. What
+remains is each lane's own 32-bit gather into `mod3_32`; the next cut would be
+inside that function, not at a module boundary.
+
+Do **not** quote the per-seed deltas: arm B's netlist differs (+86 LUTX, +5 FFX)
+so the same seed is a different placement, and the arms are independent samples,
+not matched pairs. Seed 1's +11.57 MHz is one draw, not a measurement.
+
+Recommendation: land the cut at default 0 if wanted — nearly free, zero latency
+cost, audited safe, regression-covered — but **do not present it as a speedup**.
+Establishing a +3 MHz effect against this spread needs ~40 seeds per arm (~9 h
+of P&R), and per the 2026-08-05 entry gate routed Fmax does not predict
+functional reliability anyway.
+
+### Test coverage — two real gaps closed
+
+- `rplu_thimble_pade_tb.v` now runs **six oracle-derived non-trivial [4/4]
+  vectors** (`pade_eval_vectors.mem`), all four lanes checked, 33/33 in both
+  `PADE_PIPELINED` modes. All six re-derived independently against
+  `a31_field.py:pade_eval`. Previously the bench's entire arithmetic coverage
+  was "1/1 returns 1".
+- As delivered, **five of the six never ran** — the loop used `wait_cycles`,
+  which `pulse_start()` resets and counts up to 112, ending the loop after one
+  iteration. Reported 8/8 was the tell (3 + 1×5, not 3 + 6×5). Fixed with a
+  dedicated induction variable.
+- `PARAM_VARIANTS` now covers `PIPELINED_RNS_CHECK` and `PADE_PIPELINED`.
+  Regression **188/188**. Note the totals count benches, not checks, so this
+  class of bug is invisible to the headline number.
+
+### Staging plan (nothing committed yet)
+
+Four independent commits, explicit paths only — never `git add -A`, shared tree:
+
+1. `spu13:` RNS gather cut — `spu13_m31_multiplier_structured.v`,
+   `spu13_rplu2_pade_sidecar.v`, `spu_a7_top.v`, `spu13_m31_multiplier_structured_tb.v`
+2. `a7:` artifact tagging — `build_a7.sh`
+3. `test:` evaluator coverage — `rplu_thimble_pade_tb.v`, `pade_eval_vectors.mem`,
+   `spu13_rplu2_pade_sidecar_tb.v`, `spu13_spi_rplu2_pade_tb.v`, `run_all_tests.py`
+4. `rplu_thimble_pade.v` (PADE_PIPELINED) — **hold**, pending the shelve decision.
