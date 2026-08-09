@@ -574,6 +574,20 @@ def main():
         else:
             print(f"\n  test_su3_oracle.py FAILED:\n{result_su3.stdout[-500:]}")
 
+    # Composition policy oracle + trace (docs/SERVICE_COMPOSITION_POLICY.md §5)
+    composition_pass = 0
+    composition_test = os.path.join(
+        root_dir, "software", "tests", "test_composition_trace.py")
+    if os.path.exists(composition_test):
+        result_comp = subprocess.run(
+            [sys.executable, composition_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "PASS" in result_comp.stdout:
+            composition_pass = 1
+        else:
+            print(f"\n  test_composition_trace.py FAILED:\n{result_comp.stdout[-500:]}")
+
     # Padé batch inversion oracle
     pade_batch_pass = 0
     pade_batch_test = os.path.join(root_dir, "software", "tests", "test_pade_batch_inversion.py")
@@ -894,6 +908,7 @@ def main():
         + audio_pass + host_pass + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
+        + composition_pass
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
@@ -901,6 +916,7 @@ def main():
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
+        + (1 - composition_pass)
     )
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
