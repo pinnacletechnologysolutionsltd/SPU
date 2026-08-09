@@ -25,6 +25,9 @@ swap criteria, and the LUCAS 200-step claim that had sat unbacked since
 | `714ce8c` | All five swap criteria met |
 | `0ac49ae` | `spu_host` `connect()` fixed for already-booted boards |
 | `317a0f4` | **§3.2e.7 — LUCAS 200-step zero-drift proven, 10/10** |
+| `7c59b57` | This handover |
+| `0f8e639` | Bench-supply characterisation procedure (DMM-only, no INA226 needed) |
+| `8451aae` | Sweep + four-act drivers promoted into `tools/` |
 
 ## Karatsuba — evidence chain complete
 
@@ -109,7 +112,25 @@ artifacts rather than from a report.
   **before** the part arrives, because the runbook's freeze rule forbids
   changing the rig after block 0.
 - **Padé 50 MHz** — works at 25 MHz with half throughput; datapath pipelining
-  is the route back. An optimisation, not a defect.
-- **Sweep tooling** — driver and analyser still in a session scratchpad;
-  `build/zk_pnr_campaign/20260808_194219/` holds copies. They belong in
-  `tools/` if this becomes a repeatable check.
+  is the route back. **Contract issued to GTP 2026-08-09:**
+  `spu_strategy/gtp_contract_pade_pipelining_2026-08-09.md`. Chosen because
+  every gate is machine-checkable from artifacts — a missed 50 MHz constraint
+  is a hard nextpnr error under `set -euo pipefail`, so completion *is* the
+  proof — which is the opposite of the judgement-heavy audits that failed.
+  Silicon validation stays with us; GTP delivers to P&R evidence and leaves the
+  tree uncommitted. Requires five seeds, not one, and says explicitly that "it
+  cannot close without unacceptable cost" is a legitimate result.
+- ~~**Sweep tooling**~~ — **DONE `8451aae`.** `tools/zk_pnr_sweep.sh`,
+  `tools/zk_analyse.py`, `tools/tgr_four_act.py`, listed in the AGENTS.md
+  command table, repo root from `git rev-parse` rather than a hardcoded path.
+  Promoted because §3.2l.1 cites the four-act driver's output directly and the
+  swap criteria rest on the sweep — evidence-producing tools do not belong in a
+  session scratchpad.
+
+- **Bench supply characterisation** — procedure added `0f8e639`
+  (`INA226_CAPTURE_RUNBOOK.md` §2, recording table in the handoff). Needs only a
+  DMM and the actuator, so it is doable now, and it is a hard prerequisite for
+  the manifest re-`init`: `init` freezes `--supply-limit-ma` into all thirty
+  sessions. Five readings minimum per quantity; the 2026-08-06 figures
+  (3100 mV, 307.4 mA against a 280 mA display) are single-shot priors to be
+  replaced.
