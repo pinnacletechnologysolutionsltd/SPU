@@ -138,11 +138,13 @@ Three failure modes, all observed in this repository:
    took a full silicon re-run on 2026-08-07 to settle, and two claims were
    withdrawn (§3.2e.6). Unevidenced is not the same as false; it is just
    unusable.
-2. **Sample output read as a result** — `docs/LUCAS_QUICKSTART.md` §5 shows a
+2. **Sample output read as a result** — `docs/LUCAS_QUICKSTART.md` §5 showed a
    transcript asserting *"silicon: bit-exact against ground truth for all 200
-   steps"*, and no 200-step entry exists in the ledger. **Label expected
-   output as expected**, or a walkthrough becomes an evidence claim by
-   accident. Still open as of 2026-08-09.
+   steps"* from 2026-07-17, while no 200-step entry existed in the ledger.
+   **Label expected output as expected**, or a walkthrough becomes an evidence
+   claim by accident. **Closed 2026-08-09 by §3.2e.7**, which backs the claim
+   with 10/10 runs, a hash-pinned bitstream and an internal positive control —
+   the gap was real for three weeks, and the fix was a bench run, not an edit.
 3. **Dated handovers cited as evidence** — a handover records what was believed
    on its date and is routinely superseded. It is history, not backing. Cite
    the ledger, never the handover.
@@ -163,31 +165,43 @@ do not batch it.**
 
 ## Hardware Test Status (July 2026)
 
+Every bullet below cites its ledger section, per the rule above. Bullets marked
+**[NO ENTRY]** are claims for which no backing section could be located on
+2026-08-10; they are retained because removing them would lose real history, but
+they must not be repeated elsewhere until a section exists.
+
+> **Shape caveat on the Tang Primer 25K entries.** §3.1, §3.2, §3.2a–§3.2c
+> predate the §3.2e.6 standard: they carry build commands, raw proof lines and
+> interpretation, but **no date and no bitstream SHA-256**. By this file's own
+> definition they are partial backing. They are honest records of what the UART
+> printed; they are not reproducible to a specific image.
+
 **Proven in silicon on Tang Primer 25K:**
-- FPGA configuration via openFPGALoader
-- Laminar boot (SPI flash read, RPLU table hydration)
-- Fibonacci-synchronized manifold (phi_8/13/21 pulses)
-- Davis Gate quadrance monitoring (Q: UART telemetry)
-- VE (Vector Equilibrium) QR init hydration (12 vertices)
-- QR register file read path (6 distinct hex values verified)
-- **QLDI opcode** — immediate Quadray load → writes correctly to QR regfile
-- **QSUB opcode** — QR subtraction (QLDI operands → QSUB → QR commit readback)
-- Hex coordinate projection → UART output (H: FFFE 0002)
-- Instruction sequencer with inter-instruction delay
-- RP2040 USB-to-SPI flash PMOD programmer — JEDEC, pin diagnostics, sector erase, page program, verify
-- RPLU v2 PMOD J4 flash boot-table hydration proof — Tang Primer 25K reads external W25Q128-class flash over J4
-- **RPLU2 consume proof over southbridge** — 149 records consumed via RP2350 SPI, count verified, checksum 0x0AA480E7
-- **Southbridge SPI protocol** — 0xAC status, 0xA0 manifold, 0xAE QR commit, 0xB1 instruction write, 0xA5 config write
-- RP2350 southbridge diag firmware — USB CDC console for SPI bring-up
-- **RP2350 arithmetic test driver** — QLDI+QSUB 6-test suite via SPI, byte-swap fix applied
+- FPGA configuration via openFPGALoader — §3.1
+- Laminar boot (SPI flash read, RPLU table hydration) — §3.1
+- Fibonacci-synchronized manifold (phi_8/13/21 pulses) — **[NO ENTRY]**
+- Davis Gate quadrance monitoring (Q: UART telemetry) — §3.2
+- VE (Vector Equilibrium) QR init hydration (12 vertices) — **[NO ENTRY]**
+- QR register file read path (6 distinct hex values verified) — **[NO ENTRY]**
+- **QLDI opcode** — immediate Quadray load → writes correctly to QR regfile — §3.2c
+- **QSUB opcode** — QR subtraction (QLDI operands → QSUB → QR commit readback) — §3.2c
+- Hex coordinate projection → UART output (H: FFFE 0002) — **[NO ENTRY]**
+- Instruction sequencer with inter-instruction delay — **[NO ENTRY]**
+- RP2040 USB-to-SPI flash PMOD programmer — JEDEC, pin diagnostics, sector erase, page program, verify — §3.2a
+- RPLU v2 PMOD J4 flash boot-table hydration proof — Tang Primer 25K reads external W25Q128-class flash over J4 — §3.2a
+- **RPLU2 consume proof over southbridge** — 149 records consumed via RP2350 SPI, count verified, checksum 0x0AA480E7 — §3.2c
+- **Southbridge SPI protocol** — 0xAC status, 0xA0 manifold, 0xAE QR commit, 0xB1 instruction write, 0xA5 config write — §3.2b
+- RP2350 southbridge diag firmware — USB CDC console for SPI bring-up — §3.2b
+- **RP2350 arithmetic test driver** — QLDI+QSUB 6-test suite via SPI, byte-swap fix applied — §3.2c
+- Tang 25K regression closeout — §3.2i
 
 **Proven in silicon on Wukong Artix-7 100T:**
-- JTAG detection via RP2040 DirtyJTAG (IDCODE `0x03631093`)
-- J11 SPI southbridge via RP2350 — LUCAS, SU3, ROBOTICS, SU3SHARE all PASS
-- **ROBOTICS main core** — QLDI/QSUB/ROTC 0-5/six-step closure (`13/13 PASSED`, `ARITHMETIC_BLAZE: PASS`)
-- **SU3SHARE shared multiplier** — one M31 multiplier shared between SU3 sidecar and RPLU2 config/QR path, both passing on same bitstream
-- **RPLU2PADE Thimble-Padé pipeline** — full A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] over J11 SPI. 72 DSP, 34% LUT, route closed iteration 5 (`RPLU2PADE_J11: PASS`)
-- **LUCAS sidecar** — PSCALE/PCHIRAL/PMUL/PINV all verified over J11
+- JTAG detection via RP2040 DirtyJTAG (IDCODE `0x03631093`) — **[NO ENTRY]**
+- J11 SPI southbridge via RP2350 — LUCAS (§3.2e.2), SU3 (§3.2e.6), ROBOTICS (§3.0), SU3SHARE (§3.2e.5) all PASS
+- **ROBOTICS main core** — QLDI/QSUB/ROTC 0-5/six-step closure (`13/13 PASSED`, `ARITHMETIC_BLAZE: PASS`) — §3.0, six-step kinematics §3.2h
+- **SU3SHARE shared multiplier** — one M31 multiplier shared between SU3 sidecar and RPLU2 config/QR path, both passing on same bitstream — §3.2e.5
+- **RPLU2PADE Thimble-Padé pipeline** — full A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] over J11 SPI. 72 DSP, 34% occupied slices (15% of `SLICE_LUTX`), route closed iteration 5 (`RPLU2PADE_J11: PASS`) — §3.2f. **Proven at `clk_fast` = 781.25 kHz** (`A7_CLK_DIV_LOG2=6`), not at operating speed; the spin ships at 25 MHz for half throughput, and 50 MHz is a measured negative result (see the clk-div note above). The functional claim is backed; a full-speed claim is not.
+- **LUCAS sidecar** — PSCALE/PCHIRAL/PMUL/PINV all verified over J11 — §3.2e.2; 200-step zero-drift §3.2e.7
 
 > **`spu_a7_top` outage, 2026-07-13 → 2026-08-03 — root-caused and fixed.**
 > Every `spu_a7_top` spin rebuilt after the J11 remap returned all zeros over
