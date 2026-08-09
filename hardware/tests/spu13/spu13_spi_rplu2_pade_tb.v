@@ -2,7 +2,8 @@
 
 module spu13_spi_rplu2_pade_tb #(
     parameter USE_STRUCTURED_INVERTER = 0,
-    parameter PADE_DEBUG_TRACE = 0
+    parameter PADE_DEBUG_TRACE = 0,
+    parameter PADE_PIPELINED = 0
 );
     localparam [7:0] OP_RPLU2_START = 8'h2A;
 
@@ -47,6 +48,7 @@ module spu13_spi_rplu2_pade_tb #(
     reg sidecar_commit_seen = 1'b0;
     reg [7:0] rx_buf [0:63];
     integer errors = 0;
+    integer wait_i;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -65,7 +67,8 @@ module spu13_spi_rplu2_pade_tb #(
 
     spu13_rplu2_pade_sidecar #(
         .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
-        .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE)
+        .PADE_DEBUG_TRACE(PADE_DEBUG_TRACE),
+        .PADE_PIPELINED(PADE_PIPELINED)
     ) u_sidecar (
         .clk(clk),
         .rst_n(rst_n),
@@ -443,8 +446,14 @@ module spu13_spi_rplu2_pade_tb #(
             spi_cfg_write(3'd2, 10'd0, {32'd0, denominator});
             spi_cfg_write(3'd2, 10'd8, 64'd0);
 
+            sidecar_commit_seen = 1'b0;
             spi_inst_write({OP_RPLU2_START, 8'd4, 48'd0});
-            repeat (4000) @(posedge clk);
+            wait_i = 0;
+            while (!sidecar_commit_seen && wait_i < 4000) begin
+                @(posedge clk);
+                wait_i = wait_i + 1;
+            end
+            @(negedge clk);
             expect_status(8'h07);
             expect_qr(case_name, {32'd0, expected});
 
@@ -475,6 +484,10 @@ module spu13_spi_rplu2_pade_tb #(
         end
         if (u_sidecar.PADE_DEBUG_TRACE != PADE_DEBUG_TRACE) begin
             $display("FAIL: PADE_DEBUG_TRACE did not reach sidecar");
+            errors = errors + 1;
+        end
+        if (u_sidecar.PADE_PIPELINED != PADE_PIPELINED) begin
+            $display("FAIL: PADE_PIPELINED did not reach sidecar");
             errors = errors + 1;
         end
 

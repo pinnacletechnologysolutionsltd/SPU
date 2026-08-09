@@ -4,7 +4,8 @@
 
 module spu13_rplu2_pade_sidecar_tb #(
     parameter USE_STRUCTURED_INVERTER = 0,
-    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0
+    parameter STRUCTURED_INVERTER_SEQUENTIAL = 0,
+    parameter PADE_PIPELINED = 0
 );
 
     reg clk = 1'b0;
@@ -47,7 +48,8 @@ module spu13_rplu2_pade_sidecar_tb #(
 
     spu13_rplu2_pade_sidecar #(
         .USE_STRUCTURED_INVERTER(USE_STRUCTURED_INVERTER),
-        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL)
+        .STRUCTURED_INVERTER_SEQUENTIAL(STRUCTURED_INVERTER_SEQUENTIAL),
+        .PADE_PIPELINED(PADE_PIPELINED)
     ) uut (
         .clk(clk),
         .rst_n(rst_n),
@@ -138,8 +140,10 @@ module spu13_rplu2_pade_sidecar_tb #(
 
         issue_pulse(pack(8'h2A, 8'd4, 8'd0, 16'd0, 16'd0));
 
-        for (wait_i = 0; wait_i < 1200; wait_i = wait_i + 1) begin
+        wait_i = 0;
+        while (!seen_qr_commit && wait_i < 1200) begin
             @(posedge clk);
+            wait_i = wait_i + 1;
             if (error)
                 error_seen = 1'b1;
             if (uut.pade_done)
@@ -153,6 +157,7 @@ module spu13_rplu2_pade_sidecar_tb #(
                 qr_D_seen = qr_commit_D;
             end
         end
+        @(negedge clk);
 
         if (!seen_claim) begin
             $display("FAIL: Padé sidecar did not claim opcode 0x2A");

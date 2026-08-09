@@ -109,6 +109,18 @@ def main():
     # flipping the RTL default changed nothing any test could see, and v2 (now
     # the production path) had no functional coverage anywhere in the tree.
     PARAM_VARIANTS = {
+        # Per-lane RNS check inside the structured multiplier (2026-08-09).
+        # The variant is what proves the delayed rns_error still detects an
+        # injected fault -- the default run cannot see that at all.
+        "spu13_m31_multiplier_structured_tb.v": ([
+            ("PIPELINED_RNS_CHECK", "1"),
+        ], "rnscut"),
+        # Registered multiplier-result handoff in the Pade evaluator
+        # (2026-08-09). Same reasoning: without this the option ships with no
+        # functional coverage anywhere in the tree.
+        "rplu_thimble_pade_tb.v": ([
+            ("PADE_PIPELINED", "1"),
+        ], "pipelined"),
         "rplu_pipeline_tb.v": ([
             ("USE_STRUCTURED_INVERTER", "1"),
         ], "v2"),
@@ -117,12 +129,14 @@ def main():
         ], "v2"),
         "spu13_rplu2_pade_sidecar_tb.v": ([
             ("USE_STRUCTURED_INVERTER", "1"),
+            ("PADE_PIPELINED", "1"),
         ], "v2"),
         # Keep the regression count at 184 by covering both non-default
         # parameters in the existing SPI-sidecar variant run.
         "spu13_spi_rplu2_pade_tb.v": ([
             ("USE_STRUCTURED_INVERTER", "1"),
             ("PADE_DEBUG_TRACE", "1"),
+            ("PADE_PIPELINED", "1"),
         ], "v2_trace"),
     }
     test_variants = [(f, "", None) for f in test_files]
