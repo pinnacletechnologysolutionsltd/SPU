@@ -12,6 +12,40 @@ delete it from here.
 
 ---
 
+## 2026-08-09 — bench work parked until the spare arrives; soldering is settled
+
+**Decision (John, 2026-08-09): park the remaining bench characterisation until
+a working INA226 is in hand.** The current column cannot be settled with the
+instruments available — the DMM intermittently stops reading on its amp ranges
+— and the replacement module measures current through its own R100 with a
+calibrated ADC, which is both more trustworthy than the suspect meter and the
+instrument the capture will actually use. Characterising the supply with the
+same device that will record the sessions is the better experiment, not merely
+the more convenient one.
+
+**What is settled and needs no re-deriving:**
+
+- **The power path must be soldered.** Measured today, not inferred:
+  breadboarded ~2.7 Ω against soldered-direct ~0.10 Ω at the same load. This is
+  no longer a preference or a tidiness argument — at the breadboarded figure
+  `elevated_load` misses the ±5 % bus-voltage gate by ~400 mV on physics alone,
+  whatever nominal is declared.
+- **Panel voltage offset:** reads ~60 mV low. Set ~2.95 V for a 3.000 V loaded
+  rail; declare `nominal_bus_mV = 3000`.
+- **The old stall-voltage figures are void** (rig-dependent; see below).
+
+**What is deferred to the working module:**
+
+- the regulating current at the CC clamp — the number `init` freezes across all
+  thirty sessions;
+- confirmation that `elevated_load` sits below the clamp rather than against
+  it, which is what keeps three classes from collapsing to two.
+
+**Still worth doing meanwhile, cheaply:** check or replace the DMM's current
+fuse. It is the only independent cross-check on the INA226 once the module
+arrives, and a second instrument that disagrees is how a bad sensor gets
+caught — the situation this project has already been in twice.
+
 ## 2026-08-08 — VBUS channel failed; capture parked on a replacement part
 
 **Read this first. Everything below is currently unrunnable.** The module's
