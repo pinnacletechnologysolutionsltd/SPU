@@ -28,6 +28,15 @@ swap criteria, and the LUCAS 200-step claim that had sat unbacked since
 | `7c59b57` | This handover |
 | `0f8e639` | Bench-supply characterisation procedure (DMM-only, no INA226 needed) |
 | `8451aae` | Sweep + four-act drivers promoted into `tools/` |
+| `f9bba1c` | Bench supply characterised — power path fixed, current column unresolved |
+| `23be6ca` | **Phase 6 closed; claim level raised to ladder rung 6** |
+| `9af013e` | INA226 bench work parked until the spare arrives |
+| `139ce31` | **Service composition policy adopted** |
+| `fe29773` | Boundary section pointed at the policy |
+| `1159013` | Composition oracle + reference trace |
+| `8e46808` | Trace registered in `run_all_tests.py` (184 → 185) |
+| `ab2e640` | **Composition policy RTL, exhaustive oracle parity** |
+| `42ee3eb` | Policy updated with RTL status |
 
 ## Karatsuba — evidence chain complete
 
@@ -92,6 +101,45 @@ needs a judgement call. GTP compute remains well suited to P&R sweeps, long
 formal runs, and pipelining searches — work whose output is verifiable from
 artifacts rather than from a report.
 
+## Composition track — policy to RTL in one session
+
+The architecture's self-imposed blocker is cleared. `CURRENT_STATUS.md`'s
+service-composition boundary deferred shared datapaths behind two
+preconditions; the first is now met and the second is half met.
+
+| Piece | State |
+|---|---|
+| Policy | adopted — `SERVICE_COMPOSITION_POLICY.md` |
+| Software oracle | `software/lib/composition_policy.py` |
+| Reference trace | 50 checks, in the regression |
+| RTL | `spu13_composition_policy.v` — 396 checks, exhaustive parity |
+| **Silicon trace** | **missing — shared datapaths stay deferred** |
+
+**The central rule is compose verdicts, not values.** The three services are
+different rings with no meaning-preserving map between them, so an algebra
+service emits a bounded dimensionless verdict and only that composes with a
+decision. The useful consequence: **no cross-domain adapter is needed for
+anything currently contemplated.** The §4 adapter contract exists for the case
+that is not yet contemplated and binds if anyone reaches for it.
+
+It is also the strongest argument against implicit conversion available here —
+every field is exact, so an adapter would be the **only** lossy step in the
+pipeline, destroying the central claim at the one place nobody looks.
+
+**Three decisions settled by John**, one against the draft's recommendation:
+separate annotation frame keyed on result generation; **thresholds fixed in
+RTL** rather than host-configurable; `hold` and `escalate` kept distinct. The
+fixed-threshold choice turned out to cost nothing to re-prove, because it
+pushed the design toward reusing SOM1 flag bit 3 — the classifier's own
+ambiguity call, already proven in silicon — instead of inventing a new
+constant.
+
+**Two enforcement details worth keeping:** the oracle's `compose()` returns the
+very bytes object it was handed, so rule 3.1 is checked by identity rather than
+equality and a re-encoded lookalike cannot pass as untouched evidence; and the
+RTL reads no quadrances at all, so policy §1 holds by construction rather than
+by review.
+
 ## Open
 
 - ~~**ROBOTICS spin synth re-check**~~ — **DONE 2026-08-09, PASSES.**
@@ -120,6 +168,14 @@ artifacts rather than from a report.
   Silicon validation stays with us; GTP delivers to P&R evidence and leaves the
   tree uncommitted. Requires five seeds, not one, and says explicitly that "it
   cannot close without unacceptable cost" is a legitimate result.
+  **Handed over 2026-08-09.** Audit against the contract's six gates when the
+  findings land; do not read the prose first.
+
+- **Composition silicon trace** — the last piece of policy §5. Needs
+  `spu13_composition_policy.v` integrated into a spin, driven with real SOM1
+  frames, outcomes recorded. Until it exists, shared datapaths stay deferred
+  and "composed decision" is a design intention in public material, not a
+  capability.
 - ~~**Sweep tooling**~~ — **DONE `8451aae`.** `tools/zk_pnr_sweep.sh`,
   `tools/zk_analyse.py`, `tools/tgr_four_act.py`, listed in the AGENTS.md
   command table, repo root from `git rev-parse` rather than a hardcoded path.
