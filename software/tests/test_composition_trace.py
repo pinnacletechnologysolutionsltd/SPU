@@ -141,6 +141,40 @@ try:
 except CompositionError:
     check(True, "bare string verdict rejected")
 
+# --- exhaustive golden vectors for RTL parity ----------------------------
+# Case agreement is not equivalence. Enumerate the entire meaningful input
+# space and let hardware/tests/spu13/spu13_composition_policy_tb.v check every
+# point, so the RTL cannot drift from this oracle in a corner nobody wrote a
+# case for. Flag bits 5-7 are reserved and rejected by the encoder, so the
+# space is 32 flag patterns x a few error codes x every verdict.
+REASON_CODE = {
+    "algebra verdict concurs": 0,
+    "algebra verdict dissents": 1,
+    "algebra verdict unavailable": 2,
+    "som1 result not valid": 3,
+    "som1 map not valid": 5,
+    "som1 classifier busy": 6,
+    "som1 reported ambiguous": 7,
+}
+VERDICT_CODE = {Verdict.CONCUR: 0, Verdict.DISSENT: 1, Verdict.UNAVAILABLE: 2}
+OUTCOME_CODE = {Outcome.ACCEPT: 0, Outcome.HOLD: 1, Outcome.ESCALATE: 2}
+
+golden = []
+for flags in range(0x20):            # bits 0-4; 5-7 reserved
+    for err in (0, 1, 5, 255):
+        for v in (Verdict.CONCUR, Verdict.DISSENT, Verdict.UNAVAILABLE):
+            raw = frame(flags=flags, error=err, gen=1)
+            outcome, _, reason = compose(raw, v)
+            code = 4 if reason.startswith("som1 error code") else REASON_CODE[reason]
+            word = (flags << 15) | (err << 7) | (VERDICT_CODE[v] << 5) \
+                   | (OUTCOME_CODE[outcome] << 3) | code
+            golden.append("%06x" % word)
+
+gold_path = REPO / "hardware" / "tests" / "spu13" / "composition_policy_golden.mem"
+gold_path.write_text("\n".join(golden) + "\n")
+check(len(golden) == 0x20 * 4 * 3, "golden vector count wrong: %d" % len(golden))
+check(len({g for g in golden}) > 1, "golden vectors are degenerate")
+
 # --- emit the trace artifact ---------------------------------------------
 out = REPO / "build" / "composition_trace"
 out.mkdir(parents=True, exist_ok=True)
@@ -153,5 +187,6 @@ for f in failures:
     print("  FAIL", f)
 print("  outcomes exercised:", ", ".join(sorted(seen)))
 print("  trace written:", (out / "composition_trace_v1.json").relative_to(REPO))
+print("  golden vectors:", len(golden), "->", gold_path.relative_to(REPO))
 print("PASS" if not failures else "FAIL")
 sys.exit(1 if failures else 0)
