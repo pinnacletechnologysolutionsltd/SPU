@@ -136,11 +136,19 @@ bit 3, the classifier's own determination, already proven in silicon. That is
 what makes "thresholds fixed in RTL" cost nothing to re-prove: there is no new
 constant to prove.
 
-**What remains for §5 to be satisfied in full:** an RTL implementation matching
-this oracle bit-exactly, and a trace captured from silicon rather than from
-software. Until then the oracle defines the acceptance standard, exactly as
-`software/lib/a31_field.py` does for the RPLU datapath — and shared datapaths
-stay deferred.
+**RTL exists as of 2026-08-09 and matches the oracle exhaustively.**
+`hardware/rtl/core/spu13/spu13_composition_policy.v` is combinational and
+branch-free — the decision is a MUX polynomial over five predicates, adding no
+cycles to the decision path. It reads no quadrances at all, so policy §1 holds
+by construction rather than by review. Parity is proven by 384 golden vectors
+generated from the oracle covering every flag pattern, four error codes and
+every verdict: `spu13_composition_policy_tb.v`, 396 checks, 0 failed.
+
+**What remains for §5 to be satisfied in full:** a trace captured from
+*silicon* rather than from simulation — the module integrated into a spin,
+driven with real SOM1 frames, and its outcomes recorded. Until then shared
+datapaths stay deferred, and "composed decision" remains a design intention in
+public material.
 
 ## 6. Shared datapaths — still deferred, and why
 
