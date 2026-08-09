@@ -6,8 +6,11 @@ silicon-proven 2026-07-24** — the three-product
 tensegrity consumers. The standalone `TENSEGRITYPROBE` path is now
 silicon-verified with the candidate as default (200x repeated
 `TGR:P V:7 E:00`, zero variance — `docs/hardware_evidence.md` §3.2l).
-`TENSEGRITYLINK`'s full transactional confirmation remains open, gated
-on the power-ready interlock. The reference `spu13_zphi_mul_serial`
+`TENSEGRITYLINK`'s full transactional confirmation **closed 2026-08-09**:
+10/10 four-act runs, zero deviations, bitstream `40373ab8…`
+(`docs/hardware_evidence.md` §3.2l.1). Both halves of the production
+tensegrity path are therefore silicon-verified on the three-product
+multiplier for the recorded fixtures. The reference `spu13_zphi_mul_serial`
 remains selectable (`USE_ZPHI_KARATSUBA=0` / `ZPHI_KARATSUBA=0`) for
 rollback.
 

@@ -2,13 +2,20 @@
 
 Date: 2026-07-21
 
-Status: Phases 0-5 complete as of 2026-07-23. The three-product multiplier
-is the production default in both tensegrity consumers; the four-product
-reference remains selectable for rollback. Phase 6's standalone
-`TENSEGRITYPROBE` half closed silicon-proven 2026-07-24 (200x repeated
-`TGR:P V:7 E:00`, zero variance — see `docs/hardware_evidence.md`
-§3.2l). `TENSEGRITYLINK`'s full transactional confirmation remains open,
-gated on the power-ready interlock.
+Status: **ALL PHASES COMPLETE. Phase 6 closed 2026-08-09.** The three-product
+multiplier is the production default in both tensegrity consumers; the
+four-product reference remains selectable for rollback.
+
+- Phase 6 **standalone** half — silicon-proven 2026-07-24, 200x repeated
+  `TGR:P V:7 E:00`, zero variance (`docs/hardware_evidence.md` §3.2l).
+- Phase 6 **transactional** half — silicon-proven 2026-08-09, 10/10 complete
+  four-act runs with zero deviations on bitstream `40373ab8…`
+  (`docs/hardware_evidence.md` §3.2l.1).
+
+The earlier "remains open, gated on the power-ready interlock" status is
+withdrawn on both counts: the interlock stopped gating anything on 2026-08-04
+(reaffirmed 08-07), and the run has since been performed. **Claim ladder rung 6
+is now licensed** — see §7.
 
 This plan turns the standalone result in
 `docs/ZPHI_KARATSUBA_MULTIPLIER.md` into a controlled production evaluation.
@@ -386,7 +393,9 @@ fixture), with whole-transaction sidecar admissions around 3.3-3.6% and
 guard fixtures 1-7%. Full per-fixture figures:
 `build/zphi_karatsuba_phase3_cycles.json`. Claim level: "Production-
 integrated and routed three-product multiplier" (claim ladder row 5).
-Phase 6 (silicon confirmation) remains open.
+Phase 6 (silicon confirmation) **is closed as of 2026-08-09** — standalone
+half §3.2l, transactional half §3.2l.1 — so the current claim level is ladder
+row 6, not row 5.
 
 ### Phase 6 -- Deferred hardware confirmation
 
@@ -417,11 +426,24 @@ bytes), SHA-256 `07c979daf0da76697c615527620eb2b96c85433438862368db43645550dd4ca
 was DirtyJTAG SRAM-loaded (`isc_done 1`, `init 1`, `done 1`) and the
 UART returned `TGR:P V:7 E:00` repeated 200 times over 15 seconds with
 zero variance. Full evidence: `docs/hardware_evidence.md` §3.2l. This
-licenses "silicon-verified" for the standalone `TENSEGRITYPROBE` path
-specifically — `TENSEGRITYLINK`'s full transactional confirmation
-remains open, gated on the interlock, and public material must keep
-distinguishing the two rather than generalizing this result to the
-whole tensegrity path.
+licensed "silicon-verified" for the standalone `TENSEGRITYPROBE` path
+specifically.
+
+**Phase 6 transactional half CLOSED, silicon-proven 2026-08-09.** Bitstream
+`build/spu_a7_100t_TENSEGRITYLINK_ZK1_S1.bit`, SHA-256 `40373ab8…`, packed
+from the routed artifact of the 2026-08-08 A/B sweep at the default seed, so
+it is what an ordinary build ships rather than a selected one. **10/10 complete
+four-act runs, zero deviations**: admission, mechanical negative,
+corrupt-payload rollback with the prior verdict preserved, and recovery. Across
+40 status reads: 20x `state=2 fault=0`, 20x `state=8 fault=5`, 10x `error=7`.
+Every field compared per act by `tools/tgr_four_act.py`, not eyeballed. Full
+evidence: `docs/hardware_evidence.md` §3.2l.1.
+
+**Both halves are therefore closed, and the distinction no longer needs
+policing in public material.** The full production tensegrity path — standalone
+guard and transactional table link — is silicon-verified on the three-product
+multiplier for the recorded fixtures. The remaining tensegrity frontier is the
+active proposal/actuation controller, which this work never claimed.
 
 ## 6. Commit boundaries
 
@@ -448,6 +470,15 @@ commit. Preserve all unrelated working-tree changes.
 | 5 | Production-integrated and routed three-product multiplier |
 | 6 | Silicon-verified production integration for the recorded fixtures |
 
+**Rung 6 is the current licensed level as of 2026-08-09**, both halves closed.
+The qualifier *"for the recorded fixtures"* still binds: this covers the seven
+admission fixtures and the four-act transactional sequence, not arbitrary
+tables or the actuation controller. It also rests on the five pre-registered
+criteria in `docs/ZPHI_KARATSUBA_SWAP_CRITERIA.md`, all met, none amended after
+seeing results — and on the explicit finding that **no Fmax claim is available
+in either direction**, since seed spread dwarfs the arm difference. Do not let
+"silicon-verified" drift into "faster".
+
 Do not call the multiplier `Karatsuba-Ofman` unless the paper or public text
 defines the precise three-product identity being used. In general project
 communication, `three-product Z[phi] multiplier` is the clearest description.
@@ -473,7 +504,9 @@ The agent must not:
 - perform hardware flashing or power operations;
 - loosen a watchdog or test;
 - overwrite reference build artifacts with candidate artifacts;
-- update public claim level beyond the last completed phase;
+- update public claim level beyond the last completed phase (that is now
+  rung 6, closed 2026-08-09 — but a *future* agent must re-check rather than
+  assume this line still means what it did);
 - push, publish, or contact third parties without explicit authorization.
 
 The first implementation task is transaction-semantics hardening, not the
