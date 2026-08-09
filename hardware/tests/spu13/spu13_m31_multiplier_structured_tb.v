@@ -3,7 +3,12 @@
 // Full-width comparison of every structured request against the production
 // general A31 multiplier. The frozen inverter corpus supplies extrema,
 // cancellation-heavy values, units, zero, and nonzero zero divisors.
-module spu13_m31_multiplier_structured_tb;
+module spu13_m31_multiplier_structured_tb #(
+    // At 1 the candidate's rns_error lands one cycle after done, so every
+    // rns_error assertion below needs one more edge before it is read. The
+    // arithmetic checks are unaffected.
+    parameter PIPELINED_RNS_CHECK = 0
+);
     localparam [31:0] P = 32'h7FFFFFFF;
     localparam VECTOR_COUNT = 31;
     localparam MAX_WORDS = 1 + VECTOR_COUNT * 9;
@@ -35,7 +40,9 @@ module spu13_m31_multiplier_structured_tb;
         begin m31_neg = (value == 0) ? 0 : P - value; end
     endfunction
 
-    spu13_m31_multiplier_structured u_candidate (
+    spu13_m31_multiplier_structured #(
+        .PIPELINED_RNS_CHECK(PIPELINED_RNS_CHECK)
+    ) u_candidate (
         .clk(clk), .rst_n(rst_n), .start(start), .op(op),
         .a0(a0), .a1(a1), .a2(a2), .a3(a3),
         .b0(b0), .b1(b1), .b2(b2), .b3(b3),
@@ -92,6 +99,10 @@ module spu13_m31_multiplier_structured_tb;
                 $display("  candidate %h %h %h %h", cr0, cr1, cr2, cr3);
                 $display("  reference %h %h %h %h", rr0, rr1, rr2, rr3);
                 failures = failures + 1;
+            end
+            if (PIPELINED_RNS_CHECK != 0) begin
+                @(posedge clk);
+                #1;
             end
             if (crns_error !== 1'b0 || rrns_error !== 1'b0) begin
                 $display("FAIL unexpected RNS error vector=%0d op=%0d", vector_index, request_op);
@@ -184,6 +195,13 @@ module spu13_m31_multiplier_structured_tb;
         forced_value = cr0 ^ 32'd1;
         force u_candidate.s1_r0 = forced_value;
         #1;
+        // The pipelined check latches the lane compares on the next edge; the
+        // force must still be held across it, and s1_valid is still high at
+        // that edge so the delayed qualifier comes up with the lane flag.
+        if (PIPELINED_RNS_CHECK != 0) begin
+            @(posedge clk);
+            #1;
+        end
         if (crns_error !== 1'b1) begin
             $display("FAIL narrow RNS fault injection was not detected");
             failures = failures + 1;

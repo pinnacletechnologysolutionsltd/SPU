@@ -9,7 +9,14 @@
 // logical product count records the algebraic schedule; physical parallel
 // hardware remains the retained 16-lane bank.
 
-module spu13_m31_multiplier_structured (
+module spu13_m31_multiplier_structured #(
+    // Break the RNS residue check into a per-lane stage. Default 0 keeps the
+    // single-cycle combinational check and every consumer's done-relative
+    // timing. At 1, rns_error is one cycle later than done -- see the
+    // consumer audit in spu13_rplu2_pade_sidecar.v before enabling it on a
+    // path other than the Pade sidecar's.
+    parameter PIPELINED_RNS_CHECK = 0
+) (
     input  wire         clk,
     input  wire         rst_n,
     input  wire         start,
@@ -186,7 +193,40 @@ module spu13_m31_multiplier_structured (
     assign r3 = s1_r3;
     assign done = s1_valid;
     assign busy = s0_valid || s1_valid;
-    assign rns_error = s1_valid &&
-        ((mod3_32(s1_r0) != s1_res0) || (mod3_32(s1_r1) != s1_res1) ||
-         (mod3_32(s1_r2) != s1_res2) || (mod3_32(s1_r3) != s1_res3));
+
+    // The unpipelined check is one combinational cone fed by all 128 bits of
+    // s1_r0..s1_r3 plus 8 residue bits, converging on a single comparison
+    // cluster. Those registers sit near their own product columns, so the
+    // placer cannot keep the cone compact: on the A7-100T this is the routed
+    // critical path of the RPLU2PADE spin, and ~76% of it is the gather rather
+    // than the logic. Registering the *result* does not shorten a gather --
+    // 130ac0f already did that on the sidecar side and bought +7.6%.
+    //
+    // The pipelined form computes each lane's mod-3 compare next to that
+    // lane's own registers and sends four single bits to the central OR, so
+    // 4 bits make the long trip instead of 136. Lane flags are computed
+    // unconditionally and qualified at the output by the delayed valid.
+    generate
+        if (PIPELINED_RNS_CHECK != 0) begin : gen_pipelined_rns_check
+            reg [3:0] rns_lane_q;
+            reg       rns_valid_q;
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    rns_lane_q  <= 4'd0;
+                    rns_valid_q <= 1'b0;
+                end else begin
+                    rns_lane_q[0] <= (mod3_32(s1_r0) != s1_res0);
+                    rns_lane_q[1] <= (mod3_32(s1_r1) != s1_res1);
+                    rns_lane_q[2] <= (mod3_32(s1_r2) != s1_res2);
+                    rns_lane_q[3] <= (mod3_32(s1_r3) != s1_res3);
+                    rns_valid_q   <= s1_valid;
+                end
+            end
+            assign rns_error = rns_valid_q && (|rns_lane_q);
+        end else begin : gen_direct_rns_check
+            assign rns_error = s1_valid &&
+                ((mod3_32(s1_r0) != s1_res0) || (mod3_32(s1_r1) != s1_res1) ||
+                 (mod3_32(s1_r2) != s1_res2) || (mod3_32(s1_r3) != s1_res3));
+        end
+    endgenerate
 endmodule
