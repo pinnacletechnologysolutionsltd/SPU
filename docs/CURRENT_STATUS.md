@@ -32,6 +32,13 @@ only annotate it and drive an explicit accept/hold/escalate policy.  Shared
 datapaths are considered only after this policy and an oracle-backed
 composition trace exist.
 
+**The policy now exists: [`SERVICE_COMPOSITION_POLICY.md`](SERVICE_COMPOSITION_POLICY.md),
+adopted 2026-08-09.** Its central rule is that composition happens at the
+predicate level — an algebra service emits a bounded verdict, and only that
+composes with a decision, so no cross-domain numeric adapter is required for
+any composition currently contemplated. **The oracle-backed trace remains
+outstanding, so shared datapaths stay deferred.**
+
 ## Board Roles
 
 | Board | Role | Use for | Do not use for |
