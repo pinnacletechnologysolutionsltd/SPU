@@ -17,7 +17,8 @@
 module rplu_thimble_pade #(
     parameter NUM_COEFF    = 5,         // [4/4] Padé = 5 coeffs each
     parameter COEFF_ADDR_W = 3,         // ceil(log2(NUM_COEFF))
-    parameter PADE_DEBUG_TRACE = 0      // capture-only observability, default off
+    parameter PADE_DEBUG_TRACE = 0,     // capture-only observability, default off
+    parameter PADE_PIPELINED = 0       // registered multiplier handoff, default off
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -122,6 +123,44 @@ module rplu_thimble_pade #(
     reg [31:0] inv_c0, inv_c1, inv_c2, inv_c3;
     reg        inv_start_pending;
 
+    // Optional timing cut between the shared multiplier and the evaluator
+    // FSM.  The multiplier's result is captured before the FSM consumes it;
+    // this preserves every field operation exactly and changes only the
+    // completion handshake latency.  The shipping/default path remains the
+    // direct handshake.
+    wire [31:0] mult_r0_eval, mult_r1_eval, mult_r2_eval, mult_r3_eval;
+    wire        mult_done_eval;
+    generate
+        if (PADE_PIPELINED != 0) begin : gen_pipelined_mult_handoff
+            reg [31:0] mult_r0_q, mult_r1_q, mult_r2_q, mult_r3_q;
+            reg        mult_done_q;
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    mult_r0_q <= 32'd0; mult_r1_q <= 32'd0;
+                    mult_r2_q <= 32'd0; mult_r3_q <= 32'd0;
+                    mult_done_q <= 1'b0;
+                end else begin
+                    mult_done_q <= mult_done;
+                    if (mult_done) begin
+                        mult_r0_q <= mult_r0; mult_r1_q <= mult_r1;
+                        mult_r2_q <= mult_r2; mult_r3_q <= mult_r3;
+                    end
+                end
+            end
+            assign mult_r0_eval = mult_r0_q;
+            assign mult_r1_eval = mult_r1_q;
+            assign mult_r2_eval = mult_r2_q;
+            assign mult_r3_eval = mult_r3_q;
+            assign mult_done_eval = mult_done_q;
+        end else begin : gen_direct_mult_handoff
+            assign mult_r0_eval = mult_r0;
+            assign mult_r1_eval = mult_r1;
+            assign mult_r2_eval = mult_r2;
+            assign mult_r3_eval = mult_r3;
+            assign mult_done_eval = mult_done;
+        end
+    endgenerate
+
     assign debug_state = state;
 
     generate
@@ -154,13 +193,13 @@ module rplu_thimble_pade #(
 
                     // Same edge that presents the completed denominator to
                     // inv_z*. Observe the existing expressions directly.
-                    if (state == S_HORNER && mult_done && horner_is_den &&
+                    if (state == S_HORNER && mult_done_eval && horner_is_den &&
                         horner_idx == 0) begin
                         trace_inv_input_q <= {
-                            m31_add(mult_r0, den_coeff[0][0]),
-                            m31_add(mult_r1, den_coeff[0][1]),
-                            m31_add(mult_r2, den_coeff[0][2]),
-                            m31_add(mult_r3, den_coeff[0][3])
+                            m31_add(mult_r0_eval, den_coeff[0][0]),
+                            m31_add(mult_r1_eval, den_coeff[0][1]),
+                            m31_add(mult_r2_eval, den_coeff[0][2]),
+                            m31_add(mult_r3_eval, den_coeff[0][3])
                         };
                     end
 
@@ -176,8 +215,8 @@ module rplu_thimble_pade #(
                     if (state == S_MULTIPLY) begin
                         trace_final_a_q <= {mult_a0, mult_a1, mult_a2, mult_a3};
                         trace_final_b_q <= {mult_b0, mult_b1, mult_b2, mult_b3};
-                        if (mult_done) begin
-                            trace_final_result_q <= {mult_r0, mult_r1, mult_r2, mult_r3};
+                    if (mult_done_eval) begin
+                            trace_final_result_q <= {mult_r0_eval, mult_r1_eval, mult_r2_eval, mult_r3_eval};
                             trace_valid_q <= 1'b1;
                         end
                     end
@@ -235,14 +274,14 @@ module rplu_thimble_pade #(
                 end
 
                 S_HORNER: begin
-                    if (mult_done) begin
+                    if (mult_done_eval) begin
                         if (!horner_is_den) begin
                             if (horner_idx == 0) begin
                                 // Numerator complete: acc = acc*x + p0
-                                num_c0 <= m31_add(mult_r0, num_coeff[0][0]);
-                                num_c1 <= m31_add(mult_r1, num_coeff[0][1]);
-                                num_c2 <= m31_add(mult_r2, num_coeff[0][2]);
-                                num_c3 <= m31_add(mult_r3, num_coeff[0][3]);
+                                num_c0 <= m31_add(mult_r0_eval, num_coeff[0][0]);
+                                num_c1 <= m31_add(mult_r1_eval, num_coeff[0][1]);
+                                num_c2 <= m31_add(mult_r2_eval, num_coeff[0][2]);
+                                num_c3 <= m31_add(mult_r3_eval, num_coeff[0][3]);
 
                                 // Start denominator Horner chain.
                                 horner_c0     <= den_coeff[NUM_COEFF-1][0];
@@ -262,14 +301,14 @@ module rplu_thimble_pade #(
                                 mult_start    <= 1'b1;
                             end else begin
                                 // Continue numerator: acc = acc*x + p[idx]
-                                horner_c0  <= m31_add(mult_r0, num_coeff[horner_idx][0]);
-                                horner_c1  <= m31_add(mult_r1, num_coeff[horner_idx][1]);
-                                horner_c2  <= m31_add(mult_r2, num_coeff[horner_idx][2]);
-                                horner_c3  <= m31_add(mult_r3, num_coeff[horner_idx][3]);
-                                mult_a0    <= m31_add(mult_r0, num_coeff[horner_idx][0]);
-                                mult_a1    <= m31_add(mult_r1, num_coeff[horner_idx][1]);
-                                mult_a2    <= m31_add(mult_r2, num_coeff[horner_idx][2]);
-                                mult_a3    <= m31_add(mult_r3, num_coeff[horner_idx][3]);
+                                horner_c0  <= m31_add(mult_r0_eval, num_coeff[horner_idx][0]);
+                                horner_c1  <= m31_add(mult_r1_eval, num_coeff[horner_idx][1]);
+                                horner_c2  <= m31_add(mult_r2_eval, num_coeff[horner_idx][2]);
+                                horner_c3  <= m31_add(mult_r3_eval, num_coeff[horner_idx][3]);
+                                mult_a0    <= m31_add(mult_r0_eval, num_coeff[horner_idx][0]);
+                                mult_a1    <= m31_add(mult_r1_eval, num_coeff[horner_idx][1]);
+                                mult_a2    <= m31_add(mult_r2_eval, num_coeff[horner_idx][2]);
+                                mult_a3    <= m31_add(mult_r3_eval, num_coeff[horner_idx][3]);
                                 mult_b0    <= saddle_c0;
                                 mult_b1    <= saddle_c1;
                                 mult_b2    <= saddle_c2;
@@ -280,27 +319,27 @@ module rplu_thimble_pade #(
                         end else begin
                             if (horner_idx == 0) begin
                                 // Denominator complete: acc = acc*x + q0
-                                den_c0 <= m31_add(mult_r0, den_coeff[0][0]);
-                                den_c1 <= m31_add(mult_r1, den_coeff[0][1]);
-                                den_c2 <= m31_add(mult_r2, den_coeff[0][2]);
-                                den_c3 <= m31_add(mult_r3, den_coeff[0][3]);
-                                inv_z0 <= m31_add(mult_r0, den_coeff[0][0]);
-                                inv_z1 <= m31_add(mult_r1, den_coeff[0][1]);
-                                inv_z2 <= m31_add(mult_r2, den_coeff[0][2]);
-                                inv_z3 <= m31_add(mult_r3, den_coeff[0][3]);
+                                den_c0 <= m31_add(mult_r0_eval, den_coeff[0][0]);
+                                den_c1 <= m31_add(mult_r1_eval, den_coeff[0][1]);
+                                den_c2 <= m31_add(mult_r2_eval, den_coeff[0][2]);
+                                den_c3 <= m31_add(mult_r3_eval, den_coeff[0][3]);
+                                inv_z0 <= m31_add(mult_r0_eval, den_coeff[0][0]);
+                                inv_z1 <= m31_add(mult_r1_eval, den_coeff[0][1]);
+                                inv_z2 <= m31_add(mult_r2_eval, den_coeff[0][2]);
+                                inv_z3 <= m31_add(mult_r3_eval, den_coeff[0][3]);
                                 inv_start <= 1'b1;
                                 inv_start_pending <= 1'b1;
                                 state <= S_INVERT;
                             end else begin
                                 // Continue denominator: acc = acc*x + q[idx]
-                                horner_c0  <= m31_add(mult_r0, den_coeff[horner_idx][0]);
-                                horner_c1  <= m31_add(mult_r1, den_coeff[horner_idx][1]);
-                                horner_c2  <= m31_add(mult_r2, den_coeff[horner_idx][2]);
-                                horner_c3  <= m31_add(mult_r3, den_coeff[horner_idx][3]);
-                                mult_a0    <= m31_add(mult_r0, den_coeff[horner_idx][0]);
-                                mult_a1    <= m31_add(mult_r1, den_coeff[horner_idx][1]);
-                                mult_a2    <= m31_add(mult_r2, den_coeff[horner_idx][2]);
-                                mult_a3    <= m31_add(mult_r3, den_coeff[horner_idx][3]);
+                                horner_c0  <= m31_add(mult_r0_eval, den_coeff[horner_idx][0]);
+                                horner_c1  <= m31_add(mult_r1_eval, den_coeff[horner_idx][1]);
+                                horner_c2  <= m31_add(mult_r2_eval, den_coeff[horner_idx][2]);
+                                horner_c3  <= m31_add(mult_r3_eval, den_coeff[horner_idx][3]);
+                                mult_a0    <= m31_add(mult_r0_eval, den_coeff[horner_idx][0]);
+                                mult_a1    <= m31_add(mult_r1_eval, den_coeff[horner_idx][1]);
+                                mult_a2    <= m31_add(mult_r2_eval, den_coeff[horner_idx][2]);
+                                mult_a3    <= m31_add(mult_r3_eval, den_coeff[horner_idx][3]);
                                 mult_b0    <= saddle_c0;
                                 mult_b1    <= saddle_c1;
                                 mult_b2    <= saddle_c2;
@@ -346,11 +385,11 @@ module rplu_thimble_pade #(
                 end
 
                 S_MULTIPLY: begin
-                    if (mult_done) begin
-                        result_c0 <= mult_r0;
-                        result_c1 <= mult_r1;
-                        result_c2 <= mult_r2;
-                        result_c3 <= mult_r3;
+                    if (mult_done_eval) begin
+                        result_c0 <= mult_r0_eval;
+                        result_c1 <= mult_r1_eval;
+                        result_c2 <= mult_r2_eval;
+                        result_c3 <= mult_r3_eval;
                         done      <= 1'b1;
                         busy      <= 1'b0;
                         state     <= S_IDLE;
