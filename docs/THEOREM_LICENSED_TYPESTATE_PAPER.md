@@ -1,0 +1,227 @@
+# A theorem-licensed typestate machine for exact rotation algebra
+
+## Abstract
+
+[THEOREM] This paper presents a typestate construction for exact rotation
+algebra whose transitions are licensed by a doubling theorem. The construction
+separates fresh values from values known to remain in one catalog domain, and
+rejects transitions when the theorem's validity domain is not established.
+[RTL] The construction is instantiated in the ROTC and IROTC paths and is
+connected to a bounded tensegrity admission guard. [SILICON] Selected ROTC,
+IROTC, and tensegrity paths have board evidence, while the complete catalog
+surfaces remain a mixture of RTL and board-scoped results. The contribution is
+the correspondence between an algebraic domain and an enforced transition
+relation; it is not a claim about project-wide evidence or arbitrary arithmetic
+values.
+
+## 1. Scope and contribution
+
+[THEOREM] The central result is a four-state typestate lattice for registers
+holding Z[φ] pairs: `UNTAGGED`, `FRESH`, `MAIN`, and `CONJ`. `MAIN` and `CONJ`
+mean that the register is known to lie in one of two catalog domains; they do
+not mean that an arbitrary value has been proved to be a desired application
+result.
+
+[THEOREM] Within one A₅ catalog, the doubling theorem licenses the transition
+from `FRESH` to the catalog's typed state and licenses subsequent operations
+that preserve that domain. The conjugate catalog carries the Galois-dual
+domain. A mixed main/conjugate product is outside the theorem's domain and is
+therefore rejected rather than silently truncated.
+
+[THEOREM] `PCHIRAL` carries the ring automorphism between the two catalog
+domains. `SCALE2` reconditions a register to `FRESH`. Operations outside the
+A₅ theorem domain, including the integer-matrix ROTC classes, either preserve
+only the state they are specified to preserve or demote the tag to
+`UNTAGGED`.
+
+[RTL] The state machine is represented in the IROTC integration as a two-bit
+tag per QR register, with dispatch faults for untagged use, bad catalog index,
+and catalog mixing. Faulting operations hold the destination and its tag.
+
+[THEOREM] The result is a transition-soundness statement: every accepted
+transition is licensed by the stated precondition and theorem domain. It does
+not imply that the datapath computes the intended value, that a testbench
+exhausts all values, or that a document claim is supported.
+
+## 2. Formal model
+
+### 2.1 State space
+
+[THEOREM] Let the register typestate be
+
+\[
+  \tau \in \{U,F,M,C\}
+\]
+
+for `UNTAGGED`, `FRESH`, `MAIN`, and `CONJ`. Let `D_M` and `D_C` denote the
+two catalog domains and let `φ` denote the ring automorphism used by the
+conjugate construction. The state invariant is a judgment of the form
+`Γ ⊢ (r, τ)`, where `M` and `C` carry a domain witness and `U` carries none.
+
+[THEOREM] The principal transition rules are:
+
+| Operation | Precondition | Result |
+|---|---|---|
+| raw load | none | `U` |
+| `SCALE2` | `U`, `M`, or `C` | `F` |
+| main-catalog IROTC | `F` or `M` | `M` |
+| conjugate-catalog IROTC | `F` or `C` | `C` |
+| `PCHIRAL` | `M` or `C` | the opposite typed domain |
+| mixed catalog operation | `M` and `C` | reject with `CATMIX` |
+| octahedral/integer ROTC | operation-specific | preserve or demote as specified |
+
+[THEOREM] The induction argument is by transition cases. Raw writes establish
+no catalog fact; reconditioning establishes the `FRESH` precondition; a
+same-catalog step consumes and returns the same domain witness; `PCHIRAL`
+applies the automorphism; and a mixed step has no licensed conclusion. Thus a
+rejected transition is evidence that the machine has reached the boundary of
+the theorem's stated domain, not evidence that the underlying value is
+invalid.
+
+### 2.2 What the theorem does not establish
+
+[THEOREM] The judgment is deliberately narrower than a value proof. It does
+not establish bounds, expected test-vector outputs, transport framing, clock
+configuration, placement quality, or the absence of faults outside the
+transition relation.
+
+## 3. Case studies
+
+### 3.1 ROTC
+
+[RTL] The tagged ROTC path models `CLEAN`, `PENDING`, and explicit
+`MISALIGNED`, `OVERFLOW`, and `INEXACT` fault states. Its acceptance harness
+provides the tagged-state checks, and the tagged core is distinct from the
+original TDM baseline.
+
+[SILICON] ROTC angles 0–5 have board evidence in
+[hardware_evidence.md §3.2g (ROTC 0–5)](hardware_evidence.md#32g-rotc-0-5-silicon-probe).
+
+[RTL] ROTC angles 6–35 are covered by RTL/trace evidence only; they are not
+reported here as board results. The integer permutation classes are therefore
+an example of a transition surface whose algebraic classification and board
+status must remain separate.
+
+### 3.2 IROTC
+
+[THEOREM] IROTC is the direct case study for the lattice: main-catalog chains
+remain in `MAIN`, conjugate chains remain in `CONJ`, `PCHIRAL` changes the
+catalog witness, and mixed chains have no theorem-licensed result.
+
+[RTL] The RTL engine covers the generated 60-entry main catalog and its
+conjugate catalog, including the typestate dispatch and poison-hold behavior.
+The full 60×2 catalog is reported as RTL-only in this paper.
+
+[SILICON] The IROTC probe vectors and the `BADIDX`/`UNTAGGED`/`CATMIX` fault
+matrix are supported by [hardware_evidence.md §3.2k](hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
+
+[SILICON] SPI core integration and the conjugate-catalog cases are supported
+by [hardware_evidence.md §3.2k.1](hardware_evidence.md#32k1-irotc-spi-core-integration--conjugate-catalog-silicon-proof).
+
+### 3.3 Tensegrity admission
+
+[RTL] The tensegrity guard demonstrates the same separation at a system
+boundary: a bounded admission decision carries explicit state, fault, and
+recovery transitions, while its geometry and equilibrium predicates remain
+separate computations.
+
+[SILICON] The seven frozen admission fixtures, including the equilibrium
+fixture, are supported by [hardware_evidence.md §3.2l](hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
+
+[SILICON] The four-act transport and recovery sequence is supported by
+[hardware_evidence.md §3.2l.1](hardware_evidence.md#32l1-tensegritylink-four-act-proof-on-the-karatsuba-candidate).
+
+## 4. Harness and coverage boundary
+
+[RTL] The repository's state-machine document lists typestate or explicit
+state descriptions for ROTC, SOM/BMU, BTU, Padé evaluation, Lucas MAC, and
+batch inversion. Its completed typestate harness is the ROTC item; the other
+entries describe planned or partial harness work and must not be counted as
+completed formal coverage.
+
+| Subsystem | State-machine material | Coverage represented here |
+|---|---|---|
+| ROTC | Completed tagged-state harness | RTL harness; angles 0–5 additionally have SILICON evidence |
+| SOM/BMU | State description and planned harness | Testbench/oracle material only; no completed typestate harness claimed |
+| BTU | State description and planned harness | Testbench/oracle material only; no completed typestate harness claimed |
+| Padé evaluator | State description and planned harness | Testbench/oracle material only; no completed typestate harness claimed |
+| Lucas MAC | State description and partial checks | Testbench/oracle material only for this paper |
+| Batch inversion | State description and invariants | Testbench/oracle material only; no completed typestate harness claimed |
+| IROTC | Integrated typestate tags and fault transitions | RTL engine/integration; selected cases SILICON, full catalog RTL-only |
+| Tensegrity guard | Explicit admission/fault/recovery states | RTL guard; seven fixtures and transport also SILICON |
+
+[RTL] The distinction in this table is intentional: a bench that checks
+outputs or protocol frames is not counted as a typestate harness, and a
+state-machine description is not counted as an executed proof artifact.
+
+## 5. Negative results
+
+[RTL] The planned SOM/BMU, BTU, Padé, Lucas MAC, and batch-inversion harnesses
+are specified in the state-machine document but are not presented as built
+typestate harnesses here. This is a negative result about the scope of the
+current artifact.
+
+[THEOREM] Several fault classes cannot be expressed by this machine: a wrong
+arithmetic value produced while all tags are valid, an omitted clock divider,
+a placement-dependent timing failure, a malformed evidence statement, and a
+transport or physical failure outside the modeled transition relation. Those
+failures require independent value checks, build evidence, or bench evidence.
+
+[THEOREM] The theorem domain and RTL enforcement are also different claims.
+The theorem licenses one A₅ domain and its conjugate transformation; RTL can
+store and check tags, but that alone does not prove every theorem assumption or
+every datapath result. The full generated 60×2 catalog therefore remains an
+RTL claim in this paper, not a blanket board claim.
+
+## 6. Limitations
+
+[THEOREM] Typestate constrains transitions, not values. A well-typed execution
+may still compute the wrong value, and the machine does not police claims,
+documentation, papers, or status reports.
+
+[OBSERVED] The audit of this paper is deliberately separate from the draft.
+The five defects found tonight were: the aliased loop variable that ran one
+vector instead of six; the coverage report that read as complete; the critical-
+path misattribution; the RPLU2PADE clock omission; and the seven unbacked
+bullets. The typestate machine would have caught none of them.
+
+[THEOREM] The formal result is therefore a bounded transition result. It is
+not a substitute for independent vector coverage, synthesis and timing
+inspection, configuration accounting, or a claim-by-claim evidence audit.
+
+## 7. Evidence ledger for this draft
+
+Every technical claim in the paper is assigned one tier. The tier is about the
+kind of support available for that claim, not a ranking of the theorem.
+
+| ID | Claim summary | Tier | Source | Body mapping |
+|---|---|---|---|---|
+| T1 | Four-state lattice and domain witnesses | THEOREM | §2.1 | §1 lines 19–23; §2.1 lines 50–58 |
+| T2 | Same-catalog doubling transition | THEOREM | §2.1 | §1 lines 25–29; §2.1 lines 61–73 |
+| T3 | `PCHIRAL`, `SCALE2`, and integer-ROTC boundary rules | THEOREM | §2.1 | §1 lines 31–34; §2.1 lines 61–73 |
+| T4 | Transition soundness is narrower than value proof | THEOREM | §1, §2.2 | §1 lines 41–44; §2.2 lines 83–86 |
+| T5 | IROTC main/conjugate transition interpretation | THEOREM | §3.2 | §3.2 lines 107–109 |
+| T6 | Unexpressible fault classes and theorem/RTL gap | THEOREM | §5 | §5 lines 164–174 |
+| R1 | Tagged ROTC states and tagged-state harness | RTL | `STATE_MACHINE_HARNESS.md` §3.1 | §3.1 lines 92–95 |
+| R2 | ROTC angles 6–35 are RTL/trace-only here | RTL | `STATE_MACHINE_HARNESS.md`; trace tests | §3.1 lines 100–103 |
+| R3 | IROTC generated 60×2 surface and fault transitions | RTL | IROTC RTL/testbench artifacts | §3.2 lines 111–113 |
+| R4 | Tensegrity bounded state/fault/recovery model | RTL | tensegrity RTL/testbench artifacts | §3.3 lines 123–126 |
+| R5 | Harness-versus-bench coverage boundary | RTL | `STATE_MACHINE_HARNESS.md` §3 | §4 lines 136–155 |
+| S1 | ROTC angles 0–5 | SILICON | `hardware_evidence.md` §3.2g (ROTC 0–5) | §3.1 lines 97–98 |
+| S2 | IROTC probe and fault matrix | SILICON | `hardware_evidence.md` §3.2k | §3.2 lines 115–116 |
+| S3 | IROTC SPI integration and conjugate catalog | SILICON | `hardware_evidence.md` §3.2k.1 | §3.2 lines 118–119 |
+| S4 | Tensegrity seven admission fixtures | SILICON | `hardware_evidence.md` §3.2l | §3.3 lines 128–129 |
+| S5 | Tensegrity four-act transport and recovery | SILICON | `hardware_evidence.md` §3.2l.1 | §3.3 lines 131–132 |
+| O1 | Five repository defects observed tonight; typestate caught none | OBSERVED | §6 | §6 lines 182–186 |
+
+The repository sections `§3.1–§3.2c` are only partial backing for the broader
+project context: they do not supply the date and SHA-256 shape required for a
+silicon claim in this paper, so none of them is used as a SILICON source here.
+
+## References
+
+1. [STATE_MACHINE_HARNESS.md](STATE_MACHINE_HARNESS.md), especially §3.
+2. [IROTC_SPEC.md](IROTC_SPEC.md).
+3. [hardware_evidence.md](hardware_evidence.md), §3.2g (ROTC 0–5), §§3.2k,
+   3.2k.1, 3.2l, 3.2l.1.
+4. [ROTC_EXPONENT_STATE_MACHINE.md](ROTC_EXPONENT_STATE_MACHINE.md).
