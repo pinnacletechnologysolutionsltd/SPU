@@ -51,49 +51,54 @@ outstanding, so shared datapaths stay deferred.**
 
 ## Proven Hardware Path
 
-- RP2350 SPI southbridge to Tang 25K is verified.
-- RP2350 SPI-mode SD card path is verified.
+Each bullet cites its `docs/hardware_evidence.md` section. **[NO ENTRY]** marks a
+claim with no backing section located on 2026-08-10; **[SUPERSEDED]** marks a
+dated figure that no longer describes HEAD. Tang 25K entries §3.1-§3.2c predate
+the §3.2e.6 standard (no date, no bitstream SHA-256) and are partial backing.
+
+- RP2350 SPI southbridge to Tang 25K is verified. — §3.2b
+- RP2350 SPI-mode SD card path is verified. — §3.2b
 - SD/RP2350/FPGA RPLU2 hydration is verified for corrected 149-record table
-  profiles.
+  profiles. — §3.2b, §3.2c
 - Tang 25K `rplu2_arith_probe` verifies RPLU2 config hydration plus QLDI/QSUB
-  QR commit readback in silicon.
+  QR commit readback in silicon. — §3.2c
 - Tang 25K split builds keep the proven pieces reproducible without forcing the
-  full live RPLU2 evaluator into an undersized device.
+  full live RPLU2 evaluator into an undersized device. *(build strategy, not a silicon claim)*
 - Tang 25K `lucas_mac_probe` is SRAM-load/UART verified for the Lucas
   `FAST_ONLY=1` PSCALE/PCHIRAL paths and a 100-period PSCALE zero-drift
-  marathon.
+  marathon. — §3.2e
 - Tang 25K `lucas_phslk_probe` is SRAM-load/UART verified for coherent,
   mismatched, and zero-divisor-denominator PHSLK cases, then continues a
-  dynamic live-operand loop (`PHSLK:P` on `/dev/ttyUSB2`).
+  dynamic live-operand loop (`PHSLK:P` on `/dev/ttyUSB2`). — §3.2e.1
 - Tang 25K `rotc_probe` is SRAM-load/UART verified for corrected ROTC angles
-  0-5, including canonical VM/RTL trace matching and period closure.
+  0-5, including canonical VM/RTL trace matching and period closure. — §3.2g (ROTC 0-5)
 - ROTC angles 0-35 are gated as the verified VM/RTL surface; angles 0-5 are
-  silicon-verified, while 6-35 remain testbench/trace-equivalence verified.
+  silicon-verified, while 6-35 remain testbench/trace-equivalence verified. — silicon portion §3.2g; 6-35 are trace-equivalence only, §2.5
 - Tang 25K `irotc_probe` is SRAM-load/UART verified for IROTC probe vectors
   idx 16, idx 36 main catalog, and the BADIDX/UNTAGGED/CATMIX fault matrix
-  (`IROTC:P E=00`). Full 60 x 2 catalog behavior is testbench-verified.
+  (`IROTC:P E=00`). Full 60 x 2 catalog behavior is testbench-verified. — §3.2k
 - Tang 25K `som_bmu_probe` is SRAM-load/UART verified for deterministic
-  weighted SOM/BMU classification over the BRAM-backed 7-node fixture.
+  weighted SOM/BMU classification over the BRAM-backed 7-node fixture. — §3.2g (SOM/BMU)
 - Tang 25K `som_hydrate_probe` is SRAM-load/UART verified for SOM BRAM
-  write/readback and per-feature byte-enable preservation (`HYD:P T:3 B:6 E:00`).
+  write/readback and per-feature byte-enable preservation (`HYD:P T:3 B:6 E:00`). — §3.2g.1
 - Tang 25K `six_step_probe` is SRAM-load/UART verified for the period-6
-  rational robotics kinematics harness (`KIN:P P:5 E:00`).
+  rational robotics kinematics harness (`KIN:P P:5 E:00`). — §3.2h
 - Tang 25K `neuro_guard_probe` is SRAM-load/UART verified as a standalone
-  fixed-epoch neuro sidecar proof.
+  fixed-epoch neuro sidecar proof. — **[NO ENTRY]** (§3.2d covers `neuro_sidecar_probe`, not the standalone fixed-epoch guard)
 - Tang 25K `neuro_sidecar_probe` is SRAM-load/UART verified for the
-  SPI-visible adapter command path (`0xE0`/`0xE1`/`0xE2`/`0xE3`).
+  SPI-visible adapter command path (`0xE0`/`0xE1`/`0xE2`/`0xE3`). — §3.2d
 - Tang 25K final closeout soak: 40-second `/dev/ttyUSB2` capture stayed on
-  repeated `KIN:P P:5 E:00` from `six_step_probe`.
+  repeated `KIN:P P:5 E:00` from `six_step_probe`. — §3.2h
 - Wukong Artix-7 100T JTAG through RP2040 DirtyJTAG is verified, and Wukong
   J11 SPI through RP2350 is silicon-verified for LUCAS, SU3, SU3SHARE, and
-  RPLU2CORE smoke images.
+  RPLU2CORE smoke images. — LUCAS §3.2e.2, SU3 §3.2e.6, SU3SHARE §3.2e.5, RPLU2CORE §3.2e.4; **the JTAG IDCODE itself has [NO ENTRY]**
 - Wukong Artix-7 `ROBOTICS` main-core image is SRAM-load/J11 verified:
   `rp2350_spu_arithmetic_test.uf2` passed QLDI, QSUB, all corrected ROTC
   angles 0-5, and ROTC angle-1 six-step closure (`13/13`, `ARITHMETIC_BLAZE:
-  PASS`).
+  PASS`). — §3.0, six-step closure §3.2h
 - Wukong Artix-7 `SU3SHARE` image is SRAM-load/J11 verified with one top-level
   shared `spu13_m31_multiplier`: SU3 dense-matrix readback and RPLU2 config/QR
-  regression both pass on the same bitstream.
+  regression both pass on the same bitstream. — §3.2e.5
 - Wukong Artix-7 `RPLU2PADE` image is SRAM-load/J11 verified for the full
   SPI-visible Thimble-Padé sidecar path: spu13_fp4_inverter,
   rplu_thimble_pade, spu13_rplu2_pade_sidecar, and
@@ -104,9 +109,9 @@ outstanding, so shared datapaths stay deferred.**
   `clk_fast` max 36.54 MHz, passing at the 2 MHz bring-up target. RP2350 J11
   smoke repeatedly reports `RPLU2PADE_J11: PASS` across five rational
   constant Padé cases, with status `raw=7F 2A 13 00`, `crc_error=0`,
-  and `busy=0`.
+  and `busy=0`. — §3.2f. The 2 MHz bring-up target quoted here is `A7_CLK_DIV_LOG2=6`, i.e. `clk_fast` = 781.25 kHz; the spin ships at 25 MHz and 50 MHz is a measured negative result (2026-08-10)
 - Full repository regression on 2026-07-20: `python3 run_all_tests.py` reported
-  `Total PASS: 173`, `Total FAIL: 0`.
+  `Total PASS: 173`, `Total FAIL: 0`. **[SUPERSEDED]** — 188/188 as of 2026-08-10; this line records the 07-20 state and should not be quoted as current
 - Tang 25K `irotc_spi` southbridge image is silicon-verified over the real
   RP2350 SPI link, 6/6 PASS, including the conjugate-catalog rotation
   (case 3) and CATMIX no-commit (case 4) — first conjugate-icosahedron
@@ -152,7 +157,7 @@ outstanding, so shared datapaths stay deferred.**
   replay gate. Only 12/23,184 held-out windows clamped any lane, so this is
   feature insufficiency rather than normalization collapse. No map is promoted
   to FPGA and the v1 contract will not be tuned. Full reproducible negative:
-  `docs/HYDRAULIC_PUMP_SOM_CASE_STUDY.md`.
+  `docs/HYDRAULIC_PUMP_SOM_CASE_STUDY.md`. — evidence is `docs/HYDRAULIC_PUMP_SOM_CASE_STUDY.md`, not the hardware ledger: this is a data result, not a silicon claim
 - The decisive coarse-state INA226 experiment is frozen before physical data
   at commit `ed16263`. Its capture tooling now validates thirty SHA-sealed
   whole sessions (normal/elevated-load/current-limited-stall), materializes
@@ -162,7 +167,7 @@ outstanding, so shared datapaths stay deferred.**
   synthetic fixture passes, but this is ingestion evidence only: physical
   accuracy remains pending the INA226 and safe actuator bench capture. Contract
   and procedure: `docs/INA226_COARSE_MONITOR_CONTRACT.md` and
-  `docs/INA226_CAPTURE_RUNBOOK.md`.
+  `docs/INA226_CAPTURE_RUNBOOK.md`. *(pre-registration, not a result)*
 - The renewed `SOM1` image is now silicon-verified on the same 150-sample
   corpus. All 35 prototype/label records hydrated, and every 52-byte result
   passed CRC/structure checks and matched the oracle across winner, runner-up,
