@@ -333,12 +333,31 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | R | 1 MΩ | 1 | 0.2 | 1% metal-film preferred | U2 hysteresis feedback — **fit only if** breadboard step 1 shows chatter near the threshold; size from the measured band. Unusable with the MAX9063 fallback |
 | R | 33 Ω 1/4 W THT | 5 | 1 | Generic carbon/metal film, 5% or better | J3 flash-PMOD series termination (4) +1 spare |
 | R | 10 kΩ 1/4 W THT | 3 | 0.5 | Generic carbon/metal film, 5% or better | SPI_CS# + FLASH_CS# pullups (2, WP#/HOLD# pullups removed per §2.2 correction — not physically possible on the 6-pin J3), +1 spare |
-| R | 1 kΩ 1/4 W THT | 2 | 0.5 | Generic carbon/metal film, 5% or better | LED series |
-| LED | 3 mm THT, green + red | 2 | 0.5 | Generic 3mm THT LED | PWR (input side), ACT (GP14) |
+| R | 1 kΩ 1/4 W THT | 1 | 0.3 | Generic carbon/metal film, 5% or better | R11, PWR LED series off 5 V — ≈2 mA with a Vf 3.0 V green. 680 Ω if brighter is wanted; aesthetic only |
+| R | 330 Ω 1/4 W THT | 1 | 0.3 | Generic carbon/metal film, 5% or better | R12, ACT LED series off 3.3 V GP14 — ≈4 mA with a Vf 1.9 V red. **Not interchangeable with R11**, see LED note below |
+| LED | 3 mm THT: **green** (PWR) + **red** (ACT) | 2 | 0.5 | Generic 3mm THT LED | PWR (input side, 5 V rail, any Vf); ACT (GP14, **red/amber only**) |
 | C | 100 nF ceramic X7R, 50 V | 4 | 0.5 | Generic X7R 0.1 µF, THT 2.54 mm or 0603 | **Decoupling — mandatory, one per IC supply pin, placed at the pin.** U1 VCC, U2 V+, +2 spare. Was absent from Rev B until 2026-07-30; see note below |
 | C | 10 µF ceramic or electrolytic, 16 V+ | 2 | 0.5 | Generic | Bulk on the Pico 3V3 rail feeding U1/U2, and on the metered 5 V output |
 | PCB | 2-layer, ~80×60 mm, HASL | 5 pcs | 15 | Any prototype fab (JLCPCB/PCBWay) | |
 | | **Total** | | **~NZ$53** | | including 5 spare PCBs |
+
+**The ACT LED must be red or amber — this is an electrical constraint, not a
+preference (resolved 2026-08-10).** R12 hangs off GP14 at 3.3 V. Modern InGaN
+green, blue and white parts sit at Vf ≈ 3.0–3.2 V, leaving ~0.3 V of headroom
+before the RP2350's own output drop at 4 mA (a further 0.1–0.3 V) is counted.
+Part-to-part Vf spread is ±0.2 V, comparable to the whole budget, so the result
+is not "dim but working" — it is unpredictable, varying between parts from the
+same reel, with the resistor value barely influencing it. Red and amber are
+AlGaInP and remain at Vf ≈ 1.9–2.1 V however modern the part, which is why the
+colour is specified rather than left to stock. The PWR LED is unconstrained: it
+runs off the 5 V input rail where any Vf has headroom.
+
+Rejected alternative, recorded so it is not re-proposed: driving the ACT LED
+from 5 V and sinking it with GP14. It appears to work — at Vf 3.0 V the pin is
+never pulled up, because 5 − 3.3 = 1.7 V is below the forward drop — but it
+places a 5 V rail one component failure away from a non-5 V-tolerant pin, the
+same failure class as the J11 backfeed damage in §2.1. If only high-Vf parts are
+available, fit a small NPN/MOSFET driver rather than this.
 
 **Decoupling was missing from Rev B and is not optional.** The original BOM
 listed two ICs and zero capacitors. U2 is a comparator with an integrated
