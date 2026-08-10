@@ -1,5 +1,13 @@
 # A theorem-licensed typestate machine for exact rotation algebra
 
+**Author:** John Curley
+**Affiliation:** Independent Researcher, SPU-13 Project
+**Location:** Wellington, New Zealand
+**Date:** 10 August 2026
+**AI disclosure:** AI tools assisted with drafting, repository evidence
+synthesis, and editorial revision. The human author reviewed the manuscript,
+selected its claims and scope, and is responsible for the submitted record.
+
 ## Abstract
 
 [THEOREM] This paper presents a typestate construction for exact rotation
@@ -13,6 +21,16 @@ surfaces remain a mixture of RTL and board-scoped results. The contribution is
 the correspondence between an algebraic domain and an enforced transition
 relation; it is not a claim about project-wide evidence or arbitrary arithmetic
 values.
+
+## SPU-13 context
+
+[RTL] SPU-13 is the engineering host for these case studies: ROTC supplies
+integer-coordinate rotation paths, IROTC supplies exact Z[φ] catalog rotations,
+and the tensegrity guard supplies a bounded admission state machine. They share
+an exact-arithmetic hardware setting, but the paper does not claim that the
+project as a whole is covered by the typestate result. The examples are chosen
+to show the same transition discipline at arithmetic, catalog, and system
+boundaries.
 
 ## 1. Scope and contribution
 
@@ -95,7 +113,7 @@ provides the tagged-state checks, and the tagged core is distinct from the
 original TDM baseline.
 
 [SILICON] ROTC angles 0–5 have board evidence in
-[hardware_evidence.md §3.2g (ROTC 0–5)](hardware_evidence.md#32g-rotc-0-5-silicon-probe).
+[hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe).
 
 [RTL] ROTC angles 6–35 are covered by RTL/trace evidence only; they are not
 reported here as board results. The integer permutation classes are therefore
@@ -113,10 +131,10 @@ conjugate catalog, including the typestate dispatch and poison-hold behavior.
 The full 60×2 catalog is reported as RTL-only in this paper.
 
 [SILICON] The IROTC probe vectors and the `BADIDX`/`UNTAGGED`/`CATMIX` fault
-matrix are supported by [hardware_evidence.md §3.2k](hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
+matrix are supported by [hardware_evidence.md §3.2k](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
 
 [SILICON] SPI core integration and the conjugate-catalog cases are supported
-by [hardware_evidence.md §3.2k.1](hardware_evidence.md#32k1-irotc-spi-core-integration--conjugate-catalog-silicon-proof).
+by [hardware_evidence.md §3.2k.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32k1-irotc-spi-core-integration--conjugate-catalog-silicon-proof).
 
 ### 3.3 Tensegrity admission
 
@@ -126,10 +144,10 @@ recovery transitions, while its geometry and equilibrium predicates remain
 separate computations.
 
 [SILICON] The seven frozen admission fixtures, including the equilibrium
-fixture, are supported by [hardware_evidence.md §3.2l](hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
+fixture, are supported by [hardware_evidence.md §3.2l](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
 
 [SILICON] The four-act transport and recovery sequence is supported by
-[hardware_evidence.md §3.2l.1](hardware_evidence.md#32l1-tensegritylink-four-act-proof-on-the-karatsuba-candidate).
+[hardware_evidence.md §3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32l1-tensegritylink-four-act-proof-on-the-karatsuba-candidate).
 
 ## 4. Harness and coverage boundary
 
@@ -196,23 +214,24 @@ kind of support available for that claim, not a ranking of the theorem.
 
 | ID | Claim summary | Tier | Source | Body mapping |
 |---|---|---|---|---|
-| T1 | Four-state lattice and domain witnesses | THEOREM | §2.1 | §1 lines 19–23; §2.1 lines 50–58 |
-| T2 | Same-catalog doubling transition | THEOREM | §2.1 | §1 lines 25–29; §2.1 lines 61–73 |
-| T3 | `PCHIRAL`, `SCALE2`, and integer-ROTC boundary rules | THEOREM | §2.1 | §1 lines 31–34; §2.1 lines 61–73 |
-| T4 | Transition soundness is narrower than value proof | THEOREM | §1, §2.2 | §1 lines 41–44; §2.2 lines 83–86 |
-| T5 | IROTC main/conjugate transition interpretation | THEOREM | §3.2 | §3.2 lines 107–109 |
-| T6 | Unexpressible fault classes and theorem/RTL gap | THEOREM | §5 | §5 lines 164–174 |
-| R1 | Tagged ROTC states and tagged-state harness | RTL | `STATE_MACHINE_HARNESS.md` §3.1 | §3.1 lines 92–95 |
-| R2 | ROTC angles 6–35 are RTL/trace-only here | RTL | `STATE_MACHINE_HARNESS.md`; trace tests | §3.1 lines 100–103 |
-| R3 | IROTC generated 60×2 surface and fault transitions | RTL | IROTC RTL/testbench artifacts | §3.2 lines 111–113 |
-| R4 | Tensegrity bounded state/fault/recovery model | RTL | tensegrity RTL/testbench artifacts | §3.3 lines 123–126 |
-| R5 | Harness-versus-bench coverage boundary | RTL | `STATE_MACHINE_HARNESS.md` §3 | §4 lines 136–155 |
-| S1 | ROTC angles 0–5 | SILICON | `hardware_evidence.md` §3.2g (ROTC 0–5) | §3.1 lines 97–98 |
-| S2 | IROTC probe and fault matrix | SILICON | `hardware_evidence.md` §3.2k | §3.2 lines 115–116 |
-| S3 | IROTC SPI integration and conjugate catalog | SILICON | `hardware_evidence.md` §3.2k.1 | §3.2 lines 118–119 |
-| S4 | Tensegrity seven admission fixtures | SILICON | `hardware_evidence.md` §3.2l | §3.3 lines 128–129 |
-| S5 | Tensegrity four-act transport and recovery | SILICON | `hardware_evidence.md` §3.2l.1 | §3.3 lines 131–132 |
-| O1 | Five repository defects observed tonight; typestate caught none | OBSERVED | §6 | §6 lines 182–186 |
+| T1 | Four-state lattice and domain witnesses | THEOREM | §2.1 | §1 lines 37–41; §2.1 lines 68–77 |
+| T2 | Same-catalog doubling transition | THEOREM | §2.1 | §1 lines 43–47; §2.1 lines 79–97 |
+| T3 | `PCHIRAL`, `SCALE2`, and integer-ROTC boundary rules | THEOREM | §2.1 | §1 lines 49–53; §2.1 lines 79–97 |
+| T4 | Transition soundness is narrower than value proof | THEOREM | §1, §2.2 | §1 lines 59–62; §2.2 lines 101–104 |
+| T5 | IROTC main/conjugate transition interpretation | THEOREM | §3.2 | §3.2 lines 125–127 |
+| T6 | Unexpressible fault classes and theorem/RTL gap | THEOREM | §5 | §5 lines 182–192 |
+| R1 | Tagged ROTC states and tagged-state harness | RTL | `STATE_MACHINE_HARNESS.md` §3.1 | §3.1 lines 110–113 |
+| R2 | ROTC angles 6–35 are RTL/trace-only here | RTL | `STATE_MACHINE_HARNESS.md`; trace tests | §3.1 lines 118–121 |
+| R3 | IROTC generated 60×2 surface and fault transitions | RTL | IROTC RTL/testbench artifacts | §3.2 lines 129–131 |
+| R4 | Tensegrity bounded state/fault/recovery model | RTL | tensegrity RTL/testbench artifacts | §3.3 lines 141–144 |
+| R5 | Harness-versus-bench coverage boundary | RTL | `STATE_MACHINE_HARNESS.md` §3 | §4 lines 154–173 |
+| R6 | SPU-13 case-study context | RTL | SPU-13 RTL case-study paths | §SPU-13 context lines 27–33 |
+| S1 | ROTC angles 0–5 | SILICON | `hardware_evidence.md` §3.2g (ROTC 0–5) | §3.1 lines 115–116 |
+| S2 | IROTC probe and fault matrix | SILICON | `hardware_evidence.md` §3.2k | §3.2 lines 133–134 |
+| S3 | IROTC SPI integration and conjugate catalog | SILICON | `hardware_evidence.md` §3.2k.1 | §3.2 lines 136–137 |
+| S4 | Tensegrity seven admission fixtures | SILICON | `hardware_evidence.md` §3.2l | §3.3 lines 146–147 |
+| S5 | Tensegrity four-act transport and recovery | SILICON | `hardware_evidence.md` §3.2l.1 | §3.3 lines 149–150 |
+| O1 | Five repository defects observed tonight; typestate caught none | OBSERVED | §6 | §6 lines 200–204 |
 
 The repository sections `§3.1–§3.2c` are only partial backing for the broader
 project context: they do not supply the date and SHA-256 shape required for a
@@ -220,8 +239,9 @@ silicon claim in this paper, so none of them is used as a SILICON source here.
 
 ## References
 
-1. [STATE_MACHINE_HARNESS.md](STATE_MACHINE_HARNESS.md), especially §3.
-2. [IROTC_SPEC.md](IROTC_SPEC.md).
-3. [hardware_evidence.md](hardware_evidence.md), §3.2g (ROTC 0–5), §§3.2k,
-   3.2k.1, 3.2l, 3.2l.1.
-4. [ROTC_EXPONENT_STATE_MACHINE.md](ROTC_EXPONENT_STATE_MACHINE.md).
+All repository citations below are pinned to the `v0.1-typestate` release tag.
+
+1. [STATE_MACHINE_HARNESS.md §3](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/STATE_MACHINE_HARNESS.md#3-subsystem-state-machines).
+2. [IROTC_SPEC.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/IROTC_SPEC.md).
+3. [hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe), [§§3.2k, 3.2k.1, 3.2l, 3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
+4. [ROTC_EXPONENT_STATE_MACHINE.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/ROTC_EXPONENT_STATE_MACHINE.md).
