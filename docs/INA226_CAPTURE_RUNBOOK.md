@@ -138,6 +138,17 @@ This needs only a DMM and the actuator. **It does not need the INA226**, so it
 can be done while the replacement part is in transit — and it should be,
 because it is a prerequisite for the re-`init`.
 
+> **But it must come after the soldered harness, not before.** Independence
+> from the INA226 does not mean independence from the power path. Quantity #2
+> is measured *at the `VIN−`/actuator node* — across the harness — and the
+> supply trim that follows is entirely a function of it. At 300 mA through the
+> breadboard's measured 0.96–1.44 Ω that is 0.29–0.43 V of error, drifting
+> within the session. Quantities #1 and #3 are robust, because a CC supply
+> holds its clamp regardless of series resistance until it reaches voltage
+> compliance; #2 and the trim are not. Soldering is also itself a rig change,
+> so measuring first means measuring twice. **Order: solder → characterise →
+> trim → `init`.**
+
 | # | Measure | How | Record |
 |---|---|---|---|
 | 1 | Open-circuit voltage | DMM at the terminals, output on, no load | mV |
