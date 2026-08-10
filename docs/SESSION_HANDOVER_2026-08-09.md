@@ -320,13 +320,121 @@ functional reliability anyway.
   Regression **188/188**. Note the totals count benches, not checks, so this
   class of bug is invisible to the headline number.
 
-### Staging plan (nothing committed yet)
+### Staging plan — executed
 
-Four independent commits, explicit paths only — never `git add -A`, shared tree:
+All landed. `0130c28` RNS gather cut · `5b4b3ea` PADE_PIPELINED (default 0,
+recorded not recommended) · `7dc14c8` shared plumbing + `_PP1`/`_RC1` artifact
+tags · `333183e` evaluator coverage · `e478ee8` this document. The plan's
+four-way split was not achievable at file granularity: `spu_a7_top.v`,
+`spu13_rplu2_pade_sidecar.v` and `build_a7.sh` each carry both options.
 
-1. `spu13:` RNS gather cut — `spu13_m31_multiplier_structured.v`,
-   `spu13_rplu2_pade_sidecar.v`, `spu_a7_top.v`, `spu13_m31_multiplier_structured_tb.v`
-2. `a7:` artifact tagging — `build_a7.sh`
-3. `test:` evaluator coverage — `rplu_thimble_pade_tb.v`, `pade_eval_vectors.mem`,
-   `spu13_rplu2_pade_sidecar_tb.v`, `spu13_spi_rplu2_pade_tb.v`, `run_all_tests.py`
-4. `rplu_thimble_pade.v` (PADE_PIPELINED) — **hold**, pending the shelve decision.
+---
+
+## Late session, 2026-08-09 → 08-10 — claims discipline, the typestate paper, bench
+
+Prompted by the os8088 discussion on Hacker News. That project's README claimed
+"everything here is hand-written" while its contributor list included CLAUDE;
+once that single claim was shown false, commenters stopped believing its
+genuine hardware photographs. **The lesson is not about using AI — it is that
+one overclaim contaminates real evidence.** Checked: this repository has no
+"hand-written"-equivalent claim anywhere. It did have unbacked ones.
+
+### Claims pass — two files, complete rather than sampled
+
+`spu_strategy/claude_claims_pass_2026-08-10.md`. Deliberately narrow and
+exhaustive, because both delegated attempts failed the other way: 08-08
+presented a sample as a census, 08-09 returned 141 rows marked `BACKED` naming
+no ledger section.
+
+- **`AGENTS.md`** (`e953424`): 23 bullets under "Proven in silicon", **zero**
+  carried a ledger citation — in the file that states the citation rule. All 23
+  now cite a section or are marked `[NO ENTRY]`.
+- **`docs/CURRENT_STATUS.md`** (`b4ccfb6`): 29 bullets, 6 cited. All 29 now
+  covered.
+- **7 distinct claims have no evidence anywhere** and are marked in place:
+  Fibonacci manifold pulses, VE QR init hydration, the QR regfile read path,
+  hex coordinate projection, the instruction sequencer, the Wukong JTAG IDCODE,
+  and `neuro_guard_probe`. Do not repeat them elsewhere until a section exists.
+- **RPLU2PADE was over-read.** §3.2f was taken at `A7_CLK_DIV_LOG2=6` —
+  `clk_fast` 781.25 kHz, not 25 MHz and not 50. Functional claim backed;
+  full-speed claim not. Both files now say so.
+- **The repo was also under-claiming**: `AGENTS.md` recorded the LUCAS 200-step
+  gap as open when §3.2e.7 had closed it the same day. That entry verified
+  perfectly against disk — 10/10 logs, exact SHA-256 and byte count, identical
+  step-200 value across runs. **It is the standard every other entry should be
+  held to.**
+- Ledger entries §3.1–§3.2c predate the §3.2e.6 shape (no date, no SHA-256) and
+  are partial backing. Noted in place.
+
+### `§3.2g` was a duplicate section number (`fced72e`)
+
+`hardware_evidence.md` had **two** sections numbered 3.2g — ROTC 0-5 and the
+SOM/BMU classifier — so every `§3.2g` citation in the repository was ambiguous,
+and the typestate paper was about to carry one to Zenodo. ROTC keeps `3.2g`;
+the SOM chain shifted to `3.2g.1`–`3.2g.6`, with all inbound citations moved.
+
+**Blind spot worth remembering:** the sweep missed
+`spu_strategy/som_product_roadmap_2026-07.md` because `spu_strategy/` is
+gitignored. Two citations there were off by one — a 07-16 sidecar proof
+pointing at the 07-06 hydration entry. **Any future rename must include
+gitignored paths explicitly.**
+
+### Typestate paper — drafted, audited, committed (`5089970`)
+
+Framed narrowly, at John's direction: *A theorem-licensed typestate machine for
+exact rotation algebra*. Contract
+`claude_contract_typestate_paper_2026-08-10.md`; GTP drafted; claim audit
+deliberately **not** delegated (`claude_audit_of_typestate_paper_2026-08-10.md`)
+because that task has now failed handoff twice.
+
+Three fixes raised and applied: the duplicate `§3.2g`; an `[OBSERVED]` tier
+because the five-defect statement was mis-tagged `[THEOREM]`; and an unresolvable
+"eight checks". Table reconciles at 16 rows — 6 THEOREM, 5 RTL, 5 SILICON — and
+all six cited sections resolve at HEAD.
+
+The paper states plainly that the five defects found on 08-09/10 **would have
+been caught by none of it**, and makes no hallucination-prevention or
+project-wide epistemic claim. That boundary is the point: typestate constrains
+transitions, not values, and does not police prose.
+
+**Before Zenodo: tag a release.** The paper's evidence citations are
+repo-relative and the section numbers moved tonight; without a tag they do not
+resolve for a reader.
+
+### Bench discipline
+
+`docs/BENCH_PROCEDURE_TEMPLATE.md` (drafted, uncommitted, awaiting review). Its
+output is a §3.2e.6-shaped ledger entry, so filling it in *produces* the
+evidence with no transcription step — which is where §3.2f lost its clock.
+Encodes what was learned expensively: pre-registration with a named falsifier,
+fixed by-id device paths, N≥10 rates, a positive control that must fail, raw
+captures to files, and abort conditions.
+
+**The measured problem is the signal path, not the instruments.** A breadboarded
+power path measured **0.96 Ω degrading to 1.44 Ω within one session** — 0.29 →
+0.43 V of drift-in-session drop at 300 mA. No instrument fixes that. Soldering
+the power path is an hour and unblocks the supply characterisation.
+
+### `bench_adapter` is further from fab than assumed
+
+`bench_adapter.kicad_pcb` is a **91-line stub — zero footprints, zero routing,
+no outline.** Layout has not been started. The schematic is real (29 symbols,
+footprints assigned). Blockers: R5–R12 carry designators in their Value fields,
+and the committed BOM is stale (contains unannotated `J6B?`/`JP2A?`/`JP2B?`).
+
+Resistor functions, mapped from the nets: R5–R8 flash-bus series (**100 Ω**,
+same backfeed rule as R1–R4), R9/R10 CS pull-ups to V3V3 (**10 kΩ**, correctly
+on the header side so CS stays deasserted while the Pico is hi-Z), R11 power LED
+off V5_IN (**~1 kΩ**), R12 activity LED off GP14 (**~330 Ω**). LED values depend
+on colour, which is not recorded — green/blue barely work off 3.3 V.
+
+### Open
+
+- README disclosure + "check it yourself" blocks — `docs/README_BLOCKS_DRAFT.md`,
+  drafted, needs John's voice. Includes fixing README's stale `173/173` → 188.
+- Zenodo submission (tag first).
+- Supply characterisation, then INA226 — bench-side, John's.
+- Composition silicon trace — still the last piece of policy §5, needs SOM1
+  frames at the bench.
+- Claims pass has covered **two files**. `knowledge/`, `README.md` and the four
+  papers are untouched; the repo-wide population is in the hundreds.
