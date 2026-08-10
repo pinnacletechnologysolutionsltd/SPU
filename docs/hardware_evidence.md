@@ -1302,7 +1302,7 @@ ROTC:P A:5 E:00
 - Six-step robotics kinematics remains a distinct silicon proof; this probe
   validates the ROTC primitive layer it depends on.
 
-### 3.2g SOM/BMU Classifier Silicon Probe
+### 3.2g.1 SOM/BMU Classifier Silicon Probe
 
 **Date:** 2026-06-30 NZT; BRAM-backed refresh verified 2026-07-06 NZT
 
@@ -1380,7 +1380,7 @@ UART (per Sipeed's own `TangPrimer-25K-example` UART constraints); B11/A11
   BRAM-backed 7-node fixture. It does not prove external SPI hydration of larger
   maps, visual telemetry frames, or SOM→RPLU material-bank gating.
 
-### 3.2g.1 SOM BRAM Hydration Silicon Probe
+### 3.2g.2 SOM BRAM Hydration Silicon Probe
 
 **Date:** 2026-07-06 NZT
 
@@ -1427,7 +1427,7 @@ HYD:P T:3 B:6 E:00
   a classifier proof (`SOM:P`) and a storage-hydration proof (`HYD:P`); the
   next integration step is an RP2350-driven write path into this BRAM interface.
 
-### 3.2g.2 Writable SOM Sidecar SPI/UART Silicon Proof
+### 3.2g.3 Writable SOM Sidecar SPI/UART Silicon Proof
 
 **Date:** 2026-07-16 NZT
 
@@ -1482,7 +1482,7 @@ for a checked-in trained map, versioned rich result frame, adversarial
 negative-surd corpus, interrupted hydration handling, or Artix-7 cross-vendor
 equivalence.
 
-### 3.2g.3 Reproducible Iris SOM Corpus Silicon Proof
+### 3.2g.4 Reproducible Iris SOM Corpus Silicon Proof
 
 **Date:** 2026-07-17 NZT
 
@@ -1545,13 +1545,13 @@ This closes the reproducible-map and Tang full-corpus portions of SOM v1.
 The rich versioned result frame, interrupted/partial hydration contract, and
 Artix-7 replay remain open before the complete v1 exit gate.
 
-### 3.2g.4 SOM1 Full Decision-Evidence Silicon Proof
+### 3.2g.5 SOM1 Full Decision-Evidence Silicon Proof
 
 **Date:** 2026-07-17 NZT
 
 **Scope:** renewed Tang Primer 25K silicon proof of the complete versioned
 `SOM1` observation-to-decision path. This run used the same checked Iris map
-and corpus as §3.2g.3, but replaced the legacy winner-only evidence boundary
+and corpus as §3.2g.4, but replaced the legacy winner-only evidence boundary
 with the 52-byte CRC-protected frame and hydrated all seven semantic labels in
 addition to the 28 prototype values.
 
@@ -1616,12 +1616,12 @@ map-owned semantic-label path. The 147/150 figure is model accuracy; the
 hardware implementation equivalence result is 150/150. Artix-7 full-sidecar
 replay and physical sensor acquisition remain separate open evidence items.
 
-### 3.2g.5 Cross-Vendor SOM1 Replay on Wukong Artix-7
+### 3.2g.6 Cross-Vendor SOM1 Replay on Wukong Artix-7
 
 **Date:** 2026-07-17 NZT
 
 **Scope:** Wukong Artix-7 100T silicon proof of the complete writable
-SOM-SIDECAR used in §3.2g.4, rather than the older fixed-fixture SOMPROBE.
+SOM-SIDECAR used in §3.2g.5, rather than the older fixed-fixture SOMPROBE.
 The Artix wrapper instantiates the same SPI receiver, map and semantic-label
 storage, fixed-schedule exact BMU, SOM1 encoder, and UART telemetry RTL as the
 Tang image. Only board pins and synthesis plumbing differ.
@@ -1654,7 +1654,7 @@ python3 tools/iris_som_demo.py --hardware \
   `f22a34e78437583efcb6a5a0bafb800c9df6a0803ee8614e8184b170cf5bf180`
 - RP2350 UF2 SHA-256:
   `51a0f26940464d82d11b392d9a363f218e0a343fa33658c296686dc001f63de1`
-- map and dataset identities are unchanged from §3.2g.4.
+- map and dataset identities are unchanged from §3.2g.5.
 
 **Result:** the 35-record map/label upload completed, followed by 150/150
 exact SOM1 evidence matches in 16.3 seconds. The FPGA confusion matrix was
@@ -2529,8 +2529,8 @@ documented elsewhere in this ledger and in AGENTS.md.*
 | ROTC angles 0–5 in silicon | **Verified in Silicon** on Tang 25K with UART `ROTC:P A:5 E:00`; covers canonical trace for all 6 angles plus period closure for angles 1-5. Uses TDM core (`spu13_rotor_core_tdm.v`) with silent `div3` — see Davis Gate entry in `knowledge/SPU_LEXICON.md` for the /3 exactness caveat. |
 | ROTC tagged (deferred-reduction) core | TB-verified (8/8, `spu13_rotor_core_tagged_tb.v`); probe `spu13_tang25k_rotc_tagged_probe.v` built (2026-07-09), awaiting board run. Golden-vector re-verification contract: ROTATE must produce 3× TDM golden at exp=1; REDUCE must recover TDM golden at exp=0. **Fixed 2026-07-09:** REDUCE's `reduce_val64` loaded lane values via zero-extension instead of sign-extension — every negative lane value (routine in this representation) either false-faulted INEXACT or missed a real exact division; `-9` at exp=1 is the regression case (Test 8). |
 | SOM/BMU classifier in silicon | **Verified in Silicon** on Tang 25K with UART `SOM:P T:2 B:6 E:00`; covers 2 weighted BMU oracle scenarios and cluster reduction for the 7-node fixture |
-| Writable SOM sidecar over RP2350 SPI | **Verified in Silicon** on Tang 25K: hydrated winners returned SPI `80 A0 B0` and matching C3 UART `00 14 1E`; exact fixed-434-cycle HEAD datapath, §3.2g.2 |
-| Reproducible Iris SOM edge classifier | **Verified in Silicon** on Tang 25K and Wukong Artix-7: checked seven-node map plus labels, 35/35 writes, 150/150 complete SOM1 evidence records equal the exact oracle on each vendor, 147/150 semantic labels (98.0%), §§3.2g.4–3.2g.5 |
+| Writable SOM sidecar over RP2350 SPI | **Verified in Silicon** on Tang 25K: hydrated winners returned SPI `80 A0 B0` and matching C3 UART `00 14 1E`; exact fixed-434-cycle HEAD datapath, §3.2g.3 |
+| Reproducible Iris SOM edge classifier | **Verified in Silicon** on Tang 25K and Wukong Artix-7: checked seven-node map plus labels, 35/35 writes, 150/150 complete SOM1 evidence records equal the exact oracle on each vendor, 147/150 semantic labels (98.0%), §§3.2g.5–3.2g.6 |
 | Six-step robotics kinematics harness | **Verified in Silicon** on Tang 25K with UART `KIN:P P:5 E:00`; covers period-6 angle-1 six-step forward phases, angle-4 inverse recovery per phase, early-closure rejection, and exact phase-5 closure |
 | External RP2350 neuro-sidecar opcodes | Tang adapter command path is self-driven silicon-verified; external master transactions through the shared shell are pending |
 | QSUB and DELTA RTL FSMs | Implemented and RTL-verified in `spu13_core_qsub_delta_tb`; QSUB also silicon-verified through RP2350 arithmetic tests |

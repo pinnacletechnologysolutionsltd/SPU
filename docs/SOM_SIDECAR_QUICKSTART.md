@@ -177,7 +177,7 @@ standard-library POSIX serial transport in `tools/som_map.py`.
   Tang-silicon verified over the complete 150-sample corpus. Winner, runner-up,
   exact distances, confidence gap, ambiguity, map/result generations,
   error/status, and CRC-32 matched the software oracle on every sample. See
-  `docs/hardware_evidence.md` §3.2g.4.
+  `docs/hardware_evidence.md` §3.2g.5.
 - The compact result byte remains compatible and retains its legacy label LUT;
   consumers that need map-owned labels and replay evidence must use `SOM1`.
 - The complete writable sidecar is silicon-proven on Tang 25K and Wukong

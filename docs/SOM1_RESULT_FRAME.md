@@ -109,4 +109,4 @@ The image was SRAM-loaded on 2026-07-17 and processed the checked 150-sample
 Iris corpus with all 150 frames matching the exact software oracle across
 winner, runner-up, label, both quadrances, confidence gap, ambiguity, status,
 map/result generations, and CRC-32. Full bench identity and output are in
-`docs/hardware_evidence.md` §3.2g.4.
+`docs/hardware_evidence.md` §3.2g.5.

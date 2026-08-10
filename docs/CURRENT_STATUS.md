@@ -73,14 +73,14 @@ the §3.2e.6 standard (no date, no bitstream SHA-256) and are partial backing.
 - Tang 25K `rotc_probe` is SRAM-load/UART verified for corrected ROTC angles
   0-5, including canonical VM/RTL trace matching and period closure. — §3.2g (ROTC 0-5)
 - ROTC angles 0-35 are gated as the verified VM/RTL surface; angles 0-5 are
-  silicon-verified, while 6-35 remain testbench/trace-equivalence verified. — silicon portion §3.2g; 6-35 are trace-equivalence only, §2.5
+  silicon-verified, while 6-35 remain testbench/trace-equivalence verified. — silicon portion §3.2g (ROTC 0-5); 6-35 are trace-equivalence only, §2.5
 - Tang 25K `irotc_probe` is SRAM-load/UART verified for IROTC probe vectors
   idx 16, idx 36 main catalog, and the BADIDX/UNTAGGED/CATMIX fault matrix
   (`IROTC:P E=00`). Full 60 x 2 catalog behavior is testbench-verified. — §3.2k
 - Tang 25K `som_bmu_probe` is SRAM-load/UART verified for deterministic
-  weighted SOM/BMU classification over the BRAM-backed 7-node fixture. — §3.2g (SOM/BMU)
+  weighted SOM/BMU classification over the BRAM-backed 7-node fixture. — §3.2g.1 (SOM/BMU)
 - Tang 25K `som_hydrate_probe` is SRAM-load/UART verified for SOM BRAM
-  write/readback and per-feature byte-enable preservation (`HYD:P T:3 B:6 E:00`). — §3.2g.1
+  write/readback and per-feature byte-enable preservation (`HYD:P T:3 B:6 E:00`). — §3.2g.2
 - Tang 25K `six_step_probe` is SRAM-load/UART verified for the period-6
   rational robotics kinematics harness (`KIN:P P:5 E:00`). — §3.2h
 - Tang 25K `neuro_guard_probe` is SRAM-load/UART verified as a standalone
@@ -141,7 +141,7 @@ the §3.2e.6 standard (no date, no bitstream SHA-256) and are partial backing.
   `80 A0 B0`, and the corrected C3 dock UART returned matching result bytes
   `00 14 1E`. The rebuilt image uses 12,786 LUT4 (55%), 8 BSRAM, 0 DSP and
   closes at 77.61 MHz against the 12 MHz target. Full evidence:
-  `docs/hardware_evidence.md` §3.2g.2.
+  `docs/hardware_evidence.md` §3.2g.3.
 - Tang 25K `SOM-SIDECAR` now also has a reproducible full-corpus Iris proof.
   `python3 tools/iris_som_demo.py --hardware` regenerates and validates the
   checksummed seven-node map, performs all 28 prototype writes, and classified
@@ -149,7 +149,7 @@ the §3.2e.6 standard (no date, no bitstream SHA-256) and are partial backing.
   The map's semantic labels scored 147/150 (98.0%). This run exposed and fixed
   a packed board-top metric mismatch (feature 0 was weighted 2 instead of the
   documented uniform 1); the corrected 50 MHz image closes at 79.38 MHz and is
-  recorded in `docs/hardware_evidence.md` §3.2g.3.
+  recorded in `docs/hardware_evidence.md` §3.2g.4.
 - The predeclared UCI hydraulic-pump real-data truth gate is complete. Across
   1,449 stable physical cycles and five held-out nuisance-condition folds, the
   frozen four-feature motor-power SOM reached 45.41% aggregate three-class
@@ -175,7 +175,7 @@ the §3.2e.6 standard (no date, no bitstream SHA-256) and are partial backing.
   map generation stayed stable and result generations were consecutive.
   Result: 150/150 exact evidence matches in 16.9 seconds, with the same 147/150
   semantic accuracy. The image uses 14,068 LUT4, 8 BSRAM, 0 DSP and closes at
-  75.79 MHz against 50 MHz. Evidence: `docs/hardware_evidence.md` §3.2g.4.
+  75.79 MHz against 50 MHz. Evidence: `docs/hardware_evidence.md` §3.2g.5.
 
 ## Open-Toolchain Build Evidence
 

@@ -309,7 +309,7 @@ by DMM — **before** the part arrives, so the runbook's freeze rule holds.
   this becomes a repeatable check.
 - ~~**SOM-SIDECAR dead-write-path fix**~~ — **CLOSED, no board time needed.**
   The fix is `d5a17e6` (07-16 06:54, `spu_spi_cfg.v` + Tang sidecar top). The
-  silicon proof is `hardware_evidence.md` §3.2g.2, added by `28e5c81`
+  silicon proof is `hardware_evidence.md` §3.2g.3, added by `28e5c81`
   (07-16 20:24), which explicitly describes the run as following the
   `spu_spi_cfg.v` command-acceptance repair. Verified structurally, not from
   the prose: `d5a17e6` is an ancestor of `28e5c81`, and `git diff d5a17e6
