@@ -15,6 +15,10 @@ loss.**
 
 **Not an engineer? [Start with the two-minute explanation.](docs/WHAT_IS_SPU13.md)**
 
+<!-- TODO(John): Block A — "How this was built" disclosure goes here.
+     Draft in docs/README_BLOCKS_DRAFT.md. Deliberately left unwritten: it is a
+     statement about how the author works and should be in his voice. -->
+
 ## Start here
 
 - **[Your first hour](docs/FIRST_HOUR.md)** — anonymous clone, full regression,
@@ -106,25 +110,71 @@ the treatment any patent office will give a particular claim. Contributions
 require sign-off under the [Developer Certificate of Origin (DCO)](CONTRIBUTING.md).
 
 
-## Quick Start (30 seconds to proof)
+## Check it yourself (no trust required)
+
+Every command below runs from a fresh anonymous clone and either prints the
+stated output or does not. All were run from a clean clone on 2026-08-10.
 
 ```bash
-# Replay the complete deterministic current-signature classification ABI
-python3 tools/som_sensor_replay.py
+# 1. Full regression — RTL testbenches, C++ and Python oracles
+python3 run_all_tests.py                          # prints "Total PASS: 188"
+                                                  # and "Total FAIL: 0"
+
+# 2. The product path, end to end
+python3 tools/som_sensor_replay.py                # SENSOR_REPLAY: PASS
+                                                  # windows=18 exact=18/18
+                                                  # ambiguous=0, plus dataset
+                                                  # and map SHA-256
 ```
 
-This generates unseen integer-current windows, extracts four temporal features,
-crosses the explicit Cartesian-to-SOM boundary, classifies them with the checked
-map, emits complete SOM1 frames, and parses those frames through the production
-host consumer. Expected result: 18/18 with zero ambiguity.
+That second command generates unseen integer-current windows, extracts four
+temporal features, crosses the explicit Cartesian-to-SOM boundary, classifies
+them with the checked map, emits complete SOM1 frames, and parses those frames
+through the production host consumer.
 
 ```bash
-# Deterministic fresh-clone regression
-python3 run_all_tests.py                  # 173/173 at this revision
+# 3. The RTL is checked against an independent oracle, not against review.
+#    These six [4/4] Padé vectors were derived from software/lib/a31_field.py
+#    and are re-derivable from it; the bench drives them through the RTL and
+#    compares all four A₃₁ result lanes exactly, in both pipeline modes.
+TB_FILTER=rplu_thimble python3 run_all_tests.py   # Verilog Tests: 2, Passed: 2
+cat hardware/tests/spu13/pade_eval_vectors.mem    # the vectors, in plain hex
 
-# Rational robotics remains available as a second software demonstration
+#    run_all_tests.py reports pass/fail, not per-check counts. To see the
+#    bench's own tally, run it directly:
+iverilog -g2012 -y hardware/rtl/gpu -y hardware/rtl/core/spu13 \
+    -y hardware/rtl/core/shared -y hardware/rtl/math -y hardware/rtl/common \
+    -I hardware/rtl/arch -s rplu_thimble_pade_tb \
+    -o build/thimble.vvp hardware/tests/spu13/rplu_thimble_pade_tb.v
+vvp build/thimble.vvp                             # PASS: rplu_thimble_pade_tb (33/33)
+
+# 4. Software oracles, independently
 python3 software/tests/test_rational_robotics.py  # PASS (104 checks)
+python3 software/tests/test_lucas_mac_oracle.py   # COMPOSITE ZERO-DRIFT: PASS
+                                                  # 166666 identity macros,
+                                                  # 999996 primitive ops
+python3 software/tests/test_rotc_vm_rtl_trace.py  # VM-vs-RTL TRACE EQUIVALENCE
+                                                  # (angles 0-35): PASS
 ```
+
+**What you cannot check from a clone, and why.** Bitstreams are build artifacts
+and are not committed; `build/` is gitignored. Silicon results are therefore
+recorded rather than reproduced here — each one in
+[`docs/hardware_evidence.md`](docs/hardware_evidence.md) pins its bitstream by
+SHA-256 and byte count and includes the raw captured output, so a claim can be
+matched against a specific image rather than a description of one. Reproducing
+them needs the board.
+
+**A note on counts.** `run_all_tests.py`'s summary counts *benches and
+variants*, not individual checks — a bench that goes from 8 to 33 internal
+checks does not move the headline. `TB_FILTER` filters only the Verilog benches;
+the C++ and Python suites run regardless. Read the per-bench lines, not just the
+total.
+
+**Read one entry to judge the rest.** §3.2e.7 is the standard the others are
+held to: a hash-pinned bitstream, ten runs rather than one, an internal positive
+control (the float64 arm must diverge, and does, at step 79 in every run), and
+an explicit statement of what it does *not* establish.
 
 ---
 
