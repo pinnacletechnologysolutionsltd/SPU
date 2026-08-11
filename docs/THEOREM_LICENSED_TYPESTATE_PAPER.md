@@ -198,7 +198,7 @@ may still compute the wrong value, and the machine does not police claims,
 documentation, papers, or status reports.
 
 [OBSERVED] The audit of this paper is deliberately separate from the draft.
-The five defects found tonight were: the aliased loop variable that ran one
+The five defects found on 2026-08-09/10 were: the aliased loop variable that ran one
 vector instead of six; the coverage report that read as complete; the critical-
 path misattribution; the RPLU2PADE clock omission; and the seven unbacked
 bullets. The typestate machine would have caught none of them.
@@ -231,7 +231,7 @@ kind of support available for that claim, not a ranking of the theorem.
 | S3 | IROTC SPI integration and conjugate catalog | SILICON | `hardware_evidence.md` §3.2k.1 | §3.2 lines 136–137 |
 | S4 | Tensegrity seven admission fixtures | SILICON | `hardware_evidence.md` §3.2l | §3.3 lines 146–147 |
 | S5 | Tensegrity four-act transport and recovery | SILICON | `hardware_evidence.md` §3.2l.1 | §3.3 lines 149–150 |
-| O1 | Five repository defects observed tonight; typestate caught none | OBSERVED | §6 | §6 lines 200–204 |
+| O1 | Five repository defects observed 2026-08-09/10; typestate caught none | OBSERVED | §6 | §6 lines 200–204 |
 
 The repository sections `§3.1–§3.2c` are only partial backing for the broader
 project context: they do not supply the date and SHA-256 shape required for a
