@@ -151,6 +151,56 @@ PCB** — a 1 MΩ-class feedback path from output back to the reference/input
 node, left unpopulated unless breadboard characterization shows chatter near
 the threshold. Size it from the measured chatter band.
 
+> **Schematic captured 2026-08-11 — three corrections from the datasheets.**
+> Pinouts taken from TI [SCDS037K](https://www.ti.com/lit/ds/symlink/sn74cbtlv3125.pdf)
+> §4 and [SBOS300C](https://www.ti.com/lit/ds/symlink/tlv3011.pdf) Table 5-1,
+> not from memory or from a web summary — one search summary returned
+> "Pin 6: OUT/V+" for U2, which is wrong and would have inverted the circuit.
+>
+> **1. Verified polarity (U2, SOT-23-6: 1=OUT, 2=V−, 3=IN+, 4=IN−, 5=REF,
+> 6=V+).** The open-drain output pulls low when IN− > IN+, so the sense
+> divider drives **IN− (pin 4)** and REF drives **IN+ (pin 3)**. Target
+> unpowered → IN−≈0 < IN+=1.242 V → OUT hi-Z → R13 pulls `J2_OE_N` high →
+> U1 disconnected. Correct in both states. U1's sense is confirmed by
+> SCDS037K Table 7-1: **OE = H → Disconnect, OE = L → A port = B port**, and
+> TI explicitly recommends the OE pull-up for guaranteed Hi-Z through power
+> transitions.
+>
+> **2. R16 alone would not work — R17 added.** REF is a low-impedance output
+> (sources up to 0.5 mA) driving IN+ directly, so a 1 MΩ from OUT to IN+ is
+> swamped and produces no hysteresis. Positive feedback needs a series
+> resistor between REF and IN+: **R17 = 10 kΩ**, now on the board. Without
+> it the escape hatch that justifies choosing TLV3011B over MAX9063 does not
+> exist. Hysteresis width therefore scales against **R17**, *not* the sense
+> divider — the §2.1 note above is wrong on that point. The divider's
+> **ratio** still matters (it refers the band up to J2-6, ×2.3725); its
+> **impedance** does not. "Preserve ≈240 kΩ total" is harmless but does not
+> do what it claims.
+>
+> **3. TLV3011*B* already has built-in hysteresis: V_HYS = 2 / 6 / 8 mV**
+> (SBOS300C, "Integrated hysteresis (B version)"). The breadboard doc's
+> premise — that MAX9063 was rejected because it "offered no escape hatch if
+> its fixed internal hysteresis proved too narrow", implying TLV3011B has
+> none — is wrong. 6 mV typ referred through the divider is **≈14 mV at
+> J2-6**, the same order as the ~13 mV this spec called possibly-inadequate
+> for the MAX9063. The preference still holds because the escape hatch is
+> real, but bench step 1 should start from "there is already ~14 mV", not
+> "there is none".
+>
+> **Assembly: U1 and U2 mount on DIP breakout carriers** (decision
+> 2026-08-11), not as bare SMD. Footprints `DIP-14_W7.62mm_Socket` and
+> `DIP-6_W7.62mm_Socket`. This keeps the board consistent with its own
+> "hand-solderable / module carrier" scope (line 6), avoids the 0.65 mm
+> TSSOP-14 joint, and **replaces the four bypass-link footprints** the
+> 2026-08-10 Rev A-populate decision called for: with U1 socketed, Rev A is
+> populated by fitting a wire-link header in the socket and swapping it for
+> the real module at Rev B. Populate the link header **or** U1, never both.
+>
+> ⚠ **Both carrier footprints are unverified against a physical part** — the
+> adapters are not yet ordered, and SOT-23-6 breakouts ship in more than one
+> DIP outline. Confirm both against the adapters actually purchased before
+> gerbers. Same class of risk as the A1 Pico footprint.
+
 *Fallback if TLV3011B is unobtainable:* **MAX9063EUK+T** (SOT-23-5, the
 inverting-input part of the MAX9062/9063 pair — MAX9062 has the opposite
 polarity and must not be substituted). Its 0.2 V reference requires a
@@ -230,12 +280,39 @@ directly; out of scope for Rev A.
 > pick one", with the two shunts clearly grouped so they're moved as a
 > pair, not independently.
 
+> *Schematic reconciled 2026-08-11.* The KiCad capture had **not** followed
+> the correction above: JP2 existed as two separate `Conn_01x03` symbols
+> (`JP2A`/`JP2B`) on two `PinHeader_1x03` footprints, which would have put
+> 2× 1×3 headers on the board and in the BOM instead of 1× 2×3, and let the
+> two poles be placed independently — losing the matched-pair property that
+> is the entire point of the 07-09 correction. Now a single
+> `Conn_02x03_Odd_Even` on `PinHeader_2x03_P2.54mm_Vertical`, designator
+> `JP2`, qty 1.
+>
+> **Pin assignment (odd/even numbering, one group per column):**
+>
+> | Group | Common (middle) | Position A — J3/flash | Position B — J4/UART |
+> |---|---|---|---|
+> | Odd column | pin 3 = `GP4` | pin 1 = `FLASH_MISO_PRE_R` | pin 5 = `UART_TX` |
+> | Even column | pin 4 = `GP5` | pin 2 = `FLASH_CS_PRE_R` | pin 6 = `UART_RX` |
+>
+> **Shunt orientation is a silkscreen requirement, not a preference.** Each
+> 3-pin group is a *column*, so both shunts bridge **along** the columns
+> (1–3 or 3–5; 2–4 or 4–6) — **never across the rows** (1–2, 3–4, 5–6),
+> which is the default mental model for a 2×3 block and is wrong here.
+> Bridging 1–2 shorts `FLASH_MISO_PRE_R` to `FLASH_CS_PRE_R`. The 33 Ω
+> series resistors (§2.2) keep that from being damaging, but it silently
+> breaks flash comms and looks like a dead adapter. The silkscreen must make
+> the orientation unambiguous — outline the two column groups, do not merely
+> label the pins.
+
 ### 2.3 microSD module socket (J5)
 
 Source: `hardware/rp_common/spu_sd.c:15-24` (SPI1). Socket for the common
 6-pin SPI microSD breakout module.
 
 | Signal | Pico 2 GPIO | Pico pin | J5 pin (module order: 3V3 CS MOSI CLK MISO GND) |
+<!-- module order confirmed against the physical microSD breakout 2026-08-11 -->
 |---|---|---|---|
 | SD_CS#   | GP13 | 17 | 2 |
 | SD_MOSI  | GP11 | 15 | 3 |
@@ -265,15 +342,47 @@ idle-vs-active deltas for the paper power tables at ~NZ$2 extra. Logger:
 `tools/bench_metrics/ina226_logger.py` (`ina219_logger.py` retained for
 breadboard use of existing INA219 stock).
 
-| Signal | Pico 2 GPIO | Pico pin | J6/module pin |
-|---|---|---|---|
-| I2C0 SDA | GP8 | 11 | SDA |
-| I2C0 SCL | GP9 | 12 | SCL |
-| ALERT (conversion ready) | GP15 | 20 | ALE/ALERT |
-| 3V3 | — | 36 | VCC |
-| GND | — | 13 | GND |
-| VIN+ | — | — | screw terminal T1 (5V IN) |
-| VIN− | — | — | screw terminal T2 (5V OUT) + USB-A fp J7 |
+**J6 module order (left to right, as printed on the module silkscreen):
+`IN+ IN− VBS ALE SCL SDA GND VCC`** — read off the physical part 2026-08-11.
+Confirm against the specific listing before socketing; this ordering is not
+universal across INA226 breakouts.
+
+| J6 pin | Silkscreen | Net | Pico 2 GPIO | Pico pin |
+|---|---|---|---|---|
+| 1 | IN+ | `V5_IN` — screw terminal T1 (5V IN) | — | — |
+| 2 | IN− | `V5_OUT` — screw terminal T2 (5V OUT) + USB-A J7 | — | — |
+| 3 | VBS | `V5_OUT` — **tied to IN−**, load-side bus sense | — | — |
+| 4 | ALE | `INA_ALERT` (conversion ready) | GP15 | 20 |
+| 5 | SCL | `I2C_SCL` | GP9 | 12 |
+| 6 | SDA | `I2C_SDA` | GP8 | 11 |
+| 7 | GND | `GND` | — | 13 |
+| 8 | VCC | `V3V3` | — | 36 |
+
+ALE is wired but firmware v1 polls and leaves it unconfigured — the trace
+costs nothing and enables conversion-ready gating in later logger versions.
+
+> **Corrected 2026-08-11 against the physical module — J6 is ONE 8-pin
+> header.** The capture had it as two connectors, `J6` (`Conn_01x05`:
+> SDA/SCL/ALERT/VCC/GND) and `J9` (`Conn_01x02`: VIN+/VIN−), and the BOM
+> described the module as *"6-pin: VCC,GND,SCL,SDA,ALERT,+ one NC/A0"*.
+> **All three descriptions were wrong**, in pin count, in grouping and in
+> order. J9 is deleted; J6 is now a single `Conn_01x08` on
+> `PinSocket_1x08_P2.54mm_Vertical`.
+>
+> **The old order would have destroyed the module.** The 1×05 socket was
+> wired SDA/SCL/ALERT/VCC/GND against a real part that starts IN+/IN−/VBS —
+> seating it would have put the 5 V metering rail onto the I²C lines. This is
+> the failure the J5 row guards against by naming the module order
+> explicitly; that care had not been taken for J6.
+>
+> **VBS was also missing entirely.** It is the bus-voltage sense input, and
+> the VBUS channel is actively used (a module failed *that channel* on
+> 2026-08-07). It is tied to **IN−**, matching how it was wired on the
+> breadboard rig, so VBUS keeps measuring the load-side node and existing
+> captures stay comparable with the frozen
+> `software/datasets/ina226_coarse_monitor_v2.json` contract. **Do not
+> re-point VBS** — changing the measured node silently invalidates
+> cross-session comparison, and the contract has no partial-redo path.
 
 Stock module shunt is 0.1 Ω (R100): ±0.8 A usable range at the INA226's
 ±81.92 mV shunt limit, ~0.1 mA-class resolution, 50 mV drop at 500 mA —
@@ -319,7 +428,7 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | Ref | Part | Qty | Est. NZD | MPN / listing | Notes |
 |---|---|---|---|---|---|
 | A1 | Raspberry Pi Pico 2 | 1 | 12 | official RPi Pico 2 (SC1631) | Socketed, 2× 1x20 female headers. Pico 1 (SC0915) also fits (flash-PMOD role). |
-| A2 | INA226 breakout module | 1 | 7 | Generic "INA226 I2C 36V" breakout, **R100 (0.1 Ω) shunt** — sold widely under this description on AliExpress/Amazon; 6-pin: VCC,GND,SCL,SDA,ALERT,+ one NC/A0. **Verify shunt marking (R100, not R010) on arrival before trusting readings.** | I2C + ALERT |
+| A2 | INA226 breakout module | 1 | 7 | Generic "INA226 I2C 36V" breakout, **R100 (0.1 Ω) shunt** — sold widely under this description on AliExpress/Amazon; **8-pin single header, order `IN+ IN- VBS ALE SCL SDA GND VCC`** (verified against the physical part 2026-08-11 -- the earlier "6-pin: VCC,GND,SCL,SDA,ALERT,+ NC/A0" description was wrong in count, grouping and order; see 2.5). **Verify shunt marking (R100, not R010) on arrival before trusting readings.** | I2C + ALERT |
 | A3 | microSD SPI breakout module | 1 | 4 | Generic "Micro SD Card SPI breakout, 3.3V, 6-pin" (HW-125-style footprint, no onboard level shifter) — pin order printed on the module silkscreen as 3V3 CS MOSI CLK MISO GND; confirm against the specific listing before socketing. | 6-pin, 3V3-native |
 | J1 | 2-pin 5.08 mm screw terminal, THT | 2 | 2 | Generic 5.08mm pitch 2-pin terminal block (e.g. Phoenix-style clone, KF128-2P) | T1 5V IN, T2 5V OUT |
 | J7 | USB-A female THT jack | 1 | 2 | Generic USB-A Type-A female, through-hole, 4-pin | Metered power out |
@@ -330,7 +439,12 @@ clone probes (24 MHz, comfortable at the 25 kHz–2 MHz bench SPI rates).
 | U1 | 74CBTLV3125PGG | 1 | 2 | Renesas/IDT, `Ioff`-rated 4-channel bidirectional bus switch (Active; substitute for obsolete SN74CBTLV3125PW) | Mandatory J2 isolation; TSSOP-14 |
 | U2 | TLV3011BID**BV**R | 1 | 2 | TI open-drain comparator, 1.242 V integrated reference. Three same-family traps: do **not** use TLV3012 (push-pull output); do **not** use TLV3011BID**CK**R (that is SC70-6, not SOT-23-6 — see note below); fallback MAX9063EUK+T needs a 10.2 kΩ bottom divider leg, not 102 kΩ | Pico-powered `TARGET_3V3_SENSE` supervisor; SOT-23-**6** |
 | R | 10 kΩ, 140 kΩ, 102 kΩ | 3 | 0.5 | **1% — 140k and 102k are E96 and do not exist in 5%/E24** | U1 OE pull-up (10k) and U2 2.94 V sense divider (140k/102k for TLV3011B's 1.242 V reference → 2.9467 V; the MAX9063 fallback needs a 10.2 kΩ bottom leg, not 102 kΩ). Preserve ratio **and** ≈240 kΩ total on any substitution — divider impedance sets the external hysteresis scaling. Do not buy tighter than 1%. |
-| R | 1 MΩ | 1 | 0.2 | 1% metal-film preferred | U2 hysteresis feedback — **fit only if** breadboard step 1 shows chatter near the threshold; size from the measured band. Unusable with the MAX9063 fallback |
+| R | 1 MΩ | 1 | 0.2 | 1% metal-film preferred | R16, U2 hysteresis feedback (OUT → IN+) — **fit only if** breadboard step 1 shows chatter near the threshold; size from the measured band. Marked DNP in the schematic. Unusable with the MAX9063 fallback |
+| R | 10 kΩ | 1 | 0.1 | 5% or better | **R17, added 2026-08-11** — series REF → IN+. Without it R16 does nothing: REF sources 0.5 mA and holds IN+ regardless. Hysteresis scales against *this* resistor, not the sense divider |
+| C | 100 nF | 2 | 0.2 | 50 V ceramic, THT | C1/C2, decoupling at U1 VCC and U2 V+. **Check placement before fitting R16** — chatter from missing decoupling looks identical to insufficient hysteresis |
+| — | TSSOP-14 → DIP-14 breakout adapter | 1 | 3 | — | U1 carrier (assembly decision 2026-08-11). Verify outline against the part actually ordered |
+| — | SOT-23-6 → DIP breakout adapter | 1 | 2 | **SOT-23-6, not SOT-23-5 or SC70-6** | U2 carrier. Ships in more than one DIP outline — **confirm before gerbers** |
+| — | DIP-14 wire-link header | 1 | 0.5 | Header strip + wire | Rev A populate: bridges U1's four channels while U1 is unfitted. Fit this **or** U1, never both |
 | R | 33 Ω 1/4 W THT | 5 | 1 | Generic carbon/metal film, 5% or better | J3 flash-PMOD series termination (4) +1 spare |
 | R | 10 kΩ 1/4 W THT | 3 | 0.5 | Generic carbon/metal film, 5% or better | SPI_CS# + FLASH_CS# pullups (2, WP#/HOLD# pullups removed per §2.2 correction — not physically possible on the 6-pin J3), +1 spare |
 | R | 1 kΩ 1/4 W THT | 1 | 0.3 | Generic carbon/metal film, 5% or better | R11, PWR LED series off 5 V — ≈2 mA with a Vf 3.0 V green. 680 Ω if brighter is wanted; aesthetic only |
@@ -392,6 +506,14 @@ microSD breakouts do occasionally ship in a mirrored order).
 - 2 layers; bottom = ground pour, top = signal + 5V metering trace.
 - Metering path (T1 → INA226 VIN+ → VIN− → T2/J7) in ≥2 mm trace, kept away
   from SPI. Everything else is ≤2 MHz digital — routing is uncritical.
+- **J6 placement is now doubly constrained (2026-08-11).** Consolidating the
+  INA226 onto one 8-pin strip means a single connector must be reachable by
+  *both* the ≥2 mm metering path from T1/T2 (pins 1–3) *and* the Pico's
+  I²C/ALERT signals (pins 4–6). When these were two connectors, each could be
+  placed independently — J9 by the terminal blocks, J6 by the Pico. Place J6
+  first and let the terminal blocks follow it; the fat 5 V path is the
+  harder of the two to route late. Note the metering trace necks down at the
+  1.7 mm pads, which is expected and not a violation of the ≥2 mm rule.
 - Keep each SPI group's traces together; grounds interleaved on J8 as tabled.
 - Place U1 immediately behind J2, with short grouped SPI traces; leave the
   100 Ω resistors on the Pico side of U1. Place U2 and its divider by J2-6,
@@ -401,6 +523,40 @@ microSD breakouts do occasionally ship in a mirrored order).
   without touching a connector pin.
 - Hex/IVM silkscreen motif welcome; keep the outline rectangular in Rev B.
 - Mounting: 4× M3 holes.
+
+### A1 Pico 2 footprint (created 2026-08-11)
+
+`bench_adapter:RPi_Pico2_Module_Socketed`, in the new project library
+`kicad/bench_adapter.pretty` with a `kicad/fp-lib-table`. **No Pico footprint
+ships with KiCad 10** — confirmed by searching the installed libraries, not
+assumed.
+
+Geometry from the [Pico 2 datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf)
+§3 / Figure 3:
+
+| Dimension | Value | Source |
+|---|---|---|
+| Board | 51.0 × 21.0 mm | §3 text |
+| Pin pitch | 2.54 mm | §3 text |
+| Row spacing | 17.78 mm | Figure 3 |
+| Pin 1 → pin 20 | 48.26 mm | Figure 3 |
+| Pin 1 from top edge | **1.37 mm** | (51 − 48.26)/2 — the grid is **centred**; measured off the scaled drawing as 1.386 mm, agreeing to 0.02 mm |
+| Pad / drill | 1.7 mm / 1.0 mm | matches KiCad `PinSocket_1x20_P2.54mm_Vertical` — the Pico is socketed on female headers here, not soldered down |
+
+Numbering matches the symbol and the datasheet: pin 1 top-left, down the left
+edge to 20, then 21 bottom-right up to 40 top-right. Verified 40 symbol pins
+against 40 footprint pads, with pins 1/20/21/40 at the four corners.
+
+**The Pico's own 4× Ø2.1 mounting holes are deliberately *not* in the
+footprint.** The module sits above this board on sockets, so replicating them
+would only consume routing area. The 4× M3 above are for the adapter board
+itself and are unrelated.
+
+⚠ **Print at 1:1 and check against the physical Pico 2 before gerbers.** The
+geometry is datasheet-derived and internally consistent, but has not been
+compared to a real part. The USB overhang on `F.Fab` is *indicative only* — it
+was not measured; the courtyard reserves 3 mm above the board edge to cover it
+conservatively. Same standing requirement as the U1/U2 carrier footprints.
 
 ## 6. Bring-up & test plan (uses only existing repo firmware)
 
