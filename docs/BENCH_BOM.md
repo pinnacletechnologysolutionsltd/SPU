@@ -23,9 +23,14 @@ than prices — see §4, and note the interlock is **LCSC**, not DigiKey.
 
 ## 2. Need — buy now
 
-**Decided 2026-08-08 (John): the spare INA226 is being ordered, and the sensor
+**Decided 2026-08-08 (John): the spare INA226 is to be ordered, and the sensor
 harness will be soldered rather than Dupont.** Both were already on this list;
-this records that they are now actioned rather than proposed. The custom Rev B
+this records them as decided rather than proposed.
+
+> **Status 2026-08-11: still NOT ordered** (confirmed with John). The 08-08
+> wording said "is being ordered", which read as actioned and was not. This is
+> the longest-lead item on the dataset track and does not depend on the PCB —
+> do not let it queue behind the bench_adapter layout. The custom Rev B
 PCB and the power-ready interlock remain deferred — see §5 — because the damage
 class they address has not recurred since the 100 Ω resistors went in, while
 the failures that *have* cost sessions are connector- and module-side, which is
