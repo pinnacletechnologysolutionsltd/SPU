@@ -31,6 +31,7 @@ def inline(s):
 
 lines = text.splitlines()
 body = []
+date_text = ''
 i = 0
 while i < len(lines):
     line = lines[i]
@@ -46,6 +47,8 @@ while i < len(lines):
                and not re.match(r'^\*\*(Author|Affiliation|Location|Date|AI disclosure):', lines[i])):
             block.append(lines[i].strip())
             i += 1
+        if meta.group(1) == 'Date':
+            date_text = ' '.join(block).strip()
         if meta.group(1) == 'AI disclosure':
             body.append(r'\noindent\textbf{AI disclosure.} ' + inline(' '.join(block).strip()))
         continue
@@ -121,7 +124,7 @@ tex = r'''\documentclass[11pt]{article}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
 \title{A theorem-licensed typestate machine for exact rotation algebra}
 \author{John Curley\\Independent Researcher, SPU-13 Project\\Wellington, New Zealand}
-\date{10 August 2026}
+\date{''' + esc(date_text) + r'''}
 \begin{document}
 \maketitle
 ''' + '\n\n'.join(body) + r'''

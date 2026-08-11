@@ -3,7 +3,7 @@
 **Author:** John Curley
 **Affiliation:** Independent Researcher, SPU-13 Project
 **Location:** Wellington, New Zealand
-**Date:** 10 August 2026
+**Date:** 10 August 2026 (version 1.1, revised 12 August 2026)
 **AI disclosure:** AI tools assisted with drafting, repository evidence
 synthesis, and editorial revision. The human author reviewed the manuscript,
 selected its claims and scope, and is responsible for the submitted record.
@@ -113,7 +113,7 @@ provides the tagged-state checks, and the tagged core is distinct from the
 original TDM baseline.
 
 [SILICON] ROTC angles 0–5 have board evidence in
-[hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe).
+[hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe).
 
 [RTL] ROTC angles 6–35 are covered by RTL/trace evidence only; they are not
 reported here as board results. The integer permutation classes are therefore
@@ -131,10 +131,10 @@ conjugate catalog, including the typestate dispatch and poison-hold behavior.
 The full 60×2 catalog is reported as RTL-only in this paper.
 
 [SILICON] The IROTC probe vectors and the `BADIDX`/`UNTAGGED`/`CATMIX` fault
-matrix are supported by [hardware_evidence.md §3.2k](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
+matrix are supported by [hardware_evidence.md §3.2k](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
 
 [SILICON] SPI core integration and the conjugate-catalog cases are supported
-by [hardware_evidence.md §3.2k.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32k1-irotc-spi-core-integration--conjugate-catalog-silicon-proof).
+by [hardware_evidence.md §3.2k.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32k1-irotc-spi-core-integration--conjugate-catalog-silicon-proof).
 
 ### 3.3 Tensegrity admission
 
@@ -144,10 +144,10 @@ recovery transitions, while its geometry and equilibrium predicates remain
 separate computations.
 
 [SILICON] The seven frozen admission fixtures, including the equilibrium
-fixture, are supported by [hardware_evidence.md §3.2l](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
+fixture, are supported by [hardware_evidence.md §3.2l](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
 
 [SILICON] The four-act transport and recovery sequence is supported by
-[hardware_evidence.md §3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32l1-tensegritylink-four-act-proof-on-the-karatsuba-candidate).
+[hardware_evidence.md §3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32l1-tensegritylink-four-act-proof-on-the-karatsuba-candidate).
 
 ## 4. Harness and coverage boundary
 
@@ -239,9 +239,9 @@ silicon claim in this paper, so none of them is used as a SILICON source here.
 
 ## References
 
-All repository citations below are pinned to the `v0.1-typestate` release tag.
+All repository citations below are pinned to the `v1.1-typestate` release tag.
 
-1. [STATE_MACHINE_HARNESS.md §3](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/STATE_MACHINE_HARNESS.md#3-subsystem-state-machines).
-2. [IROTC_SPEC.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/IROTC_SPEC.md).
-3. [hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe), [§§3.2k, 3.2k.1, 3.2l, 3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
-4. [ROTC_EXPONENT_STATE_MACHINE.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v0.1-typestate/docs/ROTC_EXPONENT_STATE_MACHINE.md).
+1. [STATE_MACHINE_HARNESS.md §3](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/STATE_MACHINE_HARNESS.md#3-subsystem-state-machines).
+2. [IROTC_SPEC.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/IROTC_SPEC.md).
+3. [hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe), [§§3.2k, 3.2k.1, 3.2l, 3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
+4. [ROTC_EXPONENT_STATE_MACHINE.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/ROTC_EXPONENT_STATE_MACHINE.md).
