@@ -374,8 +374,8 @@ and the typestate paper was about to carry one to Zenodo. ROTC keeps `3.2g`;
 the SOM chain shifted to `3.2g.1`–`3.2g.6`, with all inbound citations moved.
 
 **Blind spot worth remembering:** the sweep missed
-`spu_strategy/som_product_roadmap_2026-07.md` because `spu_strategy/` is
-gitignored. Two citations there were off by one — a 07-16 sidecar proof
+the private SOM roadmap because `spu_strategy/` is gitignored. Two citations
+there were off by one — a 07-16 sidecar proof
 pointing at the 07-06 hydration entry. **Any future rename must include
 gitignored paths explicitly.**
 

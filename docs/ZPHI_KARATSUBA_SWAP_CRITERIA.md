@@ -67,7 +67,7 @@ interlock."**
 reaffirmed on 2026-08-07: the backfeed damage class is mitigated by the 100 Ω
 series resistors on all four SPI lines plus power-sequencing discipline, and
 the interlock is explicitly *"not a current purchase and does not gate
-anything"* (`som_product_roadmap_2026-07.md`; `BENCH_BOM.md` §2).
+anything"* (`BENCH_BOM.md` §2).
 
 So the four-act bench is **unblocked and has been since 2026-08-04**. It is not
 future work for a hypothetical swap; it is the missing evidence for the

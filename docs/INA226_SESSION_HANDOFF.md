@@ -347,7 +347,7 @@ affected session under the same block/class condition, then seal again.
 
 Settled with the project owner 2026-08-04:
 
-- **No further hardware spend.** `som_product_roadmap_2026-07.md:191-193`
+- **No further hardware spend.** The private SOM roadmap, lines 191–193,
   already says *"No other spend on this path"*, and nothing since has changed
   it. One INA226 and one actuator carry the whole Phase A→C chain.
 - **No platform change.** The Artix-7 100T stays. The ECP5-45F was evaluated and

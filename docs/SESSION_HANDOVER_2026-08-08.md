@@ -78,7 +78,7 @@ pass (`small` 4×3 exhaustive, `width_plumbing` 8×6, `reset_semantics`), and
 **The roadmap's "two remaining cheap proof gaps" are closed** and have been
 since `6edcf9b` on 07-20. One task covers both: `width_plumbing` runs the
 second width pair *and* drives a second operand tuple at `cycle >= 6`. The
-paragraph at `som_product_roadmap_2026-07.md:709` reads as though they are
+paragraph at line 709 of the private SOM roadmap reads as though they are
 open; a later status line already supersedes it.
 
 **A prior sweep exists and is not usable.** A 2×2×3 sweep ran on 07-22/23
