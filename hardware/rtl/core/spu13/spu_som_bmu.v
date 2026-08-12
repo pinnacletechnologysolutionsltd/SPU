@@ -39,12 +39,6 @@ module spu_som_bmu #(
     output reg  [63:0]  confidence_gap,
     output reg          has_second,
 
-    // Axiomatic gatekeeper
-    input  wire [1:0]   axiomatic_level,
-    output reg          axiomatic_fault,
-    output reg  [3:0]   fault_type,
-    output reg  [31:0]  fault_count,
-
     // Training port (SOM_TRAIN: update node weights)
     input  wire         train_we,
     input  wire [$clog2(MAX_NODES)-1 : 0] train_addr,
@@ -207,9 +201,6 @@ module spu_som_bmu #(
             pipe_stage     <= 0;
             q_accum_p      <= 0;
             q_accum_q      <= 0;
-            axiomatic_fault <= 0;
-            fault_type     <= 0;
-            fault_count    <= 0;
         end else begin
             done      <= 0;
             bmu_valid <= 0;

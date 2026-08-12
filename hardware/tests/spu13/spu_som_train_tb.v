@@ -50,8 +50,6 @@ module spu_som_train_tb;
         .second_node_id(second_node_id), .cluster_label(cluster_label),
         .best_q(best_q), .second_q(second_q),
         .confidence_gap(confidence_gap), .has_second(has_second),
-        .axiomatic_level(2'b11),   // gatekeeper OFF for training
-        .axiomatic_fault(), .fault_type(), .fault_count(),
         .train_we(train_we), .train_addr(train_addr), .train_be(train_be),
         .train_wdata(train_wdata),
         .train_rdata(train_rdata)

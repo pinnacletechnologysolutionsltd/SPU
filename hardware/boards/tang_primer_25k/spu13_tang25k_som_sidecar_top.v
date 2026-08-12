@@ -189,8 +189,6 @@ module spu13_tang25k_som_sidecar_top (
         .second_node_id(bmu_second), .cluster_label(bmu_label),
         .best_q(bmu_best_q), .second_q(bmu_second_q),
         .confidence_gap(bmu_gap), .has_second(bmu_has_second),
-        .axiomatic_level(2'b00),
-        .axiomatic_fault(), .fault_type(), .fault_count(),
         .train_we(som_weight_we),
         .train_addr(som_node),
         .train_be(4'b0001 << som_feat),

@@ -408,11 +408,11 @@ def main():
                         print(f"[{disp}] PASSED")
                         passed += 1
                     else:
-                        print(f"[{disp}] EXECUTED (No explicit PASS/FAIL)")
-                        if rr.returncode == 0:
-                            passed += 1
-                        else:
-                            failed += 1
+                        # A bench that prints no verdict has told us nothing.
+                        # Exiting 0 is not evidence it checked anything, so this
+                        # counts as a failure rather than a silent pass.
+                        print(f"[{disp}] NO VERDICT (printed neither PASS nor FAIL)")
+                        failed += 1
                 except subprocess.TimeoutExpired:
                     print(f"[{disp}] TIMEOUT (Verilator run)")
                     timeouts += 1
@@ -449,11 +449,9 @@ def main():
                 print(f"[{disp}] PASSED")
                 passed += 1
             else:
-                print(f"[{disp}] EXECUTED (No explicit PASS/FAIL)")
-                if run_result.returncode == 0:
-                    passed += 1
-                else:
-                    failed += 1
+                # See above: no verdict is a failure, not a pass.
+                print(f"[{disp}] NO VERDICT (printed neither PASS nor FAIL)")
+                failed += 1
         except subprocess.TimeoutExpired:
             print(f"[{disp}] TIMEOUT (Testbench hung, likely no $finish)")
             timeouts += 1

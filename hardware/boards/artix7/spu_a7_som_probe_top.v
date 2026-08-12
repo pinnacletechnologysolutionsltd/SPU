@@ -76,9 +76,6 @@ module spu_a7_som_probe_top #(
     wire [63:0] second_q;
     wire [63:0] confidence_gap_in;
     wire        has_second;
-    wire        axiomatic_fault;
-    wire [3:0]  fault_type;
-    wire [31:0] fault_count;
 
     spu_som_bmu #(.NUM_FEATURES(NUM_FEATURES), .MAX_NODES(7), .WIDTH(WIDTH)) u_bmu (
         .clk(sys_clk),
@@ -95,10 +92,6 @@ module spu_a7_som_probe_top #(
         .second_q(second_q),
         .confidence_gap(confidence_gap_in),
         .has_second(has_second),
-        .axiomatic_level(2'b00),
-        .axiomatic_fault(axiomatic_fault),
-        .fault_type(fault_type),
-        .fault_count(fault_count),
         .train_we(1'b0),
         .train_addr(3'd0),
         .train_be(4'b0000),
@@ -270,8 +263,7 @@ module spu_a7_som_probe_top #(
                         fail_code <= 8'hE8 + {6'd0, test_idx};
                         all_pass <= 1'b0;
                         test_state <= S_FAIL;
-                    end else if (has_second !== 1'b1 || ambiguous !== 1'b0 ||
-                                 axiomatic_fault !== 1'b0) begin
+                    end else if (has_second !== 1'b1 || ambiguous !== 1'b0) begin
                         fail_code <= 8'hF0 + {6'd0, test_idx};
                         all_pass <= 1'b0;
                         test_state <= S_FAIL;

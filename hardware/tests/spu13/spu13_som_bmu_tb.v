@@ -21,9 +21,6 @@ module spu13_som_bmu_tb;
     wire [63:0] second_q;
     wire [63:0] confidence_gap;
     wire has_second;
-    wire axiomatic_fault;
-    wire [3:0] fault_type;
-    wire [31:0] fault_count;
 
     spu_som_bmu #(.NUM_FEATURES(NUM_FEATURES), .MAX_NODES(7), .WIDTH(WIDTH)) u_bmu (
         .clk(clk),
@@ -40,10 +37,6 @@ module spu13_som_bmu_tb;
         .second_q(second_q),
         .confidence_gap(confidence_gap),
         .has_second(has_second),
-        .axiomatic_level(2'b00),
-        .axiomatic_fault(axiomatic_fault),
-        .fault_type(fault_type),
-        .fault_count(fault_count),
         .train_we(1'b0),
         .train_addr(3'd0),
         .train_be(4'b0000),
@@ -98,11 +91,9 @@ module spu13_som_bmu_tb;
             if (bmu_valid !== 1'b1 ||
                 best_node_id !== exp_best ||
                 cluster_label !== exp_label ||
-                axiomatic_fault !== 1'b0 ||
                 this_latency != expected_latency) begin
-                $display("FAIL: best=%0d label=%0d valid=%b fault=%b type=%h count=%0d latency=%0d expected_latency=%0d",
+                $display("FAIL: best=%0d label=%0d valid=%b latency=%0d expected_latency=%0d",
                          best_node_id, cluster_label, bmu_valid,
-                         axiomatic_fault, fault_type, fault_count,
                          this_latency, expected_latency);
             end else begin
                 test_pass = test_pass + 1;
