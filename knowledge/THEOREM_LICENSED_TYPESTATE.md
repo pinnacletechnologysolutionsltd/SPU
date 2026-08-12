@@ -1,8 +1,19 @@
 # Theorem-Licensed Typestate — A Verification Method for Hardware State Machines
 
-**Status:** methods paper draft, ≥4 subsystems complete (ROTC tagged, IROTC,
-Lucas MAC, Batch inverter) + 5th non-arithmetic (SPI protocol).  SVA
-head-to-head measured.  TeX conversion + figures pending.
+**Status:** methods paper draft. **2 of a target 4 subsystems meet the full
+three-layer bar** (ROTC tagged, IROTC); Lucas MAC, batch inverter, SOM/BMU and
+the SPI protocol machine have partial coverage — see the strict-bar table at
+§5. This broader working document lists five case studies, but only ROTC has a
+completed typestate harness in the published paper; IROTC has integrated
+typestate RTL and the remaining entries are case-study or partial-check
+material. SVA head-to-head measured. TeX conversion + figures pending.
+
+The *narrow* result — the typestate lattice itself, with ROTC/IROTC/tensegrity
+as case studies — is already published: `docs/THEOREM_LICENSED_TYPESTATE_PAPER.md`,
+Zenodo v1.1, version DOI `10.5281/zenodo.21895480`. **That paper is
+authoritative for external coverage claims.** This document is the working
+notes for the broader *methods* paper, which is a different and unpublished
+contribution, and it uses a looser sense of "case study" throughout.
 
 ## 1. What it is
 
@@ -74,12 +85,13 @@ correct iff it matches the oracle bit-for-bit on all tested vectors.
 For every oracle-verified operation, the VM and RTL must produce identical
 register state at instruction granularity (per-operation end states, plus
 pinned instruction latency where the timing is architectural — e.g. the IROTC
-engine's fixed 13-cycle slot is a testbench assertion, not a comment). This
+engine's fixed 12-clock latency is a testbench assertion, not a comment). This
 catches implementation divergence (permutation order, writeback timing,
 sign-extension width) that the oracle's functional correctness test would miss.
 
 The ROTC trace equivalence suite (`test_rotc_vm_rtl_trace.py`) exercises all 36
-angles through both rotor datapaths — 336 bit-exact checks. The IROTC trace
+angles through both rotor datapaths — 72 checks (30 via DUT0, 42 via DUT1),
+driving 288 lane comparisons. The IROTC trace
 suite (`test_irotc_vm_trace.py`) exercises all 60 indices × both catalogs on
 tagged inputs — 9 explicit checks driving 360 component comparisons.
 
@@ -129,16 +141,41 @@ theorem to license the next `>>>1`.
 Every QR-register write site in the VM dispatch updates the typestate tag
 (verified by audit 2026-07-10 — 17 write sites, 17 tag updates, zero missed).
 The full transition algebra is in `docs/IROTC_SPEC.md` §3 and test-pinned in
-`test_irotc_chains.py` (12 checks: pure-catalog chains, thirds mid-chain fault,
+`test_irotc_chains.py` (23 checks: pure-catalog chains, thirds mid-chain fault,
 octahedral demotion, QADD lattice, A₄ alias interop).
 
-## 5. Case studies (current)
+## 5. Case studies and strict harness coverage
+
+> **Coverage bar — read before citing anything below.** "Case study" in this
+> section means a subsystem with a documented state machine and executable
+> checks. It does **not** mean a completed typestate harness. The published
+> paper (`docs/THEOREM_LICENSED_TYPESTATE_PAPER.md`, Zenodo v1.1, version DOI
+> `10.5281/zenodo.21895480`) uses the stricter bar and is **authoritative for
+> any external coverage claim**. Where the two disagree, the paper is right and
+> this document is the more permissive version.
+>
+> The strict bar is the full three-layer discipline: an independent oracle,
+> VM-vs-RTL trace equivalence, and poison proofs. Measured 2026-08-12:
+>
+> | Subsystem | Oracle | Trace equivalence | Poison proofs | Strict bar |
+> |---|---|---|---|---|
+> | ROTC | `test_rotc_thirds_native.py`, 69 checks | `test_rotc_vm_rtl_trace.py`, `test_rotc_six_step_rtl_trace.py` | `test_rotc_bad_angle.py` | **met** |
+> | IROTC | `test_irotc_chains.py`, 23 checks | `test_irotc_vm_trace.py`, 60 indices × both catalogs | `test_irotc_poison.py` | **met** |
+> | SOM/BMU | `test_rational_som.py`, 24 checks | `test_som_bmu_rtl_trace.py` | — | not met |
+> | SPI protocol | `spi_protocol_oracle.py`, 9/9 | — (TB pending) | in the oracle | not met |
+> | Lucas MAC | `test_lucas_mac_harness.py`, 30 passed | — | — | not met |
+> | Batch inverter | `test_pade_batch_inversion.py` | — | — | not met |
+>
+> So **two** subsystems meet the strict bar, not five. The counts above were
+> re-run rather than copied; §§5.3, 5.5 and §8 previously carried 13, 8 and 12
+> where the tests now report 30, 9 and 23.
 
 ### 5.1 ROTC — exponent-tagged deferred reduction (478 lines RTL, 225 lines oracle)
 
 5-state machine: CLEAN → PENDING → FAULT.{MISALIGNED, OVERFLOW, INEXACT}.
 The `div3` magic-constant was replaced with an explicit REDUCE transition
-guarded by residue-mod-3 and range checks. 8/8 acceptance tests in
+guarded by residue-mod-3 and range checks. 9/9 acceptance tests (plus 2000
+randomized REDUCE cases) in
 `spu13_rotor_core_tagged_tb.v`, 69 checks in `test_rotc_thirds_native.py`.
 
 The RTL uses 4-bit tagged exponents with sign-extended values; the oracle uses
@@ -152,7 +189,7 @@ has no fixed-width extension step.
 
 The headline case study. The 4-state typestate caught the CATMIX bug **before
 any RTL was written**; the RTL then followed the corrected spec (term-serial
-engine `spu13_irotc_engine.v`, fixed 13-cycle slot; core integration with the
+engine `spu13_irotc_engine.v`, fixed 12-clock latency; core integration with the
 tag file at every QR write site, default-clear for unclassed writers).
 Silicon 2026-07-10 on Tang 25K (`IROTC:P E=00`, hardware_evidence §3.2k),
 including all three dispatch faults firing in fabric. The three dispatch
@@ -160,7 +197,7 @@ faults (BADIDX, UNTAGGED, CATMIX) are all checked at decode time — no guards
 in the micro-program hot path (no branches in hot paths). Poison proofs cover
 all three with 14 checks; chain tests cover 10-step pure-catalog chains,
 thirds mid-chain faults, octahedral demotion, and QADD lattice behavior with
-12 checks; trace equivalence covers all 60 indices × both catalogs with 9
+23 checks; trace equivalence covers all 60 indices × both catalogs with 9
 checks; the engine TB pins 120 oracle golden cases and a fixed 12-clock
 latency per case.
 
@@ -181,7 +218,7 @@ may fire from a register that has not passed through DOUBLED.
 
 1M-step zero-drift marathon (`test_lucas_mac_oracle.py`) proves
 PSCALE→PCHIRAL→PMUL→PINV closure under repeated composition. The harness oracle
-(`test_lucas_mac_harness.py`, 13 tests) provides exhaustive reachability
+(`test_lucas_mac_harness.py`, 30 tests) provides exhaustive reachability
 analysis and invariant checks. The state space is small (6 reachable states
 from IDLE) so exhaustive enumeration is feasible.
 
@@ -213,7 +250,7 @@ Guards are protocol-framing conditions, not algebraic theorems:
 - `guard_byte_count`: payload length must match expected for command
 - `guard_not_deadman`: receive states timeout at ~1ms (50,000 cycles at 50 MHz)
 
-**Poison proofs** (8 checks in `software/lib/spi_protocol_oracle.py`):
+**Poison proofs** (9 checks in `software/lib/spi_protocol_oracle.py`):
 - UNKNOWN_CMD → single 0x00 response, state returns to S_IDLE
 - CRC_MISMATCH → `crc_error_sticky` latched, state returns to S_IDLE,
   sticky bit clears only on 0xAC status read
@@ -266,7 +303,10 @@ reserved for IROTC dispatch, where the license actually justifies the unguarded
 deviation from the shipped design, corrected 2026-07-11 — mutual equivalence
 between the two arms had hidden it, which is itself a lesson about comparing
 implementations to each other instead of to the spec.) Both are synthesizable,
-functionally equivalent (38/38 checks in `spu13_typestate_sva_compare_tb.v`,
+functionally equivalent (38/38 checks in `spu13_typestate_sva_compare_tb.v`
+— **UNRESOLVED: §8 item 4 says 41/41 for this same bench; neither figure has
+been re-run, because the TB needs a `spu13_sva_guard` module that is not
+beside the guard RTL. Do not quote either number until it is rebuilt.**,
 including demote-then-refuse sequencing), synthesised to Gowin GW5A primitives
 (yosys 0.63, `synth_guard_compare.ys`, 2026-07-11):
 
@@ -303,12 +343,19 @@ Per `docs/ROTC_CANONIZATION_ROADMAP.md` Phase 4:
 1. **This document** — extracted into `knowledge/`, serves as the paper outline. ✅
 2. **Case studies accumulate** — Padé evaluator, batch inverter, SOM/BMU, BTU
    per `docs/STATE_MACHINE_HARNESS.md` implementation order. Target: ≥4
-   subsystems with oracle + harness + poison proofs. ✅ (ROTC tagged, IROTC,
-   Lucas MAC, Batch inverter = 4; SPI protocol = 5th, non-arithmetic)
+   subsystems with oracle + trace equivalence + poison proofs. **NOT MET —
+   2 of 4** (ROTC and IROTC only; see the coverage table at §5). This item was
+   previously marked ✅ on a count of five case studies, which used the loose
+   bar: Lucas MAC and the batch inverter have an oracle but no trace
+   equivalence and no poison proofs, and SOM/BMU has no poison proofs.
+   Closing this needs two more subsystems taken to all three layers.
 3. **Non-arithmetic case study** — southbridge SPI protocol machine as the
-   second domain, demonstrating generality. ✅ (2026-07-11: oracle + 8 poison
-   checks in `software/lib/spi_protocol_oracle.py`; RTL trace equivalence TB
-   pending)
+   second domain, demonstrating generality. **PARTIAL** (2026-07-11: oracle
+   with 9 checks in `software/lib/spi_protocol_oracle.py`, poison behaviour
+   covered there; the RTL trace-equivalence TB is still pending, so the
+   generality claim rests on an oracle that has never been checked against the
+   RTL it models). This is the cheapest of the remaining gaps and the one the
+   methods paper turns on.
 4. **SVA comparison** — measured head-to-head on the φ-plane typestate lattice.
    ✅ (2026-07-11: 105-line typestate vs 155-line SVA-style, 41/41 equivalence
    checks, synthesis area measured: 70 vs 53 cells on Gowin GW5A)
@@ -329,7 +376,7 @@ Per `docs/ROTC_CANONIZATION_ROADMAP.md` Phase 4:
 - `docs/MONTGOMERY_BATCH_INVERSION.md` — Batch inverter contract.
 - `docs/ROTC_CANONIZATION_ROADMAP.md` — Phase 4 paper sequencing.
 - `docs/SOUTHBRIDGE_SPI_PROTOCOL.md` — SPI protocol v1.1 spec (8 opcodes, CRC-8).
-- `software/lib/spi_protocol_oracle.py` — SPI protocol typestate oracle (8 checks).
+- `software/lib/spi_protocol_oracle.py` — SPI protocol typestate oracle (9 checks).
 - `hardware/rtl/core/spu13/spu13_typestate_guard.v` — Typestate lattice guard (121 lines, 52 cells).
 - `hardware/rtl/core/spu13/spu13_sva_guard.v` — SVA-style boolean guard (150 lines, 52 cells).
 - `hardware/tests/spu13/spu13_typestate_sva_compare_tb.v` — 38-check equivalence testbench.

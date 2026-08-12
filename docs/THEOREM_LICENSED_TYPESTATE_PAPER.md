@@ -3,7 +3,7 @@
 **Author:** John Curley
 **Affiliation:** Independent Researcher, SPU-13 Project
 **Location:** Wellington, New Zealand
-**Date:** 10 August 2026 (version 1.1, revised 12 August 2026)
+**Date:** 10 August 2026 (working draft toward version 1.2; published version is 1.1)
 **AI disclosure:** AI tools assisted with drafting, repository evidence
 synthesis, and editorial revision. The human author reviewed the manuscript,
 selected its claims and scope, and is responsible for the submitted record.
@@ -109,8 +109,8 @@ transition relation.
 
 [RTL] The tagged ROTC path models `CLEAN`, `PENDING`, and explicit
 `MISALIGNED`, `OVERFLOW`, and `INEXACT` fault states. Its acceptance harness
-provides the tagged-state checks, and the tagged core is distinct from the
-original TDM baseline.
+provides 9/9 acceptance tests in `spu13_rotor_core_tagged_tb.v`, and the tagged
+core is distinct from the original TDM baseline.
 
 [SILICON] ROTC angles 0–5 have board evidence in
 [hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe).
@@ -144,7 +144,7 @@ recovery transitions, while its geometry and equilibrium predicates remain
 separate computations.
 
 [SILICON] The seven frozen admission fixtures, including the equilibrium
-fixture, are supported by [hardware_evidence.md §3.2l](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
+fixture, are supported by [hardware_evidence.md §3.2l — V:7 final admission tranche](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
 
 [SILICON] The four-act transport and recovery sequence is supported by
 [hardware_evidence.md §3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32l1-tensegritylink-four-act-proof-on-the-karatsuba-candidate).
@@ -220,12 +220,12 @@ kind of support available for that claim, not a ranking of the theorem.
 | T4 | Transition soundness is narrower than value proof | THEOREM | §1, §2.2 | §1 lines 59–62; §2.2 lines 101–104 |
 | T5 | IROTC main/conjugate transition interpretation | THEOREM | §3.2 | §3.2 lines 125–127 |
 | T6 | Unexpressible fault classes and theorem/RTL gap | THEOREM | §5 | §5 lines 182–192 |
-| R1 | Tagged ROTC states and tagged-state harness | RTL | `STATE_MACHINE_HARNESS.md` §3.1 | §3.1 lines 110–113 |
-| R2 | ROTC angles 6–35 are RTL/trace-only here | RTL | `STATE_MACHINE_HARNESS.md`; trace tests | §3.1 lines 118–121 |
-| R3 | IROTC generated 60×2 surface and fault transitions | RTL | IROTC RTL/testbench artifacts | §3.2 lines 129–131 |
-| R4 | Tensegrity bounded state/fault/recovery model | RTL | tensegrity RTL/testbench artifacts | §3.3 lines 141–144 |
-| R5 | Harness-versus-bench coverage boundary | RTL | `STATE_MACHINE_HARNESS.md` §3 | §4 lines 154–173 |
-| R6 | SPU-13 case-study context | RTL | SPU-13 RTL case-study paths | §SPU-13 context lines 27–33 |
+| R1 | Tagged ROTC states and tagged-state harness | RTL | `spu13_rotor_core_tagged_tb.v` (9/9 acceptance tests, plus 2000 randomized REDUCE cases) | §3.1 lines 110–113 |
+| R2 | ROTC angles 6–35 are RTL/trace-only here | RTL | `test_rotc_vm_rtl_trace.py` (72 angle x datapath checks over 36 angles; 288 lane comparisons) | §3.1 lines 118–121 |
+| R3 | IROTC generated 60×2 surface and fault transitions | RTL | `spu13_irotc_engine_tb.v` (120 oracle golden cases; fixed 12-clock latency) | §3.2 lines 129–131 |
+| R4 | Tensegrity bounded state/fault/recovery model | RTL | `spu13_tensegrity_guard_tb.v` (5/5 cases); tensegrity regression (50 PASS) | §3.3 lines 141–144 |
+| R5 | Harness-versus-bench coverage boundary | RTL | `STATE_MACHINE_HARNESS.md` §3 (8 subsystem entries; 1 completed harness) | §4 lines 154–173 |
+| R6 | SPU-13 case-study context | RTL | `spu13_core_rotc_opcode_tb.v` (41 lane checks + 2 poison faults) and `spu13_core_irotc_opcode_tb.v` (25 checks) | §SPU-13 context lines 27–33 |
 | S1 | ROTC angles 0–5 | SILICON | `hardware_evidence.md` §3.2g (ROTC 0–5) | §3.1 lines 115–116 |
 | S2 | IROTC probe and fault matrix | SILICON | `hardware_evidence.md` §3.2k | §3.2 lines 133–134 |
 | S3 | IROTC SPI integration and conjugate catalog | SILICON | `hardware_evidence.md` §3.2k.1 | §3.2 lines 136–137 |
