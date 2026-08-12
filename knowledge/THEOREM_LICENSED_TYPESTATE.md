@@ -90,8 +90,8 @@ catches implementation divergence (permutation order, writeback timing,
 sign-extension width) that the oracle's functional correctness test would miss.
 
 The ROTC trace equivalence suite (`test_rotc_vm_rtl_trace.py`) exercises all 36
-angles through both rotor datapaths — 72 checks (30 via DUT0, 42 via DUT1),
-driving 288 lane comparisons. The IROTC trace
+angles through both rotor datapaths — 336 checks over 42 generated cases,
+as the test's own aggregate reports. The IROTC trace
 suite (`test_irotc_vm_trace.py`) exercises all 60 indices × both catalogs on
 tagged inputs — 9 explicit checks driving 360 component comparisons.
 
@@ -161,12 +161,17 @@ octahedral demotion, QADD lattice, A₄ alias interop).
 > |---|---|---|---|---|
 > | ROTC | `test_rotc_thirds_native.py`, 69 checks | `test_rotc_vm_rtl_trace.py`, `test_rotc_six_step_rtl_trace.py` | `test_rotc_bad_angle.py` | **met** |
 > | IROTC | `test_irotc_chains.py`, 23 checks | `test_irotc_vm_trace.py`, 60 indices × both catalogs | `test_irotc_poison.py` | **met** |
-> | SOM/BMU | `test_rational_som.py`, 24 checks | `test_som_bmu_rtl_trace.py` | — | not met |
-> | SPI protocol | `spi_protocol_oracle.py`, 9/9 | — (TB pending) | in the oracle | not met |
+> | SOM/BMU | `test_rational_som.py`, 24 checks | `test_som_bmu_rtl_trace.py` | **none possible** | not met |
+> | SPI protocol | `spi_protocol_oracle.py`, 9/9 | `spu_spi_protocol_trace_tb.v`, 26 comparisons | in the oracle | **met** |
 > | Lucas MAC | `test_lucas_mac_harness.py`, 30 passed | — | — | not met |
 > | Batch inverter | `test_pade_batch_inversion.py` | — | — | not met |
 >
-> So **two** subsystems meet the strict bar, not five. The counts above were
+> So **three** subsystems meet the strict bar, not five — ROTC, IROTC and,
+> as of 2026-08-12, the SPI protocol machine. SOM/BMU can never meet it as
+> built: its fault interface is inert (`axiomatic_fault`/`fault_type`/
+> `fault_count` are assigned only at reset and left unconnected by the
+> production wrapper at `axiomatic_level=2'b00`), so there is nothing to
+> poison. That is a design finding, not a testing gap. The counts above were
 > re-run rather than copied; §§5.3, 5.5 and §8 previously carried 13, 8 and 12
 > where the tests now report 30, 9 and 23.
 
