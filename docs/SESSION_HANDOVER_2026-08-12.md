@@ -183,4 +183,55 @@ Stale comments in `spu13_core_som_opcode_tb.v:158,170,182` still describe
 - **Paper front matter** reads *working draft toward version 1.2; published
   version is 1.1*, so a rebuilt PDF cannot masquerade as the published artifact.
 
+## 7. Landed after this document was first written
+
+**Concept DOI verified: `10.5281/zenodo.21866716`.** The record page does not
+render it; `zenodo.org/api/records/21895480` returns it in the `conceptdoi`
+field. Use the API endpoint to re-check, not the HTML. The inference from the
+RPLU/LUCAS N/N+1 pattern was correct.
+
+**The published deposit provably matches its anchor.** Downloaded the v1.1 PDF
+from Zenodo (md5 `ca4f3ebc9e3f2cd014df87d8688a0173`, matching the API's stated
+checksum, 62817 bytes) and diffed its extracted text against a rebuild from the
+`v1.1-typestate` tag: **identical**. The 681-byte size difference is embedded
+timestamps and paths, not content. That closes the loop the whole tag-freeze
+discipline exists to protect.
+
+**New finding for v1.2 — a missing premise, raised by John.** The paper names
+the doubling theorem three times and never states what motivates it: the A₅
+matrix entries are **½Z[φ]**, not Z[φ]. Line 28's "IROTC supplies exact Z[φ]
+catalog rotations" is imprecise in exactly the direction previously identified
+as a false claim — the rotations are ½Z[φ]; it is the stored numerators `2M`
+that lie in Z[φ]. Line 38 ("registers holding Z[φ] pairs") is correct, since
+doubling puts them there. **Nothing computed is wrong and nothing needs
+retracting** — the theorem is correctly stated as licensing the transitions.
+But a reader currently gets a theorem with a name and no premise. Queued for
+v1.2 as the most substantive item there.
+
+Worth recording how it surfaced: two close readings of that paper under a
+contract explicitly demanding claims be checked against ground truth did not
+catch it. It came out of drafting an email that had to explain the result to
+someone else.
+
+**Doubling semantics, for the record** (`IROTC_SPEC.md` §3): the catalog ships
+pre-doubled as `2M`; the *operand* is doubled once via `LOAD2X` (0xD7), or
+`SCALE2` (0xD8) for data arriving undoubled over the southbridge. Chains then
+compose with no further scaling. What is tracked per rotation is the catalog,
+not the doubling — mixed main/conjugate products land back in ½Z[φ] with growing
+denominators, which is the CATMIX fault and why the tag is four states.
+
+**Contract written, not yet run:** `claude_contract_axiomatic_gatekeeper_2026-08-12.md`.
+Scoped as a decision dossier — GTP may not instantiate, delete, or fix the
+module, only characterise it. It has never been simulated, so expect bugs.
+
+**Direction set:** SPU-4 becomes the commercial focus. See tranche plan T7;
+T7.0 (is ~400 LUT silicon-proven or synthesis-estimated?) is a gate, not a task.
+
+**Andy Thomson reply drafted** — in conversation, not committed. Covers the
+verified M144 quadrance set, the ½Z[φ]/doubling convergence with a date and
+checksum, the mixed-catalog caveat, and a note that Gray's copyright covers his
+expression rather than the mathematics.
+
+---
+
 Next tranches: `spu_strategy/tranche_plan_2026-08-12.md`.
