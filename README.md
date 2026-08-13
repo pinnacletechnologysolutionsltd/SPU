@@ -195,9 +195,11 @@ python3 software/tests/test_rotc_vm_rtl_trace.py  # VM-vs-RTL TRACE EQUIVALENCE
                                                   # (angles 0-35): PASS
 ```
 
-The current headline was last re-run from source on 2026-08-13. The commands
-above are the maintained reproduction surface; individual evidence entries
-remain date- and artifact-specific.
+The current headline was re-derived from a fresh clone of the immutable
+`v1.2-typestate` tag on 2026-08-13: 141 discovered Verilog benches, 148
+Verilog executions including parameter variants, 12 C++ tests, and all
+auxiliary suites; `Total PASS: 193`, `Total FAIL: 0`. Individual hardware
+evidence entries remain date- and artifact-specific.
 
 **What you cannot check from a clone, and why.** Bitstreams are build artifacts
 and are not committed; `build/` is gitignored. Silicon results are therefore
