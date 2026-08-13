@@ -19,7 +19,7 @@ The SPU-4 operates in two distinct modes depending on its synthesis wrapper:
 In standalone mode (`spu4_standalone_top.v`), the SPU-4 operates independently on minimal-fabric FPGA targets (e.g., Tang 20K/25K, iCE40UP5K). It features:
 - **Euclidean ALU:** Scalar and basic vector arithmetic without the overhead of the SPU-13's rational field logic.
 - **Micro-cell Invariant Checking:** The SPU-4 checks its own local ΣABCD integrity natively, attempting Henosis locally.
-- **Resource Envelope:** Approximately 400 LUT4-equivalents (including its UART fixture), easily fitting into commodity edge fabrics.
+- **Resource Envelope:** Approximately 400 LUT4-equivalents (including its UART fixture), a synthesis/P&R estimate rather than a silicon resource measurement; easily fitting into commodity edge fabrics. Functional silicon evidence is recorded separately in `docs/hardware_evidence.md` §3.2j.
 
 ### B. Cluster Satellite (Meso-cell)
 In a larger cluster deployment, SPU-4 cores act as peripheral satellites to an SPU-13 governor (`spu4_top.v` / `spu4_cluster_bridge.v`).

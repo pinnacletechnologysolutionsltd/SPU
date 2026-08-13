@@ -176,7 +176,8 @@ so it does not need the SPU-13. The SPU-4 standalone core — sequencer,
 decoder, regfile, Euclidean ALU, serial multiplier — measures **668 cells
 (~400 LUT4-equivalent + ~250 FF) including its UART fixture**, which fits
 the smallest commodity fabrics (Gowin GW1N-1, iCE40UP5K) with room to
-spare. First silicon: 2026-07-08 on Tang 25K
+spare. This is a synthesis/P&R resource estimate, not a resource count
+observed in silicon. Functional first silicon was 2026-07-08 on Tang 25K
 (`SPU4:P A=0000 B=0155 C=0155 D=0155`, `docs/hardware_evidence.md` §3.2j).
 
 Integrity hardening for harsh-environment/edge roles is additive, not
@@ -221,7 +222,7 @@ the command-plane HAL; whisper is the coherence plane.
 | Component | State |
 |---|---|
 | SPU-4 standalone core | **Silicon-verified** (2026-07-08) |
-| SPU-4 resource envelope (~400 LUT) | Measured (yosys, incl. probe fixture) |
+| SPU-4 resource envelope (~400 LUT) | Synthesis/P&R estimate (Yosys, incl. probe fixture); not a silicon resource measurement |
 | Hamming SEC prims / ECC regfiles | RTL + TB verified |
 | `spu4_cluster_bridge` | RTL + TB verified only; not instantiated by a core/board top. Its 4-bit semantic-label input still needs a mapper from the SPU-4 BMU's 2-bit winner node. |
 | `spu_node_link` | TB verified, **not on hardware** |
