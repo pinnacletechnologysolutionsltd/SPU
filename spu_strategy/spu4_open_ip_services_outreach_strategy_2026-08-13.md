@@ -1,7 +1,7 @@
 # SPU-4 open-IP services and outreach strategy
 
 **Date:** 2026-08-13  
-**Direction:** SPU-4 production-facing work, with SPU-13 research continuing in parallel
+**Direction:** SPU-4 production-facing work, with SPU-13 continuing as the higher-value advanced platform
 
 ## Commercial thesis
 
@@ -18,6 +18,57 @@ is the expertise and engineering around that open foundation:
 The value is not secrecy around a small RTL block. It is the ability to turn a
 customer's sensing, geometry, or deterministic-control problem into a verified
 implementation that their team can understand and maintain.
+
+SPU-13 remains the platform with the greatest technical and commercial
+potential. It has a higher cost and a higher entry point, so SPU-4 is the
+practical first engagement: a smaller system through which customers can learn
+the architecture, prove a use case, and later expand into SPU-13 capability.
+
+## Two-tier architecture
+
+The product boundary should have two layers:
+
+```text
+customer system → spu4_customer_wrapper → spu4_core
+                                      ↘ optional telemetry / bridge
+advanced system → SPU-13 services and research platform
+```
+
+### Stable reusable core
+
+`spu4_core` is the implementation layer: Euclidean arithmetic, sequencing,
+registers, and the deterministic datapath. It should change conservatively and
+remain reusable across applications and FPGA targets.
+
+### Customer-facing wrapper
+
+`spu4_customer_wrapper` is the contract layer around the core. It hides
+development-era implementation details and defines:
+
+- clock and reset behaviour;
+- signed feature or Quadray input widths;
+- `start`, `busy`, and `done` handshakes;
+- coefficient and configuration loading;
+- result registers;
+- status and telemetry fields;
+- fixed or explicitly bounded latency;
+- optional streaming, SPI, or memory-mapped adapters.
+
+The existing `hardware/rtl/core/spu4/spu4_standalone_top.v` is the starting
+reference, not yet the final customer ABI. T7.4 should document and freeze the
+smallest useful wrapper before adding application-specific interfaces.
+
+The first sensor demonstrator can therefore use:
+
+```text
+INA226 → Pico/RP2040 logger → deterministic feature extraction
+       → SPU-4 customer wrapper → SOM1 decision path and telemetry
+```
+
+The INA226 interface should initially remain outside the SPU-4 core. This
+keeps the core useful for industrial sensing, robotics, geometry, and other
+feature sources while allowing the demonstrator to exercise a real end-to-end
+application.
 
 ## Product ladder
 
@@ -119,19 +170,26 @@ homepage article.
 - Invite collaboration around customer problems rather than promising a
   finished universal solution.
 
-## Parallel research track
+## SPU-13 advanced platform
 
 Continue SPU-13 work as experimental hardware, research demonstrations, grant
-material, and specialist consulting capability. The SPU-13 track should not
-block the SPU-4 product package, and the SPU-4 product schedule should not
-pretend that the SPU-13 research is complete.
+material, and specialist consulting capability. Its exact SOM, robotics, RPLU,
+Lucas/φ arithmetic, and higher-dimensional research make it the advanced,
+higher-value platform rather than a superseded project.
+
+The SPU-13 track should not block the SPU-4 product package, but successful
+SPU-4 engagements should create a route into SPU-13: a customer begins with a
+small deterministic feature or telemetry problem, then expands when the
+application needs richer exact arithmetic, larger maps, or advanced geometry.
 
 ## First campaign checklist
 
-1. Publish a one-page SPU-4 product brief.
+1. Publish a one-page SPU-4 product brief and wrapper/interface diagram.
 2. Link the product brief to the claim and fault-reporting ledgers.
 3. Record one short build/flash/telemetry demonstration.
 4. Publish the same technical article on the homepage and LinkedIn.
 5. Contact a small set of FPGA, sensing, robotics, and university prospects.
 6. Record their concrete problems and use those conversations to select the
    first supported application package.
+7. Define the path from a successful SPU-4 pilot to an SPU-13 advanced
+   engagement, without requiring SPU-13 to be production-complete first.
