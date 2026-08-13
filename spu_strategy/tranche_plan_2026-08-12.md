@@ -165,14 +165,15 @@ Then, in rough order:
   register file, ALU, sequencer, and standalone wrapper are present. A board
   kit may follow as a reference design, but it is not the primary product
   boundary.
-- **T7.2 — The claim set.** Write down what SPU-4 is asserted to do, each claim
-  tagged THEOREM/RTL/SILICON exactly as the papers are. A product claim set is a
-  claim ledger with commercial consequences, and the discipline transfers
-  directly. Cross-vendor bit-identity and bounded latency are the lead claims;
-  the arithmetic is the mechanism, not the pitch.
-- **T7.3 — Fault reporting.** Interacts with T3. "Deterministic detection that
-  cannot report its own faults" is the weaker product. Resolve the gatekeeper
-  question before the claim set is fixed, not after.
+- **T7.2 — RESOLVED 2026-08-13.** `docs/SPU4_PRODUCT_CLAIMS.md` records what
+  SPU-4 is asserted to do, with each claim tagged by evidence level. Cross-vendor
+  bit-identity and bounded latency remain open product gates.
+- **T7.3 — RESOLVED 2026-08-13.** `docs/SPU4_FAULT_REPORTING_CONTRACT.md`
+  defines the base product as deterministic arithmetic plus bounded telemetry,
+  not comprehensive self-fault detection. `henosis_pulse`, `dissonance`,
+  `busy`, and `done` are explicitly not universal fault indicators. Hardened
+  fault detection is a separate optional package requiring its own RTL,
+  oracle, poison, and silicon evidence.
 - **T7.4 — Integration surface.** What a customer actually receives: source,
   constraints, a reference top, a bring-up procedure, and the regression they
   can run themselves. The fresh-clone check is already the discipline here.

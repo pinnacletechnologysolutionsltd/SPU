@@ -1,6 +1,6 @@
 # SPU-4 Sentinel — Product Claim Ledger (draft)
 
-**Status:** T7.2 working draft — 2026-08-13  
+**Status:** T7.3 contract attached — 2026-08-13
 **Product boundary:** reusable FPGA IP block. The Tang Primer 25K image is a
 reference-validation vehicle, not the product.
 
@@ -14,6 +14,7 @@ levels, not marketing adjectives.
 | Standalone programmed execution with Quadray result and telemetry ports | RTL | `spu4_standalone_top.v` and `hardware/tests/spu4/spu4_standalone_top_tb.v`. The generic wrapper exposes program load, run/busy/done, A–D result, UART, and status signals. |
 | Standalone probe executes the documented QROT path and reports the expected result | SILICON — scoped | Tang Primer 25K probe, 2026-07-08: `SPU4:P A=0000 B=0155 C=0155 D=0155`; build/load details, raw line, and bitstream SHA-256 are in `docs/hardware_evidence.md` §3.2j. This does not prove every opcode or target fabric. |
 | Approximately 400 LUT4-equivalents including the UART fixture | Synthesis/P&R estimate | The figure is a resource estimate, not a silicon resource measurement. The exact probe build was rerun on 2026-08-13; its bitstream SHA-256 is `9599f5e420f46515d99b57d2b256489440341166941be3bc9992b0b827222664` and P&R closed at 168.58 MHz against 12 MHz. |
+| Defined base fault/telemetry contract | RTL contract | `docs/SPU4_FAULT_REPORTING_CONTRACT.md`; the base core reports completion, normalization events, and residual telemetry, not comprehensive self-fault detection. |
 | Fits a customer's target FPGA | OPEN | Requires a target-specific synthesis/P&R report; the ~400-LUT estimate must not be presented as universal across vendors, wrappers, or constraints. |
 | Cluster bridge and sovereign-bus integration | RTL/TB only | `spu4_cluster_bridge.v` and related benches exist, but the bridge is not instantiated in a board top and is not covered by the §3.2j silicon result. |
 | SPU-4 SOM/BMU edge tier | RTL/TB experiment only | `spu4_som_edge.v` has no upload path, synthesis record, board top, or silicon evidence. It is not part of the base product claim. |
@@ -33,6 +34,5 @@ separate integration packages until their interfaces and evidence are closed.
    format.
 3. Add a target matrix with independently generated resource and timing
    reports for each supported fabric.
-4. Decide the fault-reporting contract together with T7.3; do not advertise
-   self-detecting faults while `spu13_axiomatic_gatekeeper` remains outside the
-   SPU-4 path.
+4. Treat hardened fault detection as a separate optional package; do not
+   advertise self-detecting faults for the base core.
