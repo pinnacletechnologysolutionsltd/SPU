@@ -75,7 +75,8 @@ next sensor bench step. See [`docs/SOM_V1_PRODUCT_CONTRACT.md`](docs/SOM_V1_PROD
 This SOM path is the current SPU-13 platform wedge. The separate commercial
 direction is now the smaller SPU-4 Sentinel, developed as a reusable product
 block; see [`knowledge/SPU4_ARCHITECTURE.md`](knowledge/SPU4_ARCHITECTURE.md)
-and the current tranche plan for the product gates.
+and [`docs/SPU4_PRODUCT_CLAIMS.md`](docs/SPU4_PRODUCT_CLAIMS.md) for the
+current claim ledger and product gates.
 
 ## Current Hardware Direction
 
