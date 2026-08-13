@@ -3,7 +3,7 @@
 **Author:** John Curley
 **Affiliation:** Independent Researcher, SPU-13 Project
 **Location:** Wellington, New Zealand
-**Date:** 13 August 2026 (working draft toward version 1.2; published version is 1.1)
+**Date:** 13 August 2026 (Version 1.2)
 **AI disclosure:** AI tools assisted with drafting, repository evidence
 synthesis, and editorial revision. The human author reviewed the manuscript,
 selected its claims and scope, and is responsible for the submitted record.
