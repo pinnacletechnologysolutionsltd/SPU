@@ -56,7 +56,7 @@ docs/                   Design guides and bring-up runbooks
 | `python3 tools/gen_rplu2_tables.py --profile default --output tools/build/rplu2_boot_tables.bin` | Generate corrected 149-record RPLU2 default table blob |
 | `tools/rp2040_flash_pmod.py --port /dev/ttyACM3 write tools/build/rplu2_boot_tables.bin --offset 0x110000` | Program corrected RPLU2 table blob to PMOD SPI flash at the bootloader offset |
 | `bash build_25k_spu13_rplu2_consume_probe.sh` | Build Tang 25K RPLU2 flash consume-probe bitstream and corrected consume-profile table |
-| `python3 software/tests/test_rational_robotics.py` | Run rational robotics oracle tests (56 checks) |
+| `python3 software/tests/test_rational_robotics.py` | Run rational robotics oracle tests (104 checks) |
 | `python3 software/tests/test_rational_som.py` | Run rational SOM/BMU oracle tests (24 checks) |
 | `python3 software/tests/test_rotc_vm_rtl_trace.py` | VM-vs-RTL trace equivalence for all 36 ROTC angles (0-35), 336 bit-exact checks across both rotor datapaths |
 | `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` | Set up Python environment |
@@ -66,8 +66,11 @@ docs/                   Design guides and bring-up runbooks
 | `python3 tools/zk_analyse.py build/zk_pnr_campaign/<stamp>` | Summarise a sweep: per-arm Fmax distributions, area deltas, per-cell completeness. Filters on the campaign's `started_utc` — a killed build otherwise leaves the *previous* campaign's metrics under the same name and reports a full cell |
 | `.venv/bin/python3 tools/tgr_four_act.py --port <cdc> --runs 10` | TENSEGRITYLINK four-act campaign (evidence for §3.2l.1). Compares every `tgrstatus` field per act and stops on the first deviation |
 | `python3 software/tests/test_lucas_mac_oracle.py` | Run Lucas Phinary MAC oracle (PSCALE/PCHIRAL/PMUL/PINV + 1M-step zero-drift) |
+| `python3 software/tests/test_lucas_mac_rtl_trace.py` | Compare 59 deterministic oracle vectors against standalone Lucas RTL, including completion/error outcomes |
 | `iverilog -I hardware/rtl/arch -o build/lucas_mac_tb.vvp hardware/rtl/core/spu13/spu13_lucas_mac.v hardware/tests/spu13/spu13_lucas_mac_tb.v && vvp build/lucas_mac_tb.vvp` | Run Lucas MAC RTL testbench (11 ops + 100-period zero-drift) |
 | `python3 software/tests/test_pade_batch_inversion.py` | Run Montgomery batch inversion oracle (25 checks, tower/MAC cost tables) |
+| `python3 software/tests/test_batch_inverter_rtl_trace.py` | Regenerate batch-inverter expectations with the A31 oracle and compare 10 RTL cases, including singular isolation and ordering-adversarial lanes |
+| `iverilog -g2012 -I hardware/rtl/arch -y hardware/rtl/core/spu13 -y hardware/rtl/core/shared -y hardware/rtl/math -y hardware/rtl/common -o build/batch_poison.vvp hardware/rtl/core/spu13/spu13_batch_inverter.v hardware/tests/spu13/spu13_batch_inverter_poison_tb.v && vvp build/batch_poison.vvp` | Batch-inverter poison proof: mixed and all-singular isolation, unit-lane inverse preservation |
 | `python3 software/tests/test_hyper_catalan_oracle.py` | Run hyper-Catalan series + jet-ring oracle (21 checks vs Wildberger-Rubine 2025) |
 | `python3 software/tests/test_icosahedral_catalog.py --emit-vm` | Regenerate the checksummed IROTC VM catalog (`software/lib/irotc_catalog.py`) after oracle changes |
 | `python3 software/tests/test_irotc_vm_trace.py` | IROTC VM-vs-exact-Fraction trace equivalence (60 indices × both catalogs + A₄ alias interop) |
@@ -262,7 +265,7 @@ Tang 25K or Artix-7.
   truncates with no fault flag — see `knowledge/SPU_LEXICON.md` Davis
   Gate entry. A deferred-reduction exponent-tagged ROTC core
   (`spu13_rotor_core_tagged.v`, 314 lines) with explicit fault flags
-  (MISALIGNED/OVERFLOW/INEXACT) now exists as the verified fix — 8/8
+  (MISALIGNED/OVERFLOW/INEXACT) now exists as the verified fix — 9/9
   testbench acceptance tests PASS (was 7/7; a real bug found 2026-07-09
   while auditing REDUCE for synthesis viability — `reduce_val64` was
   loaded via zero-extension instead of sign-extension, so any negative
@@ -478,9 +481,10 @@ Tang 25K or Artix-7.
 - **SOM/BMU pipeline** — 7-node parallel array with WTA comparator
 - **RPLU v2 — Thimble-Padé Engine** — A31 arithmetic, Padé evaluator, BTU collision resolver
 - **Lucas Phinary MAC** — PSCALE (1c, 0 DSP), PCHIRAL (1c, 0 DSP), PMUL (3c), PINV (O(log L_p) Euclidean GCD). 100-period zero-drift marathon PASS. ~200 LUTs, ready for Wukong Artix-7 synthesis.
-- **Montgomery batch inverter** — 1 tower + 3(k-1) mults for k≤16, deferred
+- **Montgomery batch inverter** — 1 tower + 3(k-1) mults for k≤16, simulation-accepted
   zero-divisor check, singular-lane isolation + unit-subset re-batch; 52
-  golden lanes verified against the Python oracle (committed .mem)
+  golden lanes verified against the Python oracle (committed .mem), 10-case
+  regenerated RTL trace and mixed/all-singular poison proof
 - **Series stream evaluator** (`spu13_series_stream.v`) — eps^3
   Hyper-Catalan series root, static 26-product schedule ROM, shared
   mult/tower handshake, done-coupled busy. Golden vectors oracle-verified;
@@ -530,7 +534,7 @@ Tang 25K or Artix-7.
   `knowledge/SYNERGETICS_BEYOND_GEOMETRY.md`.
 
 **Rational Robotics & SOM Oracles (software-verified):**
-- Rational robotics oracle — 56 checks
+- Rational robotics oracle — 104 checks
 - Rational SOM/BMU oracle — 24 checks
 - C++ parity for both oracles
 - Lucas Phinary MAC oracle — 1M-step zero-drift, all 4 ops verified
@@ -776,7 +780,7 @@ caveat (`knowledge/SPU_LEXICON.md`, Davis Gate entry) applies to 6-11 exactly as
 | Layer | File | Purpose |
 |---|---|---|
 | Python robotics oracle | `software/lib/rational_robotics.py` | Exact Q(√3) robotics: Pell, F/G/H circulant, FK chains, inverse closure |
-| Python robotics tests | `software/tests/test_rational_robotics.py` | 56 checks — determinant, period, inverse, closure, no-float audit |
+| Python robotics tests | `software/tests/test_rational_robotics.py` | 104 checks — determinant, period, inverse, closure, no-float audit |
 | C++ robotics oracle | `software/common/include/spu_rational_robotics.h` | C++17 parity for all robotics primitives |
 | C++ robotics tests | `software/common/tests/spu_rational_robotics_test.cpp` | C++ parity for closure tests |
 | Python SOM oracle | `software/lib/rational_som.py` | Weighted quadrance BMU, surd-field path, stable tie-breaking |
@@ -791,7 +795,7 @@ caveat (`knowledge/SPU_LEXICON.md`, Davis Gate entry) applies to 6-11 exactly as
 | Lucas MAC paper | `docs/LUCAS_MAC_PAPER.md` | 7-section paper draft with empirical results |
 | ROTC kinematics paper | `docs/ROTC_KINEMATICS_PAPER.md` | Draft v0.1 (markdown, pre-TeX): 36-angle catalog (0-35, incl. octahedral S₄) + group structure, /3 exactness theorem + counterexample, Evgeny Yanenko state-machine harness (§6; see `Theory/EvolvingCategories.pdf`), claim-discipline table (§10) |
 | A31 field oracle | `software/lib/a31_field.py` | A31 mult table, Conjugate Reduction Tower (FLAGS.V), Montgomery batch inversion, Padé eval, op counting |
-| Batch inversion tests | `software/tests/test_pade_batch_inversion.py` | 25 checks — bit-exact batch vs per-element towers, singular isolation, cycle/MAC tables |
+| Batch inversion tests | `software/tests/test_pade_batch_inversion.py`, `software/tests/test_batch_inverter_rtl_trace.py`, `hardware/tests/spu13/spu13_batch_inverter_poison_tb.v` | 25 oracle checks; 10 regenerated RTL trace cases; mixed/all-singular poison proof |
 | Batch inversion RTL contract | `docs/MONTGOMERY_BATCH_INVERSION.md` | Semantics, interface, singular-lane tiers, acceptance checklist for the RTL block |
 | Hyper-Catalan oracle | `software/lib/hyper_catalan.py` | Exact C_m (Wildberger-Rubine Thm 5), ring-generic soft polynomial formula (Thm 4) |
 | Jet ring oracle | `software/lib/jet_ring.py` | A31[eps]/(eps^3) matching `spu13_jet_mac`/`spu13_jet_inv` multiply-for-multiply |

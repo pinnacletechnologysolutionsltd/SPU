@@ -143,7 +143,7 @@ Two independent constraints, and the second is usually binding first:
   REDUCE failure (INEXACT) reproducing the exact known counterexample
   (A=1, B=1, C=1, D=−3 via B=−5 at exp=1); ALIGN correctness;
   MISALIGNED fault triggering when B/C/D exponents differ —
-  7 tests, all PASS, `hardware/tests/spu13/spu13_rotor_core_tagged_tb.v`.
+  9 tests, all PASS, `hardware/tests/spu13/spu13_rotor_core_tagged_tb.v`.
   RTL implementation: `hardware/rtl/core/spu13/spu13_rotor_core_tagged.v`
   (314 lines, 4-bit exponents, powers-of-3 LUT, signed-division
   exactness, fault flag latching).

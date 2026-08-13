@@ -385,7 +385,7 @@ discipline in hardware.
 separate exponent-tagged rotor core (314 lines) with the powers-of-3
 table, exponent alignment, and the faulting exact-reduce; its REDUCE is
 division-free via the same magic-constant technique generalized across
-runtime exponents. It passes an 8-case acceptance testbench that includes
+runtime exponents. It passes a 9-test acceptance testbench that includes
 a regression for a real bug found during hardening (§8).
 
 ## 8. Verification Methodology
@@ -465,7 +465,7 @@ load-bearing.
 | Angle gate: unverified angle leaves manifold untouched | Poison-value proofs, RTL + VM | Simulation |
 | Group structure (§4) | Exact-fraction verification | Machine-checked math |
 | Exactness theorem + counterexample (§5) | Derivation + executable counterexample | Machine-checked math |
-| Tagged core (state-machine harness) | 8-case acceptance TB incl. sign-extension regression | Simulation (probe exists, board run pending) |
+| Tagged core (state-machine harness) | 9-test acceptance TB incl. sign-extension regression and randomized reduction | Simulation (probe exists, board run pending) |
 | Thirds rotations "are exact" | — | **Only conditionally true** — see §5; stated unconditionally nowhere in this paper, deliberately |
 
 ## 11. Future Work
@@ -477,7 +477,7 @@ load-bearing.
   Padé singular-absorber engagement, Lucas MAC overflow, and batch-inverter
   zero-divisor isolation. A plan document (`docs/STATE_MACHINE_HARNESS.md`)
   defines the state machines, invariants, and verification methodology for
-  each. The ROTC tagged core (8/8 acceptance tests) is the reference
+  each. The ROTC tagged core (9/9 acceptance tests) is the reference
   implementation. The Lucas MAC (6 states, ~200 LUTs) is the recommended
   Phase 2 target: smallest state space, existing 1M-step zero-drift oracle,
   and a natural bridge to the icosahedral work below.

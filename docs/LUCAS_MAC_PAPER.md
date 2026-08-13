@@ -70,6 +70,21 @@ no multiplier, no divider, no DSP.  Choosing a Lucas prime Lₚ as modulus
 provides the phinary analogue of the Mersenne prime's fast bit-wrap
 reduction: φᵖ ≡ ±1 (mod Lₚ) enables deterministic period closure.
 
+### 1.2.1 Integral representation at the icosahedral boundary
+
+The Lucas MAC itself operates on `Z[φ]/Lₚ` pairs and does not perform the
+icosahedral matrix rotations. The companion IROTC path uses the same
+quadratic ring before modular reduction, but its catalog matrices are in
+`½Z[φ]`, not `Z[φ]`. To keep the registered representation integral, the
+generated catalog stores doubled matrices `2M ∈ Z[φ]`, and `LOAD2X` or
+`SCALE2` doubles the operand once before a rotation. Within one A₅ catalog,
+the doubling theorem guarantees that the resulting compositions return exact
+`Z[φ]` pairs. Main/conjugate catalog mixing is outside that guarantee and is
+rejected by the IROTC `CATMIX` typestate fault rather than truncated.
+
+This boundary is a representation choice for exact rotation composition, not
+a modification to the Lucas MAC's PSCALE, PCHIRAL, PMUL, or PINV semantics.
+
 ### 1.3 Contributions
 
 1. A Verilog RTL implementation of PSCALE/PCHIRAL/PMUL/PINV over ℤ[φ]/(521),
@@ -602,6 +617,14 @@ establish fast-path and PHSLK silicon behavior, and the low-MHz Artix sidecar
 establishes external SPI operation for all four arithmetic opcodes. This
 closes a reproducible kernel study; timing closure, wider moduli, and an
 end-to-end application remain future work.
+
+The standalone RTL is also compared against the oracle by
+`software/tests/test_lucas_mac_rtl_trace.py`, which drives 59 deterministic
+vectors across PSCALE, PCHIRAL, PMUL, PINV, PHSLK, invalid-op, and zero-divisor
+cases. `spu13_lucas_mac_poison_tb.v` separately checks that invalid requests,
+busy overlaps, clock-enable stalls, and FAST_ONLY rejections do not commit a
+result. These are simulation checks; they do not extend the silicon scope
+listed above.
 
 Run `python3 software/tests/test_cyclotomic_fibonacci.py` to reproduce the
 companion cyclotomic oracle, which prints

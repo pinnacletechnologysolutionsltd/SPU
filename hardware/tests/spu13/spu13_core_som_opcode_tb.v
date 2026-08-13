@@ -189,13 +189,33 @@ module spu13_core_som_opcode_tb;
             $display("PASS: OFF gatekeeper silent");
         end
 
-        // Verify fault_count stayed at zero across all levels
+        // Clean classifications above must not increment the counter.
         if (fault_count !== 16'd0) begin
             $display("FAIL: fault_count=%d (expected 0)", fault_count);
             errors = errors + 1;
         end else begin
             $display("PASS: fault_count=0 across all levels");
         end
+
+        // Integrated positive control: drive the actual BMU completion boundary
+        // high for one cycle. This exercises the core wiring, rather than only
+        // the standalone gatekeeper module.
+        $display("TEST 6: integrated RCA₀ overflow positive control");
+        phinary_level = 16'h0000;
+        force uut.gen_som.som_accum_overflow = 1'b1;
+        force uut.som_done = 1'b1;
+        @(posedge clk);
+        #1;
+        if (axiomatic_fault !== 1'b1 || fault_type !== 2'b01 ||
+            fault_count !== 16'd1) begin
+            $display("FAIL: integrated overflow fault=%b type=%b count=%d",
+                     axiomatic_fault, fault_type, fault_count);
+            errors = errors + 1;
+        end else begin
+            $display("PASS: integrated overflow reached core status outputs");
+        end
+        release uut.som_done;
+        release uut.gen_som.som_accum_overflow;
 
         if (errors == 0)
             $display("spu13_core_som_opcode_tb: PASS");

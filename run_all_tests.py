@@ -127,6 +127,9 @@ def main():
         "spu13_batch_inverter_collision_tb.v": ([
             ("USE_STRUCTURED_INVERTER", "1"),
         ], "v2"),
+        "spu13_batch_inverter_poison_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "0"),
+        ], "reference"),
         "spu13_rplu2_pade_sidecar_tb.v": ([
             ("USE_STRUCTURED_INVERTER", "1"),
             ("PADE_PIPELINED", "1"),
@@ -247,6 +250,13 @@ def main():
                 # _seq_fallback drop-in) differ between a working tree and
                 # a fresh clone of the same commit.
                 for f in sorted(absd.rglob('*.v')):
+                    # This compatibility file intentionally duplicates names
+                    # of real optional implementations (notably spu_i2s_out).
+                    # It is for synthesis tops that explicitly need shims; in
+                    # the source-built regression it would win by directory
+                    # order and silently replace the real DUT with a tie-off.
+                    if f.name == 'spu_optional_stubs.v':
+                        continue
                     # Synth-script-only drop-in alternates redefine an
                     # existing module name on purpose ("include INSTEAD
                     # of ..."); they must never reach a simulation compile.
@@ -322,9 +332,17 @@ def main():
             import re as _re
             with open(tb_str, 'r') as _tf:
                 tb_text = _tf.read()
-            m = _re.search(r'^\s*module\s+([A-Za-z_][A-Za-z0-9_]*)', tb_text, _re.M)
-            if m:
-                top_mod = m.group(1)
+            modules = _re.findall(
+                r'^\s*module\s+([A-Za-z_][A-Za-z0-9_]*)', tb_text, _re.M
+            )
+            if modules:
+                # A few benches declare helper modules before the actual
+                # testbench top (the Karatsuba phase-1 bench is one example),
+                # while others declare simulator primitives after the top.
+                # Prefer the conventional filename-matching top; retain the
+                # first-module fallback for older benches without that name.
+                stem = Path(tb_str).stem
+                top_mod = stem if stem in modules else modules[0]
         except Exception:
             top_mod = None
 

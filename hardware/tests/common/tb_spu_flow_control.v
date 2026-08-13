@@ -10,6 +10,8 @@ module tb_spu_flow_control();
     wire spi_miso;
 
     reg fifo_full;
+    reg [7:0] rx_bytes [0:3];
+    integer failures;
 
     spu_spi_slave uut (
         .clk(clk),
@@ -27,6 +29,11 @@ module tb_spu_flow_control();
         .rplu_ratio_res(3'd0),
         .rplu_ratio_valid(1'b0),
         .fifo_full(fifo_full),
+        .laminar_index(16'h0000),
+        .turbulence(1'b0),
+        .rplu_mode(1'b0),
+        .boot_ready(1'b1),
+        .sentinel_telemetry(512'd0),
         .rplu_cfg_wr_en(),
         .rplu_cfg_sel(),
         .rplu_cfg_material(),
@@ -66,6 +73,7 @@ module tb_spu_flow_control();
                     #90;
                     spi_sck = 0;
                 end
+                rx_bytes[i] = data;
                 $display("Read byte [%0d]: 0x%h", i, data);
             end
             spi_cs_n = 1;
@@ -80,6 +88,7 @@ module tb_spu_flow_control();
         spi_sck = 0;
         spi_mosi = 0;
         fifo_full = 0;
+        failures = 0;
 
         #100 rst_n = 1;
         #100;
@@ -87,17 +96,34 @@ module tb_spu_flow_control();
         // Test 1: Read status while FIFO is EMPTY
         $display("--- Test 1: FIFO EMPTY ---");
         send_cmd(8'hAC); // CMD_READ_STATUS
-        read_bytes(3);
+        read_bytes(4);
+        if (rx_bytes[0] !== 8'h00 || rx_bytes[1] !== 8'h00 ||
+            rx_bytes[2] !== 8'h02 || rx_bytes[3] !== 8'h04) begin
+            $display("FAIL: empty status [%02h,%02h,%02h,%02h]",
+                     rx_bytes[0], rx_bytes[1], rx_bytes[2], rx_bytes[3]);
+            failures = failures + 1;
+        end
 
         // Test 2: Read status while FIFO is FULL
         $display("--- Test 2: FIFO FULL ---");
         fifo_full = 1;
         #100;
         send_cmd(8'hAC);
-        read_bytes(3);
+        read_bytes(4);
+        if (rx_bytes[0] !== 8'h00 || rx_bytes[1] !== 8'h00 ||
+            rx_bytes[2] !== 8'h0A || rx_bytes[3] !== 8'h04) begin
+            $display("FAIL: full status [%02h,%02h,%02h,%02h]",
+                     rx_bytes[0], rx_bytes[1], rx_bytes[2], rx_bytes[3]);
+            failures = failures + 1;
+        end
 
-        $display("PASS: Flow control flags verified");
-        $finish;
+        if (failures == 0) begin
+            $display("PASS: Flow control flags verified");
+            $finish;
+        end else begin
+            $display("FAIL: %0d flow-control check(s)", failures);
+            $finish(1);
+        end
     end
 
 endmodule

@@ -43,11 +43,13 @@ sim_sd_card simcard (
 reg [7:0] rx_mem [0:BLOCK_SIZE-1];
 integer idx;
 integer k;
+integer failures;
 
 initial begin
     rst_n = 0;
     start_read = 0;
     block_addr = 32'd0;
+    failures = 0;
     #100;
     rst_n = 1;
     #100;
@@ -78,12 +80,17 @@ initial begin
     for (k = 0; k < BLOCK_SIZE; k = k + 1) begin
         if (rx_mem[k] !== (block_addr[7:0] + (k & 8'hFF))) begin
             $display("Mismatch at %0d: got %02x expect %02x", k, rx_mem[k], (block_addr[7:0] + (k & 8'hFF)));
-            $finish;
+            failures = failures + 1;
         end
     end
 
-    $display("PASS");
-    $finish;
+    if (failures == 0) begin
+        $display("PASS");
+        $finish;
+    end else begin
+        $display("FAIL: %0d byte mismatches", failures);
+        $finish(1);
+    end
 end
 
 endmodule

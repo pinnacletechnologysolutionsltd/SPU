@@ -1,10 +1,10 @@
 # SPU-13 Synergetic Processing Unit
 
-**A deterministic FPGA edge-classification sidecar: labeled CSV in,
-checksummed rational SOM map out, followed by bit-exact hardware inference and
-a CRC-protected decision-evidence frame. The same writable seven-node model is
-silicon-proven on Gowin and Xilinx FPGAs with no software-to-hardware accuracy
-loss.**
+**A deterministic exact-arithmetic FPGA platform. Its current proven product
+path is an edge-classification sidecar: labeled CSV in, checksummed rational
+SOM map out, followed by bit-exact hardware inference and a CRC-protected
+decision-evidence frame. The same writable seven-node model is silicon-proven
+on Gowin and Xilinx FPGAs with no software-to-hardware implementation mismatch.**
 
 [![CI](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml/badge.svg)](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml)
 [![Hardware: CERN-OHL-W-2.0](https://img.shields.io/badge/Hardware-CERN--OHL--W--2.0-blue.svg)](hardware/LICENSE)
@@ -15,9 +15,36 @@ loss.**
 
 **Not an engineer? [Start with the two-minute explanation.](docs/WHAT_IS_SPU13.md)**
 
-<!-- TODO(John): Block A — "How this was built" disclosure goes here.
-     Draft in docs/README_BLOCKS_DRAFT.md. Deliberately left unwritten: it is a
-     statement about how the author works and should be in his voice. -->
+## How this was built
+
+SPU-13 is designed, specified and directed by John Curley. Much of the RTL,
+tooling and documentation was **written with AI assistance** under a contract-and-audit process.
+
+Nothing here is claimed to be hand-written.
+
+What is the author's: the architecture and the mathematics — exact arithmetic
+over `Q(√3)`, `A₃₁` and `Z[φ]/L_p`, the Davis Gate as an exact zero test rather
+than an epsilon comparison, Fibonacci-gated dispatch — and the rule below.
+
+**The oracle is normative.** Correctness here is not decided by reviewing
+generated code. It is decided by bit-exact agreement between the RTL and an
+independent software implementation, checked by a testbench gate that must pass
+100% before anything merges. If the RTL and the oracle disagree, the RTL is
+wrong. That rule is what makes AI-written hardware checkable at all, and it is
+the reason this repository can show you results instead of asking you to trust
+its authorship.
+
+Two consequences you can verify rather than take on faith:
+
+- **Hardware claims cite their evidence.** Any statement that something was
+  observed on physical hardware cites a section of
+  [`docs/hardware_evidence.md`](docs/hardware_evidence.md) — date, build and
+  load commands, bitstream SHA-256, raw captured proof lines. Claims that have
+  no such section are labelled `[NO ENTRY]` in place rather than quietly
+  asserted. There are currently seven.
+- **Negative results stay published.** Failed hypotheses, retracted
+  conclusions and measurements that did not go our way are kept in the record,
+  not deleted. See `AGENTS.md` for the standing example.
 
 ## Start here
 
@@ -44,6 +71,11 @@ quadrances, confidence gap, ambiguity, generations, status, and CRC. The
 synthetic current-signature replay provides the hardware-independent path for
 the first anomaly-monitoring demo; physical INA226 acquisition remains the
 next sensor bench step. See [`docs/SOM_V1_PRODUCT_CONTRACT.md`](docs/SOM_V1_PRODUCT_CONTRACT.md).
+
+This SOM path is the current SPU-13 platform wedge. The separate commercial
+direction is now the smaller SPU-4 Sentinel, developed as a reusable product
+block; see [`knowledge/SPU4_ARCHITECTURE.md`](knowledge/SPU4_ARCHITECTURE.md)
+and the current tranche plan for the product gates.
 
 ## Current Hardware Direction
 
@@ -112,12 +144,13 @@ require sign-off under the [Developer Certificate of Origin (DCO)](CONTRIBUTING.
 
 ## Check it yourself (no trust required)
 
-Every command below runs from a fresh anonymous clone and either prints the
-stated output or does not. All were run from a clean clone on 2026-08-10.
+The commands below are the maintained reproduction surface. Their expected
+outputs are explicit, and the current headline was re-run from source on
+2026-08-13; hardware evidence remains pinned separately in the ledger.
 
 ```bash
 # 1. Full regression — RTL testbenches, C++ and Python oracles
-python3 run_all_tests.py                          # prints "Total PASS: 188"
+python3 run_all_tests.py                          # currently prints "Total PASS: 193"
                                                   # and "Total FAIL: 0"
 
 # 2. The product path, end to end
@@ -153,9 +186,18 @@ python3 software/tests/test_rational_robotics.py  # PASS (104 checks)
 python3 software/tests/test_lucas_mac_oracle.py   # COMPOSITE ZERO-DRIFT: PASS
                                                   # 166666 identity macros,
                                                   # 999996 primitive ops
+python3 software/tests/test_lucas_mac_rtl_trace.py # LUCAS_TRACE: PASS cases=59
+iverilog -g2012 -o build/lucas_poison.vvp \
+    hardware/rtl/core/spu13/spu13_lucas_mac.v \
+    hardware/tests/spu13/spu13_lucas_mac_poison_tb.v && \
+    vvp build/lucas_poison.vvp                    # LUCAS_POISON: PASS
 python3 software/tests/test_rotc_vm_rtl_trace.py  # VM-vs-RTL TRACE EQUIVALENCE
                                                   # (angles 0-35): PASS
 ```
+
+The current headline was last re-run from source on 2026-08-13. The commands
+above are the maintained reproduction surface; individual evidence entries
+remain date- and artifact-specific.
 
 **What you cannot check from a clone, and why.** Bitstreams are build artifacts
 and are not committed; `build/` is gitignored. Silicon results are therefore
@@ -215,7 +257,7 @@ The `spu13_rotor_core.v` module implements Thomson's Spread-Quadray Rotor circul
 B' = F·B + H·C + G·D (cyclic). At {60°, 120°, 240°, 300°} every matrix entry is
 rational in {−1/3, 2/3}. At 120° the hardware uses a pure bit-permutation bypass.
 
-### RPLU2 — Rational Polynomial Look-Up
+### RPLU2 — Rational Projection Logic Unit
 
 RPLU2 uses corrected 149-record boot/config profiles for Padé coefficients, BTU
 rows, and Quadray constants. SD/RP2350/FPGA table hydration is proven in

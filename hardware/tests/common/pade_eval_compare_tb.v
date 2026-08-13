@@ -31,8 +31,10 @@ module pade_eval_compare_tb;
     );
 
     integer i;
+    integer failures;
     reg signed [63:0] test_x [0:7];
     initial begin
+        failures = 0;
         // representative x values
         test_x[0] = 64'sh0000000100000000; // 1.0
         test_x[1] = 64'shFFFFFFFF00000000; // -1.0
@@ -60,14 +62,24 @@ module pade_eval_compare_tb;
                 end
                 if (!(seen_ref && seen_local)) begin
                     $display("ERROR: TIMEOUT waiting for done signals for x=%h", x_q32);
+                    failures = failures + 1;
                 end
             end
             @(posedge clk);
             $display("COMPARE: x=%h ref=%0d local=%0d diff=%0d", x_q32, exp_ref, exp_local, exp_ref - exp_local);
+            if (exp_ref !== exp_local) begin
+                $display("FAIL: reference/local mismatch for x=%h", x_q32);
+                failures = failures + 1;
+            end
             #10;
         end
         $display("COMPARE_DONE");
-        $display("PASS");
-        $finish;
+        if (failures == 0) begin
+            $display("PASS");
+            $finish;
+        end else begin
+            $display("FAIL: %0d timeout(s)", failures);
+            $finish(1);
+        end
     end
 endmodule

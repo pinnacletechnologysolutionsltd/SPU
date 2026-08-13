@@ -108,7 +108,13 @@ module spu13_axiomatic_gatekeeper #(
                 endcase
 
                 // Increment fault counter (saturating)
-                if (axiomatic_fault && fault_count != 16'hFFFF)
+                // Use the current-cycle predicate rather than the registered
+                // output above.  Testing axiomatic_fault here observes its
+                // previous value (nonblocking assignment semantics) and
+                // misses the first fault in every run.
+                if (pipeline_valid && accum_overflow &&
+                    (axiomatic_level == 2'b00 || axiomatic_level == 2'b01) &&
+                    fault_count != 16'hFFFF)
                     fault_count <= fault_count + 16'd1;
 
             end

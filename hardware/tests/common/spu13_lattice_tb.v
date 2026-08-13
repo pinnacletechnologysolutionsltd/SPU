@@ -28,7 +28,16 @@ module spu13_lattice_tb();
         #10;
         $display("manifold_out[0] = %h", manifold_out[0*64 +: 64]);
         $display("manifold_out[1] = %h", manifold_out[1*64 +: 64]);
-        $display("PASS");
-        $finish;
+        if ((^manifold_out) === 1'bx) begin
+            $display("FAIL: lattice output contains unknown bits");
+            $finish(1);
+        end else if (manifold_out[0*64 +: 64] == 64'd0 ||
+                     manifold_out[1*64 +: 64] == 64'd0) begin
+            $display("FAIL: lattice did not produce nonzero stitched outputs");
+            $finish(1);
+        end else begin
+            $display("PASS");
+            $finish;
+        end
     end
 endmodule

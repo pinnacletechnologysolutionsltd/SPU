@@ -3,7 +3,7 @@
 **Author:** John Curley
 **Affiliation:** Independent Researcher, SPU-13 Project
 **Location:** Wellington, New Zealand
-**Date:** 10 August 2026 (working draft toward version 1.2; published version is 1.1)
+**Date:** 13 August 2026 (working draft toward version 1.2; published version is 1.1)
 **AI disclosure:** AI tools assisted with drafting, repository evidence
 synthesis, and editorial revision. The human author reviewed the manuscript,
 selected its claims and scope, and is responsible for the submitted record.
@@ -25,7 +25,8 @@ values.
 ## SPU-13 context
 
 [RTL] SPU-13 is the engineering host for these case studies: ROTC supplies
-integer-coordinate rotation paths, IROTC supplies exact Z[φ] catalog rotations,
+integer-coordinate rotation paths, IROTC supplies catalog rotations whose
+stored doubled numerators are exact Z[φ] values,
 and the tensegrity guard supplies a bounded admission state machine. They share
 an exact-arithmetic hardware setting, but the paper does not claim that the
 project as a whole is covered by the typestate result. The examples are chosen
@@ -45,6 +46,16 @@ from `FRESH` to the catalog's typed state and licenses subsequent operations
 that preserve that domain. The conjugate catalog carries the Galois-dual
 domain. A mixed main/conjugate product is outside the theorem's domain and is
 therefore rejected rather than silently truncated.
+
+[THEOREM] The premise of this license is that the icosahedral catalog matrices
+live in `½Z[φ]`, not in `Z[φ]`. The generated catalog stores the doubled
+matrices `2M`, whose entries lie in `Z[φ]`; `LOAD2X` or `SCALE2` doubles the
+operand once so that the registered representation remains integral. Within
+one catalog, the doubling theorem guarantees that the subsequent half-valued
+matrix compositions return an exact `Z[φ]` result. That guarantee does not
+compose across the main and conjugate catalogs: a mixed product can leave
+`½Z[φ]` with a non-integral stored result, so the typestate machine rejects it
+as `CATMIX` rather than truncating it.
 
 [THEOREM] `PCHIRAL` carries the ring automorphism between the two catalog
 domains. `SCALE2` reconditions a register to `FRESH`. Operations outside the
@@ -113,7 +124,7 @@ provides 9/9 acceptance tests in `spu13_rotor_core_tagged_tb.v`, and the tagged
 core is distinct from the original TDM baseline.
 
 [SILICON] ROTC angles 0–5 have board evidence in
-[hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe).
+[hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe).
 
 [RTL] ROTC angles 6–35 are covered by RTL/trace evidence only; they are not
 reported here as board results. The integer permutation classes are therefore
@@ -131,10 +142,10 @@ conjugate catalog, including the typestate dispatch and poison-hold behavior.
 The full 60×2 catalog is reported as RTL-only in this paper.
 
 [SILICON] The IROTC probe vectors and the `BADIDX`/`UNTAGGED`/`CATMIX` fault
-matrix are supported by [hardware_evidence.md §3.2k](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
+matrix are supported by [hardware_evidence.md §3.2k](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
 
 [SILICON] SPI core integration and the conjugate-catalog cases are supported
-by [hardware_evidence.md §3.2k.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32k1-irotc-spi-core-integration--conjugate-catalog-silicon-proof).
+by [hardware_evidence.md §3.2k.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/hardware_evidence.md#32k1-irotc-spi-core-integration--conjugate-catalog-silicon-proof).
 
 ### 3.3 Tensegrity admission
 
@@ -144,18 +155,25 @@ recovery transitions, while its geometry and equilibrium predicates remain
 separate computations.
 
 [SILICON] The seven frozen admission fixtures, including the equilibrium
-fixture, are supported by [hardware_evidence.md §3.2l — V:7 final admission tranche](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
+fixture, are supported by [hardware_evidence.md §3.2l — V:7 final admission tranche](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/hardware_evidence.md#32l-wukong-tensegrity-admission-guard-silicon-probe).
 
 [SILICON] The four-act transport and recovery sequence is supported by
-[hardware_evidence.md §3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32l1-tensegritylink-four-act-proof-on-the-karatsuba-candidate).
+[hardware_evidence.md §3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/hardware_evidence.md#32l1-tensegritylink-four-act-proof-on-the-karatsuba-candidate).
 
 ## 4. Harness and coverage boundary
 
 [RTL] The repository's state-machine document lists typestate or explicit
 state descriptions for ROTC, SOM/BMU, BTU, Padé evaluation, Lucas MAC, and
-batch inversion. Its completed typestate harness is the ROTC item; the other
-entries describe planned or partial harness work and must not be counted as
-completed formal coverage.
+batch inversion. Its completed formal typestate harness is the ROTC item; the
+other entries describe planned or partial harness work and must not be counted
+as completed formal coverage.
+
+[RTL] A separate strict case-study bar was completed after the published v1.1
+artifact: independent oracle, RTL trace equivalence, and poison proofs. Five
+subsystems now meet that bar—ROTC, IROTC, SPI protocol, Lucas MAC, and batch
+inversion—but this does not turn their output benches into formal typestate
+harnesses. SOM/BMU has an oracle, trace material, and a gatekeeper positive
+control, but still lacks a complete poison proof and independent fault oracle.
 
 | Subsystem | State-machine material | Coverage represented here |
 |---|---|---|
@@ -163,8 +181,9 @@ completed formal coverage.
 | SOM/BMU | State description and planned harness | Testbench/oracle material only; no completed typestate harness claimed |
 | BTU | State description and planned harness | Testbench/oracle material only; no completed typestate harness claimed |
 | Padé evaluator | State description and planned harness | Testbench/oracle material only; no completed typestate harness claimed |
-| Lucas MAC | State description and partial checks | Testbench/oracle material only for this paper |
-| Batch inversion | State description and invariants | Testbench/oracle material only; no completed typestate harness claimed |
+| Lucas MAC | State description and strict case-study checks | Oracle + 59-vector RTL trace + poison proof; no completed typestate harness claimed |
+| Batch inversion | State description and strict case-study checks | Oracle + 10-case RTL trace + poison/collision proofs; no completed typestate harness claimed |
+| SPI protocol | Explicit protocol state machine and strict case-study checks | Oracle + RTL trace + poison proof; no completed typestate harness claimed |
 | IROTC | Integrated typestate tags and fault transitions | RTL engine/integration; selected cases SILICON, full catalog RTL-only |
 | Tensegrity guard | Explicit admission/fault/recovery states | RTL guard; seven fixtures and transport also SILICON |
 
@@ -174,9 +193,11 @@ state-machine description is not counted as an executed proof artifact.
 
 ## 5. Negative results
 
-[RTL] The planned SOM/BMU, BTU, Padé, Lucas MAC, and batch-inversion harnesses
-are specified in the state-machine document but are not presented as built
-typestate harnesses here. This is a negative result about the scope of the
+[RTL] The planned SOM/BMU, BTU, Padé, Lucas MAC, batch-inversion, and SPI
+protocol harnesses are specified in the state-machine document but are not
+presented as built formal typestate harnesses here. The strict case-study
+results for Lucas MAC, batch inversion, and SPI are deliberately reported as
+separate evidence layers. This is a negative result about the scope of the
 current artifact.
 
 [THEOREM] Several fault classes cannot be expressed by this machine: a wrong
@@ -226,6 +247,9 @@ kind of support available for that claim, not a ranking of the theorem.
 | R4 | Tensegrity bounded state/fault/recovery model | RTL | `spu13_tensegrity_guard_tb.v` (9/9 cases); tensegrity suite total 50 PASS (suite total, not a check count) | §3.3 lines 141–144 |
 | R5 | Harness-versus-bench coverage boundary | RTL | `STATE_MACHINE_HARNESS.md` §3 (8 subsystem entries; 1 completed harness) | §4 lines 154–173 |
 | R6 | SPU-13 case-study context | RTL | `spu13_core_rotc_opcode_tb.v` (41 lane checks + 2 poison faults) and `spu13_core_irotc_opcode_tb.v` (25 checks) | §SPU-13 context lines 27–33 |
+| R7 | Lucas MAC strict case study | RTL | `test_lucas_mac_rtl_trace.py` (59 vectors) + `spu13_lucas_mac_poison_tb.v`; oracle harness 30 checks | §4 lines 171–186 |
+| R8 | Batch-inverter strict case study | RTL | `test_batch_inverter_rtl_trace.py` (10 regenerated cases) + `spu13_batch_inverter_poison_tb.v`; oracle 25 checks | §4 lines 171–186 |
+| R9 | SPI protocol strict case study | RTL | `spu_spi_protocol_trace_tb.v` (26 comparisons) + protocol poison checks | §4 lines 171–186 |
 | S1 | ROTC angles 0–5 | SILICON | `hardware_evidence.md` §3.2g (ROTC 0–5) | §3.1 lines 115–116 |
 | S2 | IROTC probe and fault matrix | SILICON | `hardware_evidence.md` §3.2k | §3.2 lines 133–134 |
 | S3 | IROTC SPI integration and conjugate catalog | SILICON | `hardware_evidence.md` §3.2k.1 | §3.2 lines 136–137 |
@@ -239,9 +263,9 @@ silicon claim in this paper, so none of them is used as a SILICON source here.
 
 ## References
 
-All repository citations below are pinned to the `v1.1-typestate` release tag.
+All repository citations below are pinned to the `v1.2-typestate` release tag.
 
-1. [STATE_MACHINE_HARNESS.md §3](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/STATE_MACHINE_HARNESS.md#3-subsystem-state-machines).
-2. [IROTC_SPEC.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/IROTC_SPEC.md).
-3. [hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe), [§§3.2k, 3.2k.1, 3.2l, 3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
-4. [ROTC_EXPONENT_STATE_MACHINE.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.1-typestate/docs/ROTC_EXPONENT_STATE_MACHINE.md).
+1. [STATE_MACHINE_HARNESS.md §3](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/STATE_MACHINE_HARNESS.md#3-subsystem-state-machines).
+2. [IROTC_SPEC.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/IROTC_SPEC.md).
+3. [hardware_evidence.md §3.2g (ROTC 0–5)](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/hardware_evidence.md#32g-rotc-0-5-silicon-probe), [§§3.2k, 3.2k.1, 3.2l, 3.2l.1](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe).
+4. [ROTC_EXPONENT_STATE_MACHINE.md](https://github.com/pinnacletechnologysolutionsltd/SPU/blob/v1.2-typestate/docs/ROTC_EXPONENT_STATE_MACHINE.md).

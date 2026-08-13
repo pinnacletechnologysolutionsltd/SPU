@@ -1,6 +1,6 @@
 # Montgomery Batch Inversion — RTL Contract
 
-Contract for the batch inversion block (RTL in progress). The Python oracle
+Contract for the batch inversion block (RTL simulation-accepted). The Python oracle
 is the source of truth: `software/lib/a31_field.py::batch_tower_inv`, verified
 by `software/tests/test_pade_batch_inversion.py` (25 checks). RTL acceptance
 means **bit-exact agreement with the oracle**, including singular-lane
@@ -92,7 +92,9 @@ where towers serialize (batched Padé/thimble runs), not as a blanket policy.
    singular lanes, all-singular, and the same-cycle done+reissue collision
    against the scoreboard.
 3. Bit-exact inverse values on unit lanes in every singular scenario.
-4. `TB_FILTER=<tb_name> python3 run_all_tests.py` green, then the full suite.
+4. `TB_FILTER=batch_inverter python3 run_all_tests.py` green, then the full
+   suite. The focused run currently covers the golden-vector, collision, and
+   poison benches in both structured and reference multiplier configurations.
 5. Wire into the relevant board `.ys` only after simulation acceptance.
 
 ## 6. Cross-references

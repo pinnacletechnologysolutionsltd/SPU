@@ -1,9 +1,9 @@
 # Theorem-Licensed Typestate — A Verification Method for Hardware State Machines
 
-**Status:** methods paper draft. **2 of a target 4 subsystems meet the full
-three-layer bar** (ROTC tagged, IROTC); Lucas MAC, batch inverter, SOM/BMU and
-the SPI protocol machine have partial coverage — see the strict-bar table at
-§5. This broader working document lists five case studies, but only ROTC has a
+**Status:** methods paper draft. **Five subsystems meet the full
+three-layer bar** (ROTC tagged, IROTC, SPI protocol, Lucas MAC, batch inverter);
+SOM/BMU has partial coverage — see the strict-bar table at §5. This broader
+working document lists five case studies, but only ROTC has a
 completed typestate harness in the published paper; IROTC has integrated
 typestate RTL and the remaining entries are case-study or partial-check
 material. SVA head-to-head measured. TeX conversion + figures pending.
@@ -161,19 +161,18 @@ octahedral demotion, QADD lattice, A₄ alias interop).
 > |---|---|---|---|---|
 > | ROTC | `test_rotc_thirds_native.py`, 69 checks | `test_rotc_vm_rtl_trace.py`, `test_rotc_six_step_rtl_trace.py` | `test_rotc_bad_angle.py` | **met** |
 > | IROTC | `test_irotc_chains.py`, 23 checks | `test_irotc_vm_trace.py`, 60 indices × both catalogs | `test_irotc_poison.py` | **met** |
-> | SOM/BMU | `test_rational_som.py`, 24 checks | `test_som_bmu_rtl_trace.py` | **none possible** | not met |
+> | SOM/BMU | `test_rational_som.py`, 24 checks | `test_som_bmu_rtl_trace.py` | gatekeeper positive control | not met |
 > | SPI protocol | `spi_protocol_oracle.py`, 9/9 | `spu_spi_protocol_trace_tb.v`, 26 comparisons | in the oracle | **met** |
-> | Lucas MAC | `test_lucas_mac_harness.py`, 30 passed | — | — | not met |
-> | Batch inverter | `test_pade_batch_inversion.py` | — | — | not met |
+> | Lucas MAC | `test_lucas_mac_harness.py`, 30 passed | `test_lucas_mac_rtl_trace.py`, 59 vectors | `spu13_lucas_mac_poison_tb.v` | **met** |
+> | Batch inverter | `test_pade_batch_inversion.py`, 25 checks | `test_batch_inverter_rtl_trace.py`, 10 regenerated cases | `spu13_batch_inverter_poison_tb.v` + collision/reordering cases | **met** |
 >
-> So **three** subsystems meet the strict bar, not five — ROTC, IROTC and,
-> as of 2026-08-12, the SPI protocol machine. SOM/BMU can never meet it as
-> built: its fault interface is inert (`axiomatic_fault`/`fault_type`/
-> `fault_count` are assigned only at reset and left unconnected by the
-> production wrapper at `axiomatic_level=2'b00`), so there is nothing to
-> poison. That is a design finding, not a testing gap. The counts above were
-> re-run rather than copied; §§5.3, 5.5 and §8 previously carried 13, 8 and 12
-> where the tests now report 30, 9 and 23.
+> So **five** subsystems meet the strict bar, not four — ROTC, IROTC, SPI
+> protocol, Lucas MAC, and batch inverter. SOM/BMU remains below the strict
+> bar: the gatekeeper is now connected to the aggregate quadrance-overflow
+> boundary and has a core positive-control test, but it still lacks a full
+> poison proof and independent SOM fault oracle. The counts above were re-run
+> rather than copied; §§5.3, 5.5 and §8 previously carried 13, 8 and 12 where
+> the tests now report 30, 9 and 23.
 
 ### 5.1 ROTC — exponent-tagged deferred reduction (478 lines RTL, 225 lines oracle)
 
@@ -348,12 +347,10 @@ Per `docs/ROTC_CANONIZATION_ROADMAP.md` Phase 4:
 1. **This document** — extracted into `knowledge/`, serves as the paper outline. ✅
 2. **Case studies accumulate** — Padé evaluator, batch inverter, SOM/BMU, BTU
    per `docs/STATE_MACHINE_HARNESS.md` implementation order. Target: ≥4
-   subsystems with oracle + trace equivalence + poison proofs. **NOT MET —
-   2 of 4** (ROTC and IROTC only; see the coverage table at §5). This item was
-   previously marked ✅ on a count of five case studies, which used the loose
-   bar: Lucas MAC and the batch inverter have an oracle but no trace
-   equivalence and no poison proofs, and SOM/BMU has no poison proofs.
-   Closing this needs two more subsystems taken to all three layers.
+   subsystems with oracle + trace equivalence + poison proofs. **MET — 5 of 4**
+   (ROTC, IROTC, SPI protocol, Lucas MAC, and batch inverter; see the coverage table at §5).
+   This item was previously marked ✅ on a count of five case studies, which
+   used the loose bar; SOM/BMU remains below all three layers.
 3. **Non-arithmetic case study** — southbridge SPI protocol machine as the
    second domain, demonstrating generality. **PARTIAL** (2026-07-11: oracle
    with 9 checks in `software/lib/spi_protocol_oracle.py`, poison behaviour

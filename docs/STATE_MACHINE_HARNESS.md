@@ -63,7 +63,7 @@ Verification then reduces to:
 - **Termination.** Every maximal path from s₀ ends in F. No livelock, no
   infinite recomposition without reaching a terminal state.
 
-The ROTC harness already does all three (verified 2026-07-09, 8/8 acceptance
+The ROTC harness already does all three (verified 2026-07-09, 9/9 acceptance
 tests). The plan below applies the same discipline to every other SPU subsystem.
 
 ## 3. Subsystem State Machines
@@ -89,7 +89,7 @@ Invariants:
   I(FAULT.*): true (terminal)
 ```
 
-Status: Implemented in `spu13_rotor_core_tagged.v`, 8/8 acceptance tests,
+Status: Implemented in `spu13_rotor_core_tagged.v`, 9/9 acceptance tests,
 Python oracle in `software/lib/rotc_thirds_native.py`. Not yet synthesised
 or run on hardware (the TDM `div3` core remains the silicon baseline).
 
@@ -275,6 +275,11 @@ Implementation notes:
   ordering-adversarial unit-LAST case that caught a stale-read isolation bug
   (fixed 2d8658b). These orderings must stay in the test vectors when the
   state-machine verification is added.
+- The regenerated oracle trace (`software/tests/test_batch_inverter_rtl_trace.py`)
+  covers ten cases, including singular isolation and unit-last rebatching. The
+  dedicated poison bench (`spu13_batch_inverter_poison_tb.v`) proves mixed and
+  all-singular batches preserve the singular mask and unit-lane inverses in
+  both the structured and reference multiplier configurations.
 
 ## 4. Verification Plan
 
@@ -304,7 +309,7 @@ For each subsystem, add acceptance tests to the existing testbench that:
 - Assert that FAULT states prevent further transitions
 - Cross-verify against the Python oracle
 
-The ROTC tagged-core testbench (`spu13_rotor_core_tagged_tb.v`, 8/8) is the
+The ROTC tagged-core testbench (`spu13_rotor_core_tagged_tb.v`, 9/9) is the
 template.
 
 ### Phase 4 — Integration
@@ -352,7 +357,7 @@ clean one without explicit reduction.
 - `docs/SERIES_STREAM_CONTROLLER.md` — series stream contract
 - `docs/TENSEGRITY_BALANCER_FEASIBILITY.md` — tensegrity balancer feasibility analysis
 - `software/lib/tensegrity_balancer.py` — exact tensegrity oracle
-- `software/tests/test_tensegrity_balancer.py` — suite-registered tensegrity tests (36 checks)
+- `software/tests/test_tensegrity_balancer.py` — suite-registered tensegrity tests (44 checks)
 - `docs/BOOT_SEQUENCE_FSM.md` — canonical boot-sequence FSM specification
 - `software/lib/boot_sequence_oracle.py` — exact boot FSM oracle
 - `software/tests/test_boot_sequence.py` — suite-registered boot FSM tests

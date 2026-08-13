@@ -232,6 +232,20 @@ verified M144 quadrance set, the ½Z[φ]/doubling convergence with a date and
 checksum, the mixed-catalog caveat, and a note that Gray's copyright covers his
 expression rather than the mathematics.
 
+## 8. Completion addendum — 2026-08-13
+
+The open gatekeeper decision was resolved in favour of integration for SOM.
+`spu13_core.v` now connects the gatekeeper to the SOM/BMU aggregate quadrance
+overflow boundary, maps `phinary_cfg[3:2]` to RCA₀/WKL₀/ACA₀/OFF, and has an
+integrated positive-control test. The standalone gatekeeper test passes 13/13;
+the full regression passes 191/191. This is simulation evidence only; no new
+silicon claim is made.
+
+T4 then brought Lucas MAC to the strict verification bar: the 59-vector
+oracle-to-RTL trace and poison bench pass, and the full regression remains
+191/191. The next active target is the batch inverter; the tranche plan is the
+current source of truth for that work.
+
 ---
 
 Next tranches: `spu_strategy/tranche_plan_2026-08-12.md`.

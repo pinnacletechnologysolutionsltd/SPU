@@ -38,6 +38,9 @@ module spu_som_bmu #(
     output reg  [63:0]  second_q,
     output reg  [63:0]  confidence_gap,
     output reg          has_second,
+    // Sticky for one scan: at least one node's accumulated quadrance
+    // exceeded the 32-bit result field before truncation.
+    output reg          accum_overflow,
 
     // Training port (SOM_TRAIN: update node weights)
     input  wire         train_we,
@@ -96,6 +99,8 @@ module spu_som_bmu #(
     reg [4*WIDTH-1:0]   q_reg  [0:NUM_FEATURES-1];  // Per-feature quadrance
     reg [31:0]           q_accum_p;
     reg signed [31:0]    q_accum_q;
+    reg [63:0]            q_accum_p_ext;
+    reg signed [63:0]     q_accum_q_ext;
     reg [1:0]            pipe_stage;
 
     reg [31:0] scan_best_dist;  // Best quadrance (P component, lower = closer)
@@ -201,6 +206,7 @@ module spu_som_bmu #(
             pipe_stage     <= 0;
             q_accum_p      <= 0;
             q_accum_q      <= 0;
+            accum_overflow <= 1'b0;
         end else begin
             done      <= 0;
             bmu_valid <= 0;
@@ -220,6 +226,7 @@ module spu_som_bmu #(
                         pipe_stage     <= 0;
                         q_accum_p      <= 0;
                         q_accum_q      <= 0;
+                        accum_overflow <= 1'b0;
                         scan_state     <= SCAN_PRIME;
 
                         for (fi = 0; fi < NUM_FEATURES; fi = fi + 1) begin
@@ -271,14 +278,21 @@ module spu_som_bmu #(
                         pipe_stage <= 2;
                     end
                     else if (pipe_stage == 2) begin
-                        q_accum_p = 32'd0;
-                        q_accum_q = 32'sd0;
+                        q_accum_p_ext = 64'd0;
+                        q_accum_q_ext = 64'sd0;
                         for (fi = 0; fi < NUM_FEATURES; fi = fi + 1) begin
-                            q_accum_p = q_accum_p
-                                + q_reg[fi][4*WIDTH-1:2*WIDTH];
-                            q_accum_q = q_accum_q
-                                + $signed(q_reg[fi][2*WIDTH-1:0]);
+                            q_accum_p_ext = q_accum_p_ext
+                                + {{28{q_reg[fi][4*WIDTH-1]}},
+                                   q_reg[fi][4*WIDTH-1:2*WIDTH]};
+                            q_accum_q_ext = q_accum_q_ext
+                                + {{28{q_reg[fi][2*WIDTH-1]}},
+                                   $signed(q_reg[fi][2*WIDTH-1:0])};
                         end
+                        q_accum_p = q_accum_p_ext[31:0];
+                        q_accum_q = q_accum_q_ext[31:0];
+                        if ((q_accum_p_ext[63:32] != 32'd0) ||
+                            (q_accum_q_ext[63:32] != {32{q_accum_q_ext[31]}}))
+                            accum_overflow <= 1'b1;
                         // Read-ahead: start BRAM read for next node
                         // (rd_addr_r latches this at the posedge entering pipe 3)
                         if (scan_node < MAX_NODES - 1)

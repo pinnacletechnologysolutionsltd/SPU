@@ -1786,6 +1786,7 @@ module spu13_core #(
             wire [15:0] som_best_id, som_sec_id, som_label_in;
             wire [63:0] som_best_q, som_sec_q, som_gap_in;
             wire        som_has_sec;
+            wire        som_accum_overflow;
             wire        som_train_we;
             wire [2:0]  som_train_addr;
             wire [3:0]  som_train_be;
@@ -1884,6 +1885,7 @@ module spu13_core #(
                 .second_q(som_sec_q),
                 .confidence_gap(som_gap_in),
                 .has_second(som_has_sec),
+                .accum_overflow(som_accum_overflow),
                 .train_we(som_train_we),
                 .train_addr(som_train_addr),
                 .train_be(som_train_be),
@@ -1891,13 +1893,21 @@ module spu13_core #(
                 .train_rdata(som_train_rdata)
             );
 
-            // The axiomatic fault interface is not implemented on this path.
-            // spu13_axiomatic_gatekeeper.v holds a full implementation but is
-            // instantiated nowhere; until it is wired in, these outputs are
-            // constant and must not be read as evidence of fault-freedom.
-            assign axiomatic_fault = 1'b0;
-            assign fault_type  = 2'b00;
-            assign fault_count = 16'd0;
+            // phinary_cfg[3:2] is the VM/core configuration encoding:
+            // RCA0, WKL0, ACA0, OFF.  The gatekeeper observes the aggregate
+            // scan overflow at BMU completion; individual node identity is
+            // intentionally deferred until the first integration is proven.
+            spu13_axiomatic_gatekeeper #(.WIDTH(18)) u_axiomatic_gatekeeper (
+                .clk(clk), .rst_n(rst_n),
+                .axiomatic_level(phinary_cfg[3:2]),
+                .quadrance_a($signed(som_best_q[17:0])),
+                .quadrance_b($signed(som_best_q[49:32])),
+                .accum_overflow(som_accum_overflow),
+                .pipeline_valid(som_done),
+                .axiomatic_fault(axiomatic_fault),
+                .fault_type(fault_type),
+                .fault_count(fault_count)
+            );
             assign som_rns_error = 1'b0;  // SOM-only path, no M31 multiplier
 
             spu_som_train #(.NUM_FEATURES(4), .MAX_NODES(7), .WIDTH(18)) u_som_train (

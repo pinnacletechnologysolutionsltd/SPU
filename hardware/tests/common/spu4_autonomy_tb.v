@@ -60,10 +60,21 @@ module spu4_autonomy_tb;
         mode_autonomous = 1;
 
         // Observe 1,000 heartbeats (abstractly)
-        #200000;
+        // The soft-start ramp visits all 256 intensity values.  Each value
+        // dwells through the eight Fibonacci thresholds, so completion is
+        // roughly 150k clocks at this 12 MHz test clock—not 2,400 clocks.
+        #15000000;
         
-        $display("[PASS] Sentinel Autonomy Verified. Final States: A=%x, B=%x, C=%x, D=%x", A_out, B_out, C_out, D_out);
-        $finish;
+        if (!bloom_complete) begin
+            $display("FAIL: Sentinel bloom did not complete");
+            $finish(1);
+        end else if ((^{A_out, B_out, C_out, D_out}) === 1'bx) begin
+            $display("FAIL: Sentinel outputs contain unknown bits");
+            $finish(1);
+        end else begin
+            $display("[PASS] Sentinel Autonomy Verified. Final States: A=%x, B=%x, C=%x, D=%x", A_out, B_out, C_out, D_out);
+            $finish;
+        end
     end
 
 endmodule
