@@ -16,7 +16,9 @@ module spu13_core_som_opcode_tb;
     wire axiomatic_fault;
     wire [1:0] fault_type;
     wire [15:0] fault_count;
-    reg [15:0] phinary_level = 16'd0;  // bits [3:2] = axiomatic level
+    // bits [10:9] = axiomatic level; bits [8:1] = phinary_chirality;
+    // bit 0 = phinary_enable.  The two fields must stay disjoint — TEST 7.
+    reg [15:0] phinary_level = 16'd0;
 
     wire mem_burst_rd;
     wire mem_burst_wr;
@@ -167,7 +169,7 @@ module spu13_core_som_opcode_tb;
 
         // Level 1 (WKL₀): same as RCA₀ for small integers
         $display("TEST 4: WKL₀ level — same feature, expect no fault");
-        phinary_level = 16'h0004;  // axiomatic_level = 01 (WKL₀)
+        phinary_level = 16'h0200;  // axiomatic_level = 01 (WKL₀)
         issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), SOM_OPCODE_TIMEOUT);
 
         if (axiomatic_fault !== 1'b0) begin
@@ -179,7 +181,7 @@ module spu13_core_som_opcode_tb;
 
         // Level 3 (OFF): gatekeeper disabled
         $display("TEST 5: OFF level — gatekeeper disabled, expect no fault");
-        phinary_level = 16'h000C;  // axiomatic_level = 11 (OFF)
+        phinary_level = 16'h0600;  // axiomatic_level = 11 (OFF)
         issue(pack(8'h2A, 8'd0, 8'd0, 16'd0, 16'd0), SOM_OPCODE_TIMEOUT);
 
         if (axiomatic_fault !== 1'b0) begin
@@ -213,6 +215,28 @@ module spu13_core_som_opcode_tb;
             errors = errors + 1;
         end else begin
             $display("PASS: integrated overflow reached core status outputs");
+        end
+        release uut.som_done;
+        release uut.gen_som.som_accum_overflow;
+
+        // Field-independence control. 16'h000C is exactly what
+        // spu13_tang25k_som_top.v and spu_a7_math_top.v pass: chirality 6.
+        // While axiomatic_level lived in phinary_cfg[3:2] that value aliased
+        // to 2'b11 (OFF), so the guard was dead on both spins while still
+        // looking wired. This is the assertion whose absence hid that.
+        $display("TEST 7: chirality 6 (16'h000C) must leave RCA₀ armed");
+        phinary_level = 16'h000C;
+        force uut.gen_som.som_accum_overflow = 1'b1;
+        force uut.som_done = 1'b1;
+        @(posedge clk);
+        #1;
+        if (axiomatic_fault !== 1'b1 || fault_type !== 2'b01 ||
+            fault_count !== 16'd2) begin
+            $display("FAIL: board-top chirality suppressed the gatekeeper: fault=%b type=%b count=%d",
+                     axiomatic_fault, fault_type, fault_count);
+            errors = errors + 1;
+        end else begin
+            $display("PASS: chirality and axiomatic level are independent fields");
         end
         release uut.som_done;
         release uut.gen_som.som_accum_overflow;

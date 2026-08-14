@@ -1893,13 +1893,23 @@ module spu13_core #(
                 .train_rdata(som_train_rdata)
             );
 
-            // phinary_cfg[3:2] is the VM/core configuration encoding:
-            // RCA0, WKL0, ACA0, OFF.  The gatekeeper observes the aggregate
-            // scan overflow at BMU completion; individual node identity is
-            // intentionally deferred until the first integration is proven.
+            // phinary_cfg[10:9] = axiomatic level (00 RCA0, 01 WKL0,
+            // 10 ACA0, 11 OFF).  Bits 15:9 were unallocated; bits 8:1 are
+            // phinary_chirality and bit 0 is phinary_enable, so the level
+            // must NOT live in [3:2] — that aliased it onto the chirality
+            // field, and every board top passing 16'h000C (chirality 6)
+            // silently decoded to OFF, disabling this guard on the SOM and
+            // A7 math spins.  See spu13_core_som_opcode_tb.v TEST 7.
+            //
+            // The gatekeeper observes the aggregate scan overflow at BMU
+            // completion; individual node identity is intentionally deferred
+            // until the first integration is proven.  Its output is bounded
+            // telemetry, not a proof of fault-freedom: the FAULT_FRACTIONAL
+            // path is still unreachable (is_fractional is tied to 0) and the
+            // module has no oracle/trace/poison suite yet.
             spu13_axiomatic_gatekeeper #(.WIDTH(18)) u_axiomatic_gatekeeper (
                 .clk(clk), .rst_n(rst_n),
-                .axiomatic_level(phinary_cfg[3:2]),
+                .axiomatic_level(phinary_cfg[10:9]),
                 .quadrance_a($signed(som_best_q[17:0])),
                 .quadrance_b($signed(som_best_q[49:32])),
                 .accum_overflow(som_accum_overflow),
