@@ -93,6 +93,13 @@ module spu4_standalone_top_tb;
             fail = fail + 1;
         end
 
+        // NOTE (2026-08-14): a `dissonance` check belongs here, but
+        // spu4_standalone_top does not export the signal — it is a port of
+        // spu4_core only. Adding it was tried and reverted: it grew the probe
+        // by 30 LUT4 and changed the bitstream SHA away from the value
+        // hardware_evidence.md §3.2j records as silicon-proven. See
+        // docs/SPU4_FAULT_REPORTING_CONTRACT.md for the open decision.
+
         // ── Load program: QLDI + QADD sequence ──────────────────────
         //   0: QLDI R1, 0x01  (load 1 into R1 P component)
         //   1: QLDI R2, 0x02  (load 2 into R2)
@@ -107,10 +114,36 @@ module spu4_standalone_top_tb;
         prog(6'd3, 24'h01_00_00);  // HALT
         #200;
 
-        // FIXME: QLDI + QADD sequence needs regfile writeback integration
-        // Currently tests just verify the sequencer runs without hanging
-        $display("PASS: sequencer ran through program");
-        pass = pass + 1;
+        // FIXME: QLDI + QADD writeback is not integrated, so the arithmetic
+        // result is deliberately not asserted here.
+        //
+        // What IS asserted: the sequencer actually executes this program to
+        // completion. The previous version of this check printed PASS without
+        // pulsing `run` at all — it could not fail under any condition, which
+        // is the vacuous-assertion class T1 exists to remove. Running the
+        // program and requiring `done` makes it reachable: a sequencer that
+        // hangs, or one that never leaves reset, now fails here.
+        @(posedge clk); run = 1;
+        @(posedge clk); run = 0;
+
+        begin : wait_done2
+            integer timeout2;
+            timeout2 = 0;
+            while (!done && timeout2 < 500) begin
+                @(posedge clk);
+                timeout2 = timeout2 + 1;
+            end
+            if (done !== 1'b1) begin
+                $display("FAIL: sequencer did not complete program 2 within 500 clocks");
+                fail = fail + 1;
+            end else if (^{A_out, B_out, C_out, D_out} === 1'bx) begin
+                $display("FAIL: program 2 left unknown bits in the quadray outputs");
+                fail = fail + 1;
+            end else begin
+                $display("PASS: sequencer ran program 2 to completion (%0d clocks)", timeout2);
+                pass = pass + 1;
+            end
+        end
 
         if (fail == 0) $display("PASS");
         else $display("FAIL");

@@ -524,7 +524,10 @@ def main():
             print(f"\n  cross_validate.py FAILED:\n{result_cv.stdout[-800:]}")
 
     # Lucas MAC oracle
+    # lucas_fail is tracked explicitly: summing only the _pass side lets a
+    # failing or deleted oracle drop the headline while Total FAIL stays 0.
     lucas_pass = 0
+    lucas_fail = 0
     lucas_test = os.path.join(root_dir, "software", "tests", "test_lucas_mac_oracle.py")
     if os.path.exists(lucas_test):
         result_lucas = subprocess.run(
@@ -534,7 +537,11 @@ def main():
         if "PASS" in result_lucas.stdout:
             lucas_pass = 1
         else:
+            lucas_fail = 1
             print(f"\n  test_lucas_mac_oracle.py FAILED:\n{result_lucas.stdout[-500:]}")
+    else:
+        lucas_fail = 1
+        print("\n  test_lucas_mac_oracle.py MISSING — counted as a failure.")
 
     # Lucas MAC state-machine harness
     lucas_harness_pass = 0
@@ -620,6 +627,7 @@ def main():
 
     # Padé batch inversion oracle
     pade_batch_pass = 0
+    pade_batch_fail = 0
     pade_batch_test = os.path.join(root_dir, "software", "tests", "test_pade_batch_inversion.py")
     if os.path.exists(pade_batch_test):
         result_pade = subprocess.run(
@@ -629,10 +637,15 @@ def main():
         if "ALL CHECKS PASS" in result_pade.stdout:
             pade_batch_pass = 1
         else:
+            pade_batch_fail = 1
             print(f"\n  test_pade_batch_inversion.py FAILED:\n{result_pade.stdout[-500:]}")
+    else:
+        pade_batch_fail = 1
+        print("\n  test_pade_batch_inversion.py MISSING — counted as a failure.")
 
     # Hyper-Catalan series oracle
     hc_pass = 0
+    hc_fail = 0
     hc_test = os.path.join(root_dir, "software", "tests", "test_hyper_catalan_oracle.py")
     if os.path.exists(hc_test):
         result_hc = subprocess.run(
@@ -642,10 +655,15 @@ def main():
         if "ALL CHECKS PASS" in result_hc.stdout:
             hc_pass = 1
         else:
+            hc_fail = 1
             print(f"\n  test_hyper_catalan_oracle.py FAILED:\n{result_hc.stdout[-500:]}")
+    else:
+        hc_fail = 1
+        print("\n  test_hyper_catalan_oracle.py MISSING — counted as a failure.")
 
     # Digon-recursive cost model + series vs Newton validation
     digon_pass = 0
+    digon_fail = 0
     digon_test = os.path.join(root_dir, "software", "lib", "digon_recursive.py")
     if os.path.exists(digon_test):
         result_digon = subprocess.run(
@@ -659,9 +677,11 @@ def main():
                 and "FAIL" not in result_digon.stdout):
             digon_pass = 1
         else:
+            digon_fail = 1
             print(f"\n  digon_recursive.py FAILED:\n{result_digon.stdout[-500:]}")
     else:
-        digon_pass = 0
+        digon_fail = 1
+        print("\n  digon_recursive.py MISSING — counted as a failure.")
 
     # Audio sink tests
     audio_test = os.path.join(root_dir, "software", "tests", "test_rplu2_audio.py")
@@ -932,6 +952,21 @@ def main():
     print(f"Passed:                 {boot_sequence_pass}")
     print(f"Failed:                 {boot_sequence_fail}")
 
+    # These seven contributed to the headline without printing a section of
+    # their own, so the total could not be reconciled from the transcript.
+    for _label, _p, _f in (
+        ("Lucas MAC Oracle",          lucas_pass,         lucas_fail),
+        ("Lucas MAC Harness",         lucas_harness_pass, 1 - lucas_harness_pass),
+        ("SU(3) Oracle",              su3_pass,           1 - su3_pass),
+        ("Pade Batch Inversion",      pade_batch_pass,    pade_batch_fail),
+        ("Hyper-Catalan Oracle",      hc_pass,            hc_fail),
+        ("Digon Recursive Cost Model", digon_pass,        digon_fail),
+        ("Composition Policy Trace",  composition_pass,   1 - composition_pass),
+    ):
+        print(f"\n{_label} Tests: {_p + _f}")
+        print(f"Passed: {_p}")
+        print(f"Failed: {_f}")
+
     total_pass = (
         passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass
         + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
@@ -947,6 +982,10 @@ def main():
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
         + (1 - composition_pass)
+        # Previously absent: these four were summed into total_pass with no
+        # fail counterpart, so a failing or missing oracle reduced the
+        # headline while Total FAIL still printed 0.
+        + lucas_fail + pade_batch_fail + hc_fail + digon_fail
     )
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")

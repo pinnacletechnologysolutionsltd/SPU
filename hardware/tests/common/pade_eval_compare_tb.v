@@ -78,7 +78,9 @@ module pade_eval_compare_tb;
             $display("PASS");
             $finish;
         end else begin
-            $display("FAIL: %0d timeout(s)", failures);
+            // failures counts both done-signal timeouts and ref/local
+            // mismatches; labelling it "timeout(s)" misreports a mismatch.
+            $display("FAIL: %0d timeout(s) and/or ref-local mismatch(es)", failures);
             $finish(1);
         end
     end
