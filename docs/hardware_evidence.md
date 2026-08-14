@@ -3,10 +3,14 @@
 A boring, reproducible record of what passed, what failed, and what remains
 unproven.  No speculation — only commands, conditions, and results.
 
-*Last updated: 2026-07-20*
+*Last updated: 2026-08-15*
 
 Current regression headline: `python3 run_all_tests.py` reports
-`Total PASS: 173`, `Total FAIL: 0`. ROTC is gated through angles 0-35
+`Total PASS: 193`, `Total FAIL: 0` (re-run 2026-08-15). Note that this headline
+covers **simulation only** — a board target can be entirely unbuildable while
+this number stays green, which is what happened to the Tang SOM sidecar for
+four weeks. Board-build coverage is `tools/board_build_check.py`; per-entry
+source anchoring for the silicon results below is §3.6. ROTC is gated through angles 0-35
 (0-5 silicon-verified; 6-35 testbench/trace-equivalence verified). IROTC uses
 the v0.2 phi-plane typestate contract; Tang 25K silicon scope is the §3.2k
 engine probe vectors (idx 16, idx 36 main catalog, and fault matrix), with the
@@ -23,7 +27,7 @@ full 60 x 2 catalog surface testbench-verified.
 | SDRAM | Winbond W9825G6KH (256 Mbit SDR SDRAM) on 40-pin Dock header |
 | Flash | External SPI NOR (J4), 16 MiB |
 | FTDI UART | Sipeed onboard, 115200 baud |
-| Toolchain | OSS CAD Suite: Yosys 0.50 → nextpnr-himbaechel → gowin_pack → openFPGALoader |
+| Toolchain | OSS CAD Suite: Yosys 0.63+87 → nextpnr-himbaechel 0.9-99 → gowin_pack → openFPGALoader v1.1.0 |
 
 ### Board Condition
 
@@ -2474,6 +2478,138 @@ SDRAM-containing probes.
 
 ---
 
+### 3.6 Source Anchors and Reproduction Status
+
+*Added 2026-08-15 (T9).*
+
+Every entry above records the SHA-256 of the bitstream that was flashed. Until
+now none recorded **which source tree produced it**, and several recorded no
+build command either. A hash with no source anchor proves only that some file
+existed — it cannot be regenerated, so it cannot be checked.
+
+This section closes what can be closed and states plainly what cannot.
+
+**How to read the anchor column.** Only one entry has a *confirmed* anchor: a
+commit from which the recorded bitstream has actually been rebuilt bit-for-bit.
+The rest carry a **candidate** commit — the repository HEAD on the entry's
+recorded date. A candidate is a starting point for a reproduction attempt, not
+a record. Two known weaknesses:
+
+- Builds were often made from a dirty tree, so the true input may be a
+  candidate plus uncommitted edits — and a hash quoted in a commit message is
+  not proof of what that commit builds. This is not hypothetical; see the
+  worked case in §3.6b.
+- Where the repo had commit gaps, several entries collapse onto one candidate.
+  §3.2g.1, §3.2e.4 and §3.2e.5 all resolve to `502c962` despite spanning
+  2026-06-30 to 2026-07-05, so the candidate carries almost no information.
+
+| § | Date | Flashed bitstream | Build command | Source anchor | Rebuild status |
+|---|---|---|---|---|---|
+| 3.2e.4 | 07-04 | `71319fbb…` | `A7_FREQ=2 A7_CLK_DIV_LOG2=6 build_a7.sh 100t rplu2core` | `502c962` cand. (gap) | UNMEASURED |
+| 3.2e.5 | 07-05 | `4dff1a6e…` | `A7_FREQ=2 A7_CLK_DIV_LOG2=6 build_a7.sh 100t su3share` | `502c962` cand. (gap) | UNMEASURED |
+| 3.2e.6 | 08-07 | `a8b9f661…` | **absent** | `616bc44` cand. | UNMEASURED |
+| 3.2e.7 | 08-09 | `07cb3d7e…` | **absent** | `0e0a4a3` cand. | UNMEASURED |
+| 3.2g.1 | 06-30 | `0385b641…` | `build_25k_spu13_som_bmu_probe.sh` | `502c962` cand. (gap) | **DIFFERS** — builds `a3df02d5…`; `spu_som_bmu.v` changed in `7b80a59` |
+| 3.2g.2 | 07-06 | `6177aa67…` | `build_25k_spu13_som_hydrate_probe.sh` | `a71635c` cand. | **REPRODUCES** at current HEAD |
+| 3.2g.3 | 07-16 | `8c6b6f8e…` | `build_25k_spu13_som_sidecar.sh` | `35105c3` cand. | DIFFERS — builds `a7d3459e…`; see §3.6b |
+| 3.2g.4 | 07-17 | `946574dc…` | **absent** | `df6cffd` cand. | UNMEASURED |
+| 3.2g.5 | 07-17 | `8753c492…` | `build_25k_spu13_som_sidecar.sh` | **`f4e271e` CONFIRMED** | **REPRODUCES** from `f4e271e` (2026-08-14) |
+| 3.2g.6 | 07-17 | `f22a34e7…` | `build_a7.sh 100t somsidecar` | `df6cffd` cand. | DIFFERS — see §3.6a |
+| 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | `7cac67a` cand. | **REPRODUCES** at current HEAD, 4× |
+| 3.2k | 07-10 | `4aedc901…` | `build_25k_spu13_irotc_probe.sh` | `d1244e0` cand. | **DIFFERS** — builds `6ac1e8ab…`; cause uninvestigated |
+| 3.2k.1 | 07-12 | `ca54c1dc…` | `build_25k_spu13_irotc_spi.sh` | `6f6ec43` cand. | UNMEASURED — 2026-08-14 run killed at 90 min; re-run without `--placed-svg`/`--routed-svg`/`--detailed-timing-report` |
+| 3.2l | 07-14 | `d72412f1…` | **absent** | `62dd6c3` cand. | UNMEASURED |
+| 3.2l.1 | 08-09 | `40373ab8…` | `ZPHI_KARATSUBA=1 A7_SEED=1 build_a7.sh 100t tensegritylink` | `0e0a4a3` cand. | UNMEASURED |
+| 3.2m | 08-03 | 8 spins, see entry | `build_a7.sh 100t <spin>` per spin | `7e6ac4a` cand. | UNMEASURED — and **not anchorable as written**, see below |
+
+**Two entries need more than an anchor.**
+
+- **§3.2m** is a sweep of eight `spu_a7_top` spins, each with its own bitstream,
+  and it records them as **16 hex characters, not full SHA-256**. Sixteen hex
+  characters is a fine label but a weak identifier, and it cannot be compared
+  against a `sha256sum` without truncating the fresh value to match — which
+  silently weakens the comparison. The entry also notes the LUCAS bitstream
+  `41df24aa145c192d` is **lost**. Future sweeps should record full hashes; the
+  existing ones stay as they are, since shortening happened at capture time and
+  the full values are unrecoverable.
+- **§3.2e.6 and §3.2e.7** carry full hashes and no build command at all. Both
+  are Wukong J11 spins from August; the spin name is recoverable from the entry
+  text, but the env prefix (`A7_FREQ`, `A7_SEED`, `ZPHI_KARATSUBA`) is not, and
+  on this project those change the output. Treat their anchors as unrecoverable
+  until someone reproduces them by search.
+
+**Standing rule.** A historical bitstream hash in this document records what was
+flashed to a board. It is never to be overwritten with a fresh build hash —
+that would assert hardware testing that did not happen. Where a rebuild
+disagrees, the disagreement is recorded in the rebuild-status column and the
+flashed hash stays untouched. `hardware/boards/board_build_manifest.json` is
+the separate record of what this tree builds today; the two files are never
+copied between.
+
+#### 3.6a A7 SOM sidecar rebuilt after the `BAUD_COUNTER` change (2026-08-15)
+
+`bc06156` added a `BAUD_COUNTER` parameter to a module `spu_a7_som_sidecar_top`
+consumes, and was verified only through yosys. §3.2g.6 could therefore not be
+trusted until a full place-and-route and pack run passed. It now has:
+
+```bash
+PRJXRAY_ROOT=$HOME/toolchains/prjxray \
+OPENXC7_PYTHON=$HOME/.local/venvs/prjxray/bin/python \
+  bash hardware/boards/artix7/build_a7.sh 100t somsidecar all
+```
+
+Result: synth, P&R and bitstream generation all complete, exit 0. Routing
+converged with zero overused wires at iteration 4, and the post-routing clock
+report is 80.18 MHz against the 50 MHz constraint (PASS).
+
+| Metric | §3.2g.6 (07-17) | Rebuild (08-15) |
+|---|---|---|
+| SLICE_LUTX | 8,013 | 8,161 |
+| SLICE_FFX | 3,098 | 3,131 |
+| DSP48E1 | 44 | 44 |
+| RAMB18E1 | 4 | 4 |
+| Routed fmax | 65.63 MHz | 80.18 MHz |
+
+**Scope of this result — build only.** It establishes that the `BAUD_COUNTER`
+change does not break the Artix-7 sidecar, which was the open risk. It does
+**not** re-prove §3.2g.6 in silicon: the rebuild produces
+`bf4c1614a0311fa91565ec68df8bc6b1a89dbc899015a17ffa163811aacf3023`, which
+differs from the flashed `f22a34e7…`, and it has not been loaded to a board or
+run against the Iris corpus. §3.2g.6's silicon claim continues to rest on the
+July run.
+
+#### 3.6b Worked case — a commit message anchored to a hash its own tree does not build
+
+Recorded because it is the clearest example of why a hash needs a source anchor,
+and because it resolves a loose end left open on 2026-08-14.
+
+`bc06156`'s message states: *"Sidecar now builds at 14,126 LUT4 (61%) … Anchor
+bitstream SHA-256 `af0c5e4c…`"*. The manifest recorded two commits later at
+`3c9e92d` instead gives `a7d3459e…`. Both cannot be right. What was measured:
+
+1. `build_25k_spu13_som_sidecar.sh` is **bit-deterministic** on this design —
+   `a7d3459e…` has now been produced on three separate runs (two on 08-14, one
+   on 08-15), including on the large near-utilisation-limit build where
+   determinism was least certain.
+2. The sidecar's full input set is the six sources in
+   `synth_gowin_25k_spu13_som_sidecar.ys`, the `-I hardware/rtl/arch` include
+   dir, the `.cst`, the `.ys` and the build script.
+   `git diff --name-only bc06156..HEAD --` over exactly that set is **empty**.
+
+A deterministic build over an unchanged input set has one output. So `bc06156`'s
+committed tree builds `a7d3459e…`, and `af0c5e4c…` was produced from a working
+tree that was never committed. **`af0c5e4c…` is not reproducible and should not
+be used as an anchor.** The correct anchor for the post-fix sidecar is
+`a7d3459e…` at `bc06156` or later.
+
+Nothing about the fix in `bc06156` is affected — the LUT figures and the
+vendor-specific `BAUD_COUNTER` reasoning stand. Only the quoted hash is wrong.
+The general lesson is the one this section exists for: a hash captured mid-work
+records a tree that may never be committed, so anchor hashes should be taken
+from a clean tree, after the commit, or not quoted at all.
+
+---
+
 ## 4. Synthesis Resource Reports
 
 ### 4.1 SPU-13 RPLU + Math + SDRAM + Lattice (full probe)
@@ -2568,10 +2704,12 @@ board.
 |---|---|---|
 | **iverilog** | OSS CAD Suite, `/opt/oss-cad-suite/bin/iverilog` | Verilog simulation (Icarus) |
 | **vvp** | OSS CAD Suite, `/opt/oss-cad-suite/bin/vvp` | VVP runtime |
-| **yosys** | OSS CAD Suite | Synthesis (synth_gowin) |
-| **nextpnr-himbaechel** | OSS CAD Suite | Place & route (GW5A-25A) |
-| **gowin_pack** | OSS CAD Suite | Bitstream packaging |
-| **openFPGALoader** | OSS CAD Suite | FPGA programming via USB |
+| **yosys** | `Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)` | Synthesis (synth_gowin / synth_xilinx) |
+| **nextpnr-himbaechel** | `nextpnr-0.9-99-g4ace8952` | Place & route (GW5A-25A) |
+| **nextpnr-xilinx** | `0.8.2-73-gf681eb3a`, `~/.local/openxc7` | Place & route (xc7a100t) |
+| **gowin_pack** | OSS CAD Suite | Bitstream packaging (Gowin) |
+| **prjxray / fasm** | `~/toolchains/prjxray`, venv `~/.local/venvs/prjxray` | Bitstream packaging (Xilinx) |
+| **openFPGALoader** | `v1.1.0` | FPGA programming via USB |
 | **python3** | 3.14.5 | VM, tools, test infrastructure |
 | **g++** | C++17 | Reference implementation and C++ tests |
 | **bash** | /bin/bash | Build scripts |

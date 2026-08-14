@@ -39,7 +39,7 @@
       "sha256": "a7d3459e9160b67efb6dc74ddda8bfd827c07356504569f4bce1f37c3c9ee3a2",
       "approx_seconds": 240,
       "silicon_evidence": "docs/hardware_evidence.md 3.2g.3, 3.2g.5",
-      "notes": "Failed placement 2026-07-17..2026-08-14 (df6cffd). Fixed in bc06156. Current build no longer matches the 3.2g.5 silicon hash because 9490c3d removed the dead SOM fault interface.",
+      "notes": "Failed placement 2026-07-17..2026-08-14 (df6cffd). Fixed in bc06156. Current build no longer matches the 3.2g.5 silicon hash because 9490c3d removed the dead SOM fault interface. Reproduced a7d3459e... three times (2x 2026-08-14, 1x 2026-08-15), so this near-limit Gowin build is bit-deterministic. Note bc06156's commit message quotes af0c5e4c... as the anchor; that value is NOT reproducible from its own committed tree and should be ignored -- see docs/hardware_evidence.md 3.6b.",
       "recorded_at_commit": "3c9e92d",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
