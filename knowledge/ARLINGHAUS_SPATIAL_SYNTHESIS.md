@@ -172,12 +172,23 @@ Henosis locally, and reports upward only what it could not recover.
 ### Edge node (micro): SPU-4 is sufficient — SPU-13 is overkill
 
 A Tang-25K-class (or smaller) edge node does not carry a rotating manifold,
-so it does not need the SPU-13. The SPU-4 standalone core — sequencer,
-decoder, regfile, Euclidean ALU, serial multiplier — measures **668 cells
-(~400 LUT4-equivalent + ~250 FF) including its UART fixture**, which fits
-the smallest commodity fabrics (Gowin GW1N-1, iCE40UP5K) with room to
-spare. This is a synthesis/P&R resource estimate, not a resource count
-observed in silicon. Functional first silicon was 2026-07-08 on Tang 25K
+so it does not need the SPU-13. The SPU-4 standalone probe — sequencer,
+decoder, regfile, Euclidean ALU, serial multiplier, plus its UART fixture —
+places on the Tang 25K (GW5A-25A) at **835 LUT4, 390 ALU, 336 DFF, 82
+MUX2_LUT\***, re-derived from the nextpnr-himbaechel utilisation report on
+2026-08-14 via `bash build_25k_spu4_probe.sh`. Pre-pack, Yosys reports 445
+LUT1–4 and 356 ALU cells. This is a synthesis/P&R resource measurement for
+one fabric, not a resource count observed in silicon.
+
+An earlier revision of this section claimed "668 cells (~400 LUT4-equivalent
++ ~250 FF)" and that the core fits a Gowin GW1N-1 "with room to spare." Both
+were wrong: the measured build is roughly twice that size, and 835 LUT4 + 390
+ALU exceeds the GW1N-1's 1152 LUT4 slots (Gowin ALU cells occupy LUT
+positions). **Fit on any fabric other than GW5A-25A is OPEN** and requires a
+target-specific synthesis/P&R run. iCE40UP5K (5280 LUT4) remains plausible on
+headroom alone but is unverified.
+
+Functional first silicon was 2026-07-08 on Tang 25K
 (`SPU4:P A=0000 B=0155 C=0155 D=0155`, `docs/hardware_evidence.md` §3.2j).
 
 Integrity hardening for harsh-environment/edge roles is additive, not
@@ -222,7 +233,7 @@ the command-plane HAL; whisper is the coherence plane.
 | Component | State |
 |---|---|
 | SPU-4 standalone core | **Silicon-verified** (2026-07-08) |
-| SPU-4 resource envelope (~400 LUT) | Synthesis/P&R estimate (Yosys, incl. probe fixture); not a silicon resource measurement |
+| SPU-4 resource envelope (835 LUT4 / 390 ALU / 336 DFF on GW5A-25A) | Synthesis/P&R measurement for one fabric (nextpnr, 2026-08-14, incl. probe fixture); not a silicon resource measurement. Fit on other fabrics is OPEN |
 | Hamming SEC prims / ECC regfiles | RTL + TB verified |
 | `spu4_cluster_bridge` | RTL + TB verified only; not instantiated by a core/board top. Its 4-bit semantic-label input still needs a mapper from the SPU-4 BMU's 2-bit winner node. |
 | `spu_node_link` | TB verified, **not on hardware** |
