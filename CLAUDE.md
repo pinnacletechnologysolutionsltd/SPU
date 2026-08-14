@@ -17,8 +17,9 @@ SPU-13 is a deterministic rational-field FPGA coprocessor: exact arithmetic over
 paths. Two cores exist:
 
 - **SPU-4 Sentinel** — 4-axis (Quadray), 32-bit, Euclidean satellite/sensory core.
-  Dual-role by design: a standalone edge-compute node (~400 LUT — fits the
-  smallest fabrics, no manifold, optional Hamming SEC) and the per-axis cluster
+  Dual-role by design: a standalone edge-compute node (835 LUT4 / 390 ALU /
+  336 DFF measured on GW5A-25A 2026-08-14 incl. the UART probe fixture; fit on
+  smaller fabrics is OPEN, no manifold, optional Hamming SEC) and the per-axis cluster
   satellite for an SPU-13 (cluster-bridge frames report Davis dissonance upward).
   Deployment architecture: `knowledge/ARLINGHAUS_SPATIAL_SYNTHESIS.md` §7.
 - **SPU-13 Cortex** — 13-axis (cuboctahedral) manifold engine, the main compute core.

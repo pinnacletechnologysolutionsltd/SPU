@@ -2,7 +2,7 @@
 //
 // Arlinghaus micro-tier SOM: 4-node register-backed Best Matching Unit
 // classifier using rational quadrance (no square roots, no floats).
-// Designed to fit the SPU-4's ~400 LUT edge budget alongside the
+// Designed to fit the SPU-4's edge budget alongside the
 // Euclidean ALU, decoder, and UART fixture.
 //
 // Architecture:

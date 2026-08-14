@@ -32,7 +32,7 @@ in §4 — "product-candidate" describes intent, not readiness.
 | RPLU2PADE | Wukong A7 100T | A₃₁ inverter, SOM/BMU, BTU, Padé [4/4] | 72 DSP, 34% LUT | silicon (`RPLU2PADE_J11: PASS`) |
 | SU3SHARE | Wukong A7 100T | SU3 sidecar + RPLU2 config/QR, one shared M31 multiplier | see build log | silicon (both paths pass on one bitstream) |
 | SOM-SIDECAR | Tang 25K / Wukong A7 100T → smaller fabrics | standalone writable SOM edge classifier (`build_25k_spu13_som_sidecar.sh`; `build_a7.sh 100t somsidecar`) | Tang: 14,068 LUT4, 8 BSRAM, 0 DSP, 75.79 MHz; A7: 8,013 SLICE_LUTX, 4 RAMB18, 44 DSP, 65.63 MHz; both at 50 MHz target | silicon on both vendors: writable SPI map/labels, fixed-434-clock exact BMU, UART, compact SPI, and 52-byte SOM1 evidence proven. The same Iris artifact passes 150/150 complete FPGA/oracle evidence records on both boards and 147/150 semantic labels (98.0%). |
-| SPU4-SENTINEL | Tang 25K → smallest fabrics | SPU-4 core, Davis gate, whisper v0 | ~400 LUT | silicon (2026-07-08, `SPU4:P A=0000 B=0155 C=0155 D=0155`) |
+| SPU4-SENTINEL | Tang 25K (fit on smaller fabrics is OPEN) | SPU-4 core, Davis gate, whisper v0 | 835 LUT4, 390 ALU, 336 DFF on GW5A-25A incl. UART fixture (nextpnr, 2026-08-14) | silicon (2026-07-08, `SPU4:P A=0000 B=0155 C=0155 D=0155`) |
 
 **First-hour stories:**
 
