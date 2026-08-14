@@ -36,6 +36,47 @@ module spu13_tang25k_som_sidecar_top (
     localparam CLK_HZ = 50000000;
     localparam CLKS_PER_BIT = CLK_HZ / 115200;
 
+    // UART baud-tick formulation.  The two branches are functionally
+    // identical — both shift at the same 434-cycle boundaries — but they
+    // map very differently, and each vendor needs the opposite one:
+    //
+    //   0 (Gowin/Tang):  constant-modulo compare.
+    //   1 (Xilinx/A7):   dedicated down-counter; avoids synthesising the
+    //                    constant modulo into a deep combinational divider.
+    //
+    // Both vendors were measured, 2026-08-14, and they want opposite forms.
+    //
+    // Gowin GW5A-25A (nextpnr-himbaechel, build_25k_spu13_som_sidecar.sh):
+    //   BAUD_COUNTER=0 → 14,073 LUT4, 578 MUX2_LUT5, places.
+    //   BAUD_COUNTER=1 → 22,750 LUT4, 6,177 MUX2_LUT5, "Unable to find
+    //                    legal placement for all cells".
+    //
+    // Xilinx xc7a100t (yosys, build_a7.sh 100t somsidecar synth), top level:
+    //   BAUD_COUNTER=1 →   349 CARRY4, 548 MUXF7,  72 MUXF8.
+    //   BAUD_COUNTER=0 →   993 CARRY4, 1056 MUXF7, 195 MUXF8 — the carry
+    //                    chain nearly triples; this is the "deep
+    //                    combinational divider" df6cffd described, and that
+    //                    claim is now measured rather than assumed.
+    //
+    // So this parameter is not a workaround hiding a defect: the two forms
+    // are functionally identical and each vendor maps one of them badly.
+    // Two fixes were tried and BOTH FAILED — do not retry them:
+    //   • Narrowing the counter to $clog2(CLKS_PER_BIT) bits: 22,804 LUT4.
+    //     The cost is the restructured conditional, not the register width.
+    //   • Replacing spu13_som1_frame's 48:1 dynamic payload_byte index with
+    //     a 384-bit shift register (the only wide dynamically-indexed
+    //     structure in the design, and the obvious suspect): 23,072 LUT4,
+    //     6,227 MUX2_LUT5, +400 DFF.  Slightly WORSE.  The mux tree is not
+    //     the frame's byte index.
+    // The mechanism behind the 10× mux blow-up is still unexplained; it is a
+    // yosys mapping pathology triggered by form 1, not a logic-size change.
+    //
+    // df6cffd applied form 1 unconditionally to help the
+    // Artix-7 replay (§3.2g.6) and thereby made the Tang target (§3.2g.5)
+    // unbuildable for four weeks; nothing rebuilds board tops, so it went
+    // unnoticed.  Do not collapse these branches without rebuilding both.
+    parameter BAUD_COUNTER = 0;
+
     // ── Reset (255 cycle delay) ───────────────────────────────────────
     reg [7:0] rst_cnt = 8'd0;
     wire rst_n = (rst_cnt == 8'hFF);
@@ -263,15 +304,16 @@ module spu13_tang25k_som_sidecar_top (
                     uart_tx_telemetry <= 1'b1;
                 end else begin
                     uart_tx_telemetry <= tx_shift[0];
-                    // A dedicated baud counter avoids synthesising the
-                    // constant-modulo expression into a deep combinational
-                    // divider on Xilinx.  The previous condition shifted at
-                    // exactly the same 434-cycle boundaries.
-                    if (tx_baud_count == 0) begin
-                        tx_shift <= {1'b1, tx_shift[9:1]};
-                        tx_baud_count <= CLKS_PER_BIT - 1;
+                    if (BAUD_COUNTER) begin
+                        if (tx_baud_count == 0) begin
+                            tx_shift <= {1'b1, tx_shift[9:1]};
+                            tx_baud_count <= CLKS_PER_BIT - 1;
+                        end else begin
+                            tx_baud_count <= tx_baud_count - 1'b1;
+                        end
                     end else begin
-                        tx_baud_count <= tx_baud_count - 1'b1;
+                        if (tx_count % CLKS_PER_BIT == 1)
+                            tx_shift <= {1'b1, tx_shift[9:1]};
                     end
                 end
                 tx_count <= tx_count - 1;
