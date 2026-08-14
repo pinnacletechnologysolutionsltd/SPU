@@ -2509,14 +2509,14 @@ a record. Two known weaknesses:
 | 3.2e.5 | 07-05 | `4dff1a6e…` | `A7_FREQ=2 A7_CLK_DIV_LOG2=6 build_a7.sh 100t su3share` | `502c962` cand. (gap) | UNMEASURED |
 | 3.2e.6 | 08-07 | `a8b9f661…` | **absent** | `616bc44` cand. | UNMEASURED |
 | 3.2e.7 | 08-09 | `07cb3d7e…` | **absent** | `0e0a4a3` cand. | UNMEASURED |
-| 3.2g.1 | 06-30 | `0385b641…` | `build_25k_spu13_som_bmu_probe.sh` | `502c962` cand. (gap) | **DIFFERS** — builds `a3df02d5…`; `spu_som_bmu.v` changed in `7b80a59` |
-| 3.2g.2 | 07-06 | `6177aa67…` | `build_25k_spu13_som_hydrate_probe.sh` | `a71635c` cand. | **REPRODUCES** at current HEAD |
+| 3.2g.1 | 06-30 | `0385b641…` | `build_25k_spu13_som_bmu_probe.sh` | `502c962` cand. (gap) | **DIFFERS** — builds `a3df02d5…`; **5** commits touch its 4 sources, cause not isolated |
+| 3.2g.2 | 07-06 | `6177aa67…` | `build_25k_spu13_som_hydrate_probe.sh` | **`a8b5bdc` or later, CONFIRMED** (not the `a71635c` candidate — see §3.6c) | **REPRODUCES** at current HEAD |
 | 3.2g.3 | 07-16 | `8c6b6f8e…` | `build_25k_spu13_som_sidecar.sh` | `35105c3` cand. | DIFFERS — builds `a7d3459e…`; see §3.6b |
 | 3.2g.4 | 07-17 | `946574dc…` | **absent** | `df6cffd` cand. | UNMEASURED |
 | 3.2g.5 | 07-17 | `8753c492…` | `build_25k_spu13_som_sidecar.sh` | **`f4e271e` CONFIRMED** | **REPRODUCES** from `f4e271e` (2026-08-14) |
 | 3.2g.6 | 07-17 | `f22a34e7…` | `build_a7.sh 100t somsidecar` | `df6cffd` cand. | DIFFERS — see §3.6a |
 | 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | `7cac67a` cand. | **REPRODUCES** at current HEAD, 4× |
-| 3.2k | 07-10 | `4aedc901…` | `build_25k_spu13_irotc_probe.sh` | `d1244e0` cand. | **DIFFERS** — builds `6ac1e8ab…`; cause uninvestigated |
+| 3.2k | 07-10 | `4aedc901…` | `build_25k_spu13_irotc_probe.sh` | `d1244e0` cand. | **DIFFERS, cause explained** — builds `6ac1e8ab…`; `73acd91` (07-12) moved the IROTC code ROM to BSRAM after this proof, see §3.6d |
 | 3.2k.1 | 07-12 | `ca54c1dc…` | `build_25k_spu13_irotc_spi.sh` | `6f6ec43` cand. | UNMEASURED — 2026-08-14 run killed at 90 min; re-run without `--placed-svg`/`--routed-svg`/`--detailed-timing-report` |
 | 3.2l | 07-14 | `d72412f1…` | **absent** | `62dd6c3` cand. | UNMEASURED |
 | 3.2l.1 | 08-09 | `40373ab8…` | `ZPHI_KARATSUBA=1 A7_SEED=1 build_a7.sh 100t tensegritylink` | `0e0a4a3` cand. | UNMEASURED |
@@ -2607,6 +2607,72 @@ vendor-specific `BAUD_COUNTER` reasoning stand. Only the quoted hash is wrong.
 The general lesson is the one this section exists for: a hash captured mid-work
 records a tree that may never be committed, so anchor hashes should be taken
 from a clean tree, after the commit, or not quoted at all.
+
+#### 3.6c A date-derived anchor that is provably wrong, and what corrects it
+
+§3.2g.2 is recorded as **2026-07-06**, which gives the candidate `a71635c`. But
+`a8b5bdc` (**2026-07-07**) modifies `spu_som_weight_bram.v`, one of the probe's
+two sources, and the current tree still reproduces the flashed `6177aa67…`.
+Since no commit after `a8b5bdc` touches either source, every tree from
+`a8b5bdc` to HEAD builds the same bitstream — and `a71635c`, which predates the
+source change, cannot.
+
+So the true anchor is **`a8b5bdc` or later, which is after the date the entry
+records**. Either the bench date and the build date differ, or the image was
+rebuilt; the record does not say which.
+
+Two things follow, and they generalise past this entry:
+
+1. **A date-derived candidate can be wrong, not merely imprecise.** Every
+   candidate in the table above should be read as a hypothesis.
+2. **Reproduction is what upgrades an anchor**, and it upgrades it to a
+   *range* — "`a8b5bdc` or later" — rather than a point. That range is a
+   stronger statement than a single unverified commit, because it was measured.
+
+#### 3.6d §3.2k DIFFERS — cause identified, and it is benign
+
+`73acd91` (2026-07-12) rewrote the IROTC engine's 540-entry code ROM from a
+combinational case function into an initialized memory mapped to one BSRAM,
+after finding that the old form synthesized into deep `MUX2_LUT8..5` chains and
+routing-livelocked the SPI spin. The engine dropped from ~6.9k to ~3.0k cells.
+
+§3.2k's silicon proof is dated **07-10**, before that rewrite, so its bitstream
+could not match a current build and the DIFFERS is fully expected. The rewrite
+preserves behaviour: ROM values are bit-identical and mechanically derived from
+the verified table, the fixed 13-cycle slot is unchanged, and the engine TB's
+per-case 12-clock latency assertion passes on all 120 golden cases alongside
+the chain, fault matrix, probe, core-opcode and SPI-level testbenches.
+
+**Treat this as closed-explained, not open.** The July silicon result stands for
+the pre-BSRAM engine; the current source is a different implementation of the
+same behaviour, verified in simulation but not separately re-proven on silicon
+for this probe.
+
+#### 3.6e What hash-reproduction can and cannot anchor
+
+Sorting the measured targets by how many sources they pull in against how much
+those sources have since changed makes the pattern plain:
+
+| Target | Sources | Commits since anchor | Result |
+|---|---|---|---|
+| `spu4_probe` (3.2j) | 7 | 0 | REPRODUCES |
+| `som_hydrate_probe` (3.2g.2) | 2 | 1 | REPRODUCES |
+| `som_bmu_probe` (3.2g.1) | 4 | 5 | DIFFERS |
+| `irotc_probe` (3.2k) | 2 | 1 | DIFFERS |
+| `irotc_spi` (3.2k.1) | **51** | **21** | see entry |
+
+Hash-reproduction is a workable anchor for **narrow probes** — few sources,
+little churn, so a mismatch is a real signal worth investigating. It is
+structurally unusable for **full-core spins**: `irotc_spi` compiles 51 sources,
+effectively the whole SPU-13 core, so it absorbs every core commit and diverges
+permanently after any core work. A DIFFERS there carries almost no information.
+
+**Consequence for `board_build_manifest.json`.** Adding full-core spins to the
+manifest would produce a check that fails constantly for uninformative reasons,
+which is how checks get ignored. For those spins the honest anchor is the
+commit, and re-verification means re-running the bench, not re-hashing. The
+manifest should stay biased toward narrow probes, where a hash mismatch means
+something changed that nobody intended.
 
 ---
 

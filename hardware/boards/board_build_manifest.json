@@ -67,7 +67,7 @@
       "sha256": "a3df02d533ff2f3b210178d726ac8f557b1b894ffd761374af3890bf562657f0",
       "approx_seconds": 120,
       "silicon_evidence": "docs/hardware_evidence.md 3.2g.1",
-      "notes": "DIFFERS from its documented silicon hash 0385b641...; spu_som_bmu.v changed in 7b80a59. Needs a re-anchor decision, not a manifest fix.",
+      "notes": "DIFFERS from its documented silicon hash 0385b641.... Five commits touch its four sources since the candidate anchor (a71635c, a8b5bdc, de6c014, 9490c3d, 7b80a59), so the cause is NOT isolated -- an earlier note blaming 7b80a59 alone was a guess. Needs a re-anchor decision, not a manifest fix.",
       "recorded_at_commit": "3c9e92d",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
@@ -81,7 +81,7 @@
       "sha256": "6ac1e8abc5dffa9bf9b49b804ef0e1aed6736f379ee0bd2de30328f8af07d518",
       "approx_seconds": 120,
       "silicon_evidence": "docs/hardware_evidence.md 3.2k",
-      "notes": "DIFFERS from its documented silicon hash 4aedc901... as measured 2026-08-14; cause not yet investigated.",
+      "notes": "DIFFERS from its documented silicon hash 4aedc901... as measured 2026-08-14. Cause identified 2026-08-15 and benign: 73acd91 (07-12) moved the IROTC code ROM to BSRAM, after the 07-10 silicon proof. ROM values bit-identical, 13-cycle slot unchanged, all TBs pass. Closed-explained -- see docs/hardware_evidence.md 3.6d.",
       "recorded_at_commit": "3c9e92d",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
