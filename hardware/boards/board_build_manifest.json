@@ -1,0 +1,92 @@
+{
+  "_comment": [
+    "Board-build baseline for tools/board_build_check.py.",
+    "",
+    "sha256 here is WHAT THIS TREE BUILDS TODAY. It is not silicon evidence.",
+    "The hashes in docs/hardware_evidence.md are what was actually flashed to",
+    "a board; these two drift apart legitimately whenever RTL changes. Never",
+    "copy a value from this file into a silicon-evidence entry -- that would",
+    "assert a bitstream was hardware-tested when it was not.",
+    "",
+    "Only Gowin/Tang targets are listed. The Artix-7 spins need a chipdb",
+    "generated from a 464 MB .bba and take far longer; add them once that is",
+    "a routine step."
+  ],
+  "recorded_at_commit": "3c9e92d",
+  "recorded_toolchain": {
+    "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+    "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+  },
+  "targets": [
+    {
+      "name": "spu4_probe",
+      "script": "build_25k_spu4_probe.sh",
+      "artifact": "build/tang_primer_25k_spu4_probe.fs",
+      "sha256": "9599f5e420f46515d99b57d2b256489440341166941be3bc9992b0b827222664",
+      "approx_seconds": 60,
+      "silicon_evidence": "docs/hardware_evidence.md 3.2j",
+      "notes": "SPU-4 Sentinel first silicon 2026-07-08. Reproduced the documented silicon hash 9599f5e4... three times on 2026-08-14.",
+      "recorded_at_commit": "3c9e92d",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "som_sidecar",
+      "script": "build_25k_spu13_som_sidecar.sh",
+      "artifact": "build/tang_primer_25k_spu13_som_sidecar.fs",
+      "sha256": "a7d3459e9160b67efb6dc74ddda8bfd827c07356504569f4bce1f37c3c9ee3a2",
+      "approx_seconds": 240,
+      "silicon_evidence": "docs/hardware_evidence.md 3.2g.3, 3.2g.5",
+      "notes": "Failed placement 2026-07-17..2026-08-14 (df6cffd). Fixed in bc06156. Current build no longer matches the 3.2g.5 silicon hash because 9490c3d removed the dead SOM fault interface.",
+      "recorded_at_commit": "3c9e92d",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "som_hydrate_probe",
+      "script": "build_25k_spu13_som_hydrate_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_som_hydrate_probe.fs",
+      "sha256": "6177aa67722b3888e70b251959058357ca79e0bd0b4d52f5b41ae7e4aed5d891",
+      "approx_seconds": 120,
+      "silicon_evidence": "docs/hardware_evidence.md 3.2g.2",
+      "notes": "Reproduced its documented silicon hash 6177aa67... on 2026-08-14.",
+      "recorded_at_commit": "3c9e92d",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "som_bmu_probe",
+      "script": "build_25k_spu13_som_bmu_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_som_bmu_probe.fs",
+      "sha256": "a3df02d533ff2f3b210178d726ac8f557b1b894ffd761374af3890bf562657f0",
+      "approx_seconds": 120,
+      "silicon_evidence": "docs/hardware_evidence.md 3.2g.1",
+      "notes": "DIFFERS from its documented silicon hash 0385b641...; spu_som_bmu.v changed in 7b80a59. Needs a re-anchor decision, not a manifest fix.",
+      "recorded_at_commit": "3c9e92d",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "irotc_probe",
+      "script": "build_25k_spu13_irotc_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_irotc_probe.fs",
+      "sha256": "6ac1e8abc5dffa9bf9b49b804ef0e1aed6736f379ee0bd2de30328f8af07d518",
+      "approx_seconds": 120,
+      "silicon_evidence": "docs/hardware_evidence.md 3.2k",
+      "notes": "DIFFERS from its documented silicon hash 4aedc901... as measured 2026-08-14; cause not yet investigated.",
+      "recorded_at_commit": "3c9e92d",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    }
+  ]
+}

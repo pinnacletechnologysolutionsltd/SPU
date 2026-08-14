@@ -92,15 +92,59 @@ build ~2x. Re-derived: **835 LUT4, 390 ALU, 336 DFF** on GW5A-25A. The GW1N-1
 7. **Spin-name drift.** `build_a7.sh:12` documents spins its dispatch no longer
    handles (`robotics`, `su3share`, `rplu2core`, …); they fall to `*`.
 
+## 4b. Board-build check — built, uncommitted, one open question
+
+`tools/board_build_check.py` + `hardware/boards/board_build_manifest.json`.
+Rebuilds board targets and compares bitstream hashes against a recorded
+baseline. Records commit + build command + toolchain version per entry — the
+field set §4.2 says `hardware_evidence.md` lacks. Deletes the artifact before
+building, so a failed build cannot be scored against a stale `.fs` (a trap hit
+for real this session). `--self-test` proves the comparison can fail.
+
+The manifest is **not** silicon evidence: `sha256` is what this tree builds
+today; `hardware_evidence.md` records what was flashed. Never copy between them.
+
+Baseline recorded at `3c9e92d`, Gowin/Tang only (A7 needs the chipdb first):
+
+| target | recorded | note |
+|---|---|---|
+| `spu4_probe` | `9599f5e4…` | == its silicon hash, 4 reproductions today |
+| `som_hydrate_probe` | `6177aa67…` | == its silicon hash |
+| `som_bmu_probe` | `a3df02d5…` | differs from silicon `0385b641…`, needs re-anchor |
+| `irotc_probe` | `6ac1e8ab…` | differs from silicon `4aedc901…`, cause uninvestigated |
+| `som_sidecar` | `a7d3459e…` | **see below** |
+
+**RESOLVED — the check's premise holds.** `python3 tools/board_build_check.py
+--only som_sidecar` rebuilt and reported **REPRODUCES `a7d3459e…`**. So Gowin
+builds are bit-deterministic even for the large, near-limit design, and hash
+comparison is a sound basis for this tool. The "near-limit designs may not be
+bit-stable" worry is disproved; no utilisation-based fallback is needed.
+
+**Loose end, not a blocker.** `som_sidecar` did produce `af0c5e4c…` earlier the
+same day, and since the build is now proven deterministic, that difference must
+have a source cause I did not identify — `bc06156`'s only non-comment change is
+the intended one, and nothing else in the build's six-file source set changed
+between the two runs. Worth one focused diff, but it does not affect the tool:
+the recorded baseline is reproducible, which is all the check requires.
+
+Note the method here. The tool was used to answer a question about its own
+validity before being trusted — the same discipline as the negative controls on
+`run_all_tests.py` and TEST 7. A check nobody has watched succeed *and* fail is
+not evidence.
+
+**The tool is therefore ready to commit** along with the manifest and this
+handover section.
+
 ## 5. Recommended next session
 
 In order:
 
-1. Commit the three `~400 LUT` stragglers (one-line commit, already staged
-   mentally, files listed in §1).
-2. **Write the board-build check.** Even a script that rebuilds the Tang spins
-   and diffs hashes against a recorded table. Everything in §4.2 becomes
-   maintainable once this exists; without it, T9 decays again immediately.
+1. **Commit `tools/board_build_check.py` + the manifest + this handover.**
+   The determinism question in §4b is resolved (REPRODUCES); the tool is
+   sound. Optionally run `--self-test` first to watch the comparison fail on
+   demand. One loose end noted in §4b is worth a diff but blocks nothing.
+2. ~~Write the board-build check~~ — built this session, see §4b. Extend to
+   the A7 spins once chipdb generation is routine.
 3. Generate the A7 chipdb and run `build_a7.sh 100t somsidecar pnr pack` to
    re-validate §3.2g.6.
 4. T9 write-up into `hardware_evidence.md`: add commit + build command +
