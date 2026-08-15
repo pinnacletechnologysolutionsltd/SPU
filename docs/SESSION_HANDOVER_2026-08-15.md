@@ -176,7 +176,7 @@ session. `--self-test` still passes.
 | `southbridge` | placement, `MUX2_LUT8` after 10001 attempts |
 | `series_stream_probe` | placement, no BELs remaining for LUT4 |
 | `som_probe` | placement, "probably at utilisation limit" |
-| `six_step_probe` | timeout at 1200 s |
+| `six_step_probe` | timeout at 1200 s — **router, not capacity; fits at 96%** (08-16) |
 | `irotc_spi` | router livelock, 8.5 h (§5) |
 
 **None of this is new breakage.** Nothing rebuilt board tops until `239bf4c`,
@@ -193,7 +193,7 @@ refuted that within the hour. Do not chase that lead.**
 | `rotc_probe` | 33,456 / 23,040 = **145%** | over capacity |
 | `som_southbridge` | 29,437 / 23,040 = **127%** | over capacity |
 | `som_probe` | 23,891 / 23,040 = **103%** | over capacity |
-| `series_stream_probe` | "no BELs remaining for LUT4" | over capacity |
+| `series_stream_probe` | 70,390 / 23,040 = **305%** (measured 08-16) | over capacity |
 | `southbridge` | 61,439 / 23,040 = **267%** (measured 08-16) | over capacity |
 | `irotc_spi` | 12,136 / 23,040 = **52%** | genuine routing pathology |
 
@@ -209,6 +209,16 @@ while the *same* message on `irotc_spi` appears at 52% and is misleading.
 
 **`irotc_spi` is the only genuine pathology, a population of one** — much weaker
 grounds for a large investigation than "six instances" suggested.
+
+> **UPDATED 2026-08-16 — it is a population of two.** `six_step_probe` was
+> recorded above as "timeout at 1200 s" and left unclassified. Measured: it is
+> **96% LUT4 (22,212/23,040) — it fits**, places successfully, and passes
+> post-placement timing at 25.77 MHz. It fails in the *router*, with the same
+> rising-cost/falling-progress signature as `irotc_spi`. Two spins at 52% and
+> 96% failing the same way is a better case for investigating the router than
+> "population of one" suggested. Do not group `six_step_probe` with the
+> over-capacity spins — nothing about it needs trimming. Details in
+> `hardware_evidence.md` §3.6g.
 
 **This is a scope decision, not a debugging task.** These spins crossed the
 25K's capacity line at some point with nothing watching. Decide which belong on
@@ -227,9 +237,9 @@ direction, is not blocked by any of this.
 
 ## 8. Open
 
-0. **Decide the fate of the five over-capacity Tang spins** — `southbridge`
-   (267%), `rotc_probe` (145%), `som_southbridge` (127%), `som_probe` (103%),
-   `series_stream_probe`. Move to A7, or trim to Tang size, or retire as
+0. **Decide the fate of the five over-capacity Tang spins** —
+   `series_stream_probe` (305%), `southbridge` (267%), `rotc_probe` (145%),
+   `som_southbridge` (127%), `som_probe` (103%). Move to A7, or trim to Tang size, or retire as
    Tang targets. **A scope decision, not debugging.** Do *not* start from the
    "Gowin mux pathology" hypothesis — it was mine, and it was refuted; see §7.
    Full table now recorded in `hardware_evidence.md` §3.6g.
@@ -239,7 +249,13 @@ direction, is not blocked by any of this.
    carried the full utilisation report, and no commit since touches this spin's
    sources. It is also the decisive case for the corrected diagnosis — it fails
    naming `MUX2_LUT8`, which is at **57%**, the one resource with headroom,
-   while LUT4 sits at 266%.
+   while LUT4 sits at 266%. `series_stream_probe` (**305%**) and
+   `six_step_probe` (**96%, fits — a router problem**) were measured at the
+   same time, so every failing target now has a number. See §3.6g.
+0c. **`six_step_probe` needs a routing decision, not a scope decision** — it
+   fits, places, and meets timing. Cheapest first step is a longer timeout and
+   a different seed; its manifest `approx_seconds` of 300 is far off, since
+   placement alone takes 484 s.
 1. **Bench re-run for §3.2j** against the 41-char line (T7.4's cost).
 2. **Bench re-run for §3.2g.6** — build-validated only.
 3. **`dissonance` width limit** — 17-bit intermediate, 19 needed. Small tranche.

@@ -2748,18 +2748,18 @@ observation; it should not be presented as a currently reproducible build.
 #### 3.6g Five Tang 25K spins have outgrown the GW5A-25A — a capacity boundary, not a bug
 
 Measured 2026-08-15/16, after the board-build check widened from 5 to 21
-targets (`42c65e9`) and exposed seven failing spins. **Six of the seven are
-simply over the fabric's capacity.** Only `irotc_spi` (§3.6f) is a genuine
-placer/router pathology.
+targets (`42c65e9`) and exposed seven failing spins. **Five of the seven are
+simply over the fabric's capacity.** The other two — `irotc_spi` (§3.6f) and
+`six_step_probe` — fit comfortably and fail in the router.
 
 | Target | LUT4 used / 23,040 | Verdict |
 |---|---|---|
+| `series_stream_probe` | **70,390 = 305%** | over capacity |
 | `southbridge` | **61,439 = 267%** | over capacity |
 | `rotc_probe` | 33,456 = 145% | over capacity |
 | `som_southbridge` | 29,437 = 127% | over capacity |
 | `som_probe` | 23,891 = 103% | over capacity |
-| `series_stream_probe` | UNMEASURED — "no BELs remaining for LUT4" | over capacity |
-| `six_step_probe` | UNMEASURED — build timed out at 1200 s | unclassified |
+| `six_step_probe` | 22,212 = **96% — it fits** | **routing**, not capacity; see below |
 | `irotc_spi` | 12,136 = 52% | **routing pathology**, see §3.6f |
 
 **The placer's error message names a symptom, not a cause.** `rotc_probe` and
@@ -2777,9 +2777,51 @@ MUX2_LUT7:  4199/ 2880  145%
 MUX2_LUT8:  1644/ 2880   57%   <- the cell named in the error
 ```
 
+`series_stream_probe` confirms the same point from the opposite direction. Its
+mux resources are **uncontended** — MUX2_LUT5/6/7/8 at 64% / 37% / 29% / 8% —
+and its error correspondingly names **LUT4 itself** ("no BELs remaining"), not a
+mux. The `MUX2_LUT*` name appears only when the muxes happen to be over
+capacity too. It is a report of where the placer stopped, not of what ran out.
+
 Likewise `design is probably at utilisation limit` is literally true for
 `som_probe` at 103% and actively misleading for `irotc_spi` at 52%. **Measure
 the utilisation; do not read the message as a diagnosis.**
+
+**`six_step_probe` is not a capacity failure at all.** Measured 2026-08-16, it
+is the one target in the group that comfortably fits, and the 1200 s timeout
+recorded on 08-15 concealed that:
+
+| Phase | Result |
+|---|---|
+| Synthesis | 22,212 / 23,040 LUT4 = **96%**; DFF 6%, ALU 9%, MUX2_LUT5 54% |
+| Placement | **succeeds** — HeAP 483.8 s, then annealing |
+| Post-placement timing | **PASS — 25.77 MHz** against the 12 MHz constraint |
+| Routing | 109,475 arcs; degrading, see below |
+
+Its router shows the same signature §3.6f documents for `irotc_spi` — cost per
+iteration rising while progress falls:
+
+| Iteration window | Arcs resolved | Rate | Seconds / 1000 iter |
+|---|---|---|---|
+| 82k → 98k | 3,505 | 5.83 arcs/s | 37.6 |
+| 98k → 108k | 1,797 | 3.19 arcs/s | 56.4 |
+
+At iteration 108k, 70,500 of 109,475 arcs were still unrouted. **This is an
+extrapolation, not an observed failure:** at the then-current and still-falling
+rate the remainder would need roughly six hours. The run was left going; if it
+converges, this paragraph is what needs correcting.
+
+**This makes routing a population of two, not one.** §3.6f called `irotc_spi`
+"a population of one — much weaker grounds for a large investigation than 'six
+instances' suggested". That is now out of date. Two spins, at 52% and 96%
+utilisation, fail the same way, which is a materially better case for
+investigating the router. It also means `six_step_probe` should *not* be
+grouped with the over-capacity spins in any scope decision: nothing about it
+needs trimming, and moving it to the A7 would be treating a symptom.
+
+The cheap first step for it is not a redesign but a **timeout and seed change**
+— its manifest `approx_seconds` of 300 was never near the truth, since
+placement alone takes 484 s.
 
 **None of this is new breakage.** No board top was rebuilt between its original
 spin and `239bf4c`, so these have been failing for unknown periods — the same
@@ -2792,10 +2834,12 @@ but absent from this spin's `.ys` file list, a synthesis regression from
 `7b80a59` (08-13). Fixed in `2315d77`. That fix was necessary but only exposed
 the 127% underneath it.
 
-**This is a scope decision, not a debugging task.** These spins crossed the
+**For the five capacity failures, this is a scope decision, not a debugging
+task.** They crossed the
 25K's capacity line with nothing watching. Each needs a call: move to the A7,
 trim to Tang size, or retire as a Tang target. `som_probe` at 103% is
-plausibly trimmable; `rotc_probe` at 145% and `southbridge` at 267% are not.
+plausibly trimmable; `rotc_probe` at 145% is a stretch; `southbridge` at 267%
+and `series_stream_probe` at 305% are not — they need 3× the fabric.
 This is the boundary this document already draws — the 25K is a split-probe
 regression board, and full concurrent integration "belongs on an Artix-7 200T /
 Kintex-class board."
