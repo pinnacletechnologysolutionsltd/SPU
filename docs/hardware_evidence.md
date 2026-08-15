@@ -2905,12 +2905,25 @@ with ample room. **Routing-with-room is still a population of one.** The two
 share a symptom, not a cause, and this is the same trap §3.6g is otherwise
 about: reading a shared error for a shared diagnosis. Do not merge them.
 
-**A longer timeout does not rescue it.** Watched to iteration 140k over 68
+**Both routing levers were tried and both fail.** Measured, not assumed.
+
+*A longer timeout does not rescue it.* Watched to iteration 140k over 68
 minutes: 65,740 of 109,475 arcs still unrouted, and the arc-resolution rate
 fell monotonically 5.83 → 3.19 → 2.64 → 2.46 → **1.39** arcs/s. That is decay
 toward the `irotc_spi` terminal state, not slow convergence. Extrapolating the
 last measured rate gives ~13 h and rising. The run was stopped; raising
 `timeout_seconds` is not a fix.
+
+*An alternate router and seed do not rescue it either.* `--router router2
+--seed 7` reached routing iteration 2 with **25,087 wires overused** out of
+~275k (iteration 1: 25,991 overused, 44,412 total overuse) — the same
+congestion signature as the default router, reached sooner. Stopped there.
+Placement quality is the lever a different router pulls, and at 96% occupancy
+there is no slack for it to exploit.
+
+**Therefore trimming is the only remaining route** to a buildable Tang
+`six_step_probe`. Seeds and routers are covered ground; do not spend on them
+again.
 
 #### DECIDED 2026-08-16 — `six_step_probe` is quarantined, not retired
 

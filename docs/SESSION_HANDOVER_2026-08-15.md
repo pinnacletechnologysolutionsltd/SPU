@@ -268,9 +268,20 @@ direction, is not blocked by any of this.
    returns the number in ~2 s.
    Retiring it would have discarded the only spin positioned to give early
    warning; leaving it gated on buildability would have made the check
-   permanently red. Longer timeouts were ruled out by measurement — over 68
-   minutes the arc rate fell 5.83 → 1.39 arcs/s, decaying rather than
-   converging.
+   permanently red.
+   **Both routing levers are now ruled out by measurement, not assumption:**
+   - *Longer timeout* — over 68 minutes the arc rate fell
+     5.83 → 3.19 → 2.64 → 2.46 → 1.39 arcs/s with 65,740 of 109,475 arcs still
+     unrouted at iteration 140k. Decaying, not converging; no budget rescues it.
+   - *Alternate router + seed* (`--router router2 --seed 7`) — **NO GO.**
+     Killed at John's call. It reached routing iteration 2 with **25,087 of
+     ~275k wires overused** (iter 1: 25,991 overused / 44,412 overuse), i.e.
+     the same congestion signature as the default router, just arrived at
+     sooner. The lever is placement quality, and at 96% occupancy neither
+     router has room to work with.
+
+   **So trimming is the only route left** if a buildable Tang `six_step` is
+   ever wanted. Do not re-try seeds or routers — that ground is covered.
    **Corrected 2026-08-16:** I first called this a second `irotc_spi`. It is
    not. It grew 13,576 → 22,212 LUT4 with DFF unchanged at 1,518, so it is a
    *congestion* failure from growth at 96% occupancy — ordinary. `irotc_spi`
