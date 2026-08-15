@@ -183,28 +183,55 @@ session. `--self-test` still passes.
 so these have been broken for unknown periods — exactly as the SOM sidecar was
 for four weeks. A backlog becoming visible, not a collapse.
 
-**Six of seven share one signature**: Gowin placement/routing pathology on the
-25K, three naming a `MUX2_LUT*` cell directly. That is the mechanism `bc06156`
-recorded as "the Gowin mux blow-up remains unexplained" and that the 08-14
-handover recommended leaving alone. At one instance that was reasonable; **at
-six it is the highest-leverage bug in the tree.**
+### CORRECTED — these spins have outgrown the fabric
 
-`som_southbridge` is the exception and the cheapest win — a missing file in a
-synth script, two days old.
+**I first read the six failures as one shared "Gowin mux pathology". Measurement
+refuted that within the hour. Do not chase that lead.**
+
+| Target | LUT4 | Verdict |
+|---|---|---|
+| `rotc_probe` | 33,456 / 23,040 = **145%** | over capacity |
+| `som_southbridge` | 29,437 / 23,040 = **127%** | over capacity |
+| `som_probe` | 23,891 / 23,040 = **103%** | over capacity |
+| `series_stream_probe` | "no BELs remaining for LUT4" | over capacity |
+| `southbridge` | UNMEASURED (build stopped) | error names `MUX2_LUT8` |
+| `irotc_spi` | 12,136 / 23,040 = **52%** | genuine routing pathology |
+
+**The error messages misled me.** `rotc_probe` and `southbridge` both fail
+naming a `MUX2_LUT*` cell, which looks like the signature `bc06156` calls "the
+Gowin mux blow-up… unexplained". It is not: it is whichever cell the placer gave
+up on while the design sat 45% over capacity. **The message names a symptom.**
+Likewise `som_probe`'s "probably at utilisation limit" is literally true at 103%,
+while the *same* message on `irotc_spi` appears at 52% and is misleading.
+
+**`irotc_spi` is the only genuine pathology, a population of one** — much weaker
+grounds for a large investigation than "six instances" suggested.
+
+**This is a scope decision, not a debugging task.** These spins crossed the
+25K's capacity line at some point with nothing watching. Decide which belong on
+the A7 and which should be trimmed: `som_probe` at 103% is plausibly
+trimmable, `rotc_probe` at 145% is not. This is the boundary this repo already
+draws — the 25K is a split-probe regression board and full integration "belongs
+on an Artix-7 200T / Kintex-class board."
+
+`som_southbridge` had a *second*, real fault in front of the capacity one: a
+missing `spu13_axiomatic_gatekeeper` in its `.ys` (regression from `7b80a59`).
+Fixed in `2315d77` — necessary, but it only exposed the 127% underneath. My
+"cheapest win, one-line fix" call was wrong.
 
 **`spu4_probe` builds and is bit-reproducible**, so T7, the declared primary
 direction, is not blocked by any of this.
 
 ## 8. Open
 
-0. **The Gowin mux pathology is now the top technical item.** Six failing
-   targets share it. It was deferred at one instance on 2026-08-14 with
-   "recommend leaving it"; that recommendation is superseded by the count.
-   `bc06156` already refutes two candidate fixes (narrowing the counter to
-   `$clog2` bits; replacing the 48:1 dynamic index with a shift register) —
-   start from there, not from scratch.
-0b. **`som_southbridge` — add `spu13_axiomatic_gatekeeper` to that spin's
-   `.ys`.** Cheapest fix in the tree, and a two-day-old regression.
+0. **Decide the fate of the five over-capacity Tang spins** — `rotc_probe`
+   (145%), `som_southbridge` (127%), `som_probe` (103%), `series_stream_probe`,
+   `southbridge` (unmeasured). Move to A7, or trim to Tang size, or retire as
+   Tang targets. **A scope decision, not debugging.** Do *not* start from the
+   "Gowin mux pathology" hypothesis — it was mine, and it was refuted; see §7.
+0b. **Measure `southbridge`'s utilisation** — the one failing target with no
+   number. Build was stopped at session end. Expect over-capacity like its
+   siblings, but it is unmeasured, so do not assume.
 1. **Bench re-run for §3.2j** against the 41-char line (T7.4's cost).
 2. **Bench re-run for §3.2g.6** — build-validated only.
 3. **`dissonance` width limit** — 17-bit intermediate, 19 needed. Small tranche.
@@ -231,3 +258,16 @@ direction, is not blocked by any of this.
 - I proposed batching the INA226 order with the PCB parts; `BENCH_BOM.md` §2
   explicitly says not to, since it is the longest-lead dataset-track item and
   must not queue behind the bench_adapter layout.
+- **I diagnosed six failing board builds as one shared "Gowin mux pathology"
+  and called it the highest-leverage bug in the tree. Measurement refuted it
+  within the hour**: four of them are simply over the GW5A-25A's LUT4 capacity
+  (103–145%), and the `MUX2_LUT*` cell named in the errors is the symptom, not
+  the cause. `irotc_spi` at 52% is the only genuine pathology. See §7.
+- I called `som_southbridge` "the cheapest win, expected to be a one-line fix".
+  The one-line fix was correct and necessary but exposed a 127% capacity
+  failure underneath it.
+
+**Pattern worth noting for next session.** Both wrong calls came from reading
+an error *message* as a diagnosis instead of measuring the underlying quantity.
+The placer says "design is probably at utilisation limit" at 52% and at 127%
+alike. Measure the utilisation.
