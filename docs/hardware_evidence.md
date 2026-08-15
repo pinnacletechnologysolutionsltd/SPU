@@ -1774,6 +1774,21 @@ work, not Tang board bring-up blockers.
 
 ### 3.2j SPU-4 Sentinel Standalone Silicon Probe
 
+> **SUPERSEDED 2026-08-15 — needs a bench re-run before it is cited again.**
+> T7.4 exported `dissonance[7:0]` from `spu4_standalone_top` and extended this
+> probe's UART line from 36 to 41 characters to carry it. The bitstream below
+> and its golden line both describe the pre-T7.4 design. The current tree
+> builds `cbd6f83a2bf42de52b6f12a4044d72049c66b525f6c5c6981c1aef59eae6ed06`
+> at 979 LUT4 / 460 ALU / 336 DFF and
+> emits `SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF`. `R=FF` is the correct
+> settled value — the QROT fixture's residual is 0x3FF and saturates — and the
+> field is `R`, not `E`, because `E=` already means an error code on other
+> probes. The hash and line recorded in this
+> entry are left untouched because they record what actually ran on the board
+> on 2026-07-08. Re-run the probe, observe the 41-char line, then write a new
+> entry — do not edit this one's measurements.
+> Decision and cost table: `docs/SPU4_FAULT_REPORTING_CONTRACT.md`.
+
 **Date:** 2026-07-08 NZT — **first SPU-4 silicon.**
 
 **Build & flash:**
@@ -2515,7 +2530,7 @@ a record. Two known weaknesses:
 | 3.2g.4 | 07-17 | `946574dc…` | **absent** | `df6cffd` cand. | UNMEASURED |
 | 3.2g.5 | 07-17 | `8753c492…` | `build_25k_spu13_som_sidecar.sh` | **`f4e271e` CONFIRMED** | **REPRODUCES** from `f4e271e` (2026-08-14) |
 | 3.2g.6 | 07-17 | `f22a34e7…` | `build_a7.sh 100t somsidecar` | `df6cffd` cand. | DIFFERS — see §3.6a |
-| 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | `7cac67a` cand. | **REPRODUCES** at current HEAD, 4× |
+| 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | `7cac67a` cand. | **SUPERSEDED 08-15** — reproduced 4× up to T7.4; the tree now builds `cbd6f83a…` and the entry needs a bench re-run |
 | 3.2k | 07-10 | `4aedc901…` | `build_25k_spu13_irotc_probe.sh` | `d1244e0` cand. | **DIFFERS, cause explained** — builds `6ac1e8ab…`; `73acd91` (07-12) moved the IROTC code ROM to BSRAM after this proof, see §3.6d |
 | 3.2k.1 | 07-12 | `ca54c1dc…` | `build_25k_spu13_irotc_spi.sh` | `6f6ec43` cand. | UNMEASURED — 2026-08-14 run killed at 90 min; re-run without `--placed-svg`/`--routed-svg`/`--detailed-timing-report` |
 | 3.2l | 07-14 | `d72412f1…` | **absent** | `62dd6c3` cand. | UNMEASURED |

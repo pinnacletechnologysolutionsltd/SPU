@@ -38,6 +38,9 @@ module spu4_standalone_top #(
     output wire [15:0]  A_out, B_out, C_out, D_out,
     output wire         henosis_pulse,
 
+    // Saturating Quadray residual (T7.4, 2026-08-15)
+    output wire [7:0]   dissonance,
+
     // Cluster link (to/from SPU-13 governor)
     output wire [31:0]  node_tx,
     input  wire [15:0]  node_rx,
@@ -120,6 +123,25 @@ module spu4_standalone_top #(
 
     // ── Cluster link (spu_node_link) ─────────────────────────────────
     // Placeholder: pack status into node_tx, unpack commands from node_rx
+
+    // ── Dissonance: saturating absolute value of gasket residual ─────
+    // dissonance[7:0] = min(|A+B+C+D|, 255)
+    // 0x00 ⇔ laminar, 0xFF ⇔ saturated (|S| ≥ 255)
+    //
+    // Mirrors spu4_core.v:187-194 bit-for-bit, over the same ALU outputs.
+    // Kept identical deliberately: the core and this wrapper must not report
+    // different residuals for the same state. Note the shared 17-bit
+    // intermediate cannot represent the full range of four 16-bit signed
+    // addends (±131072 needs 19 bits), so a sufficiently large residual wraps
+    // before the saturation test sees it. That behaviour is inherited from
+    // spu4_core, not introduced here; widening it is a core-level change and
+    // would move both bitstreams.
+    wire signed [16:0] gasket_sum_ext;
+    assign gasket_sum_ext = {A_out[15], A_out} + {B_out[15], B_out}
+                          + {C_out[15], C_out} + {D_out[15], D_out};
+    wire [16:0] abs_sum;
+    assign abs_sum = gasket_sum_ext[16] ? (~gasket_sum_ext + 17'd1) : gasket_sum_ext;
+    assign dissonance = (abs_sum > 17'd255) ? 8'hFF : abs_sum[7:0];
 
     // ── Output assignments ───────────────────────────────────────────
     assign busy = seq_busy;

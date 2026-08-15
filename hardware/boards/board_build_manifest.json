@@ -22,10 +22,10 @@
       "name": "spu4_probe",
       "script": "build_25k_spu4_probe.sh",
       "artifact": "build/tang_primer_25k_spu4_probe.fs",
-      "sha256": "9599f5e420f46515d99b57d2b256489440341166941be3bc9992b0b827222664",
+      "sha256": "cbd6f83a2bf42de52b6f12a4044d72049c66b525f6c5c6981c1aef59eae6ed06",
       "approx_seconds": 60,
-      "silicon_evidence": "docs/hardware_evidence.md 3.2j",
-      "notes": "SPU-4 Sentinel first silicon 2026-07-08. Reproduced the documented silicon hash 9599f5e4... three times on 2026-08-14.",
+      "silicon_evidence": "docs/hardware_evidence.md 3.2j (SUPERSEDED -- needs a bench re-run)",
+      "notes": "Baseline moved 2026-08-15 by T7.4, which exported dissonance[7:0] from spu4_standalone_top and extended the probe UART line 36->41 chars. Was 9599f5e4..., which matched the 2026-07-08 silicon hash and reproduced 4x; that value now lives only in hardware_evidence.md 3.2j as the record of what was flashed. Current build is 979 LUT4 / 460 ALU / 336 DFF, golden line 'SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF'. NOTE 3.2j is superseded until the probe is re-run on hardware and the 41-char line observed.",
       "recorded_at_commit": "3c9e92d",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",

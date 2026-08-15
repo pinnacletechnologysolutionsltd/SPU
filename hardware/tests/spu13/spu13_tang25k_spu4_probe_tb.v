@@ -6,12 +6,17 @@
 // latched run, unarmed busy-stable-low).  Runs the board probe with fast
 // timing parameters, decodes status lines off the actual uart_tx pin, and
 // asserts the settled line is exactly:
-//   SPU4:P A=0000 B=0155 C=0155 D=0155\r\n
+//   SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF\r\n
+//
+// The R field (dissonance) was added 2026-08-15 by T7.4.  R=FF is the correct
+// settled value, not a fault: the QROT fixture leaves A=0 B=C=D=0x155, so the
+// gasket residual is 0x3FF=1023 and saturates.  Asserting FF rather than 00 is
+// deliberate — 00 is also what a stripped or stuck-at-zero port would read.
 
 module spu13_tang25k_spu4_probe_tb;
 
     localparam CLKS_PER_BIT = 8;
-    localparam LINE_LEN = 36;
+    localparam LINE_LEN = 41;
 
     reg clk = 1'b0;
     wire [2:0] led;
@@ -62,7 +67,9 @@ module spu13_tang25k_spu4_probe_tb;
         expect_line[27]=" "; expect_line[28]="D"; expect_line[29]="=";
         expect_line[30]="0"; expect_line[31]="1"; expect_line[32]="5";
         expect_line[33]="5";
-        expect_line[34]=8'h0D; expect_line[35]=8'h0A;
+        expect_line[34]=" "; expect_line[35]="R"; expect_line[36]="=";
+        expect_line[37]="F"; expect_line[38]="F";
+        expect_line[39]=8'h0D; expect_line[40]=8'h0A;
 
         errors = 0;
         lines_seen = 0;
@@ -102,7 +109,7 @@ module spu13_tang25k_spu4_probe_tb;
         end
 
         if (errors == 0)
-            $display("PASS: spu13_tang25k_spu4_probe_tb (SPU4:P A=0000 B=0155 C=0155 D=0155, %0d lines)",
+            $display("PASS: spu13_tang25k_spu4_probe_tb (SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF, %0d lines)",
                      lines_seen);
         else
             $display("FAIL: spu13_tang25k_spu4_probe_tb (%0d mismatches)", errors);

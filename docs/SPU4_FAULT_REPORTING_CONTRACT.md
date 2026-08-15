@@ -42,7 +42,58 @@ Not allowed until separately implemented and verified:
 - “The SPU-4 detects all arithmetic overflow or corruption.”
 - “A zero `dissonance` value proves the computation is fault-free.”
 
-## Signal-boundary finding, 2026-08-14 — OPEN, needs a product decision
+## Signal-boundary finding — RESOLVED 2026-08-15 (T7.4)
+
+**Decision: option 2, add the port and re-anchor.** `spu4_standalone_top` now
+carries `dissonance[7:0]`, so the allowed wording below is true for the
+standalone wrapper and the signal table above is accurate as written. The
+history that led here is kept below because the cost trade is worth preserving.
+
+Implementation, all measured on this tree:
+
+- The residual expression **mirrors `spu4_core.v:187-194` bit-for-bit** over the
+  same ALU outputs. Core and wrapper must never report different residuals for
+  the same state, so the two are deliberately identical rather than
+  independently written. See the caveat under "inherited width limit" below.
+- The probe's UART line was extended so the value is **observable on silicon**.
+  A port that reaches no pin would have re-anchored the bitstream while proving
+  nothing about the signal, making the bench session pure cost.
+- `spu4_standalone_top_tb` now asserts it, checking the **saturated** `0xFF`
+  produced by the QROT residual rather than the laminar `0x00`, because `0x00`
+  is also what an unconnected or stuck-at-zero port reads.
+
+| Variant | LUT4 | ALU | DFF | Bitstream | Golden line |
+|---|---|---|---|---|---|
+| Baseline (07-08 silicon) | 835 | 390 | 336 | `9599f5e4…22664` | 36-char |
+| Port only, not exposed | 865 | 390 | 336 | `6457e31e…630890` | 36-char |
+| **Port + UART (adopted)** | **979** | **460** | **336** | **`cbd6f83a…e6ed06`** | **41-char** |
+
+The adopted line is `SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF`. The field is
+**`R`**, not `E`: `E=` already denotes an error code on the IROTC and
+series-stream probes, where `00` is the healthy value, whereas the healthy
+SPU-4 fixture reads `FF`. `R=FF` is correct and expected — the QROT fixture
+settles at A=0, B=C=D=0x155, a residual of 0x3FF that saturates — so this
+probe's fixture is deliberately not a zero-residual state.
+
+The port-only row reproduces the 2026-08-14 attempt's figures and its predicted
+hash exactly, which independently confirms both that measurement and this one.
+
+**Inherited width limit, not introduced here.** The shared expression sign-
+extends to 17 bits and sums four 16-bit signed addends, whose true range
+(±131072) needs 19. A sufficiently large residual therefore wraps before the
+saturation test sees it, and can read as small. This is `spu4_core` behaviour
+that the wrapper now faithfully reproduces; widening it is a core-level change
+that would move both bitstreams and is **not** in T7.4's scope. Do not claim
+`dissonance` is a reliable magnitude for large residuals until that is fixed.
+
+**Outstanding: §3.2j needs a bench re-run.** The 2026-07-08 silicon proof and
+its golden line are superseded by this change. `docs/hardware_evidence.md`
+§3.2j retains the flashed hash as the record of what ran on the board, marked
+superseded; it must not be cited as current until the probe is re-run and the
+new 41-char line observed. Apply the standing bench discipline: N≥10 per
+condition with a positive control.
+
+## Signal-boundary finding, 2026-08-14 — the original open question
 
 The table above originally listed `dissonance[7:0]` without qualification while
 explicitly flagging the chiral-adder overflow as unexported. That was
@@ -79,6 +130,10 @@ repo's bit-reproducibility of its own silicon evidence.
 
 This is T7.4 territory — the tranche that selects the customer-facing wrapper —
 and should be decided there rather than incidentally.
+
+*Decided 2026-08-15: option 2, with the probe telemetry extended so the bench
+session proves the signal rather than only re-anchoring the hash. See the
+RESOLVED section above.*
 
 The chiral-adder overflow remains genuinely unexported, and its row is
 unchanged.

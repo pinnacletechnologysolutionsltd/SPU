@@ -3,10 +3,27 @@
 // Loads QROT test program, runs it, verifies ALU output,
 // emits status over UART at 115200 baud.
 //
-// UART protocol (36-char status line, repeats every LINE_PERIOD):
-//   SPU4:. A=xxxx B=xxxx C=xxxx D=xxxx\r\n   — still running
-//   SPU4:P A=0000 B=0155 C=0155 D=0155\r\n   — PASS
-//   SPU4:F A=xxxx B=xxxx C=xxxx D=xxxx\r\n   — FAIL
+// UART protocol (41-char status line, repeats every LINE_PERIOD):
+//   SPU4:. A=xxxx B=xxxx C=xxxx D=xxxx R=xx\r\n   — still running
+//   SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF\r\n   — PASS
+//   SPU4:F A=xxxx B=xxxx C=xxxx D=xxxx R=xx\r\n   — FAIL
+//
+// The R field is `dissonance[7:0]`, the saturating Quadray residual
+// min(|A+B+C+D|, 255) — 00 is laminar, FF is saturated.  It is `R`, not `E`,
+// because `E=` already means an error code on the IROTC and series-stream
+// probes, where 00 is the healthy value; here the healthy fixture reads FF.
+//
+// R=FF on the PASS line is correct and expected, not a fault: the QROT
+// fixture settles at A=0 B=C=D=0x155, so the gasket residual is 0x3FF=1023,
+// far past the 255 saturation point.  This probe's fixture is simply not a
+// zero-residual state.  Added 2026-08-15
+// under T7.4, which exported the signal from spu4_standalone_top so the
+// product wording holds for the wrapper and not only for spu4_core.
+//
+// This CHANGED the golden line from the 36-char form proven on 2026-07-08.
+// docs/hardware_evidence.md §3.2j records that older line and the bitstream
+// 9599f5e4…22664 that produced it; both are superseded and the entry needs a
+// bench re-run before it can be cited again.
 //
 // Rewritten 2026-07-08 after first silicon attempt: the original had a
 // multi-driven tx_active/tx_byte/tx_bit (message pump and bit engine in
@@ -41,6 +58,7 @@ module spu13_tang25k_spu4_probe #(
     wire        busy;
     wire [15:0] A_out, B_out, C_out, D_out;
     wire [7:0]  debug;
+    wire [7:0]  dissonance;
 
     spu4_standalone_top #(.MEM_DEPTH(64), .ADDR_W(6)) u_spu4 (
         .clk(sys_clk), .rst_n(rst_n),
@@ -50,7 +68,8 @@ module spu13_tang25k_spu4_probe #(
         .A_in(16'h0), .B_in(16'h0100), .C_in(16'h0100), .D_in(16'h0100),
         .F(16'h0050), .G(16'h00B5), .H(16'h0050),
         .A_out(A_out), .B_out(B_out), .C_out(C_out), .D_out(D_out),
-        .henosis_pulse(), .uart_tx(), .debug_status(debug)
+        .henosis_pulse(), .uart_tx(), .debug_status(debug),
+        .dissonance(dissonance)
     );
 
     // ── Program sequencer: QROT + HALT ──────────────────────────────
@@ -176,8 +195,13 @@ module spu13_tang25k_spu4_probe #(
                 6'd31: msg_byte = h(D_out[11:8]);
                 6'd32: msg_byte = h(D_out[7:4]);
                 6'd33: msg_byte = h(D_out[3:0]);
-                6'd34: msg_byte = 8'h0D;
-                6'd35: msg_byte = 8'h0A;
+                6'd34: msg_byte = " ";
+                6'd35: msg_byte = "R";
+                6'd36: msg_byte = "=";
+                6'd37: msg_byte = h(dissonance[7:4]);
+                6'd38: msg_byte = h(dissonance[3:0]);
+                6'd39: msg_byte = 8'h0D;
+                6'd40: msg_byte = 8'h0A;
                 default: msg_byte = 8'h20;
             endcase
         end
@@ -214,7 +238,7 @@ module spu13_tang25k_spu4_probe #(
             end else if (line_active) begin
                 tx_byte <= msg_byte(msg_idx);
                 tx_go <= 1'b1;
-                if (msg_idx == 6'd35) begin
+                if (msg_idx == 6'd40) begin
                     msg_idx <= 6'd0;
                     line_active <= 1'b0;
                 end else begin

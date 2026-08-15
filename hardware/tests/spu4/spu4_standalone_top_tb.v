@@ -14,6 +14,7 @@ module spu4_standalone_top_tb;
     wire [15:0] A_out, B_out, C_out, D_out;
     wire henosis_pulse, busy, done;
     wire [7:0] debug;
+    wire [7:0] dissonance;
 
     spu4_standalone_top u_top (
         .clk(clk), .rst_n(rst_n),
@@ -24,7 +25,8 @@ module spu4_standalone_top_tb;
         .F(F), .G(G), .H(H),
         .A_out(A_out), .B_out(B_out), .C_out(C_out), .D_out(D_out),
         .henosis_pulse(henosis_pulse),
-        .uart_tx(), .debug_status(debug)
+        .uart_tx(), .debug_status(debug),
+        .dissonance(dissonance)
     );
 
     always #41.66 clk = ~clk;  // 12 MHz
@@ -93,12 +95,20 @@ module spu4_standalone_top_tb;
             fail = fail + 1;
         end
 
-        // NOTE (2026-08-14): a `dissonance` check belongs here, but
-        // spu4_standalone_top does not export the signal — it is a port of
-        // spu4_core only. Adding it was tried and reverted: it grew the probe
-        // by 30 LUT4 and changed the bitstream SHA away from the value
-        // hardware_evidence.md §3.2j records as silicon-proven. See
-        // docs/SPU4_FAULT_REPORTING_CONTRACT.md for the open decision.
+        // Dissonance, exported from the wrapper under T7.4 on 2026-08-15.
+        // The QROT case above leaves A=0000 B=C=D=0155, so the gasket residual
+        // is 0 + 3*0x155 = 0x3FF = 1023, well past the saturation point, and
+        // the port must read 0xFF.  Checking the saturated value rather than
+        // the laminar 0x00 is deliberate: 0x00 is also what an unconnected or
+        // stuck-at-zero port reads, so it cannot distinguish a working signal
+        // from a dead one.
+        if (dissonance === 8'hFF) begin
+            $display("PASS: dissonance saturates on the QROT residual");
+            pass = pass + 1;
+        end else begin
+            $display("FAIL: expected dissonance FF, got %02x", dissonance);
+            fail = fail + 1;
+        end
 
         // ── Load program: QLDI + QADD sequence ──────────────────────
         //   0: QLDI R1, 0x01  (load 1 into R1 P component)
