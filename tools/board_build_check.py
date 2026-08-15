@@ -94,11 +94,17 @@ def build_one(entry):
     if artifact.exists():
         artifact.unlink()
 
+    # Per-entry override.  A spin that cannot route does not fail fast: the
+    # irotc_spi livelock ran 8.5 h without converging and had to be killed by
+    # hand (docs/hardware_evidence.md 3.6f).  Budget from approx_seconds so one
+    # pathological target cannot stall the whole check.
+    limit = entry.get("timeout_seconds") or min(
+        BUILD_TIMEOUT, max(600, 10 * entry.get("approx_seconds", 120)))
     try:
         r = subprocess.run(["bash", str(script)], cwd=ROOT, capture_output=True,
-                           text=True, timeout=BUILD_TIMEOUT)
+                           text=True, timeout=limit)
     except subprocess.TimeoutExpired:
-        return "BUILD_TIMEOUT", None, f"exceeded {BUILD_TIMEOUT}s"
+        return "BUILD_TIMEOUT", None, f"exceeded {limit}s"
 
     if r.returncode != 0:
         tail = [ln for ln in (r.stdout + r.stderr).splitlines()
@@ -121,6 +127,21 @@ def check(entries, record):
         if status != "BUILT":
             print(f"[{name}] {status}: {detail}")
             results.append((name, status, detail))
+            continue
+
+        # Build-only entries: the gate is "does it still build", not "is the
+        # bitstream identical".  Full-core spins compile most of the core, so
+        # they absorb every core commit and a hash mismatch says nothing --
+        # see docs/hardware_evidence.md 3.6e.  What they DO need is a
+        # buildability check: the SOM sidecar was unbuildable for four weeks
+        # and irotc_spi still is, and both were found by accident.
+        if entry.get("check") == "builds":
+            entry["last_built_sha256"] = actual
+            if record:
+                entry["recorded_at_commit"] = git_commit()
+                entry["recorded_toolchain"] = tools
+            print(f"[{name}] BUILDS {actual[:16]}")
+            results.append((name, "BUILDS", actual))
             continue
 
         if record:
@@ -153,10 +174,13 @@ def self_test(entries):
     corrupts the expected hash of the cheapest entry in memory and confirms
     the comparison reports DIFFERS.  Nothing on disk is modified.
     """
-    if not entries:
-        print("self-test: no entries")
+    # Only hash-mode entries have a comparison to corrupt; build-only entries
+    # are gated on exit status, not on a baseline.
+    hashed = [e for e in entries if e.get("check") != "builds"]
+    if not hashed:
+        print("self-test: no hash-compared entries")
         return 1
-    entry = dict(sorted(entries, key=lambda e: e.get("approx_seconds", 9999))[0])
+    entry = dict(sorted(hashed, key=lambda e: e.get("approx_seconds", 9999))[0])
     real = entry.get("sha256")
     if not real:
         print(f"self-test: {entry['name']} has no baseline; run --record first")
@@ -208,14 +232,19 @@ def main():
         return 0
 
     print("\n================ BOARD BUILD CHECK ================")
-    bad = [r for r in results if r[1] != "REPRODUCES"]
+    OK = ("REPRODUCES", "BUILDS")
+    bad = [r for r in results if r[1] not in OK]
     for name, status, detail in results:
         print(f"  {status:<14} {name}")
-    print(f"\n{len(results) - len(bad)} reproduce, {len(bad)} not")
+    n_repro = sum(1 for r in results if r[1] == "REPRODUCES")
+    n_build = sum(1 for r in results if r[1] == "BUILDS")
+    print(f"\n{n_repro} reproduce, {n_build} build (build-only), {len(bad)} not")
     if bad:
         print("\nA DIFFERS is not automatically a bug -- it means the artifact")
         print("changed and no one recorded that it was meant to. If the change")
         print("was intended, rerun with --record so it appears in review.")
+        print("A BUILD_FAILED is always a bug: that target cannot be built at")
+        print("all from this tree.")
     print("===================================================")
     return 1 if bad else 0
 
