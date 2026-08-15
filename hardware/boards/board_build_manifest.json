@@ -30,7 +30,7 @@
     "measurements and re-entry conditions: hardware_evidence.md 3.6g.",
     "Re-add any of them here if it is trimmed under 23,040 LUT4 and rebuilt."
   ],
-  "recorded_at_commit": "2f177d7",
+  "recorded_at_commit": "d5d91fb",
   "recorded_toolchain": {
     "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
     "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
@@ -200,11 +200,24 @@
     {
       "name": "six_step_probe",
       "script": "build_25k_spu13_six_step_probe.sh",
-      "artifact": "build/tang_primer_25k_spu13_six_step_probe.fs",
-      "approx_seconds": 1200,
-      "notes": "KNOWN FAILING, kept in the check deliberately -- unlike the five spins retired 2026-08-16, this one FITS and is worth watching. Measured 2026-08-16: 22,212/23,040 LUT4 = 96%, placement succeeds in 484s, post-placement timing PASSES at 25.77 MHz against a 12 MHz constraint. It fails in the ROUTER through congestion: arc resolution fell 5.83 -> 2.46 arcs/s over four windows while per-iteration cost roughly doubled, with 67,337 of 109,475 arcs still unrouted at iteration 126k. Cause is growth, not a router anomaly -- it was 13,576 LUT4 / 1,518 DFF / 1,024 ALU when proven in silicon and is 22,212 / 1,518 / 1,600 now, i.e. DFF unchanged and combinational logic up ~60%. Do NOT group it with irotc_spi, which fails to route at 52% and is a different problem (3.6f). approx_seconds raised 120 -> 1200 to reflect measurement; it still will not finish. Cheap next steps: longer timeout and a different seed, then trimming. See hardware_evidence.md 3.6g. No baseline recorded.",
-      "status_2026_08_15": "FAILING",
-      "status_2026_08_16": "FAILING -- router congestion at 96% LUT4"
+      "approx_seconds": 700,
+      "notes": "QUARANTINED, not retired: watched on utilisation, not gated on building. It does NOT build -- at 96% occupancy the router congests (67,337 of 109,475 arcs unrouted at iteration 126k; arc rate fell 5.83 -> 1.39 arcs/s over five windows across 68 minutes, i.e. decaying, not converging, so no timeout rescues it). But it FITS, places in 484s, and passes timing at 25.77 MHz against 12 MHz, and it is the only spin sitting on the capacity boundary -- which makes it the early warning for the growth that cost five spins their Tang targets on 2026-08-16. Gating it on buildability would fail every run and train everyone to ignore this check; retiring it would discard the warning. So the gate is occupancy. Cause is growth, not a router anomaly: 13,576 -> 22,212 LUT4 and 1,024 -> 1,600 ALU with DFF unchanged at 1,518, i.e. pure combinational growth. Do NOT group it with irotc_spi, which fails to route at 52% and is a different problem (3.6f). Its 2026-06-30 Tang silicon result (UART 'KIN:P P:5 E:00', 40-second soak) stands as history, and six-step also has A7 ROBOTICS coverage. See hardware_evidence.md 3.6g.",
+      "status_2026_08_16": "FITS at 96% -- does not route; watched on occupancy",
+      "check": "utilisation",
+      "utilisation": {
+        "ys": "hardware/boards/tang_primer_25k/synth_gowin_25k_spu13_six_step_probe.ys",
+        "json": "build/spu13_six_step_probe.json",
+        "cst": "hardware/boards/tang_primer_25k/tang_primer_25k.cst",
+        "max_lut4_pct": 100,
+        "lut4": 22212,
+        "lut4_avail": 23040,
+        "lut4_pct": 96.4
+      },
+      "recorded_at_commit": "d5d91fb",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
     },
     {
       "name": "southbridge_link",

@@ -259,17 +259,27 @@ direction, is not blocked by any of this.
    while LUT4 sits at 266%. `series_stream_probe` (**305%**) and
    `six_step_probe` (**96%, fits — a router problem**) were measured at the
    same time, so every failing target now has a number. See §3.6g.
-0c. **`six_step_probe` is the one left open, and it WILL fail the board-build
-   check every run.** It was not in the retired five because it *fits* — 96%,
-   places, passes timing at 25.77 MHz — and is deliberately kept in the
-   manifest as worth watching. But a permanently-failing entry is exactly what
-   trains people to ignore the check, so it needs a call soon: raise the
-   timeout and try seeds, trim it, or retire it too.
+0c. ~~**`six_step_probe` will fail the board-build check every run.**~~
+   **RESOLVED 2026-08-16 — quarantined, not retired.** A third check mode,
+   `"check": "utilisation"`, now gates it on LUT4 occupancy instead of on
+   building: synthesise, pack, compare against a ceiling, skip placement and
+   routing. Baseline **22,212/23,040 = 96.4%**, ceiling 100%; growth below the
+   ceiling is reported and recorded but does not fail. `nextpnr --pack-only`
+   returns the number in ~2 s.
+   Retiring it would have discarded the only spin positioned to give early
+   warning; leaving it gated on buildability would have made the check
+   permanently red. Longer timeouts were ruled out by measurement — over 68
+   minutes the arc rate fell 5.83 → 1.39 arcs/s, decaying rather than
+   converging.
    **Corrected 2026-08-16:** I first called this a second `irotc_spi`. It is
    not. It grew 13,576 → 22,212 LUT4 with DFF unchanged at 1,518, so it is a
    *congestion* failure from growth at 96% occupancy — ordinary. `irotc_spi`
    failing to route at **52%** is still a population of one. Same symptom,
    different cause; do not merge them.
+   **Still open:** the two remaining `builds`-mode targets (`rplu2_arith_probe`,
+   `math_probe`) are candidates for the same treatment — it would replace a
+   300 s build gate with a 2 s number. They currently build fine, so this is an
+   optimisation, not a fix.
 1. **Bench re-run for §3.2j** against the 41-char line (T7.4's cost). Flash
    `0061b02f…`, not `cbd6f83a…` — item 3 moved the baseline again on 08-16, and
    one run now re-anchors both changes. Golden line is unchanged:

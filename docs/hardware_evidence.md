@@ -2905,13 +2905,47 @@ with ample room. **Routing-with-room is still a population of one.** The two
 share a symptom, not a cause, and this is the same trap §3.6g is otherwise
 about: reading a shared error for a shared diagnosis. Do not merge them.
 
-**What this means for `six_step_probe`.** It still should not be grouped with
-the five over-capacity spins — it fits, places, and passes timing at 25.77 MHz.
-But its problem *is* size, so the cheap steps are a longer timeout and a
-different seed first (its manifest `approx_seconds` of 300 was never near the
-truth — placement alone takes 484 s), and trimming if those fail. It is on the
-same trajectory as the retired spins and roughly one tranche of growth from
-joining them.
+**A longer timeout does not rescue it.** Watched to iteration 140k over 68
+minutes: 65,740 of 109,475 arcs still unrouted, and the arc-resolution rate
+fell monotonically 5.83 → 3.19 → 2.64 → 2.46 → **1.39** arcs/s. That is decay
+toward the `irotc_spi` terminal state, not slow convergence. Extrapolating the
+last measured rate gives ~13 h and rising. The run was stopped; raising
+`timeout_seconds` is not a fix.
+
+#### DECIDED 2026-08-16 — `six_step_probe` is quarantined, not retired
+
+It is the one spin sitting on the capacity boundary, which makes it the early
+warning for exactly the growth that cost five spins their Tang targets. Two
+obvious dispositions are both wrong:
+
+- **Retire it** → discards the only canary. The next design to cross the line
+  gets found the way these five were: years late, at 305%.
+- **Keep gating it on buildability** → it fails every run, and a permanently
+  red check is one everybody learns to ignore. That is how the four-week SOM
+  sidecar outage survived.
+
+So the gate changed instead of the target. `six_step_probe` now uses
+`"check": "utilisation"` in `board_build_manifest.json`: synthesise, pack,
+compare LUT4 occupancy against a ceiling, and **skip placement and routing
+entirely**. Recorded baseline **22,212 / 23,040 = 96.4%**, ceiling 100%.
+
+**Why occupancy is the better quantity.** Neither `sha` nor `builds` can give
+early warning, because both need a build that completes, and a design over
+capacity never completes — they report the failure only once it is total, and
+take hours to do it. Occupancy moves gradually, is deterministic (no placer or
+router seed noise), and `nextpnr --pack-only` reports it in **about two
+seconds**. Growth below the ceiling is printed and recorded but does not fail,
+so it surfaces in a manifest diff during review rather than as noise.
+
+Had this gate existed, all five retirements would have tripped it at 101%
+rather than being discovered at 103–305%. The manifest now runs 13 `sha`,
+2 `builds` and 1 `utilisation`; the two remaining `builds` entries
+(`rplu2_arith_probe`, `math_probe`) build fine today, so converting them is an
+optimisation rather than a fix.
+
+The spin still does not build, and that is accepted: its 2026-06-30 Tang
+silicon result stands as history, and six-step also has A7 ROBOTICS coverage,
+so nothing currently depends on producing a Tang bitstream from it.
 
 **None of this is new breakage.** No board top was rebuilt between its original
 spin and `239bf4c`, so these have been failing for unknown periods — the same
