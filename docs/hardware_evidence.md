@@ -2532,7 +2532,7 @@ a record. Two known weaknesses:
 | 3.2g.6 | 07-17 | `f22a34e7…` | `build_a7.sh 100t somsidecar` | `df6cffd` cand. | DIFFERS — see §3.6a |
 | 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | `7cac67a` cand. | **SUPERSEDED 08-15** — reproduced 4× up to T7.4; the tree now builds `cbd6f83a…` and the entry needs a bench re-run |
 | 3.2k | 07-10 | `4aedc901…` | `build_25k_spu13_irotc_probe.sh` | `d1244e0` cand. | **DIFFERS, cause explained** — builds `6ac1e8ab…`; `73acd91` (07-12) moved the IROTC code ROM to BSRAM after this proof, see §3.6d |
-| 3.2k.1 | 07-12 | `ca54c1dc…` | `build_25k_spu13_irotc_spi.sh` | `6f6ec43` cand. | UNMEASURED — 2026-08-14 run killed at 90 min; re-run without `--placed-svg`/`--routed-svg`/`--detailed-timing-report` |
+| 3.2k.1 | 07-12 | `ca54c1dc…` | `build_25k_spu13_irotc_spi.sh` | `6f6ec43` cand. | **BUILD_FAILED — not reproducible from any tested tree**, see §3.6f |
 | 3.2l | 07-14 | `d72412f1…` | **absent** | `62dd6c3` cand. | UNMEASURED |
 | 3.2l.1 | 08-09 | `40373ab8…` | `ZPHI_KARATSUBA=1 A7_SEED=1 build_a7.sh 100t tensegritylink` | `0e0a4a3` cand. | UNMEASURED |
 | 3.2m | 08-03 | 8 spins, see entry | `build_a7.sh 100t <spin>` per spin | `7e6ac4a` cand. | UNMEASURED — and **not anchorable as written**, see below |
@@ -2688,6 +2688,62 @@ which is how checks get ignored. For those spins the honest anchor is the
 commit, and re-verification means re-running the bench, not re-hashing. The
 manifest should stay biased toward narrow probes, where a hash mismatch means
 something changed that nobody intended.
+
+#### 3.6f §3.2k.1 is BUILD_FAILED — the Tang 25K no longer builds this spin
+
+Measured 2026-08-15. §3.2k.1 was previously recorded as UNMEASURED on the
+belief that the 2026-08-14 attempt had merely been slow, killed at 90 minutes
+because of `--placed-svg` / `--routed-svg` / `--detailed-timing-report`. **That
+explanation is refuted.** All three flags were removed and the build still does
+not complete.
+
+Two trees were measured, and neither produces a bitstream:
+
+| Tree | Cells | Placement | Routing |
+|---|---|---|---|
+| HEAD (`f9754a6`) | 23,081 | succeeds | **livelock** — 317k iterations / 8.5 h, plateaus at ~58,011 of 71,950 arcs unrouted |
+| Anchor `6f6ec43` | 22,997 | **fails legalisation** | never reached |
+
+The router does not stall so much as thrash: it resolved 7,728 arcs in the
+first 40k iterations and about 141 in the last 37k, while per-iteration cost
+rose roughly 80× (2.31 → 183 s per 1000 iterations). At the terminal rate the
+remaining arcs would take on the order of 26 days, still degrading.
+
+**Nothing is near a resource limit** in either tree — 52% LUT4, 37% DFF, 15%
+MUX2_LUT5, 1/56 BSRAM, 14% IOB. The placer's `design is probably at utilisation
+limit` text is misleading here; this is a legalisation failure on a design with
+ample room, the same class as the pre-BSRAM livelock `73acd91` describes, and
+the ~58k plateau closely matches the ~58.9k that commit records.
+
+**What this rules out.**
+
+- *A regressing commit.* The two trees differ by 84 cells (0.37%) yet fail in
+  **different phases**, and HEAD places where the anchor does not. The 21
+  commits since the anchor did not cause this.
+- *`5399b4c`, the prime suspect.* It flipped `USE_STRUCTURED_INVERTER` to
+  default-on, and its own message notes the default governs "other tops" — but
+  synthesising this spin with the parameter at 1 and at 0 gives **identical**
+  cell counts (23,081 both ways). The structured inverter is unreachable from
+  this spin's top and is pruned. Exonerated.
+- *Design growth.* 0.37% is not a capacity story.
+
+**What it leaves.** The spin sits at the edge of what the Gowin placer and
+router can handle for this design, and its outcome is unstable to perturbations
+far smaller than any intentional change. §3.2k.1's 2026-07-12 bitstream is
+therefore **not reproducible from its own sources on this toolchain**, and the
+entry cannot be re-anchored by rebuilding.
+
+One alternative is not excluded: that the toolchain moved since July in a way
+that affects this design specifically. The 2026-08-14 toolchain check covered
+the SOM sidecar, not this spin. Against that, the narrow `irotc_probe` (§3.2k)
+still builds today, so Gowin support is not globally broken.
+
+**Recommendation: stop treating `irotc_spi` as a Tang 25K target.** This is
+consistent with what this document already says — the 25K's role is "closed as
+a split-probe regression target" and "full concurrent integration belongs on an
+Artix-7 200T / Kintex-class board." A 51-source full-core spin is exactly what
+that boundary excludes. The 2026-07-12 silicon result stands as a historical
+observation; it should not be presented as a currently reproducible build.
 
 ---
 
