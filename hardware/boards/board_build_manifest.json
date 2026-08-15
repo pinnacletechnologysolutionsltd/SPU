@@ -244,7 +244,7 @@
       "artifact": "build/tang_primer_25k_spu13_som_southbridge.fs",
       "approx_seconds": 300,
       "check": "builds",
-      "notes": "BUILD_FAILED 2026-08-15: SYNTH error, not placement -- spu13_axiomatic_gatekeeper is instantiated in spu13_core but absent from this spin's .ys file list. Regression from 7b80a59 (2026-08-13) wiring the gatekeeper in. Distinct from the placement family and expected to be a one-line fix.",
+      "notes": "BUILD_FAILED. Two distinct faults, one behind the other. (1) SYNTH: spu13_axiomatic_gatekeeper was instantiated in spu13_core but absent from this spin's .ys file list, a regression from 7b80a59 (2026-08-13) -- FIXED 2026-08-15. (2) Underneath it, the design does not fit: 29,437 / 23,040 LUT4 = 127% on the GW5A-25A. Unlike irotc_spi (52% LUT4), here the placer's 'utilisation limit' message is literally correct. This is a capacity problem, not the Gowin mux pathology, and it is not fixable by a synth-script edit. Whether it ever fit on this fabric is unknown: the synth error masked the capacity number, so there is no prior measurement to compare against.",
       "status_2026_08_15": "FAILING"
     },
     {

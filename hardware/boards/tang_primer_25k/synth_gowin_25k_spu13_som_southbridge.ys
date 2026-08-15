@@ -38,6 +38,7 @@ read_verilog -I hardware/rtl/arch \
     hardware/rtl/core/spu13/spu_som_weight_bram.v \
     hardware/rtl/core/spu13/spu_som_bmu.v \
     hardware/rtl/core/spu13/spu_som_train.v \
+    hardware/rtl/core/spu13/spu13_axiomatic_gatekeeper.v \
     hardware/rtl/core/spu13/spu_cluster_reduce.v \
     hardware/rtl/arch/spu_optional_stubs.v
 
