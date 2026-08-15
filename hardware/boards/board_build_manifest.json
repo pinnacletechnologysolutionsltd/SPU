@@ -30,10 +30,10 @@
       "name": "spu4_probe",
       "script": "build_25k_spu4_probe.sh",
       "artifact": "build/tang_primer_25k_spu4_probe.fs",
-      "sha256": "cbd6f83a2bf42de52b6f12a4044d72049c66b525f6c5c6981c1aef59eae6ed06",
+      "sha256": "0061b02f17a0f945110ad0aed269556568eb1412875268a3679baeb1cb56d67c",
       "approx_seconds": 60,
       "silicon_evidence": "docs/hardware_evidence.md 3.2j (SUPERSEDED -- needs a bench re-run)",
-      "notes": "Baseline moved 2026-08-15 by T7.4, which exported dissonance[7:0] from spu4_standalone_top and extended the probe UART line 36->41 chars. Was 9599f5e4..., which matched the 2026-07-08 silicon hash and reproduced 4x; that value now lives only in hardware_evidence.md 3.2j as the record of what was flashed. Current build is 979 LUT4 / 460 ALU / 336 DFF, golden line 'SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF'. NOTE 3.2j is superseded until the probe is re-run on hardware and the 41-char line observed.",
+      "notes": "Baseline moved TWICE since the 2026-07-08 silicon run, and 3.2j stays superseded until one bench session re-runs the probe. (1) 2026-08-15, T7.4 exported dissonance[7:0] from spu4_standalone_top and extended the probe UART line 36->41 chars: 9599f5e4... -> cbd6f83a..., 835 -> 979 LUT4. (2) 2026-08-16, the dissonance residual width was fixed 17 -> 19 bits and the duplicated expression extracted into spu4_dissonance.v: cbd6f83a... -> 0061b02f..., 979 -> 982 LUT4 / 460 -> 462 ALU / 336 DFF unchanged, 160.38 MHz, reproduced 2x. The two moves were deliberately batched before the bench run so one hardware session re-anchors both. Golden line is UNCHANGED by (2) -- 'SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF' -- because the QROT fixture residual of 0x3FF saturates either way; the width bug is only observable past +/-65536, which that fixture does not reach. 9599f5e4... now lives only in hardware_evidence.md 3.2j as the record of what was flashed.",
       "recorded_at_commit": "4f3fc9b",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",

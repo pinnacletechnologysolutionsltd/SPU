@@ -22,7 +22,7 @@ fault contract.
 | `done` | The programmed operation or sequence reached its completion condition. | No. |
 | `busy` | The standalone sequencer is executing. | No. |
 | `henosis_pulse` | The Euclidean ALU applied its defined fold/normalization path for an arithmetic result. | No; it is an observable normalization event. |
-| `dissonance[7:0]` | Saturating absolute value of the Quadray gasket residual \(|A+B+C+D|\). `0` means zero residual; `0xff` means saturated or larger. Exported by both `spu4_core` and `spu4_standalone_top`. | No; it is an invariant telemetry value. |
+| `dissonance[7:0]` | Saturating absolute value of the Quadray gasket residual \(|A+B+C+D|\). `0` means zero residual; `0xff` means saturated or larger. Monotone and correct across the **full reachable range** (±131072) since the 2026-08-16 width fix — before that a maximal residual could read `0x00`. Exported by both `spu4_core` and `spu4_standalone_top` from one shared module. | No; it is an invariant telemetry value. |
 | `debug_status` | Wrapper state bits, including busy, done, henosis, and decoder/status indicators. | No; fields are status, not a universal fault bitmap. |
 | chiral-adder `overflow` | The phinary adder crossed its configured laminar threshold during that operation. | Local event only; not currently exported by `spu4_standalone_top`. |
 
@@ -51,10 +51,13 @@ history that led here is kept below because the cost trade is worth preserving.
 
 Implementation, all measured on this tree:
 
-- The residual expression **mirrors `spu4_core.v:187-194` bit-for-bit** over the
-  same ALU outputs. Core and wrapper must never report different residuals for
-  the same state, so the two are deliberately identical rather than
-  independently written. See the caveat under "inherited width limit" below.
+- The residual expression is **one shared module**, `spu4_dissonance.v`,
+  instantiated by both `spu4_core` and `spu4_standalone_top`. Core and wrapper
+  must never report different residuals for the same state; sharing the module
+  makes that structural. *(It was a copied expression in two files until
+  2026-08-16, kept in step only by a comment. They had already diverged once —
+  T7.4 found the wrapper had no port at all — and the width bug below then had
+  to be fixed twice.)*
 - The probe's UART line was extended so the value is **observable on silicon**.
   A port that reaches no pin would have re-anchored the bitstream while proving
   nothing about the signal, making the bench session pure cost.
@@ -66,7 +69,8 @@ Implementation, all measured on this tree:
 |---|---|---|---|---|---|
 | Baseline (07-08 silicon) | 835 | 390 | 336 | `9599f5e4…22664` | 36-char |
 | Port only, not exposed | 865 | 390 | 336 | `6457e31e…630890` | 36-char |
-| **Port + UART (adopted)** | **979** | **460** | **336** | **`cbd6f83a…e6ed06`** | **41-char** |
+| Port + UART (adopted by T7.4) | 979 | 460 | 336 | `cbd6f83a…e6ed06` | 41-char |
+| **+ 19-bit width fix (current)** | **982** | **462** | **336** | **`0061b02f…56d67c`** | **41-char, unchanged** |
 
 The adopted line is `SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF`. The field is
 **`R`**, not `E`: `E=` already denotes an error code on the IROTC and
@@ -78,13 +82,28 @@ probe's fixture is deliberately not a zero-residual state.
 The port-only row reproduces the 2026-08-14 attempt's figures and its predicted
 hash exactly, which independently confirms both that measurement and this one.
 
-**Inherited width limit, not introduced here.** The shared expression sign-
-extends to 17 bits and sums four 16-bit signed addends, whose true range
-(±131072) needs 19. A sufficiently large residual therefore wraps before the
-saturation test sees it, and can read as small. This is `spu4_core` behaviour
-that the wrapper now faithfully reproduces; widening it is a core-level change
-that would move both bitstreams and is **not** in T7.4's scope. Do not claim
-`dissonance` is a reliable magnitude for large residuals until that is fixed.
+**Width limit — FIXED 2026-08-16.** The shared expression sign-extended to
+17 bits and summed four 16-bit signed addends, whose true range (±131072)
+needs 19. A large residual therefore wrapped before the saturation test saw
+it and could read *small* — `A=B=C=D=0x8000`, the maximum reachable residual,
+reported `0x00`, i.e. perfectly laminar.
+
+Widened to 19 bits (18 holds the range, but negating −131072 in 18-bit signed
+wraps back to itself, so the abs step needs the extra bit). Covered by
+`hardware/tests/spu4/spu4_dissonance_width_tb.v` — 2016 checks against an
+independent 32-bit reference, verified non-vacuous by replaying against the
+old expression. Full write-up: `hardware_evidence.md` §3.2j.1.
+
+**Cost: +3 LUT4, +2 ALU, 0 DFF**, and the bitstream moves
+`cbd6f83a…` → `0061b02f…` (982 / 462 / 336, 160.38 MHz, reproduced 2×). The
+**golden line does not change** — the QROT fixture's 0x3FF saturates under
+both widths — so the §3.2j bench re-run that T7.4 already owed now validates
+both changes in one session. That is why the fix was taken before the bench
+run rather than after.
+
+With this closed, `dissonance` **is** a reliable saturating magnitude across
+the full reachable input range. It remains, per the base contract above, a
+telemetry value and not a universal fault indicator.
 
 **Outstanding: §3.2j needs a bench re-run.** The 2026-07-08 silicon proof and
 its golden line are superseded by this change. `docs/hardware_evidence.md`

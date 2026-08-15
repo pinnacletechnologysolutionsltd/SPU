@@ -183,15 +183,13 @@ module spu4_core (
     assign C_out = alu_C;
     assign D_out = alu_D;
 
-    // Dissonance: saturating absolute value of gasket residual
-    // dissonance[7:0] = min(|A+B+C+D|, 255)
-    // 0x00 ⇔ laminar, 0xFF ⇔ saturated (|S| ≥ 255)
-    wire signed [16:0] gasket_sum_ext;
-    assign gasket_sum_ext = {alu_A[15], alu_A} + {alu_B[15], alu_B}
-                          + {alu_C[15], alu_C} + {alu_D[15], alu_D};
-    wire [16:0] abs_sum;
-    assign abs_sum = gasket_sum_ext[16] ? (~gasket_sum_ext + 17'd1) : gasket_sum_ext;
-    assign dissonance = (abs_sum > 17'd255) ? 8'hFF : abs_sum[7:0];
+    // Dissonance: saturating absolute value of the gasket residual.
+    // Shared with spu4_standalone_top via one module, so the core and the
+    // product wrapper cannot report different residuals for the same state.
+    spu4_dissonance u_dissonance (
+        .A(alu_A), .B(alu_B), .C(alu_C), .D(alu_D),
+        .dissonance(dissonance)
+    );
 
     // ── Whisper v1 coherence-plane emitter ──────────────────────────
     // The emitter continuously broadcasts the node's laminar state,

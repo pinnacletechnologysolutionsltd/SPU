@@ -1777,10 +1777,7 @@ work, not Tang board bring-up blockers.
 > **SUPERSEDED 2026-08-15 — needs a bench re-run before it is cited again.**
 > T7.4 exported `dissonance[7:0]` from `spu4_standalone_top` and extended this
 > probe's UART line from 36 to 41 characters to carry it. The bitstream below
-> and its golden line both describe the pre-T7.4 design. The current tree
-> builds `cbd6f83a2bf42de52b6f12a4044d72049c66b525f6c5c6981c1aef59eae6ed06`
-> at 979 LUT4 / 460 ALU / 336 DFF and
-> emits `SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF`. `R=FF` is the correct
+> and its golden line both describe the pre-T7.4 design. `R=FF` is the correct
 > settled value — the QROT fixture's residual is 0x3FF and saturates — and the
 > field is `R`, not `E`, because `E=` already means an error code on other
 > probes. The hash and line recorded in this
@@ -1788,6 +1785,17 @@ work, not Tang board bring-up blockers.
 > on 2026-07-08. Re-run the probe, observe the 41-char line, then write a new
 > entry — do not edit this one's measurements.
 > Decision and cost table: `docs/SPU4_FAULT_REPORTING_CONTRACT.md`.
+>
+> **Baseline moved a second time, 2026-08-16.** The `dissonance` residual
+> width was fixed (17 → 19 bits, §3.2j.1 below) and the duplicated expression
+> extracted into `spu4_dissonance.v`. The tree now builds
+> `0061b02f17a0f945110ad0aed269556568eb1412875268a3679baeb1cb56d67c`
+> at **982 LUT4 / 462 ALU / 336 DFF, 160.38 MHz**, reproduced 2×
+> (was `cbd6f83a…` at 979 / 460 / 336 under T7.4 alone).
+> **The golden line is unchanged** — the QROT fixture's 0x3FF saturates under
+> both widths — so the pending bench re-run validates both changes at once.
+> The two moves were batched deliberately for that reason: doing the width fix
+> after the bench session would have cost a second one.
 
 **Date:** 2026-07-08 NZT — **first SPU-4 silicon.**
 
@@ -1833,6 +1841,50 @@ simulation after the SOM/BMU golden line exonerated the bench path. The
 UART engine now reuses the SOM probe's silicon-proven pattern; regression
 is `hardware/tests/spu13/spu13_tang25k_spu4_probe_tb.v`, which decodes the
 golden line byte-for-byte off `uart_tx`.
+
+#### 3.2j.1 The `dissonance` residual read laminar under maximum fault (fixed 2026-08-16)
+
+Found while closing T7.4 on 2026-08-15, documented then, fixed now. **This is
+a simulation and synthesis result. No board was involved**; the 2026-07-08
+silicon in §3.2j ran the defective version.
+
+`dissonance[7:0] = min(|A+B+C+D|, 255)` summed four sign-extended 16-bit
+addends in a **17-bit** context. Four 16-bit signed values span ±131072, so
+the sum wrapped modulo 131072 *before* the saturation test could see it:
+
+| Vector | True residual | Old reading | Correct |
+|---|---|---|---|
+| `A=B=C=D=0x8000` | **−131072** (maximum reachable) | **`0x00` — perfectly laminar** | `0xFF` |
+| `A=B=C=D=0x7FFF` | 131068 | `0x04` — near-laminar | `0xFF` |
+
+A saturating fault signal that reads *clean* under the largest possible fault
+is worse than no signal, because it is trusted. The failure is silent and in
+the unsafe direction.
+
+**Fix.** Width raised to 19 bits. 18 bits *hold* the ±131072 range, but the
+absolute-value step negates, and negating −131072 in 18-bit signed wraps back
+to itself — so 19 is the correct width, not 18.
+
+**The expression was also deduplicated.** It existed as a copied block in both
+`spu4_core.v` and `spu4_standalone_top.v`, kept in step only by a comment
+saying they must not diverge. They had already diverged once (T7.4 found the
+wrapper had no `dissonance` port at all), and this bug then had to be fixed in
+two places. It is now one module, `hardware/rtl/core/spu4/spu4_dissonance.v`,
+instantiated by both — the constraint is structural rather than a comment.
+
+**Coverage:** `hardware/tests/spu4/spu4_dissonance_width_tb.v`, 2016 checks
+against an independent 32-bit reference model. Verified non-vacuous by
+replaying it against a reconstruction of the old 17-bit expression, which
+fails on exactly the two vectors above.
+
+**A note on what caught it.** That replay also passed **all 2000 random
+vectors** in the same file. `$random` essentially never produces four
+same-sign extremes, which is the only region where the wrap is observable.
+The targeted corner vectors found this; the randomised sweep would not have,
+at any iteration count worth running.
+
+**Cost:** +3 LUT4, +2 ALU, 0 DFF (979 → 982, 460 → 462), Fmax 160.38 MHz.
+Regression 193 → 194 PASS.
 
 ### 3.2k IROTC Icosahedral Rotation Engine Silicon Probe
 
@@ -2530,7 +2582,7 @@ a record. Two known weaknesses:
 | 3.2g.4 | 07-17 | `946574dc…` | **absent** | `df6cffd` cand. | UNMEASURED |
 | 3.2g.5 | 07-17 | `8753c492…` | `build_25k_spu13_som_sidecar.sh` | **`f4e271e` CONFIRMED** | **REPRODUCES** from `f4e271e` (2026-08-14) |
 | 3.2g.6 | 07-17 | `f22a34e7…` | `build_a7.sh 100t somsidecar` | `df6cffd` cand. | DIFFERS — see §3.6a |
-| 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | `7cac67a` cand. | **SUPERSEDED 08-15** — reproduced 4× up to T7.4; the tree now builds `cbd6f83a…` and the entry needs a bench re-run |
+| 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | `7cac67a` cand. | **SUPERSEDED 08-15, moved again 08-16** — reproduced 4× up to T7.4; tree built `cbd6f83a…` under T7.4, now builds `0061b02f…` after the §3.2j.1 width fix (2×). Golden line unchanged, so one bench re-run re-anchors both moves |
 | 3.2k | 07-10 | `4aedc901…` | `build_25k_spu13_irotc_probe.sh` | `d1244e0` cand. | **DIFFERS, cause explained** — builds `6ac1e8ab…`; `73acd91` (07-12) moved the IROTC code ROM to BSRAM after this proof, see §3.6d |
 | 3.2k.1 | 07-12 | `ca54c1dc…` | `build_25k_spu13_irotc_spi.sh` | `6f6ec43` cand. | **BUILD_FAILED — not reproducible from any tested tree**, see §3.6f |
 | 3.2l | 07-14 | `d72412f1…` | **absent** | `62dd6c3` cand. | UNMEASURED |

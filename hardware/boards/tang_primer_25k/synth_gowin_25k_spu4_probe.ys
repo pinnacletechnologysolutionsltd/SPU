@@ -7,6 +7,7 @@ read_verilog -sv -I hardware/rtl/arch \
     hardware/rtl/core/spu4/spu4_decoder.v \
     hardware/rtl/core/spu4/spu4_regfile.v \
     hardware/rtl/core/spu4/spu4_euclidean_alu.v \
+    hardware/rtl/core/spu4/spu4_dissonance.v \
     hardware/rtl/common/prim/spu_multiplier_serial.v
 
 hierarchy -top spu13_tang25k_spu4_probe
