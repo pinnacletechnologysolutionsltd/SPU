@@ -167,12 +167,44 @@ Also added a **per-entry build timeout** derived from `approx_seconds`, so one
 pathological target cannot stall the check the way `irotc_spi` stalled this
 session. `--self-test` still passes.
 
-`python3 tools/board_build_check.py --record` was running when this was written.
-**Results not yet in — check `git log` for the follow-up commit.** Any
-BUILD_FAILED it reports is a new finding of the same class as §5.
+**RESULTS IN (`42c65e9`) — 15 of 22 targets build, 7 do not.**
+
+| Failing | Cause |
+|---|---|
+| `som_southbridge` | **SYNTH** — `spu13_axiomatic_gatekeeper` instantiated in `spu13_core`, absent from this spin's `.ys`. Regression from `7b80a59` (08-13) |
+| `rotc_probe` | placement, `MUX2_LUT5` after 10001 attempts |
+| `southbridge` | placement, `MUX2_LUT8` after 10001 attempts |
+| `series_stream_probe` | placement, no BELs remaining for LUT4 |
+| `som_probe` | placement, "probably at utilisation limit" |
+| `six_step_probe` | timeout at 1200 s |
+| `irotc_spi` | router livelock, 8.5 h (§5) |
+
+**None of this is new breakage.** Nothing rebuilt board tops until `239bf4c`,
+so these have been broken for unknown periods — exactly as the SOM sidecar was
+for four weeks. A backlog becoming visible, not a collapse.
+
+**Six of seven share one signature**: Gowin placement/routing pathology on the
+25K, three naming a `MUX2_LUT*` cell directly. That is the mechanism `bc06156`
+recorded as "the Gowin mux blow-up remains unexplained" and that the 08-14
+handover recommended leaving alone. At one instance that was reasonable; **at
+six it is the highest-leverage bug in the tree.**
+
+`som_southbridge` is the exception and the cheapest win — a missing file in a
+synth script, two days old.
+
+**`spu4_probe` builds and is bit-reproducible**, so T7, the declared primary
+direction, is not blocked by any of this.
 
 ## 8. Open
 
+0. **The Gowin mux pathology is now the top technical item.** Six failing
+   targets share it. It was deferred at one instance on 2026-08-14 with
+   "recommend leaving it"; that recommendation is superseded by the count.
+   `bc06156` already refutes two candidate fixes (narrowing the counter to
+   `$clog2` bits; replacing the 48:1 dynamic index with a shift register) —
+   start from there, not from scratch.
+0b. **`som_southbridge` — add `spu13_axiomatic_gatekeeper` to that spin's
+   `.ys`.** Cheapest fix in the tree, and a two-day-old regression.
 1. **Bench re-run for §3.2j** against the 41-char line (T7.4's cost).
 2. **Bench re-run for §3.2g.6** — build-validated only.
 3. **`dissonance` width limit** — 17-bit intermediate, 19 needed. Small tranche.
