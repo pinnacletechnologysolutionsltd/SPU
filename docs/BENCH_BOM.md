@@ -20,6 +20,8 @@ than prices — see §4, and note the interlock is **LCSC**, not DigiKey.
 | JBL Cinema SB180 PSU (salvaged) | 18.44 V open circuit, red = positive. Unplug at the wall before working on it |
 | Wukong Artix-7 100T, Tang Primer 25K | J11 bottom row only; top row backfeed-damaged and retired |
 | 100 Ω resistors, 4× inline on SPI | **Installed.** Caps fault current at ~33 mA/pin. Current backfeed mitigation |
+| 1N4001-class diodes | **Have** (confirmed 2026-08-16). Flyback across the motor |
+| Enamel (magnet) wire | **Have** (confirmed 2026-08-16). This is the soldered sensor harness stock — see the stripping note in §2 before using it |
 
 ## 2. Need — buy now
 
@@ -43,15 +45,50 @@ shunt does not merely read differently — every row fails the contract's
 `shunt_equation` residual check, and the validator rejects the whole session.
 Check the `R100` marking before wiring anything.
 
+**The list is three items as of 2026-08-16** — John confirmed diodes and enamel
+wire are already on hand, so both moved to §1.
+
 | Item | Qty | ~NZD | Why |
 |---|---|---|---|
 | **INA226 breakout (R100 shunt)** | **2** | 24 | One failed its VBUS channel 2026-08-07 with I2C and shunt both perfect. `SESSION_HANDOVER_2026-07-28.md` already advised a spare on cost grounds: the frozen contract has **no partial-redo path**, so a module failure mid-capture costs all thirty sessions |
-| **IR slotted optical encoder** | 1 | 5–10 | The highest-value *scientific* purchase. All three prior negatives failed because features encoded operating condition rather than fault state; RPM is the covariate that lets the study condition on operating point instead of hoping. Current × speed also gives a torque proxy |
-| **Dupont jumper set, or wire for a soldered harness** | — | 5–15 | Four distinct connector failures in one session on 2026-08-07 — a failing SDA line, two dropped grounds, a dropped VCC. A soldered four-wire harness to the sensor removes the entire class |
-| **1N4001-class diode** | few | 2 | Flyback across the motor. Hygiene for switching an inductive load. Note: **not** a fix for an observed fault — the back-EMF damage theory was investigated and not supported |
+| **IR slotted optical encoder** | 1 | 5–10 | The highest-value *scientific* purchase, and **co-blocking with the INA226** — see below. All three prior negatives failed because features encoded operating condition rather than fault state; RPM is the covariate that lets the study condition on operating point instead of hoping. Current × speed also gives a torque proxy |
+| **8-channel logic analyzer** | 1 | 15–30 | **Recovered onto this list 2026-08-16.** The roadmap's 2026-07-19 amendment said "INA226 + logic analyzer + test-gear order is going in now", but the analyzer never appeared in this BOM when it was extracted from the 07-28 handover, and John confirmed he does not have one. It is the single instrument that would have shortened several SPI sessions this year — the A7 bring-up saga, the SCK≤clk_fast/6 ratio work, the boot-status decode debugging — all of which were diagnosed by inference from UART symptoms instead of by looking at the bus |
 
 Verify the `R100` marking on arrival. A different shunt invalidates the
 current scaling, which is exact only for 0.1 Ω.
+
+### Why the encoder must arrive *with* the INA226, not after it
+
+`software/datasets/ina226_coarse_monitor_v2.json` is
+`status: frozen_before_physical_capture_or_scoring`, defines 30 sessions
+(3 classes × 10, in 10 blocks) with `all_capture_sessions_must_validate: true`,
+and its four features are **current-only**: `mean_current_mA`,
+`peak_to_peak_mA`, `mean_abs_delta_mA`, `mean_abs_deviation_mA`. RPM appears
+nowhere.
+
+RPM therefore has to be recorded **while capturing** — it cannot be
+retro-fitted. Buy the INA226, start the campaign, then add the encoder, and the
+choice is between discarding sealed sessions and permanently losing the ability
+to condition on operating point. That second outcome is precisely the flaw that
+produced all three prior negatives.
+
+The v1→v2 amendment record is the precedent: it was legitimate specifically
+because `sessions_sealed_when_amended: 0`. The same latitude exists now and
+closes the moment block 0 is sealed.
+
+**Decide before ordering, not after:** whether RPM enters as a formal v3
+contract amendment or as additive per-session metadata. Either is defensible;
+capturing without it is not.
+
+### Note on the enamel wire
+
+Enamel/magnet wire is fine harness stock, but the insulation is a varnish that
+looks like bare copper. It must be stripped — thermally with a hot iron and
+solder blob, or mechanically — before it will take a joint. An unstripped
+strand gives a joint that looks good and conducts intermittently, which is the
+same failure class as the four connector faults of 2026-08-07 that this harness
+exists to eliminate. Tin every conductor and confirm continuity before wiring
+the sensor.
 
 ## 3. Need — later, not blocking
 
@@ -105,6 +142,11 @@ Lead time dominates cost at these amounts.
 - **Local (Jaycar, Surplustronics, PB Tech)** — pay the markup for anything
   that *blocks work*. The INA226 pair belongs here: the experiment is stopped
   until one arrives, and a month of waiting costs far more than the premium.
+  **The encoder belongs here too** (added 2026-08-16): §2 shows it is
+  co-blocking, not follow-on, so a slow order for it delays the campaign just
+  as surely as a slow INA226 — and starting without it is worse than waiting.
+  The logic analyzer does not block the capture campaign and can go the slow
+  route, unless an SPI problem is actively costing sessions.
 - **LCSC** — the interlock BOM, since that is where TLV3011B is stocked.
   Weeks of shipping, but nothing depends on it.
 - **AliExpress** — accelerometer, spare encoder, anything with no deadline.
