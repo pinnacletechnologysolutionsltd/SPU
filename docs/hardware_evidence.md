@@ -2857,11 +2857,18 @@ iteration rising while progress falls:
 |---|---|---|---|
 | 82k → 98k | 3,505 | 5.83 arcs/s | 37.6 |
 | 98k → 108k | 1,797 | 3.19 arcs/s | 56.4 |
+| 108k → 115k | 1,200 | 2.64 arcs/s | 65.0 |
+| 115k → 126k | 1,963 | 2.46 arcs/s | 72.4 |
 
-At iteration 108k, 70,500 of 109,475 arcs were still unrouted. **This is an
-extrapolation, not an observed failure:** at the then-current and still-falling
-rate the remainder would need roughly six hours. The run was left going; if it
-converges, this paragraph is what needs correcting.
+Monotone in both directions across four windows: the arc-resolution rate more
+than halved while per-iteration cost roughly doubled. At iteration 126k,
+**67,337 of 109,475 arcs were still unrouted after 49 minutes of routing** —
+that is, 62% of the design remained unrouted having consumed six times the
+whole build's nominal budget.
+
+**This is an extrapolation, not an observed failure:** at the last measured
+and still-falling rate the remainder needs on the order of 7–8 hours. The run
+was left going; if it converges, this paragraph is what needs correcting.
 
 **This makes routing a population of two, not one.** §3.6f called `irotc_spi`
 "a population of one — much weaker grounds for a large investigation than 'six

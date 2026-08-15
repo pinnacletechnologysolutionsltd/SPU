@@ -256,9 +256,21 @@ direction, is not blocked by any of this.
    fits, places, and meets timing. Cheapest first step is a longer timeout and
    a different seed; its manifest `approx_seconds` of 300 is far off, since
    placement alone takes 484 s.
-1. **Bench re-run for §3.2j** against the 41-char line (T7.4's cost).
+1. **Bench re-run for §3.2j** against the 41-char line (T7.4's cost). Flash
+   `0061b02f…`, not `cbd6f83a…` — item 3 moved the baseline again on 08-16, and
+   one run now re-anchors both changes. Golden line is unchanged:
+   `SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF`. Per the bench-evidence rule,
+   N≥10 with a positive control.
 2. **Bench re-run for §3.2g.6** — build-validated only.
-3. **`dissonance` width limit** — 17-bit intermediate, 19 needed. Small tranche.
+3. ~~**`dissonance` width limit** — 17-bit intermediate, 19 needed. Small tranche.~~
+   **CLOSED 2026-08-16 (`8598308`).** It was worse than "a false laminar
+   reading" suggested: at `A=B=C=D=0x8000`, the *maximum reachable* residual,
+   the port read `0x00` — perfectly laminar. Fixed to 19 bits, and the
+   duplicated expression extracted into `spu4_dissonance.v` so core and wrapper
+   can no longer diverge. Cost +3 LUT4 / +2 ALU; bitstream `cbd6f83a…` →
+   `0061b02f…`, reproduced 3×; **golden line unchanged**, so item 1's bench run
+   now re-anchors both this and T7.4 in one session. Regression 194. Details:
+   `hardware_evidence.md` §3.2j.1.
 4. **Re-anchor decisions** for §3.2g.1 and §3.2k, both DIFFERS with known or
    partly-known causes. John's call, not mechanical.
 5. **§3.2e.6 / §3.2e.7 anchors are unrecoverable** — full hashes, no build
