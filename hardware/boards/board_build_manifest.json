@@ -10,9 +10,17 @@
     "",
     "Only Gowin/Tang targets are listed. The Artix-7 spins need a chipdb",
     "generated from a 464 MB .bba and take far longer; add them once that is",
-    "a routine step."
+    "a routine step.",
+    "",
+    "check=builds entries are gated on 'does it still build', not on hash",
+    "equality -- full-core spins absorb every core commit so a DIFFERS says",
+    "nothing, but a BUILD_FAILED says everything. See hardware_evidence.md 3.6e.",
+    "",
+    "build_25k_spu13_irotc_spi.sh is DELIBERATELY ABSENT: it is BUILD_FAILED and",
+    "takes ~8.5 h to fail (router livelock, hardware_evidence.md 3.6f). Adding it",
+    "would make this check unusable. Re-add it if it is ever made to route."
   ],
-  "recorded_at_commit": "3c9e92d",
+  "recorded_at_commit": "2f177d7",
   "recorded_toolchain": {
     "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
     "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
@@ -26,7 +34,7 @@
       "approx_seconds": 60,
       "silicon_evidence": "docs/hardware_evidence.md 3.2j (SUPERSEDED -- needs a bench re-run)",
       "notes": "Baseline moved 2026-08-15 by T7.4, which exported dissonance[7:0] from spu4_standalone_top and extended the probe UART line 36->41 chars. Was 9599f5e4..., which matched the 2026-07-08 silicon hash and reproduced 4x; that value now lives only in hardware_evidence.md 3.2j as the record of what was flashed. Current build is 979 LUT4 / 460 ALU / 336 DFF, golden line 'SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF'. NOTE 3.2j is superseded until the probe is re-run on hardware and the 41-char line observed.",
-      "recorded_at_commit": "3c9e92d",
+      "recorded_at_commit": "4f3fc9b",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
         "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
@@ -40,7 +48,7 @@
       "approx_seconds": 240,
       "silicon_evidence": "docs/hardware_evidence.md 3.2g.3, 3.2g.5",
       "notes": "Failed placement 2026-07-17..2026-08-14 (df6cffd). Fixed in bc06156. Current build no longer matches the 3.2g.5 silicon hash because 9490c3d removed the dead SOM fault interface. Reproduced a7d3459e... three times (2x 2026-08-14, 1x 2026-08-15), so this near-limit Gowin build is bit-deterministic. Note bc06156's commit message quotes af0c5e4c... as the anchor; that value is NOT reproducible from its own committed tree and should be ignored -- see docs/hardware_evidence.md 3.6b.",
-      "recorded_at_commit": "3c9e92d",
+      "recorded_at_commit": "2f177d7",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
         "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
@@ -54,7 +62,7 @@
       "approx_seconds": 120,
       "silicon_evidence": "docs/hardware_evidence.md 3.2g.2",
       "notes": "Reproduced its documented silicon hash 6177aa67... on 2026-08-14.",
-      "recorded_at_commit": "3c9e92d",
+      "recorded_at_commit": "2f177d7",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
         "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
@@ -68,7 +76,7 @@
       "approx_seconds": 120,
       "silicon_evidence": "docs/hardware_evidence.md 3.2g.1",
       "notes": "DIFFERS from its documented silicon hash 0385b641.... Five commits touch its four sources since the candidate anchor (a71635c, a8b5bdc, de6c014, 9490c3d, 7b80a59), so the cause is NOT isolated -- an earlier note blaming 7b80a59 alone was a guess. Needs a re-anchor decision, not a manifest fix.",
-      "recorded_at_commit": "3c9e92d",
+      "recorded_at_commit": "2f177d7",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
         "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
@@ -82,11 +90,194 @@
       "approx_seconds": 120,
       "silicon_evidence": "docs/hardware_evidence.md 3.2k",
       "notes": "DIFFERS from its documented silicon hash 4aedc901... as measured 2026-08-14. Cause identified 2026-08-15 and benign: 73acd91 (07-12) moved the IROTC code ROM to BSRAM, after the 07-10 silicon proof. ROM values bit-identical, 13-cycle slot unchanged, all TBs pass. Closed-explained -- see docs/hardware_evidence.md 3.6d.",
-      "recorded_at_commit": "3c9e92d",
+      "recorded_at_commit": "2f177d7",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
         "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
       }
+    },
+    {
+      "name": "sdram_min_probe",
+      "script": "build_25k_sdram_min_probe.sh",
+      "artifact": "build/tang_primer_25k_sdram_min_probe.fs",
+      "approx_seconds": 120,
+      "notes": "Added 2026-08-15 widening coverage after a third spin was found silently unbuildable.",
+      "sha256": "36a2b54f999dc4ded175c8d64c125fa1b50ae8c4b4f9d030fc5faf62e4760d52",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "southbridge_spi_probe",
+      "script": "build_25k_southbridge_spi_probe.sh",
+      "artifact": "build/tang_primer_25k_southbridge_spi_probe.fs",
+      "approx_seconds": 120,
+      "notes": "Added 2026-08-15 widening coverage after a third spin was found silently unbuildable.",
+      "sha256": "156baf1282ac462883b1c676507c760afc89863d341e7669710f890047b6b3f4",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "lucas_mac_probe",
+      "script": "build_25k_spu13_lucas_mac_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_lucas_mac_probe.fs",
+      "approx_seconds": 120,
+      "notes": "Added 2026-08-15 widening coverage after a third spin was found silently unbuildable.",
+      "sha256": "7839d1743bf26b091f5902d5835da8b2eb74c82e05462ad5e18d7c317001fe17",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "lucas_phslk_probe",
+      "script": "build_25k_spu13_lucas_phslk_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_lucas_phslk_probe.fs",
+      "approx_seconds": 120,
+      "notes": "Added 2026-08-15 widening coverage after a third spin was found silently unbuildable.",
+      "sha256": "75c4715033e209efbb9b10f637674ff92cfbffcccaa67bc4fd5421c2851bf7eb",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "neuro_guard_probe",
+      "script": "build_25k_spu13_neuro_guard_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_neuro_guard_probe.fs",
+      "approx_seconds": 120,
+      "notes": "Added 2026-08-15 widening coverage after a third spin was found silently unbuildable.",
+      "sha256": "a85d02c11c1399116495299e534d38deca42e8636430618bb0e838604ca8e1cf",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "rplu2_consume_probe",
+      "script": "build_25k_spu13_rplu2_consume_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_rplu2_consume_probe.fs",
+      "approx_seconds": 120,
+      "notes": "Added 2026-08-15 widening coverage after a third spin was found silently unbuildable.",
+      "sha256": "1071da2493e3b98eba4c8f139d3c90668eb33727acee70e1f603610109b1e212",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "neuro_sidecar_probe",
+      "script": "build_25k_spu13_neuro_sidecar_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_neuro_sidecar_probe.fs",
+      "approx_seconds": 120,
+      "notes": "Added 2026-08-15 widening coverage after a third spin was found silently unbuildable.",
+      "sha256": "63652521f667301a6cec61fd7d43e51e0399d024d9f254f1d244ca5b0dead3dd",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "rotc_probe",
+      "script": "build_25k_spu13_rotc_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_rotc_probe.fs",
+      "approx_seconds": 120,
+      "notes": "BUILD_FAILED 2026-08-15 (first ever rebuild): placement, MUX2_LUT5 cell after 10001 attempts. Same Gowin mux pathology family as bc06156's unexplained blow-up. No baseline recorded -- there is nothing to record until it builds.",
+      "status_2026_08_15": "FAILING"
+    },
+    {
+      "name": "six_step_probe",
+      "script": "build_25k_spu13_six_step_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_six_step_probe.fs",
+      "approx_seconds": 120,
+      "notes": "BUILD_TIMEOUT 2026-08-15 at 1200s (first ever rebuild). Not proven unbuildable -- proven not to finish in a sane budget. Raise timeout_seconds to distinguish slow from livelocked. No baseline recorded.",
+      "status_2026_08_15": "FAILING"
+    },
+    {
+      "name": "series_stream_probe",
+      "script": "build_25k_series_stream_probe.sh",
+      "artifact": "build/tang_primer_25k_series_stream_probe.fs",
+      "approx_seconds": 120,
+      "notes": "BUILD_FAILED 2026-08-15 (first ever rebuild): placement, 'no BELs remaining to implement cell type LUT4'. No baseline recorded.",
+      "status_2026_08_15": "FAILING"
+    },
+    {
+      "name": "southbridge_link",
+      "script": "build_25k_spu13_southbridge_link.sh",
+      "artifact": "build/tang_primer_25k_spu13_southbridge_link.fs",
+      "approx_seconds": 180,
+      "notes": "Added 2026-08-15 widening coverage after a third spin was found silently unbuildable.",
+      "sha256": "22fe2c39c2a0137309d56b7a20fbb8d09da56e8f8f40436200e05a66984bba5e",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "rplu2_arith_probe",
+      "script": "build_25k_spu13_rplu2_arith_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_rplu2_arith_probe.fs",
+      "approx_seconds": 300,
+      "check": "builds",
+      "notes": "Full-core spin: hash comparison is uninformative (hardware_evidence.md 3.6e), so the gate is buildability only.",
+      "last_built_sha256": "c46dd97622e2364e98a5fea38e7d1933fe671a48e747b5099eaf36e2ad33ddb2",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "som_southbridge",
+      "script": "build_25k_spu13_som_southbridge.sh",
+      "artifact": "build/tang_primer_25k_spu13_som_southbridge.fs",
+      "approx_seconds": 300,
+      "check": "builds",
+      "notes": "BUILD_FAILED 2026-08-15: SYNTH error, not placement -- spu13_axiomatic_gatekeeper is instantiated in spu13_core but absent from this spin's .ys file list. Regression from 7b80a59 (2026-08-13) wiring the gatekeeper in. Distinct from the placement family and expected to be a one-line fix.",
+      "status_2026_08_15": "FAILING"
+    },
+    {
+      "name": "som_probe",
+      "script": "build_25k_spu13_som_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_som_probe.fs",
+      "approx_seconds": 300,
+      "check": "builds",
+      "notes": "BUILD_FAILED 2026-08-15 (first ever rebuild): placement, 'design is probably at utilisation limit'. Note nothing was near a limit on the comparable irotc_spi failure, so read this message with suspicion.",
+      "status_2026_08_15": "FAILING"
+    },
+    {
+      "name": "math_probe",
+      "script": "build_25k_spu13_math_probe.sh",
+      "artifact": "build/tang_primer_25k_spu13_math_probe.fs",
+      "approx_seconds": 300,
+      "check": "builds",
+      "notes": "Full-core spin: hash comparison is uninformative (hardware_evidence.md 3.6e), so the gate is buildability only.",
+      "last_built_sha256": "19e49637b87855a85d0e049d77a0da13e9eae090eff4a93543718dff18ea3926",
+      "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "southbridge",
+      "script": "build_25k_spu13_southbridge.sh",
+      "artifact": "build/tang_primer_25k_spu13_southbridge.fs",
+      "approx_seconds": 300,
+      "check": "builds",
+      "notes": "BUILD_FAILED 2026-08-15 (first ever rebuild): placement, MUX2_LUT8 cell after 10001 attempts. Same mux pathology family as rotc_probe.",
+      "status_2026_08_15": "FAILING"
     }
   ]
 }
