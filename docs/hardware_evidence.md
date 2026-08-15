@@ -2745,6 +2745,64 @@ Artix-7 200T / Kintex-class board." A 51-source full-core spin is exactly what
 that boundary excludes. The 2026-07-12 silicon result stands as a historical
 observation; it should not be presented as a currently reproducible build.
 
+#### 3.6g Five Tang 25K spins have outgrown the GW5A-25A — a capacity boundary, not a bug
+
+Measured 2026-08-15/16, after the board-build check widened from 5 to 21
+targets (`42c65e9`) and exposed seven failing spins. **Six of the seven are
+simply over the fabric's capacity.** Only `irotc_spi` (§3.6f) is a genuine
+placer/router pathology.
+
+| Target | LUT4 used / 23,040 | Verdict |
+|---|---|---|
+| `southbridge` | **61,439 = 267%** | over capacity |
+| `rotc_probe` | 33,456 = 145% | over capacity |
+| `som_southbridge` | 29,437 = 127% | over capacity |
+| `som_probe` | 23,891 = 103% | over capacity |
+| `series_stream_probe` | UNMEASURED — "no BELs remaining for LUT4" | over capacity |
+| `six_step_probe` | UNMEASURED — build timed out at 1200 s | unclassified |
+| `irotc_spi` | 12,136 = 52% | **routing pathology**, see §3.6f |
+
+**The placer's error message names a symptom, not a cause.** `rotc_probe` and
+`southbridge` both fail naming a `MUX2_LUT*` cell, which resembles the
+"Gowin mux blow-up… unexplained" that `bc06156` describes. It is not that.
+The named cell is whichever one the placer gave up on while the design sat far
+over capacity. `southbridge` is the decisive case: it fails on **`MUX2_LUT8`,
+the one resource with headroom** —
+
+```
+LUT4:      61439/23040  266%
+MUX2_LUT5: 23546/11520  204%
+MUX2_LUT6:  9864/ 5760  171%
+MUX2_LUT7:  4199/ 2880  145%
+MUX2_LUT8:  1644/ 2880   57%   <- the cell named in the error
+```
+
+Likewise `design is probably at utilisation limit` is literally true for
+`som_probe` at 103% and actively misleading for `irotc_spi` at 52%. **Measure
+the utilisation; do not read the message as a diagnosis.**
+
+**None of this is new breakage.** No board top was rebuilt between its original
+spin and `239bf4c`, so these have been failing for unknown periods — the same
+way the Tang SOM sidecar was silently unbuildable for four weeks. This is a
+backlog becoming visible.
+
+`som_southbridge` additionally had a real, separate fault in front of the
+capacity one: `spu13_axiomatic_gatekeeper` was instantiated in `spu13_core`
+but absent from this spin's `.ys` file list, a synthesis regression from
+`7b80a59` (08-13). Fixed in `2315d77`. That fix was necessary but only exposed
+the 127% underneath it.
+
+**This is a scope decision, not a debugging task.** These spins crossed the
+25K's capacity line with nothing watching. Each needs a call: move to the A7,
+trim to Tang size, or retire as a Tang target. `som_probe` at 103% is
+plausibly trimmable; `rotc_probe` at 145% and `southbridge` at 267% are not.
+This is the boundary this document already draws — the 25K is a split-probe
+regression board, and full concurrent integration "belongs on an Artix-7 200T /
+Kintex-class board."
+
+`spu4_probe` builds and is bit-reproducible, so T7 — the declared primary
+direction — is not blocked by any of this.
+
 ---
 
 ## 4. Synthesis Resource Reports

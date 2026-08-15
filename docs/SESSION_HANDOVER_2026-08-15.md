@@ -194,13 +194,16 @@ refuted that within the hour. Do not chase that lead.**
 | `som_southbridge` | 29,437 / 23,040 = **127%** | over capacity |
 | `som_probe` | 23,891 / 23,040 = **103%** | over capacity |
 | `series_stream_probe` | "no BELs remaining for LUT4" | over capacity |
-| `southbridge` | UNMEASURED (build stopped) | error names `MUX2_LUT8` |
+| `southbridge` | 61,439 / 23,040 = **267%** (measured 08-16) | over capacity |
 | `irotc_spi` | 12,136 / 23,040 = **52%** | genuine routing pathology |
 
 **The error messages misled me.** `rotc_probe` and `southbridge` both fail
 naming a `MUX2_LUT*` cell, which looks like the signature `bc06156` calls "the
 Gowin mux blow-up… unexplained". It is not: it is whichever cell the placer gave
 up on while the design sat 45% over capacity. **The message names a symptom.**
+`southbridge`'s 08-16 measurement settles this: it fails on `MUX2_LUT8`, which
+is at **57%** — the one resource with room — while LUT4 is at 266% and
+MUX2_LUT5/6/7 are at 204% / 171% / 145%.
 Likewise `som_probe`'s "probably at utilisation limit" is literally true at 103%,
 while the *same* message on `irotc_spi` appears at 52% and is misleading.
 
@@ -224,14 +227,19 @@ direction, is not blocked by any of this.
 
 ## 8. Open
 
-0. **Decide the fate of the five over-capacity Tang spins** — `rotc_probe`
-   (145%), `som_southbridge` (127%), `som_probe` (103%), `series_stream_probe`,
-   `southbridge` (unmeasured). Move to A7, or trim to Tang size, or retire as
+0. **Decide the fate of the five over-capacity Tang spins** — `southbridge`
+   (267%), `rotc_probe` (145%), `som_southbridge` (127%), `som_probe` (103%),
+   `series_stream_probe`. Move to A7, or trim to Tang size, or retire as
    Tang targets. **A scope decision, not debugging.** Do *not* start from the
    "Gowin mux pathology" hypothesis — it was mine, and it was refuted; see §7.
-0b. **Measure `southbridge`'s utilisation** — the one failing target with no
-   number. Build was stopped at session end. Expect over-capacity like its
-   siblings, but it is unmeasured, so do not assume.
+   Full table now recorded in `hardware_evidence.md` §3.6g.
+0b. **CLOSED 2026-08-16 — `southbridge` is 61,439/23,040 LUT4 = 267%**, the
+   worst of the seven by nearly 2×. The number did not need a new build: the
+   stopped run's `build/spu13_southbridge_nextpnr.log` (08-15 23:24) already
+   carried the full utilisation report, and no commit since touches this spin's
+   sources. It is also the decisive case for the corrected diagnosis — it fails
+   naming `MUX2_LUT8`, which is at **57%**, the one resource with headroom,
+   while LUT4 sits at 266%.
 1. **Bench re-run for §3.2j** against the 41-char line (T7.4's cost).
 2. **Bench re-run for §3.2g.6** — build-validated only.
 3. **`dissonance` width limit** — 17-bit intermediate, 19 needed. Small tranche.
