@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 # build_25k_spu13_southbridge.sh — Tang 25K RP2350 SPI southbridge
+#
+# ── RETIRED AS A TANG 25K TARGET, 2026-08-16 ──────────────────────
+#   This spin does not fit the GW5A-25A: 61,439 LUT4 = 267% of 23,040.
+#   Retired by decision, not by defect: it is absent from
+#   hardware/boards/board_build_manifest.json because a target that
+#   cannot fit cannot be a regression signal.
+#   AGENTS.md recorded this as not fitting on 2026-07-11 at 25.5k LUT4. It has
+#   more than doubled again since, unmeasured. Full concurrent integration is
+#   an Artix-7 200T / Kintex-class target, which this repo already states.
+#   Rationale and re-entry conditions: docs/hardware_evidence.md 3.6g.
+#   Re-add to the manifest if trimmed under 23,040 LUT4 and rebuilt.
+#
+#   The script is left working and unmodified below.
+# ─────────────────────────────────────────────────────────────────
 # FPGA pure-compute engine; RP2350 owns boot, table hydration, instruction streaming.
 set -e
 

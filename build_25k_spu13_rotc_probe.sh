@@ -1,5 +1,20 @@
 #!/usr/bin/env bash
 # build_25k_spu13_rotc_probe.sh -- Tang 25K ROTC 0-5 standalone probe
+#
+# ── RETIRED AS A TANG 25K TARGET, 2026-08-16 ──────────────────────
+#   This spin does not fit the GW5A-25A: 33,456 LUT4 = 145% of 23,040.
+#   Retired by decision, not by defect: it is absent from
+#   hardware/boards/board_build_manifest.json because a target that
+#   cannot fit cannot be a regression signal.
+#   NOTE this spin DID fit once: hardware_evidence.md 3.2g records a real Tang
+#   silicon run at 13,352 LUT4 with UART proof 'ROTC:P A:5 E:00'. That result
+#   stands as history; it is simply no longer reproducible on this fabric.
+#   ROTC also has A7 ROBOTICS silicon coverage.
+#   Rationale and re-entry conditions: docs/hardware_evidence.md 3.6g.
+#   Re-add to the manifest if trimmed under 23,040 LUT4 and rebuilt.
+#
+#   The script is left working and unmodified below.
+# ─────────────────────────────────────────────────────────────────
 set -e
 mkdir -p build
 

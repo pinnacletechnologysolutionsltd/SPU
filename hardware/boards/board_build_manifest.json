@@ -18,7 +18,17 @@
     "",
     "build_25k_spu13_irotc_spi.sh is DELIBERATELY ABSENT: it is BUILD_FAILED and",
     "takes ~8.5 h to fail (router livelock, hardware_evidence.md 3.6f). Adding it",
-    "would make this check unusable. Re-add it if it is ever made to route."
+    "would make this check unusable. Re-add it if it is ever made to route.",
+    "",
+    "RETIRED AS TANG TARGETS 2026-08-16, by decision, not by defect:",
+    "  series_stream_probe 305%   southbridge 267%   rotc_probe 145%",
+    "  som_southbridge 127%       som_probe 103%",
+    "All five exceed the GW5A-25A's 23,040 LUT4. They are absent from this",
+    "manifest because a target that cannot fit cannot be a regression signal --",
+    "it would fail every run and train the check to be ignored. Their build",
+    "scripts and RTL are kept; each script carries a RETIRED header. Rationale,",
+    "measurements and re-entry conditions: hardware_evidence.md 3.6g.",
+    "Re-add any of them here if it is trimmed under 23,040 LUT4 and rebuilt."
   ],
   "recorded_at_commit": "2f177d7",
   "recorded_toolchain": {
@@ -188,28 +198,13 @@
       }
     },
     {
-      "name": "rotc_probe",
-      "script": "build_25k_spu13_rotc_probe.sh",
-      "artifact": "build/tang_primer_25k_spu13_rotc_probe.fs",
-      "approx_seconds": 120,
-      "notes": "BUILD_FAILED 2026-08-15 (first ever rebuild): placement, MUX2_LUT5 cell after 10001 attempts. Same Gowin mux pathology family as bc06156's unexplained blow-up. No baseline recorded -- there is nothing to record until it builds.",
-      "status_2026_08_15": "FAILING"
-    },
-    {
       "name": "six_step_probe",
       "script": "build_25k_spu13_six_step_probe.sh",
       "artifact": "build/tang_primer_25k_spu13_six_step_probe.fs",
-      "approx_seconds": 120,
-      "notes": "BUILD_TIMEOUT 2026-08-15 at 1200s (first ever rebuild). Not proven unbuildable -- proven not to finish in a sane budget. Raise timeout_seconds to distinguish slow from livelocked. No baseline recorded.",
-      "status_2026_08_15": "FAILING"
-    },
-    {
-      "name": "series_stream_probe",
-      "script": "build_25k_series_stream_probe.sh",
-      "artifact": "build/tang_primer_25k_series_stream_probe.fs",
-      "approx_seconds": 120,
-      "notes": "BUILD_FAILED 2026-08-15 (first ever rebuild): placement, 'no BELs remaining to implement cell type LUT4'. No baseline recorded.",
-      "status_2026_08_15": "FAILING"
+      "approx_seconds": 1200,
+      "notes": "KNOWN FAILING, kept in the check deliberately -- unlike the five spins retired 2026-08-16, this one FITS and is worth watching. Measured 2026-08-16: 22,212/23,040 LUT4 = 96%, placement succeeds in 484s, post-placement timing PASSES at 25.77 MHz against a 12 MHz constraint. It fails in the ROUTER through congestion: arc resolution fell 5.83 -> 2.46 arcs/s over four windows while per-iteration cost roughly doubled, with 67,337 of 109,475 arcs still unrouted at iteration 126k. Cause is growth, not a router anomaly -- it was 13,576 LUT4 / 1,518 DFF / 1,024 ALU when proven in silicon and is 22,212 / 1,518 / 1,600 now, i.e. DFF unchanged and combinational logic up ~60%. Do NOT group it with irotc_spi, which fails to route at 52% and is a different problem (3.6f). approx_seconds raised 120 -> 1200 to reflect measurement; it still will not finish. Cheap next steps: longer timeout and a different seed, then trimming. See hardware_evidence.md 3.6g. No baseline recorded.",
+      "status_2026_08_15": "FAILING",
+      "status_2026_08_16": "FAILING -- router congestion at 96% LUT4"
     },
     {
       "name": "southbridge_link",
@@ -239,24 +234,6 @@
       }
     },
     {
-      "name": "som_southbridge",
-      "script": "build_25k_spu13_som_southbridge.sh",
-      "artifact": "build/tang_primer_25k_spu13_som_southbridge.fs",
-      "approx_seconds": 300,
-      "check": "builds",
-      "notes": "BUILD_FAILED. Two distinct faults, one behind the other. (1) SYNTH: spu13_axiomatic_gatekeeper was instantiated in spu13_core but absent from this spin's .ys file list, a regression from 7b80a59 (2026-08-13) -- FIXED 2026-08-15. (2) Underneath it, the design does not fit: 29,437 / 23,040 LUT4 = 127% on the GW5A-25A. Unlike irotc_spi (52% LUT4), here the placer's 'utilisation limit' message is literally correct. This is a capacity problem, not the Gowin mux pathology, and it is not fixable by a synth-script edit. Whether it ever fit on this fabric is unknown: the synth error masked the capacity number, so there is no prior measurement to compare against.",
-      "status_2026_08_15": "FAILING"
-    },
-    {
-      "name": "som_probe",
-      "script": "build_25k_spu13_som_probe.sh",
-      "artifact": "build/tang_primer_25k_spu13_som_probe.fs",
-      "approx_seconds": 300,
-      "check": "builds",
-      "notes": "BUILD_FAILED 2026-08-15 (first ever rebuild): placement, 'design is probably at utilisation limit'. Note nothing was near a limit on the comparable irotc_spi failure, so read this message with suspicion.",
-      "status_2026_08_15": "FAILING"
-    },
-    {
       "name": "math_probe",
       "script": "build_25k_spu13_math_probe.sh",
       "artifact": "build/tang_primer_25k_spu13_math_probe.fs",
@@ -269,15 +246,6 @@
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
         "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
       }
-    },
-    {
-      "name": "southbridge",
-      "script": "build_25k_spu13_southbridge.sh",
-      "artifact": "build/tang_primer_25k_spu13_southbridge.fs",
-      "approx_seconds": 300,
-      "check": "builds",
-      "notes": "BUILD_FAILED 2026-08-15 (first ever rebuild): placement, MUX2_LUT8 cell after 10001 attempts. Same mux pathology family as rotc_probe.",
-      "status_2026_08_15": "FAILING"
     }
   ]
 }

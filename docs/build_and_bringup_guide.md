@@ -134,8 +134,8 @@ independent probes now split the architecture into testable subsystems:
 | `math_probe` | 1 | 0 | ~4,000 | `bash build_25k_spu13_math_probe.sh` | ROTC, Davis, rotor |
 | `rplu2_arith_probe` | 0 | 1 | 9,211 LUT4 | `bash build_25k_spu13_rplu2_arith_probe.sh` | QLDI, QSUB, RPLU2 config, CRC-8 writes, ECC regfile |
 | `lucas_mac_probe` | 0 | 0 | 696 LUT4 | `bash build_25k_spu13_lucas_mac_probe.sh` | PSCALE/PCHIRAL fast paths, PSCALE zero-drift |
-| `rotc_probe` | 0 | 0 | 13,352 LUT4 | `bash build_25k_spu13_rotc_probe.sh` | Corrected ROTC 0-5 trace and period closure |
-| `six_step_probe` | 0 | 0 | 13,576 LUT4 | `bash build_25k_spu13_six_step_probe.sh` | Period-6 six-step robotics closure and inverse recovery |
+| ~~`rotc_probe`~~ | 0 | 0 | **33,456 LUT4 = 145% — RETIRED 2026-08-16** | ~~`bash build_25k_spu13_rotc_probe.sh`~~ | Corrected ROTC 0-5 trace and period closure. **Does not fit the 25K.** The 13,352 LUT4 in earlier revisions of this table was its 2026-06-30 footprint; it has grown 2.5× since. Silicon result stands (`hardware_evidence.md` §3.2g); the build does not. See §3.6g |
+| `six_step_probe` | 0 | 0 | **22,212 LUT4 = 96%** (was 13,576) | `bash build_25k_spu13_six_step_probe.sh` | Period-6 six-step robotics closure and inverse recovery. **Still fits and passes timing, but no longer routes in reasonable time** — see §3.6g |
 | `som_bmu_probe` | 0 | 0 | 15,325 LUT4 + 4 BSRAM | `bash build_25k_spu13_som_bmu_probe.sh` | BRAM-backed weighted SOM/BMU classification and cluster reduction |
 | `som_hydrate_probe` | 0 | 0 | 583 LUT4 + 8 BSRAM | `bash build_25k_spu13_som_hydrate_probe.sh` | SOM BRAM write/readback and per-feature byte-enable hydration |
 | `neuro_guard_probe` | 0 | 0 | 5,016 LUT4 | `bash build_25k_spu13_neuro_guard_probe.sh` | Fixed-epoch neuro guard, Lucas norm admission, fallback |
@@ -166,8 +166,13 @@ and no DSP. It self-checks the corrected ROTC catalog on the canonical VM/RTL
 trace vector and repeats period-closure loops for all non-identity angles.
 Hardware-verified UART after SRAM load is `ROTC:P A:5 E:00`.
 
-The `six_step_probe` routes at 13,576 LUT4 / 1,518 DFF / 1,024 ALU with no BRAM
-and no DSP. It self-checks the period-6 rational robotics harness: six forward
+The `six_step_probe` routed at 13,576 LUT4 / 1,518 DFF / 1,024 ALU with no BRAM
+and no DSP when it was proven. **Remeasured 2026-08-16: 22,212 LUT4 / 1,518 DFF
+/ 1,600 ALU** — LUT4 up 63% and ALU up 56% while DFF is unchanged to the digit,
+i.e. pure combinational growth. At 96% occupancy it still places and passes
+timing at 25.77 MHz, but no longer routes in reasonable time (§3.6g). The
+hardware-verified UART below remains a valid historical result.
+It self-checks the period-6 rational robotics harness: six forward
 ROTC angle-1 phases, angle-4 inverse recovery after every phase, early-closure
 rejection, and exact closure on phase 5. Hardware-verified UART after SRAM load
 is `KIN:P P:5 E:00`.
@@ -496,7 +501,10 @@ closed; retest in this order when checking a board or after RTL/toolchain edits:
 2. **Core-attached SPI link:** `bash build_25k_spu13_southbridge_link.sh` → load → verify SPI with the real integration shell
 3. **Math probe:** `bash build_25k_spu13_math_probe.sh` → load → verify ROTC/Davis/rotor
 4. **RPLU2 arithmetic:** `bash build_25k_spu13_rplu2_arith_probe.sh` → load → verify QLDI/QSUB/RPLU2 config
-5. **ROTC 0-5:** `bash build_25k_spu13_rotc_probe.sh` → load → verify `ROTC:P A:5 E:00`
+5. ~~**ROTC 0-5:** `bash build_25k_spu13_rotc_probe.sh` → load → verify `ROTC:P A:5 E:00`~~
+   — **skip, retired 2026-08-16.** This spin is 145% of the 25K's LUT4 and will
+   not build. Its 2026-06-30 silicon result stands as history (§3.2g); ROTC
+   also has A7 ROBOTICS coverage. Do not attempt this step on a Tang.
 6. **Six-step robotics:** `bash build_25k_spu13_six_step_probe.sh` → load → verify `KIN:P P:5 E:00`
 7. **SOM/BMU:** `bash build_25k_spu13_som_bmu_probe.sh` → load → verify `SOM:P T:2 B:6 E:00`
 8. **Lucas MAC:** `bash build_25k_spu13_lucas_mac_probe.sh` → load → verify `LUCAS:P`

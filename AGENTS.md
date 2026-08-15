@@ -41,7 +41,7 @@ docs/                   Design guides and bring-up runbooks
 | `TB_FILTER=spu13 python3 run_all_tests.py` | Run only testbenches matching a prefix for faster triage |
 | `python3 software/spu_forge.py simulate <program.sas>` | Simulate a .sas program on the Python VM |
 | `bash build_25k_spu13_math_probe.sh` | Synthesise, P&R, bitstream for SPU-13 math probe on Tang 25K |
-| `bash build_25k_spu13_southbridge.sh` | Full southbridge build (MATH=1 + RPLU_V2=1 — too large for 25K at 89% LUT) |
+| ~~`bash build_25k_spu13_southbridge.sh`~~ | **RETIRED as a Tang target 2026-08-16** — full southbridge build (MATH=1 + RPLU_V2=1). Not "89% LUT": measured **61,439 LUT4 = 267%** of the GW5A-25A. See `hardware_evidence.md` §3.6g |
 | `bash build_25k_spu13_southbridge_link.sh` | SPI link-only probe (4,784 LUT4 post-PnR, measured 2026-07-20) — validates RP2350↔FPGA SPI |
 | `bash build_25k_spu13_rplu2_arith_probe.sh` | RPLU2 arithmetic probe (6,282 LUTs, 27%) — QLDI/QSUB/RPLU2 config |
 | `bash build_25k_spu13_lucas_mac_probe.sh` | Lucas Phinary MAC standalone probe (~200 LUTs) — zero-drift proof |
@@ -566,16 +566,31 @@ Tang 25K or Artix-7.
   eps^3/eps^5 regime — contract in `docs/SPARSE_JET_MAC.md`
 
 **Known board limitations:**
-- **`build_25k_spu13_southbridge.sh` (MATH=1 fpga_top spin) no longer
-  fits at HEAD** (found 2026-07-11): post-synth 25.5k LUT4 vs 23k
-  device; the last successful placement (2026-06-29) was already 90%.
-  Core growth since June 29 (ROTC tranches 2-3, RPLU2/M31 additions)
-  is the cause. The June 29 southbridge bitstream still works but
-  cannot be rebuilt from HEAD. Lean spins (rplu2_arith at MATH=0,
-  irotc_spi at MATH=0) are unaffected.
+- **Five Tang spins are RETIRED as targets (2026-08-16), all over LUT4
+  capacity:** `series_stream_probe` 305%, `southbridge` 267%,
+  `rotc_probe` 145%, `som_southbridge` 127%, `som_probe` 103%. They are
+  removed from `board_build_manifest.json` and each script carries a
+  `RETIRED` header. Retired by decision, not defect — the RTL is fine,
+  the designs are simply bigger than a GW5A-25A. Scripts and RTL are
+  kept; re-add to the manifest if trimmed under 23,040 LUT4. Rationale,
+  measurements and re-entry conditions: `hardware_evidence.md` §3.6g.
+  - `southbridge` was already known not to fit on 2026-07-11 at 25.5k
+    LUT4 (core growth since 2026-06-29: ROTC tranches 2-3, RPLU2/M31).
+    It has **more than doubled again since**, unmeasured, to 61,439.
+    The June 29 bitstream still works but cannot be rebuilt from HEAD.
+  - `rotc_probe` **did fit once** — real Tang silicon at 13,352 LUT4,
+    `ROTC:P A:5 E:00` (§3.2g). That result stands; the build does not.
+  - Tang SOM coverage survives via `som_sidecar`, `som_bmu_probe` and
+    `som_hydrate_probe`, which all still build.
+- **`six_step_probe` is not retired but is close.** It grew 13,576 →
+  22,212 LUT4 (59% → 96%) with DFF unchanged; it still places and
+  passes timing at 25.77 MHz, but no longer routes in reasonable time.
+  Lean spins (rplu2_arith at MATH=0, irotc_spi at MATH=0) are unaffected
+  by the capacity problem — though `irotc_spi` has its own separate
+  routing failure at 52%, see §3.6f.
 - SDRAM module (W9825G6KH) retired — DQ[10] fault confirmed, not an FPGA issue
 - Tang 25K FPGA board is healthy; SDRAM fault was on the external module
-- RPLU2 full pipeline (MATH=1 + RPLU_V2=1) too large for 25K (89% LUT) — needs Wukong Artix-7
+- RPLU2 full pipeline (MATH=1 + RPLU_V2=1) too large for 25K — needs Wukong Artix-7. (The "89% LUT" long quoted here was a synthesis-era estimate; the spin measures 267% today, see §3.6g)
 - Split-build strategy: 4 independent probes fit on 25K (southbridge_link, math_probe, rplu2_arith_probe, lucas_mac_probe)
 - USB 3.0 port on BL616 bridge unreliable — use USB 2.0 only
 - **Wukong Artix-7 100T (this unit): J11 CS/SCK/MOSI confirmed damaged

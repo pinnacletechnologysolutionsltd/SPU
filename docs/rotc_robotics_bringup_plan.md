@@ -18,7 +18,7 @@ trajectory correction.
 | Corrected ROTC angle catalog (0–5) | Validated — all determinants = 1, inverses closed | `knowledge/RATIONAL_CURVES_SPEC.md` |
 | RTL rotor core (`spu13_rotor_core_tdm.v`) | PASS — all 5 ROTC cases in testbench | `hardware/tests/spu13/spu13_rotc_tdm_tb.v` |
 | VM-vs-RTL trace equivalence | PASS — bit-exact for all 6 angles | `software/tests/test_rotc_vm_rtl_trace.py` |
-| Tang 25K ROTC silicon probe | PASS — UART `ROTC:P A:5 E:00` | `build_25k_spu13_rotc_probe.sh` |
+| Tang 25K ROTC silicon probe | PASS — UART `ROTC:P A:5 E:00` (2026-06-30). **Build RETIRED 2026-08-16** — the spin is now 145% of the 25K; the result stands, the rebuild does not | `build_25k_spu13_rotc_probe.sh` (historical) |
 | Six-step VM-vs-RTL trace | PASS — angle-1 period-6 forward/inverse closure | `software/tests/test_rotc_six_step_rtl_trace.py` |
 | Tang 25K six-step robotics probe | PASS — UART `KIN:P P:5 E:00` | `build_25k_spu13_six_step_probe.sh` |
 | Rational robotics oracle (Python) | PASS — 104 checks | `software/tests/test_rational_robotics.py` |
@@ -146,12 +146,19 @@ DSPs:  [record here]
 
 ### 1.2 ROTC-Only Blaze Probe
 
-The dedicated ROTC probe is the hardware acceptance image for the corrected
-angle catalog:
+The dedicated ROTC probe **was** the Tang hardware acceptance image for the
+corrected angle catalog. It is **retired as a Tang target as of 2026-08-16**:
+it synthesises to 33,456 LUT4 against the GW5A-25A's 23,040 (145%), having
+grown 2.5× from the 13,352 recorded below. The command is kept as a record of
+what produced the 2026-06-30 result — **do not run it expecting a bitstream**:
 
 ```sh
+# HISTORICAL — does not fit the Tang 25K since some point before 2026-08-16
 bash build_25k_spu13_rotc_probe.sh
 ```
+
+For current ROTC hardware acceptance, use the A7 ROBOTICS spin. Rationale and
+re-entry conditions: `docs/hardware_evidence.md` §3.6g.
 
 It instantiates `spu13_rotor_core_tdm` directly, feeds the canonical VM/RTL
 trace vector through all six corrected angles, then repeats closure loops for

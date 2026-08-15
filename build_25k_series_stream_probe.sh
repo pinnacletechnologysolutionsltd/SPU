@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 # build_25k_series_stream_probe.sh -- Tang 25K series-stream silicon probe.
+#
+# ── RETIRED AS A TANG 25K TARGET, 2026-08-16 ──────────────────────
+#   This spin does not fit the GW5A-25A: 70,390 LUT4 = 305% of 23,040.
+#   Retired by decision, not by defect: it is absent from
+#   hardware/boards/board_build_manifest.json because a target that
+#   cannot fit cannot be a regression signal.
+#   Root cause is known and has a remedy: the combinational M31 multiplier.
+#   A sequential variant or a Gowin DSP wrapper would bring it back in range.
+#   See docs/SPIN_CATALOG.md, which recorded this diagnosis before the sweep.
+#   Rationale and re-entry conditions: docs/hardware_evidence.md 3.6g.
+#   Re-add to the manifest if trimmed under 23,040 LUT4 and rebuilt.
+#
+#   The script is left working and unmodified below.
+# ─────────────────────────────────────────────────────────────────
 # Walks all 8 committed golden vectors (incl. 2 singular) through the eps^3
 # Hyper-Catalan series evaluator with ONE shared M31 multiplier muxed
 # between the Fp4 tower and the stream.

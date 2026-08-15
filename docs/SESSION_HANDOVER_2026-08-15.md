@@ -237,12 +237,19 @@ direction, is not blocked by any of this.
 
 ## 8. Open
 
-0. **Decide the fate of the five over-capacity Tang spins** —
+0. ~~**Decide the fate of the five over-capacity Tang spins.**~~
+   **DECIDED 2026-08-16 — John's call: all five retired as Tang targets.**
    `series_stream_probe` (305%), `southbridge` (267%), `rotc_probe` (145%),
-   `som_southbridge` (127%), `som_probe` (103%). Move to A7, or trim to Tang size, or retire as
-   Tang targets. **A scope decision, not debugging.** Do *not* start from the
-   "Gowin mux pathology" hypothesis — it was mine, and it was refuted; see §7.
-   Full table now recorded in `hardware_evidence.md` §3.6g.
+   `som_southbridge` (127%), `som_probe` (103%). Removed from
+   `board_build_manifest.json`; each script carries a `RETIRED` header; scripts
+   and RTL kept. Re-entry is trimming under 23,040 LUT4 and re-adding.
+   Retired **by decision, not defect** — the RTL is fine, the designs are
+   bigger than the fabric. Not lost: ROTC keeps its §3.2g silicon result and
+   A7 coverage; Tang SOM coverage survives via `som_sidecar`/`som_bmu_probe`/
+   `som_hydrate_probe`; `series_stream_probe` has a known remedy (sequential
+   M31 multiplier or DSP wrapper). Full rationale: `hardware_evidence.md`
+   §3.6g. Docs updated: AGENTS.md, SPIN_CATALOG.md, build_and_bringup_guide.md,
+   rotc_robotics_bringup_plan.md.
 0b. **CLOSED 2026-08-16 — `southbridge` is 61,439/23,040 LUT4 = 267%**, the
    worst of the seven by nearly 2×. The number did not need a new build: the
    stopped run's `build/spu13_southbridge_nextpnr.log` (08-15 23:24) already
@@ -252,10 +259,17 @@ direction, is not blocked by any of this.
    while LUT4 sits at 266%. `series_stream_probe` (**305%**) and
    `six_step_probe` (**96%, fits — a router problem**) were measured at the
    same time, so every failing target now has a number. See §3.6g.
-0c. **`six_step_probe` needs a routing decision, not a scope decision** — it
-   fits, places, and meets timing. Cheapest first step is a longer timeout and
-   a different seed; its manifest `approx_seconds` of 300 is far off, since
-   placement alone takes 484 s.
+0c. **`six_step_probe` is the one left open, and it WILL fail the board-build
+   check every run.** It was not in the retired five because it *fits* — 96%,
+   places, passes timing at 25.77 MHz — and is deliberately kept in the
+   manifest as worth watching. But a permanently-failing entry is exactly what
+   trains people to ignore the check, so it needs a call soon: raise the
+   timeout and try seeds, trim it, or retire it too.
+   **Corrected 2026-08-16:** I first called this a second `irotc_spi`. It is
+   not. It grew 13,576 → 22,212 LUT4 with DFF unchanged at 1,518, so it is a
+   *congestion* failure from growth at 96% occupancy — ordinary. `irotc_spi`
+   failing to route at **52%** is still a population of one. Same symptom,
+   different cause; do not merge them.
 1. **Bench re-run for §3.2j** against the 41-char line (T7.4's cost). Flash
    `0061b02f…`, not `cbd6f83a…` — item 3 moved the baseline again on 08-16, and
    one run now re-anchors both changes. Golden line is unchanged:

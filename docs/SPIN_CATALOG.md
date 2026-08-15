@@ -73,11 +73,12 @@ Tang Primer 25K, one root-level script each:
 | `build_25k_spu13_rplu2_arith_probe.sh` | QLDI/QSUB + RPLU2 config over SPI (6,282 LUT, 27%) | silicon |
 | `build_25k_spu13_rplu2_consume_probe.sh` | 149-record table consumption, checksum `0x0AA480E7` | silicon |
 | `build_25k_spu13_lucas_mac_probe.sh` | Lucas MAC zero-drift standalone (~200 LUT) | silicon |
-| `build_25k_spu13_rotc_probe.sh` | ROTC 0–5 standalone | silicon (via A7 ROBOTICS; Tang run per evidence doc) |
-| `build_25k_spu13_six_step_probe.sh` | six-step robotics closure | silicon (via A7 ROBOTICS; Tang run per evidence doc) |
-| `build_25k_spu13_som_probe.sh` / `som_bmu` / `som_hydrate` / `som_southbridge` | SOM classification, BMU array, BRAM hydration, hydrate+classify over SPI | silicon (SOM/BMU Tang-proven; see evidence doc for per-script runs) |
+| ~~`build_25k_spu13_rotc_probe.sh`~~ | ROTC 0–5 standalone | **RETIRED as a Tang target 2026-08-16** — 33,456 LUT4 = 145%. It fit at 13,352 when proven (§3.2g), so it grew 2.5× unnoticed. Silicon result stands; ROTC keeps A7 ROBOTICS coverage. See §3.6g |
+| `build_25k_spu13_six_step_probe.sh` | six-step robotics closure | silicon (via A7 ROBOTICS; Tang run per evidence doc) — **but no longer routes on Tang**: grew 13,576 → 22,212 LUT4 (59% → 96%), places and meets timing, router congests. Not retired; one tranche from it. §3.6g |
+| `som_bmu` / `som_hydrate` / `som_sidecar` | BMU array, BRAM hydration, writable sidecar | silicon (SOM/BMU Tang-proven; see evidence doc for per-script runs). **These still build — Tang SOM coverage lives here now** |
+| ~~`build_25k_spu13_som_probe.sh`~~ / ~~`som_southbridge`~~ | SOM classification; hydrate+classify over SPI | **RETIRED as Tang targets 2026-08-16** — 103% and 127% LUT4. `som_probe` is the closest of the five to fitting and the best trim candidate. §3.6g |
 | `build_25k_spu4_probe.sh` | SPU-4 Sentinel first silicon | silicon (2026-07-08) |
-| `build_25k_series_stream_probe.sh` | eps³ hyper-Catalan series eval, 8 golden vectors, one shared multiplier | **blocked** — combinational M31 multiplier ≈305% LUT on GW5A; needs sequential variant or Gowin DSP wrapper |
+| ~~`build_25k_series_stream_probe.sh`~~ | eps³ hyper-Catalan series eval, 8 golden vectors, one shared multiplier | **RETIRED as a Tang target 2026-08-16** — the ≈305% estimate recorded here was confirmed by measurement: **70,390 LUT4 = 305%**, the largest of the group. Cause and remedy unchanged: combinational M31 multiplier; needs a sequential variant or Gowin DSP wrapper. Retired as a *Tang* target, not abandoned. §3.6g |
 | `build_25k_sdram_min_probe.sh` | SDRAM controller | retired — external module DQ[10] fault, board healthy |
 | `build_25k_southbridge_spi_probe.sh` | SPI-only southbridge telemetry | see script header — reconcile with AGENTS.md |
 | `build_25k_spu13_lucas_phslk_probe.sh` | Lucas PHSLK | **untracked** — reconcile with AGENTS.md or retire |

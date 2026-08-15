@@ -1261,6 +1261,19 @@ Consequences:
 
 ### 3.2g ROTC 0-5 Silicon Probe
 
+> **The result below stands; the build is no longer reproducible on Tang.**
+> `rotc_probe` was retired as a Tang 25K target on 2026-08-16 (§3.6g): it
+> synthesises to 33,456 LUT4 today against the 23,040 the device has. The
+> footprint recorded in this entry — **13,352 LUT4** — is what it measured when
+> it ran, so the spin has grown **2.5×** since, unnoticed, in a design nobody
+> rebuilt.
+>
+> Nothing in this entry is withdrawn. The 2026-06-30 run happened, on hardware,
+> and the UART proof below is what the board emitted. What is lost is only the
+> ability to rebuild that bitstream on this fabric. ROTC also carries A7
+> ROBOTICS silicon coverage, so the capability is not evidenced solely here.
+> Treat the build command below as a historical record, not a procedure.
+
 **Date:** 2026-06-30 NZT
 
 **Scope:** dedicated Tang 25K self-checking bitstream for the corrected ROTC
@@ -2800,9 +2813,10 @@ observation; it should not be presented as a currently reproducible build.
 #### 3.6g Five Tang 25K spins have outgrown the GW5A-25A — a capacity boundary, not a bug
 
 Measured 2026-08-15/16, after the board-build check widened from 5 to 21
-targets (`42c65e9`) and exposed seven failing spins. **Five of the seven are
-simply over the fabric's capacity.** The other two — `irotc_spi` (§3.6f) and
-`six_step_probe` — fit comfortably and fail in the router.
+targets (`42c65e9`) and exposed seven failing spins. **Six of the seven are
+size failures** — five over the fabric's capacity outright, and
+`six_step_probe` at 96% failing to route through congestion. Only `irotc_spi`
+fails with room to spare (§3.6f), and it is the one genuine anomaly.
 
 | Target | LUT4 used / 23,040 | Verdict |
 |---|---|---|
@@ -2870,17 +2884,34 @@ whole build's nominal budget.
 and still-falling rate the remainder needs on the order of 7–8 hours. The run
 was left going; if it converges, this paragraph is what needs correcting.
 
-**This makes routing a population of two, not one.** §3.6f called `irotc_spi`
-"a population of one — much weaker grounds for a large investigation than 'six
-instances' suggested". That is now out of date. Two spins, at 52% and 96%
-utilisation, fail the same way, which is a materially better case for
-investigating the router. It also means `six_step_probe` should *not* be
-grouped with the over-capacity spins in any scope decision: nothing about it
-needs trimming, and moving it to the A7 would be treating a symptom.
+**Correction — it is not a second `irotc_spi`.** I first wrote this up as
+making routing "a population of two, not one", which overstated it. Comparing
+against the footprint recorded in `docs/build_and_bringup_guide.md` for the
+run that was proven in silicon:
 
-The cheap first step for it is not a redesign but a **timeout and seed change**
-— its manifest `approx_seconds` of 300 was never near the truth, since
-placement alone takes 484 s.
+| | Proven run | 2026-08-16 | Change |
+|---|---|---|---|
+| LUT4 | 13,576 (59%) | **22,212 (96%)** | **+63%** |
+| ALU | 1,024 | 1,600 | +56% |
+| DFF | 1,518 | 1,518 | **unchanged** |
+
+DFF identical to the digit while combinational logic grew by half. So
+`six_step_probe` is a **congestion** failure: the design grew until the fabric
+was 96% full, and routing a nearly-full device is expected to be hard. That is
+an ordinary consequence of growth, not an anomaly.
+
+`irotc_spi` remains the genuinely anomalous one — it fails to route at **52%**,
+with ample room. **Routing-with-room is still a population of one.** The two
+share a symptom, not a cause, and this is the same trap §3.6g is otherwise
+about: reading a shared error for a shared diagnosis. Do not merge them.
+
+**What this means for `six_step_probe`.** It still should not be grouped with
+the five over-capacity spins — it fits, places, and passes timing at 25.77 MHz.
+But its problem *is* size, so the cheap steps are a longer timeout and a
+different seed first (its manifest `approx_seconds` of 300 was never near the
+truth — placement alone takes 484 s), and trimming if those fail. It is on the
+same trajectory as the retired spins and roughly one tranche of growth from
+joining them.
 
 **None of this is new breakage.** No board top was rebuilt between its original
 spin and `239bf4c`, so these have been failing for unknown periods — the same
@@ -2893,12 +2924,57 @@ but absent from this spin's `.ys` file list, a synthesis regression from
 `7b80a59` (08-13). Fixed in `2315d77`. That fix was necessary but only exposed
 the 127% underneath it.
 
-**For the five capacity failures, this is a scope decision, not a debugging
-task.** They crossed the
-25K's capacity line with nothing watching. Each needs a call: move to the A7,
-trim to Tang size, or retire as a Tang target. `som_probe` at 103% is
-plausibly trimmable; `rotc_probe` at 145% is a stretch; `southbridge` at 267%
-and `series_stream_probe` at 305% are not — they need 3× the fabric.
+**For the five capacity failures, this was a scope decision, not a debugging
+task.** They crossed the 25K's capacity line with nothing watching.
+
+#### DECIDED 2026-08-16 — all five are retired as Tang 25K targets
+
+John's call. **Retired by decision, not by defect.** Nothing here is broken
+RTL; these designs are correct and simply larger than a GW5A-25A.
+
+| Retired target | LUT4 | Notes |
+|---|---|---|
+| `series_stream_probe` | 305% | Cause known, remedy known — see below |
+| `southbridge` | 267% | Already recorded as not fitting on 2026-07-11, at 25.5k |
+| `rotc_probe` | 145% | **Did fit once** — real Tang silicon at 13,352 LUT4, §3.2g |
+| `som_southbridge` | 127% | |
+| `som_probe` | 103% | Closest to fitting; best trim candidate if wanted back |
+
+**What retirement means here.** They are removed from
+`hardware/boards/board_build_manifest.json`, so they no longer run in the
+board-build check. A target that cannot fit cannot be a regression signal — it
+fails every run, and a check that always fails trains people to ignore it.
+Their scripts and RTL are **kept and unmodified**; each script now carries a
+`RETIRED` header stating its number and this rationale.
+
+**Re-entry condition:** trim under 23,040 LUT4, rebuild, re-add to the
+manifest. Nothing else is required, and none of this is irreversible.
+
+**What is not lost.**
+
+- **ROTC** keeps its silicon evidence. §3.2g records a genuine Tang run at
+  13,352 LUT4 with UART proof `ROTC:P A:5 E:00`; that happened and stands.
+  ROTC additionally has A7 ROBOTICS coverage. What is gone is only the ability
+  to *reproduce* that bitstream on this fabric — see the note in §3.2g.
+- **SOM on Tang survives.** `som_sidecar`, `som_bmu_probe` and
+  `som_hydrate_probe` all still build and remain in the manifest. Only the
+  larger `som_probe` and `som_southbridge` spins are retired, so the SOM
+  product track keeps its Tang regression coverage.
+- **`series_stream_probe` has a known fix path.** `docs/SPIN_CATALOG.md`
+  already carried the diagnosis — a combinational M31 multiplier — and the
+  remedy: a sequential variant or a Gowin DSP wrapper. Its 305% was recorded
+  there before this sweep measured it independently. It is retired as a *Tang*
+  target, not abandoned as a design.
+
+**`rotc_probe` is the one worth pausing on.** It fit at 13,352 LUT4 (58%) when
+it was proven in silicon, and stands at 33,456 today — **2.5× growth** in a
+spin nobody rebuilt. `southbridge` tells the same story twice over: known not
+to fit at 25.5k on 2026-07-11, now at 61,439. This is the cost of the
+board-build gap that `239bf4c` closed, measured after the fact.
+
+The boundary this enforces is the one this document already draws: the 25K is
+"closed as a split-probe regression target", and full concurrent integration
+"belongs on an Artix-7 200T / Kintex-class board."
 This is the boundary this document already draws — the 25K is a split-probe
 regression board, and full concurrent integration "belongs on an Artix-7 200T /
 Kintex-class board."
