@@ -46,15 +46,21 @@ from pathlib import Path
 
 CLASSES = ("normal", "elevated_load", "current_limited_stall")
 
-# class -> (mean current mA, current jitter mA, bus mV, bus jitter mV)
+# class -> (mean current mA, current jitter mA, bus mV, bus jitter mV,
+#           mean encoder edges per 10 ms sample, edge jitter)
+#
+# The pulse figures are ILLUSTRATIVE, not measured. This fixture exists to
+# exercise the validator, not to demonstrate that the classes are separable --
+# do not cite it as evidence of anything about the wedge. Values assume a
+# 20-slot wheel, so 10 edges per 10 ms sample is 3000 rpm.
 PROFILE = {
-    "normal": (98.3, 11.0, 3005, 12),
-    "elevated_load": (240.8, 20.0, 2915, 20),
-    "current_limited_stall": (307.4, 1.0, 1490, 12),
+    "normal": (98.3, 11.0, 3005, 12, 10, 1),
+    "elevated_load": (240.8, 20.0, 2915, 20, 6, 1),
+    "current_limited_stall": (307.4, 1.0, 1490, 12, 0, 0),
 }
 
 ROWS = 145  # a 1.4 s capture at 100 Hz, matching the real bench procedure
-HEADER = "host_iso,probe,phase,t_ms,bus_mV,shunt_uV,current_uA"
+HEADER = "host_iso,probe,phase,t_ms,bus_mV,shunt_uV,current_uA,pulses"
 
 
 def expected_class_order(block: int) -> tuple[str, ...]:
@@ -65,7 +71,7 @@ def expected_class_order(block: int) -> tuple[str, ...]:
 
 def session_rows(class_name: str, block: int, probe: str,
                  rng: random.Random) -> list[str]:
-    mean_mA, jitter_mA, bus_mV, bus_jitter = PROFILE[class_name]
+    mean_mA, jitter_mA, bus_mV, bus_jitter, mean_edges, edge_jitter = PROFILE[class_name]
     lines = [HEADER]
     t_ms = 1000 + block * 100_000
     for index in range(ROWS):
@@ -79,8 +85,11 @@ def session_rows(class_name: str, block: int, probe: str,
         iso = "2026-08-07T%02d:%02d:%02d.%03d" % (
             9 + block // 4, (block * 7 + index) % 60, index % 60,
             (index * 7) % 1000)
+        # Non-negative by construction; the validator rejects negatives.
+        pulses = max(0, mean_edges + rng.randint(-edge_jitter, edge_jitter))
         lines.append(
-            f"{iso},{probe},{class_name},{t_ms},{bus},{shunt_uV},{current_uA}")
+            f"{iso},{probe},{class_name},{t_ms},{bus},{shunt_uV},"
+            f"{current_uA},{pulses}")
     return lines
 
 

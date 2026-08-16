@@ -19,8 +19,8 @@ from lib.som_current_monitor import (
 )
 
 
-CONTRACT_FORMAT = "SPU_INA226_COARSE_MONITOR_V2"
-CONTRACT_PATH = "software/datasets/ina226_coarse_monitor_v2.json"
+CONTRACT_FORMAT = "SPU_INA226_COARSE_MONITOR_V3"
+CONTRACT_PATH = "software/datasets/ina226_coarse_monitor_v3.json"
 # Bus voltage is validated only where a stable supply rail is expected. Current
 # limiting works by collapsing supply voltage, so current_limited_stall cannot
 # satisfy a tolerance band around nominal on any bench — the v1 contract's two
@@ -37,6 +37,12 @@ CSV_COLUMNS = (
     "bus_mV",
     "shunt_uV",
     "current_uA",
+    # v3, 2026-08-16: raw encoder edges per sample interval. A COVARIATE, not
+    # a feature -- see the contract's policy_note. It must never enter FEATURES:
+    # rotation trivially separates current_limited_stall, so a model given it
+    # would score well while demonstrating nothing about current-based anomaly
+    # detection.
+    "pulses",
 )
 CAPTURE_BLOCKS = 10
 FOLD_COUNT = 5
@@ -58,6 +64,7 @@ class CaptureSample:
     bus_mV: int
     shunt_uV: int
     current_uA: int
+    pulses: int
 
 
 @dataclass(frozen=True)
@@ -312,6 +319,11 @@ def parse_capture_csv(
         bus_mV = _parse_int(row["bus_mV"], row_number, "bus_mV")
         shunt_uV = _parse_int(row["shunt_uV"], row_number, "shunt_uV")
         current_uA = _parse_int(row["current_uA"], row_number, "current_uA")
+        pulses = _parse_int(row["pulses"], row_number, "pulses")
+        if pulses < 0:
+            raise CaptureDataError(
+                f"{path}: row {row_number} has a negative pulse count"
+            )
         if previous_t is not None:
             interval = t_ms - previous_t
             if not 8 <= interval <= 12:
@@ -335,6 +347,7 @@ def parse_capture_csv(
             bus_mV=bus_mV,
             shunt_uV=shunt_uV,
             current_uA=current_uA,
+            pulses=pulses,
         ))
     if len(samples) < ACCEPTED_ROWS:
         raise CaptureDataError(

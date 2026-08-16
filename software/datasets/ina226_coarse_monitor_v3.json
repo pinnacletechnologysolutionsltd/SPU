@@ -1,0 +1,123 @@
+{
+  "format": "SPU_INA226_COARSE_MONITOR_V3",
+  "status": "frozen_before_physical_capture_or_scoring",
+  "supersedes": {
+    "format": "SPU_INA226_COARSE_MONITOR_V2",
+    "path": "software/datasets/ina226_coarse_monitor_v2.json",
+    "sha256": "fd9f51e40458feae87393b9c5633ecdf373739596b22ef82f4af4d0ab7416c28",
+    "amended_on": "2026-08-16",
+    "sessions_sealed_when_amended": 0,
+    "reason": "v2 records four current-derived features and no measure of rotation. Every prior negative on this track failed the same way: the features encoded OPERATING CONDITION rather than FAULT STATE, and there was no covariate to condition on. Shaft rotation is that covariate. It cannot be retro-fitted, because it must be sampled while capturing, so the amendment has to happen before any session is sealed or never.",
+    "evidence": "Determined 2026-08-16 while writing tools/bench_metrics/ina226_logger_v2.py. software/lib/ina226_capture.py compares the CSV header for exact equality against the frozen schema, so a fifth column rejects every capture file at seal time; and tools/bench_metrics/power_log.py carried a hard-coded len(parts)!=4 filter that silently dropped wider rows rather than erroring. Adding rotation is therefore a contract change, not a tooling change.",
+    "scope": "Only the capture schema changes: sensor.csv_columns and sensor.logger gain the pulses column and the v2 logger, and validation gains pulse clauses. features, window, folds, capture order, models and gates are carried over from v2 UNCHANGED. In particular the feature list is still the same four current-derived values.",
+    "policy_note": "pulses is a COVARIATE, not a feature, and must never be added to the features list. Rotation trivially separates current_limited_stall from the other classes, so a model given it would score well while demonstrating nothing about current-based anomaly detection -- it would be reporting that a stopped motor has stopped. It exists to let analysis condition on operating point and to check that a labelled physical condition was actually achieved. This amendment corrects a specification gap before any session is sealed and before any score exists; the gates.failure_policy prohibition on tuning against scores remains in force and unmodified."
+  },
+  "sensor": {
+    "logger": "ina226_logger v2",
+    "address": "0x40",
+    "sample_hz": 100,
+    "rshunt_mohm": 100,
+    "shunt_lsb_uV": "5/2",
+    "current_lsb_uA": 25,
+    "csv_columns": [
+      "host_iso",
+      "probe",
+      "phase",
+      "t_ms",
+      "bus_mV",
+      "shunt_uV",
+      "current_uA",
+      "pulses"
+    ],
+    "encoder": {
+      "signal": "raw rising-edge count per sample interval, not rpm",
+      "pin": "GP6, internal pull-up, rising edge",
+      "pulses_per_revolution": null,
+      "ppr_note": "MUST be set to the measured value of the encoder actually used before any session is captured. A salvaged ball-mouse wheel and a bought encoder differ, and a raw count is meaningless without it. null here means undeclared, and a capture taken with it undeclared cannot be converted to rpm afterwards.",
+      "rpm_conversion": "rpm = pulses * 60000 // (ppr * elapsed_ms), integer, truncating",
+      "resolution_note": "At 100 Hz a sample interval is 10 ms, so one edge is worth roughly 300 rpm on a 20-slot wheel -- per-row rotation is coarse by construction. Summed over the 32-sample window it is about 107 edges at 1000 rpm, roughly 1 percent. Aggregate before interpreting."
+    }
+  },
+  "task": {
+    "class_names": [
+      "normal",
+      "elevated_load",
+      "current_limited_stall"
+    ],
+    "decision_unit": "complete capture session",
+    "sessions_per_class": 10,
+    "capture_blocks": 10,
+    "sessions_per_block": 3,
+    "capture_order": "block b uses class order rotated left by b modulo 3",
+    "folds": 5,
+    "fold_assignment": "capture_block modulo 5",
+    "session_vote": "plurality over four windows; lowest class id breaks a tie"
+  },
+  "window": {
+    "samples": 32,
+    "windows_per_session": 4,
+    "selection": "first 128 rows; four contiguous non-overlapping windows"
+  },
+  "features": [
+    "mean_current_mA",
+    "peak_to_peak_mA",
+    "mean_abs_delta_mA",
+    "mean_abs_deviation_mA"
+  ],
+  "validation": {
+    "timestamp_interval_ms_min": 8,
+    "timestamp_interval_ms_max": 12,
+    "required_rows_min": 128,
+    "accepted_rows": 128,
+    "shunt_equation_residual_max": 500,
+    "shunt_equation": "abs(shunt_uV*1000-current_uA*rshunt_mohm) <= residual",
+    "absolute_shunt_uV_max": 75000,
+    "bus_voltage_tolerance_ppm": 50000,
+    "bus_voltage_checked_classes": [
+      "normal",
+      "elevated_load"
+    ],
+    "bus_voltage_exemption": "current_limited_stall is exempt because supply voltage collapse is the defining characteristic of that class, not a fault. Every other validation clause, including shunt scaling, shunt headroom, cadence, and row count, still applies to it in full.",
+    "normalization": "training-fold min/max affine map to 0..30000, round-half-even, held-out clamp with diagnostics",
+    "malformed_duplicate_gap_shunt_or_saturation_policy": "reject the complete session",
+    "session_leakage_policy": "all four windows from one session remain in one fold",
+    "pulses_min": 0,
+    "pulses_required_every_row": true,
+    "pulses_note": "pulses must be a non-negative integer on every accepted row. No class-conditional pulse gate is specified in v3, deliberately: it is not yet known whether a current-limited stall on this rig stops rotation completely or merely slows it, and inventing a threshold before measuring would encode a guess as a validation rule. The first capture block answers that empirically; a gate may be added in a later amendment IF sessions are still unsealed at that point.",
+    "pulses_absent_is_not_encoder_absent": "An all-zero pulse column is indistinguishable from a stalled motor, which is a real capture class. It does NOT prove the encoder was disconnected, and disconnection cannot be detected from the data. Confirm the encoder counts before capturing block 0."
+  },
+  "safety": {
+    "target": "separate low-voltage actuator or fan; never an FPGA rail",
+    "supply": "current-limited bench supply with limit at or below the actuator continuous-current rating",
+    "supply_limit_verification": "The commanded limit must be verified against a measurement, not read from the front panel. A supply displaying 280 mA was measured regulating at 307.4 mA on 2026-08-06, above the actuator continuous rating it was set to protect.",
+    "stall_capture_max_ms": 1500,
+    "stall_cooldown_min_ms": 30000,
+    "abort_conditions": [
+      "actuator or wiring heating",
+      "supply leaves constant-voltage/current-limit behavior unexpectedly",
+      "absolute shunt voltage exceeds 75000 uV",
+      "operator cannot confirm the actuator current rating"
+    ]
+  },
+  "models": {
+    "majority": "three-class training-fold majority",
+    "threshold": "training-fitted scalar normal-versus-anomaly threshold with deterministic tie breaks",
+    "centroid": "training-fold three-class nearest centroid",
+    "som": "seven-node SPU_SOM_MAP_V1 with the published deterministic v1 schedule",
+    "ambiguity": "the v1 hardware flag means exact zero winner/runner-up gap; report all gaps and exact ties"
+  },
+  "gates": {
+    "hardware_replay_eligible": {
+      "aggregate_three_class_som_balanced_accuracy_ppm_min": 900000,
+      "worst_fold_three_class_som_balanced_accuracy_ppm_min": 800000,
+      "minimum_per_class_recall_ppm": 800000,
+      "all_capture_sessions_must_validate": true,
+      "all_software_som1_records_must_match_oracle": true
+    },
+    "baseline_superiority_claim": {
+      "three_class_som_must_exceed_centroid": true,
+      "collapsed_binary_som_must_exceed_scalar_threshold": true
+    },
+    "failure_policy": "Record a negative result; do not tune the frozen capture, feature, fold, model, or gate contract against held-out scores."
+  }
+}

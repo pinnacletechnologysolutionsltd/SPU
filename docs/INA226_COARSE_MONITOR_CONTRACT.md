@@ -6,7 +6,44 @@ Date frozen: 2026-07-19 (v1) — amended 2026-08-06 (v2)
 
 This contract was frozen before an INA226 was available and before any
 physical capture was ingested or scored. Its machine-readable source of truth
-is `software/datasets/ina226_coarse_monitor_v2.json`.
+is `software/datasets/ina226_coarse_monitor_v3.json`.
+
+### What changed in v3, and why the earlier versions are still on disk
+
+**Amended 2026-08-16, `sessions_sealed_when_amended: 0`.** v3 adds a fifth
+capture column, `pulses` — the raw encoder edge count per sample interval —
+so that shaft rotation is recorded while capturing.
+
+**Why it had to happen now or never.** Rotation cannot be retro-fitted: it is
+sampled, not derived. Once block 0 is sealed, adding it means discarding
+sessions or permanently losing the ability to condition on operating point.
+The same latitude the v1→v2 amendment relied on — nothing sealed, no score in
+existence — is what makes this legitimate, and it closes at block 0.
+
+**Why it is needed at all.** Every prior negative on this track failed the
+same way: the features encoded *operating condition* rather than *fault
+state*, with no covariate to condition on. Rotation is that covariate.
+
+**`pulses` is a COVARIATE, not a feature, and must never enter the feature
+list.** Rotation trivially separates `current_limited_stall` from the other
+classes, so a model given it would score well while demonstrating nothing
+about current-based anomaly detection — it would be reporting that a stopped
+motor has stopped. The feature list is unchanged at the same four
+current-derived values, and `software/tests/test_ina226_capture.py` asserts
+`"pulses" not in contract["features"]` so a future edit cannot quietly
+invalidate the study.
+
+Everything else — window, folds, capture order, models, gates — is carried
+over from v2 unchanged.
+
+**No class-conditional pulse gate is specified, deliberately.** It is not yet
+known whether a current-limited stall on this rig stops rotation completely or
+merely slows it, and inventing a threshold before measuring would encode a
+guess as a validation rule. The first capture block answers that empirically.
+
+**An all-zero pulse column does not prove the encoder was disconnected** — it
+is indistinguishable from a stalled motor, which is a real class. Confirm the
+encoder counts before capturing block 0.
 
 ### What changed in v2, and why v1 is still on disk
 

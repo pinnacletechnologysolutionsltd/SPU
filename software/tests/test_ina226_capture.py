@@ -34,12 +34,12 @@ from som_map import load_map  # noqa: E402
 from som_voronoi_explain import explain  # noqa: E402
 
 
-CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v2.json"
+CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v3.json"
 
 
 def fixture_rows(class_name: str, block: int, probe: str = "dc_fan_v1") -> list[str]:
     label = CLASS_NAMES.index(class_name)
-    lines = ["host_iso,probe,phase,t_ms,bus_mV,shunt_uV,current_uA"]
+    lines = ["host_iso,probe,phase,t_ms,bus_mV,shunt_uV,current_uA,pulses"]
     bases = (4_000, 12_000, 24_000)
     amplitudes = (35, 110, 190)
     strides = (3, 5, 7)
@@ -54,10 +54,13 @@ def fixture_rows(class_name: str, block: int, probe: str = "dc_fan_v1") -> list[
             raw += 720 + block * 7
         current_uA = raw * 25
         shunt_uV = raw * 5 // 2
+        # v3 covariate. Deliberately class-dependent so a fixture that lost
+        # the column would not merely fail parsing but also stop separating.
+        pulses = (10, 6, 0)[label] + (index % 2 if label != 2 else 0)
         lines.append(
             f"2026-07-19T12:00:{index // 100:02d}.{index % 100:03d},"
             f"{probe},{class_name},{1000 + index * 10},{5000 + (index % 3) - 1},"
-            f"{shunt_uV},{current_uA}"
+            f"{shunt_uV},{current_uA},{pulses}"
         )
     return lines
 
@@ -198,6 +201,37 @@ def main() -> None:
         ):
             rejects(name, lambda mutator=mutator: reject_mutation(mutator))
 
+        # v3 negative controls. The amendment is only real if a pre-v3 file
+        # is actually rejected -- otherwise old captures would flow through
+        # silently and the covariate would be missing without anyone noticing.
+        v2_shaped = root / "v2_shaped.csv"
+        v2_lines = []
+        for line in original.splitlines():
+            v2_lines.append(line.rsplit(",", 1)[0])
+        v2_shaped.write_text("\n".join(v2_lines) + "\n", encoding="ascii")
+        rejects(
+            "pre-v3 file without the pulses column rejected",
+            lambda: parse_capture_csv(
+                v2_shaped, class_name="normal", probe="dc_fan_v1", nominal_bus_mV=5000
+            ),
+        )
+
+        negative_pulses = root / "negative_pulses.csv"
+        neg_lines = [original.splitlines()[0]]
+        for index, line in enumerate(original.splitlines()[1:]):
+            fields = line.split(",")
+            if index == len(original.splitlines()) - 2:   # the LAST row
+                fields[7] = "-1"
+            neg_lines.append(",".join(fields))
+        negative_pulses.write_text("\n".join(neg_lines) + "\n", encoding="ascii")
+        rejects(
+            "negative pulse count rejected",
+            lambda: parse_capture_csv(
+                negative_pulses, class_name="normal", probe="dc_fan_v1",
+                nominal_bus_mV=5000
+            ),
+        )
+
         short_path = root / "short.csv"
         short_path.write_text("\n".join(original.splitlines()[:100]) + "\n", encoding="ascii")
         rejects(
@@ -277,13 +311,29 @@ def main() -> None:
         check("Voronoi winner inequality holds", explanation["inequality"]["lhs"] <= explanation["inequality"]["rhs"])
 
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
-    check("contract format pinned", contract["format"] == "SPU_INA226_COARSE_MONITOR_V2")
+    check("contract format pinned", contract["format"] == "SPU_INA226_COARSE_MONITOR_V3")
     check(
-        "v2 records the v1 hash it supersedes",
+        "v3 records the v2 hash it supersedes",
         contract["supersedes"]["sha256"]
         == hashlib.sha256(
-            (REPO / "software/datasets/ina226_coarse_monitor_v1.json").read_bytes()
+            (REPO / "software/datasets/ina226_coarse_monitor_v2.json").read_bytes()
         ).hexdigest(),
+    )
+    check(
+        "v3 amends while nothing is sealed",
+        contract["supersedes"]["sessions_sealed_when_amended"] == 0,
+    )
+    check(
+        "v3 schema carries the pulses covariate",
+        tuple(contract["sensor"]["csv_columns"])[-1] == "pulses",
+    )
+    # The load-bearing constraint of this amendment. Rotation trivially
+    # separates current_limited_stall, so a model given it would score well
+    # while demonstrating nothing about current-based anomaly detection.
+    # If this check ever fails, the study has been silently invalidated.
+    check(
+        "pulses is a covariate and NOT a feature",
+        "pulses" not in contract["features"],
     )
     check(
         "bus gate scoped to non-stall classes",

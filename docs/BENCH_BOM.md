@@ -40,7 +40,7 @@ what these two items address at a fraction of the cost.
 
 **Order the same variant.** The capture contract hard-codes `rshunt_mohm: 100`,
 `shunt_lsb_uV: 5/2`, `current_lsb_uA: 25` and I2C address `0x40`
-(`software/datasets/ina226_coarse_monitor_v2.json`). A module with a different
+(`software/datasets/ina226_coarse_monitor_v3.json`). A module with a different
 shunt does not merely read differently — every row fails the contract's
 `shunt_equation` residual check, and the validator rejects the whole session.
 Check the `R100` marking before wiring anything.
@@ -59,7 +59,7 @@ current scaling, which is exact only for 0.1 Ω.
 
 ### Why the encoder must arrive *with* the INA226, not after it
 
-`software/datasets/ina226_coarse_monitor_v2.json` is
+`software/datasets/ina226_coarse_monitor_v3.json` is
 `status: frozen_before_physical_capture_or_scoring`, defines 30 sessions
 (3 classes × 10, in 10 blocks) with `all_capture_sessions_must_validate: true`,
 and its four features are **current-only**: `mean_current_mA`,
@@ -104,10 +104,13 @@ So the options are concretely:
 | Side-car file per session | No schema change | Correlating two files by timestamp is fragile, and a missing side-car fails silently |
 | Session-level metadata only | Cheapest | The contract's `decision_unit` **is** "complete capture session", so this may genuinely suffice — but it loses per-window RPM stability checks |
 
-**Recommendation: the v3 column.** Zero sessions are sealed, so the amendment
-is legitimate now and never will be again; per-sample counts cost one integer
-per row; and the validator's exact-header check is a *feature* that should be
-updated by a visible, reviewable act rather than worked around.
+**DECIDED 2026-08-16 (John): the v3 column.** Implemented same day —
+`software/datasets/ina226_coarse_monitor_v3.json`, validator, pipeline,
+synthetic fixture and tests all moved. `pulses` is a **covariate, never a
+feature**; the feature list is unchanged at the same four current-derived
+values, and the test suite asserts that so a future edit cannot quietly
+invalidate the study. Negative controls confirm a pre-v3 file and a negative
+pulse count are both rejected.
 
 **Firmware is already written and tested** —
 `tools/bench_metrics/ina226_logger_v2.py`, covered by
