@@ -1,6 +1,7 @@
-# SPU-4 customer ABI — v1.0
+# SPU-4 customer ABI — v1.1
 
-**Status: FROZEN 2026-08-16.**
+**v1.0 status: FROZEN 2026-08-16.** **v1.1 appended 2026-08-17: adds `id`,
+a read-only identity port. No existing port's meaning changed — see §6.**
 **Module:** `hardware/rtl/core/spu4/spu4_customer_wrapper.v`
 **Executable form of this document:** `hardware/tests/spu4/spu4_customer_wrapper_tb.v`
 
@@ -83,7 +84,7 @@ spu4_customer_wrapper #(
     .a_in(a), .b_in(b), .c_in(c), .d_in(d),
     .coeff_f(f), .coeff_g(g), .coeff_h(h),
     .a_out(qa), .b_out(qb), .c_out(qc), .d_out(qd),
-    .dissonance(diss), .status(status)
+    .dissonance(diss), .status(status), .id(id)
 );
 ```
 
@@ -99,6 +100,7 @@ spu4_customer_wrapper #(
 | `a_out`…`d_out` | out | signed 16 | Registered results, stable while `done` |
 | `dissonance` | out | 8 | Saturating \|a+b+c+d\| of the completed operation |
 | `status` | out | 8 | See below |
+| `id` | out | 16 | **v1.1.** Synthesis-time constant identifying ABI version and wrapper variant. See §2a |
 
 ### `status` bits
 
@@ -114,6 +116,47 @@ spu4_customer_wrapper #(
 `start_ignored` exists so handshake misuse is *reported* rather than silently
 absorbed. A customer polling only `done` would otherwise never learn that a
 command was dropped.
+
+---
+
+## 2a. `id` — identity, v1.1
+
+**Why this exists.** This RTL is meant to be reused: as a modular spin on a
+different fabric, or built into a custom ASIC. Once that happens, the person
+holding the silicon is not necessarily the person who set the Verilog
+parameters — they have a chip, maybe a datasheet, and no guarantee the two
+still agree. `id` lets them ask the silicon directly rather than trust
+paperwork. It is a synthesis-time constant, not a register: nothing to reset,
+nothing that can drift between power-cycles.
+
+**Deliberately small.** RISC-V's `misa` discovery register works fine on its
+own terms; what actually causes RISC-V compatibility pain is the size of the
+*discoverable space* behind it — dozens of optional extensions and vendor
+customs that turn "what does this chip support" into a combinatorial lookup.
+`id` avoids that shape on purpose: one 16-bit word, a handful of fixed
+fields, no open-ended extension registry. If a real need for more discovery
+surface shows up later, it appends — see §6 — it does not grow this word.
+
+### Bitfield
+
+| Bits | Name | Meaning |
+|---|---|---|
+| 15:12 | `ABI_MAJOR` | Breaking-change version. `1` for this module. A breaking change is v2.0 **and a new module name** (§6), so this nibble cannot change without a rename — it exists mostly as a sanity check, not a live discriminator |
+| 11:8 | `ABI_MINOR` | Additive-append version. `1` as of this port's own addition. Bumps whenever v1.x appends a port or gives a reserved bit meaning |
+| 7:4 | `WRAPPER_ID` | Which product variant this is. `1` = the QROT-only Euclidean ALU wrapper — the only variant that exists today. A future wrapper (e.g. a SOM-classifier product surface over `spu4_som_edge`) gets the next unused value. Values are never reused, even if a variant is retired |
+| 3:0 | reserved | Reads `0`. Same rule as `status[7:5]`: may gain meaning in a later v1.x append |
+
+For this release, `id` = `16'h1110`.
+
+**What `id` is not.** It does not enumerate optional hardware blocks (there
+are none in this wrapper — no ECC, no configurable feature count) and it does
+not attempt to describe `spu4_som_edge`'s `NUM_FEATURES` or any other RTL
+parameter this module does not itself carry. Extending `id`'s meaning ahead
+of a real second variant would be exactly the over-generalization this design
+is trying to avoid. When a second variant is actually built, it either gets
+its own `WRAPPER_ID` value under this same word (if it shares the port
+shape) or its own module and its own `id` word (if it doesn't) — decided
+then, against the real module, not now against a hypothetical one.
 
 ---
 
@@ -158,13 +201,19 @@ zero.
 > It is stated as a requirement rather than fixed in RTL because latching an
 > early `start` would mean accepting an operation while the datapath is still
 > in reset, which is worse. A customer-visible `ready` output is a candidate
-> for v1.1 — it would be an appended port, which the compatibility promise
-> allows.
+> for a future v1.x append — it would be an appended port, which the
+> compatibility promise allows.
 
 > This one encodes a lesson that cost three weeks. A raw asynchronous reset pad
 > driving internal resets was the root cause of the A7 `spu_a7_top` outage
 > (see the A7 reset post-mortem). A customer must not be able to reproduce that
 > by wiring a button or a power-supervisor output straight to `rst_n`.
+
+**G7 — `id` is a fixed, correct constant, unaffected by reset.** `id` reads
+`16'h1110` before the first operation ever runs, and it reads the same value
+after a re-assert of reset — proving it is wiring off the module's identity,
+not state that could reset to something else or drift. See §2a for the
+bitfield.
 
 ---
 
@@ -234,11 +283,11 @@ preparation.
 
 | Claim | Level |
 |---|---|
-| G1–G6 hold | **Simulation.** `spu4_customer_wrapper_tb`, 19 checks |
+| G1–G7 hold | **Simulation.** `spu4_customer_wrapper_tb`, 21 checks |
 | Latency ∈ [180, 183], bound 200 | **Simulation**, 124 operations |
 | QROT reference fixture reproduces `0x0155` | **Simulation**, matching the vector proven in silicon at §3.2j |
-| This wrapper on hardware | **PROVEN 2026-08-16** — Tang 25K, 10/10 loads, `hardware_evidence.md` §3.2j.3 |
-| Resource cost | **Post-P&R, measured** — see §5.1 |
+| This wrapper on hardware | **PROVEN 2026-08-16** — Tang 25K, 10/10 loads, `hardware_evidence.md` §3.2j.3. That run predates `id` (v1.0 only); `id` itself has **no board run** — `spu13_tang25k_spu4_abi_probe` instantiates this wrapper but leaves `id` unconnected |
+| Resource cost | **Post-P&R, measured** — see §5.1. Predates `id`; a 16-bit constant net is expected to be negligible but has not been re-measured |
 
 Do not describe this wrapper as silicon-proven. The *core beneath it* has
 silicon evidence (§3.2j, 2026-07-08); the wrapper does not, and the two are
@@ -294,8 +343,14 @@ guarantees, and it is worth stating rather than hiding.
 ## 6. Compatibility promise
 
 Within **v1.x**: ports are added only at the end of the list; reserved `status`
-bits read `0` and may later gain meaning; the meaning of an existing port never
-changes. A breaking change is **v2.0** and a new module name.
+bits (and, as of v1.1, reserved `id` bits) read `0` and may later gain meaning;
+the meaning of an existing port never changes. A breaking change is **v2.0**
+and a new module name.
+
+**v1.1, 2026-08-17: `id` appended.** Every port from v1.0 keeps its position,
+width and meaning; `id` is added at the end of the list per this rule. G1–G6
+and their checks are untouched; this release adds G7 and does not renumber
+the others.
 
 ## 7. Open, not blocking
 
@@ -313,3 +368,8 @@ changes. A breaking change is **v2.0** and a new module name.
 4. **The programmable path.** If the sequencer's writeback is ever closed, a
    programmable variant can be added as a separate module. It must not be
    retrofitted into this one.
+5. **`id` has no board run and is not wired into `spu4_abi_probe`'s UART
+   output.** It is a plain constant net, so the risk is low, but "low risk"
+   is not "measured" — see §5. Wiring `S=` in the probe's golden line to also
+   report `id` is the natural next check, not done here to avoid moving the
+   pre-registered probe's golden line without a bench sitting to confirm it.

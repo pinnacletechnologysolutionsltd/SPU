@@ -1,4 +1,4 @@
-// spu4_customer_wrapper_tb.v — the ABI v1.0 contract, asserted
+// spu4_customer_wrapper_tb.v — the ABI v1.1 contract, asserted
 //
 // This file is the executable form of docs/SPU4_ABI.md. Every numbered
 // guarantee in that document has a check here, and the check is written to
@@ -25,6 +25,7 @@ module spu4_customer_wrapper_tb;
     wire busy, done;
     wire signed [15:0] a_out, b_out, c_out, d_out;
     wire [7:0] dissonance, status;
+    wire [15:0] id;
 
     spu4_customer_wrapper dut (
         .clk(clk), .rst_n(rst_n),
@@ -32,7 +33,7 @@ module spu4_customer_wrapper_tb;
         .a_in(a_in), .b_in(b_in), .c_in(c_in), .d_in(d_in),
         .coeff_f(coeff_f), .coeff_g(coeff_g), .coeff_h(coeff_h),
         .a_out(a_out), .b_out(b_out), .c_out(c_out), .d_out(d_out),
-        .dissonance(dissonance), .status(status)
+        .dissonance(dissonance), .status(status), .id(id)
     );
 
     always #41.66 clk = ~clk;          // 12 MHz, matching the reference build
@@ -125,6 +126,13 @@ module spu4_customer_wrapper_tb;
 
         if (done !== 1'b0) bad("G3 done must be low from reset until a result");
         else               ok("G3 done low from reset");
+
+        // ── G7: id is a synthesis-time constant, present before anything
+        // has run ──────────────────────────────────────────────────────
+        // ABI_MAJOR=1, ABI_MINOR=1, WRAPPER_ID=1 (QROT-only Euclidean ALU
+        // wrapper), reserved nibble 0.
+        if (id === 16'h1110) ok("G7 id reads ABI v1.1, wrapper 1, at reset");
+        else                 bad("G7 id does not match the documented v1.1 bitfield");
 
         // ── Operation 1: the QROT reference fixture ──────────────────
         // Same vector as the silicon probe: B=C=D=0x0100 under F=0x50,
@@ -262,6 +270,9 @@ module spu4_customer_wrapper_tb;
             ok("G6 reset clears busy, done and status");
         else
             bad("G6 reset did not return the contract to its defined state");
+
+        if (id === 16'h1110) ok("G7 id is unaffected by reset -- it is wiring, not state");
+        else                 bad("G7 id changed across reset; it must be a synthesis-time constant");
 
         // ── Negative control ─────────────────────────────────────────
         // The X/Z detector must be capable of firing, or every G1 PASS above

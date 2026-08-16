@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-// spu4_customer_wrapper.v — the SPU-4 product contract layer (ABI v1.0)
+// spu4_customer_wrapper.v — the SPU-4 product contract layer (ABI v1.1)
 //
 // This is the module a customer integrates against. It is deliberately NOT
 // `spu4_standalone_top`: that module is a development and bring-up vehicle,
@@ -21,6 +21,10 @@
 //  5. Latency is fixed and bounded. See SPU4_LATENCY_CYCLES below; the
 //     bound is asserted every operation by spu4_customer_wrapper_tb.
 //  6. `rst_n` may be driven asynchronously. It is synchronised here.
+//  7. `id` is a synthesis-time constant identifying the ABI version and the
+//     wrapper variant, so a modular spin or a custom ASIC built from this
+//     RTL can be interrogated for what it actually is. Added in v1.1 -- see
+//     SPU4_ID_* below and docs/SPU4_ABI.md §2a.
 //
 // ── Deliberately NOT in this contract ────────────────────────────────
 //  * Program memory / the sequencer. The programmable path is not closed
@@ -90,8 +94,32 @@ module spu4_customer_wrapper #(
     // status[3] saturated    -- dissonance read 0xFF for the op
     // status[4] start_ignored-- a start arrived while busy (handshake misuse)
     // status[7:5] reserved, read 0
-    output wire [7:0]               status
+    output wire [7:0]               status,
+
+    // ── Identity, added in ABI v1.1 ──────────────────────────────────
+    // A synthesis-time constant, not a register -- nothing to reset, nothing
+    // that can drift at runtime. Exists so a modular spin or a custom ASIC
+    // built from this RTL can be interrogated for what it is, without
+    // trusting that the netlist in hand matches the datasheet it shipped
+    // with. See docs/SPU4_ABI.md §2a for the bitfield.
+    //
+    // id[15:12] ABI_MAJOR    -- breaking-change version, 1 for this module
+    // id[11:8]  ABI_MINOR    -- additive-append version, 1 as of this port
+    // id[7:4]   WRAPPER_ID   -- 1 = QROT-only Euclidean ALU wrapper (the
+    //                           only variant that exists; a future variant,
+    //                           e.g. a SOM-classifier wrapper, gets a new
+    //                           value, never a reused one)
+    // id[3:0]   reserved, reads 0 -- same rule as status[7:5]
+    output wire [15:0]              id
 );
+
+    localparam [3:0] SPU4_ID_ABI_MAJOR  = 4'h1;
+    localparam [3:0] SPU4_ID_ABI_MINOR  = 4'h1;
+    localparam [3:0] SPU4_ID_WRAPPER_ID = 4'h1;
+    localparam [3:0] SPU4_ID_RESERVED   = 4'h0;
+
+    assign id = {SPU4_ID_ABI_MAJOR, SPU4_ID_ABI_MINOR,
+                 SPU4_ID_WRAPPER_ID, SPU4_ID_RESERVED};
 
     // Cycle budget for one operation, measured not assumed. The testbench
     // asserts every operation completes within this and fails if it does not,
