@@ -157,8 +157,26 @@ four features are **current-only** — RPM appears nowhere. RPM must be recorded
 sealed forces a choice between discarding sessions and losing the ability to
 condition on operating point — the exact flaw behind all three prior negatives.
 
-**Decide before ordering:** RPM as a formal v3 contract amendment, or as
-additive per-session metadata.
+**DECIDED and DONE 2026-08-16: the v3 contract amendment.**
+`ina226_coarse_monitor_v3.json` adds a `pulses` column; validator, pipeline,
+synthetic fixture and tests all moved. Legitimate only because
+`sessions_sealed_when_amended: 0` — that latitude closes at block 0.
+
+**`pulses` is a COVARIATE and must never become a feature.** Rotation
+trivially separates `current_limited_stall`, so a model given it would score
+well while proving nothing about current-based anomaly detection. The feature
+list is unchanged at four current-derived values and the test suite asserts
+`"pulses" not in contract["features"]`.
+
+**No class-conditional pulse gate**, deliberately — it is not yet known
+whether a current-limited stall on this rig stops rotation or merely slows it,
+and a threshold invented before measuring would encode a guess as a validation
+rule. Block 0 answers it.
+
+Firmware is ready: `tools/bench_metrics/ina226_logger_v2.py` (GP6, raw edge
+counts, `ppr` in the header), 17 host-side checks in the regression. **Set
+`ENC_PPR` to the measured value of whatever encoder is actually used before
+capturing.**
 
 **The logic analyzer was a recovered omission** — the roadmap's 07-19 amendment
 listed it; it never reached BENCH_BOM.
@@ -192,7 +210,10 @@ listed it; it never reached BENCH_BOM.
    every run, report the rate. Re-anchors T7.4 *and* the width fix in one
    session because the golden line is unchanged. Gates T7.
 2. **§3.2g.6 bench re-run** — needs the full A7 + RP2350 southbridge rig.
-3. **Order the three bench items** (§6), and settle the RPM contract question.
+3. **Order the three bench items** (§6). The RPM contract question is settled —
+   v3 is in. **Set `ENC_PPR` in the logger and confirm the encoder counts on
+   the Pico before block 0**; an all-zero pulse column is indistinguishable
+   from a stalled motor, so disconnection cannot be detected from the data.
 4. **`six_step_probe`** — trimming is the only remaining route. Not urgent; the
    utilisation gate is watching it.
 5. **Re-anchor decisions** for §3.2g.1 and §3.2k. John's call.
