@@ -1787,7 +1787,12 @@ work, not Tang board bring-up blockers.
 
 ### 3.2j SPU-4 Sentinel Standalone Silicon Probe
 
-> **SUPERSEDED 2026-08-15 — needs a bench re-run before it is cited again.**
+> **SUPERSEDED — and the bench re-run is DONE. See §3.2j.2 (2026-08-16) for
+> the current SPU-4 silicon result, which re-anchors both T7.4 and the width
+> fix at 10/10 loads with a 4/4 positive control. This entry's measurements
+> stay as the record of what ran on 2026-07-08 and must not be edited.**
+>
+> **SUPERSEDED 2026-08-15 — needed a bench re-run before it could be cited.**
 > T7.4 exported `dissonance[7:0]` from `spu4_standalone_top` and extended this
 > probe's UART line from 36 to 41 characters to carry it. The bitstream below
 > and its golden line both describe the pre-T7.4 design. `R=FF` is the correct
@@ -1898,6 +1903,91 @@ at any iteration count worth running.
 
 **Cost:** +3 LUT4, +2 ALU, 0 DFF (979 → 982, 460 → 462), Fmax 160.38 MHz.
 Regression 193 → 194 PASS.
+
+#### 3.2j.2 SPU-4 probe re-anchored — T7.4 and the width fix, in silicon
+
+**Date:** 2026-08-16 NZT. Supersedes §3.2j as the current SPU-4 silicon result.
+§3.2j's own measurements are untouched; they record what ran on 2026-07-08.
+
+**Scope:** re-anchors *two* changes in one session, which is why the width fix
+was taken before this run rather than after — T7.4's `dissonance` export
+(§3.2j) and the 19-bit residual widening (§3.2j.1). The golden line is
+unchanged by the second, so one bench run validates both.
+
+**Procedure:** `docs/BENCH_PROCEDURE_2026-08-3_2j_SPU4_REANCHOR.md`,
+pre-registered before the rig was energised.
+
+**Build & load:**
+
+```bash
+bash build_25k_spu4_probe.sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_probe.fs
+```
+
+Bitstream SHA-256:
+`0061b02f17a0f945110ad0aed269556568eb1412875268a3679baeb1cb56d67c`
+(982 LUT4 / 462 ALU / 336 DFF, 160.38 MHz against 12 MHz; reproduced 3× before
+the session and hash-verified again at the bench).
+
+**UART proof — 10/10 loads, 250 lines, every line identical:**
+
+```
+SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF
+```
+
+41 bytes including CRLF, verified with `cat -A`. The bitstream was reloaded
+between every run, so what is sampled is the configure-and-start path, not one
+configuration observed ten times.
+
+**Positive control — 4/4 loads, the previous bitstream:**
+
+```
+SPU4:P A=0000 B=0155 C=0155 D=0155
+```
+
+36 bytes, **no `R=` field**. `9599f5e4…22664`, rebuilt from commit `511f3f3`
+and reproducing the 2026-07-08 hash bit-exactly. Run 3× before the trials and
+**once more after them**, so the capture path is shown to discriminate the two
+images at both ends of the session. This is the control that matters here: the
+risk was never the RTL but "did the new image actually load", and a control
+that merely proves the bench works cannot distinguish that.
+
+**`R=FF` is correct, not a fault.** The QROT fixture settles at A=0,
+B=C=D=0x155, a residual of 0x3FF that saturates. `R=00` would be the
+suspicious reading — that is also what a stripped or stuck-at-zero port emits.
+
+**Capture path differs from §3.2j and is recorded as such.** July used the
+bare dock's BL616 USB-CDC. This session used a **Sipeed USB Debugger
+(FTDI FT2232, `0403:6010`)**, JTAG on interface 0 and the C3 UART on
+interface 1 (`/dev/serial/by-id/usb-SIPEED_USB_Debugger_2025030317-if01-port0`),
+115200 8N1. No `ttyACM` device was present. `blinky_uart` was loaded first as a
+bench-path sanity image and returned `BLINK`, which is what established that
+interface 1 carries C3 before any result was interpreted.
+
+**Method note — a stale-buffer artifact, and why all ten runs were repeated.**
+The first attempt's run 01 mixed a truncated control line with the golden line,
+because the serial buffer still held bytes from the previously-loaded image.
+Runs 02–10 looked clean only because they followed the *same* image, so the
+stale bytes were indistinguishable from fresh ones. That is a capture artifact,
+not a device failure — the same one `tools/bench_metrics/power_log.py` already
+flushes for. Rather than discard one run, the capture method was corrected to
+drain the buffer after loading and **all ten trials were re-run**. **Raw captures are committed** at
+`docs/bench_captures/2026-08-16-spu4-reanchor/` — ten trial logs, four
+control logs, and the superseded first attempt under
+`attempt1_stale_buffer/`. They are in the repository rather than in the
+gitignored `build/` tree specifically so they survive a clean and remain
+auditable later.
+
+**What this establishes.** The SPU-4 standalone probe executes the documented
+QROT path on Tang 25K silicon and reports the saturating Quadray residual on a
+pin, at the current HEAD bitstream. T7.4's product-wording claim and §3.2j.1's
+width fix are both now silicon-backed rather than simulation-backed.
+
+**What it does not establish.** One board, one session — a behaviour, not a
+reliability rate. It says nothing about other fabrics, and nothing about the
+160.38 MHz figure, which is a P&R result and not exercised by a 12 MHz run. It
+also gives no evidence for `spu4_customer_wrapper`, which is a different
+bitstream (§4a of `docs/SPU4_ABI.md`).
 
 ### 3.2k IROTC Icosahedral Rotation Engine Silicon Probe
 
@@ -2595,7 +2685,8 @@ a record. Two known weaknesses:
 | 3.2g.4 | 07-17 | `946574dc…` | **absent** | `df6cffd` cand. | UNMEASURED |
 | 3.2g.5 | 07-17 | `8753c492…` | `build_25k_spu13_som_sidecar.sh` | **`f4e271e` CONFIRMED** | **REPRODUCES** from `f4e271e` (2026-08-14) |
 | 3.2g.6 | 07-17 | `f22a34e7…` | `build_a7.sh 100t somsidecar` | `df6cffd` cand. | DIFFERS — see §3.6a |
-| 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | `7cac67a` cand. | **SUPERSEDED 08-15, moved again 08-16** — reproduced 4× up to T7.4; tree built `cbd6f83a…` under T7.4, now builds `0061b02f…` after the §3.2j.1 width fix (2×). Golden line unchanged, so one bench re-run re-anchors both moves |
+| 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | **`511f3f3` CONFIRMED** — rebuilt 2026-08-16 and reproduces the flashed hash bit-exactly | **SUPERSEDED by §3.2j.2.** Historical record of the 07-08 run; used 2026-08-16 as the positive control, 4/4 |
+| 3.2j.2 | **08-16** | `0061b02f…` | `build_25k_spu4_probe.sh` | `2adebf6` | **CURRENT** — 10/10 loads, 250 identical lines, 4/4 positive control. Re-anchors T7.4 and the width fix together |
 | 3.2k | 07-10 | `4aedc901…` | `build_25k_spu13_irotc_probe.sh` | `d1244e0` cand. | **DIFFERS, cause explained** — builds `6ac1e8ab…`; `73acd91` (07-12) moved the IROTC code ROM to BSRAM after this proof, see §3.6d |
 | 3.2k.1 | 07-12 | `ca54c1dc…` | `build_25k_spu13_irotc_spi.sh` | `6f6ec43` cand. | **BUILD_FAILED — not reproducible from any tested tree**, see §3.6f |
 | 3.2l | 07-14 | `d72412f1…` | **absent** | `62dd6c3` cand. | UNMEASURED |
