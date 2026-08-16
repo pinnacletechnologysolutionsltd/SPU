@@ -17,6 +17,9 @@ Interactive capture (type a new label + Enter to switch phase, Ctrl-C ends):
         --probe som_bmu_probe --out build/metrics/som_bmu.csv
 
 Output columns: host_iso,probe,phase,t_ms,bus_mV,shunt_uV,current_uA
+and, from an ina226_logger_v2 stream, a trailing `pulses`. The header is
+chosen from the first data row rather than assumed, so the file always
+matches its own rows.
 """
 
 import argparse
@@ -33,6 +36,10 @@ except ImportError:
              "pip install -r requirements.txt")
 
 HEADER = "host_iso,probe,phase,t_ms,bus_mV,shunt_uV,current_uA"
+# ina226_logger_v2 appends `pulses`. The header must match the rows actually
+# written, or the file is malformed in a way the validator reports only at
+# seal time. It is chosen from the first accepted row rather than assumed.
+HEADER_V2 = HEADER + ",pulses"
 
 
 def parse_args():
@@ -70,7 +77,8 @@ def main():
     anomalies = []
 
     with open(args.out, "w") as out:
-        out.write(HEADER + "\n")
+        # Written lazily, once the first data row reveals the logger's width.
+        header_written = False
         print(f"logging to {args.out}  probe={args.probe}  phase={phase}")
         if interactive:
             print("type a new phase label + Enter to switch; Ctrl-C to stop")
@@ -88,7 +96,12 @@ def main():
                 if not line or line.startswith("#") or line.startswith("t_ms"):
                     continue
                 parts = line.split(",")
-                if len(parts) != 4:
+                # v1 loggers emit 4 fields; ina226_logger_v2 appends `pulses`.
+                # This was `!= 4`, which SILENTLY dropped every row from a v2
+                # logger -- `continue`, not an error, so a whole session would
+                # capture zero samples and only announce it at seal time.
+                # Accept both widths and reject anything else.
+                if len(parts) not in (4, 5):
                     continue
                 try:
                     [int(p) for p in parts]
@@ -105,11 +118,22 @@ def main():
                     anomalies.append((n + 1, prev_t, t_ms))
                 prev_t = t_ms
 
+                if not header_written:
+                    out.write((HEADER_V2 if len(parts) == 5 else HEADER) + "\n")
+                    header_written = True
+
                 iso = datetime.datetime.now().isoformat(timespec="milliseconds")
                 out.write(f"{iso},{args.probe},{phase},{line}\n")
                 n += 1
         except KeyboardInterrupt:
             pass
+
+    if not header_written:
+        # No row ever arrived. Emit the v1 header so the file is well-formed
+        # and obviously empty, rather than zero bytes that look like a missing
+        # capture instead of a silent logger.
+        with open(args.out, "a") as out:
+            out.write(HEADER + "\n")
 
     print(f"done: {n} samples -> {args.out}")
     if anomalies:

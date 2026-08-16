@@ -80,6 +80,43 @@ closes the moment block 0 is sealed.
 contract amendment or as additive per-session metadata. Either is defensible;
 capturing without it is not.
 
+#### The mechanics of that decision, found 2026-08-16
+
+Investigated while writing `ina226_logger_v2.py`. Adding RPM is a **contract**
+change, not a tooling change, and two specific things enforce that:
+
+- **`software/lib/ina226_capture.py:294`** compares the CSV header for **exact
+  equality** against a 7-column frozen schema and raises *"CSV header differs
+  from frozen schema"*. A fifth column makes **every capture file fail
+  validation** — at seal time, long after the bench work is done.
+- **`tools/bench_metrics/power_log.py`** had a hard-coded `len(parts) != 4`
+  row filter that **silently dropped** every wider row — `continue`, not an
+  error, so a whole session would capture zero samples and only announce it at
+  seal. **Fixed 2026-08-16** to accept both widths and to choose its output
+  header from the first data row instead of assuming one. That was a latent
+  bug regardless of RPM.
+
+So the options are concretely:
+
+| Option | Cost | Notes |
+|---|---|---|
+| **v3 contract, `pulses` as a 5th column** | Bump `CSV_COLUMNS`, write contract v3, update the validator | Per-sample data, strictly most informative. Legitimate **only while `sessions_sealed_when_amended` is 0** — the v1→v2 precedent |
+| Side-car file per session | No schema change | Correlating two files by timestamp is fragile, and a missing side-car fails silently |
+| Session-level metadata only | Cheapest | The contract's `decision_unit` **is** "complete capture session", so this may genuinely suffice — but it loses per-window RPM stability checks |
+
+**Recommendation: the v3 column.** Zero sessions are sealed, so the amendment
+is legitimate now and never will be again; per-sample counts cost one integer
+per row; and the validator's exact-header check is a *feature* that should be
+updated by a visible, reviewable act rather than worked around.
+
+**Firmware is already written and tested** —
+`tools/bench_metrics/ina226_logger_v2.py`, covered by
+`test_ina226_logger_v2.py` (17 checks, in the regression). It logs **raw edge
+counts**, not rpm: at 100 Hz one sample is 10 ms, so a 20-slot wheel at
+1000 rpm gives ~3 edges per row and one edge is worth ~300 rpm. Over the
+contract's 32-sample window it is ~107 edges, about 1% resolution. Log edges,
+aggregate host-side.
+
 ### Sourcing the encoder — local stock not found, 2026-08-16
 
 John could not find an IR slotted optical encoder locally. Since it is

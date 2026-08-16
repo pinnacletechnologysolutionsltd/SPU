@@ -826,6 +826,29 @@ def main():
     boot_sequence_pass = sum(p for p, _ in boot_sequence_results.values())
     boot_sequence_fail = sum(f for _, f in boot_sequence_results.values())
 
+    # Bench-metrics firmware helpers (no Pico, no encoder, no bench).
+    # ina226_logger_v2 is written ahead of the encoder arriving so the bench
+    # session is a confidence check rather than firmware development; that only
+    # holds if the arithmetic and edge accounting are verified here first.
+    bench_metrics_results = {}
+    for bench_metrics_name in ("test_ina226_logger_v2.py",):
+        bench_metrics_path = os.path.join(
+            root_dir, "tools", "bench_metrics", bench_metrics_name)
+        if not os.path.exists(bench_metrics_path):
+            bench_metrics_results[bench_metrics_name] = (0, 0)
+            continue
+        result_bench_metrics = subprocess.run(
+            [sys.executable, bench_metrics_path],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_bench_metrics.returncode == 0:
+            bench_metrics_results[bench_metrics_name] = (1, 0)
+        else:
+            bench_metrics_results[bench_metrics_name] = (0, 1)
+            print(f"\n  {bench_metrics_name} FAILED:\n{result_bench_metrics.stdout[-500:]}")
+    bench_metrics_pass = sum(p for p, _ in bench_metrics_results.values())
+    bench_metrics_fail = sum(f for _, f in bench_metrics_results.values())
+
     # spu_host console parser (no hardware required)
     host_test = os.path.join(root_dir, "software", "tests", "test_spu_host_parser.py")
     if os.path.exists(host_test):
@@ -948,6 +971,10 @@ def main():
     print(f"Passed:                    {tensegrity_pass}")
     print(f"Failed:                    {tensegrity_fail}")
 
+    print(f"\nBench Metrics Firmware Tests: {bench_metrics_pass + bench_metrics_fail}")
+    print(f"Passed:                 {bench_metrics_pass}")
+    print(f"Failed:                 {bench_metrics_fail}")
+
     print(f"\nBoot Sequence FSM Tests: {boot_sequence_pass + boot_sequence_fail}")
     print(f"Passed:                 {boot_sequence_pass}")
     print(f"Failed:                 {boot_sequence_fail}")
@@ -973,6 +1000,7 @@ def main():
         + audio_pass + host_pass + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
+        + bench_metrics_pass
         + composition_pass
     )
     total_fail = (
@@ -980,6 +1008,7 @@ def main():
         + audio_fail + host_fail + som_product_fail + robotics_demo_fail
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
+        + bench_metrics_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
         + (1 - composition_pass)
         # Previously absent: these four were summed into total_pass with no
