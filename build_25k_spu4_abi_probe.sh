@@ -8,9 +8,11 @@
 # images already staged, so adding the wrapper to it would void that prep.
 #
 # Golden UART line at 115200 baud:
-#   ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7
+#   ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7 I=1110
 # L is the MEASURED latency in clocks (0xB7 = 183), which closes the bounded
 # latency product gate with hardware evidence rather than a simulation figure.
+# I is ABI v1.1's id port (SPU4_ABI.md 2a) -- wired through here for the
+# first time, so a matching I=1110 off real silicon is what this build adds.
 set -e
 mkdir -p build
 
@@ -34,4 +36,4 @@ gowin_pack -d GW5A-25A --sspi_as_gpio --mspi_as_gpio --cpu_as_gpio \
 echo ""
 echo "=== SPU-4 ABI Probe Build Complete ==="
 echo "SRAM load: openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_abi_probe.fs"
-echo "Expect:    ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7"
+echo "Expect:    ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7 I=1110"

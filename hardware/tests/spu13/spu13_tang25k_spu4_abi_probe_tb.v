@@ -109,7 +109,7 @@ module spu13_tang25k_spu4_abi_probe_tb;
         while (lines_seen < 6 && !pass_seen) begin
             recv_line;
             lines_seen = lines_seen + 1;
-            if (line_len == 44 && line[4] == "P") pass_seen = 1'b1;
+            if (line_len == 51 && line[4] == "P") pass_seen = 1'b1;
         end
 
         if (!pass_seen) begin
@@ -122,9 +122,9 @@ module spu13_tang25k_spu4_abi_probe_tb;
             ok("probe emitted a PASS line");
 
             // ── Framing ──────────────────────────────────────────────
-            if (line_len == 44) ok("line is 44 bytes (42 visible + CRLF)");
+            if (line_len == 51) ok("line is 51 bytes (49 visible + CRLF)");
             else                bad("line length wrong");
-            if (line[42] == 8'h0D && line[43] == 8'h0A) ok("line ends CR LF");
+            if (line[49] == 8'h0D && line[50] == 8'h0A) ok("line ends CR LF");
             else                                        bad("line terminator wrong");
 
             if (line[0] == "A" && line[1] == "B" && line[2] == "I" &&
@@ -135,8 +135,9 @@ module spu13_tang25k_spu4_abi_probe_tb;
 
             // ── Field labels, so a silently reordered line fails ──────
             if (line[6] == "B" && line[13] == "C" && line[20] == "D" &&
-                line[27] == "R" && line[32] == "S" && line[37] == "L")
-                ok("field labels B C D R S L in order");
+                line[27] == "R" && line[32] == "S" && line[37] == "L" &&
+                line[43] == "I")
+                ok("field labels B C D R S L I in order");
             else
                 bad("field labels wrong or reordered");
 
@@ -183,6 +184,14 @@ module spu13_tang25k_spu4_abi_probe_tb;
                 ok("latency agrees with the simulated 180-183 range");
             else
                 bad("latency disagrees with simulation -- investigate before trusting either");
+
+            // ── id (ABI v1.1), wired through with no decoding in the probe ──
+            // SPU4_ABI.md §2a: ABI_MAJOR=1, ABI_MINOR=1, WRAPPER_ID=1
+            // (QROT-only Euclidean ALU wrapper), reserved nibble 0.
+            if (hex4(45) == 16'h1110)
+                ok("I = 1110, the documented ABI v1.1 id constant, off real silicon");
+            else
+                bad("I disagrees with the documented id bitfield -- see SPU4_ABI.md 2a");
         end
 
         $display("%0d checks, %0d passed, %0d failed", pass + fail, pass, fail);

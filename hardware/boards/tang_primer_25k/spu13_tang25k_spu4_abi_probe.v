@@ -18,10 +18,10 @@
 //   with hardware evidence instead of a simulation figure -- and if silicon
 //   disagrees with simulation, that is worth knowing loudly.
 //
-// UART protocol (44 bytes = 42 visible chars + CRLF, repeats every LINE_PERIOD):
-//   ABI:. B=xxxx C=xxxx D=xxxx R=xx S=xx L=xxx\r\n   — still running
-//   ABI:P B=0155 C=0155 D=0155 R=FF S=xx L=xxx\r\n   — PASS
-//   ABI:F B=xxxx C=xxxx D=xxxx R=xx S=xx L=xxx\r\n   — FAIL
+// UART protocol (51 bytes = 49 visible chars + CRLF, repeats every LINE_PERIOD):
+//   ABI:. B=xxxx C=xxxx D=xxxx R=xx S=xx L=xxx I=xxxx\r\n   — still running
+//   ABI:P B=0155 C=0155 D=0155 R=FF S=xx L=xxx I=1110\r\n   — PASS
+//   ABI:F B=xxxx C=xxxx D=xxxx R=xx S=xx L=xxx I=xxxx\r\n   — FAIL
 //
 //   B/C/D  registered wrapper results. A is omitted -- it is 0000 for this
 //          fixture and the line has to stay inside a sane width; the
@@ -33,6 +33,9 @@
 //          predicted here, and the testbench pins whatever the RTL yields.
 //   L      measured latency in clocks from the accepted `start` to `done`,
 //          three hex digits, saturating at FFF.
+//   I      ABI v1.1: the wrapper's `id` port, wired straight through with no
+//          decoding here -- it is SPU4_ABI.md's bitfield read off real
+//          silicon, not a value this probe computes or could get wrong.
 //
 // The UART engine is copied from spu13_tang25k_spu4_probe, which is the
 // silicon-proven single-owner pattern; do not restructure it. The original
@@ -62,6 +65,7 @@ module spu13_tang25k_spu4_abi_probe #(
     wire        busy, done;
     wire signed [15:0] a_out, b_out, c_out, d_out;
     wire [7:0]  dissonance, status;
+    wire [15:0] id;
 
     spu4_customer_wrapper u_abi (
         .clk(sys_clk), .rst_n(rst_n),
@@ -72,7 +76,7 @@ module spu13_tang25k_spu4_abi_probe #(
         .a_in(16'sh0000), .b_in(16'sh0100), .c_in(16'sh0100), .d_in(16'sh0100),
         .coeff_f(16'sh0050), .coeff_g(16'sh00B5), .coeff_h(16'sh0050),
         .a_out(a_out), .b_out(b_out), .c_out(c_out), .d_out(d_out),
-        .dissonance(dissonance), .status(status)
+        .dissonance(dissonance), .status(status), .id(id)
     );
 
     // ── Drive exactly one operation, and time it ─────────────────────
@@ -218,8 +222,15 @@ module spu13_tang25k_spu4_abi_probe #(
                 6'd39: msg_byte = h(latency[11:8]);
                 6'd40: msg_byte = h(latency[7:4]);
                 6'd41: msg_byte = h(latency[3:0]);
-                6'd42: msg_byte = 8'h0D;
-                6'd43: msg_byte = 8'h0A;
+                6'd42: msg_byte = " ";
+                6'd43: msg_byte = "I";
+                6'd44: msg_byte = "=";
+                6'd45: msg_byte = h(id[15:12]);
+                6'd46: msg_byte = h(id[11:8]);
+                6'd47: msg_byte = h(id[7:4]);
+                6'd48: msg_byte = h(id[3:0]);
+                6'd49: msg_byte = 8'h0D;
+                6'd50: msg_byte = 8'h0A;
                 default: msg_byte = 8'h20;
             endcase
         end
@@ -256,7 +267,7 @@ module spu13_tang25k_spu4_abi_probe #(
             end else if (line_active) begin
                 tx_byte <= msg_byte(msg_idx);
                 tx_go <= 1'b1;
-                if (msg_idx == 6'd43) begin
+                if (msg_idx == 6'd50) begin
                     msg_idx <= 6'd0;
                     line_active <= 1'b0;
                 end else begin
