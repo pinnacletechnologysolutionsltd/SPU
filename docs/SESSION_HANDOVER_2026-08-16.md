@@ -1,7 +1,9 @@
 # Session handover — 2026-08-16
 
 Worked the 08-15 handover's open list top to bottom, then took the SPU-4
-product direction forward. Closed items 0, 0b, 0c and 3. Froze the customer ABI.
+product direction forward. Closed items 0, 0b, 0c and 3. Froze the customer
+ABI, pre-registered the next bench session, settled outreach timing, and
+amended the capture contract to v3 while it was still legitimate to do so.
 
 *Written incrementally as work landed, per the 08-01 lesson.*
 
@@ -9,8 +11,8 @@ product direction forward. Closed items 0, 0b, 0c and 3. Froze the customer ABI.
 
 - `master`, clean, **in sync with origin** — 13 commits from 08-15 that had
   never been pushed went out today, plus today's work.
-- Regression **195 PASS / 0 FAIL** (was 193 at session start; +1 dissonance
-  width TB, +1 customer wrapper TB).
+- Regression **196 PASS / 0 FAIL** (was 193 at session start; +1 dissonance
+  width TB, +1 customer wrapper TB, +1 bench-metrics firmware test).
 - Board-build check: **16 targets** — 13 `sha`, 2 `builds`, 1 `utilisation`.
   Self-test passes on both comparing modes.
 
@@ -25,6 +27,11 @@ product direction forward. Closed items 0, 0b, 0c and 3. Froze the customer ABI.
 | `e9a46c4` | Bench buy-now list cut to three; logic analyzer recovered |
 | `460aeec` | `router2` NO GO recorded |
 | `37c1339` | **SPU-4 customer ABI v1.0 frozen** |
+| `c7b4b99` | This handover |
+| `f7d8919` | §3.2j bench procedure pre-registered, both bitstreams staged |
+| `69221d6` | Outreach wait decision; encoder sourcing alternatives |
+| `2cd434c` | **`ina226_logger_v2`** with an encoder channel; silent row-drop fixed |
+| `26faebe` | **Capture contract amended to v3** — the `pulses` covariate |
 
 ## 2. The dissonance defect was worse than recorded (`8598308`)
 
