@@ -26,6 +26,15 @@ fault contract.
 | `debug_status` | Wrapper state bits, including busy, done, henosis, and decoder/status indicators. | No; fields are status, not a universal fault bitmap. |
 | chiral-adder `overflow` | The phinary adder crossed its configured laminar threshold during that operation. | Local event only; not currently exported by `spu4_standalone_top`. |
 
+> **Interface note, 2026-08-16.** The module a customer integrates against is
+> now `spu4_customer_wrapper` (ABI v1.0, `docs/SPU4_ABI.md`), not
+> `spu4_standalone_top`. On that wrapper the signals in the table above appear
+> as `dissonance` plus a `status` word with named bits — `busy`, `done`,
+> `henosis`, `saturated`, `start_ignored` — replacing `debug_status`'s
+> unlabelled bit-soup. Nothing in this contract's *meaning* changes; only where
+> the signals are read from. `spu4_standalone_top` remains the bring-up vehicle
+> and carries two undriven outputs of its own — see `SPU4_ABI.md` §1.
+
 ## Product wording
 
 Allowed:
