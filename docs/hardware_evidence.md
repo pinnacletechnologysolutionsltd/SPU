@@ -1808,7 +1808,9 @@ work, not Tang board bring-up blockers.
 > width was fixed (17 → 19 bits, §3.2j.1 below) and the duplicated expression
 > extracted into `spu4_dissonance.v`. The tree now builds
 > `0061b02f17a0f945110ad0aed269556568eb1412875268a3679baeb1cb56d67c`
-> at **982 LUT4 / 462 ALU / 336 DFF, 160.38 MHz**, reproduced 2×
+> at **982 LUT4 / 462 ALU / 336 DFF, 161.11 MHz** (CORRECTED 2026-08-17: was
+> recorded as 160.38 MHz, nextpnr's post-placement estimate; 161.11 MHz is the
+> final post-route figure), reproduced 2×
 > (was `cbd6f83a…` at 979 / 460 / 336 under T7.4 alone).
 > **The golden line is unchanged** — the QROT fixture's 0x3FF saturates under
 > both widths — so the pending bench re-run validates both changes at once.
@@ -1901,7 +1903,9 @@ same-sign extremes, which is the only region where the wrap is observable.
 The targeted corner vectors found this; the randomised sweep would not have,
 at any iteration count worth running.
 
-**Cost:** +3 LUT4, +2 ALU, 0 DFF (979 → 982, 460 → 462), Fmax 160.38 MHz.
+**Cost:** +3 LUT4, +2 ALU, 0 DFF (979 → 982, 460 → 462), Fmax 161.11 MHz
+(CORRECTED 2026-08-17: was recorded as 160.38 MHz, nextpnr's post-placement
+estimate; 161.11 MHz is the final post-route figure).
 Regression 193 → 194 PASS.
 
 #### 3.2j.2 SPU-4 probe re-anchored — T7.4 and the width fix, in silicon
@@ -1926,7 +1930,9 @@ openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_probe.fs
 
 Bitstream SHA-256:
 `0061b02f17a0f945110ad0aed269556568eb1412875268a3679baeb1cb56d67c`
-(982 LUT4 / 462 ALU / 336 DFF, 160.38 MHz against 12 MHz; reproduced 3× before
+(982 LUT4 / 462 ALU / 336 DFF, 161.11 MHz against 12 MHz — CORRECTED
+2026-08-17, was recorded as 160.38 MHz, nextpnr's post-placement estimate;
+161.11 MHz is the final post-route figure; reproduced 3× before
 the session and hash-verified again at the bench).
 
 **UART proof — 10/10 loads, 250 lines, every line identical:**
@@ -1985,7 +1991,8 @@ width fix are both now silicon-backed rather than simulation-backed.
 
 **What it does not establish.** One board, one session — a behaviour, not a
 reliability rate. It says nothing about other fabrics, and nothing about the
-160.38 MHz figure, which is a P&R result and not exercised by a 12 MHz run. It
+161.11 MHz figure (CORRECTED 2026-08-17, was 160.38 MHz — see §3.2j.2's cost
+line), which is a P&R result and not exercised by a 12 MHz run. It
 also gives no evidence for `spu4_customer_wrapper`, which is a different
 bitstream (§4a of `docs/SPU4_ABI.md`).
 
@@ -2006,7 +2013,10 @@ openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_abi_probe.fs
 
 Bitstream SHA-256:
 `1e70739d68477869c47e673407ebd599c350ce058ac1c1ba2b7a77edd647a81a`
-(1,044 LUT4 / 500 ALU / 381 DFF, 160.26 MHz against 12 MHz; reproduced 2×).
+(1,044 LUT4 / 500 ALU / 381 DFF, 211.60 MHz against 12 MHz — CORRECTED
+2026-08-17, was recorded as 160.26 MHz, nextpnr's post-placement estimate;
+211.60 MHz is the final post-route figure, confirmed by rebuilding this
+commit; reproduced 2×).
 
 **UART proof — 10/10 loads, 250 complete lines, every one identical:**
 
@@ -2045,7 +2055,8 @@ reports the saturating residual, and meets its published latency bound.
 
 **What it does not.** One board, one session — a behaviour, not a reliability
 rate. It exercises one operand fixture, so it does not probe the ABI's full
-input range, and it says nothing about the 160.26 MHz P&R figure, which a
+input range, and it says nothing about the 211.60 MHz P&R figure (CORRECTED
+2026-08-17, was 160.26 MHz — see the bitstream note above), which a
 12 MHz run cannot test.
 
 #### 3.2j.4 Three further probes brought up, one genuinely mute
@@ -2061,8 +2072,10 @@ Same session, exploratory block. None of these had ever been run on a board.
 `rotc_tagged_probe`'s silence is a **genuine finding, not a bench fault**. It
 was checked immediately against `blinky_uart`, which returned 14 lines on the
 same path seconds later. The spin builds, reproduces bit-exactly
-(`5fa8b4b8…`), and closes timing at 120–135 MHz against 12 MHz — it simply
-emits nothing. That is a real bring-up item: it has been recorded as "built,
+(`5fa8b4b8…`), and closes timing at 120.03 MHz against 12 MHz (CORRECTED
+2026-08-17: the 120–135 MHz range previously recorded here was nextpnr's
+final post-route figure and its post-placement estimate, unlabeled; 120.03 MHz
+is the final one) — it simply emits nothing. That is a real bring-up item: it has been recorded as "built,
 awaiting board run" since 2026-07-09, and the board run now says the image is
 silent.
 
@@ -2122,18 +2135,19 @@ consistent with `id` being a synthesis-time constant net rather than clocked
 state. Full table and the reasoning behind the LUT4 attribution:
 `docs/SPU4_ABI.md` §5.1.
 
-**Fmax finding, not yet resolved:** getting the comparison above required
+**Fmax finding, corrected 2026-08-17:** getting the comparison above required
 rebuilding §3.2j.3's exact commit, which surfaced that nextpnr prints *two*
 `Max frequency` lines per run — a post-placement estimate, then (after a full
-`Critical path report`) the final post-route figure — and **this repo has
-been citing the estimate, not the final number, for §3.2j.3's `160.26 MHz`.**
-The same rebuild's actual final post-route Fmax was **211.60 MHz**. This
-build's own two figures are 183.52 MHz (estimate) / **142.25 MHz (final,
-correctly the one cited above and in SPU4_ABI.md)**. **Not corrected here** —
-§3.2j.3, this table's row below, and `board_build_manifest.json` all still
-carry the uncorrected `160.26 MHz` and need a dedicated pass, flagged rather
-than silently rewritten since it touches already-published silicon evidence.
-Full detail: `docs/SPU4_ABI.md` §5.1.
+`Critical path report`) the final post-route figure — and **this repo had
+been citing the estimate, not the final number, for §3.2j.3's Fmax.** The
+same rebuild's actual final post-route Fmax was **211.60 MHz**, not the
+previously recorded `160.26 MHz`. This build's own two figures are 183.52 MHz
+(estimate) / **142.25 MHz (final, correctly the one cited above and in
+SPU4_ABI.md)**. A same-day repo-wide audit (see the nextpnr Fmax
+estimate-vs-final finding) found and fixed four more instances of the same
+mistake; §3.2j.3, this document's other citations, `SPU4_ABI.md`, and
+`board_build_manifest.json` are all corrected. Full detail:
+`docs/SPU4_ABI.md` §5.1.
 
 **UART proof — 10/10 loads, one capture per load, all identical:**
 
@@ -3350,7 +3364,7 @@ documented elsewhere in this ledger and in AGENTS.md.*
 | Inter-SPU node link protocol | `spu_node_link_tb` exists, not probed on hardware |
 | SDRAM arbiter under concurrent access | Simulated (`spu_sdram_arbiter_tb`), not stress-tested on hardware |
 | ROTC angles 0–5 in silicon | **Verified in Silicon** on Tang 25K with UART `ROTC:P A:5 E:00`; covers canonical trace for all 6 angles plus period closure for angles 1-5. Uses TDM core (`spu13_rotor_core_tdm.v`) with silent `div3` — see Davis Gate entry in `knowledge/SPU_LEXICON.md` for the /3 exactness caveat. |
-| ROTC tagged (deferred-reduction) core | TB-verified (8/8, `spu13_rotor_core_tagged_tb.v`); probe `spu13_tang25k_rotc_tagged_probe.v` **still awaiting a board run after five weeks** (built 2026-07-09). **Rebuilt and manifest-covered 2026-08-16**: 570/23,040 LUT4 = 2.5%, `u_rotc.clk` closes 120.03–135.37 MHz against 12 MHz, bitstream `5fa8b4b8…`, reproduced 2×. It was one of four targets the 08-15 sweep left uncovered. Nothing blocks the board run. Golden-vector re-verification contract: ROTATE must produce 3× TDM golden at exp=1; REDUCE must recover TDM golden at exp=0. **Fixed 2026-07-09:** REDUCE's `reduce_val64` loaded lane values via zero-extension instead of sign-extension — every negative lane value (routine in this representation) either false-faulted INEXACT or missed a real exact division; `-9` at exp=1 is the regression case (Test 8). |
+| ROTC tagged (deferred-reduction) core | TB-verified (8/8, `spu13_rotor_core_tagged_tb.v`); probe `spu13_tang25k_rotc_tagged_probe.v` **still awaiting a board run after five weeks** (built 2026-07-09). **Rebuilt and manifest-covered 2026-08-16**: 570/23,040 LUT4 = 2.5%, `u_rotc.clk` closes 120.03 MHz against 12 MHz (CORRECTED 2026-08-17: the 120.03–135.37 MHz range previously recorded here was nextpnr's final post-route figure and its post-placement estimate, unlabeled; 120.03 MHz is the final one), bitstream `5fa8b4b8…`, reproduced 2×. It was one of four targets the 08-15 sweep left uncovered. Nothing blocks the board run. Golden-vector re-verification contract: ROTATE must produce 3× TDM golden at exp=1; REDUCE must recover TDM golden at exp=0. **Fixed 2026-07-09:** REDUCE's `reduce_val64` loaded lane values via zero-extension instead of sign-extension — every negative lane value (routine in this representation) either false-faulted INEXACT or missed a real exact division; `-9` at exp=1 is the regression case (Test 8). |
 | SOM/BMU classifier in silicon | **Verified in Silicon** on Tang 25K with UART `SOM:P T:2 B:6 E:00`; covers 2 weighted BMU oracle scenarios and cluster reduction for the 7-node fixture |
 | Writable SOM sidecar over RP2350 SPI | **Verified in Silicon** on Tang 25K: hydrated winners returned SPI `80 A0 B0` and matching C3 UART `00 14 1E`; exact fixed-434-cycle HEAD datapath, §3.2g.3 |
 | Reproducible Iris SOM edge classifier | **Verified in Silicon** on Tang 25K and Wukong Artix-7: checked seven-node map plus labels, 35/35 writes, 150/150 complete SOM1 evidence records equal the exact oracle on each vendor, 147/150 semantic labels (98.0%), §§3.2g.5–3.2g.6 |

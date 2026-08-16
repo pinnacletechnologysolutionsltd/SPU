@@ -104,7 +104,9 @@ independent 32-bit reference, verified non-vacuous by replaying against the
 old expression. Full write-up: `hardware_evidence.md` §3.2j.1.
 
 **Cost: +3 LUT4, +2 ALU, 0 DFF**, and the bitstream moves
-`cbd6f83a…` → `0061b02f…` (982 / 462 / 336, 160.38 MHz, reproduced 2×). The
+`cbd6f83a…` → `0061b02f…` (982 / 462 / 336, 161.11 MHz — CORRECTED 2026-08-17,
+was 160.38 MHz, nextpnr's post-placement estimate; 161.11 MHz is the final
+post-route figure, reproduced 2×). The
 **golden line does not change** — the QROT fixture's 0x3FF saturates under
 both widths — so the §3.2j bench re-run that T7.4 already owed now validates
 both changes in one session. That is why the fix was taken before the bench

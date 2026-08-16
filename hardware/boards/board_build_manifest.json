@@ -50,7 +50,7 @@
       "sha256": "0061b02f17a0f945110ad0aed269556568eb1412875268a3679baeb1cb56d67c",
       "approx_seconds": 60,
       "silicon_evidence": "docs/hardware_evidence.md 3.2j.2 (CURRENT -- bench re-run completed 2026-08-16, 10/10)",
-      "notes": "Baseline moved TWICE since the 2026-07-08 silicon run, and 3.2j stays superseded until one bench session re-runs the probe. (1) 2026-08-15, T7.4 exported dissonance[7:0] from spu4_standalone_top and extended the probe UART line 36->41 chars: 9599f5e4... -> cbd6f83a..., 835 -> 979 LUT4. (2) 2026-08-16, the dissonance residual width was fixed 17 -> 19 bits and the duplicated expression extracted into spu4_dissonance.v: cbd6f83a... -> 0061b02f..., 979 -> 982 LUT4 / 460 -> 462 ALU / 336 DFF unchanged, 160.38 MHz, reproduced 2x. The two moves were deliberately batched before the bench run so one hardware session re-anchors both. Golden line is UNCHANGED by (2) -- 'SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF' -- because the QROT fixture residual of 0x3FF saturates either way; the width bug is only observable past +/-65536, which that fixture does not reach. 9599f5e4... now lives only in hardware_evidence.md 3.2j as the record of what was flashed.",
+      "notes": "Baseline moved TWICE since the 2026-07-08 silicon run, and 3.2j stays superseded until one bench session re-runs the probe. (1) 2026-08-15, T7.4 exported dissonance[7:0] from spu4_standalone_top and extended the probe UART line 36->41 chars: 9599f5e4... -> cbd6f83a..., 835 -> 979 LUT4. (2) 2026-08-16, the dissonance residual width was fixed 17 -> 19 bits and the duplicated expression extracted into spu4_dissonance.v: cbd6f83a... -> 0061b02f..., 979 -> 982 LUT4 / 460 -> 462 ALU / 336 DFF unchanged, 161.11 MHz (CORRECTED 2026-08-17: previously recorded as 160.38 MHz, nextpnr's post-placement estimate; 161.11 MHz is the final post-route figure -- see the nextpnr Fmax estimate-vs-final finding), reproduced 2x. The two moves were deliberately batched before the bench run so one hardware session re-anchors both. Golden line is UNCHANGED by (2) -- 'SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF' -- because the QROT fixture residual of 0x3FF saturates either way; the width bug is only observable past +/-65536, which that fixture does not reach. 9599f5e4... now lives only in hardware_evidence.md 3.2j as the record of what was flashed.",
       "recorded_at_commit": "4f3fc9b",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
@@ -286,7 +286,7 @@
       "artifact": "build/tang_primer_25k_satellite_aggregator_probe.fs",
       "sha256": "08cd65ce8501abdf76da2399f01bdd7778a92478c0de63aebb1b820e45500a76",
       "approx_seconds": 240,
-      "notes": "7855/23040 LUT4 = 34%, whisper_clk closes 59.17-77.48 MHz against 12 MHz. NEVER RUN ON A BOARD as of 2026-08-16. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
+      "notes": "7855/23040 LUT4 = 34%, whisper_clk closes 59.17 MHz against 12 MHz (CORRECTED 2026-08-17: the 59.17-77.48 MHz range previously recorded here was nextpnr's final post-route figure and its post-placement estimate, unlabeled; 59.17 MHz is the final one). NEVER RUN ON A BOARD as of 2026-08-16. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
       "recorded_at_commit": "2adebf6",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
@@ -299,7 +299,7 @@
       "artifact": "build/tang_primer_25k_rotc_tagged_probe.fs",
       "sha256": "5fa8b4b8ca793fc4a6e2214e1dcdbf4554f159b7344f77fe5411af91a17b58d1",
       "approx_seconds": 120,
-      "notes": "570/23040 LUT4 = 2%, u_rotc.clk closes 120.03-135.37 MHz against 12 MHz. NEVER RUN ON A BOARD -- hardware_evidence.md section 5 has recorded it as 'built (2026-07-09), awaiting board run' for five weeks. Golden-vector contract for that run: ROTATE must produce 3x the TDM golden at exp=1, REDUCE must recover the TDM golden at exp=0. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
+      "notes": "570/23040 LUT4 = 2%, u_rotc.clk closes 120.03 MHz against 12 MHz (CORRECTED 2026-08-17: the 120.03-135.37 MHz range previously recorded here was nextpnr's final post-route figure and its post-placement estimate, unlabeled; 120.03 MHz is the final one). NEVER RUN ON A BOARD -- hardware_evidence.md section 5 has recorded it as 'built (2026-07-09), awaiting board run' for five weeks. Golden-vector contract for that run: ROTATE must produce 3x the TDM golden at exp=1, REDUCE must recover the TDM golden at exp=0. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
       "recorded_at_commit": "2adebf6",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
@@ -312,7 +312,7 @@
       "artifact": "build/tang_primer_25k_whisper_v1_probe.fs",
       "sha256": "a6da8d8c403147f3c9b5951fca8499931f56c804acbc8657b66fc4e9ee65ac1f",
       "approx_seconds": 180,
-      "notes": "clk_div[1] closes 118.76-125.64 MHz against 12 MHz. NEVER RUN ON A BOARD as of 2026-08-16. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
+      "notes": "clk_div[1] closes 118.76 MHz against 12 MHz (CORRECTED 2026-08-17: the 118.76-125.64 MHz range previously recorded here was nextpnr's final post-route figure and its post-placement estimate, unlabeled; 118.76 MHz is the final one). NEVER RUN ON A BOARD as of 2026-08-16. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
       "recorded_at_commit": "2adebf6",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
@@ -326,7 +326,7 @@
       "sha256": "23ba4a3f5326d0943f32c63a011dc5f6ee6c32aba7608c40bb7f73d03dad8365",
       "approx_seconds": 90,
       "silicon_evidence": "PROVEN -- Tang 25K, 10/10 loads 2026-08-17, hardware_evidence.md 3.2j.6 (stale entry corrected: 3.2j.3 had already proven the pre-id v1.0 build on 2026-08-16)",
-      "notes": "Instantiates spu4_customer_wrapper, the SPU-4 ABI contract layer -- now v1.1, adding the id identity port (SPU4_ABI.md 2a). Post-P&R, measured 2026-08-17: 1066/23040 LUT4 = 4.6%, 500 ALU, 381 DFF (+22 LUT4 over the pre-id build's 1044/500/381, ALU/DFF unchanged since id is a constant net, not clocked state). u_abi.clk final post-route Fmax 142.25 MHz against the 12 MHz constraint. NOTE the pre-id figure this build is compared against (previously cited as 160.26 MHz, e.g. in hardware_evidence.md 3.2j.3) is FLAGGED, not confirmed -- rebuilding that commit for this comparison found nextpnr prints a post-placement ESTIMATE before its final post-route figure, and 160.26 MHz appears to be the estimate; the same rebuild's final post-route Fmax was 211.60 MHz. Not yet corrected across the repo -- see SPU4_ABI.md 5.1. This build's own 142.25 MHz is confirmed as the final (last-printed) figure. Golden line 'ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7 I=1110', decoded byte-for-byte by spu13_tang25k_spu4_abi_probe_tb (17 checks). L is the MEASURED latency in clocks (0xB7 = 183); I is the id bitfield (0x1110 = ABI v1.1, wrapper 1). Deliberately separate from spu4_probe, whose bitstream is pinned by 3.2j and a pre-registered bench procedure.",
+      "notes": "Instantiates spu4_customer_wrapper, the SPU-4 ABI contract layer -- now v1.1, adding the id identity port (SPU4_ABI.md 2a). Post-P&R, measured 2026-08-17: 1066/23040 LUT4 = 4.6%, 500 ALU, 381 DFF (+22 LUT4 over the pre-id build's 1044/500/381, ALU/DFF unchanged since id is a constant net, not clocked state). u_abi.clk final post-route Fmax 142.25 MHz against the 12 MHz constraint. The pre-id figure this build is compared against was CORRECTED 2026-08-17: previously cited as 160.26 MHz (e.g. in hardware_evidence.md 3.2j.3), which was nextpnr's post-placement estimate; the actual final post-route Fmax for that build is 211.60 MHz -- corrected across the repo, see SPU4_ABI.md 5.1 and the nextpnr Fmax estimate-vs-final finding. This build's own 142.25 MHz is confirmed as the final (last-printed) figure. Golden line 'ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7 I=1110', decoded byte-for-byte by spu13_tang25k_spu4_abi_probe_tb (17 checks). L is the MEASURED latency in clocks (0xB7 = 183); I is the id bitfield (0x1110 = ABI v1.1, wrapper 1). Deliberately separate from spu4_probe, whose bitstream is pinned by 3.2j and a pre-registered bench procedure.",
       "recorded_at_commit": "daabf25",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",

@@ -239,7 +239,9 @@ introducing a large data-dependent stall fails even while staying under the
 bound.
 
 At the 12 MHz reference constraint, 200 clocks is ~16.7 µs per operation. The
-reference build closes at 160.38 MHz, so the bound is ~1.25 µs at that rate —
+reference build closes at 161.11 MHz (CORRECTED 2026-08-17: was 160.38 MHz,
+nextpnr's post-placement estimate — see §5.1's flag), so the bound is ~1.25 µs
+at that rate —
 but **the frequency claim and the latency claim are separate**, and only the
 12 MHz figure has silicon behind it.
 
@@ -319,7 +321,7 @@ the real board top:
 | LUT4 | **1,044 / 23,040 = 4.5%** |
 | ALU | 500 |
 | DFF | 381 |
-| Fmax (`u_abi.clk`) | **160.26 MHz**, as originally recorded — **now in question, see the flag below** |
+| Fmax (`u_abi.clk`) | **211.60 MHz** (CORRECTED 2026-08-17: was recorded as 160.26 MHz, nextpnr's post-placement estimate; 211.60 MHz is the final post-route figure — see the resolved flag below) |
 | Bitstream | `1e70739d…` reproduced 2× |
 
 **Post-P&R, 2026-08-17 (v1.1, with `id` wired into the probe's UART line)**:
@@ -329,7 +331,7 @@ the real board top:
 | LUT4 | **1,066 / 23,040 = 4.6%** (+22 over the pre-`id` build) |
 | ALU | 500 (unchanged) |
 | DFF | 381 (unchanged) |
-| Fmax (`u_abi.clk`) | **142.25 MHz**, the final post-route figure (see flag below on which of nextpnr's two numbers this is) |
+| Fmax (`u_abi.clk`) | **142.25 MHz**, the final post-route figure (confirmed correct — see the resolved flag below) |
 | Bitstream | `23ba4a3f…`, commit `daabf25`, rebuild reproduces it bit-exactly |
 
 `id` itself is a synthesis-time constant net — no new flops, no new ALU
@@ -344,23 +346,38 @@ into a flip-flop, unrelated to either `id` or the UART logic. Do not repeat
 "the UART mux is on the critical path" as a checked fact; it isn't, and an
 earlier draft of this document said so without checking.
 
-> **Flag: nextpnr prints two `Max frequency` lines per run, and this
-> document has been citing the wrong one.** The first appears right after
-> placement (an *estimate*, before the router has run); the second, following
-> a full `Critical path report`, appears at the very end of the run and is
-> the final post-route figure. Rebuilding the pre-`id` commit to get the
-> LUT4/ALU/DFF numbers above surfaced this: the **160.26 MHz** already
+> **Resolved 2026-08-17: nextpnr prints two `Max frequency` lines per run,
+> and this document had been citing the wrong one.** The first appears right
+> after placement (an *estimate*, before the router has run); the second,
+> following a full `Critical path report`, appears at the very end of the run
+> and is the final post-route figure. Rebuilding the pre-`id` commit to get
+> the LUT4/ALU/DFF numbers above surfaced this: the `160.26 MHz` previously
 > published for that build (here, in `hardware_evidence.md` §3.2j.3, and in
-> `board_build_manifest.json`) is the placement-stage estimate — the actual
-> final post-route figure from that same build is **211.60 MHz**. For the new
-> `id`-bearing build the two figures are 183.52 MHz (estimate) and 142.25 MHz
-> (final); 142.25 MHz above is correctly the final one. **Not yet corrected
-> across the repo** — this needs its own pass to fix §3.2j.3, this table's
-> pre-`id` row, and the manifest entry consistently, and to check whether
-> other Fmax citations elsewhere have the same mistake. Flagged rather than
-> silently rewritten because it touches already-published silicon evidence.
-> **Both figures are the PROBE**, not the wrapper alone — see below —
-> regardless of which one turns out to be the currently-published error.
+> `board_build_manifest.json`) was the placement-stage estimate — the actual
+> final post-route figure from that same build is **211.60 MHz**, now
+> corrected in both places (both tables above). For the `id`-bearing build the
+> two figures are 183.52 MHz (estimate) and 142.25 MHz (final); 142.25 MHz
+> above was already the final one and needed no correction.
+>
+> A same-day repo-wide audit checked every other nextpnr Fmax citation this
+> pattern could plausibly affect and found four more live instances: the
+> pinned SPU-4 core reference (`spu4_probe`, §3.2j.2 — 160.38 → 161.11 MHz,
+> corrected) and three probes whose Fmax had been published as an unlabeled
+> range spanning both numbers rather than picking the final one
+> (`rotc_tagged_probe`, `satellite_aggregator_probe`, `spu_whisper_v1_probe` —
+> all corrected to their single final figure in `board_build_manifest.json`
+> and `hardware_evidence.md`). One citation (`six_step_probe`) was checked and
+> found already correct: that design never completes routing (96%
+> congestion), so only the estimate exists and the doc already labels it
+> "post-placement" honestly. Artix-7 (`build_a7.sh`) Fmax citations remain
+> **unverified** — that toolchain (`nextpnr-xilinx`) was not available to
+> rebuild against during the audit; its safety argument (the build pipes
+> through `tools/collect_fpga_metrics.py` with a `--report` JSON flag, which
+> structurally only contains the final post-route analysis, confirmed by
+> mechanism on the Tang builds that use the same flag) is by code-reading, not
+> by an empirical rebuild.
+>
+> **Both figures are the PROBE**, not the wrapper alone — see below.
 
 **That figure is the PROBE, not the wrapper alone** — it includes the UART
 engine, the test FSM and the LEDs. For scale, `spu4_probe` (standalone top +
@@ -400,11 +417,10 @@ the others.
 
 ## 7. Open, not blocking
 
-1. ~~A placed-and-routed cost, and an Fmax.~~ **CLOSED 2026-08-16** — see
-   §5.1. 1,044 LUT4 / 500 ALU / 381 DFF via `spu13_tang25k_spu4_abi_probe`.
-   **The `160.26 MHz` figure recorded alongside it is now flagged as likely
-   wrong** — see the flag in §5.1. Reopening this item's Fmax half, not its
-   LUT/ALU/DFF half.
+1. ~~A placed-and-routed cost, and an Fmax.~~ **CLOSED 2026-08-16**, Fmax
+   **corrected 2026-08-17** — see §5.1. 1,044 LUT4 / 500 ALU / 381 DFF via
+   `spu13_tang25k_spu4_abi_probe`, **211.60 MHz** (was recorded as
+   160.26 MHz, nextpnr's post-placement estimate).
 2. **A silicon run.** **Corrected 2026-08-16:** this previously said to batch
    it into the existing SPU-4 probe. That is wrong — §3.2j is now
    pre-registered with both bitstreams already built and staged, and modifying
@@ -421,9 +437,12 @@ the others.
    `I=` field, confirmed 10/10 loads on Tang 25K (`hardware_evidence.md`
    §3.2j.6). Resource cost also measured while closing this: 1,066 LUT4 (+22)
    / 500 ALU / 381 DFF (both unchanged) — see §5.1.
-6. **The Fmax methodology flag in §5.1.** `160.26 MHz` (pre-`id`) and
-   possibly other Fmax citations in this repo may be nextpnr's post-placement
-   estimate rather than the final post-route figure. Needs a dedicated pass
-   across §3.2j.3, this document's §5.1, and `board_build_manifest.json` —
-   discovered 2026-08-17 as a side effect of the `id` resource measurement
-   above, not yet acted on.
+6. ~~The Fmax methodology flag in §5.1.~~ **CLOSED 2026-08-17** — see §5.1.
+   Discovered as a side effect of the `id` resource measurement above; a
+   same-day repo-wide audit found and corrected five instances total
+   (this document, `hardware_evidence.md` §3.2j.2/§3.2j.3/§3.2j.4/§3353,
+   `board_build_manifest.json`, `SPU4_FAULT_REPORTING_CONTRACT.md`,
+   `BENCH_PROCEDURE_2026-08-3_2j_SPU4_REANCHOR.md`). Artix-7 (`build_a7.sh`)
+   Fmax citations remain unverified — `nextpnr-xilinx` was not available to
+   rebuild against; see the flag in §5.1 for the reasoning on why they're
+   presumed (not confirmed) safe.

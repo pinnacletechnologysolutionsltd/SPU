@@ -211,7 +211,7 @@ never added.** All four build and reproduce bit-exactly:
 | `blinky_uart` | 140 (0.6%) | has silicon |
 | `rotc_tagged_probe` | 570 (2.5%) | **never run** — recorded as "awaiting board run" since 07-09 |
 | `satellite_aggregator_probe` | 7,855 (34%) | **never run** |
-| `whisper_v1_probe` | — (119–126 MHz) | **never run** |
+| `whisper_v1_probe` | — (118.76 MHz, corrected 2026-08-17 from an unlabeled 119–126 MHz range) | **never run** |
 
 Coverage is now 26 scripts = 20 checked + 5 retired + 1 excluded.
 `blinky_uart` at 140 LUT4 is the cheapest known-good bench image and is a
@@ -262,7 +262,8 @@ this fixture is an RTL fact, and asserting a guess would be a fabricated
 expectation. The TB asserts only the bits the contract fixes.
 
 **Post-P&R, closing `SPU4_ABI.md` open item 1:** 1,044/23,040 LUT4 = 4.5%,
-500 ALU, 381 DFF, **160.26 MHz** against 12 MHz, bitstream `1e70739d…`,
+500 ALU, 381 DFF, **211.60 MHz** (CORRECTED 2026-08-17: was recorded here as
+160.26 MHz, nextpnr's post-placement estimate) against 12 MHz, bitstream `1e70739d…`,
 reproduced 2×. **That is the PROBE, not the wrapper alone** — it includes the
 UART engine, FSM and LEDs. For scale `spu4_probe` is 982/462/336, so the ABI
 probe is slightly *larger* despite excluding the sequencer, decoder and
@@ -329,7 +330,8 @@ SILICON (scoped)** — scope stated: one operand fixture, one board, one session
 | `whisper_v1_probe` | PASS — `WHSP:P F:1 E:00` |
 | **`rotc_tagged_probe`** | **MUTE — genuine, not a bench fault** |
 
-`rotc_tagged_probe` builds, reproduces `5fa8b4b8…`, closes 120–135 MHz, and
+`rotc_tagged_probe` builds, reproduces `5fa8b4b8…`, closes 120.03 MHz
+(corrected 2026-08-17 from an unlabeled 120–135 MHz range), and
 emits nothing. `blinky_uart` returned 14 lines on the same path seconds later.
 Recorded as "awaiting board run" since 2026-07-09; the board run now says the
 image is silent. **This is the open bring-up item, and it needs no hardware to

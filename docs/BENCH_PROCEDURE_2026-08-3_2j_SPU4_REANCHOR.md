@@ -40,9 +40,10 @@ capture path is not reporting what is on the board, and the session is void.
 ### What this session will NOT establish
 
 One board, one session. It re-anchors a functional claim; it is **not** a
-reliability rate, and it says nothing about other fabrics. The 160.38 MHz P&R
-figure is a synthesis/P&R result and is **not** proven by this session — keep
-the frequency claim and the functional claim separate.
+reliability rate, and it says nothing about other fabrics. The 161.11 MHz P&R
+figure (CORRECTED 2026-08-17: was 160.38 MHz, nextpnr's post-placement
+estimate) is a synthesis/P&R result and is **not** proven by this session —
+keep the frequency claim and the functional claim separate.
 
 ---
 
