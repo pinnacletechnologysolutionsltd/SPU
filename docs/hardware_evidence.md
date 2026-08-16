@@ -2093,6 +2093,58 @@ interfaces re-enumerated and `blinky_uart` returned `BLINK` immediately.
 - A replug power-cycles the board, so SRAM configuration is lost — reload
   before capturing.
 
+#### 3.2j.6 SPU-4 ABI v1.1 `id` port in silicon — first read-back of the identity word
+
+**Date:** 2026-08-17 NZT.
+
+**Scope:** first silicon for `id`, the read-only identity port appended to
+`spu4_customer_wrapper` in ABI v1.1 (`docs/SPU4_ABI.md` §2a). `id` was wired
+into `spu13_tang25k_spu4_abi_probe`'s UART line as a new `I=` field for this
+run; the probe's golden line previously ended at `L=`.
+
+**Build & load:**
+
+```bash
+bash build_25k_spu4_abi_probe.sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_abi_probe.fs
+```
+
+Bitstream SHA-256:
+`23ba4a3f5326d0943f32c63a011dc5f6ee6c32aba7608c40bb7f73d03dad8365`,
+built from commit `daabf25` — rebuilt after that commit and reproduces the
+flashed hash bit-exactly. nextpnr reported 142.25 MHz max for `u_abi.clk`
+(PASS at the 12 MHz constraint) — not a comparable figure to §3.2j.3's
+160.26 MHz, since this build carries the extra `id` wiring and a longer UART
+message; no P&R resource count was re-measured (SPU4_ABI.md §5 flags this as
+open).
+
+**UART proof — 10/10 loads, one capture per load, all identical:**
+
+```
+ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7 I=1110
+```
+
+Raw log: `docs/bench_captures/2026-08-17-spu4-abi-v1.1-id/raw_runs.log`.
+Captured via `/dev/ttyUSB1` at 115200 8N1, reloaded between every run.
+
+**`I=1110` matches `docs/SPU4_ABI.md` §2a exactly**: `ABI_MAJOR=1`,
+`ABI_MINOR=1`, `WRAPPER_ID=1` (QROT-only Euclidean ALU wrapper), reserved
+nibble `0`. `B`/`C`/`D`/`R`/`S`/`L` are unchanged from §3.2j.3 and confirm
+this run is the same wrapper behaviour with one port added, not a different
+build.
+
+**What this establishes.** `id` is not just a simulated constant — the
+elaborated netlist on real Tang 25K silicon reads back the exact bitfield the
+doc promises, across 10 independent SRAM loads. This is the discovery
+mechanism itself proven end-to-end: a party holding only this bitstream could
+read `id` off the UART (or, on an ASIC, off the equivalent pins) and learn
+which ABI version and wrapper variant they have, without trusting paperwork.
+
+**What it does not.** One board, one session, one fixture — same scope
+caveat as §3.2j.3. It does not exercise a second `WRAPPER_ID` value (none
+exists yet) or prove anything about a future custom-ASIC spin; it proves the
+mechanism works for the one variant that exists today.
+
 ### 3.2k IROTC Icosahedral Rotation Engine Silicon Probe
 
 **Date:** 2026-07-10 NZT — **first icosahedral (A₅) rotation silicon.**
@@ -2791,6 +2843,8 @@ a record. Two known weaknesses:
 | 3.2g.6 | 07-17 | `f22a34e7…` | `build_a7.sh 100t somsidecar` | `df6cffd` cand. | DIFFERS — see §3.6a |
 | 3.2j | 07-08 | `9599f5e4…` | `build_25k_spu4_probe.sh` | **`511f3f3` CONFIRMED** — rebuilt 2026-08-16 and reproduces the flashed hash bit-exactly | **SUPERSEDED by §3.2j.2.** Historical record of the 07-08 run; used 2026-08-16 as the positive control, 4/4 |
 | 3.2j.2 | **08-16** | `0061b02f…` | `build_25k_spu4_probe.sh` | `2adebf6` | **CURRENT** — 10/10 loads, 250 identical lines, 4/4 positive control. Re-anchors T7.4 and the width fix together |
+| 3.2j.3 | 08-16 | `1e70739d…` | `build_25k_spu4_abi_probe.sh` | **absent** | UNMEASURED — first ABI silicon, predates this table row |
+| 3.2j.6 | **08-17** | `23ba4a3f…` | `build_25k_spu4_abi_probe.sh` | **`daabf25` CONFIRMED** — rebuilt post-commit, reproduces the flashed hash bit-exactly | **CURRENT** — 10/10 loads, `id` field matches SPU4_ABI.md 2a on every load |
 | 3.2k | 07-10 | `4aedc901…` | `build_25k_spu13_irotc_probe.sh` | `d1244e0` cand. | **DIFFERS, cause explained** — builds `6ac1e8ab…`; `73acd91` (07-12) moved the IROTC code ROM to BSRAM after this proof, see §3.6d |
 | 3.2k.1 | 07-12 | `ca54c1dc…` | `build_25k_spu13_irotc_spi.sh` | `6f6ec43` cand. | **BUILD_FAILED — not reproducible from any tested tree**, see §3.6f |
 | 3.2l | 07-14 | `d72412f1…` | **absent** | `62dd6c3` cand. | UNMEASURED |

@@ -258,10 +258,11 @@ own testbench, which is the same shape as the defects it was written to
 prevent.
 
 Golden line, decoded byte-for-byte off `uart_tx` by
-`hardware/tests/spu13/spu13_tang25k_spu4_abi_probe_tb.v` (16 checks):
+`hardware/tests/spu13/spu13_tang25k_spu4_abi_probe_tb.v` (17 checks,
+**v1.1: 16→17, the `id` field added**):
 
 ```
-ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7
+ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7 I=1110
 ```
 
 - `S=0A` — `done` and `saturated` set, `busy`, `henosis` and `start_ignored`
@@ -273,6 +274,9 @@ ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7
   which closes the bounded-latency product gate with hardware evidence
   (§3.2j.3).
 - `R=FF` is correct, not a fault; the QROT fixture's residual is 0x3FF.
+- `I=1110` — **v1.1's `id` field, confirmed on silicon 2026-08-17**, 10/10
+  loads, matching §2a's bitfield exactly (`hardware_evidence.md` §3.2j.6).
+  Wired through with no decoding in the probe itself.
 
 Deliberately a **separate target** from `spu13_tang25k_spu4_probe`: that
 probe's bitstream is pinned by §3.2j and by a pre-registered bench procedure
@@ -286,7 +290,8 @@ preparation.
 | G1–G7 hold | **Simulation.** `spu4_customer_wrapper_tb`, 21 checks |
 | Latency ∈ [180, 183], bound 200 | **Simulation**, 124 operations |
 | QROT reference fixture reproduces `0x0155` | **Simulation**, matching the vector proven in silicon at §3.2j |
-| This wrapper on hardware | **PROVEN 2026-08-16** — Tang 25K, 10/10 loads, `hardware_evidence.md` §3.2j.3. That run predates `id` (v1.0 only); `id` itself has **no board run** — `spu13_tang25k_spu4_abi_probe` instantiates this wrapper but leaves `id` unconnected |
+| This wrapper on hardware | **PROVEN 2026-08-16** — Tang 25K, 10/10 loads, `hardware_evidence.md` §3.2j.3 |
+| `id` on hardware | **PROVEN 2026-08-17** — Tang 25K, 10/10 loads, `I=1110` matching §2a exactly, `hardware_evidence.md` §3.2j.6 |
 | Resource cost | **Post-P&R, measured** — see §5.1. Predates `id`; a 16-bit constant net is expected to be negligible but has not been re-measured |
 
 Do not describe this wrapper as silicon-proven. The *core beneath it* has
@@ -368,8 +373,8 @@ the others.
 4. **The programmable path.** If the sequencer's writeback is ever closed, a
    programmable variant can be added as a separate module. It must not be
    retrofitted into this one.
-5. **`id` has no board run and is not wired into `spu4_abi_probe`'s UART
-   output.** It is a plain constant net, so the risk is low, but "low risk"
-   is not "measured" — see §5. Wiring `S=` in the probe's golden line to also
-   report `id` is the natural next check, not done here to avoid moving the
-   pre-registered probe's golden line without a bench sitting to confirm it.
+5. ~~`id` has no board run and is not wired into `spu4_abi_probe`'s UART
+   output.~~ **CLOSED 2026-08-17** — see §4a and §5. `id` is now the probe's
+   `I=` field, confirmed 10/10 loads on Tang 25K (`hardware_evidence.md`
+   §3.2j.6). The resource-cost re-measurement it left open (a 16-bit constant
+   net, expected negligible but unmeasured post-P&R) is still open.
