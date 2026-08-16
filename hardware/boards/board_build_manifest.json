@@ -318,6 +318,20 @@
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
         "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
       }
+    },
+    {
+      "name": "spu4_abi_probe",
+      "script": "build_25k_spu4_abi_probe.sh",
+      "artifact": "build/tang_primer_25k_spu4_abi_probe.fs",
+      "sha256": "1e70739d68477869c47e673407ebd599c350ce058ac1c1ba2b7a77edd647a81a",
+      "approx_seconds": 90,
+      "silicon_evidence": "NONE YET -- built and simulated only, no board run",
+      "notes": "First build that instantiates spu4_customer_wrapper, the SPU-4 ABI v1.0 contract layer. Until 2026-08-16 the ABI reached no .ys, no board top and no manifest entry. 1044/23040 LUT4 = 4.5%, 500 ALU, 381 DFF, u_abi.clk closes 160.26 MHz against the 12 MHz constraint, reproduced 2x. NOTE this figure is the PROBE, not the wrapper alone -- it includes the UART engine, the test FSM and the LEDs. Golden line 'ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7', decoded byte-for-byte by spu13_tang25k_spu4_abi_probe_tb (16 checks). L is the MEASURED latency in clocks (0xB7 = 183), matching the simulated 180-183 range and inside the 200-clock ABI bound. Deliberately separate from spu4_probe, whose bitstream is pinned by 3.2j and a pre-registered bench procedure.",
+      "recorded_at_commit": "5b59fda",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
     }
   ]
 }

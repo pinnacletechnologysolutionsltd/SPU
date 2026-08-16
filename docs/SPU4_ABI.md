@@ -133,6 +133,22 @@ start.
 (async assert, sync release). After reset, `busy`, `done` and `status` are all
 zero.
 
+> **Integration requirement, added 2026-08-16: hold `start` off for at least
+> 2 clocks after `rst_n` rises.** The synchroniser is a two-flop chain, so
+> `rst_n` going high does not immediately release the datapath — a `start`
+> asserted on the first cycle is swallowed and the operation never begins.
+>
+> This was found by the first real integration (`spu13_tang25k_spu4_abi_probe`)
+> and had been missing from this document. Its symptom is silent and easy to
+> misread: `busy` and `done` both stay low and the wrapper looks dead rather
+> than mis-driven. The probe waits 16 clocks, which is comfortable margin.
+>
+> It is stated as a requirement rather than fixed in RTL because latching an
+> early `start` would mean accepting an operation while the datapath is still
+> in reset, which is worse. A customer-visible `ready` output is a candidate
+> for v1.1 — it would be an appended port, which the compatibility promise
+> allows.
+
 > This one encodes a lesson that cost three weeks. A raw asynchronous reset pad
 > driving internal resets was the root cause of the A7 `spu_a7_top` outage
 > (see the A7 reset post-mortem). A customer must not be able to reproduce that
@@ -172,6 +188,34 @@ but **the frequency claim and the latency claim are separate**, and only the
 
 ---
 
+## 4a. Silicon vehicle
+
+`hardware/boards/tang_primer_25k/spu13_tang25k_spu4_abi_probe.v` is the first
+build that instantiates this wrapper. Until 2026-08-16 the ABI reached no
+`.ys`, no board top and no manifest entry — it was verified only against its
+own testbench, which is the same shape as the defects it was written to
+prevent.
+
+Golden line, decoded byte-for-byte off `uart_tx` by
+`hardware/tests/spu13/spu13_tang25k_spu4_abi_probe_tb.v` (16 checks):
+
+```
+ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7
+```
+
+- `S=0A` — `done` and `saturated` set, `busy`, `henosis` and `start_ignored`
+  clear. `henosis` is **decoded and reported, not predicted**: whether the
+  Φ-fold fires for this fixture is an RTL fact, and asserting a guess would
+  be a fabricated expectation.
+- `L=0B7` — **183 clocks measured**, matching the simulated 180–183 range and
+  inside the 200-clock bound.
+- `R=FF` is correct, not a fault; the QROT fixture's residual is 0x3FF.
+
+Deliberately a **separate target** from `spu13_tang25k_spu4_probe`: that
+probe's bitstream is pinned by §3.2j and by a pre-registered bench procedure
+with images already staged, so adding the wrapper to it would have voided that
+preparation.
+
 ## 5. Evidence status
 
 | Claim | Level |
@@ -180,7 +224,7 @@ but **the frequency claim and the latency claim are separate**, and only the
 | Latency ∈ [180, 183], bound 200 | **Simulation**, 124 operations |
 | QROT reference fixture reproduces `0x0155` | **Simulation**, matching the vector proven in silicon at §3.2j |
 | This wrapper on hardware | **NOT PROVEN.** No board has run it |
-| Resource cost | **Synthesis estimate only** — see §5.1 |
+| Resource cost | **Post-P&R, measured** — see §5.1 |
 
 Do not describe this wrapper as silicon-proven. The *core beneath it* has
 silicon evidence (§3.2j, 2026-07-08); the wrapper does not, and the two are
@@ -199,7 +243,25 @@ and serial multiplier beneath it:
 | ALU | 119 |
 | DFF / DFFCE / DFFRE | 12 / 2 / 419 — **433 flops total** |
 
-**Three caveats, all of which matter:**
+**Post-P&R, 2026-08-16** — `spu13_tang25k_spu4_abi_probe`, the real board top:
+
+| | Value |
+|---|---|
+| LUT4 | **1,044 / 23,040 = 4.5%** |
+| ALU | 500 |
+| DFF | 381 |
+| Fmax (`u_abi.clk`) | **160.26 MHz** against a 12 MHz constraint |
+| Bitstream | `1e70739d…` reproduced 2× |
+
+**That figure is the PROBE, not the wrapper alone** — it includes the UART
+engine, the test FSM and the LEDs. For scale, `spu4_probe` (standalone top +
+sequencer + decoder + regfile + ALU + the same UART fixture) is 982 / 462 /
+336. So the ABI probe is slightly *larger* despite excluding the sequencer,
+decoder and register file: the capture and result registers that buy G2 and G3
+cost roughly what the programmable path cost. That is the price of the
+guarantees, and it is worth stating rather than hiding.
+
+**Three caveats on the yosys estimate below, all of which matter:
 
 1. **This is a yosys cell count, not a placed-and-routed figure.** The repo has
    already been burned once by quoting a synthesis estimate as a resource
@@ -223,12 +285,15 @@ changes. A breaking change is **v2.0** and a new module name.
 
 ## 7. Open, not blocking
 
-1. **A placed-and-routed cost, and an Fmax.** §5.1 is a synthesis estimate
-   only; neither number is closed until the wrapper goes through P&R in a real
-   board top.
-2. **A silicon run.** The natural vehicle is the existing SPU-4 probe, which
-   would move its bitstream — so this should be batched with the §3.2j bench
-   re-run already owed, not taken separately.
+1. ~~A placed-and-routed cost, and an Fmax.~~ **CLOSED 2026-08-16** — see
+   §5.1. 1,044 LUT4 / 500 ALU / 381 DFF, 160.26 MHz, via
+   `spu13_tang25k_spu4_abi_probe`.
+2. **A silicon run.** **Corrected 2026-08-16:** this previously said to batch
+   it into the existing SPU-4 probe. That is wrong — §3.2j is now
+   pre-registered with both bitstreams already built and staged, and modifying
+   `spu4_probe` would void that preparation. The vehicle is the separate
+   `spu4_abi_probe` (§4a), which can be flashed in the same bench sitting as a
+   distinct block **after** §3.2j is sealed.
 3. **Adapters.** SPI, streaming and memory-mapped front ends layer on this
    wrapper. None are in v1.0.
 4. **The programmable path.** If the sequencer's writeback is ever closed, a
