@@ -80,6 +80,37 @@ closes the moment block 0 is sealed.
 contract amendment or as additive per-session metadata. Either is defensible;
 capturing without it is not.
 
+### Sourcing the encoder — local stock not found, 2026-08-16
+
+John could not find an IR slotted optical encoder locally. Since it is
+co-blocking, do **not** let it sit on a single slow order.
+
+**The bar is lower than "encoder" suggests.** RPM here is a covariate to
+condition on, not a measurement. The three classes are `normal`,
+`elevated_load` and `current_limited_stall` — stall is ~0 RPM, elevated load is
+reduced, normal is free-running. Telling those apart needs pulses proportional
+to rotation, nothing more. Accuracy is close to irrelevant.
+
+| Option | Notes |
+|---|---|
+| **Ball-mouse salvage** | A ball mouse contains **two** IR slotted encoders, each with the slotted wheel already on a shaft. Free, immediate, no lead time. Try this first |
+| TradeMe | Worth checking; spec barely matters for this job |
+| Reflective IR (TCRT5000 / line-follower module) + a white mark on the shaft | Often easier to source locally than slotted types |
+| AliExpress **in parallel** | A few dollars. Order alongside a local attempt — whichever arrives first wins |
+
+**Parallel-source it.** Spending ~$5 twice to remove a four-week gate on a
+30-session campaign is obviously correct. The standing rule in §5 — do not let
+a slow order gate a fast one — applies with extra force to a co-blocking part.
+
+**Whichever is used:**
+
+- **Record pulses-per-revolution in the session metadata.** A salvaged mouse
+  wheel and a bought encoder differ, and a raw pulse count is meaningless
+  without it.
+- **Prove it counts on the Pico before block 0 is captured.** The electronics
+  are trivial; the mounting is the fiddly part, and the contract is frozen once
+  capture starts.
+
 ### Note on the enamel wire
 
 Enamel/magnet wire is fine harness stock, but the insulation is a varnish that

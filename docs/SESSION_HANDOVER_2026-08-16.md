@@ -201,6 +201,35 @@ listed it; it never reached BENCH_BOM.
    optimisation, not a fix; both build fine.
 8. Spin-name drift in `build_a7.sh:12` — cosmetic, still unfixed.
 
+### Outreach — DECIDED 2026-08-16: wait
+
+**No campaign starts until the real-sensor result exists** — not even a gentle
+or educational one. John's call, reaffirming the 2026-08-04 sequencing.
+
+Order: order the three bench items → §3.2j → capture campaign → *then*
+artifact-led post → warm network → sniper email.
+
+Reasoning, in one line each: nothing is blocked on audience (parts, §3.2j and
+Gate A are what is blocked); you get one first impression and the Iris demo is
+a classification benchmark rather than the wedge, so posting now means having
+nothing to sell anyone who engages; content is the slowest path to revenue on
+this project's own list, and if pressure sharpens the answer is paid
+engineering work, not more content. Nothing is lost by waiting — the material
+is generated as a side effect of working honestly and already carries numbers.
+
+Also settled: **artifact-led, not education-led.** "Did anyone replicate it?"
+is answerable; "did the education land?" is not.
+
+**Full record — including the reconciliation of three conflicting outreach
+documents and which one governs — is `outreach_decision_record_2026-08-16.md`
+in the gitignored `spu_strategy/` directory.** Flagged here because a decision
+that lives only in an ignored file is invisible to git, to handover
+orientation, and to a fresh clone; that hazard already caused a duplicated
+contract on 2026-08-04. Kept out of tracked `docs/` deliberately, since this
+repo publishes its RTL and that file is commercial positioning.
+
+**Revisit on a result, not on a new strategy document.**
+
 ### Not to be done
 - **The `irotc_spi` router anomaly.** Population of one, nothing depends on it.
 - **ECP5 port.** Right second vendor eventually, but John's 08-16 call is that
