@@ -11,9 +11,9 @@ amended the capture contract to v3 while it was still legitimate to do so.
 
 - `master`, clean, **in sync with origin** — 13 commits from 08-15 that had
   never been pushed went out today, plus today's work.
-- Regression **197 PASS / 0 FAIL** (was 193 at session start; +1 dissonance
-  width TB, +1 customer wrapper TB, +1 bench-metrics firmware test, +1 ABI
-  probe TB).
+- Regression **198 PASS / 0 FAIL** (was 193 at session start).
+- **A bench session ran.** Two silicon results sealed, three probes on a board
+  for the first time, one real defect found. See §8.
 - Board-build check: **21 targets** — 18 `sha`, 2 `builds`, 1 `utilisation`.
   Self-test passes on both comparing modes. Coverage is now complete: 27 Tang
   scripts = 21 checked + 5 retired + 1 deliberately excluded.
@@ -37,6 +37,9 @@ amended the capture contract to v3 while it was still legitimate to do so.
 | `8040917` | Manifest coverage gap closed — four targets were never added |
 | `62971fe` | **`0xB0` resolved** — opaque payload with a mandatory magic |
 | `d996b28` | **`spu4_abi_probe`** — the ABI reaches a board top |
+| `9e3e513` | **§3.2j re-anchored in silicon** — 10/10, 4/4 control |
+| `405dfcf` | **Tier 1** — register → ALU → register loop closed |
+| `27d63d7` | **ABI proven in silicon** — bounded-latency gate closed |
 
 ## 2. The dissonance defect was worse than recorded (`8598308`)
 
@@ -283,6 +286,90 @@ in one run. That is the argument for building the probe.
 `spu4_probe`. **Wrong** — §3.2j is pre-registered with both bitstreams built
 and staged, and touching `spu4_probe` would void it. `spu4_abi_probe` is its
 own target.
+
+## 8. Bench session — two silicon results, one real defect
+
+Ran on the Tang 25K, Sipeed FTDI debugger (JTAG if0, C3 UART if1). **No
+southbridge, no external supply** — every probe is `sys_clk` + `led` +
+`uart_tx`.
+
+### §3.2j.2 — re-anchored, 10/10 (`9e3e513`)
+
+```
+SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF      41 bytes, 10/10 loads, 250 lines
+SPU4:P A=0000 B=0155 C=0155 D=0155           36 bytes, 4/4 positive control
+```
+
+Re-anchors T7.4 **and** the width fix in one session, which is why the width
+fix was taken first. Control run 3× before and once **after** the trials.
+`9599f5e4…` rebuilt from `511f3f3` reproduces the July hash bit-exactly, which
+also upgrades §3.2j's source anchor to **CONFIRMED**. Raw captures committed at
+`docs/bench_captures/2026-08-16-spu4-reanchor/`.
+
+### §3.2j.3 — the ABI on silicon, and a product gate closed (`27d63d7`)
+
+```
+ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7   10/10 loads, 250 lines
+```
+
+**`L=0B7` = 183 clocks, measured on hardware.** Simulation said 180–183 against
+a 200 bound. `SPU4_PRODUCT_CLAIMS.md`'s bounded-latency gate moves **OPEN →
+SILICON (scoped)** — scope stated: one operand fixture, one board, one session.
+
+### §3.2j.4 — three first-ever board runs
+
+| Probe | Result |
+|---|---|
+| `satellite_aggregator_probe` | PASS — `SAGG:P W:2 I:9 E:00` |
+| `whisper_v1_probe` | PASS — `WHSP:P F:1 E:00` |
+| **`rotc_tagged_probe`** | **MUTE — genuine, not a bench fault** |
+
+`rotc_tagged_probe` builds, reproduces `5fa8b4b8…`, closes 120–135 MHz, and
+emits nothing. `blinky_uart` returned 14 lines on the same path seconds later.
+Recorded as "awaiting board run" since 2026-07-09; the board run now says the
+image is silent. **This is the open bring-up item, and it needs no hardware to
+start** — a probe that builds and stays mute is usually a testbench-vs-top
+wiring difference.
+
+### §3.2j.5 — the bench path wedges, and how to tell
+
+**The Sipeed FTDI's channel B stops passing UART after ~20 MPSSE loads on
+channel A.** `blinky_uart`, working minutes earlier, went silent while JTAG
+stayed healthy and the device stayed enumerated. **Replugging fixes it**; that
+power-cycles the board, so reload before capturing.
+
+Four probes read as failures before `blinky` showed the path was dead. The same
+check later proved `rotc_tagged_probe`'s silence was real. **Keeping a
+known-good discriminator is what separates those two cases** — without it they
+are identical.
+
+## 9. Tier 1 — the register loop closed (`405dfcf`)
+
+`spu4_standalone_top` gains `OPERAND_SRC`: `0` PIN (default, unchanged), `1`
+REG (register file feeds the ALU — the closed loop), `2` SELF (the ALU's
+always-present `mode_autonomous`, previously hardwired off).
+
+Proven by **poisoning**: REG mode's pins are driven `0x7FFF` and the result must
+still follow the register. PIN gives `0x0155`, REG gives `0x0000` from R0's
+reset quadray, and the test asserts they **disagree**.
+
+Default is PIN, so **no bitstream moved** — verified, `spu4_probe` still builds
+`0061b02f…` bit-exactly.
+
+**Scope correction:** this does *not* make SPU-4 programmable.
+`spu4_euclidean_alu` has **no opcode input and no second operand port**, and
+the decoder's `alu_op` is connected to nothing. `QADD` cannot execute
+regardless of routing; `QLDI` has no immediate→register path. Both need
+arithmetic-core changes that re-anchor §3.2j.2.
+
+**SPU-13 does not have this defect** — `spu13_nsa_core` loads operands from its
+register bank by decoded source address.
+
+**Recommendation on the next step:** do `QLDI` (a regfile write mux, does not
+touch the ALU, and without it the closed loop can only start from R0's reset
+value or the pins). Do **not** do `QADD` — narrow the stated ISA to what the
+hardware does instead. Claiming an ISA you do not implement is the same failure
+pattern this session spent the day removing.
 
 ## 7. Open
 
