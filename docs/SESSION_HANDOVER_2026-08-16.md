@@ -11,10 +11,12 @@ amended the capture contract to v3 while it was still legitimate to do so.
 
 - `master`, clean, **in sync with origin** — 13 commits from 08-15 that had
   never been pushed went out today, plus today's work.
-- Regression **196 PASS / 0 FAIL** (was 193 at session start; +1 dissonance
-  width TB, +1 customer wrapper TB, +1 bench-metrics firmware test).
-- Board-build check: **16 targets** — 13 `sha`, 2 `builds`, 1 `utilisation`.
-  Self-test passes on both comparing modes.
+- Regression **197 PASS / 0 FAIL** (was 193 at session start; +1 dissonance
+  width TB, +1 customer wrapper TB, +1 bench-metrics firmware test, +1 ABI
+  probe TB).
+- Board-build check: **21 targets** — 18 `sha`, 2 `builds`, 1 `utilisation`.
+  Self-test passes on both comparing modes. Coverage is now complete: 27 Tang
+  scripts = 21 checked + 5 retired + 1 deliberately excluded.
 
 | Commit | Change |
 |---|---|
@@ -32,6 +34,9 @@ amended the capture contract to v3 while it was still legitimate to do so.
 | `69221d6` | Outreach wait decision; encoder sourcing alternatives |
 | `2cd434c` | **`ina226_logger_v2`** with an encoder channel; silent row-drop fixed |
 | `26faebe` | **Capture contract amended to v3** — the `pulses` covariate |
+| `8040917` | Manifest coverage gap closed — four targets were never added |
+| `62971fe` | **`0xB0` resolved** — opaque payload with a mandatory magic |
+| `d996b28` | **`spu4_abi_probe`** — the ABI reaches a board top |
 
 ## 2. The dissonance defect was worse than recorded (`8598308`)
 
@@ -225,6 +230,60 @@ payload registry. New compatibility rule 5 generalises it.
 this failure — the same bytes meaning different things depending on the
 implementation. It was the most directly quotable flaw in the repo.*
 
+## 6c. The ABI now reaches a board — `spu4_abi_probe` (`d996b28`)
+
+§5 froze the customer ABI. It then **reached nothing**: no `.ys`, no board top,
+no manifest entry, verified only against its own testbench. That is the same
+shape as the three defects it was written to prevent. **An ABI that has never
+been synthesised is a paper contract.**
+
+`spu13_tang25k_spu4_abi_probe` drives `spu4_customer_wrapper` through its real
+handshake and prints:
+
+```
+ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7
+```
+
+**`L` is the measured latency in clocks** — `0xB7` = 183, matching the
+simulated 180–183 range and inside the 200-clock bound. Bounded latency is an
+*open* product gate in `SPU4_PRODUCT_CLAIMS.md`; printing it off the board
+closes it with hardware evidence rather than a simulation figure.
+
+`S` is **decoded and reported, not predicted** — whether the Φ-fold fires for
+this fixture is an RTL fact, and asserting a guess would be a fabricated
+expectation. The TB asserts only the bits the contract fixes.
+
+**Post-P&R, closing `SPU4_ABI.md` open item 1:** 1,044/23,040 LUT4 = 4.5%,
+500 ALU, 381 DFF, **160.26 MHz** against 12 MHz, bitstream `1e70739d…`,
+reproduced 2×. **That is the PROBE, not the wrapper alone** — it includes the
+UART engine, FSM and LEDs. For scale `spu4_probe` is 982/462/336, so the ABI
+probe is slightly *larger* despite excluding the sequencer, decoder and
+regfile: the capture and result registers that buy G2 and G3 cost about what
+the programmable path cost.
+
+### It found an ABI gap on the first integration
+
+The first version printed `L=FFF S=00` forever. The reset synchroniser added
+for G6 is a two-flop chain, so `rst_n` going high does **not** release the
+datapath for two more clocks — the probe's cycle-one `start` was swallowed.
+**That requirement was nowhere in `SPU4_ABI.md`.**
+
+Now documented under G6 with the symptom, because it is silent and reads as a
+*dead* wrapper rather than a *mis-driven* one. Stated as a requirement rather
+than fixed in RTL: latching an early `start` would mean accepting an operation
+while the datapath is still in reset, which is worse. A `ready` output is a
+v1.1 candidate — an appended port, which the compatibility promise allows.
+
+Twelve hours of simulation did not surface this. The first real integration did,
+in one run. That is the argument for building the probe.
+
+### Correction
+
+`SPU4_ABI.md` open item 2 previously said to batch the ABI silicon run into
+`spu4_probe`. **Wrong** — §3.2j is pre-registered with both bitstreams built
+and staged, and touching `spu4_probe` would void it. `spu4_abi_probe` is its
+own target.
+
 ## 7. Open
 
 1. **§3.2j bench re-run — DECIDED: this is next session's work.**
@@ -253,6 +312,19 @@ implementation. It was the most directly quotable flaw in the repo.*
    it is already in doubt. 10 trial loads, 3 control loads, reload between
    every run, report the rate. Re-anchors T7.4 *and* the width fix in one
    session because the golden line is unchanged. Gates T7.
+
+   **The session now has a natural three-block shape**, and the blocks must not
+   be interleaved — §3.2j's procedure aborts if the rig changes mid-run:
+
+   | Block | What | Why |
+   |---|---|---|
+   | 0 | `blinky_uart` | Bench-path sanity, 140 LUT4. Cheapest known-good image; better than the `som_bmu_probe` the procedure currently names |
+   | 1 | **§3.2j, sealed** | Pre-registered. Controls first, 10 trials, finish and write it up before touching anything else |
+   | 2 | Exploratory | Four probes that have **never been on a board**: `spu4_abi_probe`, `rotc_tagged_probe`, `satellite_aggregator_probe`, `whisper_v1_probe`. Separate notes, not part of the sealed run |
+
+   Block 2's expected lines are all recorded in the manifest notes.
+   `spu4_abi_probe` is the highest-value of them — it would give the ABI its
+   first silicon and close the bounded-latency product gate on hardware.
 2. **§3.2g.6 bench re-run** — needs the full A7 + RP2350 southbridge rig.
 3. **Order the three bench items** (§6). The RPM contract question is settled —
    v3 is in. **Set `ENC_PPR` in the logger and confirm the encoder counts on
