@@ -2,8 +2,13 @@
 
 Worked the 08-15 handover's open list top to bottom, then took the SPU-4
 product direction forward. Closed items 0, 0b, 0c and 3. Froze the customer
-ABI, pre-registered the next bench session, settled outreach timing, and
-amended the capture contract to v3 while it was still legitimate to do so.
+ABI **and proved it in silicon the same day**, ran a bench session that sealed
+two results, closed the register→ALU loop, amended the capture contract to v3
+while that was still legitimate, and settled outreach timing.
+
+**READ §9 FIRST.** Focus is now narrowed to one programme — the SPU-4 edge
+node. Everything else is parked by name. Sections 1–8 are the record of how we
+got here; §9 is what to do next.
 
 *Written incrementally as work landed, per the 08-01 lesson.*
 
@@ -287,7 +292,7 @@ in one run. That is the argument for building the probe.
 and staged, and touching `spu4_probe` would void it. `spu4_abi_probe` is its
 own target.
 
-## 8. Bench session — two silicon results, one real defect
+## 7. Bench session — two silicon results, one real defect
 
 Ran on the Tang 25K, Sipeed FTDI debugger (JTAG if0, C3 UART if1). **No
 southbridge, no external supply** — every probe is `sys_clk` + `led` +
@@ -343,7 +348,7 @@ check later proved `rotc_tagged_probe`'s silence was real. **Keeping a
 known-good discriminator is what separates those two cases** — without it they
 are identical.
 
-## 9. Tier 1 — the register loop closed (`405dfcf`)
+## 8. Tier 1 — the register loop closed (`405dfcf`)
 
 `spu4_standalone_top` gains `OPERAND_SRC`: `0` PIN (default, unchanged), `1`
 REG (register file feeds the ALU — the closed loop), `2` SELF (the ALU's
@@ -371,98 +376,86 @@ value or the pins). Do **not** do `QADD` — narrow the stated ISA to what the
 hardware does instead. Claiming an ISA you do not implement is the same failure
 pattern this session spent the day removing.
 
-## 7. Open
+## 9. FOCUS NARROWED — the SPU-4 edge node is the only programme
 
-1. **§3.2j bench re-run — DECIDED: this is next session's work.**
-   **Everything is prepared; next session is execution, not design.**
-   Procedure: `docs/BENCH_PROCEDURE_2026-08-3_2j_SPU4_REANCHOR.md`, with Part 0
-   pre-registration and Part 1 rig already filled in.
+**John's call, 2026-08-16, closing the session.** No more spreading thin until
+money and time allow. Everything below the programme is **parked by name** so
+it stops competing for attention.
 
-   Both bitstreams are **built, hash-verified and staged** in
-   `build/bench_3_2j/` (gitignored, regeneration commands are in the procedure):
+### What SPU-4 is, and what we are building
 
-   | Role | File | SHA-256 |
-   |---|---|---|
-   | Trial | `TRIAL_head_0061b02f.fs` | `0061b02f…56d67c` |
-   | **Positive control** | `POSCTL_pre_t74_9599f5e4.fs` | `9599f5e4…22664` |
+`knowledge/ARLINGHAUS_SPATIAL_SYNTHESIS.md` §7 already designates it:
+**micro-cell = edge node = SPU-4 only.** Not a small SPU-13. A self-contained
+sensing node that classifies locally, checks its own ΣABCD, recovers via
+Henosis locally, and reports upward only what it could not recover.
 
-   **The positive control is the part worth knowing about.** It is the
-   *pre-T7.4* bitstream, rebuilt from commit `511f3f3` on 2026-08-16 —
-   reproducing `9599f5e4…` **bit-exactly**, a fifth independent reproduction.
-   It must emit the **36-char** line with no `R=` field. If both images produce
-   the same line, the capture path is not reporting what is on the board and
-   the session is void. That directly tests the failure this session is most
-   exposed to — *did the new image actually load* — which a bench-works control
-   cannot distinguish.
+> **The deliverable: a self-contained deterministic anomaly-detection edge node
+> on a $30 FPGA — sensor features in, exact classification out, with a
+> continuously-checked invariant, proven end-to-end on real data.**
 
-   Run controls **first**: if a control run afterwards fails, every trial before
-   it is already in doubt. 10 trial loads, 3 control loads, reload between
-   every run, report the rate. Re-anchors T7.4 *and* the width fix in one
-   session because the golden line is unchanged. Gates T7.
+The classifier already exists as RTL and has never been used:
+**`hardware/rtl/core/spu4/spu4_som_edge.v`** — a 4-node Kohonen BMU on rational
+quadrance (`Q = p² + 3q²`, no sqrt, no division), register-backed, explicitly
+sized for the SPU-4 edge budget. Its own header records the gap: *"not
+instantiated by an SPU-4 core or board top, has no host weight-upload path, and
+has not been synthesized or proven in silicon."*
 
-   **The session now has a natural three-block shape**, and the blocks must not
-   be interleaved — §3.2j's procedure aborts if the rig changes mid-run:
+Note the SOM that **is** cross-vendor silicon-proven is the SPU-13 seven-node
+BRAM version, not this one. They are different modules and must not be
+conflated in any claim.
 
-   | Block | What | Why |
-   |---|---|---|
-   | 0 | `blinky_uart` | Bench-path sanity, 140 LUT4. Cheapest known-good image; better than the `som_bmu_probe` the procedure currently names |
-   | 1 | **§3.2j, sealed** | Pre-registered. Controls first, 10 trials, finish and write it up before touching anything else |
-   | 2 | Exploratory | Four probes that have **never been on a board**: `spu4_abi_probe`, `rotc_tagged_probe`, `satellite_aggregator_probe`, `whisper_v1_probe`. Separate notes, not part of the sealed run |
+### The programme — four of five steps need nothing we lack
 
-   Block 2's expected lines are all recorded in the manifest notes.
-   `spu4_abi_probe` is the highest-value of them — it would give the ABI its
-   first silicon and close the bounded-latency product gate on hardware.
-2. **§3.2g.6 bench re-run** — needs the full A7 + RP2350 southbridge rig.
-3. **Order the three bench items** (§6). The RPM contract question is settled —
-   v3 is in. **Set `ENC_PPR` in the logger and confirm the encoder counts on
-   the Pico before block 0**; an all-zero pulse column is indistinguishable
-   from a stalled motor, so disconnection cannot be detected from the data.
-4. **`six_step_probe`** — trimming is the only remaining route. Not urgent; the
-   utilisation gate is watching it.
-5. **Re-anchor decisions** for §3.2g.1 and §3.2k. John's call.
-6. **A7 targets are still outside the manifest.** Chipdb exists; build time only.
-7. **The two remaining `builds`-mode targets** could move to `utilisation` —
-   optimisation, not a fix; both build fine.
-8. Spin-name drift in `build_a7.sh:12` — cosmetic, still unfixed.
+| # | Step | Blocked on parts? |
+|---|---|---|
+| 1 | **Weight-upload path for `spu4_som_edge`** — it has none, and untrained hardware is a demo, not a product | **No** |
+| 2 | **`spu4_edge_node_top`** — customer wrapper + som_edge + telemetry in one bitstream. The pieces have never been together | **No** |
+| 3 | **Full-chain testbench** against the `software/lib/rational_som.py` oracle | **No** |
+| 4 | **Board probe → silicon.** The Tang is connected and the bench path is understood | **No** |
+| 5 | Feed it real INA226 data | Yes — parts ordered week of 08-17 |
+
+**Start at step 1.** It is what turns `spu4_som_edge` from an experiment into a
+component, it is pure RTL plus a testbench, and everything downstream needs it.
+
+### Decide before step 1
+
+`spu4_som_edge` defaults to **`NUM_FEATURES = 3`**. The capture contract
+(`ina226_coarse_monitor_v3.json`) defines **four** features. The parameter
+supports 4, but this is a deliberate call — get it wrong and the hardware and
+the dataset disagree silently, which is the exact class of defect this session
+spent the day removing.
+
+### PARKED by name
+
+SPU-13 tranches · GPU/rasterizer · PDM audio · Padé/RPLU2 · quantum · the
+papers · `QADD` · ECP5 port · the `irotc_spi` router anomaly ·
+`six_step_probe` trimming · A7 manifest targets · re-anchor decisions for
+§3.2g.1 and §3.2k · `build_a7.sh:12` spin-name drift.
+
+All promising. None of them this.
+
+### Carried, because they are cheap and on the path
+
+- **`QLDI`** — a regfile write mux, does not touch the ALU. Without it the
+  register loop closed in §8 can only start from R0's reset value or the pins.
+  Do this one; do **not** do `QADD`.
+- **`rotc_tagged_probe` is MUTE** (§7). Real defect, needs no hardware to
+  start, but it is *not* the wedge — pick it up only if the wedge stalls.
+- **Order the three bench items** (§6) and set `ENC_PPR` before block 0.
+- **John is reading `docs/SPU4_ABI.md`** to ratify or overturn the product
+  decisions made in it on 2026-08-16. Those were mine and are properly his;
+  v1.0 has no external dependents, so changes are free right now and expensive
+  later.
 
 ### Outreach — DECIDED 2026-08-16: wait
 
-**No campaign starts until the real-sensor result exists** — not even a gentle
-or educational one. John's call, reaffirming the 2026-08-04 sequencing.
+No campaign until the real-sensor result exists. Artifact-led, not
+education-led. Full record in the gitignored
+`spu_strategy/outreach_decision_record_2026-08-16.md`; flagged here because a
+decision living only in an ignored file is invisible to git and to a fresh
+clone.
 
-Order: order the three bench items → §3.2j → capture campaign → *then*
-artifact-led post → warm network → sniper email.
-
-Reasoning, in one line each: nothing is blocked on audience (parts, §3.2j and
-Gate A are what is blocked); you get one first impression and the Iris demo is
-a classification benchmark rather than the wedge, so posting now means having
-nothing to sell anyone who engages; content is the slowest path to revenue on
-this project's own list, and if pressure sharpens the answer is paid
-engineering work, not more content. Nothing is lost by waiting — the material
-is generated as a side effect of working honestly and already carries numbers.
-
-Also settled: **artifact-led, not education-led.** "Did anyone replicate it?"
-is answerable; "did the education land?" is not.
-
-**Full record — including the reconciliation of three conflicting outreach
-documents and which one governs — is `outreach_decision_record_2026-08-16.md`
-in the gitignored `spu_strategy/` directory.** Flagged here because a decision
-that lives only in an ignored file is invisible to git, to handover
-orientation, and to a fresh clone; that hazard already caused a duplicated
-contract on 2026-08-04. Kept out of tracked `docs/` deliberately, since this
-repo publishes its RTL and that file is commercial positioning.
-
-**Revisit on a result, not on a new strategy document.**
-
-### Not to be done
-- **The `irotc_spi` router anomaly.** Population of one, nothing depends on it.
-- **ECP5 port.** Right second vendor eventually, but John's 08-16 call is that
-  boards/interlock/sensor suite come before any further FPGA hardware. Also
-  note the 08-04 ECP5 rejection was an **SPU-13/LUCAS DSP** verdict, not an
-  SPU-4 one — don't cite it either way.
-- **Seeds or alternate routers on `six_step`.** Covered ground, twice.
-
-## 8. Corrections to earlier beliefs
+## 10. Corrections to earlier beliefs
 
 - I called `six_step_probe` a second `irotc_spi` routing anomaly. It is
   congestion from growth at 96%; DFF unchanged proves it. See §4.
