@@ -311,15 +311,56 @@ and serial multiplier beneath it:
 | ALU | 119 |
 | DFF / DFFCE / DFFRE | 12 / 2 / 419 — **433 flops total** |
 
-**Post-P&R, 2026-08-16** — `spu13_tang25k_spu4_abi_probe`, the real board top:
+**Post-P&R, 2026-08-16 (pre-`id`, v1.0)** — `spu13_tang25k_spu4_abi_probe`,
+the real board top:
 
 | | Value |
 |---|---|
 | LUT4 | **1,044 / 23,040 = 4.5%** |
 | ALU | 500 |
 | DFF | 381 |
-| Fmax (`u_abi.clk`) | **160.26 MHz** against a 12 MHz constraint |
+| Fmax (`u_abi.clk`) | **160.26 MHz**, as originally recorded — **now in question, see the flag below** |
 | Bitstream | `1e70739d…` reproduced 2× |
+
+**Post-P&R, 2026-08-17 (v1.1, with `id` wired into the probe's UART line)**:
+
+| | Value |
+|---|---|
+| LUT4 | **1,066 / 23,040 = 4.6%** (+22 over the pre-`id` build) |
+| ALU | 500 (unchanged) |
+| DFF | 381 (unchanged) |
+| Fmax (`u_abi.clk`) | **142.25 MHz**, the final post-route figure (see flag below on which of nextpnr's two numbers this is) |
+| Bitstream | `23ba4a3f…`, commit `daabf25`, rebuild reproduces it bit-exactly |
+
+`id` itself is a synthesis-time constant net — no new flops, no new ALU
+cells — which is exactly what the unchanged ALU/DFF counts confirm. The +22
+LUT4 is attributed to the probe's UART message logic growing by one field
+(four more `h()` hex-nibble decodes and a wider `msg_byte` case), not to `id`
+itself, which is just a 16-bit wire bundle. **This is inference from the cell
+delta, not a checked claim** — the nextpnr critical-path report for this build
+does not run through the message-byte mux at all; it runs through
+`spu4_dissonance.v`'s residual adder chain into an ABC-mapped LUT chain and
+into a flip-flop, unrelated to either `id` or the UART logic. Do not repeat
+"the UART mux is on the critical path" as a checked fact; it isn't, and an
+earlier draft of this document said so without checking.
+
+> **Flag: nextpnr prints two `Max frequency` lines per run, and this
+> document has been citing the wrong one.** The first appears right after
+> placement (an *estimate*, before the router has run); the second, following
+> a full `Critical path report`, appears at the very end of the run and is
+> the final post-route figure. Rebuilding the pre-`id` commit to get the
+> LUT4/ALU/DFF numbers above surfaced this: the **160.26 MHz** already
+> published for that build (here, in `hardware_evidence.md` §3.2j.3, and in
+> `board_build_manifest.json`) is the placement-stage estimate — the actual
+> final post-route figure from that same build is **211.60 MHz**. For the new
+> `id`-bearing build the two figures are 183.52 MHz (estimate) and 142.25 MHz
+> (final); 142.25 MHz above is correctly the final one. **Not yet corrected
+> across the repo** — this needs its own pass to fix §3.2j.3, this table's
+> pre-`id` row, and the manifest entry consistently, and to check whether
+> other Fmax citations elsewhere have the same mistake. Flagged rather than
+> silently rewritten because it touches already-published silicon evidence.
+> **Both figures are the PROBE**, not the wrapper alone — see below —
+> regardless of which one turns out to be the currently-published error.
 
 **That figure is the PROBE, not the wrapper alone** — it includes the UART
 engine, the test FSM and the LEDs. For scale, `spu4_probe` (standalone top +
@@ -360,8 +401,10 @@ the others.
 ## 7. Open, not blocking
 
 1. ~~A placed-and-routed cost, and an Fmax.~~ **CLOSED 2026-08-16** — see
-   §5.1. 1,044 LUT4 / 500 ALU / 381 DFF, 160.26 MHz, via
-   `spu13_tang25k_spu4_abi_probe`.
+   §5.1. 1,044 LUT4 / 500 ALU / 381 DFF via `spu13_tang25k_spu4_abi_probe`.
+   **The `160.26 MHz` figure recorded alongside it is now flagged as likely
+   wrong** — see the flag in §5.1. Reopening this item's Fmax half, not its
+   LUT/ALU/DFF half.
 2. **A silicon run.** **Corrected 2026-08-16:** this previously said to batch
    it into the existing SPU-4 probe. That is wrong — §3.2j is now
    pre-registered with both bitstreams already built and staged, and modifying
@@ -376,5 +419,11 @@ the others.
 5. ~~`id` has no board run and is not wired into `spu4_abi_probe`'s UART
    output.~~ **CLOSED 2026-08-17** — see §4a and §5. `id` is now the probe's
    `I=` field, confirmed 10/10 loads on Tang 25K (`hardware_evidence.md`
-   §3.2j.6). The resource-cost re-measurement it left open (a 16-bit constant
-   net, expected negligible but unmeasured post-P&R) is still open.
+   §3.2j.6). Resource cost also measured while closing this: 1,066 LUT4 (+22)
+   / 500 ALU / 381 DFF (both unchanged) — see §5.1.
+6. **The Fmax methodology flag in §5.1.** `160.26 MHz` (pre-`id`) and
+   possibly other Fmax citations in this repo may be nextpnr's post-placement
+   estimate rather than the final post-route figure. Needs a dedicated pass
+   across §3.2j.3, this document's §5.1, and `board_build_manifest.json` —
+   discovered 2026-08-17 as a side effect of the `id` resource measurement
+   above, not yet acted on.

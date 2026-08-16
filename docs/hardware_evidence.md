@@ -2112,11 +2112,28 @@ openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_abi_probe.fs
 Bitstream SHA-256:
 `23ba4a3f5326d0943f32c63a011dc5f6ee6c32aba7608c40bb7f73d03dad8365`,
 built from commit `daabf25` — rebuilt after that commit and reproduces the
-flashed hash bit-exactly. nextpnr reported 142.25 MHz max for `u_abi.clk`
-(PASS at the 12 MHz constraint) — not a comparable figure to §3.2j.3's
-160.26 MHz, since this build carries the extra `id` wiring and a longer UART
-message; no P&R resource count was re-measured (SPU4_ABI.md §5 flags this as
-open).
+flashed hash bit-exactly.
+
+**Post-P&R resource cost, measured 2026-08-17** (closes the open item left by
+§3.2j.3, which did not have `id` yet): **1,066 LUT4 / 23,040 = 4.6%, 500 ALU,
+381 DFF.** Rebuilding §3.2j.3's pre-`id` commit for comparison gives **1,044
+LUT4, 500 ALU, 381 DFF** — so `id` costs **+22 LUT4, and zero new ALU/DFF**,
+consistent with `id` being a synthesis-time constant net rather than clocked
+state. Full table and the reasoning behind the LUT4 attribution:
+`docs/SPU4_ABI.md` §5.1.
+
+**Fmax finding, not yet resolved:** getting the comparison above required
+rebuilding §3.2j.3's exact commit, which surfaced that nextpnr prints *two*
+`Max frequency` lines per run — a post-placement estimate, then (after a full
+`Critical path report`) the final post-route figure — and **this repo has
+been citing the estimate, not the final number, for §3.2j.3's `160.26 MHz`.**
+The same rebuild's actual final post-route Fmax was **211.60 MHz**. This
+build's own two figures are 183.52 MHz (estimate) / **142.25 MHz (final,
+correctly the one cited above and in SPU4_ABI.md)**. **Not corrected here** —
+§3.2j.3, this table's row below, and `board_build_manifest.json` all still
+carry the uncorrected `160.26 MHz` and need a dedicated pass, flagged rather
+than silently rewritten since it touches already-published silicon evidence.
+Full detail: `docs/SPU4_ABI.md` §5.1.
 
 **UART proof — 10/10 loads, one capture per load, all identical:**
 
