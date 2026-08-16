@@ -165,10 +165,32 @@ listed it; it never reached BENCH_BOM.
 
 ## 7. Open
 
-1. **§3.2j bench re-run** — the highest-value hardware task, and it needs no new
-   parts. Flash `0061b02f…`, golden line
-   `SPU4:P A=0000 B=0155 C=0155 D=0155 R=FF`, N≥10 with a positive control.
-   Re-anchors T7.4 *and* the width fix in one session. Gates T7.
+1. **§3.2j bench re-run — DECIDED: this is next session's work.**
+   **Everything is prepared; next session is execution, not design.**
+   Procedure: `docs/BENCH_PROCEDURE_2026-08-3_2j_SPU4_REANCHOR.md`, with Part 0
+   pre-registration and Part 1 rig already filled in.
+
+   Both bitstreams are **built, hash-verified and staged** in
+   `build/bench_3_2j/` (gitignored, regeneration commands are in the procedure):
+
+   | Role | File | SHA-256 |
+   |---|---|---|
+   | Trial | `TRIAL_head_0061b02f.fs` | `0061b02f…56d67c` |
+   | **Positive control** | `POSCTL_pre_t74_9599f5e4.fs` | `9599f5e4…22664` |
+
+   **The positive control is the part worth knowing about.** It is the
+   *pre-T7.4* bitstream, rebuilt from commit `511f3f3` on 2026-08-16 —
+   reproducing `9599f5e4…` **bit-exactly**, a fifth independent reproduction.
+   It must emit the **36-char** line with no `R=` field. If both images produce
+   the same line, the capture path is not reporting what is on the board and
+   the session is void. That directly tests the failure this session is most
+   exposed to — *did the new image actually load* — which a bench-works control
+   cannot distinguish.
+
+   Run controls **first**: if a control run afterwards fails, every trial before
+   it is already in doubt. 10 trial loads, 3 control loads, reload between
+   every run, report the rate. Re-anchors T7.4 *and* the width fix in one
+   session because the golden line is unchanged. Gates T7.
 2. **§3.2g.6 bench re-run** — needs the full A7 + RP2350 southbridge rig.
 3. **Order the three bench items** (§6), and settle the RPM contract question.
 4. **`six_step_probe`** — trimming is the only remaining route. Not urgent; the
