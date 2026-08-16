@@ -188,6 +188,43 @@ capturing.**
 **The logic analyzer was a recovered omission** — the roadmap's 07-19 amendment
 listed it; it never reached BENCH_BOM.
 
+## 6b. Board-build coverage gap closed, and `0xB0` resolved
+
+**The 08-15 sweep reported widening the check to 21 targets; four scripts were
+never added.** All four build and reproduce bit-exactly:
+
+| Target | LUT4 | Board status |
+|---|---|---|
+| `blinky_uart` | 140 (0.6%) | has silicon |
+| `rotc_tagged_probe` | 570 (2.5%) | **never run** — recorded as "awaiting board run" since 07-09 |
+| `satellite_aggregator_probe` | 7,855 (34%) | **never run** |
+| `whisper_v1_probe` | — (119–126 MHz) | **never run** |
+
+Coverage is now 26 scripts = 20 checked + 5 retired + 1 excluded.
+`blinky_uart` at 140 LUT4 is the cheapest known-good bench image and is a
+better positive control for a capture path than the `som_bmu_probe` the §3.2j
+procedure currently names.
+
+**`0xB0` resolved (`62971fe`)**, open since 2026-07-08. The protocol
+documented it as "Sentinel Telemetry, 8 nodes" while the firmware decoded
+RPLU2 telemetry behind a `SPUC` magic — an opcode whose meaning depended on
+which bitstream answered, violating the protocol's *own* compatibility rule 1.
+
+Traced in RTL rather than argued from docs: `spu_spi_slave.v` imposes **no
+structure at all**, streaming an opaque 512-bit port that each top drives
+differently. **The decisive finding is that the 8-node layout is not reachable
+on any current bitstream** — `spu_system.v` is referenced only from archived
+scripts, no live `.ys`, no testbench. The doc led with the interpretation
+nobody can build.
+
+So the documentation was over-specified, not the RTL wrong. `0xB0` is now
+documented as 64 opaque bytes with a **mandatory magic in bytes 0–3** and a
+payload registry. New compatibility rule 5 generalises it.
+
+*Prompted by reading Dmitry Grinberg's RISC-V critique, whose §7 is exactly
+this failure — the same bytes meaning different things depending on the
+implementation. It was the most directly quotable flaw in the repo.*
+
 ## 7. Open
 
 1. **§3.2j bench re-run — DECIDED: this is next session's work.**
