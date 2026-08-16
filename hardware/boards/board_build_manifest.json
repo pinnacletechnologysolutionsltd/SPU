@@ -28,7 +28,14 @@
     "it would fail every run and train the check to be ignored. Their build",
     "scripts and RTL are kept; each script carries a RETIRED header. Rationale,",
     "measurements and re-entry conditions: hardware_evidence.md 3.6g.",
-    "Re-add any of them here if it is trimmed under 23,040 LUT4 and rebuilt."
+    "Re-add any of them here if it is trimmed under 23,040 LUT4 and rebuilt.",
+    "",
+    "COVERAGE GAP CLOSED 2026-08-16. The 2026-08-15 sweep reported widening this",
+    "check to 21 targets, but four Tang build scripts were never added and stayed",
+    "uncovered: blinky_uart, satellite_aggregator_probe, rotc_tagged_probe and",
+    "whisper_v1_probe. All four build, all four reproduce, and three of them have",
+    "NEVER been run on a board. Coverage is now 26 scripts = 20 checked + 5 retired",
+    "(3.6g) + 1 deliberately excluded (irotc_spi)."
   ],
   "recorded_at_commit": "d5d91fb",
   "recorded_toolchain": {
@@ -255,6 +262,58 @@
       "notes": "Full-core spin: hash comparison is uninformative (hardware_evidence.md 3.6e), so the gate is buildability only.",
       "last_built_sha256": "19e49637b87855a85d0e049d77a0da13e9eae090eff4a93543718dff18ea3926",
       "recorded_at_commit": "2f177d7",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "blinky_uart",
+      "script": "build_25k_blinky_uart.sh",
+      "artifact": "build/tang_primer_25k_blinky_uart.fs",
+      "sha256": "4f9a8a1cdc3b491e94b8278f875fe5b81d20a69ee999ba5baee894f9a9a105df",
+      "approx_seconds": 60,
+      "notes": "Bench-path sanity image: bitstream load, clock, LEDs, BL616 USB-CDC UART leg. 140/23040 LUT4 = 0.6%. The cheapest known-good image on the bench and the right positive control for a capture path before any result is interpreted -- prefer it over som_bmu_probe for that role. SPIN_CATALOG records it as silicon. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
+      "recorded_at_commit": "2adebf6",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "satellite_aggregator_probe",
+      "script": "build_25k_spu13_satellite_aggregator_probe.sh",
+      "artifact": "build/tang_primer_25k_satellite_aggregator_probe.fs",
+      "sha256": "08cd65ce8501abdf76da2399f01bdd7778a92478c0de63aebb1b820e45500a76",
+      "approx_seconds": 240,
+      "notes": "7855/23040 LUT4 = 34%, whisper_clk closes 59.17-77.48 MHz against 12 MHz. NEVER RUN ON A BOARD as of 2026-08-16. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
+      "recorded_at_commit": "2adebf6",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "rotc_tagged_probe",
+      "script": "build_25k_spu_rotc_tagged_probe.sh",
+      "artifact": "build/tang_primer_25k_rotc_tagged_probe.fs",
+      "sha256": "5fa8b4b8ca793fc4a6e2214e1dcdbf4554f159b7344f77fe5411af91a17b58d1",
+      "approx_seconds": 120,
+      "notes": "570/23040 LUT4 = 2%, u_rotc.clk closes 120.03-135.37 MHz against 12 MHz. NEVER RUN ON A BOARD -- hardware_evidence.md section 5 has recorded it as 'built (2026-07-09), awaiting board run' for five weeks. Golden-vector contract for that run: ROTATE must produce 3x the TDM golden at exp=1, REDUCE must recover the TDM golden at exp=0. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
+      "recorded_at_commit": "2adebf6",
+      "recorded_toolchain": {
+        "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
+        "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
+      }
+    },
+    {
+      "name": "whisper_v1_probe",
+      "script": "build_25k_spu_whisper_v1_probe.sh",
+      "artifact": "build/tang_primer_25k_whisper_v1_probe.fs",
+      "sha256": "a6da8d8c403147f3c9b5951fca8499931f56c804acbc8657b66fc4e9ee65ac1f",
+      "approx_seconds": 180,
+      "notes": "clk_div[1] closes 118.76-125.64 MHz against 12 MHz. NEVER RUN ON A BOARD as of 2026-08-16. Added to this manifest 2026-08-16; reproduced 2x on the day it was added.",
+      "recorded_at_commit": "2adebf6",
       "recorded_toolchain": {
         "yosys": "Yosys 0.63+87 (git sha1 2f1cdc2df, clang++ 18.1.8 -fPIC -O3)",
         "nextpnr-himbaechel": "\"nextpnr-himbaechel\" -- Next Generation Place and Route (Version nextpnr-0.9-99-g4ace8952)"
