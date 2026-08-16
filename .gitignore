@@ -127,3 +127,10 @@ docs/*.fdb_latexmk
 docs/*.fls
 docs/*.bbl
 docs/*.blg
+
+# Bench captures are EVIDENCE, not build noise, and must survive a clean.
+# docs/hardware_evidence.md entries cite them by path; 3.2e.7's ten run logs
+# are what made that result auditable months later. The global *.log rule above
+# would otherwise silently drop them.
+!docs/bench_captures/
+!docs/bench_captures/**
