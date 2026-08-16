@@ -40,13 +40,25 @@ structural fix.
 ### What is deliberately excluded, and why
 
 - **Program memory and the sequencer.** The programmable path is *not closed*
-  in this design. The register file's read ports (`rf_dout_a`, `rf_dout_b`,
-  `r0_out`) are connected to the regfile and then used nowhere, and
-  `mode_auto` is a hardwired `1'b0`, so the ALU always reads the input pins and
-  register operands can never reach it. `spu4_standalone_top_tb` already
-  carries a `FIXME` saying writeback is not integrated. Freezing an ABI over
-  that would freeze a defect into the product. One operation per `start` is the
-  smallest useful contract.
+  in this design. **Partly addressed 2026-08-16** — `spu4_standalone_top` now
+  has an `OPERAND_SRC` parameter, and at `1` the register file feeds the ALU,
+  so `QROT Rd` rotates the quadray held in `Rd` and writes it back. That is a
+  real register → ALU → register loop, proven by
+  `hardware/tests/spu4/spu4_operand_src_tb.v` by poisoning the input pins and
+  confirming the result still follows the register contents.
+
+  **It is still not enough to justify a programmable ABI, for a reason the
+  wiring cannot fix:** `spu4_euclidean_alu` has **no opcode input and no
+  second operand port**. It performs the QROT circulant transform and nothing
+  else. `alu_op` is decoded and connected to nothing. So `QADD` cannot execute
+  regardless of operand routing, and `QLDI` has no path from the immediate
+  into a register. Those need changes to the arithmetic core — the module
+  carrying the §3.2j.2 silicon evidence — and are a separate decision.
+
+  `OPERAND_SRC` defaults to `0` (pins), so the shipped bitstream is unchanged;
+  verified by rebuilding `spu4_probe` and confirming `0061b02f…` reproduces
+  bit-exactly after the change. One operation per `start` remains the smallest
+  useful contract for v1.0.
 - **`sentinel_mode`, `piranha_pulse`.** Research-era concepts, not product
   behaviour.
 - **UART and cluster-link ports.** These are *adapters* layered on this

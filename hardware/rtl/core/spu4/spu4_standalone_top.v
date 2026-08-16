@@ -11,7 +11,26 @@
 
 module spu4_standalone_top #(
     parameter MEM_DEPTH = 64,
-    parameter ADDR_W    = 6
+    parameter ADDR_W    = 6,
+    // ── Operand source (Tier 1, 2026-08-16) ──────────────────────────
+    //   0 = PIN  operands come from A_in..D_in. The original behaviour and
+    //            the DEFAULT, so no existing bitstream moves. This is what
+    //            hardware_evidence.md 3.2j.2 proved on silicon.
+    //   1 = REG  operands come from the register file at reg_dest, so
+    //            `QROT Rd` rotates the quadray held in Rd and writes it
+    //            back. This is the closed register -> ALU -> register loop.
+    //   2 = SELF the ALU feeds back its own output (mode_autonomous, which
+    //            the ALU has always supported and which was hardwired off).
+    //
+    // Until this parameter existed the register file's read ports went
+    // nowhere and register operands could never reach the ALU: results
+    // flowed in, operands never flowed out. See docs/SPU4_ABI.md 1.
+    //
+    // NOT closed by this change: QADD and QLDI. The ALU has no opcode input
+    // and no second operand port, so it can only ever perform the QROT
+    // circulant transform. Those need arithmetic-core changes and are a
+    // separate decision.
+    parameter OPERAND_SRC = 0
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -101,8 +120,17 @@ module spu4_standalone_top #(
         .r0_out(r0_out)
     );
 
+    // ── Operand mux ──────────────────────────────────────────────────
+    // The register file stores {A,B,C,D} as one 64-bit word, A in the high
+    // lane. Reading dout_a (addressed by reg_dest) is what closes the loop:
+    // the destination register is also the operand source, so a rotation
+    // composes onto the value already there.
+    wire [15:0] op_A = (OPERAND_SRC == 1) ? rf_dout_a[63:48] : A_in;
+    wire [15:0] op_B = (OPERAND_SRC == 1) ? rf_dout_a[47:32] : B_in;
+    wire [15:0] op_C = (OPERAND_SRC == 1) ? rf_dout_a[31:16] : C_in;
+    wire [15:0] op_D = (OPERAND_SRC == 1) ? rf_dout_a[15:0]  : D_in;
+
     // ── ALU ──────────────────────────────────────────────────────────
-    // In autonomous mode, the ALU feeds back its own output as input
     wire mode_auto;
 
     spu4_euclidean_alu u_alu (
@@ -110,16 +138,18 @@ module spu4_standalone_top #(
         .start(alu_start),
         .bloom_intensity(8'hFF),
         .mode_autonomous(mode_auto),
-        .A_in(A_in), .B_in(B_in), .C_in(C_in), .D_in(D_in),
+        .A_in(op_A), .B_in(op_B), .C_in(op_C), .D_in(op_D),
         .F(F), .G(G), .H(H),
         .A_out(A_out), .B_out(B_out), .C_out(C_out), .D_out(D_out),
         .done(alu_done),
         .henosis_pulse(henosis_pulse)
     );
 
-    // Autonomous mode: ALU reads from its own output (state persistence)
-    // Slave mode: ALU reads from input pins
-    assign mode_auto = 1'b0;  // start in slave mode; sequencer can set this
+    // SELF mode routes operands through the ALU's own output registers.
+    // This capability was always present in spu4_euclidean_alu and was
+    // hardwired off, with a comment claiming the sequencer could set it --
+    // it could not, it was a constant.
+    assign mode_auto = (OPERAND_SRC == 2);
 
     // ── Cluster link (spu_node_link) ─────────────────────────────────
     // Placeholder: pack status into node_tx, unpack commands from node_rx
