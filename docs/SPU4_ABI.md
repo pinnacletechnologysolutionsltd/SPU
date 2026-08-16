@@ -220,7 +220,9 @@ ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7
   Φ-fold fires for this fixture is an RTL fact, and asserting a guess would
   be a fabricated expectation.
 - `L=0B7` — **183 clocks measured**, matching the simulated 180–183 range and
-  inside the 200-clock bound.
+  inside the 200-clock bound. **Confirmed on silicon 2026-08-16**, 10/10 loads,
+  which closes the bounded-latency product gate with hardware evidence
+  (§3.2j.3).
 - `R=FF` is correct, not a fault; the QROT fixture's residual is 0x3FF.
 
 Deliberately a **separate target** from `spu13_tang25k_spu4_probe`: that
@@ -235,7 +237,7 @@ preparation.
 | G1–G6 hold | **Simulation.** `spu4_customer_wrapper_tb`, 19 checks |
 | Latency ∈ [180, 183], bound 200 | **Simulation**, 124 operations |
 | QROT reference fixture reproduces `0x0155` | **Simulation**, matching the vector proven in silicon at §3.2j |
-| This wrapper on hardware | **NOT PROVEN.** No board has run it |
+| This wrapper on hardware | **PROVEN 2026-08-16** — Tang 25K, 10/10 loads, `hardware_evidence.md` §3.2j.3 |
 | Resource cost | **Post-P&R, measured** — see §5.1 |
 
 Do not describe this wrapper as silicon-proven. The *core beneath it* has

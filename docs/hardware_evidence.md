@@ -1989,6 +1989,110 @@ reliability rate. It says nothing about other fabrics, and nothing about the
 also gives no evidence for `spu4_customer_wrapper`, which is a different
 bitstream (§4a of `docs/SPU4_ABI.md`).
 
+#### 3.2j.3 SPU-4 ABI v1.0 in silicon — the bounded-latency gate closed on hardware
+
+**Date:** 2026-08-16 NZT, same bench session as §3.2j.2, run as a separate
+block after that result was sealed.
+
+**Scope:** first silicon for `spu4_customer_wrapper`, the SPU-4 ABI v1.0
+contract layer. Until this run the ABI had been verified only in simulation.
+
+**Build & load:**
+
+```bash
+bash build_25k_spu4_abi_probe.sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_abi_probe.fs
+```
+
+Bitstream SHA-256:
+`1e70739d68477869c47e673407ebd599c350ce058ac1c1ba2b7a77edd647a81a`
+(1,044 LUT4 / 500 ALU / 381 DFF, 160.26 MHz against 12 MHz; reproduced 2×).
+
+**UART proof — 10/10 loads, 250 complete lines, every one identical:**
+
+```
+ABI:P B=0155 C=0155 D=0155 R=FF S=0A L=0B7
+```
+
+44 bytes including CRLF, verified with `cat -A`. Reloaded between every run.
+
+**`L=0B7` is the measured latency: 183 clocks.** This is the result that
+matters commercially. `docs/SPU4_PRODUCT_CLAIMS.md` carried bounded latency as
+an **OPEN** product gate, and simulation had measured 180–183 over 124
+operations against a contract bound of 200. Hardware returns **183** — inside
+the bound and at the top of the simulated range. The gate is now closed with
+silicon rather than a simulation figure.
+
+**`S=0A`** decodes as `done` and `saturated` set, `busy`, `henosis` and
+`start_ignored` clear. `start_ignored` clear is the useful one: it confirms the
+probe drove the handshake correctly, so the latency figure describes one
+accepted operation rather than a contended one. `henosis` clear is an
+observation, not a prediction — the testbench deliberately reports that bit
+rather than asserting a guess.
+
+**Capture artifact, stated because it looks like a failure and is not.** Seven
+of the ten captures contain a **truncated final line** — `timeout` cutting the
+stream mid-transmission, e.g. `ABI:P B=` on run 09. Every *complete* line in
+every run is the golden line, and dropping the trailing fragment gives 10/10.
+An initial hypothesis that the fragment was the *leading* line was tested
+against the data and refuted; it is the trailing one. §3.2j.2's captures were
+checked for the same artifact and have none (0/10), so that entry is
+unaffected.
+
+**What this establishes.** The frozen ABI executes on Tang 25K silicon through
+its real `start`/`busy`/`done` handshake, returns the reference QROT result,
+reports the saturating residual, and meets its published latency bound.
+
+**What it does not.** One board, one session — a behaviour, not a reliability
+rate. It exercises one operand fixture, so it does not probe the ABI's full
+input range, and it says nothing about the 160.26 MHz P&R figure, which a
+12 MHz run cannot test.
+
+#### 3.2j.4 Three further probes brought up, one genuinely mute
+
+Same session, exploratory block. None of these had ever been run on a board.
+
+| Probe | Result | Line |
+|---|---|---|
+| `satellite_aggregator_probe` | **PASS** | `SAGG:P W:2 I:9 E:00` |
+| `whisper_v1_probe` | **PASS** | `WHSP:P F:1 E:00  PASS` |
+| `rotc_tagged_probe` | **MUTE** | no output |
+
+`rotc_tagged_probe`'s silence is a **genuine finding, not a bench fault**. It
+was checked immediately against `blinky_uart`, which returned 14 lines on the
+same path seconds later. The spin builds, reproduces bit-exactly
+(`5fa8b4b8…`), and closes timing at 120–135 MHz against 12 MHz — it simply
+emits nothing. That is a real bring-up item: it has been recorded as "built,
+awaiting board run" since 2026-07-09, and the board run now says the image is
+silent.
+
+Single runs, exploratory. `SAGG` and `WHSP` need N≥10 with a control before
+either is cited as evidence.
+
+#### 3.2j.5 Bench operational finding — the FTDI UART channel wedges
+
+**The Sipeed USB Debugger's channel B stops delivering UART after repeated
+MPSSE use on channel A**, which is what a long sequence of `openFPGALoader`
+invocations does. Observed after roughly twenty loads in one session:
+`blinky_uart`, working minutes earlier, went silent; JTAG stayed healthy
+(`idcode 0x1281b`, loads reporting DONE), the device stayed enumerated, and no
+process held the port.
+
+**Unplugging and replugging the USB cable restores it.** Confirmed: both
+interfaces re-enumerated and `blinky_uart` returned `BLINK` immediately.
+
+**Operational rules this earns:**
+
+- **Re-enumerate after a long load sequence.** Do not interpret silence as an
+  RTL result until this is ruled out.
+- **Keep a known-good image as the discriminator.** `blinky_uart` at 140 LUT4
+  is the cheapest one. Four probes read as failures in this session before
+  `blinky` showed the path itself was dead; the same check later proved
+  `rotc_tagged_probe`'s silence was real. The check is what separates the two
+  cases, and without it both look identical.
+- A replug power-cycles the board, so SRAM configuration is lost — reload
+  before capturing.
+
 ### 3.2k IROTC Icosahedral Rotation Engine Silicon Probe
 
 **Date:** 2026-07-10 NZT — **first icosahedral (A₅) rotation silicon.**
