@@ -31,7 +31,7 @@ constraints files, never protocol forks.
 | `0xAD` | Scale Table | read | 9 |
 | `0xAE` | QR Commit | read | 34 |
 | `0xAF` | HEX Projection | read | 5 |
-| `0xB0` | Sentinel Telemetry | read | 64 |
+| `0xB0` | Opaque Telemetry Burst | read | 64 |
 | `0xB1` | Instruction Write | write | 64 bits + 8-bit CRC |
 | `0xA5` | RPLU Config Write | write | 128 bits + 8-bit CRC |
 
@@ -72,6 +72,15 @@ the optional opcodes do not alter any existing wire format.
    work unmodified against any board that implements v1, per the
    Interconnect Architecture homogeneity rule. A board-specific fork of
    this protocol is a bug in the port, not a new "board variant."
+5. **An opcode whose payload varies by build must be documented as opaque
+   at the wire level AND must carry a self-describing magic in its first
+   four bytes.** An opcode whose meaning silently depends on which
+   bitstream answered it is a protocol defect regardless of how carefully
+   each individual meaning is documented — a caller cannot tell them
+   apart. Added 2026-08-16 while resolving `0xB0`, which is the only
+   opaque-payload opcode in v1. Payload magics are registered in that
+   opcode's section and must be allocated *before* a bitstream emits
+   them.
 
 A future incompatible v2 (if one is ever needed) gets its own document.
 Compatible v1 extensions may allocate unused opcodes as above, while the
@@ -424,40 +433,59 @@ Byte  Content
 
 ---
 
-#### **0xB0 — Sentinel Telemetry** (64 bytes)
-**Response:** SPU-4 Sentinel probe data (8 nodes × 8 bytes)
+#### **0xB0 — Opaque Telemetry Burst** (64 bytes)
 
-**Format:**
-```
-Byte Range  Content
-──────────  ─────────────────────────────────────────
-0–7         Sentinel node 0 telemetry (8 bytes)
-8–15        Sentinel node 1 telemetry (8 bytes)
-...
-56–63       Sentinel node 7 telemetry (8 bytes)
-```
+**RESOLVED 2026-08-16.** This entry previously documented `0xB0` as
+"Sentinel Telemetry, 8 nodes x 8 bytes" and then flagged a discrepancy with
+the firmware. The discrepancy was real, and the resolution is that **the
+documentation was over-specified, not the RTL wrong.**
 
-- **Node 0 (bits 511:448)** = bytes 0–7
-- **Node 1 (bits 447:384)** = bytes 8–15
-- Each node carries satellite SNR, phase, status flags
+**Wire format: 64 opaque bytes. That is the whole wire contract.**
 
-**Discrepancy flagged 2026-07-08 (found building the host library):** the
-console command that issues this opcode (`cfgtele` in
-`hardware/rp_common/spu_diag.c: cmd_cfgtele`) does **not** decode this
-buffer as 8 sentinel nodes. It reads a `magic == "SPUC"` (`0x53505543`)
-guard at bytes 0–3, then `count` (2B), last-write `sel/material/addr/data`,
-a `checksum` (4B), and — when `count==149` or an RPLU2 status is set — six
-more RPLU2 telemetry words. This matches every bring-up log in this
-document (`magic=SPUC`, `rplu2_sum=...`, etc.), so **RPLU2 config-write
-telemetry is the real, currently-exercised use of 0xB0** on the
-southbridge/RPLU2 probe builds; the 8-node sentinel layout above may be
-correct for a different bitstream (a SOM/cluster build reporting actual
-satellites) or may be stale. Whichever a given bitstream implements,
-`0xB0`'s response is a `uint8_t[64]` opaque payload at the wire level —
-callers must know which build they're talking to before interpreting it.
-Resolve by confirming against current RTL (`spu_spi_slave.v` response mux
-for `SPU_CMD_READ_SENTINEL`) and either splitting into two opcodes or
-documenting the bitstream-dependent dual meaning here explicitly.
+`spu_spi_slave.v` streams `sentinel_telemetry[511:0]` big-endian, byte 0 from
+bits 511:504. It imposes no structure whatsoever on the payload. The 512-bit
+port is driven by whichever top instantiated the slave, and different tops
+legitimately carry different telemetry:
+
+| Top | Drives the port with | Payload |
+|---|---|---|
+| `spu13_tang25k_fpga_top.v`, `southbridge_spi_top.v`, `spu_a7_top.v` | `southbridge_telemetry` | RPLU2 config/write telemetry, `SPUC` magic |
+| `spu13_tang25k_fpga_smoke_top.v`, `spu_a7_tensegrity_link_top.v` | `512'd0` | all zeros |
+| `spu_system.v` | 8x `debug_reg_r0` | the 8-node sentinel layout |
+
+**The 8-node sentinel layout is not reachable on any current bitstream.**
+`spu_system.v` is referenced only from `hardware/boards/tang_primer_25k/archive/`
+scripts, by no live `.ys`, and by no testbench (verified 2026-08-16). The
+layout this section used to lead with is the one nobody can build.
+
+### Payload discrimination is mandatory
+
+Because the wire format is opaque, **bytes 0-3 are a payload magic** and a
+caller MUST check it before interpreting anything after it.
+
+| Magic | Bytes 0-3 | Meaning | Status |
+|---|---|---|---|
+| `SPUC` | `53 50 55 43` | RPLU2 config/write telemetry: `count` (2B), last-write `sel`/`material`/`addr`/`data`, `checksum` (4B), and six RPLU2 telemetry words when `count == 149` or an RPLU2 status bit is set | **The only payload currently shipped.** Decoded by `cmd_cfgtele` in `hardware/rp_common/spu_diag.c`, and matches every bring-up log in this document |
+| — | `00 00 00 00` | No telemetry wired. Reserved; never allocate a real payload to this value | Emitted by the smoke and tensegrity-link tops |
+| *(none)* | — | 8-node sentinel layout | **Carries no magic and is therefore undiscriminable.** Not currently reachable. **Reviving it requires allocating and emitting a magic first** — that is a precondition, not a nicety |
+
+**Any future payload on `0xB0` must declare a magic here before it is
+emitted by any bitstream.** A payload without one cannot be told apart from
+another, which is the defect this section resolves.
+
+### Why this does not violate compatibility rule 1
+
+Rule 1 says an opcode's response format never changes. It has not: `0xB0`
+has always been 64 opaque bytes at the wire level, and still is. What changed
+is this document, which previously described one particular *payload schema*
+as if it were the wire format. Correcting an over-specified description is not
+a format change, and no bitstream moves as a result of this edit.
+
+The general principle, now rule 5 in the compatibility section: an opcode
+whose payload varies by build must be documented as opaque **and** must carry
+a self-describing magic. An opcode whose meaning silently depends on which
+bitstream answered it is a protocol defect regardless of how well each
+individual meaning is documented.
 
 ---
 

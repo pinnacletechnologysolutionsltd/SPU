@@ -533,7 +533,7 @@ The SPI commands (`spu_spi_slave.v`) map directly to the telemetry opcodes:
 | 0xAD | SCALE | 9 bytes | Read scale table + overflow |
 | 0xAE | QR | 34 bytes | Read QR commit registers |
 | 0xAF | HEX | 5 bytes | Read hex (q, r) |
-| 0xB0 | SENT | 64 bytes | Read sentinel telemetry burst |
+| 0xB0 | SENT | 64 bytes | Opaque telemetry burst — payload is bitstream-determined and discriminated by a magic in bytes 0-3. See `docs/SOUTHBRIDGE_SPI_PROTOCOL.md` |
 | 0xB1 | CHORD | — | Write 8-byte instruction chord |
 | 0xA5 | RCFG | — | Write RPLU config record (HEADER + DATA) |
 

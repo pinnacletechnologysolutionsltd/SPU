@@ -486,7 +486,7 @@ RPLU2CORE_QSUB: PASS
 | 0xAD | Read | 9-byte scale table and overflow flags |
 | 0xAE | Read | 34-byte last-QLDI commit: valid, lane, then A/B/C/D as four big-endian 64-bit words |
 | 0xAF | Read | 5-byte sticky HEX result: valid, signed q16, signed r16; read clears valid |
-| 0xB0 | Read | 64-byte sentinel telemetry burst |
+| 0xB0 | Read | 64-byte **opaque** telemetry burst — check the magic in bytes 0-3 before decoding; `SPUC` is the only payload currently shipped |
 | 0xA5 | Write | RPLU config record: 8-byte HEADER + 8-byte DATA |
 | 0xB1 | Write | 8-byte instruction word (inst_valid pulsed) |
 
