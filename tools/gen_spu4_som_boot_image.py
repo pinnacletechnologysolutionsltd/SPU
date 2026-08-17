@@ -90,6 +90,14 @@ def build_image(feature_count, node_weights):
     return bytes(image)
 
 
+ORACLE_FIXTURE_WEIGHTS = (
+    ((100, 0), (0, 0), (0, 0), (0, 0)),
+    ((0, 0), (0, 40), (0, 0), (0, 0)),
+    ((-30, 0), (-30, 0), (60, 0), (0, 0)),
+    ((0, 0), (0, 0), (0, 0), (50, 50)),
+)
+
+
 def synthetic_profile(profile, feature_count):
     """Weights with no training behind them, for exercising the loader RTL
     and this script before a real trainer exists.
@@ -99,7 +107,19 @@ def synthetic_profile(profile, feature_count):
     'demo' uses the exact formula spu4_som_flash_loader_tb.v's mock flash
     uses (P = 0x1000 + node*256 + feature*16 + 1, Q = same + 0x1000 + 1) —
     keep the two in sync if either changes, they are meant to cross-check.
+    'oracle_fixture' reproduces software/lib/spu4_som_edge_oracle.py's NODES
+    byte-for-byte — the same fixture already proven in simulation by
+    software/tests/test_spu4_som_edge_oracle.py and
+    hardware/tests/spu4/spu4_som_edge_full_chain_tb.v, and what
+    spu13_tang25k_spu4_som_edge_probe.v's silicon bench expects flashed at
+    FLASH_SPU4_SOM_BASE. Fixed at feature_count=4; keep all three in sync if
+    any changes.
     """
+    if profile == "oracle_fixture":
+        if feature_count != 4:
+            raise ValueError("oracle_fixture is fixed at feature_count=4")
+        return [list(node) for node in ORACLE_FIXTURE_WEIGHTS]
+
     node_weights = [[] for _ in range(NODE_COUNT)]
     for node_id in range(NODE_COUNT):
         for feature in range(feature_count):
@@ -130,7 +150,7 @@ def checksum(image):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--weights", help="path to a trained weights JSON document (see WeightsError docstring for schema)")
-    parser.add_argument("--profile", choices=("zero", "demo"), default="zero",
+    parser.add_argument("--profile", choices=("zero", "demo", "oracle_fixture"), default="zero",
                          help="synthetic profile to use when --weights is not given (default: zero)")
     parser.add_argument("--features", type=int, default=4,
                          help="feature count for a synthetic profile (default: 4, the INA226 capture contract's value)")

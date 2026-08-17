@@ -2176,6 +2176,100 @@ caveat as §3.2j.3. It does not exercise a second `WRAPPER_ID` value (none
 exists yet) or prove anything about a future custom-ASIC spin; it proves the
 mechanism works for the one variant that exists today.
 
+#### 3.2j.7 SPU-4 edge-node SOM in silicon — step 4 of the edge-node programme closed
+
+**Date:** 2026-08-17 NZT.
+
+**Scope:** first silicon for `spu4_som_edge_wrapper` and the fixed
+`spu4_som_edge.v` (see the same-day quadrance-sum generalization fix,
+commit `efc7466`) — the SPU-4 edge SOM product, a different sub-product
+from the ABI/Euclidean-ALU wrapper covered by the rest of §3.2j. Closes
+step 4 (board probe → silicon) of the edge-node programme; step 3 (the
+oracle-checked full-chain testbench) landed simulation-only earlier the
+same day.
+
+**Build & load:**
+
+```bash
+bash build_25k_spu4_som_edge_probe.sh
+python3 tools/gen_spu4_som_boot_image.py --profile oracle_fixture \
+    --output tools/build/spu4_som_boot_image.bin
+tools/rp2040_flash_pmod.py --port <tty> write tools/build/spu4_som_boot_image.bin \
+    --offset 0x120000
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_som_edge_probe.fs
+```
+
+Bitstream SHA-256:
+`4cd15ae59f2b132c2608679ba6ad22ed39807e3777217572ecec14e60e242734`.
+
+**Post-P&R resource cost, measured 2026-08-17:** 14,653 LUT4 / 23,040 =
+63%, 1,072 ALU / 17,280 = 6%, 1,069 DFF / 23,040 = 4%. Fmax: nextpnr
+printed the usual two `Max frequency` lines (35.67 MHz post-placement
+estimate, then the final post-route figure) — the final figure is
+**42.15 MHz**, comfortably clearing the 12 MHz `--freq` target.
+
+**UART proof — stable, repeating, re-verified after reload:**
+
+```
+SOM:P N=1 Q=00001900 S=06 L=007 I=1020
+```
+
+`N=1`/`Q=00001900` (6400) is the oracle-computed answer for the fixture's
+"far from all nodes, mixed sign" query
+(`software/lib/spu4_som_edge_oracle.py`) — deliberately the one query
+whose correct verdict depends on feature index 3, i.e. the exact
+regression case for the dropped-feature bug fixed the same day. `S=06`
+decodes to hydrated=1, done=1, busy=0, start_ignored=0. `L=007` matches
+the simulation testbench's latency exactly. `I=1020` matches
+`ABI_MAJOR=1 ABI_MINOR=0 WRAPPER_ID=2` per `docs/SPU4_ABI.md` §2a.
+
+**What this establishes.** The full product chain — external SPI flash →
+`spu4_som_flash_loader` → `spu4_som_edge` → `spu4_som_edge_wrapper`'s
+handshake → UART report — works end to end on real silicon, on the one
+query that a synthesis-vs-simulation mismatch in that day's RTL fix could
+plausibly have broken. Bit-exact agreement with the software oracle, not
+just "a plausible-looking number."
+
+**What it does not.** One board, one session, one fixture, same caveat
+class as the rest of §3.2j. Real (non-synthetic) trained weights still
+don't exist — this proves the mechanism, not a trained classifier.
+
+**Operational findings from this session (worth more than the RTL result
+itself, time-wise):**
+
+- **A stuck Sipeed dock debugger looks identical to a bench result you can't
+  trust, not to an obvious hardware fault.** Symptom: the UART line reads
+  *something* — a real, well-formed, previously-golden line from a
+  completely different bitstream, sometimes repeating, sometimes a single
+  non-repeating leftover byte sequence — while the board is actually frozen
+  (clock not running). The tell is the LED: a design's heartbeat LED
+  (`led[0]` in both SOM probes here) should be visibly blinking; steady/frozen
+  means the board is stuck regardless of what the UART appears to say.
+  **Check the LED before trusting any UART read that looks "wrong but
+  plausible."**
+- **Recovery: short the Tang 25K Dock's `3V3`/`TDO` test points** (bottom
+  side, upper-left corner) while powering on / connecting the debug USB
+  cable, wait for it to enumerate as a Bouffalo `/dev/ttyACMx` CDC device
+  (vendor ID `349b`, confirming it's genuinely the BL616 in DFU mode, not
+  guessed), release the short, then power-cycle normally. Source: Sipeed's
+  own wiki (`wiki.sipeed.com/hardware/en/tang/common-doc/update_debugger.html`),
+  not the generic/unverified pin names a first search pass turned up.
+- **`openFPGALoader -b tangprimer25k <file>` reports success (`Load SRAM
+  100%`, `Done DONE`) even when the load does not take live effect until
+  the next power cycle.** Observed repeatedly and consistently this
+  session — reading immediately after a "successful" load kept showing the
+  *previous* bitstream's output, and only a subsequent power cycle brought
+  up the newly-loaded design. Budget a power cycle into every load-and-check
+  cycle on this board rather than trusting the load command's own success
+  report.
+- **A dedicated debug probe that bypasses the product wrapper and reads raw
+  hydrated weight registers directly (`spu13_tang25k_spu4_som_edge_debug_probe.v`,
+  kept in-tree) is what actually separated "RTL bug" from "the J4 flash
+  chip was never wired to the Tang board at all, only to the RP2040
+  programmer"** — an all-`FFFF` readback (the floating-MISO pull-up
+  pattern, per `tang_primer_25k.cst`'s `PULL_MODE=UP` on that pin) pointed
+  straight at the physical wiring rather than the quadrance-sum fix.
+
 ### 3.2k IROTC Icosahedral Rotation Engine Silicon Probe
 
 **Date:** 2026-07-10 NZT — **first icosahedral (A₅) rotation silicon.**
