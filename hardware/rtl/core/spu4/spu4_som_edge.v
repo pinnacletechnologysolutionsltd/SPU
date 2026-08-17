@@ -93,17 +93,26 @@ module spu4_som_edge #(
                                (node_idx == 2'd1) ? weight1 :
                                (node_idx == 2'd2) ? weight2 : weight3;
 
-    // Combinational quadrance for current node
-    wire [63:0] f0_q = feature_quadrance(
-        features[1*FEATURE_W-1 : 0*FEATURE_W],
-        w[1*FEATURE_W-1 : 0*FEATURE_W]);
-    wire [63:0] f1_q = feature_quadrance(
-        features[2*FEATURE_W-1 : 1*FEATURE_W],
-        w[2*FEATURE_W-1 : 1*FEATURE_W]);
-    wire [63:0] f2_q = feature_quadrance(
-        features[3*FEATURE_W-1 : 2*FEATURE_W],
-        w[3*FEATURE_W-1 : 2*FEATURE_W]);
-    wire [63:0] node_quadrance = f0_q + f1_q + f2_q;
+    // Combinational quadrance for current node — sum of feature_quadrance
+    // across all NUM_FEATURES features. Previously hardcoded to exactly
+    // three terms (f0_q+f1_q+f2_q) regardless of NUM_FEATURES, which
+    // silently dropped feature index 3 (and any beyond) from the BMU
+    // decision whenever this module was instantiated with NUM_FEATURES=4,
+    // as spu4_som_edge_wrapper.v does for the INA226 capture contract. An
+    // exact-match query never exposes a dropped feature (its delta is 0
+    // either way), which is why the existing TBs' exact-match checks
+    // passed despite the bug. Found 2026-08-17 building the oracle-checked
+    // full-chain testbench.
+    reg [63:0] node_quadrance;
+    integer feat_i;
+    always @* begin
+        node_quadrance = 64'd0;
+        for (feat_i = 0; feat_i < NUM_FEATURES; feat_i = feat_i + 1) begin
+            node_quadrance = node_quadrance + feature_quadrance(
+                features[feat_i*FEATURE_W +: FEATURE_W],
+                w[feat_i*FEATURE_W +: FEATURE_W]);
+        end
+    end
 
     // Combinational winner for this cycle
     wire node_wins = (node_quadrance < best_q);
