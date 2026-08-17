@@ -369,13 +369,21 @@ earlier draft of this document said so without checking.
 > and `hardware_evidence.md`). One citation (`six_step_probe`) was checked and
 > found already correct: that design never completes routing (96%
 > congestion), so only the estimate exists and the doc already labels it
-> "post-placement" honestly. Artix-7 (`build_a7.sh`) Fmax citations remain
-> **unverified** — that toolchain (`nextpnr-xilinx`) was not available to
-> rebuild against during the audit; its safety argument (the build pipes
-> through `tools/collect_fpga_metrics.py` with a `--report` JSON flag, which
-> structurally only contains the final post-route analysis, confirmed by
-> mechanism on the Tang builds that use the same flag) is by code-reading, not
-> by an empirical rebuild.
+> "post-placement" honestly.
+>
+> **Artix-7 (`build_a7.sh`) verified 2026-08-17, safe for a different reason
+> than assumed.** The installed `nextpnr-xilinx` (`/home/john/.local/openxc7`,
+> version `0.8.2-73-gf681eb3a`) does **not** support `--report` at all
+> (`nextpnr-xilinx --help` has no such flag) — `build_a7.sh` detects this and
+> falls back to `tools/collect_fpga_metrics.py`'s **log-based** parsing for
+> every A7 build, not the JSON mechanism. That log parser prints the same
+> two-`Max frequency`-line pattern as the Tang builds (confirmed: rebuilding
+> `LUCAS` at `A7_FREQ=2` gave 55.33 MHz estimate → 61.94 MHz final), and its
+> regex loop writes matches into a dict keyed by clock name, so a later match
+> always overwrites an earlier one — the extracted JSON came back `61.94`,
+> the correct final value, confirmed against the raw log. A7 Fmax citations
+> produced via `build_a7.sh` are safe by this mechanism, empirically checked,
+> not by `--report`.
 >
 > **Both figures are the PROBE**, not the wrapper alone — see below.
 
@@ -443,6 +451,7 @@ the others.
    (this document, `hardware_evidence.md` §3.2j.2/§3.2j.3/§3.2j.4/§3353,
    `board_build_manifest.json`, `SPU4_FAULT_REPORTING_CONTRACT.md`,
    `BENCH_PROCEDURE_2026-08-3_2j_SPU4_REANCHOR.md`). Artix-7 (`build_a7.sh`)
-   Fmax citations remain unverified — `nextpnr-xilinx` was not available to
-   rebuild against; see the flag in §5.1 for the reasoning on why they're
-   presumed (not confirmed) safe.
+   citations were verified same-day once the `nextpnr-xilinx` toolchain was
+   located (`~/.local/openxc7`, not on `PATH` by default) — rebuilding `LUCAS`
+   confirmed the log-parsing fallback (this installed version has no
+   `--report` support at all) correctly extracts the final Fmax; see §5.1.
