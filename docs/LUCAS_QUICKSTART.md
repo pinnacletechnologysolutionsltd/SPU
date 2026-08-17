@@ -62,7 +62,7 @@ not divide anything. The recorded build routed at 4.41 MHz and reports
 at, and passes on margin. Leave the flag in: a build that misses its constraint
 is a nextpnr `ERROR` and emits no bitstream, and whether this spin would close
 at 50 has never been tested. See
-[the `A7_FREQ` note](SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check--it-does-not-slow-anything-down).
+[the `A7_FREQ` note](SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check-it-does-not-slow-anything-down).
 
 A successful SRAM load ends with `isc_done 1`, `init 1`, and `done 1`.
 

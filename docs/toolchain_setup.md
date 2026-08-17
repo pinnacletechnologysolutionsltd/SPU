@@ -216,7 +216,7 @@ The `A7_FREQ=2` in both commands is a nextpnr timing constraint, not a clock
 divider, and is required — `LUCAS` runs `clk_fast` at the full 50 MHz board
 clock in silicon regardless of it, and a build that misses its constraint is a
 nextpnr `ERROR` that emits no bitstream. See
-[the `A7_FREQ` note](SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check--it-does-not-slow-anything-down).
+[the `A7_FREQ` note](SOUTHBRIDGE_SPI_PROTOCOL.md#a7_freq2-suppresses-the-timing-check-it-does-not-slow-anything-down).
 
 Current routed IROTC spin pack command:
 

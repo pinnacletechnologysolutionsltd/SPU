@@ -44,7 +44,7 @@ Two consequences you can verify rather than take on faith:
 
 - **Hardware claims cite their evidence.** Any statement that something was
   observed on physical hardware cites a section of
-  [`docs/hardware_evidence.md`](docs/hardware_evidence.md) — date, build and
+  [`docs/hardware_evidence.md`](hardware_evidence.md) — date, build and
   load commands, bitstream SHA-256, raw captured proof lines. Claims that have
   no such section are labelled `[NO ENTRY]` in place rather than quietly
   asserted. There are currently seven.
@@ -100,7 +100,7 @@ python3 tools/som_sensor_replay.py                # SENSOR_REPLAY: PASS
 **What you cannot check from a clone, and why.** Bitstreams are build artifacts
 and are not committed; `build/` is gitignored. Silicon results are therefore
 recorded rather than reproduced here — each one in
-[`docs/hardware_evidence.md`](docs/hardware_evidence.md) pins its bitstream by
+[`docs/hardware_evidence.md`](hardware_evidence.md) pins its bitstream by
 SHA-256 and byte count and includes the raw captured output, so a claim can be
 matched against a specific image rather than a description of one. Reproducing
 them needs the board.
