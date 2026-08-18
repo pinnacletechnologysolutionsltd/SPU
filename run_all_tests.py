@@ -919,6 +919,7 @@ def main():
         "test_hydraulic_pump.py",
         "test_ina226_capture.py",
         "test_spu4_som_edge_trainer.py",
+        "test_spu4_som_edge_cross_validate.py",
     ):
         som_product_path = os.path.join(
             root_dir, "software", "tests", som_product_name
