@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import struct
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -13,6 +14,7 @@ from typing import Callable, Iterable, Sequence
 
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "software"))
 sys.path.insert(0, str(REPO / "tools"))
 
@@ -30,11 +32,25 @@ from lib.ina226_capture import (  # noqa: E402
     seal_manifest,
 )
 from lib.som_current_monitor import replay_current_windows  # noqa: E402
+# NOTE: RationalSurd/find_bmu_edge are imported via the software.lib.* path
+# (not lib.*) specifically to match tools/spu4_som_edge_trainer.py's own
+# import path exactly. Python caches modules by their full import path, so
+# `lib.rational_som` and `software.lib.rational_som` load the SAME FILE as
+# TWO DIFFERENT classes -- dataclass equality requires identical class
+# objects (`self.__class__ is other.__class__`), so RationalSurd instances
+# built by the trainer would silently compare unequal to structurally
+# identical ones built here, even with every field the same. Found by the
+# boot-image round-trip check below failing on values that printed
+# identically on both sides.
+from software.lib.rational_som import RationalSurd  # noqa: E402
+from software.lib.spu4_som_edge_oracle import find_bmu_edge  # noqa: E402
 from som_map import write_map  # noqa: E402
 from som_trainer import build_map_document, squared_distance  # noqa: E402
+import gen_spu4_som_boot_image as spu4_image  # noqa: E402
+import spu4_som_edge_trainer as spu4_trainer  # noqa: E402
 
 
-DEFAULT_CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v3.json"
+DEFAULT_CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v4.json"
 
 
 def round_ratio_half_even(numerator: int, denominator: int) -> int:
@@ -228,6 +244,64 @@ def _som_session_pairs(
     }
 
 
+def _spu4_som_edge_session_pairs(
+    train_norm: Sequence[tuple[CaptureWindow, tuple[int, ...], tuple[int, ...]]],
+    test_norm: Sequence[tuple[CaptureWindow, tuple[int, ...], tuple[int, ...]]],
+    *,
+    model: str,
+) -> tuple[tuple[tuple[int, int], ...], dict]:
+    """spu4_som_edge's analog to _som_session_pairs: train on train_norm,
+    classify test_norm, reduce to one session decision per fold by
+    plurality -- same procedure as the seven-node SOM path, same frozen
+    folds/normalization, independent gate (docs/INA226_COARSE_MONITOR_CONTRACT.md,
+    "spu4_som_edge gate (v4)").
+
+    spu4_som_edge has no evidence-frame ABI the way SOM1 does, so there is
+    no oracle-equality check to borrow. The closest equivalent -- does the
+    software pipeline's understanding of the hardware format match reality
+    -- is round-tripping the trained weights through the ACTUAL boot-image
+    byte packing (struct.pack('>hh', p, q), the exact bytes
+    spu4_som_flash_loader.v reads) and confirming they survive unchanged.
+    This catches a real class of bug (e.g. a trained P/Q value drifting
+    outside signed 16-bit range and silently wrapping) that a purely
+    in-memory check would miss.
+    """
+
+    feature_count = len(train_norm[0][1])
+    train_samples = [(features, row.label) for row, features, _ in train_norm]
+    weights, node_labels, _chosen = spu4_trainer.train_nodes(train_samples, model=model)
+
+    node_weight_pairs = [[(w.p, w.q) for w in node] for node in weights]
+    image_bytes = spu4_image.build_image(feature_count, node_weight_pairs)
+    roundtrip_weights = []
+    for node_id in range(spu4_trainer.NODE_COUNT):
+        node = []
+        for feature_index in range(feature_count):
+            offset = (node_id * feature_count + feature_index) * 4
+            p, q = struct.unpack(">hh", image_bytes[offset:offset + 4])
+            node.append(RationalSurd(p, q))
+        roundtrip_weights.append(node)
+    if roundtrip_weights != weights:
+        raise CaptureDataError(
+            "spu4_som_edge trained weights do not survive the boot-image round trip"
+        )
+
+    grouped: dict[str, list[tuple[CaptureWindow, int]]] = defaultdict(list)
+    for row, features, _directions in test_norm:
+        best, _quadrance = find_bmu_edge(
+            tuple(RationalSurd(value, 0) for value in features), weights
+        )
+        grouped[row.session_id].append((row, node_labels[best]))
+    pairs = []
+    for session_id in sorted(grouped):
+        session = sorted(grouped[session_id], key=lambda item: item[0].window)
+        pairs.append((session[0][0].label, plurality(prediction for _, prediction in session)))
+    return tuple(pairs), {
+        "node_majority_labels": node_labels,
+        "boot_image_roundtrip_matches": True,
+    }
+
+
 def run_study(manifest: dict, manifest_path: Path, output_dir: Path) -> dict:
     if manifest["contract"]["sha256"] != hashlib.sha256(DEFAULT_CONTRACT.read_bytes()).hexdigest():
         raise CaptureDataError("manifest does not pin the checked-in frozen contract")
@@ -287,6 +361,13 @@ def run_study(manifest: dict, manifest_path: Path, output_dir: Path) -> dict:
         som_pairs, som_diagnostics = _som_session_pairs(test_norm, document)
         binary_som_pairs = tuple((int(truth != 0), int(predicted != 0))
                                  for truth, predicted in som_pairs)
+
+        spu4_model = f"spu4-som-edge-ina226-v1-fold-{fold_index}"
+        spu4_pairs, spu4_diagnostics = _spu4_som_edge_session_pairs(
+            train_norm, test_norm, model=spu4_model
+        )
+        binary_spu4_pairs = tuple((int(truth != 0), int(predicted != 0))
+                                  for truth, predicted in spu4_pairs)
         clamp_counts = [0, 0, 0, 0]
         all_lane_clamps = 0
         for _row, _features, directions in test_norm:
@@ -302,6 +383,8 @@ def run_study(manifest: dict, manifest_path: Path, output_dir: Path) -> dict:
             "centroid_three_class": confusion_from_pairs(centroid_pairs, 3),
             "som_three_class": confusion_from_pairs(som_pairs, 3),
             "som_binary": confusion_from_pairs(binary_som_pairs, 2),
+            "spu4_som_edge_three_class": confusion_from_pairs(spu4_pairs, 3),
+            "spu4_som_edge_binary": confusion_from_pairs(binary_spu4_pairs, 2),
         }
         folds.append({
             "fold": fold_index,
@@ -314,6 +397,7 @@ def run_study(manifest: dict, manifest_path: Path, output_dir: Path) -> dict:
             "heldout_clamp_counts": clamp_counts,
             "heldout_all_lane_clamps": all_lane_clamps,
             "som_diagnostics": som_diagnostics,
+            "spu4_som_edge_diagnostics": spu4_diagnostics,
             "metrics": metrics,
         })
 
@@ -323,6 +407,8 @@ def run_study(manifest: dict, manifest_path: Path, output_dir: Path) -> dict:
         "centroid_three_class": aggregate_confusions(folds, "centroid_three_class", 3),
         "som_three_class": aggregate_confusions(folds, "som_three_class", 3),
         "som_binary": aggregate_confusions(folds, "som_binary", 2),
+        "spu4_som_edge_three_class": aggregate_confusions(folds, "spu4_som_edge_three_class", 3),
+        "spu4_som_edge_binary": aggregate_confusions(folds, "spu4_som_edge_binary", 2),
     }
     replay_gate = (
         aggregate["som_three_class"]["balanced_accuracy_ppm"] >= 900_000
@@ -338,6 +424,23 @@ def run_study(manifest: dict, manifest_path: Path, output_dir: Path) -> dict:
         and aggregate["som_binary"]["balanced_accuracy_ppm"]
         > aggregate["threshold_binary"]["balanced_accuracy_ppm"]
     )
+    # spu4_som_edge gate -- docs/INA226_COARSE_MONITOR_CONTRACT.md's
+    # "spu4_som_edge gate (v4)": same threshold values as the seven-node
+    # SOM gate above, independent pass/fail, scored on the same folds.
+    spu4_replay_gate = (
+        aggregate["spu4_som_edge_three_class"]["balanced_accuracy_ppm"] >= 900_000
+        and min(fold["metrics"]["spu4_som_edge_three_class"]["balanced_accuracy_ppm"]
+                for fold in folds) >= 800_000
+        and min(aggregate["spu4_som_edge_three_class"]["per_class_recall_ppm"]) >= 800_000
+        and all(fold["spu4_som_edge_diagnostics"]["boot_image_roundtrip_matches"]
+                for fold in folds)
+    )
+    spu4_superiority_gate = (
+        aggregate["spu4_som_edge_three_class"]["balanced_accuracy_ppm"]
+        > aggregate["centroid_three_class"]["balanced_accuracy_ppm"]
+        and aggregate["spu4_som_edge_binary"]["balanced_accuracy_ppm"]
+        > aggregate["threshold_binary"]["balanced_accuracy_ppm"]
+    )
     return {
         "format": "SPU_INA226_COARSE_MONITOR_RESULT_V1",
         "manifest_sha256": hashlib.sha256(Path(manifest_path).read_bytes()).hexdigest(),
@@ -349,6 +452,10 @@ def run_study(manifest: dict, manifest_path: Path, output_dir: Path) -> dict:
             "hardware_replay_eligible": replay_gate,
             "baseline_superiority_claim_authorized": superiority_gate and replay_gate,
             "literal_baseline_superiority_predicate": superiority_gate,
+            "spu4_som_edge_hardware_replay_eligible": spu4_replay_gate,
+            "spu4_som_edge_baseline_superiority_claim_authorized":
+                spu4_superiority_gate and spu4_replay_gate,
+            "spu4_som_edge_literal_baseline_superiority_predicate": spu4_superiority_gate,
         },
         "evidence_scope": "physical only when the sealed CSVs are real captures; synthetic fixtures prove plumbing only",
     }
@@ -407,11 +514,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         result_path = Path(args.output) / "ina226_coarse_monitor_result_v1.json"
         result_path.write_bytes(canonical_json_bytes(result))
         aggregate = result["aggregate"]["som_three_class"]
+        spu4_aggregate = result["aggregate"]["spu4_som_edge_three_class"]
         print(
             "INA226_CAPTURE_RUN: PASS "
             f"sessions={result['sessions']} windows={result['windows']} "
             f"som_balanced={aggregate['balanced_accuracy_ppm']/10000:.2f}% "
-            f"replay_eligible={result['gates']['hardware_replay_eligible']}"
+            f"replay_eligible={result['gates']['hardware_replay_eligible']} "
+            f"spu4_som_edge_balanced={spu4_aggregate['balanced_accuracy_ppm']/10000:.2f}% "
+            f"spu4_som_edge_replay_eligible={result['gates']['spu4_som_edge_hardware_replay_eligible']}"
         )
         print(f"Result SHA-256: {hashlib.sha256(result_path.read_bytes()).hexdigest()}")
         return 0

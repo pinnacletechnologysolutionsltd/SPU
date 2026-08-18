@@ -34,7 +34,7 @@ from som_map import load_map  # noqa: E402
 from som_voronoi_explain import explain  # noqa: E402
 
 
-CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v3.json"
+CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v4.json"
 
 
 def fixture_rows(class_name: str, block: int, probe: str = "dc_fan_v1") -> list[str]:
@@ -296,6 +296,25 @@ def main() -> None:
         ) == 120)
         check("synthetic fixture is not labelled physical", "synthetic fixtures" in result_a["evidence_scope"])
 
+        # spu4_som_edge is scored alongside the seven-node SOM on the same
+        # folds -- same synthetic fixture, independent gate (v4 amendment).
+        check("spu4_som_edge scored on all five folds", all(
+            "spu4_som_edge_diagnostics" in fold for fold in result_a["folds"]
+        ))
+        check("spu4_som_edge weights survive the boot-image round trip on "
+              "every fold", all(
+            fold["spu4_som_edge_diagnostics"]["boot_image_roundtrip_matches"]
+            for fold in result_a["folds"]
+        ))
+        check("spu4_som_edge_three_class present in the aggregate",
+              "spu4_som_edge_three_class" in result_a["aggregate"])
+        check("spu4_som_edge gate keys present in the result",
+              "spu4_som_edge_hardware_replay_eligible" in result_a["gates"]
+              and "spu4_som_edge_baseline_superiority_claim_authorized" in result_a["gates"])
+        check("spu4_som_edge gate is a real bool, not always True by "
+              "construction (this synthetic fixture is not claimed to pass it)",
+              isinstance(result_a["gates"]["spu4_som_edge_hardware_replay_eligible"], bool))
+
         map_document = load_map(out_a / "fold_0/map.json")
         first_test = next(row for row in windows if row.fold == 0)
         scaler = result_a["folds"][0]["scaler"]
@@ -311,21 +330,41 @@ def main() -> None:
         check("Voronoi winner inequality holds", explanation["inequality"]["lhs"] <= explanation["inequality"]["rhs"])
 
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
-    check("contract format pinned", contract["format"] == "SPU_INA226_COARSE_MONITOR_V3")
+    check("contract format pinned", contract["format"] == "SPU_INA226_COARSE_MONITOR_V4")
     check(
-        "v3 records the v2 hash it supersedes",
+        "v4 records the v3 hash it supersedes",
         contract["supersedes"]["sha256"]
         == hashlib.sha256(
-            (REPO / "software/datasets/ina226_coarse_monitor_v2.json").read_bytes()
+            (REPO / "software/datasets/ina226_coarse_monitor_v3.json").read_bytes()
         ).hexdigest(),
     )
     check(
-        "v3 amends while nothing is sealed",
+        "v4 amends while nothing is sealed",
         contract["supersedes"]["sessions_sealed_when_amended"] == 0,
     )
     check(
-        "v3 schema carries the pulses covariate",
+        "v4 schema carries the pulses covariate (unchanged since v3)",
         tuple(contract["sensor"]["csv_columns"])[-1] == "pulses",
+    )
+    # The load-bearing constraint of the v4 amendment: spu4_som_edge gets
+    # its own gate, independent of and identical in threshold to the
+    # seven-node SOM's, not a softer bar for the newer classifier.
+    check(
+        "v4 declares the spu4_som_edge model",
+        "spu4_som_edge" in contract["models"],
+    )
+    check(
+        "v4 spu4_som_edge gate thresholds match the seven-node SOM gate exactly",
+        contract["gates"]["spu4_som_edge_hardware_replay_eligible"][
+            "aggregate_three_class_balanced_accuracy_ppm_min"
+        ] == contract["gates"]["hardware_replay_eligible"][
+            "aggregate_three_class_som_balanced_accuracy_ppm_min"
+        ]
+        and contract["gates"]["spu4_som_edge_hardware_replay_eligible"][
+            "worst_fold_three_class_balanced_accuracy_ppm_min"
+        ] == contract["gates"]["hardware_replay_eligible"][
+            "worst_fold_three_class_som_balanced_accuracy_ppm_min"
+        ],
     )
     # The load-bearing constraint of this amendment. Rotation trivially
     # separates current_limited_stall, so a model given it would score well
