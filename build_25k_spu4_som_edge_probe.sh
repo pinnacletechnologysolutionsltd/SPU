@@ -14,7 +14,7 @@
 #
 # Golden UART line at 115200 baud (see spu13_tang25k_spu4_som_edge_probe.v's
 # header for the full field reference):
-#   SOM:P N=1 Q=00001900 S=07 L=xxx I=1020
+#   SOM:P N=1 Q=00001900 S=06 L=xxx I=1020
 # L is the MEASURED latency in clocks. The query is deliberately the
 # oracle fixture's feature-3-dependent case -- see the probe's header for
 # why an exact-match query could not have caught the bug this proves fixed.
@@ -41,6 +41,6 @@ gowin_pack -d GW5A-25A --sspi_as_gpio --mspi_as_gpio --cpu_as_gpio \
 echo ""
 echo "=== SPU-4 SOM Edge Probe Build Complete ==="
 echo "SRAM load: openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_som_edge_probe.fs"
-echo "Expect:    SOM:P N=1 Q=00001900 S=07 L=xxx I=1020"
+echo "Expect:    SOM:P N=1 Q=00001900 S=06 L=xxx I=1020"
 echo "(flash the oracle_fixture boot image at 0x120000 first -- see this"
 echo " script's header comment)"

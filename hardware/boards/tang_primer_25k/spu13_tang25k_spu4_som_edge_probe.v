@@ -34,7 +34,7 @@
 // UART protocol (41 bytes = 39 visible chars + CRLF, repeats every
 // LINE_PERIOD):
 //   SOM:. N=x Q=xxxxxxxx S=xx L=xxx I=xxxx\r\n   -- still running
-//   SOM:P N=1 Q=00001900 S=07 L=xxx I=1120\r\n   -- PASS (Q=6400=0x1900)
+//   SOM:P N=1 Q=00001900 S=06 L=xxx I=1020\r\n   -- PASS (Q=6400=0x1900)
 //   SOM:F N=x Q=xxxxxxxx S=xx L=xxx I=xxxx\r\n   -- FAIL
 //
 //   N   best_node, one hex digit (the port is only 2 bits wide).
