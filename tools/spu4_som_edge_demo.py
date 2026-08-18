@@ -24,9 +24,17 @@ boot image matching --profile -- see
 build_25k_spu4_som_edge_interactive_probe.sh's header for the exact
 commands.
 
+--weights points at a trained weights JSON (tools/spu4_som_edge_trainer.py's
+output, or anything matching tools/gen_spu4_som_boot_image.py's WeightsError
+schema) instead of a canned profile -- for verifying a board actually
+flashed with real trained weights rather than one of the three synthetic
+profiles.
+
 Usage:
     python3 tools/spu4_som_edge_demo.py --port /dev/ttyACM0
     python3 tools/spu4_som_edge_demo.py --port /dev/ttyACM0 --profile demo
+    python3 tools/spu4_som_edge_demo.py --port /dev/ttyACM0 \\
+        --weights tools/build/spu4_som_edge_synthetic_weights.json
 """
 
 import argparse
@@ -48,7 +56,7 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
 from software.lib.rational_som import RationalSurd
 from software.lib.spu4_som_edge_oracle import find_bmu_edge
 from software.lib.spu4_som_probe_client import ProbeTransport
-from gen_spu4_som_boot_image import ORACLE_FIXTURE_WEIGHTS, synthetic_profile
+from gen_spu4_som_boot_image import ORACLE_FIXTURE_WEIGHTS, load_weights, synthetic_profile
 
 NUM_FEATURES = 4
 
@@ -63,6 +71,16 @@ def node_weights_as_surds(profile):
         raw = ORACLE_FIXTURE_WEIGHTS
     else:
         raw = synthetic_profile(profile, NUM_FEATURES)
+    return [[RationalSurd(p, q) for p, q in node] for node in raw]
+
+
+def node_weights_from_file(path):
+    """Same shape as node_weights_as_surds, but sourced from a trained
+    weights JSON -- the demo run only means something if the board was
+    actually flashed with tools/gen_spu4_som_boot_image.py --weights path
+    using this exact file."""
+
+    _feature_count, raw = load_weights(path)
     return [[RationalSurd(p, q) for p, q in node] for node in raw]
 
 
@@ -89,7 +107,12 @@ def main(argv=None):
                      default="oracle_fixture",
                      help="which flashed weight profile to assume (default: "
                           "oracle_fixture) -- must match what's actually on "
-                          "the board's PMOD J4 flash chip")
+                          "the board's PMOD J4 flash chip; ignored if "
+                          "--weights is given")
+    ap.add_argument("--weights",
+                     help="path to a trained weights JSON (overrides "
+                          "--profile) -- must match what's actually on the "
+                          "board's PMOD J4 flash chip")
     ap.add_argument("--timeout", type=float, default=5.0)
     ns = ap.parse_args(argv)
 
@@ -98,11 +121,16 @@ def main(argv=None):
         return 1
 
     print("SPU-4 SOM edge classifier -- interactive demo")
-    print(f"(assuming --profile {ns.profile} is flashed; this is demo/synthetic "
-          f"data, not a validated anomaly result -- see knowledge/spu4-edge-node-focus)")
+    if ns.weights:
+        print(f"(assuming weights from {ns.weights} are flashed; this is "
+              f"demo/synthetic data, not a validated anomaly result -- see "
+              f"knowledge/spu4-edge-node-focus)")
+    else:
+        print(f"(assuming --profile {ns.profile} is flashed; this is demo/synthetic "
+              f"data, not a validated anomaly result -- see knowledge/spu4-edge-node-focus)")
     print("=" * 72)
 
-    nodes = node_weights_as_surds(ns.profile)
+    nodes = node_weights_from_file(ns.weights) if ns.weights else node_weights_as_surds(ns.profile)
     queries = build_demo_queries(nodes)
 
     ser = serial.Serial(ns.port, ns.baud, timeout=1)

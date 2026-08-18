@@ -2270,6 +2270,112 @@ itself, time-wise):**
   pattern, per `tang_primer_25k.cst`'s `PULL_MODE=UP` on that pin) pointed
   straight at the physical wiring rather than the quadrance-sum fix.
 
+#### 3.2j.8 First trained-weight silicon result — interactive probe + fixed-probe reconfirmation
+
+**Date:** 2026-08-19 NZT.
+
+**Scope:** first time `spu4_som_edge_wrapper` classified against genuinely
+*trained* weights (`tools/spu4_som_edge_trainer.py` output, not a synthetic
+profile) on real silicon, via the interactive probe
+(`spu13_tang25k_spu4_som_edge_interactive_probe.v`, §2 of the 2026-08-18
+handover — this is that probe's first board session). Immediately followed
+by a full swap back to `oracle_fixture` weights and the fixed probe to
+reconfirm §3.2j.7 still holds on the same physical wiring after a flash
+chip reseat.
+
+**Build & load (interactive probe, trained weights):**
+
+```bash
+python3 tools/spu4_som_edge_trainer.py --csv software/tests/data/synthetic_current_v1.csv \
+    --output tools/build/spu4_som_edge_synthetic_weights.json \
+    --report tools/build/spu4_som_edge_synthetic_report.json
+python3 tools/gen_spu4_som_boot_image.py --weights tools/build/spu4_som_edge_synthetic_weights.json \
+    --output tools/build/spu4_som_edge_synthetic_boot_image.bin
+tools/rp2040_flash_pmod.py --port /dev/ttyACM0 write tools/build/spu4_som_edge_synthetic_boot_image.bin \
+    --offset 0x120000
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_som_edge_interactive_probe.fs
+python3 tools/spu4_som_edge_demo.py --port /dev/ttyUSB1 \
+    --weights tools/build/spu4_som_edge_synthetic_weights.json
+```
+
+Bitstream SHA-256:
+`03ab3d3fb0315710b4101f0b1f308cb6d0d72ee5c8d13ee87f8de304c63aa384`.
+nextpnr final Fmax **44.32 MHz** (the second of the two printed "Max
+frequency" lines — see §3.6/nextpnr-fmax memory), file size 5.9 MB, from
+the 2026-08-18 build session; utilization not re-measured this session.
+
+**Demo output — 5/5, all matched the independent oracle:**
+
+```
+exact match: node 0              HW: node=0 Q=0      ORACLE: node=0 Q=0      [OK]
+exact match: node 1              HW: node=1 Q=0      ORACLE: node=1 Q=0      [OK]
+exact match: node 2              HW: node=2 Q=0      ORACLE: node=2 Q=0      [OK]
+exact match: node 3              HW: node=3 Q=0      ORACLE: node=3 Q=0      [OK]
+midpoint of node 0 and node 1    HW: node=3 Q=82056  ORACLE: node=3 Q=82056  [OK]
+PASS: every hardware classification matched the software oracle exactly.
+```
+
+`tools/spu4_som_edge_demo.py` previously only supported the three synthetic
+profiles (`oracle_fixture`/`demo`/`zero`) via `--profile`; it did not know
+how to compare against arbitrary trained weights, so this session added a
+`--weights` flag (reusing `gen_spu4_som_boot_image.load_weights`, the same
+loader the boot-image generator already trusted) rather than writing a
+separate one-off script.
+
+**Then the swap-back — flash chip unseated, wired to the RP2040 PMOD,
+reflashed `oracle_fixture`, reseated in `J4`, fixed-probe bitstream
+reloaded:**
+
+```bash
+python3 tools/gen_spu4_som_boot_image.py --profile oracle_fixture \
+    --output tools/build/spu4_som_edge_oracle_fixture_boot_image.bin
+tools/rp2040_flash_pmod.py --port /dev/ttyACM0 write tools/build/spu4_som_edge_oracle_fixture_boot_image.bin \
+    --offset 0x120000
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu4_som_edge_probe.fs
+python3 tools/spu4_som_edge_smoketest.py --port /dev/ttyUSB1
+```
+
+Fixed-probe bitstream SHA-256 (re-verified, unchanged from §3.2j.7):
+`4cd15ae59f2b132c2608679ba6ad22ed39807e3777217572ecec14e60e242734`.
+
+**Smoke-test output:**
+
+```
+SOM:P N=1 Q=00001900 S=06 L=007 I=1020
+PASS: real silicon classified the fixed fixture correctly.
+```
+
+Bit-exact match to §3.2j.7's original result, on the same board after the
+flash chip was physically removed and reseated — a genuine reseat/wiring
+check, not just a re-run of the same session.
+
+**Environment note:** this machine's system Python (3.14) has no
+`pyserial` and no pip/venv; both serial-dependent scripts were run via
+`/opt/oss-cad-suite/py3bin/python3` (the OSS CAD Suite's bundled
+Python 3.11, which does have `pyserial`) instead. `tools/rp2040_flash_pmod.py`
+worked under the system Python unmodified — worth checking why if this
+becomes a recurring friction point.
+
+**What this establishes.** The full chain — trainer output → boot-image
+generator → external SPI flash → `spu4_som_flash_loader` →
+`spu4_som_edge` → wrapper handshake → UART — is correct end to end on real
+silicon using weights that came from actual training, not a hand-picked
+constant, for the first time. The fixed-probe reconfirmation additionally
+proves the physical flash-reseat procedure itself doesn't disturb a known-
+good result.
+
+**What it does not.** Training data is still the synthetic fixture
+(`synthetic_current_v1.csv`), not real INA226 captures — Track A (parts
+ordered 2026-08-18) is still the gate for a result that says anything about
+a real bearing/motor. Also: §3.2j.7 flagged that `openFPGALoader` can
+report success while a load doesn't take live effect until a power cycle;
+this session did not independently re-verify the LED-blink check for
+either load, though both results were internally consistent with the
+weights actually flashed (a stale load would have produced the *other*
+probe's answer instead of a clean match), which is reasonably strong
+circumstantial evidence against it happening here, not a substitute for
+checking directly next time.
+
 ### 3.2k IROTC Icosahedral Rotation Engine Silicon Probe
 
 **Date:** 2026-07-10 NZT — **first icosahedral (A₅) rotation silicon.**
