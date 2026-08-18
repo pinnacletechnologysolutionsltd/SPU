@@ -54,6 +54,8 @@ nav:
       - Southbridge SPI protocol: SOUTHBRIDGE_SPI_PROTOCOL.md
       - Board scaling strategy: fpga_board_scaling_strategy.md
   - Architecture & Math:
+      - SPU-13 architecture: knowledge/SPU13_ARCHITECTURE.md
+      - SPU-4 architecture: knowledge/SPU4_ARCHITECTURE.md
       - Mathematical foundations: knowledge/MATHEMATICAL_FOUNDATIONS.md
       - ISA reference: knowledge/isa_reference.md
       - ISA quickstart: knowledge/ISA_QUICKSTART.md
