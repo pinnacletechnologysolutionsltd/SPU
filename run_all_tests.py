@@ -864,6 +864,48 @@ def main():
     else:
         host_pass = host_fail = 0
 
+    # SPU-4 SOM edge probe UART line parser (no hardware required) -- shared
+    # grammar between the fixed self-test probe and the interactive probe.
+    spu4_probe_parser_test = os.path.join(
+        root_dir, "software", "tests", "test_spu4_som_probe_parser.py"
+    )
+    if os.path.exists(spu4_probe_parser_test):
+        result_spu4_probe_parser = subprocess.run(
+            [sys.executable, spu4_probe_parser_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_spu4_probe_parser.returncode == 0:
+            spu4_probe_parser_pass, spu4_probe_parser_fail = 1, 0
+        else:
+            spu4_probe_parser_pass, spu4_probe_parser_fail = 0, 1
+            print(
+                f"\n  test_spu4_som_probe_parser.py FAILED:\n"
+                f"{result_spu4_probe_parser.stdout[-500:]}"
+            )
+    else:
+        spu4_probe_parser_pass = spu4_probe_parser_fail = 0
+
+    # SPU-4 SOM edge interactive-probe client (no hardware required) --
+    # encode/decode + ProbeTransport against a fake serial port.
+    spu4_probe_client_test = os.path.join(
+        root_dir, "software", "tests", "test_spu4_som_probe_client_parser.py"
+    )
+    if os.path.exists(spu4_probe_client_test):
+        result_spu4_probe_client = subprocess.run(
+            [sys.executable, spu4_probe_client_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_spu4_probe_client.returncode == 0:
+            spu4_probe_client_pass, spu4_probe_client_fail = 1, 0
+        else:
+            spu4_probe_client_pass, spu4_probe_client_fail = 0, 1
+            print(
+                f"\n  test_spu4_som_probe_client_parser.py FAILED:\n"
+                f"{result_spu4_probe_client.stdout[-500:]}"
+            )
+    else:
+        spu4_probe_client_pass = spu4_probe_client_fail = 0
+
     # SOM product artifact/trainer/data gates (no hardware required). These pin
     # Iris, the generalized CSV path, and the deterministic Paderborn importer.
     som_product_results = {}
@@ -903,7 +945,8 @@ def main():
     # Explicit list rather than a glob so in-flight/unregistered demo tests
     # don't silently join the gate before their author intends them to.
     spin_demo_tests = ["test_robotics_demo.py", "test_lucas_demo.py",
-                       "test_tensegrity_demo.py"]
+                       "test_tensegrity_demo.py", "test_spu4_som_edge_smoketest.py",
+                       "test_spu4_som_edge_demo.py"]
     robotics_demo_pass = robotics_demo_fail = 0
     for demo_name in spin_demo_tests:
         demo_path = os.path.join(root_dir, "software", "tests", demo_name)
@@ -930,6 +973,14 @@ def main():
     print(f"\nHost Library Tests: {host_pass + host_fail}")
     print(f"Passed:             {host_pass}")
     print(f"Failed:             {host_fail}")
+
+    print(f"\nSPU-4 SOM Probe Parser Tests: {spu4_probe_parser_pass + spu4_probe_parser_fail}")
+    print(f"Passed:                       {spu4_probe_parser_pass}")
+    print(f"Failed:                       {spu4_probe_parser_fail}")
+
+    print(f"\nSPU-4 SOM Probe Client Tests: {spu4_probe_client_pass + spu4_probe_client_fail}")
+    print(f"Passed:                       {spu4_probe_client_pass}")
+    print(f"Failed:                       {spu4_probe_client_fail}")
 
     print(f"\nSOM Product Tests: {som_product_pass + som_product_fail}")
     print(f"Passed:           {som_product_pass}")
@@ -997,7 +1048,8 @@ def main():
     total_pass = (
         passed + cpp_p + py_pass + cv_pass + lucas_pass + lucas_harness_pass
         + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
-        + audio_pass + host_pass + som_product_pass + robotics_demo_pass
+        + audio_pass + host_pass + spu4_probe_parser_pass + spu4_probe_client_pass
+        + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
         + bench_metrics_pass
@@ -1005,7 +1057,8 @@ def main():
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
-        + audio_fail + host_fail + som_product_fail + robotics_demo_fail
+        + audio_fail + host_fail + spu4_probe_parser_fail + spu4_probe_client_fail
+        + som_product_fail + robotics_demo_fail
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + bench_metrics_fail

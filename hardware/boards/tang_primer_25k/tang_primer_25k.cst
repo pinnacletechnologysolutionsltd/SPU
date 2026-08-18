@@ -120,7 +120,18 @@ IO_PORT "sdram_dm[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
 IO_PORT "sdram_dm[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
 
 // ─── Dual UART Bridge (Host & Telemetry) ──────────────────────────────────
-IO_LOC  "periph_rx"          B3;    // Input from RP2350 (USB-A)
+// NOTE 2026-08-18: per the Sipeed Tang_Primer_25K_Dock_60033 schematic
+// (page 1, "Peripherals -> Debugger"), B3 is actually IOB56A_FPGA_UART_RX,
+// wired on the dock PCB to net 616_UART_TX -- the onboard BL616
+// USB-JTAG-UART bridge chip's own TX pin, and the exact RX partner to C3
+// (uart_tx below). "Input from RP2350 (USB-A)" describes a separate,
+// legacy external bodge-wire scheme onto this SAME pin
+// (docs/rp_mcu_bringup_plan.md, hardware/rp2350/rp2350_uart_injector.c) --
+// confirmed NOT currently wired on this board (2026-08-18). Two live UART
+// TX drivers (onboard BL616 + external RP2350) on B3 at once would
+// contend -- see knowledge memory tang25k-b3-pin-contention-risk before
+// reconnecting that bodge wire on any board that also uses "uart_rx" below.
+IO_LOC  "periph_rx"          B3;    // Input from RP2350 (USB-A) -- legacy, currently unwired
 IO_LOC  "uart_tx_telemetry"  B11;   // Output to BL616 (USB-C)
 IO_LOC  "uart_rx_telemetry"  A11;   // Input from BL616 (USB-C)
 IO_PORT "periph_rx"          IO_TYPE=LVCMOS33 PULL_MODE=UP;
@@ -129,6 +140,13 @@ IO_PORT "uart_rx_telemetry"  IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
 IO_LOC  "uart_tx"            C3;    // Host-bound TX
 IO_PORT "uart_tx"            IO_TYPE=LVCMOS33 DRIVE=8;
+
+// Host-bound RX, the schematic-confirmed partner to uart_tx/C3 above (both
+// through the onboard BL616 bridge). Used by
+// spu13_tang25k_spu4_som_edge_interactive_probe.v; same physical pin as
+// "periph_rx" above by design -- see the NOTE at the top of this section.
+IO_LOC  "uart_rx"            B3;
+IO_PORT "uart_rx"            IO_TYPE=LVCMOS33 PULL_MODE=UP;
 
 // ─── PMOD J4 SPI Flash ───────────────────────────────────────────────────
 // Verified by J4 sweep mapping M00: G10=CS#, D10=SCK, B10=MOSI/D1, C10=MISO/DO.
