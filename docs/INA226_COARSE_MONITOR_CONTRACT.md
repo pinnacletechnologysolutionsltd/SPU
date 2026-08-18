@@ -1,12 +1,62 @@
-# INA226 coarse anomaly monitor v2 contract
+# INA226 coarse anomaly monitor v4 contract
 
-Date frozen: 2026-07-19 (v1) — amended 2026-08-06 (v2)
+Date frozen: 2026-07-19 (v1) — amended 2026-08-06 (v2) — amended 2026-08-16
+(v3) — amended 2026-08-18 (v4)
 
 ## Status and question
 
 This contract was frozen before an INA226 was available and before any
 physical capture was ingested or scored. Its machine-readable source of truth
-is `software/datasets/ina226_coarse_monitor_v3.json`.
+is `software/datasets/ina226_coarse_monitor_v4.json`.
+
+### What changed in v4, and why v3 is still on disk
+
+**Amended 2026-08-18, `sessions_sealed_when_amended: 0`.** v4 adds a second
+model, gated independently: `spu4_som_edge` (the four-node winner-take-all
+classifier, `hardware/rtl/core/spu4/spu4_som_edge.v`), alongside the existing
+seven-node SPU-13 SOM. Nothing about the capture schema, task, folds,
+features, or validation changes — this is purely an addition to `models` and
+`gates`.
+
+**Why it had to happen now or never.** The edge-node product focus decided
+2026-08-16 moved the deployable classifier to `spu4_som_edge` — see
+`knowledge/ARLINGHAUS_SPATIAL_SYNTHESIS.md` §7 and the session notes for that
+decision — but this contract's "Baselines and frozen gates" section, carried
+over unchanged since v2, still named only the seven-node SOM. Found
+2026-08-18 while building `tools/spu4_som_edge_trainer.py` and
+`tools/spu4_som_edge_cross_validate.py`: the classifier this repo is actually
+building tooling for had no predeclared accuracy gate. A gate committed after
+real data exists has no integrity — same reasoning v3 used for the `pulses`
+covariate — so this had to be written now, blind, or not at all.
+
+**Both models are targeted explicitly, not one replacing the other.** Real
+captures will be scored against both the existing seven-node SOM gate and the
+new `spu4_som_edge` gate independently. A negative on one does not relax the
+other's threshold, and passing one does not require passing the other.
+
+**The `spu4_som_edge` threshold values are identical to the seven-node SOM's**
+(aggregate ≥90%, worst fold ≥80%, per-class recall ≥80%) — same task, same
+data, same bar, deliberately not an easier standard for the newer, simpler
+classifier. `spu4_som_edge`'s v1 hardware ABI (`best_node`, `best_quadrance`)
+does not expose a runner-up quadrance the way the SOM1 evidence frame's
+confidence gap does, so there is currently no ambiguity gate for it — an
+honest hardware boundary, not an oversight papered over for symmetry.
+
+**What this amendment does NOT do.** `tools/ina226_capture_pipeline.py`'s
+`run_study()` fully implements the seven-node SOM path — fold splitting,
+per-fold normalization, majority/threshold/centroid baselines, gate checking
+— and has **not** been extended to also train and score `spu4_som_edge` per
+fold. `software/tests/test_ina226_capture.py`'s `CONTRACT` constant still
+pins v3. Wiring `spu4_som_edge` into that pipeline (mirroring
+`_som_session_pairs` with `tools/spu4_som_edge_trainer.py`'s `train_nodes`
+and `find_bmu_edge` instead of the SOM1 evidence-frame path) is real,
+separate, tracked follow-up work — attempting it inside this same change
+alongside a frozen-contract amendment risked a rushed edit to pipeline code
+that already produces real evidence for the seven-node path. This amendment
+is the part that only has integrity if committed to *before* that
+integration and before real data exist; the integration itself can safely
+happen after, since the gate it must satisfy is now fixed and can't be
+tuned against results either way.
 
 ### What changed in v3, and why the earlier versions are still on disk
 
@@ -173,6 +223,42 @@ Any failed gate is recorded as a negative. The capture selection, features,
 folds, training schedule, or gates must not be tuned against held-out results.
 A changed hypothesis requires a new versioned contract.
 
+### spu4_som_edge gate (v4)
+
+The same real captures, the same frozen folds (`capture_block mod 5`), the
+same session-level plurality reduction over four windows, and the same
+training-fold-normalized `0..30000` features are scored a second time against
+`spu4_som_edge` — independently of, not instead of, the seven-node SOM gate
+above. Every fold reports `spu4_som_edge`'s three-class confusion matrix,
+balanced accuracy, and per-class recall, trained via
+`tools/spu4_som_edge_trainer.py` and scored via
+`software/lib/spu4_som_edge_oracle.py`'s `find_bmu_edge`.
+
+A captured map is eligible for `spu4_som_edge` FPGA replay only when all of
+these hold:
+
+- aggregate three-class `spu4_som_edge` balanced accuracy is at least 90%;
+- the worst fold is at least 80%;
+- every class recall is at least 80%;
+- every capture session passes acquisition validation;
+- every generated prediction matches `find_bmu_edge`'s oracle exactly.
+
+An accuracy-superiority statement for `spu4_som_edge` is separately permitted
+only when it exceeds the three-class nearest centroid and its collapsed
+normal/anomaly result exceeds the scalar threshold — the identical structure
+as the seven-node claim, evaluated for `spu4_som_edge` on its own terms.
+
+`spu4_som_edge` has no ambiguity/confidence-gap gate. Its v1 hardware ABI
+(`best_node`, `best_quadrance`) does not report a runner-up, unlike the SOM1
+evidence frame. This is a real hardware-contract boundary, not a gap in this
+document.
+
+**Not yet built:** the actual scoring code. `tools/ina226_capture_pipeline.py`
+trains and scores the seven-node SOM per fold today; it does not yet also
+train and score `spu4_som_edge`. That integration is tracked, separate work —
+see "What changed in v4" above for why declaring the gate first, before that
+code exists, is the part that has to happen now.
+
 ## Safety boundary
 
 The monitored target is a separate low-voltage, replaceable actuator or fan,
@@ -193,3 +279,13 @@ materializer, hostile logger fixtures, capture-day runbook, and exact Voronoi
 explanation can all be completed with synthetic files. Synthetic fixtures may
 test plumbing and rejection behaviour only; they are not evidence that the
 physical accuracy gates pass.
+
+Also buildable now, same caveat: wiring `spu4_som_edge` into
+`tools/ina226_capture_pipeline.py`'s `run_study()` (see "Not yet built" under
+the `spu4_som_edge` gate above) needs no real sensor — `tools/spu4_som_edge_trainer.py`
+and `tools/spu4_som_edge_cross_validate.py` are already proven against
+synthetic data (`software/tests/data/synthetic_current_v1.csv`), and the same
+pattern extends to the pipeline's fold/normalization machinery without a
+physical capture in hand. Doing so does not make any accuracy claim true
+early; it only means the scoring code exists and is tested before the gate
+it must satisfy gets exercised for real.

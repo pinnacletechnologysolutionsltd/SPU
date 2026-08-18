@@ -1,0 +1,136 @@
+{
+  "format": "SPU_INA226_COARSE_MONITOR_V4",
+  "status": "frozen_before_physical_capture_or_scoring",
+  "supersedes": {
+    "format": "SPU_INA226_COARSE_MONITOR_V3",
+    "path": "software/datasets/ina226_coarse_monitor_v3.json",
+    "sha256": "c71722609627dc909907db1fde9744358f178c31630cc24296a5569b362aa9de",
+    "amended_on": "2026-08-18",
+    "sessions_sealed_when_amended": 0,
+    "reason": "The edge-node product focus (2026-08-16) moved the deployable classifier to spu4_som_edge (hardware/rtl/core/spu4/spu4_som_edge.v, four-node winner-take-all), but v3's models/gates section, carried over unchanged since v2, still names only the seven-node SPU-13 SOM. That left the real product target without a predeclared accuracy gate. A gate has no integrity if it is written after real data exists, so this has to happen now or never, the same reasoning v3 used for the pulses covariate.",
+    "evidence": "Found 2026-08-18 while building tools/spu4_som_edge_trainer.py and tools/spu4_som_edge_cross_validate.py: docs/INA226_COARSE_MONITOR_CONTRACT.md's 'Baselines and frozen gates' section is written entirely in terms of the seven-node SOM and the SOM1 evidence-frame ABI, with no mention of spu4_som_edge, even though it is the only actively developed classifier per the edge-node focus decision.",
+    "scope": "Additive only. sensor, task, window, features, and validation are carried over from v3 unchanged -- same capture schema, same folds, same 3 classes, same 4 features, same normalization. models gains a spu4_som_edge entry; gates gains spu4_som_edge_hardware_replay_eligible and spu4_som_edge_baseline_superiority_claim, parallel to and independent of the existing seven-node SOM gates -- both models are evaluated against the same real captures, each against its own gate, per an explicit decision to target both rather than replace one with the other.",
+    "policy_note": "The threshold values chosen for spu4_som_edge (aggregate >=90%, worst fold >=80%, per-class recall >=80%) are IDENTICAL to the existing seven-node SOM gate, deliberately: same task, same data, same bar, not an easier standard for the newer, simpler classifier. spu4_som_edge's v1 hardware ABI (best_node, best_quadrance) does not expose a runner-up quadrance, unlike the SOM1 evidence frame's confidence gap -- there is currently no hardware-verifiable ambiguity gate for spu4_som_edge, and this amendment does not invent one to force parity. EXECUTION NOTE, not yet done as of this amendment: tools/ina226_capture_pipeline.py's run_study() implements the seven-node SOM path (fold splitting, normalization, baselines, gate checking) completely; it has NOT been extended to also train/score spu4_som_edge per fold, and test_ina226_capture.py's CONTRACT constant still pins v3. That integration is separate, real, tracked follow-up work -- this amendment predeclares the gate spu4_som_edge must be scored against once that integration exists and real data is captured, which is the part that only has integrity if committed to now, before either exists."
+  },
+  "sensor": {
+    "logger": "ina226_logger v2",
+    "address": "0x40",
+    "sample_hz": 100,
+    "rshunt_mohm": 100,
+    "shunt_lsb_uV": "5/2",
+    "current_lsb_uA": 25,
+    "csv_columns": [
+      "host_iso",
+      "probe",
+      "phase",
+      "t_ms",
+      "bus_mV",
+      "shunt_uV",
+      "current_uA",
+      "pulses"
+    ],
+    "encoder": {
+      "signal": "raw rising-edge count per sample interval, not rpm",
+      "pin": "GP6, internal pull-up, rising edge",
+      "pulses_per_revolution": null,
+      "ppr_note": "MUST be set to the measured value of the encoder actually used before any session is captured. A salvaged ball-mouse wheel and a bought encoder differ, and a raw count is meaningless without it. null here means undeclared, and a capture taken with it undeclared cannot be converted to rpm afterwards.",
+      "rpm_conversion": "rpm = pulses * 60000 // (ppr * elapsed_ms), integer, truncating",
+      "resolution_note": "At 100 Hz a sample interval is 10 ms, so one edge is worth roughly 300 rpm on a 20-slot wheel -- per-row rotation is coarse by construction. Summed over the 32-sample window it is about 107 edges at 1000 rpm, roughly 1 percent. Aggregate before interpreting."
+    }
+  },
+  "task": {
+    "class_names": [
+      "normal",
+      "elevated_load",
+      "current_limited_stall"
+    ],
+    "decision_unit": "complete capture session",
+    "sessions_per_class": 10,
+    "capture_blocks": 10,
+    "sessions_per_block": 3,
+    "capture_order": "block b uses class order rotated left by b modulo 3",
+    "folds": 5,
+    "fold_assignment": "capture_block modulo 5",
+    "session_vote": "plurality over four windows; lowest class id breaks a tie"
+  },
+  "window": {
+    "samples": 32,
+    "windows_per_session": 4,
+    "selection": "first 128 rows; four contiguous non-overlapping windows"
+  },
+  "features": [
+    "mean_current_mA",
+    "peak_to_peak_mA",
+    "mean_abs_delta_mA",
+    "mean_abs_deviation_mA"
+  ],
+  "validation": {
+    "timestamp_interval_ms_min": 8,
+    "timestamp_interval_ms_max": 12,
+    "required_rows_min": 128,
+    "accepted_rows": 128,
+    "shunt_equation_residual_max": 500,
+    "shunt_equation": "abs(shunt_uV*1000-current_uA*rshunt_mohm) <= residual",
+    "absolute_shunt_uV_max": 75000,
+    "bus_voltage_tolerance_ppm": 50000,
+    "bus_voltage_checked_classes": [
+      "normal",
+      "elevated_load"
+    ],
+    "bus_voltage_exemption": "current_limited_stall is exempt because supply voltage collapse is the defining characteristic of that class, not a fault. Every other validation clause, including shunt scaling, shunt headroom, cadence, and row count, still applies to it in full.",
+    "normalization": "training-fold min/max affine map to 0..30000, round-half-even, held-out clamp with diagnostics",
+    "malformed_duplicate_gap_shunt_or_saturation_policy": "reject the complete session",
+    "session_leakage_policy": "all four windows from one session remain in one fold",
+    "pulses_min": 0,
+    "pulses_required_every_row": true,
+    "pulses_note": "pulses must be a non-negative integer on every accepted row. No class-conditional pulse gate is specified in v3, deliberately: it is not yet known whether a current-limited stall on this rig stops rotation completely or merely slows it, and inventing a threshold before measuring would encode a guess as a validation rule. The first capture block answers that empirically; a gate may be added in a later amendment IF sessions are still unsealed at that point.",
+    "pulses_absent_is_not_encoder_absent": "An all-zero pulse column is indistinguishable from a stalled motor, which is a real capture class. It does NOT prove the encoder was disconnected, and disconnection cannot be detected from the data. Confirm the encoder counts before capturing block 0."
+  },
+  "safety": {
+    "target": "separate low-voltage actuator or fan; never an FPGA rail",
+    "supply": "current-limited bench supply with limit at or below the actuator continuous-current rating",
+    "supply_limit_verification": "The commanded limit must be verified against a measurement, not read from the front panel. A supply displaying 280 mA was measured regulating at 307.4 mA on 2026-08-06, above the actuator continuous rating it was set to protect.",
+    "stall_capture_max_ms": 1500,
+    "stall_cooldown_min_ms": 30000,
+    "abort_conditions": [
+      "actuator or wiring heating",
+      "supply leaves constant-voltage/current-limit behavior unexpectedly",
+      "absolute shunt voltage exceeds 75000 uV",
+      "operator cannot confirm the actuator current rating"
+    ]
+  },
+  "models": {
+    "majority": "three-class training-fold majority",
+    "threshold": "training-fitted scalar normal-versus-anomaly threshold with deterministic tie breaks",
+    "centroid": "training-fold three-class nearest centroid",
+    "som": "seven-node SPU_SOM_MAP_V1 with the published deterministic v1 schedule",
+    "ambiguity": "the v1 hardware flag means exact zero winner/runner-up gap; report all gaps and exact ties",
+    "spu4_som_edge": "four-node winner-take-all deterministic classifier (hardware/rtl/core/spu4/spu4_som_edge.v), no topology/neighbor diffusion unlike the seven-node SOM. Trained via tools/spu4_som_edge_trainer.py (exact-integer dyadic competitive learning), same frozen folds/session grouping/normalization as the seven-node path above. BMU selection uses software/lib/spu4_som_edge_oracle.py's find_bmu_edge, the same function the RTL is checked against bit-exactly.",
+    "spu4_som_edge_ambiguity_note": "spu4_som_edge_wrapper.v's v1 ABI (best_node, best_quadrance) does not expose a runner-up node or gap, unlike the SOM1 evidence frame's confidence gap. No ambiguity gate is defined for spu4_som_edge; this is an honest hardware-ABI boundary, not an oversight."
+  },
+  "gates": {
+    "hardware_replay_eligible": {
+      "aggregate_three_class_som_balanced_accuracy_ppm_min": 900000,
+      "worst_fold_three_class_som_balanced_accuracy_ppm_min": 800000,
+      "minimum_per_class_recall_ppm": 800000,
+      "all_capture_sessions_must_validate": true,
+      "all_software_som1_records_must_match_oracle": true
+    },
+    "spu4_som_edge_hardware_replay_eligible": {
+      "aggregate_three_class_balanced_accuracy_ppm_min": 900000,
+      "worst_fold_three_class_balanced_accuracy_ppm_min": 800000,
+      "minimum_per_class_recall_ppm": 800000,
+      "all_capture_sessions_must_validate": true,
+      "all_predictions_must_match_find_bmu_edge_oracle": true
+    },
+    "baseline_superiority_claim": {
+      "three_class_som_must_exceed_centroid": true,
+      "collapsed_binary_som_must_exceed_scalar_threshold": true
+    },
+    "spu4_som_edge_baseline_superiority_claim": {
+      "three_class_spu4_som_edge_must_exceed_centroid": true,
+      "collapsed_binary_spu4_som_edge_must_exceed_scalar_threshold": true
+    },
+    "failure_policy": "Record a negative result; do not tune the frozen capture, feature, fold, model, or gate contract against held-out scores. This applies independently to the seven-node SOM gates and the spu4_som_edge gates -- a negative on one is not grounds to relax the other's threshold."
+  }
+}
