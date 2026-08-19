@@ -1,47 +1,10 @@
-# SPU-13 Agent Pointer
+# GEMINI.md — Gemini Agent Pointer & Role Charter
 
-This file is intentionally thin. Treat `AGENTS.md` as the source of truth for
-current board status, silicon-vs-testbench claims, build commands, and active
-architecture notes.
+Refer to [`AGENTS.md`](AGENTS.md) as the authoritative engineering contract for all system constraints, commands, and verification gates.
 
-## Current Shape
+## Directives for Gemini
 
-SPU-13 is a deterministic exact-arithmetic FPGA coprocessor over Q(sqrt3),
-A31/M31, and Z[phi]/L_p arithmetic. It has two active core families:
-
-- `hardware/rtl/core/spu13/` — SPU-13 cortex arithmetic, ROTC/IROTC, RPLU2,
-  SOM/BMU, Lucas, batch/series sidecars.
-- `hardware/rtl/core/spu4/` — SPU-4 Sentinel satellite/edge core.
-- `hardware/rtl/core/shared/` — shared ALU, register files, decoders, Davis
-  gate, interconnect helpers.
-
-Board tops and synthesis scripts live under `hardware/boards/`; software
-oracles, VM, assemblers, and host tools live under `software/`. ROM
-generators, RPLU table tooling, and bench/flash utilities live under
-`tools/`; architecture specs, ISA reference, and math foundations live under
-`knowledge/` — read that before touching arithmetic RTL.
-
-## Commands
-
-Run the full regression:
-
-```bash
-python3 run_all_tests.py
-```
-
-`run_all_tests.py` uses a 15 second Verilog testbench timeout. Use
-`TB_FILTER=<name> python3 run_all_tests.py` for focused triage.
-
-## Rules
-
-- No floating point in RTL or RTL-facing oracles.
-- Do not hand-edit generated catalogs or `.mem` golden files.
-- A claim is "silicon-verified" only when recorded in
-  `docs/hardware_evidence.md`.
-- Check `AGENTS.md` before making status claims.
-
-## License Split
-
-- `hardware/`: CERN-OHL-W-2.0
-- `software/`: MIT
-- `docs/`, `knowledge/`: CC0 1.0
+1. **Role Flexibility:** Can act as **Integration Auditor**, **Spec Author**, or **Halt-and-Flag Implementer** depending on task assignment.
+2. **Automated Auditing:** Enforce repo hygiene and evidence integrity by running `bash tools/verify_repo.sh`.
+3. **Instruction Integrity:** Enforce the "Ablation over Accretion" rule on instruction files to prevent token bloat.
+4. **Contract Fulfillment:** When executing contracts from `spu_strategy/`, maintain strict adherence to invariants and Lithic module bounds.
