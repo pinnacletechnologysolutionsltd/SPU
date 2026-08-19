@@ -138,7 +138,7 @@ until the RPLU config opcodes are moved behind a prefix or otherwise retired.
 |---|---|---|---|---|
 | φ-adder (chiral) | ~80 | ~40 | 0 | SPU-4 proven, port to GW5A |
 | PSCALE/PCHIRAL fast paths | Included in MAC | synthesis-mapped | 0 | Shift-add only |
-| Tang `FAST_ONLY=1` probe | 696 LUT4 | 216 | 0 | Silicon-verified with UART `LUCAS:P` |
+| Tang `FAST_ONLY=1` probe | 696 LUT4 | 216 | 0 | Silicon-verified with UART `LUCAS:P` (`docs/hardware_evidence.md` §3.2e) |
 | Full Lucas MAC | 588 LCs | synthesis-mapped | 40 | Artix-7 proof with Barrett reducer |
 | SPI sidecar + MAC | 641 LCs | synthesis-mapped | 40 | D0-D3 Artix-7 sidecar proof |
 | Tang PHSLK microprobe | 293 LUT4 | 146 | 0 | Post-route 200.40 MHz, 4.99 ns critical path; SRAM UART `PHSLK:P` |

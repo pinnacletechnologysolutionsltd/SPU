@@ -4,7 +4,7 @@
 (`software/tests/test_tensegrity_balancer.py`, 44 checks). The bounded Artix
 admission guard now implements all six guards, including exact strut contact
 and type-uniform force-density equilibrium. The seven-fixture V:7 image is
-silicon-verified on Wukong Artix-7. Part of the
+silicon-verified on Wukong Artix-7 (`docs/hardware_evidence.md` §3.2l). Part of the
 state-machine harness catalogue (`docs/STATE_MACHINE_HARNESS.md`) as case
 study #6.
 
@@ -35,9 +35,9 @@ positive density, struts require negative density.
 | Fuller concept | SPU-13 primitive | Status |
 |---|---|---|
 | Icosahedral A5 rotations | `IROTC` opcode (1/2 Z[phi] matrix, 60-entry catalog) | Tang 25K silicon for probe vectors idx 16, idx 36 main, and fault matrix; full 60 x 2 surface testbench-verified |
-| Tetrahedral rotations | `ROTC` opcode (36-angle catalog, Q(sqrt3) circulant/permutation/octahedral paths) | Angles 0-5 silicon-verified on Artix-7/Tang probe path; 6-35 testbench-verified |
-| Quadray coordinates | QR register file (4 x 32-bit RationalSurd per lane) | Silicon-verified for QLDI/QSUB/readback paths |
-| Exact node adjacency and quadrance | Davis Gate zero-sum/quadrance identities | Silicon-verified as the existing Davis/VE invariant layer |
+| Tetrahedral rotations | `ROTC` opcode (36-angle catalog, Q(sqrt3) circulant/permutation/octahedral paths) | Angles 0-5 silicon-verified on Artix-7/Tang probe path (`docs/hardware_evidence.md` §3.2g); 6-35 testbench-verified |
+| Quadray coordinates | QR register file (4 x 32-bit RationalSurd per lane) | Silicon-verified for QLDI/QSUB/readback paths (§3.2e.4) |
+| Exact node adjacency and quadrance | Davis Gate zero-sum/quadrance identities | Silicon-verified as the existing Davis/VE invariant layer (§3.2e.4) |
 | MAIN/CONJ grid alternation | phi-plane 4-state typestate | Testbench-verified in core integration; IROTC engine probe has Tang silicon scope above |
 | Exact quadrance | `QSUB`/Davis-style exact arithmetic | Silicon-verified for existing arithmetic probes |
 

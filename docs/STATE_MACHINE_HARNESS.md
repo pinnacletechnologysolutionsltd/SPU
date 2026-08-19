@@ -387,9 +387,9 @@ equilibrium force-density signs: cable/GAP positive, strut negative.
 | Fuller concept | SPU-13 primitive | Status |
 |---|---|---|
 | Icosahedral A5 rotations | IROTC opcode (60-entry 1/2 Z[phi] catalog) | Tang 25K silicon for probe vectors idx 16, idx 36 main, and fault matrix; full surface testbench-verified |
-| Tetrahedral rotations | ROTC opcode (36-angle Q(sqrt3) catalog) | 0-5 silicon-verified; 6-35 testbench-verified |
-| Quadray coordinates | QR register file | QLDI/QSUB/readback silicon-verified |
-| Exact quadrance | QSUB / Davis-style exact arithmetic | Existing arithmetic probes silicon-verified |
+| Tetrahedral rotations | ROTC opcode (36-angle Q(sqrt3) catalog) | 0-5 silicon-verified (`docs/hardware_evidence.md` §3.2g); 6-35 testbench-verified |
+| Quadray coordinates | QR register file | QLDI/QSUB/readback silicon-verified (§3.2e.4) |
+| Exact quadrance | QSUB / Davis-style exact arithmetic | Existing arithmetic probes silicon-verified (§3.2e.4) |
 | MAIN/CONJ grid alternation | phi-plane 4-state typestate | Core integration testbench-verified |
 
 The bounded admission guard now has RTL and Artix silicon proof for all six

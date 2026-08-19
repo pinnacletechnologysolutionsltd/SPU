@@ -8,7 +8,7 @@
 
 **Status:** Pre-release technical report; RTL/oracle verified, Tang 25K PHSLK microprobe measured, Artix-7 sidecar timing closure pending
 
-**Implementation state:** Wukong Artix-7 hardened sidecar profile (PINV watchdog, registered multiply stage, runtime norm checks): 5,073 estimated LCs, 120 DSP48E1 slices, routed max 4.41 MHz in the current 2 MHz bench image; PMUL/PINV silicon-verified over J11 SPI. Tang 25K PHSLK microprobe: 200.40 MHz post-route, UART-verified.
+**Implementation state:** Wukong Artix-7 hardened sidecar profile (PINV watchdog, registered multiply stage, runtime norm checks): 5,073 estimated LCs, 120 DSP48E1 slices, routed max 4.41 MHz in the current 2 MHz bench image; PMUL/PINV silicon-verified over J11 SPI (`docs/hardware_evidence.md` §3.2e.2). Tang 25K PHSLK microprobe: 200.40 MHz post-route, UART-verified (§3.2e.1).
 
 ---
 
@@ -431,7 +431,7 @@ by a Verilog latency histogram.
 | Resource | Current mapped result | Notes |
 |---|---|---|
 | PSCALE/PCHIRAL fast paths | 0 DSP | Shift-add/conjugation paths inside the MAC |
-| Tang 25K `FAST_ONLY=1` probe | 696 LUT4, 216 DFF, 0 DSP | Silicon-verified with UART `LUCAS:P`; PSCALE/PCHIRAL plus 100-period zero-drift |
+| Tang 25K `FAST_ONLY=1` probe | 696 LUT4, 216 DFF, 0 DSP | Silicon-verified with UART `LUCAS:P`; PSCALE/PCHIRAL plus 100-period zero-drift (`docs/hardware_evidence.md` §3.2e) |
 | Tang 25K PHSLK microprobe | 293 LUT4, 146 DFF, 0 DSP | Post-route 200.40 MHz, 4.99 ns critical path; dynamic operands; SRAM UART `PHSLK:P` |
 | Hardened Lucas MAC | 955 estimated LCs, 92 DSP48E1 | Full PMUL/PINV proof with Barrett reducer, PINV watchdog, registered multiply, runtime norm checks |
 | Whole Wukong `LUCAS` spin | 5,073 estimated LCs, 120 DSP48E1 | Includes CE-paced SPI sidecar (D0-D3 opcodes via SPI `0xB1`) and top-level SPI/UART/LED shell |

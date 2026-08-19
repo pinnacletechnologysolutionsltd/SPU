@@ -111,7 +111,7 @@ existing compact byte.
 | Reproducible seven-node Iris map | PASS; checked JSON equals deterministic regeneration |
 | Iris corpus on Tang sidecar | silicon PASS; 150/150 FPGA winners equal oracle, 147/150 labels correct |
 | Artix-7 complete writable sidecar | silicon PASS; 35/35 hydration writes and 150/150 complete SOM1 records equal oracle |
-| Exact-order fixed-schedule comparator at HEAD | testbench/trace PASS; renewed Tang sidecar silicon proof PASS |
+| Exact-order fixed-schedule comparator at HEAD | testbench/trace PASS; renewed Tang sidecar silicon proof PASS (`docs/hardware_evidence.md` §3.2g.3) |
 | SOM1 result encoder/SPI/host parser | silicon PASS on Tang 25K and Wukong Artix-7; complete 150-sample replay on both vendors |
 
 The corpus-proven Tang sidecar uses 12,865/23,040 LUT4 (55%), 1,576 DFF,
@@ -159,7 +159,7 @@ SOM v1 is complete only when all of the following are true:
 - one host command performs hydrate -> classify corpus -> compare with oracle;
 - ties, negative surd coefficients, the exact-order adversarial case, range
   rejection, and interrupted/partial hydration have explicit tests;
-- the exact-order, fixed-434-cycle HEAD passes renewed Tang silicon proof;
+- the exact-order, fixed-434-cycle HEAD passes renewed Tang silicon proof (`docs/hardware_evidence.md` §3.2g.3);
 - the identical golden corpus passes on Artix-7, establishing cross-vendor
   bit-exact behavior;
 - all active SOM tests pass with no archived implementation needed.

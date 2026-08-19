@@ -207,7 +207,7 @@ latency per case.
 
 The PCHIRAL transition (MAIN↔CONJ via the Galois automorphism) is specified in
 the typestate algebra but not yet implemented in the VM — the Lucas MAC
-sidecar's PCHIRAL opcode (verified in silicon on Artix-7) will bridge this gap
+sidecar's PCHIRAL opcode (verified in silicon on Artix-7, `docs/hardware_evidence.md` §3.2e.2) will bridge this gap
 at RTL time. The VM reaches the conjugate catalog via SCALE2 re-conditioning
 (MAIN → SCALE2 → FRESH → IROTC[conj=1]) as a functionally equivalent path.
 
