@@ -4,7 +4,9 @@
 #
 # Runs deterministic, token-free checks before commits or merges:
 # 1. Root hygiene: checks for stray temporary files, waveforms, or scratch files.
-# 2. Evidence gate: checks that claims of silicon verification cite docs/hardware_evidence.md.
+# 2. Evidence gate: checks that NEWLY ADDED silicon-verification claims (lines
+#    changed since HEAD) cite docs/hardware_evidence.md. Scoped to the diff, not
+#    the whole tree, so pre-existing docs don't need to be cleared to pass.
 # 3. Test regression: optionally runs python3 run_all_tests.py.
 # ==============================================================================
 
@@ -25,30 +27,35 @@ else
     echo "✅ Root directory is clean of scratch/temporary files."
 fi
 
-echo "=== [2/3] Checking Silicon Evidence Citation Integrity ==="
-# Check modified or staged markdown files for unbacked claims
+echo "=== [2/3] Checking Silicon Evidence Citation Integrity (new/changed lines only) ==="
+# Only check markdown files with lines added since HEAD -- not the whole tree.
 CLAIM_PAT="verified in silicon|silicon-verified|proven in silicon|silicon proof"
 UNBACKED_HITS=0
 
-for file in $(find docs knowledge spu_strategy -name "*.md" 2>/dev/null); do
+CHANGED_MD_FILES=$(git diff --name-only HEAD -- '*.md' 2>/dev/null || true)
+
+for file in $CHANGED_MD_FILES; do
+    [ -f "$file" ] || continue  # skip deleted files
     # Skip the evidence ledger itself and historical handovers
     if [[ "$file" == "docs/hardware_evidence.md" ]] || [[ "$file" == *"SESSION_HANDOVER"* ]] || [[ "$file" == *"tranche_plan"* ]]; then
         continue
     fi
-    
-    # If a file asserts silicon verification, verify it references hardware_evidence.md
-    if grep -inE "$CLAIM_PAT" "$file" > /dev/null 2>&1; then
+
+    # Only the lines this change actually added
+    ADDED_LINES=$(git diff -U0 HEAD -- "$file" | grep -E '^\+[^+]' || true)
+    if echo "$ADDED_LINES" | grep -inE "$CLAIM_PAT" > /dev/null 2>&1; then
         if ! grep -q "hardware_evidence.md" "$file"; then
-            echo "⚠️  WARNING: $file makes silicon claims but does not cite docs/hardware_evidence.md"
+            echo "❌ ERROR: $file adds a silicon claim but does not cite docs/hardware_evidence.md"
             UNBACKED_HITS=$((UNBACKED_HITS + 1))
+            ERRORS=$((ERRORS + 1))
         fi
     fi
 done
 
 if [ "$UNBACKED_HITS" -gt 0 ]; then
-    echo "⚠️  Found $UNBACKED_HITS files with potential unbacked silicon claims."
+    echo "⚠️  Found $UNBACKED_HITS changed files with potential unbacked silicon claims."
 else
-    echo "✅ Markdown files pass evidence citation check."
+    echo "✅ Changed markdown files pass evidence citation check."
 fi
 
 echo "=== [3/3] Running Test Suite Regression Gate ==="
