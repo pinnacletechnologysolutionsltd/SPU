@@ -4,7 +4,10 @@
 // external SPI flash at boot.
 //
 // This is the product path for the SPU-4 edge node: training happens once,
-// offline, in software/lib/rational_som.py; the trained weights are written
+// offline, in tools/spu4_som_edge_trainer.py (bit-identical BMU selection to
+// this module's own oracle, software/lib/spu4_som_edge_oracle.py -- NOT
+// software/lib/rational_som.py, which is the unrelated seven-node SPU-13
+// SOM's math); the trained weights are written
 // to a $2 SPI flash chip (tools/rp2040_flash_pmod.py, the same PMOD path
 // already proven for RPLU2's boot tables); the flash chip ships with the
 // board. No host is present at runtime -- `start` pulsed once after reset is

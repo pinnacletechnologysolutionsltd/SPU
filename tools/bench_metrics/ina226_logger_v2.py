@@ -10,27 +10,24 @@
 #   ...
 #
 # ─────────────────────────────────────────────────────────────────────
-# DO NOT USE FOR CAPTURE YET — it will fail validation
+# READY FOR CAPTURE — this is the v3/v4-contract logger
 # ─────────────────────────────────────────────────────────────────────
-# The fifth column breaks two things that are frozen or brittle today:
+# The `pulses` column is now part of the frozen schema. `pulses` was added
+# to the capture contract in v3 (2026-08-16, `ina226_coarse_monitor_v3.json`,
+# `sessions_sealed_when_amended: 0` at the time -- the only reason the
+# amendment was legitimate) and carried unchanged into v4 (2026-08-18, which
+# only added the spu4_som_edge gate alongside it, see
+# docs/INA226_COARSE_MONITOR_CONTRACT.md). `software/lib/ina226_capture.py`'s
+# CSV_HEADER and row parser both require `pulses` now, and
+# `tools/bench_metrics/power_log.py` accepts both the 4- and 5-column widths
+# (`HEADER_V2`). This file is the one to flash as `main.py` for every capture
+# from here on -- do not use `ina226_logger.py` (v1, no `pulses` column).
 #
-#   * software/lib/ina226_capture.py:294 compares the CSV header for EXACT
-#     equality against a 7-column frozen schema and raises
-#     "CSV header differs from frozen schema". Every capture file would be
-#     rejected at seal time -- long after the bench session is over.
-#   * tools/bench_metrics/power_log.py had a hard-coded `len(parts) != 4`
-#     row filter, which SILENTLY dropped every row rather than erroring.
-#     That is fixed to accept both widths, but the validator is a contract
-#     matter and is deliberately untouched here.
-#
-# Adding RPM is therefore a CONTRACT change, not a tooling change. It needs
-# a v3 of ina226_coarse_monitor, and it is only legitimate while
-# `sessions_sealed_when_amended` is 0 -- exactly the precedent the v1->v2
-# amendment set. That decision is John's and is pending; see
-# docs/BENCH_BOM.md and the 2026-08-16 handover.
-#
-# Until then this file exists so that the firmware is ready the day the
-# encoder arrives, instead of being written at the bench.
+# **`ENC_PPR` below is still 0 (uncalibrated).** Run the ENC_PPR calibration
+# procedure in docs/INA226_CAPTURE_RUNBOOK.md §2 with the actual encoder in
+# hand, set the measured value here, and re-flash before block 0. A capture
+# taken with `ENC_PPR=0` still logs valid raw pulse counts (nothing is lost),
+# but the host cannot convert them to rpm until this is set truthfully.
 #
 # ─────────────────────────────────────────────────────────────────────
 # Wiring

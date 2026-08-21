@@ -14,9 +14,13 @@
 //   - A deployment-specific node→class mapper is required before the
 //     4-bit som_label input of spu4_cluster_bridge.v
 //
-// Lifecycle: RTL/TB experiment only. This module is not instantiated by an
-// SPU-4 core or board top, has no host weight-upload path, and has not been
-// synthesized or proven in silicon.
+// Lifecycle: instantiated by spu4_som_edge_wrapper.v, hydrated at boot by
+// spu4_som_flash_loader.v (no host weight-upload path at runtime -- flash is
+// the upload path). Synthesized and silicon-proven on Tang Primer 25K --
+// docs/hardware_evidence.md §3.2j.7 (mechanism, oracle_fixture weights) and
+// §3.2j.8 (first genuinely trained weights, then fixed-probe reconfirmation
+// after a flash reseat). Real (non-synthetic) trained weights from physical
+// sensor data do not exist yet -- see knowledge/spu4-edge-node-focus.
 //
 // Quadrance of surd (p + q√3): Q = p² + 3q²  (no division, no sqrt)
 

@@ -55,6 +55,10 @@ OPCODES: dict[str, int] = {
     # Control flow
     "JMP":    0x06, "SNAP":   0x07, "COND":   0x20,
     "CALL":   0x20, "RET":    0x21, "HALT":   0x08,
+    # REGEN boundary (Stage A, contract_regen_stageA_2026-08-20.md): block
+    # terminator; P1_A carries the compile-time .block K (not architectural
+    # state). Emitted by the .regen directive.
+    "REGEN":  0x09,
     "MIN4":    0x1F, "QREAD":  0x22,
     "CALL":    0x20, "RET":     0x21,
     # Quadray IVM operations
@@ -103,6 +107,9 @@ OPCODES_WF: dict[str, int] = {
 
 # Opcodes that take no register/immediate arguments
 _NO_ARGS  = {"NOP", "HALT", "RET", "SNAP", "EQUIL"}
+# Block-eligible set E_REGEN (Stage A, contract_regen_stageA_2026-08-20.md):
+# MUST equal the RTL counter's set in spu13_core.v and the VM's set.
+_E_REGEN  = {"QLDI", "IDNT", "QSUB", "ROTC", "DELTA", "HEX", "QLOG", "IROTC"}
 # Opcodes where first arg is a QR register
 _QR_FIRST = {"QLOAD", "QLOG", "QADD", "QSUB", "QROT", "QNORM", "HEX", "MIN4",
               "SPREAD", "IDNT", "ANNE", "ROTC", "QLDI", "QREAD",
@@ -163,6 +170,11 @@ def _assemble_line(parts: list[str], labels: dict[str, int]) -> int:
 
     if mnemonic in _NO_ARGS:
         pass  # nothing to parse
+
+    elif mnemonic == "REGEN":
+        # REGEN K: P1_A carries the compile-time .block K (metadata, not
+        # architectural state; Stage A encoding decision, §0 of the contract)
+        p1_a = _u16(args[0])
 
     elif mnemonic == "LD":
         # LD Rd, a, b  →  r1=reg, p1_a=a (surd real), p1_b=b (surd coeff)
@@ -326,7 +338,26 @@ def _parse_ir(source: str, filename: str = "<input>") -> tuple[dict, list]:
             labels[tok[:-1]] = addr
         elif tok in OPCODES:
             addr += 1
+        elif tok == '.REGEN':
+            addr += 1          # .regen emits the REGEN instruction
 
+    ir = _parse_directives(source, filename)
+
+    return labels, ir
+
+
+def _parse_directives(source: str, filename: str = "<input>") -> list:
+    """Pre-pass: translate .block K / .regen directives into the IR.
+
+    `.block K=n` opens a block; exactly K E_REGEN-eligible operations follow;
+    `.regen` validates and emits the REGEN instruction (P1_A = K). Errors:
+    orphan .regen, unterminated .block, too-short, too-long, nested .block,
+    and ineligible mnemonics inside a block. Mirrors `parse_block` in the
+    emulator reference model."""
+    lines = source.splitlines()
+    ir: list = []
+    block_k: int | None = None
+    block_count = 0
     for lineno, raw in enumerate(lines, 1):
         clean = raw.split(';')[0].strip()
         if not clean:
@@ -335,11 +366,34 @@ def _parse_ir(source: str, filename: str = "<input>") -> tuple[dict, list]:
         mnemonic = parts[0].upper()
         if mnemonic.endswith(':'):
             continue
-        if mnemonic not in OPCODES:
-            raise AssemblyError(f"{filename}:{lineno}: unknown mnemonic '{mnemonic}'")
-        ir.append((lineno, mnemonic, parts[1:], len(ir)))
-
-    return labels, ir
+        if mnemonic == '.BLOCK':
+            if block_k is not None:
+                raise AssemblyError(f"{filename}:{lineno}: nested .block")
+            try:
+                block_k = int(parts[1].split('=')[1])
+            except (IndexError, ValueError):
+                raise AssemblyError(f"{filename}:{lineno}: malformed .block '{clean}'")
+            block_count = 0
+        elif mnemonic == '.REGEN':
+            if block_k is None:
+                raise AssemblyError(f"{filename}:{lineno}: orphan .regen")
+            if block_count != block_k:
+                raise AssemblyError(
+                    f"{filename}:{lineno}: block declares K={block_k} "
+                    f"but contains {block_count} ops")
+            ir.append((lineno, 'REGEN', [str(block_k)], len(ir)))
+            block_k = None
+        else:
+            if block_k is not None and mnemonic not in _E_REGEN:
+                raise AssemblyError(
+                    f"{filename}:{lineno}: '{mnemonic}' is not block-eligible "
+                    f"(E_REGEN = {sorted(_E_REGEN)})")
+            ir.append((lineno, mnemonic, parts[1:], len(ir)))
+            if block_k is not None:
+                block_count += 1
+    if block_k is not None:
+        raise AssemblyError(f"{filename}: unterminated .block (K={block_k})")
+    return ir
 
 
 # ---------------------------------------------------------------------------

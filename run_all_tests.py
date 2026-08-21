@@ -765,6 +765,23 @@ def main():
     else:
         rotc_trace_pass = rotc_trace_fail = 0
 
+    # REGEN suite (0x09 contract: emulator reference, assembler legality,
+    # bit-exact equivalence Digital == Stage-A RTL == Stage-B RTL == VM).
+    regen_results = {}
+    for regen_name in ("test_regen_emulator.py", "test_regen_asm.py",
+                       "test_regen_equivalence.py"):
+        regen_path = os.path.join(root_dir, "software", "tests", regen_name)
+        if not os.path.exists(regen_path):
+            continue
+        try:
+            r = subprocess.run([sys.executable, regen_path],
+                               capture_output=True, text=True, timeout=600)
+        except subprocess.TimeoutExpired:
+            r = type("R", (), {"returncode": 1, "stdout": "", "stderr": "timeout"})()
+        regen_results[regen_name] = (r.returncode == 0)
+        if r.returncode != 0:
+            print(f"\n  {regen_name} FAILED:\n{(r.stdout or '')[-500:]}")
+
     # IROTC VM suite (trace equivalence / poison proofs / chain tests) —
     # φ-plane icosahedral opcodes, no hardware required. The trace and
     # chain tests import test_icosahedral_catalog.py, so the derivation's
@@ -1008,6 +1025,12 @@ def main():
     print(f"Passed:                       {rotc_trace_pass}")
     print(f"Failed:                       {rotc_trace_fail}")
 
+    regen_pass = sum(1 for v in regen_results.values() if v)
+    regen_fail = sum(1 for v in regen_results.values() if not v)
+    print(f"\nREGEN Suite Tests (emulator/asm/equivalence): {regen_pass + regen_fail}")
+    print(f"Passed:                       {regen_pass}")
+    print(f"Failed:                       {regen_fail}")
+
     print(f"\nIcosahedral Catalog Tests: {1}")
     print(f"Passed:                    {icosa_pass}")
     print(f"Failed:                    {1 - icosa_pass}")
@@ -1053,6 +1076,7 @@ def main():
         + audio_pass + host_pass + spu4_probe_parser_pass + spu4_probe_client_pass
         + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
+        + regen_pass
         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
         + bench_metrics_pass
         + composition_pass
@@ -1062,6 +1086,7 @@ def main():
         + audio_fail + host_fail + spu4_probe_parser_fail + spu4_probe_client_fail
         + som_product_fail + robotics_demo_fail
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
+        + regen_fail
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + bench_metrics_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)

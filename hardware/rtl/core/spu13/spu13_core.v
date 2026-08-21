@@ -79,6 +79,9 @@ module spu13_core #(
     input  wire [63:0]             inst_word,
     output wire                    inst_done,   // pulsed when instruction completes
 
+    // REGEN compensation knob (Stage B; 2^-16 rad units; 0 = drift-free)
+    input  wire [7:0]              regen_dphi_cfg,
+
     // RPLU comparator outputs (fast domain)
     output wire signed [2:0]       ratio_cmp_res,
     output wire                    ratio_cmp_valid,
@@ -120,6 +123,7 @@ module spu13_core #(
     output wire                      ecc_single_err,   // QR regfile single-bit error corrected
     output wire                      ecc_double_err,   // QR regfile double-bit error detected
     output wire [15:0]               rotc_debug_status, // bring-up: flags/state/angle
+    output wire [15:0]               regen_debug_status, // REGEN telemetry (non-architectural; Stage A)
     output wire                      boot_ready,        // boot FSM in READY (docs/BOOT_SEQUENCE_FSM.md)
     output wire [1:0]                boot_state_dbg,    // raw boot FSM state: 0=RESET 1=HYDRATING 2=READY 3=FAULT (bring-up only)
 
@@ -873,6 +877,7 @@ module spu13_core #(
             assign rote_debug_state = 4'd0;
             assign ecc_single_err = 1'b0;
             assign ecc_double_err = 1'b0;
+            assign regen_debug_status = 16'd0;   // no QR path -> no REGEN
         end
     endgenerate
 
@@ -1013,6 +1018,102 @@ module spu13_core #(
     localparam [7:0] OP_IROTC  = 8'hD6;
     localparam [7:0] OP_LOAD2X = 8'hD7;
     localparam [7:0] OP_SCALE2 = 8'hD8;
+
+    // ── REGEN boundary (Stage A, contract_regen_stageA_2026-08-20.md) ──
+    // E_REGEN: the named block-eligible set; assembler, RTL counter, and VM
+    // must agree on it exactly. IROTC is conditional on ENABLE_IROTC.
+    wire        core_regen_opcode = (eff_inst_word[63:56] == 8'h09);
+    wire        regen_eligible_op = inst_accept && (
+        (eff_inst_word[63:56] == 8'h1D) ||  // QLDI
+        (eff_inst_word[63:56] == 8'h18) ||  // IDNT
+        (eff_inst_word[63:56] == 8'h1B) ||  // QSUB
+        (eff_inst_word[63:56] == 8'h1C) ||  // ROTC
+        (eff_inst_word[63:56] == 8'h1E) ||  // DELTA
+        (eff_inst_word[63:56] == 8'h16) ||  // HEX
+        (eff_inst_word[63:56] == 8'h14) ||  // QLOG
+        (ENABLE_IROTC && (eff_inst_word[63:56] == OP_IROTC)));
+    reg         regen_start;
+    reg  [15:0] regen_declared_k;
+    wire        regen_done;
+    wire        regen_prec_fault;
+    wire [15:0] regen_block_op_count;
+    reg         regen_commit_lane1;   // Stage-B 2-cycle whole-state commit
+
+    // ── Stage B: fixed-point chain (FPGA reference backend) ──
+    // Mirrors the block's state-transform ops (QLDI/QSUB/ROTC) on a Q2.40
+    // 2-lane field; REGEN recovers the exact state from its measurement.
+    // (contract_regen_stageB_2026-08-20.md)
+    wire        chain_op_strobe = inst_accept && (
+        (eff_inst_word[63:56] == 8'h1D) ||  // QLDI (load)
+        (eff_inst_word[63:56] == 8'h1B) ||  // QSUB
+        (eff_inst_word[63:56] == 8'h1C));   // ROTC
+    wire [2:0]  chain_op_type = (eff_inst_word[63:56] == 8'h1B) ? 3'd1 :
+                                (eff_inst_word[63:56] == 8'h1C) ? 3'd2 : 3'd0;
+    wire [3:0]  chain_op_dst   = eff_inst_word[55:48];  // QR lane (0/1 in harness)
+    wire [3:0]  chain_op_src_a = eff_inst_word[47:40];
+    wire [3:0]  chain_op_src_b = eff_inst_word[11:8];   // p1_b[3:0]
+    wire [5:0]  chain_rotc_angle = eff_inst_word[29:24];
+    wire [31:0] chain_load_a = {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
+    wire [31:0] chain_load_b = {{24{eff_inst_word[31]}}, eff_inst_word[31:24]};
+    wire [31:0] chain_load_c = {{24{eff_inst_word[23]}}, eff_inst_word[23:16]};
+    wire [31:0] chain_load_d = {{24{eff_inst_word[15]}}, eff_inst_word[15:8]};
+    wire [41:0] bk_qr0_ma, bk_qr0_mb, bk_qr0_mc, bk_qr0_md;
+    wire [41:0] bk_qr1_ma, bk_qr1_mb, bk_qr1_mc, bk_qr1_md;
+    wire [9:0]  bk_sigma_exp0, bk_sigma_exp1;
+    wire [15:0] bk_angle_k;
+    wire        regen_commit_valid;
+    wire [31:0] regen_rec_qr0_a, regen_rec_qr0_b, regen_rec_qr0_c, regen_rec_qr0_d;
+    wire [31:0] regen_rec_qr1_a, regen_rec_qr1_b, regen_rec_qr1_c, regen_rec_qr1_d;
+
+    fpga_chain u_chain (
+        .clk(clk), .rst_n(rst_n),
+        // boundary re-encode fires only on the VALID K>0 REGEN completion:
+        // a faulting REGEN preserves the chain, and the K=0 pass-through
+        // leaves it unchanged (the state continues into the next block)
+        .regen_reload(regen_done && regen_commit_valid),
+        .rec_qr0_a(regen_rec_qr0_a), .rec_qr0_b(regen_rec_qr0_b),
+        .rec_qr0_c(regen_rec_qr0_c), .rec_qr0_d(regen_rec_qr0_d),
+        .rec_qr1_a(regen_rec_qr1_a), .rec_qr1_b(regen_rec_qr1_b),
+        .rec_qr1_c(regen_rec_qr1_c), .rec_qr1_d(regen_rec_qr1_d),
+        .op_strobe(chain_op_strobe),
+        .op_type(chain_op_type),
+        .op_dst(chain_op_dst),
+        .op_src_a(chain_op_src_a),
+        .op_src_b(chain_op_src_b),
+        .rotc_angle(chain_rotc_angle),
+        .load_a(chain_load_a), .load_b(chain_load_b),
+        .load_c(chain_load_c), .load_d(chain_load_d),
+        .dphi_cfg(regen_dphi_cfg),
+        .bk_qr0_meas_a(bk_qr0_ma), .bk_qr0_meas_b(bk_qr0_mb),
+        .bk_qr0_meas_c(bk_qr0_mc), .bk_qr0_meas_d(bk_qr0_md),
+        .bk_qr1_meas_a(bk_qr1_ma), .bk_qr1_meas_b(bk_qr1_mb),
+        .bk_qr1_meas_c(bk_qr1_mc), .bk_qr1_meas_d(bk_qr1_md),
+        .bk_sigma_exp0(bk_sigma_exp0), .bk_sigma_exp1(bk_sigma_exp1),
+        .bk_angle_k(bk_angle_k)
+    );
+
+    spu13_regen u_regen (
+        .clk(clk), .rst_n(rst_n),
+        .start(regen_start),
+        .declared_k(regen_declared_k),
+        .eligible_op(regen_eligible_op),
+        .bk_valid(1'b1),   // Stage B: the fixed-point chain is deterministic
+        .bk_qr0_meas_a(bk_qr0_ma), .bk_qr0_meas_b(bk_qr0_mb),
+        .bk_qr0_meas_c(bk_qr0_mc), .bk_qr0_meas_d(bk_qr0_md),
+        .bk_qr1_meas_a(bk_qr1_ma), .bk_qr1_meas_b(bk_qr1_mb),
+        .bk_qr1_meas_c(bk_qr1_mc), .bk_qr1_meas_d(bk_qr1_md),
+        .bk_sigma_exp0(bk_sigma_exp0), .bk_sigma_exp1(bk_sigma_exp1),
+        .bk_angle_k(bk_angle_k),
+        .rec_qr0_a(regen_rec_qr0_a), .rec_qr0_b(regen_rec_qr0_b),
+        .rec_qr0_c(regen_rec_qr0_c), .rec_qr0_d(regen_rec_qr0_d),
+        .rec_qr1_a(regen_rec_qr1_a), .rec_qr1_b(regen_rec_qr1_b),
+        .rec_qr1_c(regen_rec_qr1_c), .rec_qr1_d(regen_rec_qr1_d),
+        .commit_valid(regen_commit_valid),
+        .done(regen_done),
+        .regen_prec_fault(regen_prec_fault),
+        .block_op_count(regen_block_op_count),
+        .regen_debug_status(regen_debug_status)
+    );
     reg [1:0] qr_tags [0:12];
     reg [3:0] qsub_lhs_lane;        // for the QSUB tag lattice join
     reg       irotc_active;         // dispatch accepted, waiting one cycle
@@ -1155,6 +1256,9 @@ module spu13_core #(
             irotc_src_tag <= 0;
             scale2_active <= 0;
             scale2_dst_lane <= 0;
+            regen_start <= 0;
+            regen_declared_k <= 0;
+            regen_commit_lane1 <= 0;
             for (tag_i = 0; tag_i < 13; tag_i = tag_i + 1)
                 qr_tags[tag_i] <= TAG_UNTAGGED;
         end else begin
@@ -1165,6 +1269,7 @@ module spu13_core #(
             hex_valid <= 0;   // default: one-cycle pulse
             rote_en <= 0;     // default: one-cycle rotor start pulse
             irotc_start <= 0; // default: one-cycle engine start pulse
+            regen_start <= 0; // default: one-cycle REGEN start pulse
             if (rote_done_tdm)
                 rotc_debug_flags[3] <= 1'b1;
 
@@ -1443,6 +1548,51 @@ module spu13_core #(
                 // JSCR commits through the topology6 state block below.  Keep
                 // it explicit here so opcode 0x48 is not hidden by the
                 // unknown-instruction catch-all path.
+                inst_done_r <= 1;
+            end else if (inst_accept && core_regen_opcode) begin
+                // REGEN 0x09 (Stage A): pulse the boundary module; completion
+                // is registered via regen_done on the next cycle.
+                regen_start <= 1;
+                regen_declared_k <= eff_inst_word[39:24];
+            end else if (regen_done) begin
+                // REGEN completion: commit the recovered whole state ONLY on
+                // the K>0 valid path (regen_commit_valid). The K=0 pass-through
+                // and REGEN_PREC faults commit nothing (the exact state in the
+                // QR file is preserved; stale recovery is never written).
+                if (regen_commit_valid) begin
+                    instr_wr_A <= {32'd0, regen_rec_qr0_a};
+                    instr_wr_B <= {32'd0, regen_rec_qr0_b};
+                    instr_wr_C <= {32'd0, regen_rec_qr0_c};
+                    instr_wr_D <= {32'd0, regen_rec_qr0_d};
+                    instr_wr_active <= 1;
+                    qrf_wr_en <= 1;
+                    qrf_wr_lane <= 4'd0;
+                    qr_tags[0] <= TAG_UNTAGGED;
+                    qr_commit_valid_r <= 1;
+                    qr_commit_lane_r <= 4'd0;
+                    qr_commit_A_r <= {32'd0, regen_rec_qr0_a};
+                    qr_commit_B_r <= {32'd0, regen_rec_qr0_b};
+                    qr_commit_C_r <= {32'd0, regen_rec_qr0_c};
+                    qr_commit_D_r <= {32'd0, regen_rec_qr0_d};
+                    regen_commit_lane1 <= 1;
+                end else
+                    inst_done_r <= 1;   // pass-through / fault: no QR write
+            end else if (regen_commit_lane1) begin
+                regen_commit_lane1 <= 0;
+                instr_wr_A <= {32'd0, regen_rec_qr1_a};
+                instr_wr_B <= {32'd0, regen_rec_qr1_b};
+                instr_wr_C <= {32'd0, regen_rec_qr1_c};
+                instr_wr_D <= {32'd0, regen_rec_qr1_d};
+                instr_wr_active <= 1;
+                qrf_wr_en <= 1;
+                qrf_wr_lane <= 4'd1;
+                qr_tags[1] <= TAG_UNTAGGED;
+                qr_commit_valid_r <= 1;
+                qr_commit_lane_r <= 4'd1;
+                qr_commit_A_r <= {32'd0, regen_rec_qr1_a};
+                qr_commit_B_r <= {32'd0, regen_rec_qr1_b};
+                qr_commit_C_r <= {32'd0, regen_rec_qr1_c};
+                qr_commit_D_r <= {32'd0, regen_rec_qr1_d};
                 inst_done_r <= 1;
             end else if (inst_accept &&
                          eff_inst_word[63:56] != 8'h1D &&

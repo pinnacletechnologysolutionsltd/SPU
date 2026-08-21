@@ -34,12 +34,15 @@ class PhysicalParams:
     lo_track: bool = False
 
     # Thermo-optic / waveguide (used when noise_mode == 'C2')
+    # Canonical silicon design values, consistent with the physical constants in
+    # test_photonic_surd_oracle.py (n_eff=2.45, dn_eff_dT=1.86e-4, 60° delay line
+    # delta_L_m10 = 6.4322 um). Single source of truth for unspecified params.
     lambda0_nm: float = 1550.0
-    n_eff: float = 2.4
-    dn_eff_dT: float = 1.8e-4       # 1/K, silicon thermo-optic coefficient
+    n_eff: float = 2.45
+    dn_eff_dT: float = 1.86e-4       # 1/K, silicon thermo-optic coefficient
     deltaT: float = 0.0             # K, the swept variable in a temperature experiment
-    deltaL_a: float = 1e-3          # m
-    deltaL_b: float = 1e-3          # m
+    deltaL_a: float = 6.4322e-6     # m, m=10 delay-line length
+    deltaL_b: float = 6.4322e-6     # m
     dphi_dlambda_a: float = 0.0
     dphi_dlambda_b: float = 0.0
     delta_lambda_nm: float = 0.0
@@ -76,7 +79,7 @@ def run_experiment(params: PhysicalParams, out_path: Optional[str] = None) -> Di
     c2_params = params.to_c2_dict() if params.noise_mode == 'C2' else None
 
     correct = 0
-    errors: List[int] = []
+    errors: List[int] = []  # coordinate-wise |delta| over failed trials
 
     for trial in range(params.num_trials):
         rng = trial_rng(master, trial)
@@ -103,16 +106,38 @@ def run_experiment(params: PhysicalParams, out_path: Optional[str] = None) -> Di
         if noisy == golden:
             correct += 1
         else:
-            errors.append(abs(noisy[0] - golden[0]) + abs(noisy[1] - golden[1]))
+            errors.append(abs(noisy[0] - golden[0]))
+            errors.append(abs(noisy[1] - golden[1]))
+
+    n = params.num_trials
+    p = correct / n
+    se = math.sqrt(max(p * (1 - p), 0.0) / n)
+    ci_low = max(0.0, (p - 1.96 * se) * 100.0)
+    ci_high = min(100.0, (p + 1.96 * se) * 100.0)
+    if errors:
+        mae = sum(errors) / len(errors)
+        rmse = math.sqrt(sum(e * e for e in errors) / len(errors))
+        srt = sorted(errors)
+        median = srt[len(srt) // 2]
+        q95 = srt[max(0, int(0.95 * len(srt)) - 1)]
+        q99 = srt[max(0, int(0.99 * len(srt)) - 1)]
+    else:
+        mae = rmse = median = q95 = q99 = 0.0
 
     result = {
         'params': asdict(params),
         'not_wired': NOT_WIRED,
         'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'correct': correct,
-        'num_trials': params.num_trials,
-        'recovery_pct': 100.0 * correct / params.num_trials,
-        'mae': (sum(errors) / len(errors)) if errors else 0.0,
+        'num_trials': n,
+        'recovery_pct': 100.0 * p,
+        'ci_low': ci_low,
+        'ci_high': ci_high,
+        'mae': mae,
+        'rmse': rmse,
+        'median': median,
+        'q95': q95,
+        'q99': q99,
     }
 
     if out_path:

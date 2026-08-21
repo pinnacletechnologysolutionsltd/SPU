@@ -608,7 +608,10 @@ OPCODES = {
     "MUL":   0x03, "PHADD": 0x30, "PHCFG": 0x31, "ROT":   0x04, "LOG":   0x05,
     # Control flow
     "JMP":   0x06, "SNAP":  0x07, "COND":  0x20,
-    "CALL":  0x21, "RET":   0x22,
+    "CALL":  0x21, "RET":   0x22, "HALT":  0x08,
+    # REGEN boundary (Stage A, contract_regen_stageA_2026-08-20.md):
+    # block terminator; P1_A carries the compile-time .block K
+    "REGEN": 0x09,
     # Quadray IVM operations
     "QADD":  0x10, "QROT":  0x11, "QNORM": 0x12,
     "QLOAD": 0x13, "QLOG":  0x14, "QSUB":  0x1B, "ROTC":  0x1C, "QLDI":  0x1D, "DELTA": 0x1E,
@@ -631,6 +634,12 @@ OPCODES = {
     "NOP":   0xFF,
 }
 OPNAMES = {v: k for k, v in OPCODES.items()}
+
+# Block-eligible set E_REGEN (Stage A, contract_regen_stageA_2026-08-20.md):
+# MUST equal the RTL counter's set in spu13_core.v and the assembler's set.
+_VM_E_REGEN = frozenset(
+    OPCODES[m] for m in ("QLDI", "IDNT", "QSUB", "ROTC", "DELTA", "HEX",
+                         "QLOG", "IROTC"))
 
 def _parse_int16(s: str) -> int:
     v = int(s, 0)  # base 0: auto-detect hex (0x) / decimal
@@ -1142,6 +1151,8 @@ class SPUCore:
         self.pc = 0
         self.halted = False
         self.step_count = 0
+        self.regen_block_count = 0
+        self.regen_prec_fault = False
         self.gasket = DavisGasket()
         self.fib    = FibDispatch()
         self.sdf    = SdfState()
@@ -1196,6 +1207,11 @@ class SPUCore:
         word = self.program[self.pc]
         opcode, r1, r2, p1_a, p1_b = self.decode(word)
         next_pc = self.pc + 1
+
+        # Stage A block accounting (E_REGEN): count eligible ops since the
+        # last REGEN, mirroring the RTL counter in spu13_core.v.
+        if opcode in _VM_E_REGEN:
+            self.regen_block_count += 1
 
         imm = RationalSurd(p1_a, p1_b)
         # Seed pell_step=0 when loading the Pell unity seed (1,0) — enables
@@ -2124,6 +2140,22 @@ class SPUCore:
             if self.verbose:
                 print(f"  [{self.pc:04d}] NOP")
 
+        elif opcode == OPCODES["REGEN"]:
+            # Stage A pass-through boundary: validate the block count against
+            # the declared K (P1_A); the state is already exact (digital
+            # backend). Idempotence: K=0 with empty counter is a clean pass.
+            if self.regen_block_count == p1_a:
+                self.regen_prec_fault = False
+                if self.verbose:
+                    print(f"  [{self.pc:04d}] REGEN K={p1_a} "
+                          f"(counted {self.regen_block_count}) — pass-through")
+            else:
+                self.regen_prec_fault = True
+                if self.verbose:
+                    print(f"  [{self.pc:04d}] REGEN K={p1_a}: REGEN_PREC "
+                          f"FAULT (counted {self.regen_block_count})")
+            self.regen_block_count = 0
+
         elif opcode == OPCODES.get("PHCFG"):
             # Set phinary configuration register (16-bit)
             cfg = p1_a & 0xFFFF
@@ -2242,6 +2274,11 @@ class SPUCore:
             if self.verbose:
                 cmp_str = '<' if cmp_res == -1 else ('=' if cmp_res == 0 else '>')
                 print(f"  [{self.pc:04d}] RATIO_CMP R{r1}, R{r2} -> p1/q1 {cmp_str} p2/q2 (res={cmp_res})")
+
+        elif opcode == OPCODES["HALT"]:
+            self.halted = True
+            if self.verbose:
+                print(f"  [{self.pc:04d}] HALT")
         else:
             print(f"  [{self.pc:04d}] ??? unknown opcode 0x{opcode:02X} — NOP")
 

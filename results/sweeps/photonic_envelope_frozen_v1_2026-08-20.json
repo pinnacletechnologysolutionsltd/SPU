@@ -1,0 +1,1253 @@
+{
+ "experiment": "photonic_envelope",
+ "contract": "contract_photonics_backend_2026-08-20.md",
+ "description": "Declared regeneration envelope: P_A/P_B vs K x noise axis (frozen E6/E7 levels)",
+ "seed": 13,
+ "n_trials_per_cell": 30000,
+ "band": [
+  1000,
+  30000
+ ],
+ "M_K": {
+  "1": 2000,
+  "2": 2000,
+  "4": 2000,
+  "8": 2000,
+  "16": 2000
+ },
+ "deltaT_K": 2.0,
+ "axes": {
+  "phi_deg": [
+   0.0,
+   0.25,
+   0.5,
+   1.0
+  ],
+  "amp": [
+   0.0,
+   1e-05,
+   2.5e-05,
+   5e-05
+  ],
+  "det": [
+   0.0,
+   0.0001,
+   0.0003,
+   0.001
+  ]
+ },
+ "cells": [
+  {
+   "axis": "phi",
+   "level": 0.0,
+   "K": 1,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "phi",
+   "level": 0.0,
+   "K": 2,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "phi",
+   "level": 0.0,
+   "K": 4,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "phi",
+   "level": 0.0,
+   "K": 8,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "phi",
+   "level": 0.0,
+   "K": 16,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "phi",
+   "level": 0.25,
+   "K": 1,
+   "recovery_A": 0.9998333333333334,
+   "recovery_B": 0.9998333333333334,
+   "ci": 0.00014607759987480225,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    5
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "phi",
+   "level": 0.25,
+   "K": 2,
+   "recovery_A": 0.9995333333333334,
+   "recovery_B": 0.9675333333333334,
+   "ci": 0.0002443979031248944,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    5,
+    9
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "phi",
+   "level": 0.25,
+   "K": 4,
+   "recovery_A": 0.9955,
+   "recovery_B": 0.4067,
+   "ci": 0.0007573948243815728,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    6,
+    6,
+    38,
+    85
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "phi",
+   "level": 0.25,
+   "K": 8,
+   "recovery_A": 0.9805333333333334,
+   "recovery_B": 0.07336666666666666,
+   "ci": 0.0015634083288147737,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    1,
+    4,
+    52,
+    62,
+    63,
+    97,
+    112,
+    193
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "phi",
+   "level": 0.25,
+   "K": 16,
+   "recovery_A": 0.9599666666666666,
+   "recovery_B": 0.0138,
+   "ci": 0.002218372111844046,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    3,
+    7,
+    34,
+    54,
+    65,
+    62,
+    78,
+    81,
+    89,
+    86,
+    72,
+    98,
+    98,
+    99,
+    122,
+    153
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "phi",
+   "level": 0.5,
+   "K": 1,
+   "recovery_A": 0.9703666666666667,
+   "recovery_B": 0.9703666666666667,
+   "ci": 0.0019189056955424308,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    889
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "phi",
+   "level": 0.5,
+   "K": 2,
+   "recovery_A": 0.9196666666666666,
+   "recovery_B": 0.7656,
+   "ci": 0.0030758033159678008,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    810,
+    1600
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "phi",
+   "level": 0.5,
+   "K": 4,
+   "recovery_A": 0.7936,
+   "recovery_B": 0.1234,
+   "ci": 0.004579848585794076,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    812,
+    1629,
+    1766,
+    1985
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "phi",
+   "level": 0.5,
+   "K": 8,
+   "recovery_A": 0.6163333333333333,
+   "recovery_B": 0.019333333333333334,
+   "ci": 0.005502756641969617,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    805,
+    1609,
+    1655,
+    1539,
+    1427,
+    1409,
+    1464,
+    1602
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "phi",
+   "level": 0.5,
+   "K": 16,
+   "recovery_A": 0.41923333333333335,
+   "recovery_B": 0.003833333333333333,
+   "ci": 0.005583727147483187,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    873,
+    1604,
+    1544,
+    1479,
+    1314,
+    1249,
+    1151,
+    1025,
+    960,
+    944,
+    848,
+    852,
+    813,
+    806,
+    917,
+    1044
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "phi",
+   "level": 1.0,
+   "K": 1,
+   "recovery_A": 0.8143333333333334,
+   "recovery_B": 0.8143333333333334,
+   "ci": 0.004400109864621649,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    5570
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "phi",
+   "level": 1.0,
+   "K": 2,
+   "recovery_A": 0.5447,
+   "recovery_B": 0.5088333333333334,
+   "ci": 0.005635376761897409,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    5607,
+    8052
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "phi",
+   "level": 1.0,
+   "K": 4,
+   "recovery_A": 0.23546666666666666,
+   "recovery_B": 0.0347,
+   "ci": 0.004801294822296106,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    5321,
+    8256,
+    5433,
+    3926
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "phi",
+   "level": 1.0,
+   "K": 8,
+   "recovery_A": 0.0675,
+   "recovery_B": 0.0051,
+   "ci": 0.002839041563626711,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    5345,
+    8124,
+    4974,
+    3318,
+    2315,
+    1672,
+    1197,
+    1030
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "phi",
+   "level": 1.0,
+   "K": 16,
+   "recovery_A": 0.009166666666666667,
+   "recovery_B": 0.0010666666666666667,
+   "ci": 0.0010784536082674974,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    5344,
+    8044,
+    5050,
+    3233,
+    2141,
+    1659,
+    1113,
+    784,
+    601,
+    482,
+    343,
+    296,
+    222,
+    177,
+    119,
+    117
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "amp",
+   "level": 0.0,
+   "K": 1,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "amp",
+   "level": 0.0,
+   "K": 2,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "amp",
+   "level": 0.0,
+   "K": 4,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "amp",
+   "level": 0.0,
+   "K": 8,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "amp",
+   "level": 0.0,
+   "K": 16,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "amp",
+   "level": 1e-05,
+   "K": 1,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "amp",
+   "level": 1e-05,
+   "K": 2,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "amp",
+   "level": 1e-05,
+   "K": 4,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "amp",
+   "level": 1e-05,
+   "K": 8,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "amp",
+   "level": 1e-05,
+   "K": 16,
+   "recovery_A": 1.0,
+   "recovery_B": 0.9985333333333334,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "amp",
+   "level": 2.5e-05,
+   "K": 1,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "amp",
+   "level": 2.5e-05,
+   "K": 2,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "amp",
+   "level": 2.5e-05,
+   "K": 4,
+   "recovery_A": 1.0,
+   "recovery_B": 0.9997,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "amp",
+   "level": 2.5e-05,
+   "K": 8,
+   "recovery_A": 0.9997666666666667,
+   "recovery_B": 0.9880666666666666,
+   "ci": 0.00017283558464192272,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    5
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "amp",
+   "level": 2.5e-05,
+   "K": 16,
+   "recovery_A": 0.9993,
+   "recovery_B": 0.9488,
+   "ci": 0.000299290138828536,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    0,
+    1,
+    1,
+    3,
+    3,
+    3,
+    4,
+    2
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "amp",
+   "level": 5e-05,
+   "K": 1,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "amp",
+   "level": 5e-05,
+   "K": 2,
+   "recovery_A": 1.0,
+   "recovery_B": 0.9998666666666667,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "amp",
+   "level": 5e-05,
+   "K": 4,
+   "recovery_A": 0.9984333333333333,
+   "recovery_B": 0.9812666666666666,
+   "ci": 0.0004475517725317403,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    8,
+    39
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "amp",
+   "level": 5e-05,
+   "K": 8,
+   "recovery_A": 0.9897333333333334,
+   "recovery_B": 0.8737,
+   "ci": 0.0011406943054252648,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    4,
+    15,
+    35,
+    59,
+    86,
+    109
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "amp",
+   "level": 5e-05,
+   "K": 16,
+   "recovery_A": 0.9681,
+   "recovery_B": 0.7235,
+   "ci": 0.0019886158454563325,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    6,
+    30,
+    41,
+    49,
+    61,
+    62,
+    61,
+    66,
+    76,
+    72,
+    88,
+    85,
+    119,
+    141
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "det",
+   "level": 0.0,
+   "K": 1,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "det",
+   "level": 0.0,
+   "K": 2,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "det",
+   "level": 0.0,
+   "K": 4,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "det",
+   "level": 0.0,
+   "K": 8,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "det",
+   "level": 0.0,
+   "K": 16,
+   "recovery_A": 1.0,
+   "recovery_B": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "det",
+   "level": 0.0001,
+   "K": 1,
+   "recovery_A": 0.8136333333333333,
+   "recovery_B": 0.8136333333333333,
+   "ci": 0.004406501569063939,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    5591
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "det",
+   "level": 0.0001,
+   "K": 2,
+   "recovery_A": 0.5464,
+   "recovery_B": 0.6731,
+   "ci": 0.005308144044214826,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    5610,
+    7998
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "det",
+   "level": 0.0001,
+   "K": 4,
+   "recovery_A": 0.0148,
+   "recovery_B": 0.0191,
+   "ci": 0.0015489039770538822,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    5398,
+    7983,
+    13588,
+    2587
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "det",
+   "level": 0.0001,
+   "K": 8,
+   "recovery_A": 0.0013666666666666666,
+   "recovery_B": 0.0013333333333333333,
+   "ci": 0.0004180514885176847,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    5225,
+    8079,
+    13329,
+    2362,
+    544,
+    234,
+    105,
+    81
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "det",
+   "level": 0.0001,
+   "K": 16,
+   "recovery_A": 0.0003,
+   "recovery_B": 0.0007666666666666667,
+   "ci": 0.0003132075275572388,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    5222,
+    8041,
+    13360,
+    2296,
+    554,
+    240,
+    117,
+    63,
+    35,
+    18,
+    14,
+    14,
+    4,
+    5,
+    5,
+    3
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "det",
+   "level": 0.0003,
+   "K": 1,
+   "recovery_A": 0.056966666666666665,
+   "recovery_B": 0.056966666666666665,
+   "ci": 0.002622825334623093,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    28291
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "det",
+   "level": 0.0003,
+   "K": 2,
+   "recovery_A": 0.0005333333333333334,
+   "recovery_B": 0.005666666666666667,
+   "ci": 0.0008494254650884566,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    28233,
+    1751
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "det",
+   "level": 0.0003,
+   "K": 4,
+   "recovery_A": 0.0,
+   "recovery_B": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    27858,
+    2124,
+    17,
+    1
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "det",
+   "level": 0.0003,
+   "K": 8,
+   "recovery_A": 0.0,
+   "recovery_B": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    27657,
+    2317,
+    25,
+    1,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "det",
+   "level": 0.0003,
+   "K": 16,
+   "recovery_A": 0.0,
+   "recovery_B": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    27439,
+    2527,
+    34,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 16.3937
+  },
+  {
+   "axis": "det",
+   "level": 0.001,
+   "K": 1,
+   "recovery_A": 0.0007333333333333333,
+   "recovery_B": 0.0007333333333333333,
+   "ci": 0.0003063281141859831,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    29978
+   ],
+   "mean_total_m": 7.9924
+  },
+  {
+   "axis": "det",
+   "level": 0.001,
+   "K": 2,
+   "recovery_A": 0.0,
+   "recovery_B": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.0621776235580981,
+   "first_failed_A_hist": [
+    0,
+    29983,
+    17
+   ],
+   "mean_total_m": 7.999533333333333
+  },
+  {
+   "axis": "det",
+   "level": 0.001,
+   "K": 4,
+   "recovery_A": 0.0,
+   "recovery_B": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.40509240897913856,
+   "first_failed_A_hist": [
+    0,
+    29965,
+    35,
+    0,
+    0
+   ],
+   "mean_total_m": 9.978566666666667
+  },
+  {
+   "axis": "det",
+   "level": 0.001,
+   "K": 8,
+   "recovery_A": 0.0,
+   "recovery_B": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5461834024143043,
+   "first_failed_A_hist": [
+    0,
+    29951,
+    49,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 13.212233333333334
+  },
+  {
+   "axis": "det",
+   "level": 0.001,
+   "K": 16,
+   "recovery_A": 0.0,
+   "recovery_B": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274,
+   "first_failed_A_hist": [
+    0,
+    29958,
+    42,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "mean_total_m": 16.3937
+  }
+ ]
+}
