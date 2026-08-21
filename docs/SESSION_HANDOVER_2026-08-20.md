@@ -332,19 +332,49 @@ Arm N: angles {0,2,5}, both pure self-rotation chains with identical
 deterministic per-trial m=23) ran through all gates in order — independent
 oracle, noiseless validation (100% both arms), smoke pass (29s/70 cells,
 extrapolated ≈72.5 min), full run (70 cells × 30,000 trials, sha256
-`2e322400…`).
+`2e322400…`), **reproducibility CONFIRMED** (two independent full runs,
+bit-identical) and **frozen**:
+`results/sweeps/cascade_depth_sweep_frozen_v1_2026-08-22.json`.
 
 **Result: Arm T and Arm N's crossing brackets coincide exactly**
 ([1.5e-9, 2.0e-9] for both at 99.9%/99%; [2.0e-9, 3.0e-9] for both at 95%)
-— uncompensated `/3` divisions do **not** explain the collapse. A
-secondary finding refined the prediction itself: the closed-form
-`0.05/2^m` is a single-component threshold, but arm-B scoring requires all
-4 lane-0 components to round correctly — aggregating that tightens the
-predicted 50%-point from 5.96e-9 to ≈4.2e-9, closer to (though not
-exactly) what both arms actually showed. This correction is K-independent
-and doesn't touch E9's actual finding. **The K=8→K=16 collapse remains
-unexplained — no new hypothesis was retrofit onto this result, per
-explicit instruction.** Next candidate mechanisms (operation ordering,
-accumulated loss, effective optical depth, regeneration placement) remain
-open, each needing its own separately-authorized contract. Reproducibility
-rerun and freeze: not yet authorized.
+— uncompensated `/3` divisions do **not** explain the collapse. §10 of the
+E11 contract shows why mathematically, not just empirically: `(F,G,H)/div`
+is an exact unit vector for all six ROTC angles — the `/3` is rotation
+normalization, not independent attenuation. A secondary finding refined
+the prediction itself: the closed-form `0.05/2^m` is a single-component
+threshold, but arm-B scoring requires all 4 lane-0 components to round
+correctly — aggregating that tightens the predicted 50%-point from 5.96e-9
+to ≈4.2e-9, closer to (though not exactly) what both arms actually showed.
+**The K=8→K=16 collapse remains unexplained** — no new hypothesis was
+retrofit onto this result.
+
+**E12 (2026-08-22): accumulated optical-depth loss — CLOSED, RESULT:
+NEGATIVE.** `spu_strategy/contract_photonics_optical_depth_2026-08-22.md`.
+Went through two designs, both caught before wasting the full sweep
+budget: (1) fully uncompensated 1.8 dB/op loss (the established single-op
+default, never carried into the K-chain backend) gave 0% recovery for
+both K regardless of detector noise — an unrealistic strawman (a real
+system calibrates known constants, same as REGEN already does for thermal
+drift); (2) mean-compensated loss (measuring `L̄(K)` empirically — 0.488
+at K=8, 0.496 at K=16, nearly flat, very different from the naive
+`LOSS_LINEAR^K` prediction — then correcting for it) *also* gave
+`comp_B = 0.0000` regardless of detector noise, because the residual
+variance around the mean (CV≈30%) is 2-3 orders of magnitude larger than
+the ~10⁻³–10⁻⁴ relative precision exact BQE recovery needs. Closed at the
+calibration/invariant stage, full 30,000×4 sweep not run — the result was
+already structurally determined. **Conclusion (precisely scoped): no
+single fixed scalar compensation per K can recover exact BQE under this
+loss model — not the broader claim that no compensation scheme could
+ever work.** Two independent failure modes (uncompensated, mean-
+compensated) converging on the same precision-mismatch conclusion
+substantially lowers the odds that ordinary accumulated loss explains
+E9. Also a standalone architectural finding: this system's scalar-
+calibrated receiver can't correct for >~0.1% transfer variance, whatever
+the source.
+
+**Next, per explicit direction — not further loss tuning:** regeneration
+placement (GTP's second-ranked candidate) is the natural next
+mechanism-investigation contract, not yet drafted. Operation ordering
+remains parked (E11 §10). E10 (combined-axis) still deferred behind
+understanding K=16.

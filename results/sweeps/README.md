@@ -58,6 +58,22 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`cascade_depth_sweep_frozen_v1_2026-08-22.json`** (sha256
+  `2e322400…37592dff8`) — **E11, the cascade-depth mechanism
+  investigation** (`contract_photonics_cascade_depth_2026-08-22.md`).
+  70 cells (35-point det grid × 2 arms), 30,000 trials/cell, K=16 only,
+  pure self-rotation chains (Arm T: ROTC angles {1,3,4}, Arm N: {0,2,5}),
+  identical deterministic per-trial m=23 for both arms, seed 13, run
+  twice, bit-identical. **RESULT: HYPOTHESIS RULED OUT.** Tests whether
+  uncompensated `/3` divisions from exact-thirds ROTC angles explain E9's
+  disproportionate K=8→K=16 collapse — they don't: Arm T and Arm N's
+  crossing brackets coincide exactly ([1.5e-9, 2.0e-9] for both at
+  99.9%/99%). Mathematical grounding (§10 of the contract): `(F,G,H)/div`
+  is an exact unit vector for all six ROTC angles — the `/3` is rotation
+  normalization, not independent attenuation, so this result was
+  structurally expected once checked, not a surprise. K=16's collapse
+  remains unexplained. Driver:
+  `photonics/run_photonic_cascade_depth_sweep.py`.
 - **`detector_boundary_sweep_frozen_v1_2026-08-21.json`** (sha256
   `1a3306a1…870f1afda`) — **E9, the detector-boundary sweep**
   (`contract_photonics_detector_boundary_2026-08-21.md`). 127 cells
