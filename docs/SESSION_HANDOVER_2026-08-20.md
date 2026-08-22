@@ -403,8 +403,38 @@ and E12 both ruled out) to produce a large, reproducible effect in the
 predicted direction — a real, substantial contributor, not the complete
 explanation.
 
-**Next:** the remaining 34.2× gap at M=4 is the open question — candidates
-include finer M (M=2, previously excluded as degenerate, worth
-reconsidering given how strong this trend is) or a second mechanism
-combining with regeneration frequency. None authorized yet. Operation
-ordering remains parked (E11 §10). E10 (combined-axis) still deferred.
+**E14 (2026-08-22): M=2 extension — RUN COMPLETE, RESULT: OUTCOME B
+(DIMINISHING RETURNS).** `spu_strategy/contract_photonics_regen_placement_m2_2026-08-22.md`.
+Reviewed before implementation (per explicit request): a pre-registered
+four-way outcome taxonomy (A: continued acceleration, B: diminishing
+returns, C: saturation, D: reversal) and an approved lane-attribution
+instrumentation extension, specifically to make outcome D's two candidate
+causes (lane-1 exposure vs. regenerating not-yet-computed operands at
+M=2's QLDI-only first boundary) empirically distinguishable rather than
+inferred from curve shape. E13's M=16/8/4 curve reused frozen, not
+rerun — M=2 was the only new measurement.
+
+**Result: M=2 improves on M=4 by only 2.00× at 99.9%** (geomean
+3.464e-6 vs M=4's 1.732e-6) — far short of the 31.62× seen going
+M=8→M=4. The improvement-per-halving sequence (1.0 dec → 1.5 dec →
+**0.3 dec**) peaks at M=4 and sharply reverses — not a smooth saturation.
+Reproducibility confirmed, two full runs bit-identical.
+
+**The lane-attribution instrumentation paid off directly:** across
+~3,769 failed trials (M=2 at 4 levels, M=4 matched control at 2 levels),
+**100% of failures were attributable to lane 0 only — zero lane-1
+involvement**, despite M=2 having double M=4's REGEN-boundary count.
+This cleanly rules out the lane-1-exposure hypothesis by direct
+measurement, leaving M=2's QLDI-only first boundary (no combine op
+before the first REGEN, unlike every other M tested) as the surviving,
+untested candidate — not proven, just the one candidate not eliminated.
+
+M=2 closes 69.4% of the full 4.033-decade gap to native K=8 (up from
+M=4's 62.0%); **a 17.1× gap remains** — narrower than E13's 34.2× but
+still open.
+
+**Next (not authorized):** test the QLDI-only-first-boundary hypothesis
+directly (e.g. a grouping variant that defers the first REGEN past at
+least one combine op) — a new, separately-authorized contract. M=1 (Arm A)
+remains the separately-established endpoint. Operation ordering stays
+parked (E11 §10). E10 (combined-axis) still deferred.

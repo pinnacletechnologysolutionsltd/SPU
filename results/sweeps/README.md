@@ -58,6 +58,24 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`regen_placement_m2_sweep_frozen_v1_2026-08-22.json`** (sha256
+  `90e1bf35…a843f8651`) — **E14, the M=2 extension of E13's regeneration-
+  placement investigation** (`contract_photonics_regen_placement_m2_2026-08-22.md`).
+  16 cells (locked from a wide exploratory smoke pass), 30,000 trials/cell,
+  K=16, M=16/8/4 reused from E13's frozen curve (not rerun), M=2 measured
+  directly, seed 13, run twice, bit-identical. **RESULT: OUTCOME B,
+  DIMINISHING RETURNS.** M=2 improves on M=4 by only 2.00× at 99.9%
+  (geomean 3.464e-6 vs M=4's 1.732e-6) — far short of the 31.62× seen
+  going M=8→M=4. The improvement-per-halving sequence (1.0 dec, 1.5 dec,
+  then 0.3 dec) peaks at M=4 and sharply reverses, not a smooth
+  saturation. New lane-attribution instrumentation (§4b of the contract)
+  found **zero** lane-1-attributable failures across ~3,769 failed trials
+  (both M=2 and an M=4 matched-control sample) — cleanly rules out the
+  lane-1-exposure hypothesis by direct measurement, leaving M=2's
+  QLDI-only first REGEN boundary (no combine op before it, unlike
+  M=4/8/16) as the surviving, untested candidate. M=2 closes 69.4% of the
+  full 4.033-decade gap to native K=8 (up from M=4's 62.0%); 17.1×
+  remains. Driver: `photonics/run_photonic_regen_placement_m2_sweep.py`.
 - **`regen_placement_sweep_frozen_v1_2026-08-22.json`** (sha256
   `cd942f77…6282935fa4`) — **E13, the regeneration-placement mechanism
   investigation** (`contract_photonics_regen_placement_2026-08-22.md`).

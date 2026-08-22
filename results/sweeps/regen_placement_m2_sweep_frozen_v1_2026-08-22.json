@@ -1,0 +1,168 @@
+{
+ "experiment": "regen_placement_m2_sweep",
+ "contract": "contract_photonics_regen_placement_m2_2026-08-22.md",
+ "description": "M=2 extension of E13's regen-frequency sweep: does the accelerating trend continue toward K=8, saturate, or reverse at the QLDI-only first boundary?",
+ "seed": 13,
+ "n_trials_per_cell": 30000,
+ "band": [
+  1000,
+  30000
+ ],
+ "M_K16": 2000,
+ "deltaT_K": 2.0,
+ "K": 16,
+ "M": 2,
+ "det_levels": [
+  1e-07,
+  3e-07,
+  1e-06,
+  2e-06,
+  3e-06,
+  4e-06,
+  5e-06,
+  7e-06,
+  1e-05,
+  1.5e-05,
+  2e-05,
+  3e-05,
+  5e-05,
+  0.0001,
+  0.0003,
+  0.001
+ ],
+ "e13_frozen_reference": {
+  "M4_geomean": 1.732e-06,
+  "M8_geomean": 5.477e-08,
+  "M16_geomean": 5.477e-09
+ },
+ "cells": [
+  {
+   "M": 2,
+   "level": 1e-07,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 3e-07,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 1e-06,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 2e-06,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 3e-06,
+   "recovery": 0.9993333333333333,
+   "ci": 0.0002920821396393506,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 4e-06,
+   "recovery": 0.9974666666666666,
+   "ci": 0.0005688408915863447,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 5e-06,
+   "recovery": 0.9901,
+   "ci": 0.0011203470412332077,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 7e-06,
+   "recovery": 0.9612666666666667,
+   "ci": 0.0021835333127211403,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 1e-05,
+   "recovery": 0.8940666666666667,
+   "ci": 0.0034825448227452332,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 1.5e-05,
+   "recovery": 0.7168666666666667,
+   "ci": 0.00509812099337117,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 2e-05,
+   "recovery": 0.5045666666666667,
+   "ci": 0.005657796642882051,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 3e-05,
+   "recovery": 0.1215,
+   "ci": 0.0036970426938297586,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 5e-05,
+   "recovery": 0.007566666666666667,
+   "ci": 0.0009806147390436417,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 0.0001,
+   "recovery": 0.0001,
+   "ci": 0.00011315499458707071,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 0.0003,
+   "recovery": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 2,
+   "level": 0.001,
+   "recovery": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  }
+ ]
+}
