@@ -438,3 +438,63 @@ directly (e.g. a grouping variant that defers the first REGEN past at
 least one combine op) — a new, separately-authorized contract. M=1 (Arm A)
 remains the separately-established endpoint. Operation ordering stays
 parked (E11 §10). E10 (combined-axis) still deferred.
+
+**E15 (2026-08-22): first-boundary placement — RUN COMPLETE, RESULT:
+RULED OUT (small real residual quantified).**
+`spu_strategy/contract_photonics_regen_boundary_placement_2026-08-22.md`.
+Tests E14's surviving candidate directly: shift every M=2 boundary by
+exactly +1 op ([2,4,...,16] → [3,5,...,15,16]), holding the 8-event REGEN
+count fixed, so the first REGEN reads a 3-op state (past one combine op)
+instead of the 2-op QLDI-only state. Contract frozen after four
+Halt-and-Flag amendments: the E13-scaling number demoted from pass/fail
+threshold to reference point (E14 already showed that acceleration factor
+doesn't generalize); equivalence gate strengthened to per-trial, not
+aggregate; "statistically indistinguishable" pre-defined via bracket
+overlap / grid-interval movement, before running; a first-boundary
+state-equivalence diagnostic added.
+
+**All gates passed cleanly:** per-trial equivalence (500 trials, 0
+mismatches — `run_chain_boundary_noisy` confirmed a strict refactoring of
+E14's scorer, including matching RNG-stream state); first-boundary state
+diagnostic (confirmed via a truncated-block direct test, after catching
+that the naive first trial's first combine op was a degenerate angle-0
+identity ROTC — picked a representative trial with a real state change
+instead); noiseless+rejection (600 trials, 0 failures); smoke pass located
+the transition ~5e-6 to ~3e-5; full run (16 cells × 30,000 trials);
+reproducibility (two runs, bit-identical, sha256
+`30e98021...c4cc08b`); `verify_repo.sh` clean.
+
+**Result, by the pre-registered bracket-overlap criterion: RULED OUT.**
+Crossing brackets at 99.9% (overlap), 99% (identical), and 95%
+(identical) all show no full-grid-interval shift versus pure M2's frozen
+brackets. **But the curve is not indistinguishable from pure M2 either** —
+recovery is higher at every shared grid point from 3e-6 to 5e-5, peaking
+at 7.8σ (level=3e-5, +0.0436 absolute, 36% relative). Quantified as a
+noise-axis shift at the 50%-recovery crossing: **+0.011 decades (~2.7%)**
+— roughly three orders of magnitude smaller than E13's regeneration-
+frequency effect (1.0–1.5 decades per halving), and far short of closing
+any of the 17.1× gap E14 left open. QLDI-only-first-boundary placement is
+not a substantial cause of M=2's diminishing return; the direction of the
+small residual is consistent with the hypothesis but its magnitude rules
+it out as a primary explanation. Lane-attribution spot-check (3 cells,
+n=3,000 each) confirms failures remain 99.9% lane-0-only — the shift did
+not introduce a new lane-1 pathway.
+
+**Where this leaves the investigation:** E11 (algebraic normalization)
+and E12 (accumulated optical loss) ruled out mathematically/by two
+independent failure modes; E13 established regeneration frequency as a
+substantial (62%) contributor; E14 found the frequency benefit peaks at
+M=4 and reverses at M=2; E15 has now ruled out the leading candidate
+explanation for that reversal (first-boundary placement) as anything but
+a minor (~3%) contributor. **A 17.1× gap to native K=8 remains
+unexplained by any tested mechanism.** Per the stated overall objective
+(work toward `P_recover = F(K, M, boundary placement, noise, state
+dynamic range)`, not open-ended parameter hunting), the next step is a
+genuinely new hypothesis for the remaining gap — not yet drafted, not
+authorized. Candidates not yet tested: interaction between M and K
+directly (is the 17.1× gap actually "K=16 run at M=2" vs "native K=8" a
+fair comparison at all, given K=8 has its own different op-count/lane
+mix?); dynamic-range/state-magnitude effects distinct from noise-per-op;
+higher M=2 REGEN density interacting with the ROTC angle-normalization
+division (E11 ruled out the *general* mechanism but not specifically at
+M=2's shorter inter-REGEN intervals).

@@ -58,6 +58,32 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`regen_boundary_placement_sweep_frozen_v1_2026-08-22.json`** (sha256
+  `30e9802103a6665a057262545e9f294b5d036e333d7a20f09eb3ea8b3c4cc08b`) —
+  **E15, tests whether M=2's QLDI-only first REGEN boundary (E14's
+  surviving candidate) explains its diminishing return**
+  (`contract_photonics_regen_boundary_placement_2026-08-22.md`). Shifts
+  every boundary by exactly +1 op ([2,4,...,16] → [3,5,...,15,16]),
+  holding the 8-event REGEN count fixed — isolates "first boundary before
+  any computation" from "regeneration frequency." 16 cells, 30,000
+  trials/cell, K=16, seed 13, run twice, bit-identical. Equivalence gate
+  (per-trial, not aggregate) and first-boundary state diagnostic both
+  passed cleanly before the sweep. **RESULT: RULED OUT** under the
+  pre-registered bracket-overlap criterion — 99.9%/99%/95% crossing
+  brackets all overlap or are identical to pure M2's frozen brackets (no
+  full-grid-interval shift at any of the three). A small, real,
+  statistically significant residual is present (recovery higher at every
+  shared grid point from 3e-6 to 5e-5, peak 7.8σ at level=3e-5) but
+  quantifies to only ~+0.011 decades (~2.7%) at the 50%-recovery
+  crossing — roughly three orders of magnitude smaller than E13's
+  regeneration-frequency effect, and far short of closing any of the
+  17.1× gap E14 left open. QLDI-only-first-boundary placement is ruled
+  out as a substantial cause of M=2's diminishing return; a new
+  hypothesis is needed for the remaining gap (not constructed in this
+  contract, per its own non-goals). Lane-attribution spot-check (3 cells,
+  n=3,000 each) confirms failures remain 99.9% lane-0-only, no new lane-1
+  pathway introduced. Driver:
+  `photonics/run_photonic_regen_boundary_placement_sweep.py`.
 - **`regen_placement_m2_sweep_frozen_v1_2026-08-22.json`** (sha256
   `90e1bf35…a843f8651`) — **E14, the M=2 extension of E13's regeneration-
   placement investigation** (`contract_photonics_regen_placement_m2_2026-08-22.md`).

@@ -1,0 +1,326 @@
+{
+ "experiment": "regen_boundary_placement_sweep",
+ "contract": "contract_photonics_regen_boundary_placement_2026-08-22.md",
+ "description": "E15: does deferring M=2's first REGEN boundary past exactly one combine op (boundaries [3,5,7,9,11,13,15,16] vs pure M=2's [2,4,6,8,10,12,14,16], same 8-event REGEN count) restore some of the improvement M=2 failed to deliver in E14?",
+ "seed": 13,
+ "n_trials_per_cell": 30000,
+ "band": [
+  1000,
+  30000
+ ],
+ "M_K16": 2000,
+ "deltaT_K": 2.0,
+ "K": 16,
+ "boundaries": [
+  3,
+  5,
+  7,
+  9,
+  11,
+  13,
+  15,
+  16
+ ],
+ "det_levels": [
+  1e-06,
+  2e-06,
+  3e-06,
+  5e-06,
+  7e-06,
+  1e-05,
+  1.5e-05,
+  2e-05,
+  2.5e-05,
+  3e-05,
+  4e-05,
+  5e-05,
+  7e-05,
+  0.0001,
+  0.0002,
+  0.0003
+ ],
+ "reference_points": {
+  "e14_frozen_m2_pure_999pct_geomean": 3.464e-06,
+  "e14_frozen_m2_pure_bracket_999pct": [
+   3e-06,
+   4e-06
+  ],
+  "e13_frozen_m4_999pct_geomean": 1.732e-06,
+  "e9_k8_native_crossing_geomean": 5.92e-05,
+  "e13_scaling_extrapolation_reference": 5.48e-05
+ },
+ "cells": [
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 1e-06,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 2e-06,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 3e-06,
+   "recovery": 0.9995333333333334,
+   "ci": 0.0002443979031248944,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 5e-06,
+   "recovery": 0.9916666666666667,
+   "ci": 0.0010286974863965182,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 7e-06,
+   "recovery": 0.9654,
+   "ci": 0.00206817431683115,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 1e-05,
+   "recovery": 0.9031666666666667,
+   "ci": 0.003346507751649748,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 1.5e-05,
+   "recovery": 0.7318333333333333,
+   "ci": 0.005013071907929715,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 2e-05,
+   "recovery": 0.5308666666666667,
+   "ci": 0.005647240952688181,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 2.5e-05,
+   "recovery": 0.31293333333333334,
+   "ci": 0.0052471175853443216,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 3e-05,
+   "recovery": 0.1651,
+   "ci": 0.004201324349868741,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 4e-05,
+   "recovery": 0.04686666666666667,
+   "ci": 0.0023916867968366935,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 5e-05,
+   "recovery": 0.0148,
+   "ci": 0.0013664335077858709,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 7e-05,
+   "recovery": 0.0018333333333333333,
+   "ci": 0.00048408061618181213,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 0.0001,
+   "recovery": 6.666666666666667e-05,
+   "ci": 9.239220618084062e-05,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 0.0002,
+   "recovery": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "boundaries": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    16
+   ],
+   "level": 0.0003,
+   "recovery": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  }
+ ]
+}
