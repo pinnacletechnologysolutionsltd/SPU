@@ -1,0 +1,333 @@
+{
+ "experiment": "regen_placement_sweep",
+ "contract": "contract_photonics_regen_placement_2026-08-22.md",
+ "description": "Regeneration-frequency sweep at K=16: does regenerating every M ops restore recovery toward E9's K=8 territory (~5e-5) or stay near K=16's collapsed crossing (~3-5e-9)? M=16 measured directly as the control anchor.",
+ "seed": 13,
+ "n_trials_per_cell": 30000,
+ "band": [
+  1000,
+  30000
+ ],
+ "M_K16": 2000,
+ "deltaT_K": 2.0,
+ "K": 16,
+ "M_values": [
+  4,
+  8,
+  16
+ ],
+ "det_levels": [
+  1e-09,
+  3e-09,
+  1e-08,
+  3e-08,
+  1e-07,
+  3e-07,
+  1e-06,
+  3e-06,
+  1e-05,
+  3e-05,
+  0.0001,
+  0.0003
+ ],
+ "reference_points": {
+  "E9_K8_99.9pct_bracket": [
+   5e-05,
+   7e-05
+  ],
+  "E9_K16_99.9pct_bracket": [
+   3e-09,
+   5e-09
+  ]
+ },
+ "cells": [
+  {
+   "M": 4,
+   "level": 1e-09,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 3e-09,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 1e-08,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 3e-08,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 1e-07,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 3e-07,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 1e-06,
+   "recovery": 0.9992333333333333,
+   "ci": 0.0003132075275572442,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 3e-06,
+   "recovery": 0.9164666666666667,
+   "ci": 0.0031310044637369557,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 1e-05,
+   "recovery": 0.28063333333333335,
+   "ci": 0.005084406045148316,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 3e-05,
+   "recovery": 0.023566666666666666,
+   "ci": 0.0017165870108984235,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 0.0001,
+   "recovery": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 4,
+   "level": 0.0003,
+   "recovery": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 1e-09,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 3e-09,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 1e-08,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 3e-08,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 1e-07,
+   "recovery": 0.9967,
+   "ci": 0.000648984976097287,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 3e-07,
+   "recovery": 0.9351333333333334,
+   "ci": 0.002787038727783121,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 1e-06,
+   "recovery": 0.6132333333333333,
+   "ci": 0.005511030817287842,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 3e-06,
+   "recovery": 0.2638333333333333,
+   "ci": 0.00498710314652445,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 1e-05,
+   "recovery": 0.08886666666666666,
+   "ci": 0.003219999889983895,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 3e-05,
+   "recovery": 0.016066666666666667,
+   "ci": 0.0014227912072115566,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 0.0001,
+   "recovery": 0.0001,
+   "ci": 0.00011315499458707071,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 8,
+   "level": 0.0003,
+   "recovery": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 1e-09,
+   "recovery": 1.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 3e-09,
+   "recovery": 0.9999,
+   "ci": 0.00011315499458706446,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 1e-08,
+   "recovery": 0.8435666666666667,
+   "ci": 0.0041107380117858085,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 3e-08,
+   "recovery": 0.7154333333333334,
+   "ci": 0.0051058969192478995,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 1e-07,
+   "recovery": 0.6393333333333333,
+   "ci": 0.005433905996269746,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 3e-07,
+   "recovery": 0.5579,
+   "ci": 0.005619968510421862,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 1e-06,
+   "recovery": 0.4461333333333333,
+   "ci": 0.005625101910617232,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 3e-06,
+   "recovery": 0.3289666666666667,
+   "ci": 0.0053167157026732074,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 1e-05,
+   "recovery": 0.18456666666666666,
+   "ci": 0.0043900180782956875,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 3e-05,
+   "recovery": 0.052066666666666664,
+   "ci": 0.0025139939545111315,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 0.0001,
+   "recovery": 0.0007666666666666667,
+   "ci": 0.0003132075275572388,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  },
+  {
+   "M": 16,
+   "level": 0.0003,
+   "recovery": 0.0,
+   "ci": 0.0,
+   "n_trials": 30000,
+   "rejection": 0.5694789259934274
+  }
+ ]
+}

@@ -373,8 +373,38 @@ E9. Also a standalone architectural finding: this system's scalar-
 calibrated receiver can't correct for >~0.1% transfer variance, whatever
 the source.
 
-**Next, per explicit direction — not further loss tuning:** regeneration
-placement (GTP's second-ranked candidate) is the natural next
-mechanism-investigation contract, not yet drafted. Operation ordering
-remains parked (E11 §10). E10 (combined-axis) still deferred behind
-understanding K=16.
+**E13 (2026-08-22): regeneration-placement mechanism investigation —
+RUN COMPLETE, RESULT: SUBSTANTIAL CONTRIBUTOR.**
+`spu_strategy/contract_photonics_regen_placement_2026-08-22.md`. Reading
+`run_chain_noisy` (used by E8/E9/E11/E12) confirmed it has **zero**
+intermediate-regeneration support — its accumulation state initializes
+once, before the block loop, and never resets between blocks, so every
+prior "K=16" measurement was necessarily "regenerate only once, after all
+16 ops." New code (`run_chain_periodic_noisy`) simulates whole-state REGEN
+boundaries every M ops within a 16-op sequence — whole-state re-entry
+(all 13 lanes) confirmed architecturally *required*, not just convenient,
+by `contract_regen_isa_0x09_2026-08-20.md` §5's "no opportunistic
+per-component regeneration" rule. Reviewed before implementation (per
+explicit request) — caught a real second-order concern (more frequent
+regen also exposes the otherwise-static lane 1 to more noise draws) that
+did NOT materialize as a measurable effect once run.
+
+**Result:** M=16 measured directly (control anchor) matched E9's original
+arm-B harness exactly at 6 spot-checked levels before anything new was
+trusted. Full 36-cell × 30,000-trial sweep, reproducibility confirmed
+(two runs, bit-identical): regenerating every 8 ops gives **10.00×**
+improvement over never regenerating until op 16; every 4 ops gives
+another **31.62×** (316.23× total) — monotonic, accelerating (not a
+constant decades-per-halving law), no crossovers at any of 12 grid
+points. **Covers 62.0% of the full 4.033-decade gap to E9's native K=8
+crossing; a 34.2× gap remains at M=4**, the most frequent regeneration
+tested. This is the first candidate mechanism in the E9 chain (after E11
+and E12 both ruled out) to produce a large, reproducible effect in the
+predicted direction — a real, substantial contributor, not the complete
+explanation.
+
+**Next:** the remaining 34.2× gap at M=4 is the open question — candidates
+include finer M (M=2, previously excluded as degenerate, worth
+reconsidering given how strong this trend is) or a second mechanism
+combining with regeneration frequency. None authorized yet. Operation
+ordering remains parked (E11 §10). E10 (combined-axis) still deferred.

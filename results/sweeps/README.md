@@ -58,6 +58,25 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`regen_placement_sweep_frozen_v1_2026-08-22.json`** (sha256
+  `cd942f77…6282935fa4`) — **E13, the regeneration-placement mechanism
+  investigation** (`contract_photonics_regen_placement_2026-08-22.md`).
+  36 cells (12-point det grid × M∈{4,8,16}), 30,000 trials/cell, K=16
+  only, `gen_block` (E9's generator), M=16 measured directly as a
+  control anchor (verified exact agreement with E9's original arm-B
+  harness at 6 matched levels before trusting the new one), seed 13, run
+  twice, bit-identical. **RESULT: SUBSTANTIAL CONTRIBUTOR, not complete
+  explanation.** New code (`run_chain_periodic_noisy`) simulates
+  intermediate whole-state REGEN boundaries within a 16-op sequence —
+  something `run_chain_noisy` (used by every prior K-chain experiment)
+  has never supported. Regenerating every 8 ops gives exactly 10.00×
+  improvement over never regenerating until op 16; every 4 ops gives
+  another 31.62× (316.23× total) — monotonic, accelerating, no
+  crossovers. Covers 62.0% of the full 4.033-decade gap to E9's native
+  K=8 crossing; a 34.2× gap remains at M=4, the most frequent tested.
+  First candidate mechanism (after E11, E12 both ruled out) to produce a
+  large, reproducible effect in the predicted direction — not a full
+  explanation. Driver: `photonics/run_photonic_regen_placement_sweep.py`.
 - **`cascade_depth_sweep_frozen_v1_2026-08-22.json`** (sha256
   `2e322400…37592dff8`) — **E11, the cascade-depth mechanism
   investigation** (`contract_photonics_cascade_depth_2026-08-22.md`).
