@@ -58,6 +58,38 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`m0_dynamic_range_sweep_frozen_v1_2026-08-22.json`** (sha256
+  `794160db5fd13af8eb0b724fc336b2fb6dc1514901b38fa41c9639a8dd661e5b`) —
+  **E16, tests whether per-REGEN-event recovery is governed by the local
+  scale exponent `m[0]` and `sigma_det`, approximately independent of
+  which regeneration interval M produced that `m0`**
+  (`contract_photonics_m0_dynamic_range_2026-08-22.md`). Mechanism found
+  by reading `PhotonicQuadrayBackend` directly: every combine op
+  unconditionally increments `m[dst]`; REGEN re-derives `m` from the
+  recovered value's own bit-length at re-entry (does NOT reset to a
+  baseline); detector noise is injected before the `2^m` readout rescale
+  — only lane 0 ever accumulates `m` growth (mechanistically explains
+  E14's 100%-lane-0-only failures). 16 cells (M∈{2,4,8,16} × shared
+  σ_det grid `[1e-7,1e-6,1e-5,3e-5]`), 30,000 trials/cell, 840,000
+  group-observations, seed 13, run twice, bit-identical. **RESULT:
+  FALSIFIED overall** (pre-registered Bonferroni-corrected pairwise
+  z-test, 25/128 comparisons significant, max diff 0.103 — far above the
+  5%/0.05 Confirmed bar), but **decisively concentrated in M=2**: pairs
+  excluding M=2 (M∈{4,8,16} only) sit right at the Partially-confirmed
+  boundary (8.8% significant, max diff 0.055), while M=2-involving pairs
+  are robustly different (37.5% significant, max diff 0.103). A
+  pre-registered trial-clustered bootstrap addendum confirms 23/25
+  (92%) of the significant differences are not a within-trial-
+  correlation artifact. Descriptive finding: the 50%-recovery crossing
+  *location* is nonetheless nearly identical across all four M (within
+  ~0.1–0.2 `m0` units, vs. the many-decades-scale K/M-dependence the
+  original framing implied) and sits ~0.5 `m0` units below the naive
+  `log2(0.05/sigma_det)` prediction, consistently. `m0` is the dominant
+  factor governing recovery but not a fully sufficient statistic —
+  M=2 has some additional, uncharacterized structural feature. Gate 6
+  (out-of-sample prediction against E13/E14's frozen curves) NOT run,
+  per the contract's own gating (primary test Falsified). Driver:
+  `photonics/run_photonic_m0_dynamic_range_sweep.py`.
 - **`regen_boundary_placement_sweep_frozen_v1_2026-08-22.json`** (sha256
   `30e9802103a6665a057262545e9f294b5d036e333d7a20f09eb3ea8b3c4cc08b`) —
   **E15, tests whether M=2's QLDI-only first REGEN boundary (E14's

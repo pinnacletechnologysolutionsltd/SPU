@@ -498,3 +498,65 @@ mix?); dynamic-range/state-magnitude effects distinct from noise-per-op;
 higher M=2 REGEN density interacting with the ROTC angle-normalization
 division (E11 ruled out the *general* mechanism but not specifically at
 M=2's shorter inter-REGEN intervals).
+
+**E16 (2026-08-22): m₀-conditioned recovery — RUN COMPLETE, RESULT:
+FALSIFIED overall, decisively concentrated in M=2.**
+`spu_strategy/contract_photonics_m0_dynamic_range_2026-08-22.md`. Before
+drafting, John/GTP redirected explicitly: not another M sweep, but a
+code/architecture analysis of what "dynamic range" concretely means in
+`PhotonicQuadrayBackend`. Reading `_apply_op_field`/the REGEN readout
+formula directly (not guessing) found the mechanism: every combine op
+unconditionally increments the destination lane's shared scale exponent
+`m`; REGEN re-derives `m` at re-entry from the recovered value's own
+bit-length (does **not** reset to a baseline); detector noise is
+injected before the `2^m` readout rescale. Two quick checks: `cos(angle)`
+degradation is analytically negligible even at K=16 (ruled out without
+an experiment); only lane 0 ever accumulates `m` growth (`gen_block`
+never makes lane 1 a combine-op destination) — mechanistically explains
+E14's 100%-lane-0-only failures, not just correlates with it. A pilot
+measurement (200–20,000 trials) found a sharp threshold matching
+`m0,crit(σ) ≈ log2(0.05/σ_det)` closely, and — the decisive signal — M=2
+and M=4 at the *same* σ produced nearly the same per-group recovery vs.
+`m0` curve.
+
+E16 formalized this at full scale: M∈{2,4,8,16} × a **shared** σ_det
+grid `[1e-7,1e-6,1e-5,3e-5]` (not each M's own transition zone — `m0` is
+driven mostly by the random initial QLDI magnitude, so even M=16
+occasionally produces low-`m0` trials overlapping M=2's range), 30,000
+trials/cell, 840,000 total group-observations, reproducibility
+bit-identical. Pre-registered test: Bonferroni-corrected two-proportion
+z-tests across all `(M1,M2)` pairs at matched `(m0,σ)`.
+
+**Result: FALSIFIED for the full four-M set** (25/128 comparisons
+significant, max diff 0.103 — well past the 5%/0.05 Confirmed bar). **But
+the falsification has clear structure:** excluding M=2, M∈{4,8,16}
+comparisons sit right at the Partially-confirmed boundary (8.8%
+significant, max diff 0.055); M=2-involving comparisons are decisively
+different (37.5% significant, max diff 0.103). A pre-registered
+trial-clustered bootstrap (added before results were seen, per
+Halt-and-Flag review that group-level observations within a trial aren't
+independent) confirms 23/25 (92%) of the significant differences survive
+cluster-aware resampling — not a within-trial-correlation artifact.
+
+Descriptively (not the primary test): the 50%-recovery crossing
+**location** is nearly identical across all four M (within ~0.1–0.2 `m0`
+units — M=16/M=8/M=4/M=2 at σ=1e-5: 11.75/11.75/11.69/11.66), a
+striking compression of what looked like a many-decades-scale K/M
+mystery down to sub-1-unit `m0` differences. Both measured crossings sit
+~0.5 `m0` units below the naive `log2(0.05/σ)` prediction, consistently
+— the functional form looks right, the constant needs recalibration.
+
+**Where this leaves things:** `m0` (the shared scale exponent at REGEN
+readout) is now established as the dominant, mechanistically-grounded
+driver of recovery — not K, not M, not boundary placement directly, all
+of which only matter through the `m0` distribution they produce. It is
+not, however, a fully sufficient statistic: M=2 has some real,
+cluster-robust, uncharacterized additional effect beyond `m0` alone.
+Gate 6 (out-of-sample prediction against E13/E14's frozen curves) was
+**not run**, per the contract's own gating (triggered only if the
+primary test doesn't fail outright) and §8's bar on new hypothesis
+construction without separate authorization. Two natural, not-yet-
+authorized follow-ups: (1) restrict the out-of-sample prediction to
+M∈{4,8,16} only, since that subset is close to invariant; (2) a new,
+separate contract asking what's specific to M=2 (its uniquely short,
+frequent regeneration groups are the standing structural difference).
