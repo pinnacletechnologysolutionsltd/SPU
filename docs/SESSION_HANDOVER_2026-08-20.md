@@ -602,7 +602,10 @@ reading); (2) `m0`, `σ_det` → per-event recovery probability, the
 experimentally validated local law (0/122 significant, M-invariant); (3)
 that law, composed as a product over a trial's REGEN events, → whole-
 chain recovery — the independent-reconstruction claim, since it predicts
-E9/E13/E14's curves without being fit to them. See
+E9/E13/E14's curves without being fit to them. All of this holds within
+the tested Model-C parameterization (`SCALE=0.1`, `deltaT=2.0`,
+detector-noise axis only) — not yet claimed as a universal constant or
+as anything beyond behavioral simulation. See
 `spu_strategy/contract_photonics_m0_dynamic_range_2026-08-22.md` §10 for
 the full writeup; §9 is retained as documented history of the confound,
 not current.
