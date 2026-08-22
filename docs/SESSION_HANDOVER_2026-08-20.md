@@ -666,3 +666,56 @@ information forward that the independent-events product model discards)
 — or move toward the whole-chain-product optimization GTP described,
 now that the simpler greedy version is validated as a real improvement.
 See contract §9 for the full writeup.
+
+**E17 Part 2 (2026-08-23): whole-chain-optimal REGEN placement — RUN
+COMPLETE, RESULT: DOMINATES greedy, decisively.**
+`spu_strategy/contract_photonics_compiler_optimal_placement_2026-08-23.md`.
+John's explicit choice when asked what "continue with E17" meant:
+extend E17 itself with the harder, strictly-more-general optimization
+(minimize REGEN events subject to a whole-chain reliability constraint)
+rather than the greedy per-event floor. A dynamic program — shortest
+path over `O(16²)` candidate segments, since the exact oracle trajectory
+is placement-independent (pure algebra) — maximizes predicted `P_chain`
+for a REGEN-cost parameter λ, tracing a Pareto frontier. Deliberately
+reuses the same (uncorrected) E16 product model E17 used, to isolate
+"is greedy leaving efficiency on the table" from "is the model missing
+physics" (the standing correlation hypothesis, left untouched).
+
+**Gate 0's required cross-check caught a real bug before any prediction
+was trusted:** the first `segment_m0` implementation assumed every
+combine op adds a flat `+1` to `m[0]` — true for `ROTC` (`src=dst=0`
+always) but wrong for `QSUB`, whose production semantics are `m[0] =
+max(m[sa], m[sb]) + 1`, and `sa`/`sb` can draw from lane 1, whose
+exponent can exceed lane 0's. Caught by comparing against E17's
+already-verified `greedy_place` on identical boundary sets — 734–1330
+mismatches per 600-trial sample before the fix, 0 after. A 76-
+configuration brute-force optimality spot-check (does the DP actually
+find the shortest path, not just *a* valid one) also passed clean —
+exactly the failure mode a noiseless-oracle gate alone cannot catch,
+since any valid boundary set recovers exactly when noiseless regardless
+of whether the *predicted* probability driving the DP's choice was
+computed correctly.
+
+**Result: DOMINATES E17's greedy placement at both σ_det points.** At
+σ=1e-6, 5 of 9 λ values dominate outright; the best point uses **21.9%
+fewer REGEN events** (2.05 vs. greedy's 2.62) at equal, perfect
+(1.0000) reliability. At σ=1e-5, 8 of 9 λ values dominate; the best
+point uses **36.4% fewer events** (4.24 vs. greedy's 6.67) *and*
+improves reliability (0.9853 vs. 0.9793) — outside greedy's own 95% CI,
+a statistically real gain, not just a larger point estimate. The
+frontier's more aggressive λ settings trade some of that reliability
+back for even greater efficiency (a genuine, reportable trade-off, not
+a failure) rather than degrading uniformly.
+
+**What this does and doesn't establish:** confirms GTP's framing that
+greedy, while already beating every fixed-`M` policy (E17), was still
+leaving real efficiency on the table relative to the model's own
+optimum — trading margin unevenly across events beats a uniform floor.
+Does **not** resolve the standing correlation hypothesis: the DP's own
+predictions remain conservative in the same direction greedy's were
+(predicted < observed, same sign, same pattern) — this contract
+deliberately used the uncorrected product model as its objective, so it
+cannot distinguish "the model under-predicts" from "the model is
+wrong in a way that would change the optimal placement." That
+remains separate, later, not-yet-authorized work. See contract §9 for
+the full writeup.

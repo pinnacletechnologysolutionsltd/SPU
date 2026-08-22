@@ -58,6 +58,36 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`compiler_optimal_placement_sweep_frozen_v1_2026-08-23.json`** (sha256
+  `6911fd3f0f9f51e9a36b1000800ade8bfe91a3664caf6530ecbcccdfbd25c3df`) —
+  **E17 Part 2, tests whether a dynamic-programming whole-chain-optimal
+  REGEN placement dominates E17's greedy placement**
+  (`contract_photonics_compiler_optimal_placement_2026-08-23.md`).
+  Rather than E17's fixed per-event floor, a DP (shortest-path over
+  `O(16²)` candidate segments) maximizes predicted `P_chain = ∏
+  P_event(m0_i,σ)` for a REGEN-cost parameter λ, tracing a Pareto
+  frontier. Reuses E15's scorer unmodified; only the DP itself is new
+  code. **Gate 0's required cross-check against E17's already-verified
+  `greedy_place` caught a real bug**: the first `segment_m0`
+  implementation assumed every combine op adds a flat `+1` to `m[0]`,
+  true for `ROTC` but wrong for `QSUB` (production semantics: `m[0] =
+  max(m[sa], m[sb]) + 1`, and `sa`/`sb` can draw from lane 1) — 734–1330
+  mismatches per 600-trial sample before the fix, 0 after. A 76-config
+  brute-force optimality spot-check also passed clean. 2 σ_det points
+  (`[1e-6, 1e-5]`, reusing E17's informative pair; σ=1e-4 not retested,
+  already established as universally degenerate) × 9 λ values, 10,000
+  trials/cell, run twice, bit-identical. **RESULT: DOMINATES greedy,
+  decisively, at both points.** σ=1e-6: 5/9 λ values dominate outright;
+  best point uses 21.9% fewer REGEN events (2.05 vs. greedy's 2.62) at
+  equal (perfect, 1.0000) reliability. σ=1e-5: 8/9 λ values dominate;
+  best point uses 36.4% fewer events (4.24 vs. greedy's 6.67) *and*
+  improves reliability (0.9853 vs. 0.9793 — outside greedy's own 95%
+  CI, a statistically real gain, not just numerically larger). The DP's
+  own predictions remain conservative in the same direction as greedy's
+  (E17) — the standing correlation hypothesis is neither confirmed nor
+  falsified here, deliberately, since this contract reused the
+  uncorrected product model as its optimization objective. Driver:
+  `photonics/run_photonic_compiler_optimal_placement_sweep.py`.
 - **`compiler_regen_placement_sweep_frozen_v1_2026-08-23.json`** (sha256
   `b33b4a9405f9863f7c577bb67e8391d00b02a79b7b087199c80b74679c182acb`) —
   **E17, tests greedy compile-time REGEN placement** (insert a boundary
