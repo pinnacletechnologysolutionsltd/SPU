@@ -93,12 +93,33 @@ def run_chain_boundary_noisy_m0trace(pb, block, boundaries, sigma_det, rng):
 
 
 def collect(M, level, n_trials, K=16):
-    """One (M, det_level) cell: n_trials accepted, m0-binned histogram
-    over every REGEN group across all trials."""
+    """One (M, det_level) cell: n_trials accepted, two m0-binned
+    histograms over REGEN groups.
+
+    `m0_histogram_raw` pools every group observation in every trial.
+    `m0_histogram_clean` pools only observations reached with every PRIOR
+    group in that trial having succeeded, stopping (but still recording)
+    at each trial's first failure.
+
+    This distinction matters: once one group's recovered state diverges
+    from the true oracle, the corrupted state feeds forward and later
+    groups in the same trial almost never coincidentally re-match the
+    oracle -- so raw pooling mixes independent (m0, sigma)-conditioned
+    trials with contaminated, effectively-doomed continuations. A trial
+    with more REGEN events (small M) has more opportunities to carry
+    such contamination, which biases the raw per-m0 recovery rate down
+    for small M even when the underlying per-event physics is
+    M-invariant. Found post-hoc (2026-08-22) after the original
+    E16 pre-registered test, run on m0_histogram_raw, reported a
+    M=2-specific falsification that did not survive this correction
+    (contract SS9 addendum) -- 0/58 pairwise comparisons on
+    m0_histogram_clean were significant, max diff 0.029, vs. 25/128
+    significant on m0_histogram_raw, max diff 0.103."""
     boundaries = BOUNDARIES[M]
     master = make_master_rng(SEED)
     pb = PhotonicQuadrayBackend(deltaT=2.0)
-    hist = defaultdict(lambda: [0, 0])  # m0 -> [n_ok, n_total]
+    hist_raw = defaultdict(lambda: [0, 0])
+    hist_clean = defaultdict(lambda: [0, 0])
     trial = 0
     rejected = 0
     accepted = 0
@@ -109,15 +130,23 @@ def collect(M, level, n_trials, K=16):
         if blk is None:
             rejected += 1
             continue
+        clean = True
         for m0, g_ok in run_chain_boundary_noisy_m0trace(pb, blk, boundaries, level, rng):
-            hist[m0][1] += 1
+            hist_raw[m0][1] += 1
             if g_ok:
-                hist[m0][0] += 1
+                hist_raw[m0][0] += 1
+            if clean:
+                hist_clean[m0][1] += 1
+                if g_ok:
+                    hist_clean[m0][0] += 1
+                else:
+                    clean = False
         accepted += 1
     return {
         "M": M, "level": level, "n_trials": n_trials,
         "rejection": rejected / (rejected + n_trials),
-        "m0_histogram": {str(k): v for k, v in sorted(hist.items())},
+        "m0_histogram_raw": {str(k): v for k, v in sorted(hist_raw.items())},
+        "m0_histogram_clean": {str(k): v for k, v in sorted(hist_clean.items())},
     }
 
 
@@ -135,18 +164,28 @@ def main():
     for i, (M, level) in enumerate(cell_specs, 1):
         c = collect(M, level, N_TRIALS)
         results.append(c)
-        n_groups = sum(v[1] for v in c["m0_histogram"].values())
-        print("  [%3d/%3d] M=%-2d det=%9g n_groups=%8d rej=%.3f"
-              % (i, total, M, level, n_groups, c["rejection"]), flush=True)
+        n_raw = sum(v[1] for v in c["m0_histogram_raw"].values())
+        n_clean = sum(v[1] for v in c["m0_histogram_clean"].values())
+        print("  [%3d/%3d] M=%-2d det=%9g n_groups_raw=%8d n_groups_clean=%8d rej=%.3f"
+              % (i, total, M, level, n_raw, n_clean, c["rejection"]), flush=True)
         with open(OUT, "w") as f:
             json.dump({
                 "experiment": "m0_dynamic_range_sweep",
                 "contract": "contract_photonics_m0_dynamic_range_2026-08-22.md",
-                "description": ("E16: is per-REGEN-event recovery governed by "
-                                 "the local scale exponent m[0] and sigma_det, "
+                "description": ("E16 (v2, contamination-corrected 2026-08-22): "
+                                 "is per-REGEN-event recovery governed by the "
+                                 "local scale exponent m[0] and sigma_det, "
                                  "approximately independent of M? Shared "
                                  "sigma_det grid across M=16/8/4/2 for direct "
-                                 "(m0, sigma) overlap."),
+                                 "(m0, sigma) overlap. Each cell reports both "
+                                 "m0_histogram_raw (pools every group "
+                                 "observation, including ones downstream of an "
+                                 "earlier same-trial failure -- contaminated, "
+                                 "the v1 measurement that produced a spurious "
+                                 "M=2-specific falsification) and "
+                                 "m0_histogram_clean (stops counting a trial "
+                                 "after its first failure -- the corrected, "
+                                 "primary measurement)."),
                 "seed": SEED, "n_trials_per_cell": N_TRIALS,
                 "band": list(BAND), "M_K16": M_K[16], "deltaT_K": 2.0, "K": 16,
                 "M_values": M_VALUES, "det_levels": DET_LEVELS,

@@ -560,3 +560,49 @@ authorized follow-ups: (1) restrict the out-of-sample prediction to
 M∈{4,8,16} only, since that subset is close to invariant; (2) a new,
 separate contract asking what's specific to M=2 (its uniquely short,
 frequent regeneration groups are the standing structural difference).
+
+**E16 CORRECTED, same day (2026-08-22): the M=2 anomaly above was a
+measurement artifact, not real physics — CONFIRMED, and gate 6
+succeeds.** Before drafting a follow-on E17 around the M=2-specific
+finding, a code-level re-check found `run_chain_noisy` and every
+boundary-generalized descendant use only the *last* op's noise draw at
+readout (`test_regen_equivalence.py:363`) — detector noise is memoryless
+per REGEN event, not accumulated across a group, ruling out the
+"accumulated noise" framing originally proposed for E17. A follow-up
+empirical check then found the real flaw was in E16's own v1 measurement:
+its `m0_histogram_raw` pooled every group observation, including ones
+downstream of an earlier same-trial failure — a corrupted recovered
+state stays corrupted, and 59.9% of M=2's group-8 failures at the
+transition `m0` had an earlier same-trial failure. M=2 (8 REGEN events
+per trial) simply had more opportunities for this contamination than
+M=4/8/16, dragging its raw per-`m0` recovery rate down artificially.
+
+Fixed: `collect()` now also reports `m0_histogram_clean` (stops counting
+a trial at its first failure). Full 16-cell sweep rerun, reproducibility
+bit-identical. **Corrected primary test: 0/122 pairwise comparisons
+significant (was 25/128), max diff 0.029 (was 0.103) — CONFIRMED.** The
+v1 "M=2 is different" finding does not survive the correction.
+
+With M-invariance genuinely confirmed, **gate 6 (out-of-sample
+prediction) was run and succeeds**: fit `P(recover|m0,σ)` by maximum
+likelihood on the pooled corrected data (a first fit attempt had a
+grid-search range bug excluding the true optimum — caught by checking
+against training data before trusting it, then fixed), then predicted
+E13/E14's independently-frozen whole-trial curves via a product-of-
+independent-per-event-probabilities model using noiseless `m0`-
+trajectories. **All 12 crossing brackets (4 M × {99.9%,99%,95%}) overlap
+between predicted and frozen**, typically within 0.02 absolute
+probability, across four decades of σ including levels far outside E16's
+own tested grid.
+
+**This substantially closes the investigation's original objective, via
+three separable claims** (contract §10): (1) `K`/`M`/boundary placement
+→ the distribution of `m0` (architectural, established by direct code
+reading); (2) `m0`, `σ_det` → per-event recovery probability, the
+experimentally validated local law (0/122 significant, M-invariant); (3)
+that law, composed as a product over a trial's REGEN events, → whole-
+chain recovery — the independent-reconstruction claim, since it predicts
+E9/E13/E14's curves without being fit to them. See
+`spu_strategy/contract_photonics_m0_dynamic_range_2026-08-22.md` §10 for
+the full writeup; §9 is retained as documented history of the confound,
+not current.

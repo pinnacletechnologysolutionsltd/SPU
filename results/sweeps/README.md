@@ -58,7 +58,41 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
-- **`m0_dynamic_range_sweep_frozen_v1_2026-08-22.json`** (sha256
+- **`m0_dynamic_range_sweep_frozen_v2_2026-08-22.json`** (sha256
+  `c6841f14ac573e81d2900823d494530a3fab00172c6695fd6210cfdf5a56be8c`) —
+  **E16 v2, corrects a measurement confound found in v1 the same day.**
+  v1's `m0_histogram_raw` pooled every REGEN-group observation, including
+  ones downstream of an earlier same-trial failure — once a group's
+  recovered state diverges from the true oracle, it stays corrupted
+  (59.9% of M=2's group-8 failures at the transition `m0` had an earlier
+  same-trial failure). v2 adds `m0_histogram_clean`, which stops counting
+  a trial's observations at its first failure. Same 16-cell grid, same
+  30,000 trials/cell, reproducibility bit-identical (two runs). **Rerun
+  of the pre-registered primary test on the corrected histogram: 0/122
+  comparisons significant (was 25/128 on the raw histogram), max diff
+  0.029 (was 0.103) — CONFIRMED. The v1 "M=2 is different" finding was
+  entirely a contamination artifact, not real physics.** With M-invariance
+  now genuinely confirmed, gate 6 (out-of-sample prediction against
+  E13/E14's frozen curves) was run: fit `P(recover|m0,σ)` by maximum
+  likelihood on the pooled clean data (a=-4.79, β=3.19 in
+  `sigmoid(β·(a−log2(σ)−m0))`; a first fit attempt had a grid-search
+  range bug that excluded the true optimum, caught by checking against
+  training data before trusting it), then predicted E13/E14's whole-trial
+  curves via a product-of-independent-per-event-probabilities model using
+  independently-measured noiseless `m0`-trajectories. **All 12 crossing
+  brackets (4 M × {99.9%,99%,95%}) overlap between predicted and frozen**,
+  typically within 0.02 absolute recovery probability, across four
+  decades of σ including levels far outside E16's own tested grid. This
+  substantially answers the investigation's original objective: `m0`
+  (the shared scale exponent at REGEN readout) and `σ_det`, combined via
+  one per-event law and a product-of-events model, predict recovery
+  across everything this investigation has covered (E9/E13/E14's
+  independently-frozen curves reconstructed from E16's own per-group
+  data). Driver: `photonics/run_photonic_m0_dynamic_range_sweep.py`.
+- **`m0_dynamic_range_sweep_frozen_v1_2026-08-22.json`** (SUPERSEDED by
+  v2 above — retained per repo discipline against silently rewriting a
+  superseded result, do not cite its "FALSIFIED, concentrated in M=2"
+  verdict as current) (sha256
   `794160db5fd13af8eb0b724fc336b2fb6dc1514901b38fa41c9639a8dd661e5b`) —
   **E16, tests whether per-REGEN-event recovery is governed by the local
   scale exponent `m[0]` and `sigma_det`, approximately independent of
