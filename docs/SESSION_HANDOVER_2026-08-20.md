@@ -609,3 +609,60 @@ as anything beyond behavioral simulation. See
 `spu_strategy/contract_photonics_m0_dynamic_range_2026-08-22.md` §10 for
 the full writeup; §9 is retained as documented history of the confound,
 not current.
+
+**E17 (2026-08-23): compiler-controlled REGEN placement — RUN COMPLETE,
+RESULT: efficiency win confirmed, calibration falsified in greedy
+placement's favor.**
+`spu_strategy/contract_photonics_compiler_regen_placement_2026-08-23.md`.
+The natural next step after E16's design-rule consolidation: John/GTP's
+explicit next target was a *compile-time* REGEN placement pass (existing
+ISA, no new hardware) — insert a REGEN boundary whenever the noiseless
+`m0` trajectory reaches `m0_safe(σ_det, P_target=0.999)`, using E16's
+frozen law (`a=-4.79, β=3.19`) as the physical cost function driving the
+scheduling decision, rather than a fixed period `M`. This is explicitly
+framed as a calibration test of E16's law under a *structurally
+different* placement rule than it was fit on (fixed `M` → variable,
+data-dependent group sizes) — a genuine out-of-sample test of the law
+itself, not just of the compiler pass.
+
+Reused E15's `run_chain_boundary_noisy_diag` unmodified (already accepts
+arbitrary boundary lists) — only the greedy placement algorithm was new
+code. Smoke pass caught exactly the edge case flagged at freeze: σ=1e-4
+(the third test point) turned out genuinely degenerate (99th-percentile
+predicted recovery = 0.0013) — asked John directly rather than silently
+redesigning the locked grid; he chose to keep it as a reported boundary
+case. Gate 0 (noiseless correctness) clean at all three σ_det points (0
+oracle mismatches, 1,800 trials). Full run (3 × 30,000 trials),
+reproducibility bit-identical.
+
+**Result: the pre-registered calibration test FAILED — but favorably.**
+At σ=1e-5 (the point with real predicted-probability spread), four bins
+exceed the 0.03 per-bin threshold, all in the *same* direction: the
+product-of-independent-events model systematically **under**-predicts
+actual recovery (e.g. 0.721 predicted vs. 0.780 observed). Greedy,
+variable-group-size placement recovers more reliably than the fixed-`M`
+fit says it should — some group-to-group correlation the model doesn't
+capture is working in greedy placement's favor, not against it.
+
+**Efficiency (reported regardless of calibration): a clear, practical
+win.** At σ=1e-6, greedy matches the best fixed policy's 1.0 reliability
+using **2.62 mean REGEN events vs. M=2's fixed 8** (and beats M=4's
+0.9992 outright). At σ=1e-5, greedy's **0.9793** whole-trial recovery
+*exceeds every fixed-`M` option* (best fixed, M=2, only reaches 0.8941)
+while using fewer events on average (6.67 vs. 8). At σ=1e-4, no policy —
+fixed or greedy — recovers meaningfully, consistent with the calibration
+finding that this is a genuine physical boundary, not a placement
+failure.
+
+**This validates the core claim behind E17's motivation:** REGEN
+placement is a compiler optimization problem, and the *existing* SPU-13
+ISA — no new datapath hardware — already benefits from solving it that
+way. Where the E16 law's *direction* (which windows are safe) drives
+placement, actual outcomes beat both the fixed-period baseline and the
+law's own conservative quantitative prediction. Next step (not yet
+authorized): investigate the source of the favorable miscalibration
+(candidate: group-to-group correlation from re-entry magnitude carrying
+information forward that the independent-events product model discards)
+— or move toward the whole-chain-product optimization GTP described,
+now that the simpler greedy version is validated as a real improvement.
+See contract §9 for the full writeup.

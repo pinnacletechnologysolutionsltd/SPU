@@ -58,6 +58,38 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`compiler_regen_placement_sweep_frozen_v1_2026-08-23.json`** (sha256
+  `b33b4a9405f9863f7c577bb67e8391d00b02a79b7b087199c80b74679c182acb`) —
+  **E17, tests greedy compile-time REGEN placement** (insert a boundary
+  whenever the noiseless `m0` trajectory reaches `m0_safe(sigma_det,
+  P_target=0.999)`, computed from E16's frozen law `a=-4.79, β=3.19`)
+  against the pure product-of-independent-events model's own predictions
+  (`contract_photonics_compiler_regen_placement_2026-08-23.md`). Reuses
+  E15's `run_chain_boundary_noisy_diag` unmodified — only the boundary-
+  *selection* algorithm (`greedy_place`) is new. 3 σ_det points
+  (`[1e-6, 1e-5, 1e-4]`), 30,000 trials/cell, per-trial (predicted,
+  observed, n_regen) records, seed 13, run twice, bit-identical. Gate 0
+  (noiseless correctness) clean at all 3 points, 0 oracle mismatches.
+  Smoke pass confirmed σ=1e-4 is a genuinely degenerate test point
+  (99th-percentile predicted = 0.0013) — John chose to keep it locked
+  rather than swap it, reported as a boundary-case finding.
+  **RESULT: calibration FALSIFIED, in greedy placement's favor.** At
+  σ=1e-5 (the point with real predicted-probability spread), four bins
+  exceed the pre-registered 0.03 per-bin threshold, all in the same
+  direction: the model *under*-predicts actual recovery (e.g. predicted
+  0.721 vs. observed 0.780 in the [0.5,0.8) bin) — greedy, variable-
+  group-size placement recovers more reliably than the fixed-`M`-fit
+  product model says it should, consistent with some group-to-group
+  correlation the model doesn't capture working in greedy's favor.
+  **Efficiency (reported regardless): a clear win.** At σ=1e-6, greedy
+  matches the best fixed policy's 1.0 reliability using 2.62 mean REGEN
+  events vs. M=2's fixed 8 (and beats M=4's 0.9992 outright). At σ=1e-5,
+  greedy's 0.9793 whole-trial recovery *exceeds* every fixed-`M` option
+  (best fixed, M=2, only reaches 0.8941) while using fewer events on
+  average (6.67 vs. M=2's 8). At σ=1e-4, no policy recovers meaningfully
+  — consistent with the calibration finding that this is a genuine
+  boundary case, not a placement failure. Driver:
+  `photonics/run_photonic_compiler_regen_placement_sweep.py`.
 - **`m0_dynamic_range_sweep_frozen_v2_2026-08-22.json`** (sha256
   `c6841f14ac573e81d2900823d494530a3fab00172c6695fd6210cfdf5a56be8c`) —
   **E16 v2, corrects a measurement confound found in v1 the same day.**
