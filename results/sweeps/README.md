@@ -58,6 +58,40 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`corruption_support_sweep_frozen_v1_2026-08-24.json`** (sha256
+  `dc4428a8f4f3ae5e6dea2733e6c6b63fec511cd74ed0cdc72e32968b8dcf8a41`) —
+  **E21, tests whether corruption *support* `S_i` (how many of the 4
+  lane-0 components deviate, not which one or by how much) explains
+  E18's dependence, and whether it or the pre-boundary state `m0_i`
+  attenuates E20's small `op_i` association**
+  (`contract_photonics_corruption_support_2026-08-24.md`). Deterministic
+  **replay of E18–E20's exact 300,000 trials**; equivalence gate
+  0/2,000 mismatches, replay-fidelity exact match on all 24 cells
+  **plus** a strengthened element-wise ordered `(op_i, R_{i+1})`
+  sequence check against E20's frozen raw_events (catches an ordering
+  bug a matching aggregate count alone would miss), reproducibility
+  bit-identical. Two conditional re-analyses (Gate 0: does `op_i`
+  survive `m0_i` conditioning; Gate 5: does it survive `S_i`
+  conditioning) use a pooled, SS-summed-across-strata eta² — locked
+  precisely to avoid a repeat of E20's tautological `A_D` mistake —
+  reported as attenuation ratios against E20's frozen per-cell eta²,
+  not as fresh significance tests. **RESULT: `S_i` is a clean null**
+  (23/23 analyzed cells negligible, eta² 5e-8–0.0058, even cleaner than
+  `op_i`'s own 0.018–0.041). **Both conditional checks unanimous, not
+  merely majority: `op_i`'s association survives `m0_i` conditioning in
+  7/7 cells and survives `S_i` conditioning in 7/7 cells**, with
+  attenuation ratios clustering tightly around 1.0 in both (0.972–1.130
+  and 0.922–1.030) — no partial attenuation in either direction. The
+  spread hypothesis (that `op_i`'s association was really exposing
+  corruption geometry) is decisively falsified, and the `m0_i`-confound
+  possibility is decisively ruled out too. `op_i`'s small, real E20
+  association is confirmed robust to both checks but remains
+  mechanistically unexplained by either candidate — narrows the search
+  away from component count and pre-boundary state, toward something
+  more specific to the arithmetic structure of the operation itself
+  (e.g. `ROTC_thirds`'s circulant mixing vs. `ROTC_plain`/`QSUB`'s
+  simpler structure) or the actual corrupted values, not opened by this
+  contract. Driver: `photonics/run_photonic_corruption_support_sweep.py`.
 - **`discrete_corruption_descriptor_sweep_frozen_v1_2026-08-24.json`**
   (sha256 `c059d2b5b6f38f25676ce2e4425ecf20d9c93cec5aa9811e836239fcfa05264`)
   — **E20, tests whether three discrete properties of the corrupted

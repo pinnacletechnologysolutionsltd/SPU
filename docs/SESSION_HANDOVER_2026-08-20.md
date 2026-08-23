@@ -1019,3 +1019,61 @@ information upstream, toward the state or transformation immediately
 *before* the failing operation, rather than toward any one discrete
 signature of the failure itself examined so far. See contract §9 for the
 full writeup.
+
+**E21 (2026-08-24): corruption support/spread — RUN COMPLETE, RESULT:
+spread hypothesis falsified; `op_i`'s association survives both
+falsification checks, unanimously.**
+`spu_strategy/contract_photonics_corruption_support_2026-08-24.md`.
+John/GTP's explicit E21 scoping after E20: test whether corruption
+*support* `S_i` (how many of the 4 lane-0 components deviate, not which
+one or by how much — a genuinely new axis, distinct from E19's
+magnitude and E20's identity/sign) explains E18's dependence, and
+whether `S_i` attenuates E20's small `op_i` association — run as a
+support-conditioned attenuation analysis (not formal mediation, since
+`op_i → S_i → R_{i+1}` isn't established as a causal chain), with a
+`m0_i` confound check (Gate 0) run first and given explicit interpretive
+precedence.
+
+Halted before freeze on five amendments: renaming "Gate 5 mediation" to
+"support-conditioned attenuation" throughout; locking the pooled
+conditional-eta² estimator precisely (SS_between and SS_total summed
+across strata, divided once — not an `n`-weighted average of per-stratum
+eta² values, a different, non-equivalent estimator); stating explicitly
+that Gates 0 and 5 are descriptive re-analyses of E20's already-frozen 7
+cells, not new significance tests; fixing an `m0_i`/`m0_{i+1}` conflation
+in outcome 4's wording and giving Gate 0 explicit interpretive
+precedence over outcomes 1–3; and strengthening replay fidelity beyond
+aggregate counts to an element-wise ordered `(op_i, R_{i+1})` sequence
+check against E20's frozen raw_events.
+
+Gate 0a (equivalence, hard): 0/2,000 mismatches. Gate 0b (replay
+fidelity, hard): exact match on all 24 cells, **plus** the new
+ordered-sequence check, exact match, all 24 cells. Full run +
+reproducibility bit-identical (~11 minutes each).
+
+**Result:** `S_i` is a clean null across its own 24-cell family — 23/23
+analyzed cells negligible, `eta2` 5.2e-08–0.0058, even cleaner than
+`op_i`'s own 0.018–0.041 from E20. Both conditional checks came back
+**unanimous** (7/7 cells, not just the required majority of 4/7):
+`op_i`'s association survives `m0_i` conditioning (Gate 0) and survives
+`S_i` conditioning (Gate 5), with attenuation ratios clustering tightly
+around **1.0** in both (0.972–1.130 and 0.922–1.030) — no partial
+attenuation in either direction, not a borderline result. The spread
+hypothesis is decisively falsified, and the `m0_i`-confound possibility
+is decisively ruled out too — `op_i`'s small, real E20 association holds
+up against both checks this session put in front of it.
+
+**Interpretation:** the investigation has now ruled out error magnitude
+(E19), component identity/sign (E20), corruption support/cardinality
+(E21), and the pre-boundary trajectory state `m0_i` (E21 Gate 0) as
+explanations for `op_i`'s association. What's left unexplained points
+toward something more specific to the *arithmetic structure* of the
+operation itself — `ROTC_thirds`'s circulant mixing (`F,G,H` coefficients)
+versus `ROTC_plain`'s pure permutation or `QSUB`'s elementwise
+subtraction — or the actual corrupted *values* rather than their count
+or position. Not established, not opened by this contract (§8) — a
+candidate direction for a possible E22, alongside the still-deferred
+`ΔS_i` (support before/after the op, requires new mid-group
+instrumentation the simulator doesn't currently expose) and the raw
+corruption mask (`M_i`, retained in E21's evidence but not analyzed).
+See contract §9 for the full writeup.
