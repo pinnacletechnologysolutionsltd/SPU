@@ -6,10 +6,12 @@ REGEN datapath (`software/tests/test_regen_equivalence.py`), not RTL or
 silicon. Do not cite anything here as `silicon-verified` without a
 matching entry in [`docs/hardware_evidence.md`](hardware_evidence.md) —
 none exists yet. This document answers a design question raised by the
-K=16 detector-noise anomaly investigation (E9–E16, `results/sweeps/`,
+K=16 detector-noise anomaly investigation (E9–E16) and now, as of the
+E17 chain, gives a validated compile-time answer to it (`results/sweeps/`,
 frozen contracts in `spu_strategy/`): **given a logical optical
 computation of depth K, how should REGEN boundaries be placed so that
-exact digital recovery stays reliable?**
+exact digital recovery stays reliable, and how few of them can a
+compiler get away with while still meeting that bar?**
 
 ## 1. The validated law
 
@@ -112,50 +114,127 @@ sigma_det,max(m0_worst, P_target) = 2^(a − m0_worst − ln(P_target/(1−P_tar
 This is the same formula as §2 step 3, solved for `sigma_det` instead of
 `m0`. Use whichever direction the actual design constraint runs.
 
-## 4. Future direction (not specified here): REGEN as a placement problem
+## 4. Compile-time REGEN placement — validated (E17 chain)
 
-The `M-invariance` result (§1) implies a REGEN policy is not required to
+The `M`-invariance result (§1) implies a REGEN policy is not required to
 be periodic at all — it only needs to keep `m0 < m0,safe(sigma_det,
 P_target)` at every readout. That reframes REGEN placement from "pick a
-constant `M`" to an optimization: minimize REGEN frequency subject to
-`m0 < m0,safe`. Two different architectures could implement this, and
-they are not the same proposal:
+constant `M`" to an optimization: minimize REGEN events subject to that
+constraint. Since `m0`'s trajectory for a *given* op sequence and
+initial magnitude band is computable in advance (§2 step 1), this can be
+done entirely at compile time, using the *existing* ISA (`.block K` at
+compiler-chosen points, not a fixed period) — no new datapath hardware.
+This section was "future work, not specified here" in the previous
+revision of this document; it is now validated, with concrete numbers.
 
-- **A runtime, state-adaptive controller** — REGEN whenever the *current*
-  `m0` reaches `m0,safe`, decided dynamically as the computation runs.
-  Handles data-dependent magnitude (the same program, different inputs,
-  different `m0` trajectories) but needs the datapath to expose `m0` to
-  a comparator and gate a REGEN trigger from it — new hardware, not just
-  new firmware.
-- **A static, compile-time placement** — since `m0`'s trajectory for a
-  *given* op sequence and initial magnitude band is computable in
-  advance (exactly how §2 step 1 computes it for the fixed-`M` rule
-  above), a compiler could place REGEN boundaries only where the
-  recoverability constraint actually requires them, using the *existing*
-  ISA (`.block K` at compiler-chosen points, not a fixed period) — no
-  new hardware, but only correct for programs whose magnitude range is
-  known statically, not genuinely data-dependent ones.
+**Algorithm 1 — greedy threshold placement**
+(`contract_photonics_compiler_regen_placement_2026-08-23.md`, E17):
+walk the op sequence; after each op updates `m[0]`, if `m[0] ≥
+m0,safe(sigma_det, P_target)`, place a REGEN boundary there (reference
+implementation: `photonics/run_photonic_compiler_regen_placement_sweep.py`,
+`greedy_place`). **Result:** beats every fixed-`M` policy tested, on
+both event count and reliability. At `sigma_det=1e-6`: 2.62 mean REGEN
+events for 1.0000 (perfect) recovery, vs. the best fixed policy's 8
+events for the same reliability. At `sigma_det=1e-5`: 6.67 mean events
+achieving 0.9793 recovery, exceeding *every* fixed-`M` option tested
+(the best fixed policy, `M=2`, only reached 0.8941).
 
-Both are **explicitly not specified by this document** — each needs its
-own contract (Spec Author role, `spu_strategy/contract_template.md`).
-The static variant is the cheaper, more immediately actionable one (only
-a compiler-pass argument, not a new comparator/trigger path in the
-datapath) and would be the natural first step; the runtime controller
-covers a strictly larger set of cases (mid-run data-dependence) at
-significantly larger hardware cost. Neither is validated by this
-document or by E9–E16 — both remain future work, and both would need
-their own noiseless-trajectory-based verification methodology before any
-correctness claim, following §2's cite of
-`run_photonic_m0_dynamic_range_sweep.py`'s reference implementation.
+**Algorithm 2 — whole-chain-optimal placement**
+(`contract_photonics_compiler_optimal_placement_2026-08-23.md`, E17
+Part 2): rather than a uniform per-event floor, a dynamic program
+(shortest path over `O(K²)` candidate segments, since the exact oracle
+trajectory is placement-independent pure algebra) maximizes predicted
+whole-chain `P_chain = ∏ P_event(m0_i, sigma_det)` for a REGEN-cost
+parameter `λ`, trading safety margin unevenly across events rather than
+enforcing it uniformly (reference implementation:
+`photonics/run_photonic_compiler_optimal_placement_sweep.py`,
+`optimal_placement`). **Result:** dominates greedy. At `sigma_det=1e-6`
+(`λ=0.01`): 21.9% fewer REGEN events (2.05 vs. 2.62) at equal, perfect
+reliability. At `sigma_det=1e-5`: 36.4% fewer events (4.24 vs. 6.67)
+*and* higher reliability (0.9853 vs. 0.9793 — outside greedy's own 95%
+CI, a real gain, not just a larger point estimate).
 
-## 5. Non-goals
+**Validated against the real simulator, not just its own objective**
+(`contract_photonics_compiler_montecarlo_optimum_2026-08-23.md`, E17
+Part 3): both algorithms above choose schedules by maximizing a
+*predicted* score built from §1's law, which is known to under-predict
+actual recovery in aggregate (see the residual issue, below). Whether
+that conservative bias distorts *which* schedule looks best — not just
+the predicted magnitude — was tested directly: for 20 sampled blocks at
+each of the two `sigma_det` points above, every same-event-count
+alternative to the DP's chosen schedule (up to 500 per block, fully
+enumerated when `≤500`) was Monte-Carlo evaluated against the real
+noisy simulator using common random numbers for a paired comparison.
+**No alternative ever beat the DP's schedule, at either `sigma_det`
+(20/20 blocks each).** The one block with real statistical power (not
+saturated at perfect recovery — 39 of 40 sampled blocks were, which
+limits how much most of them can distinguish "the true optimum" from
+"any reasonable schedule ties at the ceiling") showed the DP's schedule
+was the actual best among all 91 fully-enumerated legal alternatives —
+not a sampling artifact, not a ceiling tie.
+
+**Residual, open issue — do not use the placement results to paper over
+this:** §1's law itself is measurably conservative in *magnitude*
+(predicted recovery is systematically lower than observed, in every
+noise-level bin with real spread — e.g. `sigma_det=1e-5`: 0.721
+predicted vs. 0.780 observed in one bin). E17 Part 3's finding is that
+this conservatism does not appear to distort *schedule ranking* at the
+operating points tested — a materially weaker and more precise claim
+than "the model is correct." The mechanism behind the magnitude gap
+(candidate: REGEN events within a trial are not fully independent, so
+the product-of-marginals model discards real correlation) remains
+uncharacterized and is a separate, not-yet-authorized research
+question, deliberately kept apart from the placement-validation result
+above (`contract_photonics_compiler_optimal_placement_2026-08-23.md`
+§1: reusing the same uncorrected model as the optimization objective
+was a deliberate choice, specifically so the placement result and the
+calibration question could not be conflated).
+
+**Scope of the placement claim, stated precisely:** validated only at
+`λ=0.01` and the two `sigma_det` values where §1's law predicts high
+recovery — an operating regime where most sampled blocks saturate at
+perfect recovery (§ above). A genuinely discriminating test — deliberately
+choosing an operating point where `0.2 ≲ P_recover ≲ 0.8` for most
+blocks, so schedule differences have real statistical leverage — has not
+been run. Until it is, "near-optimal" should be read as established at
+the high-reliability end of the operating range, not proven in general.
+
+## 5. Runtime adaptive REGEN — still unvalidated, future work
+
+A **runtime, state-adaptive controller** — REGEN whenever the *current*
+`m0` reaches `m0,safe`, decided dynamically as the computation runs,
+rather than precomputed at compile time — remains a materially
+different, larger proposal from §4's compile-time placement. It would
+handle genuinely data-dependent magnitude (the same program, different
+inputs, different `m0` trajectories) that a compile-time schedule
+cannot, but needs the datapath to expose `m0` to a comparator and gate a
+REGEN trigger from it — new hardware, not just a new compiler pass.
+**Explicitly not specified by this document, and not validated by
+E9–E17** — needs its own contract (Spec Author role,
+`spu_strategy/contract_template.md`), covering at minimum: where the
+`m0`-vs-threshold comparator lives in the pipeline, what happens on the
+cycle a threshold crossing is detected mid-operation, and whether
+`m0,safe` is a compile-time constant or a runtime-configurable register.
+Given §4 already validates the compile-time alternative for static
+magnitude ranges, the case for taking on this hardware cost rests on how
+much genuinely data-dependent behavior SPU-13 programs are expected to
+have in practice — not evaluated here.
+
+## 6. Non-goals
 
 - No RTL or silicon claim. Nothing here is `testbench-verified` for any
   hardware target; it is a simulation-derived design guideline, stated
   as such per the repo's silicon-claims discipline.
-- No adaptive-REGEN specification (§4) — a future, separate contract.
+- No runtime-adaptive-REGEN specification (§5) — a future, separate
+  contract; genuinely unvalidated, unlike §4's compile-time placement.
+- No claim that §4's "near-optimal" result generalizes beyond the
+  tested, high-reliability operating point (§4's scope note) — a
+  less-saturated operating point has not been tested.
+- No resolution of the magnitude-conservatism residual (§4) — a
+  separate, open research question, not required for §4's placement
+  results to hold.
 - No generalization beyond the detector-noise axis (`sigma_phi`,
-  `sigma_amp` were held at 0 throughout E9–E16; this law does not cover
+  `sigma_amp` were held at 0 throughout E9–E17; this law does not cover
   phase or amplitude noise).
 - No claim that `a=-4.79, β=3.19` are universal constants independent of
   `SCALE`, `deltaT`, or the specific circulant/ROTC catalog used —
@@ -174,4 +253,15 @@ correctness claim, following §2's cite of
   `contract_photonics_regen_placement_2026-08-22.md` (E13),
   `contract_photonics_regen_placement_m2_2026-08-22.md` (E14) — the
   independently-frozen curves §1's law reconstructs out of sample.
+- `contract_photonics_compiler_regen_placement_2026-08-23.md` (E17) —
+  §4 Algorithm 1 (greedy threshold placement), its frozen results.
+- `contract_photonics_compiler_optimal_placement_2026-08-23.md` (E17
+  Part 2) — §4 Algorithm 2 (whole-chain-optimal DP placement), its
+  frozen results, and the `segment_m0` `QSUB`-lane-1-dependency bug
+  found and fixed by that contract's own cross-check gate (worth
+  reading before implementing anything similar).
+- `contract_photonics_compiler_montecarlo_optimum_2026-08-23.md` (E17
+  Part 3) — the direct Monte-Carlo validation of §4's placement
+  results, its common-random-numbers methodology, and the honest power
+  caveat (39/40 sampled blocks saturated) that qualifies "near-optimal."
 - `results/sweeps/README.md` — evidence artifact index, sha256 hashes.

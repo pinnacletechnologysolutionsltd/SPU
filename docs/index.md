@@ -45,8 +45,9 @@ what exactness buys, what has been demonstrated, and what SPU-13 is not.
 - **[Mathematical foundations](knowledge/MATHEMATICAL_FOUNDATIONS.md)** and the
   **[ISA reference](knowledge/isa_reference.md)**
 - **[Photonic REGEN placement design rule](PHOTONIC_REGEN_PLACEMENT_DESIGN_RULE.md)** —
-  simulation-derived law (`m0`, `sigma_det` → recovery probability) and how
-  to place REGEN boundaries; not a silicon claim
+  simulation-derived law (`m0`, `sigma_det` → recovery probability) plus a
+  validated compile-time placement compiler (greedy + DP, beats fixed-period
+  REGEN); not a silicon claim
 
 ## 🔧 For builders
 
