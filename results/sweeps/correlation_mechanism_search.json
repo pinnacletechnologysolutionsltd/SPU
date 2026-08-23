@@ -1,0 +1,59 @@
+{
+ "experiment": "correlation_mechanism_search",
+ "contract": "contract_photonics_correlation_mechanism_2026-08-23.md",
+ "candidate_sigmas": [
+  1e-06,
+  3e-06,
+  1e-05,
+  3e-05,
+  0.0001,
+  0.0003
+ ],
+ "n_search_trials": 20000,
+ "min_eligible_cells": 20,
+ "min_pairs_represented": 5,
+ "report": [
+  {
+   "sigma_det": 1e-06,
+   "n_eligible_cells": 0,
+   "pairs_represented": 0,
+   "clears_bar": false
+  },
+  {
+   "sigma_det": 3e-06,
+   "n_eligible_cells": 0,
+   "pairs_represented": 0,
+   "clears_bar": false
+  },
+  {
+   "sigma_det": 1e-05,
+   "n_eligible_cells": 1,
+   "pairs_represented": 1,
+   "clears_bar": false
+  },
+  {
+   "sigma_det": 3e-05,
+   "n_eligible_cells": 21,
+   "pairs_represented": 6,
+   "clears_bar": true
+  },
+  {
+   "sigma_det": 0.0001,
+   "n_eligible_cells": 4,
+   "pairs_represented": 2,
+   "clears_bar": false
+  },
+  {
+   "sigma_det": 0.0003,
+   "n_eligible_cells": 0,
+   "pairs_represented": 0,
+   "clears_bar": false
+  }
+ ],
+ "chosen": {
+  "sigma_det": 3e-05,
+  "n_eligible_cells": 21,
+  "pairs_represented": 6,
+  "clears_bar": true
+ }
+}

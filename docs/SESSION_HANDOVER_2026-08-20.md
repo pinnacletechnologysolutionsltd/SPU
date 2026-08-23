@@ -817,3 +817,69 @@ not a placement-ranking effect. The correlation-mechanism investigation
 remains open and motivated by the magnitude gap alone, not by any
 demonstrated placement-quality consequence. See contract §10 for the
 full writeup.
+
+**E18 (2026-08-23): correlation/calibration mechanism investigation —
+RUN COMPLETE, RESULT: REAL DEPENDENCE FOUND, decisively.**
+`spu_strategy/contract_photonics_correlation_mechanism_2026-08-23.md`.
+John/GTP's explicit E18 scoping after E17 Part 4: don't modify the
+production DP yet — first directly measure whether `P(R_{i+1}|m0_{i+1},
+R_i) ≠ P(R_{i+1}|m0_{i+1})` under the real simulator. Almost the entire
+simulation layer is reused verbatim from E16 (`run_chain_boundary_noisy_m0trace`)
+— the key realization was that E16's own contamination correction
+*discarded exactly this data* (its "clean arrival" rule stops counting
+a trial at its first failure specifically to get an unbiased marginal
+estimate); E18 goes back to what was discarded and studies it directly
+rather than treating it as noise to remove.
+
+Halted before freeze on four amendments: search/inference dataset
+separation with disjoint RNG namespaces (the search that locates
+`σ_det` must never contribute observations to the inferential test);
+a two-part statistical-and-material dependence criterion (Bonferroni CI
+excludes zero *and* `|diff|>0.05`, not either alone); a deterministic
+`m0` binning hierarchy (exact integer → width-2 → width-4 → exclude,
+decided by sample count only, frozen before any significance was
+computed — no analyst-chosen binning after seeing results); and a
+quantified search acceptance bar (`≥20` eligible cells, `≥5/7` position
+pairs represented). Fixed `M=2` placement, not DP — a controlled
+measurement question, not a placement-optimization one.
+
+Gate 0 (search, disjoint namespace) located `σ=3e-5` cleanly. Gate 1
+(smoke, 2,000 trials) already showed a striking preliminary signal (3/3
+eligible cells materially dependent) — explicitly not treated as the
+result, since the actual inferential dataset was the full 300,000-trial
+run that followed. Both full runs (reproducibility) took only ~11
+minutes each — the cheapest contract in the E17/E18 chain by far, since
+this reuses a single fixed placement with no candidate enumeration.
+Bit-identical.
+
+**Result: 24/30 tested cells (80%) both statistically and materially
+dependent** (Bonferroni-adjusted CI excludes zero, `|diff|>0.05`).
+**29 of 30 cells agree on direction: `R_i=False → lower P(R_{i+1})` —
+failures cluster** — the *opposite* of the originally proposed "noise
+anti-correlates" mechanism, exactly the kind of finding the contract's
+own falsification criteria were built to let stand on its own terms
+rather than force into the expected story. Effect sizes are large (up
+to 78.5 percentage points, `z>100` on several cells, visible even at
+the smoke pass's `n=2,000`) and vary systematically with `m0_{i+1}`:
+largest near the recovery ceiling, vanishing past the steep part of the
+cliff (`m0=12`, where both `R_i` states are already near zero).
+
+**What this establishes and what it doesn't:** `m0` is not a
+sufficient statistic for next-event recovery probability — plausibly
+because it's a coarse bit-length descriptor that discards *which*
+specific corrupted value a failed group's BQE rounding produced (a
+concrete, testable follow-on hypothesis, not established here). **This
+does not reopen E17 Part 3/4's placement-ranking question.**
+`greedy_place`/`optimal_placement` choose boundaries from the
+*noiseless* trajectory, before any `R_i` exists — a compile-time
+optimizer structurally cannot condition on a stochastic per-trial
+outcome, so this correlation, however large, isn't exploitable by the
+kind of compiler E17 built. What it *does* explain is *why* whole-chain
+success has been conservatively mispredicted throughout E9–E17:
+positively correlated events push a chain's true joint success above
+what the naive independent-events product model predicts — exactly the
+direction of every conservative-calibration finding in this
+investigation's history. One caveat: pair 0 (groups 1→2) never produced
+an eligible cell at any binning resolution at this operating point — the
+finding is established across 6 of the 7 adjacent positions, not all 7.
+See contract §10 for the full writeup.

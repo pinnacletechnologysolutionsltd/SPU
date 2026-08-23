@@ -58,6 +58,41 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`correlation_mechanism_sweep_frozen_v1_2026-08-23.json`** (sha256
+  `c12f8589f8d4a91337c379ff934bab4db6f34fcb2d09b12110781b9e02f576cf`) +
+  **`correlation_mechanism_search_frozen_v1_2026-08-23.json`** (sha256
+  `f15163fa19c7e3798a6ae2d504b02e42bbbe442bb59bc0a85bff0f13cc9afcf4`) —
+  **E18, directly tests whether `R_i` (event i's success/failure)
+  predicts `R_{i+1}` beyond `m0_{i+1}` alone**
+  (`contract_photonics_correlation_mechanism_2026-08-23.md`), at fixed
+  `M=2` placement (not DP — a measurement question, not a placement
+  one). Reuses E16's `run_chain_boundary_noisy_m0trace` verbatim — no
+  new simulation code, only the "clean arrival up to `i`" pair-collection
+  rule, a deterministic `m0` binning hierarchy (exact integer → width-2
+  → width-4 → exclude, decided by sample count only, frozen before any
+  significance was computed), and a search/inference split using
+  disjoint RNG namespaces and disjoint trials (search: 20,000
+  trials/candidate at 6 `σ_det` values, locked `σ=3e-5`; inference:
+  300,000 fresh trials, run twice, bit-identical). **RESULT: REAL
+  DEPENDENCE FOUND, decisively** — 24/30 tested cells (80%) both
+  statistically and materially dependent (`|diff|>0.05` with a
+  Bonferroni-adjusted CI excluding zero), 29/30 agreeing on direction:
+  `R_i=False → lower P(R_{i+1})` (failures cluster) — the *opposite* of
+  the originally proposed "noise anti-correlates" mechanism. Effect
+  sizes are large (up to 78.5 points, `z>100` on several cells) and vary
+  systematically with `m0_{i+1}` (largest near the ceiling, vanishing
+  past the steep part of the recovery cliff). Establishes `m0` is not a
+  sufficient statistic for next-event recovery — plausibly because it's
+  a coarse bit-length descriptor that discards which specific corrupted
+  value a failed group produced. **Does not contradict E17 Part 3/4**:
+  placement decisions use the noiseless trajectory, computed before any
+  `R_i` exists, so this correlation — however large — isn't exploitable
+  by a compile-time optimizer. It explains *why* whole-chain success has
+  been conservatively mispredicted throughout E9–E17 (positively
+  correlated events push true joint success above the naive
+  independent-product estimate), without reopening the placement
+  question E17 already closed. Driver:
+  `photonics/run_photonic_correlation_mechanism_sweep.py`.
 - **`compiler_montecarlo_lesssaturated_sweep_frozen_v1_2026-08-23.json`**
   (sha256 `306be148d6d118b67d82d6b5cdea659b2002e8b2e9e158e3ada9ecee5654bc5b`)
   + **`compiler_montecarlo_lesssaturated_search_frozen_v1_2026-08-23.json`**
