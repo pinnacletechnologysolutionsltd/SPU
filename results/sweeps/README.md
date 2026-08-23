@@ -58,6 +58,40 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`compiler_montecarlo_lesssaturated_sweep_frozen_v1_2026-08-23.json`**
+  (sha256 `306be148d6d118b67d82d6b5cdea659b2002e8b2e9e158e3ada9ecee5654bc5b`)
+  + **`compiler_montecarlo_lesssaturated_search_frozen_v1_2026-08-23.json`**
+  (sha256 `756211493c37736f82dbe5f98cda4b6ae69f774e75e2eeb7295b5cb7e3a2abb5`)
+  — **E17 Part 4, repeats E17 Part 3's Monte-Carlo closeness-to-optimum
+  test at a deliberately located, non-saturated operating point**
+  (`contract_photonics_compiler_montecarlo_lesssaturated_2026-08-23.md`),
+  closing E17 Part 3's power gap (39/40 blocks saturated there).
+  A new operating-point search (gate 0c) swept a candidate `σ_det` grid
+  measuring the count of blocks landing in `[0.2,0.8]` recovery at
+  reduced precision; the first 8-point grid's best candidate (5e-5)
+  landed at 9/20, one short of the `≥10/20` bar — HALTed and reported
+  per the contract's own rule against silently loosening the bar; John
+  chose to widen the grid (added 4.5e-5/5.5e-5/6e-5) rather than lower
+  it. `σ=4.5e-5` cleared the bar at 12/20 (search precision). All other
+  machinery (CRN, `score_schedule_addressable`, paired-difference
+  statistics) reused verbatim from E17 Part 3, not re-gated. Full run
+  (20 blocks, up to 500 candidates each), reproducibility bit-identical
+  (~125 minutes/run). **RESULT: CONFIRMED — 20/20 blocks rank-1 or
+  CI-tied-for-best, 0/20 beaten by any alternative**, and this time
+  with real power: **11/20 blocks (55%) landed genuinely in the
+  `[0.2,0.8]` band**, versus E17 Part 3's 1/40 (2.5%). A quick "discrete
+  `N`-jump" explanation floated for the search grid's non-monotonic
+  in-band counts was checked against the per-block data and found
+  wrong before being written into the record — every block's own
+  recovery decreases perfectly monotonically with `σ_det`; the
+  aggregate non-monotonicity is just a superposition of many
+  individually-monotonic curves crossing the target band at different
+  points. Across both E17 Part 3 (saturated) and E17 Part 4
+  (non-saturated) operating regimes, no evidence has been found that
+  E16's conservative calibration bias distorts DP's schedule ranking —
+  it looks like a magnitude effect, not a placement-ranking effect,
+  within everything tested so far. Driver:
+  `photonics/run_photonic_compiler_montecarlo_lesssaturated_sweep.py`.
 - **`compiler_montecarlo_optimum_sweep_frozen_v1_2026-08-23.json`** (sha256
   `4bf394082692abbe1a9d32516d814dc0728d735c0b6dd9653efda4327a67b05d`) —
   **E17 Part 3, tests whether E17 Part 2's DP schedule is genuinely the

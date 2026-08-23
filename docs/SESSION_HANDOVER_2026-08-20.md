@@ -774,3 +774,46 @@ ranking-quality gap at a less-saturated operating point (e.g. a more
 aggressive λ). A follow-on contract targeting that regime — not this
 one — would give the method a fairer test. See contract §10 for the
 full writeup.
+
+**E17 Part 4 (2026-08-23): the less-saturated follow-up — RUN COMPLETE,
+RESULT: DP near-optimal CONFIRMED, this time with real statistical
+power.**
+`spu_strategy/contract_photonics_compiler_montecarlo_lesssaturated_2026-08-23.md`.
+Directly closes E17 Part 3's stated weakness (39/40 blocks saturated at
+ceiling) by deliberately locating an operating point where recovery
+lands in `[0.2,0.8]` for a substantial fraction of blocks. Since no
+formula predicts where that band falls in advance, a new gate 0c
+searches a `σ_det` candidate grid — genuinely HALTed once (initial
+8-point grid's best candidate landed at 9/20, one short of the `≥10/20`
+bar; reported rather than silently loosened; John chose to widen the
+grid rather than lower the bar), then locked `σ=4.5e-5` at 12/20
+in-band. A "discrete `N`-jump" guess for the grid's non-monotonic
+pattern was checked against the per-block data during the ~2-hour wait
+and found wrong — every block's own recovery decreases perfectly
+monotonically with `σ_det`; the aggregate non-monotonicity is just a
+superposition of many individually-shifted monotonic curves — corrected
+in the contract before it could sit on record as an unverified guess.
+
+All other machinery (CRN, `score_schedule_addressable`, paired-
+difference statistics) reused verbatim from E17 Part 3, not re-gated.
+Full run took ~125 minutes (near the low end of the smoke-pass
+extrapolation); reproducibility bit-identical.
+
+**Result: CONFIRMED, decisively — 20/20 blocks rank-1 or
+CI-tied-for-best, 0/20 beaten by any evaluated alternative** (up to 501
+candidates per block). This time **11/20 blocks (55%) landed genuinely
+in the target band**, up from E17 Part 3's 1/40 (2.5%) — a real,
+well-powered result, not one exhaustively-tested block carrying the
+whole finding. The rare non-rank-1 cases (3 of 20 blocks) are all at
+the noise floor (recovery ≈0.0000–0.0015) — not a meaningful ranking
+difference.
+
+**Where this leaves the standing correlation question:** across two
+very different operating regimes (E17 Part 3's near-ceiling and E17
+Part 4's genuinely mixed recovery), no evidence has been found that
+E16's conservative calibration bias distorts DP's schedule *ranking* —
+it looks like a magnitude effect throughout everything tested so far,
+not a placement-ranking effect. The correlation-mechanism investigation
+remains open and motivated by the magnitude gap alone, not by any
+demonstrated placement-quality consequence. See contract §10 for the
+full writeup.
