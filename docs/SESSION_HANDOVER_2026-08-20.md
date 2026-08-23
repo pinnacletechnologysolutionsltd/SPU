@@ -883,3 +883,60 @@ investigation's history. One caveat: pair 0 (groups 1→2) never produced
 an eligible cell at any binning resolution at this operating point — the
 finding is established across 6 of the 7 adjacent positions, not all 7.
 See contract §10 for the full writeup.
+
+**E19 (2026-08-23): corrupted-state sufficiency — RUN COMPLETE, RESULT:
+error magnitude does NOT explain E18's gap, decisively.**
+`spu_strategy/contract_photonics_corrupted_state_sufficiency_2026-08-23.md`.
+John/GTP's explicit E19 scoping after E18: don't fit a corrected model
+or touch the compiler yet — first ask whether E18's `R_i`-dependence is
+really about *how wrong* a failed group's recovered state is (`err_i`,
+a compact descriptor exposed from state E16's scoring function already
+computes and discards) or whether *any* deviation triggers a similar
+downstream effect regardless of size. A deterministic **replay of E18's
+exact 300,000 trials** (same seed, `σ=3e-5`, `M=2`), scoped to E18's own
+24 materially-dependent cells — no new operating-point search needed.
+
+Halted before freeze on seven amendments, the most important being an
+explicit attenuation metric `A=(p_small−p_false)/(p_true−p_false)`
+replacing vague "statistically indistinguishable/closer to" language,
+with frozen numerical thresholds (`A≥0.5` per cell, `≥12/24` cells for
+the majority classification) — chosen before seeing results. Also:
+explicit acknowledgment that the 24 cells are E18-selected (dependent
+cells), not an unbiased sample; hard HALT conditions (not advisory) on
+both the equivalence and replay-fidelity gates; and consistent
+"error-magnitude descriptor" terminology to keep the conclusion
+appropriately narrow (`err_i` is one partial summary of the corrupted
+state, not the whole of it).
+
+Gate 0a (equivalence, hard): 0/2,000 mismatches. Gate 0b (replay
+fidelity): confirmed proportional at smoke scale. Full run + reproducibility
+bit-identical (~11 minutes each, same as E18 — a deterministic replay of
+the same trial count).
+
+**Result: 13/24 cells analyzed (11 excluded for insufficient large-error
+samples), 13/13 negligible, 0 substantial — clears the `≥12/24` bar
+outright.** Attenuation `A` is essentially zero everywhere (`-0.010` to
+`+0.020`, every CI far below the `0.5` threshold). **A genuinely
+interesting structural finding surfaced alongside the exclusions,
+reported honestly rather than treated as mere power shortfall:** `err_i`
+is overwhelmingly exactly `1` in nearly every cell — several excluded
+cells show **zero** `err_i>1` cases across the full 300,000 trials, and
+**position pair 1 (groups 2→3) shows this at every one of its bins**,
+never producing a large error when it fails. A secondary, exploratory
+observation (not the primary classification): the stratification
+direction is mixed and appears to track `m0_{i+1}` region (counter-
+intuitive at the transition zone, intuitive deeper in the cliff) — noted
+as a lead for a future contract, not an established effect given how
+thin the large-error samples are.
+
+**Interpretation:** error magnitude is ruled out as the missing
+variable — whatever `R_i` carries beyond `m0_{i+1}` is carried by the
+*fact* of failure, not by how far the recovery missed. Plausible reading:
+the deterministic exact arithmetic downstream of REGEN doesn't treat a
+"slightly wrong" input differently from a "very wrong" one — both are
+just wrong integers entering the same transform, with `m0` incrementing
+identically regardless of magnitude. This points toward a *qualitative*
+mechanism (which component deviated, its sign, the op type active at
+failure) as the next hypothesis for a separate, later, not-yet-authorized
+E20 — not established by this contract, which only rules magnitude out.
+See contract §9 for the full writeup.

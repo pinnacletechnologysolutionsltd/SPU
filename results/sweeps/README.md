@@ -58,6 +58,32 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`corrupted_state_sufficiency_sweep_frozen_v1_2026-08-23.json`**
+  (sha256 `642496a317d9edae7cebde0b926d272e6d0115d4bedb87e344b6bc523c14f775`)
+  — **E19, tests whether the *magnitude* of a failed event's recovery
+  error (`err_i`) explains E18's `R_i`-conditioned dependence**
+  (`contract_photonics_corrupted_state_sufficiency_2026-08-23.md`).
+  `err_i` isn't invented — it's exposed from state the simulator already
+  computes and discards (`rec[0]` vs `qr[0]`, already compared inside
+  E16's frozen scoring function). A deterministic **replay of E18's
+  exact 300,000 trials** (same seed, same `σ=3e-5`, same `M=2`), scoped
+  to E18's own 24 materially-dependent cells — no new operating-point
+  search needed. Hard equivalence gate (0/2,000 mismatches) before
+  trusting the new instrumentation; reproducibility bit-identical.
+  **RESULT: `err_i` does NOT explain the gap, decisively** — 13/24
+  cells analyzed (11 excluded for insufficient large-error samples),
+  **13/13 negligible, 0 substantial** (attenuation metric `A` ranging
+  `-0.010` to `+0.020`, every CI far below the `0.5` threshold). A
+  genuinely interesting structural finding surfaced alongside the
+  exclusions: `err_i` is overwhelmingly exactly `1` in nearly every
+  cell, and position pair 1 (groups 2→3) shows **zero** `err_i>1`
+  cases across all 300,000 trials at any `m0` bin. Regardless of
+  whether a failure's error was minimal or larger, subsequent recovery
+  stays similarly depressed — ruling out error *magnitude* as the
+  missing variable and pointing toward a qualitative mechanism (which
+  component deviated, its sign, the op type active at failure) as the
+  next hypothesis, not established here. Driver:
+  `photonics/run_photonic_corrupted_state_sufficiency_sweep.py`.
 - **`correlation_mechanism_sweep_frozen_v1_2026-08-23.json`** (sha256
   `c12f8589f8d4a91337c379ff934bab4db6f34fcb2d09b12110781b9e02f576cf`) +
   **`correlation_mechanism_search_frozen_v1_2026-08-23.json`** (sha256
