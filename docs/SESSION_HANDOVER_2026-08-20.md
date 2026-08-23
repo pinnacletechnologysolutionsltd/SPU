@@ -1077,3 +1077,38 @@ candidate direction for a possible E22, alongside the still-deferred
 instrumentation the simulator doesn't currently expose) and the raw
 corruption mask (`M_i`, retained in E21's evidence but not analyzed).
 See contract §9 for the full writeup.
+
+**E18–E21 descriptor-search campaign CLOSED 2026-08-24 — explicit
+decision, not a pause.** John/GTP's call after reviewing E21: the
+clean, unanimous double-null (both `m0_i` and `S_i` ruled out with
+attenuation ratios ≈1.0, not just "not significant") means the
+currently-justified state-descriptor hypotheses are exhausted. **Do not
+open E22 by default** — if the two remaining candidate directions
+(arithmetic/structural action of the operation, or the actual corrupted
+values, §6 of the synthesis below) ever become concretely actionable,
+that's a new research question needing its own contract, not a resumed
+E-series tail.
+
+**Synthesis written:**
+[`docs/PHOTONIC_REGEN_CORRELATION_SYNTHESIS.md`](PHOTONIC_REGEN_CORRELATION_SYNTHESIS.md)
+(new standalone document, John's explicit choice over extending the
+design-rule doc). Closes the loop back to
+`docs/PHOTONIC_REGEN_PLACEMENT_DESIGN_RULE.md` §4's residual-
+conservatism note (now cross-linked both directions) that originally
+motivated this whole campaign. Central engineering point, not stated
+anywhere in the E18–E21 contracts themselves: `R_i`/`S_i`/`err_i`/`j`/
+`sign` all require comparing against the noiseless oracle `qr`, which
+real hardware never has at runtime — so E18's large, decisive
+correlation finding is real but **not a lever any physical controller
+could pull**; `op_i` (just the instruction stream) is the only
+oracle-free variable in the whole campaign, which is why it's the only
+one with actual (if not-yet-actionable) design relevance. Three scoped
+implications: (1) product-of-marginals whole-chain reliability
+estimates are conservative, not wrong — fine as a safety margin, wrong
+basis for a tight estimate, no corrected model built; (2) compile-time
+placement (`greedy_place`/`optimal_placement`) needs **no change** —
+structurally can't see/exploit `R_i`; (3) a future `op_i`-aware
+scheduling heuristic is a candidate, **explicitly not proposed now**
+(small effect, unexplained mechanism — don't build on inference alone,
+AGENTS.md). `verify_repo.sh` green (214/214) after the synthesis doc
+landed.

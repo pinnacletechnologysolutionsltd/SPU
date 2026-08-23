@@ -182,12 +182,23 @@ this conservatism does not appear to distort *schedule ranking* at the
 operating points tested — a materially weaker and more precise claim
 than "the model is correct." The mechanism behind the magnitude gap
 (candidate: REGEN events within a trial are not fully independent, so
-the product-of-marginals model discards real correlation) remains
-uncharacterized and is a separate, not-yet-authorized research
-question, deliberately kept apart from the placement-validation result
-above (`contract_photonics_compiler_optimal_placement_2026-08-23.md`
-§1: reusing the same uncorrected model as the optimization objective
-was a deliberate choice, specifically so the placement result and the
+the product-of-marginals model discards real correlation) was
+subsequently investigated by a dedicated E18–E21 campaign, now closed:
+the correlation is real and large (E18), but its cause was not fully
+identified — magnitude, component identity/sign, corruption support,
+and pre-boundary state were all ruled out as explanations for the one
+small residual signal found (operation type), which remains
+mechanistically unexplained. See
+[`docs/PHOTONIC_REGEN_CORRELATION_SYNTHESIS.md`](PHOTONIC_REGEN_CORRELATION_SYNTHESIS.md)
+for the full synthesis and what it does and doesn't imply for this
+document's §4 placement result (short answer: no change — §4's
+algorithms decide from the noiseless trajectory, before any correlated
+runtime outcome exists, so they were never able to exploit or be
+distorted by this correlation either way). This remained deliberately
+kept apart from the placement-validation result above
+(`contract_photonics_compiler_optimal_placement_2026-08-23.md` §1:
+reusing the same uncorrected model as the optimization objective was a
+deliberate choice, specifically so the placement result and the
 calibration question could not be conflated).
 
 **Scope of the placement claim, stated precisely:** validated only at
@@ -265,3 +276,7 @@ have in practice — not evaluated here.
   results, its common-random-numbers methodology, and the honest power
   caveat (39/40 sampled blocks saturated) that qualifies "near-optimal."
 - `results/sweeps/README.md` — evidence artifact index, sha256 hashes.
+- [`docs/PHOTONIC_REGEN_CORRELATION_SYNTHESIS.md`](PHOTONIC_REGEN_CORRELATION_SYNTHESIS.md)
+  — the E18–E21 campaign that investigated this document's §4 residual
+  conservatism issue, closed 2026-08-24, and what its results do and
+  don't imply for the placement algorithms above.
