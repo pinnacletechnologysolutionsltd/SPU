@@ -58,6 +58,50 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`discrete_corruption_descriptor_sweep_frozen_v1_2026-08-24.json`**
+  (sha256 `c059d2b5b6f38f25676ce2e4425ecf20d9c93cec5aa9811e836239fcfa05264`)
+  — **E20, tests whether three discrete properties of the corrupted
+  lane-0 state at a failing boundary — `j` (which component `k∈{0,1,2,3}`
+  deviates most), `sign(Δ_j)`, and `op_i` (`QSUB` / `ROTC_thirds` /
+  `ROTC_plain`, the op immediately preceding the boundary) — explain
+  E18's `R_i`-conditioned dependence**
+  (`contract_photonics_discrete_corruption_descriptor_2026-08-24.md`).
+  Deterministic **replay of E18/E19's exact 300,000 trials**, same 24
+  materially-dependent cells; equivalence gate 0/2,000 mismatches,
+  replay-fidelity exact match on all 24 cells, reproducibility
+  bit-identical. Tested as three **separate** univariate stratifications
+  (a joint model would fragment the already-thin `R_i=False` population
+  well below usable sample size). One statistical mid-course correction:
+  the originally-specified gap-explanation metric `A_D` (a
+  category-share-weighted average recovery rate) was found, after the
+  first full run, to be mathematically tautological — it collapses
+  identically to the cell's own marginal rate by the law of total
+  probability whenever no category is excluded, so it read ≈0.00000 in
+  23/24 cells for every descriptor regardless of whether the descriptor
+  carried information. Replaced with eta-squared (proportion of outcome
+  variance explained) — pure post-processing on the already-frozen raw
+  event data, no resimulation, same sha256 before/after the swap.
+  **RESULT: no large-effect descriptor found.** `j` and `sign` are clean
+  nulls (0/23 and 0/24 cells omnibus-significant, eta² ≤0.0025
+  everywhere). `op_i` is not: it clears Bonferroni-corrected omnibus
+  significance in 7/24 cells (several overwhelmingly, e.g. p=4.5e-65 at
+  pair=1/bin=9), but the effect size is small (eta² 0.018–0.041, Cohen's
+  "small" band, well under the frozen `≥0.14` "large" bar), so it does
+  not clear the "explains most of the gap" criterion either (18/24
+  negligible, 0 substantial — aggregate tier "does not explain the
+  gap," same as `j`/`sign`, but not for the same reason). **Do not
+  reinterpret `op_i`'s result as an explanation of E18's gap — it is a
+  statistically robust but small-effect modifier, not a sufficient-state
+  descriptor.** Notable secondary pattern: at 5 of 6 `bin=9` cells,
+  `op_i`'s categories replicate a consistent ordering with
+  non-overlapping CIs — `ROTC_plain` (`A_c` +0.30 to +0.45) recovers
+  best, `QSUB` (−0.11 to −0.17) middling, `ROTC_thirds` (−0.20 to −0.38)
+  worst — a high-value lead for a future, more mechanistic experiment
+  (why operation type matters specifically near `m0≈9`), not a
+  conclusion in itself; no such follow-on was run. Driver:
+  `photonics/run_photonic_discrete_corruption_descriptor_sweep.py`
+  (`--reanalyze-only` recomputes the analysis block from the frozen
+  `raw_events` without resimulating, used for the eta² swap).
 - **`corrupted_state_sufficiency_sweep_frozen_v1_2026-08-23.json`**
   (sha256 `642496a317d9edae7cebde0b926d272e6d0115d4bedb87e344b6bc523c14f775`)
   — **E19, tests whether the *magnitude* of a failed event's recovery

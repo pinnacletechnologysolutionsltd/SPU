@@ -940,3 +940,75 @@ mechanism (which component deviated, its sign, the op type active at
 failure) as the next hypothesis for a separate, later, not-yet-authorized
 E20 — not established by this contract, which only rules magnitude out.
 See contract §9 for the full writeup.
+
+**E20 (2026-08-24): discrete corruption descriptor — RUN COMPLETE, RESULT:
+no large-effect descriptor found; `op_i` carries a small, real signal
+`j`/`sign` entirely lack.**
+`spu_strategy/contract_photonics_discrete_corruption_descriptor_2026-08-24.md`.
+John/GTP's explicit E20 scoping after E19: reconstruct the actual
+corrupted lane-0 transition at the failing boundary and test whether a
+discrete descriptor — `j` (which component `k∈{0,1,2,3}` deviates
+most), `sign(Δ_j)`, or `op_i` (`QSUB`/`ROTC_thirds`/`ROTC_plain`, the op
+immediately preceding the boundary) — explains E18's `R_i`-conditioned
+dependence. Halted before freeze on a scoping decision (three separate
+univariate stratifications, not one joint `(j,sign,op)` model — a joint
+descriptor has up to 24 categories, which would fragment the
+already-thin `R_i=False` population far below usable sample size) plus
+four amendments: the gap-explanation metric changed twice (see below);
+the statistical family was frozen as 24 cell-level *omnibus* tests per
+descriptor (not post-hoc best-vs-worst category pairwise comparisons),
+Bonferroni-corrected within each descriptor's own family; `op_i`'s
+definition dropped a causal-responsibility framing for a purely
+mechanical one (`block[i-1]`); and the raw signed deviation `Δ_j` (not
+just its sign) is retained in frozen evidence for future use.
+
+Gate 0a (equivalence, hard): 0/2,000 mismatches. Gate 0b (replay
+fidelity, hard): exact match on all 24 cells against E18/E19's frozen
+counts. Full run + reproducibility bit-identical (~11 minutes, same
+replay as E18/E19).
+
+**Mid-course correction (results-driven, not a bug):** the frozen
+gap-explanation metric `A_D = (p_D-p_F)/(p_T-p_F)` with `p_D = Σ_c
+w_c·p_c` (`w_c` = empirical category share) turned out to be
+mathematically tautological — by the law of total probability, that sum
+collapses identically to the cell's own marginal `p_false` whenever no
+category is excluded, so `A_D` read ≈0.00000 in essentially every cell
+for every descriptor *regardless of whether the descriptor carried any
+information*. Caught by inspecting the first full run's numbers rather
+than accepting a suspiciously uniform "does not explain" verdict at face
+value. Replaced with eta-squared (proportion of outcome variance
+explained by category) — pure re-analysis of the already-frozen raw
+event data (`--reanalyze-only` flag added to the driver), no
+resimulation, same sha256 for the simulation-derived fields before and
+after the swap. The frozen `eta2≥0.14` "large effect" threshold was
+**not** weakened after seeing results — the distinction preserved
+throughout is *statistically detectable* vs. *materially explanatory*.
+
+**Result:** `j` and `sign` are clean nulls — 0/23 and 0/24 cells
+omnibus-significant, eta² ≤0.0025 everywhere. `op_i` is not a clean
+null: it clears Bonferroni-corrected omnibus significance in 7/24 cells,
+several overwhelmingly (p as low as 4.5e-65 at pair=1/bin=9), but the
+effect size is small (eta² 0.018–0.041, Cohen's "small" band, well under
+the `≥0.14` bar), so the aggregate tier reads "does not explain the gap"
+for all three descriptors — correct against the frozen threshold, but
+not because `op_i` has zero effect. **Do not reinterpret `op_i`'s result
+as an explanation of E18's gap. It is a statistically robust but
+small-effect modifier, not a sufficient-state descriptor.** A secondary,
+high-value pattern: at 5 of 6 `bin=9` cells, `op_i`'s three categories
+replicate a consistent, non-overlapping-CI ordering — `ROTC_plain`
+recovers best (`A_c` +0.30 to +0.45), `QSUB` middling (−0.11 to −0.17),
+`ROTC_thirds` worst (−0.20 to −0.38). This is a lead for E21, not a
+conclusion: no follow-on was run this session, and John/GTP explicitly
+recommended against both weakening the frozen threshold and jumping
+straight to a larger joint-descriptor search — any E21 should be
+motivated by a specific mechanistic hypothesis about *why* operation
+type matters near `m0≈9`, not another generic stratification.
+
+**Interpretation:** the investigation chain (E18: `R_i` carries
+information beyond `m0` → E19: not explained by error *magnitude* → E20:
+not explained by *which component* failed or *which direction*, only
+weakly by *which operation type*) continues to push the missing
+information upstream, toward the state or transformation immediately
+*before* the failing operation, rather than toward any one discrete
+signature of the failure itself examined so far. See contract §9 for the
+full writeup.
