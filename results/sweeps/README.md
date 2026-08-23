@@ -58,6 +58,42 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`compiler_montecarlo_optimum_sweep_frozen_v1_2026-08-23.json`** (sha256
+  `4bf394082692abbe1a9d32516d814dc0728d735c0b6dd9653efda4327a67b05d`) —
+  **E17 Part 3, tests whether E17 Part 2's DP schedule is genuinely the
+  best same-event-count placement for individual blocks, via a
+  model-free Monte-Carlo comparison**
+  (`contract_photonics_compiler_montecarlo_optimum_2026-08-23.md`).
+  Uses common random numbers (a precomputed noise table addressable by
+  op position, shared across every candidate schedule for a given
+  block/repeat — not a stateful sequential rng, which would desync
+  between candidates with different REGEN counts) for a paired-difference
+  comparison, deliberately reusing E16/E17's uncorrected product model
+  only to *choose* DP's schedule (via E17 Part 2's `optimal_placement`,
+  reused verbatim), never to evaluate it. Required a new scoring
+  function (`score_schedule_addressable`) verified equivalent to E15's
+  `run_chain_boundary_noisy_diag` via its own cross-check gate (0/300
+  mismatches). 20 blocks per σ_det (`[1e-6, 1e-5]`, E17 Part 2's
+  dominating λ=0.01), up to 500 candidate schedules per block (full
+  enumeration when `C(14,N-1)≤500`, else reproducibly sampled), 2,000
+  paired repeats each, run twice, bit-identical (each run took
+  ~80–90 minutes — the largest single sweep in this branch by compute).
+  **RESULT: DP near-optimal, CONFIRMED — 20/20 blocks at both σ_det**,
+  no evaluated alternative ever beat DP outside noise. **Important
+  caveat, reported explicitly:** 39/40 blocks were saturated at perfect
+  (1.0000) recovery, where any reasonable same-N schedule ties trivially
+  — this confirms no regression but has little power to detect a subtle
+  ranking advantage. The one non-saturated block (σ=1e-5, block 2,
+  0.9460 recovery) is the substantive result: DP's own 3-boundary
+  schedule was independently verified as the actual best among all 91
+  fully-enumerated alternatives, not a ceiling artifact. Interpretation:
+  at E17 Part 2's own dominating operating point, the E16 law's
+  conservative bias appears roughly uniform across candidate segments
+  (doesn't distort rankings) rather than context-dependent — but this
+  was tested only at one λ and two σ_det values where recovery is
+  already high, and does not rule out a ranking-quality gap at a less-
+  saturated operating point (a follow-on contract, not attempted here).
+  Driver: `photonics/run_photonic_compiler_montecarlo_optimum_sweep.py`.
 - **`compiler_optimal_placement_sweep_frozen_v1_2026-08-23.json`** (sha256
   `6911fd3f0f9f51e9a36b1000800ade8bfe91a3664caf6530ecbcccdfbd25c3df`) —
   **E17 Part 2, tests whether a dynamic-programming whole-chain-optimal

@@ -719,3 +719,58 @@ cannot distinguish "the model under-predicts" from "the model is
 wrong in a way that would change the optimal placement." That
 remains separate, later, not-yet-authorized work. See contract §9 for
 the full writeup.
+
+**E17 Part 3 (2026-08-23): Monte-Carlo closeness-to-optimum check — RUN
+COMPLETE, RESULT: DP near-optimal, CONFIRMED, with an honestly-reported
+power caveat.**
+`spu_strategy/contract_photonics_compiler_montecarlo_optimum_2026-08-23.md`.
+John's answer when asked which of two follow-ups to E17 Part 2's open
+correlation question: the Monte-Carlo comparison (direct, model-free)
+over refitting a corrected model and rerunning the DP against it (which
+risked conflating "better search" with "better model," the exact
+distinction E17 Part 2 was built to preserve). Halted before freeze: a
+detailed review flagged seven methodological amendments, the most
+consequential being **common random numbers (CRN)** — a precomputed
+noise table addressable by op position, shared across every candidate
+schedule for a given (block, repeat), replacing independent per-candidate
+noise streams. This was necessary, not cosmetic: candidates with
+different REGEN counts consume different numbers of noise draws, so a
+naive shared sequential stream would silently desync between them.
+Implementing CRN required a new scoring function
+(`score_schedule_addressable`), verified equivalent to E15's original
+via its own cross-check gate (0/300 mismatches) before being trusted —
+the same discipline every substitute scorer in this chain has required.
+Other amendments: paired-difference statistics (captures the CRN
+variance reduction automatically), sampled-rank semantics
+(`rank_among_evaluated` vs. any claim about the full schedule space),
+explicit screening-experiment framing (20 blocks, not a population
+estimate), and a smoke-measured (not assumed) compute budget.
+
+The smoke pass extrapolated to ~95 minutes for the full run, with real
+uncertainty given a highly skewed 6-block sample — reported explicitly
+per the contract's own requirement; John chose to run as locked rather
+than reduce scope. Each of the two full runs (for reproducibility) took
+~80–90 minutes — the largest single sweep in this branch by compute.
+
+**Result: DOMINATES was not what was tested here — DP near-optimal was,
+and it held.** 20/20 blocks at both σ_det points (λ=0.01, E17 Part 2's
+dominating point) — no evaluated alternative (up to 500 per block, full
+enumeration when tractable) ever beat DP's schedule outside noise.
+**Reported honestly rather than declared a clean sweep:** 39 of 40
+blocks were saturated at perfect (1.0000) recovery, where *any*
+reasonable same-N schedule ties trivially — confirms no regression, but
+has essentially no power to detect a subtle ranking advantage. The one
+non-saturated block (σ=1e-5, block 2, 0.9460 recovery) is the
+substantive result: independently verified that DP's own 3-boundary
+schedule was the actual best among all 91 fully-enumerated alternatives
+for that block, not a ceiling artifact.
+
+**Interpretation, scoped precisely:** consistent with the E16 law's
+conservative calibration bias being roughly uniform across candidate
+segments (doesn't distort rankings) rather than context-dependent, at
+this specific operating point — but tested only at one λ and two σ_det
+values where recovery is already high. Does not rule out a real
+ranking-quality gap at a less-saturated operating point (e.g. a more
+aggressive λ). A follow-on contract targeting that regime — not this
+one — would give the method a fairer test. See contract §10 for the
+full writeup.
