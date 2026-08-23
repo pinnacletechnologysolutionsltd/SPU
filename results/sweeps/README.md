@@ -81,15 +81,22 @@ self-describing experiment with its own seed).
   carried information. Replaced with eta-squared (proportion of outcome
   variance explained) — pure post-processing on the already-frozen raw
   event data, no resimulation, same sha256 before/after the swap.
-  **RESULT: no large-effect descriptor found.** `j` and `sign` are clean
-  nulls (0/23 and 0/24 cells omnibus-significant, eta² ≤0.0025
-  everywhere). `op_i` is not: it clears Bonferroni-corrected omnibus
-  significance in 7/24 cells (several overwhelmingly, e.g. p=4.5e-65 at
-  pair=1/bin=9), but the effect size is small (eta² 0.018–0.041, Cohen's
-  "small" band, well under the frozen `≥0.14` "large" bar), so it does
-  not clear the "explains most of the gap" criterion either (18/24
-  negligible, 0 substantial — aggregate tier "does not explain the
-  gap," same as `j`/`sign`, but not for the same reason). **Do not
+  **RESULT (headline): no tested discrete corruption descriptor
+  explains E18's dependence at large effect size. Component identity
+  and error sign are null. Operation type shows a small but highly
+  reproducible downstream recovery effect, especially at `m0=9`, with
+  `ROTC_plain > QSUB > ROTC_thirds`; insufficient to constitute an
+  explanation of the gap but a credible follow-up candidate.** The
+  formal `≥12/24` aggregate tier reads "does not explain the gap" for
+  all three (`j`: Null, 0/23 cells omnibus-significant, eta² ≤0.0025;
+  `sign`: Null, 0/24, eta² ≤0.0015; `op_i`: **small, highly significant
+  effect, not a null** — 7/24 cells clear Bonferroni-corrected omnibus
+  significance, several overwhelmingly, e.g. p=4.5e-65 at pair=1/bin=9,
+  but eta² 0.018–0.041 stays in Cohen's "small" band, under the frozen
+  `≥0.14` "large" bar, so it lands in "statistically real but
+  sub-threshold," not "substantial" or "null" — 18/24 cells negligible,
+  0 substantial). Reporting `op_i`'s count alone would wrongly equate
+  it with `j`/`sign`; it is not equivalent. **Do not
   reinterpret `op_i`'s result as an explanation of E18's gap — it is a
   statistically robust but small-effect modifier, not a sufficient-state
   descriptor.** Notable secondary pattern: at 5 of 6 `bin=9` cells,

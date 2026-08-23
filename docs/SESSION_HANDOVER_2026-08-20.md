@@ -984,6 +984,13 @@ after the swap. The frozen `eta2≥0.14` "large effect" threshold was
 **not** weakened after seeing results — the distinction preserved
 throughout is *statistically detectable* vs. *materially explanatory*.
 
+**Headline:** no tested discrete corruption descriptor explains E18's
+dependence at large effect size. Component identity and error sign are
+null. Operation type shows a small but highly reproducible downstream
+recovery effect, especially at `m0=9`, with `ROTC_plain > QSUB >
+ROTC_thirds`; insufficient to constitute an explanation of the E18 gap
+but a credible candidate for follow-up investigation.
+
 **Result:** `j` and `sign` are clean nulls — 0/23 and 0/24 cells
 omnibus-significant, eta² ≤0.0025 everywhere. `op_i` is not a clean
 null: it clears Bonferroni-corrected omnibus significance in 7/24 cells,
