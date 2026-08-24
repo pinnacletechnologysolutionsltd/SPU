@@ -1,0 +1,144 @@
+{
+ "experiment": "pair0_sensitivity_check",
+ "contract": "contract_photonics_pair0_calibration_2026-08-24.md",
+ "description": "Phase 0: is pair-0's missing calibration quantitatively capable of explaining the corrected-reliability-model's overshoot? Sensitivity sweep over a hypothetical flat pair-0 correction factor, no new calibration data gathered.",
+ "seed": 13,
+ "n_trials": 300000,
+ "trial_offset": 300000000,
+ "sigma_det": 3e-05,
+ "M_boundaries": [
+  2,
+  4,
+  6,
+  8,
+  10,
+  12,
+  14,
+  16
+ ],
+ "K": 16,
+ "e18_source": "/home/john/Projects/hardware/SPU/results/sweeps/correlation_mechanism_sweep_frozen_v1_2026-08-23.json",
+ "mean_base": 0.16808360682888537,
+ "empirical_rate": 0.12174,
+ "empirical_ci": [
+  0.12056989820811487,
+  0.12291010179188513
+ ],
+ "r1_marginal": {
+  "n_true": 300000,
+  "n_false": 0,
+  "n_min_200_met": false
+ },
+ "p_hat_0_sweep": [
+  {
+   "p_hat_0": 0.0,
+   "mean_corrected": 0.0,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.05,
+   "mean_corrected": 0.00840418034144427,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.1,
+   "mean_corrected": 0.01680836068288854,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.15,
+   "mean_corrected": 0.025212541024332805,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.2,
+   "mean_corrected": 0.03361672136577708,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.25,
+   "mean_corrected": 0.04202090170722134,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.3,
+   "mean_corrected": 0.05042508204866561,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.35,
+   "mean_corrected": 0.058829262390109875,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.4,
+   "mean_corrected": 0.06723344273155415,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.45,
+   "mean_corrected": 0.07563762307299841,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.5,
+   "mean_corrected": 0.08404180341444269,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.55,
+   "mean_corrected": 0.09244598375588696,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.6,
+   "mean_corrected": 0.10085016409733122,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.65,
+   "mean_corrected": 0.10925434443877549,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.7,
+   "mean_corrected": 0.11765852478021975,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.75,
+   "mean_corrected": 0.12606270512166404,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.8,
+   "mean_corrected": 0.1344668854631083,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.85,
+   "mean_corrected": 0.14287106580455256,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.9,
+   "mean_corrected": 0.15127524614599683,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 0.95,
+   "mean_corrected": 0.1596794264874411,
+   "inside_empirical_ci": false
+  },
+  {
+   "p_hat_0": 1.0,
+   "mean_corrected": 0.16808360682888537,
+   "inside_empirical_ci": false
+  }
+ ],
+ "viable_p_hat_0_range_exact": [
+  0.717320983781952,
+  0.7312438381751984
+ ],
+ "verdict": "Pair-0 hypothesis quantitatively viable"
+}

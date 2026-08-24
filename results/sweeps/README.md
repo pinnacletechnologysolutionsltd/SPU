@@ -58,6 +58,40 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`pair0_sensitivity_check_frozen_v1_2026-08-24.json`** (sha256
+  `bb6042d647e62073e2e19877664820e062f948fdf897b52184d14241c601fd5b`) —
+  **Phase 0 of the pair-0 calibration follow-up**
+  (`spu_strategy/contract_photonics_pair0_calibration_2026-08-24.md`,
+  gitignored) — John-authorized diagnostic, not a new calibration: is
+  pair-0's missing E18 coverage (100% fallback to the marginal law in
+  the corrected-reliability-model contract) even quantitatively capable
+  of explaining that model's over-correction? Same trial sequence
+  (`SEED`, `sigma_det=3e-5`, `M=2`, `K=16`, fresh offset `300,000,000+`,
+  300,000 trials) — no new random data beyond what that contract already
+  specified. **Mid-course correction, caught before any result was
+  reported:** the original 0.05-step sweep grid over a hypothetical flat
+  pair-0 correction factor `p_hat_0` showed no grid point landing inside
+  the empirical rate's 95% CI — an apparent "not viable" verdict. Since
+  `mean_corrected(p_hat_0)` is exactly linear in `p_hat_0` by
+  construction, the true viable range is solvable in closed form; the CI
+  is narrower than one grid step, so the grid straddled a real window
+  without a sample point landing in it. Fixed to use the exact
+  analytical range. **RESULT: pair-0 hypothesis is quantitatively
+  viable** — exact viable range `p_hat_0 ∈ [0.7173, 0.7312]`, a
+  plausible, non-extreme value (not near 0 or 1), roughly a modest
+  downward correction from the naive marginal law's current fallback
+  value there. **Not a demonstration that pair 0 is the actual cause —
+  only that the hypothesis survives the cheapest test that could have
+  killed it.** Separately, `R_1`'s raw marginal recovery count came back
+  `n_false=0/300,000` — cleanly confirms the rare-event-sampling
+  mechanism (not a binning-resolution problem) but means "just run more
+  trials at the same `sigma_det`" is not obviously a practical Phase-1
+  fix (the true failure rate could be far below what 300,000 trials can
+  resolve); a different, higher-`sigma_det` operating point now looks
+  like the more practical path if Phase 1 is ever pursued. **Phase 1
+  remains NOT authorized** — this result makes it a candidate for future
+  authorization, not a default next step. Driver:
+  `photonics/run_photonic_pair0_sensitivity_check.py`.
 - **`corrected_reliability_sweep_frozen_v1_2026-08-24.json`** (sha256
   `047154a6cd83ea5972f8efe543289c984a4bb21340f357d92239f1ee495c035c`) —
   **corrected whole-chain reliability model, item #1 of the E18–E21
@@ -109,7 +143,11 @@ self-describing experiment with its own seed).
   `predicted_p_chain` (naive) remains the adopted production/design-rule
   estimator; this corrected estimator is preserved as a completed
   research result, rejected for design use by its own pre-registered
-  gate, not discarded. Driver:
+  gate, not discarded. **Follow-on (2026-08-24, John-authorized): a
+  cheap sensitivity check (`pair0_sensitivity_check_frozen_v1_2026-08-24.json`,
+  above) confirmed pair-0's hypothesis is quantitatively viable — not
+  ruled out, still not demonstrated, Phase 1 (real calibration) remains
+  unauthorized.** Driver:
   `photonics/run_photonic_corrected_reliability_sweep.py`.
 - **`corruption_support_sweep_frozen_v1_2026-08-24.json`** (sha256
   `dc4428a8f4f3ae5e6dea2733e6c6b63fec511cd74ed0cdc72e32968b8dcf8a41`) —
