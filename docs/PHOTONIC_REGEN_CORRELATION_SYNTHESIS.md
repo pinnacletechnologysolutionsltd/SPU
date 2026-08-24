@@ -195,8 +195,13 @@ question needing its own contract**, not a resumed E-series tail.
 
 - No RTL or silicon claim — simulation-only, same discipline as the
   design-rule document.
-- No corrected joint (non-independent-events) reliability model built —
-  §5.1 names the need, does not fill it.
+- No corrected joint reliability model **adopted for engineering use** —
+  the follow-on corrected estimator named in §5.1 was subsequently
+  built, validated, and experimentally **rejected** as non-conservative
+  (§5.1's update note); `predicted_p_chain` remains the adopted
+  estimator. This campaign itself (E18–E21) still built none — the
+  correction was a separate, later contract, referenced here, not
+  performed by this document.
 - No change to `greedy_place`/`optimal_placement` or any other
   production code — this campaign was measurement-only throughout
   (E18–E21, each contract's own non-goals).
