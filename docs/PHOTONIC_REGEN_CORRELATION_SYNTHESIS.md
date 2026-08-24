@@ -12,6 +12,12 @@ draws out what the campaign's results mean for SPU-13 photonic REGEN
 design. It is a synthesis of already-frozen contracts, not a new
 experiment: no new measurement is reported here.
 
+**This document's implications, alongside the design-rule doc and the
+corrected-reliability-model result, are now consolidated into one
+interface-level specification:**
+[`docs/PHOTONIC_REGEN_COMPILATION_CONTRACT.md`](PHOTONIC_REGEN_COMPILATION_CONTRACT.md)
+— what a photonic compiler/backend actually needs from this evidence.
+
 ## 1. Origin and scope
 
 [`docs/PHOTONIC_REGEN_PLACEMENT_DESIGN_RULE.md`](PHOTONIC_REGEN_PLACEMENT_DESIGN_RULE.md)

@@ -13,6 +13,13 @@ computation of depth K, how should REGEN boundaries be placed so that
 exact digital recovery stays reliable, and how few of them can a
 compiler get away with while still meeting that bar?**
 
+**This document's results are now consolidated, alongside the
+correlation synthesis and the corrected-reliability-model result, into
+one interface-level specification:**
+[`docs/PHOTONIC_REGEN_COMPILATION_CONTRACT.md`](PHOTONIC_REGEN_COMPILATION_CONTRACT.md)
+— what a photonic compiler/backend actually needs from this evidence.
+Start there for "what should a compiler do," this document for "why."
+
 ## 1. The validated law
 
 Every REGEN event reads out lane 0's field value, scaled by `2^m0` where
