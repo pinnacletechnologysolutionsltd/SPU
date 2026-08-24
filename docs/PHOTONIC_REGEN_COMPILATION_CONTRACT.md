@@ -19,6 +19,16 @@ authorizes a new experiment only when it blocks an engineering decision
 below, not merely because it is unanswered.** §5 lists what is
 consequently parked.
 
+**Follow-on (2026-08-24):**
+[`docs/PHOTONIC_SPU13_ARCHITECTURE_SPEC.md`](PHOTONIC_SPU13_ARCHITECTURE_SPEC.md)
+takes this contract's interface and asks what a hypothetical photonic
+implementation satisfying it would have to look like as a system —
+including the physical component picture this document deliberately
+stays silent on. Also resolves a question this document didn't ask:
+REGEN (opcode `0x09`) turns out to already be a real, RTL-implemented,
+architecturally frozen SPU-13 instruction, not something specific to
+this branch.
+
 ## 1. The reliability contract — what a compiler/backend needs
 
 **Per-operation physical error model.** Detector noise (`sigma_det`) is

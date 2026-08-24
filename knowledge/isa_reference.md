@@ -55,6 +55,7 @@
 | 0x20 | CALL | addr | Push PC, jump to subroutine |
 | 0x21 | RET | — | Pop return stack, return |
 | 0x08 | HALT | — | Halt execution |
+| **0x09** | **REGEN** | `.block K` | Regeneration-boundary primitive: `S̃_K ↦ S_K`, projecting the accumulated block state back to the exact algebraic state after `K` legal ops. Architecturally frozen (`spu_strategy/contract_regen_isa_0x09_2026-08-20.md`, REGEN v1) — substrate-independent by governance rule ("the ISA is not modified to accommodate any substrate — photonic, FPGA, ASIC, or digital"); backend implementation (Photonic / FPGA-reference / Digital) lives below this boundary and is not ISA-visible. `K=0` is a true pass-through (`REGEN(REGEN(S))=S`, idempotent, architectural invariant); a fault (`REGEN_PREC`) commits nothing and preserves prior state. RTL: `hardware/rtl/core/spu13/spu13_regen.v`, testbench-verified only (`hardware/tests/spu13/spu13_regen_tb.v`; substrate-opacity adversarially tested, 232 boundaries × 3 phase conditions, zero leaks, Stage C) — **no silicon evidence entry exists yet.** Executable reference semantics: `software/tests/regen_emulator.py`. |
 | 0xFF | NOP | — | No operation |
 
 ### Quadray IVM Operations
@@ -154,15 +155,20 @@ RET
 | Category | Count | Hardware Verified |
 |----------|-------|------------------|
 | Scalar ops | 8 | 4 |
-| Control flow | 7 | 4 (JMP/CALL/RET/NOP) |
+| Control flow | 8 | 4 (JMP/CALL/RET/NOP) |
 | Quadray ops | 12 | 8 |
 | Output | 2 | 2 (HEX/QLOG) |
 | VE/Janus | 3 | 1 (IDNT) |
 | RPLU | 2 | 0 |
-| **Total** | **26** | **19** |
+| **Total** | **27** | **19** |
 
-20 of 26 opcodes have RTL implementations. The remaining 6 are software sequences
-or require RPLU/SPI flash integration.
+20 of 27 opcodes have RTL implementations. The remaining 7 are software sequences
+or require RPLU/SPI flash integration. **REGEN (0x09) added 2026-08-24** — has
+RTL (`spu13_regen.v`) but is testbench-verified only, not silicon-verified, so
+it is counted in the RTL-implementation figure (20/27) but not in the
+"Hardware Verified" column above, which this doc uses for a silicon-adjacent
+bar the other pre-existing counts predate a clear definition of; not
+re-audited here beyond REGEN's own addition.
 
 ## FLAGS Register
 
