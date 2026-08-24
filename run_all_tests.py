@@ -625,6 +625,23 @@ def main():
         else:
             print(f"\n  test_composition_trace.py FAILED:\n{result_comp.stdout[-500:]}")
 
+    # GPU raster oracle <-> RTL parity (hardware/rtl/gpu/, exhaustive
+    # full-screen check added 2026-08-24 after an audit found the one
+    # prior testbench never actually exercised the outside-the-triangle
+    # case despite claiming to)
+    gpu_raster_pass = 0
+    gpu_raster_test = os.path.join(
+        root_dir, "software", "tests", "test_gpu_raster_oracle_rtl_parity.py")
+    if os.path.exists(gpu_raster_test):
+        result_gpu_raster = subprocess.run(
+            [sys.executable, gpu_raster_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if "ALL GPU RASTER PARITY CHECKS PASSED" in result_gpu_raster.stdout:
+            gpu_raster_pass = 1
+        else:
+            print(f"\n  test_gpu_raster_oracle_rtl_parity.py FAILED:\n{result_gpu_raster.stdout[-500:]}")
+
     # Padé batch inversion oracle
     pade_batch_pass = 0
     pade_batch_fail = 0
@@ -1065,6 +1082,7 @@ def main():
         ("Hyper-Catalan Oracle",      hc_pass,            hc_fail),
         ("Digon Recursive Cost Model", digon_pass,        digon_fail),
         ("Composition Policy Trace",  composition_pass,   1 - composition_pass),
+        ("GPU Raster Oracle/RTL Parity", gpu_raster_pass, 1 - gpu_raster_pass),
     ):
         print(f"\n{_label} Tests: {_p + _f}")
         print(f"Passed: {_p}")
@@ -1080,6 +1098,7 @@ def main():
         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
         + bench_metrics_pass
         + composition_pass
+        + gpu_raster_pass
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
@@ -1090,7 +1109,7 @@ def main():
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + bench_metrics_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
-        + (1 - composition_pass)
+        + (1 - composition_pass) + (1 - gpu_raster_pass)
         # Previously absent: these four were summed into total_pass with no
         # fail counterpart, so a failing or missing oracle reduced the
         # headline while Total FAIL still printed 0.
