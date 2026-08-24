@@ -642,6 +642,22 @@ def main():
         else:
             print(f"\n  test_gpu_raster_oracle_rtl_parity.py FAILED:\n{result_gpu_raster.stdout[-500:]}")
 
+    # GPU raster oracle <-> Vulkan compute parity (software/gpu_vulkan/,
+    # the third leg alongside oracle<->RTL above; skips cleanly rather
+    # than failing on a machine with no Vulkan-capable GPU/driver)
+    gpu_vulkan_pass = 0
+    gpu_vulkan_test = os.path.join(
+        root_dir, "software", "tests", "test_gpu_raster_oracle_vulkan_parity.py")
+    if os.path.exists(gpu_vulkan_test):
+        result_gpu_vulkan = subprocess.run(
+            [sys.executable, gpu_vulkan_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if "ALL GPU RASTER VULKAN PARITY CHECKS PASSED" in result_gpu_vulkan.stdout:
+            gpu_vulkan_pass = 1
+        else:
+            print(f"\n  test_gpu_raster_oracle_vulkan_parity.py FAILED:\n{result_gpu_vulkan.stdout[-500:]}")
+
     # Padé batch inversion oracle
     pade_batch_pass = 0
     pade_batch_fail = 0
@@ -1083,6 +1099,7 @@ def main():
         ("Digon Recursive Cost Model", digon_pass,        digon_fail),
         ("Composition Policy Trace",  composition_pass,   1 - composition_pass),
         ("GPU Raster Oracle/RTL Parity", gpu_raster_pass, 1 - gpu_raster_pass),
+        ("GPU Raster Oracle/Vulkan Parity", gpu_vulkan_pass, 1 - gpu_vulkan_pass),
     ):
         print(f"\n{_label} Tests: {_p + _f}")
         print(f"Passed: {_p}")
@@ -1099,6 +1116,7 @@ def main():
         + bench_metrics_pass
         + composition_pass
         + gpu_raster_pass
+        + gpu_vulkan_pass
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
@@ -1109,7 +1127,7 @@ def main():
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + bench_metrics_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
-        + (1 - composition_pass) + (1 - gpu_raster_pass)
+        + (1 - composition_pass) + (1 - gpu_raster_pass) + (1 - gpu_vulkan_pass)
         # Previously absent: these four were summed into total_pass with no
         # fail counterpart, so a failing or missing oracle reduced the
         # headline while Total FAIL still printed 0.

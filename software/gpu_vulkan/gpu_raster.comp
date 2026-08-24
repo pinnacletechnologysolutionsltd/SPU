@@ -1,0 +1,32 @@
+#version 450
+// gpu_raster.comp -- triangle edge-function coverage test, GPU compute
+// side. Must match software/lib/gpu_raster_oracle.py's edge_inside /
+// triangle_covered exactly: A*x + B*y + C >= 0 per edge, covered iff
+// all three edges are inside. GLSL `int` is 32-bit two's complement
+// with well-defined wraparound (no UB, unlike C/C++), matching the
+// oracle's explicit trunc32() model with no extra work.
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(std430, binding = 0) buffer CoverageBuffer {
+    uint covered[];   // row-major, width*height entries, 0 or 1
+};
+
+layout(push_constant) uniform PushConstants {
+    int a0, b0, c0;
+    int a1, b1, c1;
+    int a2, b2, c2;
+    int width, height;
+} pc;
+
+void main() {
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    if (p.x >= pc.width || p.y >= pc.height) return;
+
+    int f0 = pc.a0 * p.x + pc.b0 * p.y + pc.c0;
+    int f1 = pc.a1 * p.x + pc.b1 * p.y + pc.c1;
+    int f2 = pc.a2 * p.x + pc.b2 * p.y + pc.c2;
+
+    bool inside = (f0 >= 0) && (f1 >= 0) && (f2 >= 0);
+    covered[p.y * pc.width + p.x] = inside ? 1u : 0u;
+}
