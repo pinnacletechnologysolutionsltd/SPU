@@ -36,6 +36,17 @@ module spu_raster_tb;
         @(posedge clk); #1;
         setup = 0;
 
+        // At (0,0) immediately after setup, before any step -- genuinely
+        // outside this triangle (90,90)-(150,90)-(90,150). Previously
+        // unchecked (2026-08-24): the comment above claimed this check
+        // existed but it was never implemented, so the pre-fix stub
+        // (inside_out hardcoded to 1) passed this testbench undetected.
+        @(posedge clk); #1;
+        if (covered) begin
+            $display("FAIL: pixel (0,0) should be outside triangle");
+            pass = 0;
+        end
+
         // Step to pixel (100, 100): step_y 100 times, then step_x 100 times
         // step_y first (advances y from 0 to 100)
         for (iy = 0; iy < 100; iy = iy + 1) begin

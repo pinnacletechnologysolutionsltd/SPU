@@ -38,6 +38,10 @@ module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, x_span, in
         end
     end
 
-    assign inside_out = 1'b1;
+    // Inside the half-plane when the edge function is non-negative
+    // (matches the ">=" convention documented at each call site, e.g.
+    // spu_raster_tb.v's "Edge 0: y >= 90 -> A=0, B=1, C=-90"). Was a
+    // hardcoded stub (`1'b1`, always inside) until 2026-08-24.
+    assign inside_out = (f >= 32'sd0);
 
 endmodule
