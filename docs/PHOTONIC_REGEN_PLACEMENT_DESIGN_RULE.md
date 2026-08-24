@@ -194,7 +194,22 @@ for the full synthesis and what it does and doesn't imply for this
 document's §4 placement result (short answer: no change — §4's
 algorithms decide from the noiseless trajectory, before any correlated
 runtime outcome exists, so they were never able to exploit or be
-distorted by this correlation either way). This remained deliberately
+distorted by this correlation either way).
+
+**Follow-on (2026-08-24): a corrected joint estimator built from E18's
+dependence was tried and rejected for design use.**
+`spu_strategy/contract_photonics_corrected_reliability_model_2026-08-24.md`
+built a whole-chain "still-clean-branch" estimator folding E18's
+`R_i→R_{i+1}` dependence into `predicted_p_chain`'s product form. It cut
+the point-estimate gap by 71% (real predictive signal, confirming E18)
+but the corrected mean exceeded the empirical rate's 95% CI at
+N=300,000 — over-corrected past conservative into unsafe territory, and
+was rejected on that basis. **§1's `predicted_p_chain` remains the
+adopted estimator; the corrected one is research-only.** This does not
+reopen the residual issue above as unaddressed — it confirms the
+mechanism is real and shows that exploiting it naively is unsafe, a
+materially different and now better-characterized state than "unknown
+mechanism, gap unaddressed." This remained deliberately
 kept apart from the placement-validation result above
 (`contract_photonics_compiler_optimal_placement_2026-08-23.md` §1:
 reusing the same uncorrected model as the optimization objective was a

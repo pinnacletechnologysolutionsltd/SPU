@@ -58,6 +58,59 @@ self-describing experiment with its own seed).
 
 ## Notes / open flags
 
+- **`corrected_reliability_sweep_frozen_v1_2026-08-24.json`** (sha256
+  `047154a6cd83ea5972f8efe543289c984a4bb21340f357d92239f1ee495c035c`) —
+  **corrected whole-chain reliability model, item #1 of the E18–E21
+  closure's agreed future-work order** — does folding E18's frozen
+  `R_i→R_{i+1}` dependence into a "still-clean-branch" corrected
+  estimator predict real whole-chain ("all 8 groups recover exactly")
+  recovery better than the naive product-of-marginals model
+  `predicted_p_chain`, at the same operating point E18 was calibrated at
+  (`M=2`, `K=16`, `sigma_det=3e-5`)?
+  (`contract_photonics_corrected_reliability_model_2026-08-24.md`).
+  **Not an E-series experiment** — the E18–E21 campaign is closed; this
+  reuses E18's frozen cell table read-only as calibration input and
+  validates on a fresh, disjoint 300,000-trial RNG namespace
+  (offset `300,000,000+`), so it is not a replay of E18/E19/E20/E21's
+  trials. Two rounds of Halt-and-Flag review before/during: round 1
+  verified directly against code (not assumed) that realized and
+  noiseless `m0_{i+1}` coincide exactly on the still-clean branch — the
+  fact the whole estimator depends on; round 2 (external reviewer)
+  required locking the `pair_id=i-2` transition mapping in code (not
+  just prose), quantifying the pair-0 fallback's coverage rather than
+  leaving it a prose caveat, and replacing an ill-defined "own
+  dispersion band" falsification criterion with a plain gap comparison.
+  The first full run (pre-amendment) was killed mid-flight before
+  writing any output once round-2 review landed — confirmed clean, no
+  partial artifact. Reproducibility bit-identical across two full runs
+  post-amendment (same sha256). **RESULT: the correction reduces the
+  raw point-estimate gap by 71% (`gap_naive=0.0143` →
+  `gap_corrected=0.0041`, ratio 0.287, comfortably under the frozen 0.5×
+  "materially closes" bar) but is disqualified by the contract's own
+  distinct failure-mode gate: `mean_corrected=0.1258` exceeds the
+  empirical rate's 95% CI upper bound (`empirical=0.1217`, CI
+  `[0.1206, 0.1229]`, N=300,000) — over-corrected into non-conservative
+  territory, tier "Model actively wrong (over-corrected,
+  non-conservative)".** Numerically closer is not the same as safe to
+  use: a model that *overestimates* whole-chain reliability is a worse
+  failure mode than the naive model's conservative bias, per the
+  contract's explicit design intent. **Leading hypothesis for the
+  overshoot, not demonstrated:** `pair_id=0` (groups 1→2) has zero E18
+  calibration coverage (E18 §10's known gap) and therefore falls back to
+  the uncorrected marginal law in 100% of trials (300,000/300,000) — the
+  transition-coverage breakdown (new diagnostic, added in the round-2
+  amendment) shows every other pair_id resolves to a real E18 cell in
+  99%+ of trials, isolating pair 0 as the one term carrying no
+  correction at all. This is a real coverage asymmetry, not yet shown to
+  be the overshoot's cause. Whether closing that gap (e.g. new
+  calibration data at pair 0, or an ablation excluding it) would fix or
+  worsen the overshoot is untested. **Parked future investigation, not
+  authorized by this contract.** Engineering conclusion:
+  `predicted_p_chain` (naive) remains the adopted production/design-rule
+  estimator; this corrected estimator is preserved as a completed
+  research result, rejected for design use by its own pre-registered
+  gate, not discarded. Driver:
+  `photonics/run_photonic_corrected_reliability_sweep.py`.
 - **`corruption_support_sweep_frozen_v1_2026-08-24.json`** (sha256
   `dc4428a8f4f3ae5e6dea2733e6c6b63fec511cd74ed0cdc72e32968b8dcf8a41`) —
   **E21, tests whether corruption *support* `S_i` (how many of the 4

@@ -107,6 +107,21 @@ tradeoff rather than a safety margin — the current model should not be
 used as-is; a corrected joint model would need to be built, which this
 campaign deliberately did not attempt (§6).
 
+**Update (2026-08-24): that follow-on was attempted and rejected**, not
+left open. `spu_strategy/contract_photonics_corrected_reliability_model_2026-08-24.md`
+built a corrected estimator from this section's own dependence and
+validated it on a fresh 300,000-trial sample: it cut the naive model's
+point-estimate error by 71% (confirming the dependence carries real
+predictive signal, not just statistical significance) but the corrected
+mean landed outside the empirical rate's 95% CI — over-corrected past
+conservative into unsafe territory — and was rejected on that basis.
+`predicted_p_chain` remains the adopted estimator. The result itself is
+informative: local conditional dependence can be real and predictive
+while a naive composition of locally calibrated conditionals is still
+non-conservative at the whole-chain level. Further pair-0-coverage work
+(§9 there, the leading hypothesis for the overshoot) is explicitly
+parked, not authorized.
+
 ### 5.2 Compile-time placement (§4 of the design-rule document): no change needed
 
 `greedy_place`/`optimal_placement` choose REGEN boundaries from the

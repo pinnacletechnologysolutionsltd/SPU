@@ -1,0 +1,72 @@
+{
+ "experiment": "corrected_reliability_sweep",
+ "contract": "contract_photonics_corrected_reliability_model_2026-08-24.md",
+ "description": "Does E18's frozen R_i->R_{i+1} dependence, folded into a still-clean-branch corrected estimator, predict real whole-chain recovery better than the naive product-of-marginals model, at M=2/K=16/sigma_det=3e-5?",
+ "seed": 13,
+ "n_trials": 300000,
+ "trial_offset": 300000000,
+ "sigma_det": 3e-05,
+ "M_boundaries": [
+  2,
+  4,
+  6,
+  8,
+  10,
+  12,
+  14,
+  16
+ ],
+ "K": 16,
+ "a_fit": -4.79,
+ "beta_fit": 3.19,
+ "e18_source": "/home/john/Projects/hardware/SPU/results/sweeps/correlation_mechanism_sweep_frozen_v1_2026-08-23.json",
+ "transition_coverage": {
+  "0": {
+   "n_used_e18_cell": 0,
+   "n_fallback": 300000,
+   "frac_used": 0.0
+  },
+  "1": {
+   "n_used_e18_cell": 299965,
+   "n_fallback": 35,
+   "frac_used": 0.9998833333333333
+  },
+  "2": {
+   "n_used_e18_cell": 298309,
+   "n_fallback": 1691,
+   "frac_used": 0.9943633333333334
+  },
+  "3": {
+   "n_used_e18_cell": 298162,
+   "n_fallback": 1838,
+   "frac_used": 0.9938733333333334
+  },
+  "4": {
+   "n_used_e18_cell": 298229,
+   "n_fallback": 1771,
+   "frac_used": 0.9940966666666666
+  },
+  "5": {
+   "n_used_e18_cell": 298409,
+   "n_fallback": 1591,
+   "frac_used": 0.9946966666666667
+  },
+  "6": {
+   "n_used_e18_cell": 299143,
+   "n_fallback": 857,
+   "frac_used": 0.9971433333333334
+  }
+ },
+ "n_all_succeed": 36522,
+ "mean_naive": 0.13606795472391683,
+ "mean_corrected": 0.12584837098166612,
+ "empirical_rate": 0.12174,
+ "empirical_ci": [
+  0.12056989820811487,
+  0.12291010179188513
+ ],
+ "gap_naive": 0.014327954723916833,
+ "gap_corrected": 0.0041083709816661235,
+ "gap_ratio": 0.2867381326106688,
+ "tier": "Model actively wrong (over-corrected, non-conservative)"
+}
