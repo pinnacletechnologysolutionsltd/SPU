@@ -42,21 +42,33 @@ does not expose a runner-up quadrance the way the SOM1 evidence frame's
 confidence gap does, so there is currently no ambiguity gate for it — an
 honest hardware boundary, not an oversight papered over for symmetry.
 
-**What this amendment does NOT do.** `tools/ina226_capture_pipeline.py`'s
-`run_study()` fully implements the seven-node SOM path — fold splitting,
-per-fold normalization, majority/threshold/centroid baselines, gate checking
-— and has **not** been extended to also train and score `spu4_som_edge` per
-fold. `software/tests/test_ina226_capture.py`'s `CONTRACT` constant still
-pins v3. Wiring `spu4_som_edge` into that pipeline (mirroring
-`_som_session_pairs` with `tools/spu4_som_edge_trainer.py`'s `train_nodes`
-and `find_bmu_edge` instead of the SOM1 evidence-frame path) is real,
-separate, tracked follow-up work — attempting it inside this same change
-alongside a frozen-contract amendment risked a rushed edit to pipeline code
-that already produces real evidence for the seven-node path. This amendment
-is the part that only has integrity if committed to *before* that
-integration and before real data exist; the integration itself can safely
-happen after, since the gate it must satisfy is now fixed and can't be
-tuned against results either way.
+**Update, same evening (2026-08-18), commit `3ad5da7`: the pipeline
+integration described below as not-yet-done is now done.**
+`tools/ina226_capture_pipeline.py`'s `run_study()` trains and scores
+`spu4_som_edge` per fold, alongside and independent of the existing
+seven-node SOM path — `_spu4_som_edge_session_pairs()` mirrors
+`_som_session_pairs()`, using `tools/spu4_som_edge_trainer.py`'s
+`train_nodes` and `software/lib/spu4_som_edge_oracle.py`'s `find_bmu_edge`.
+`software/tests/test_ina226_capture.py`'s `CONTRACT` constant points at v4.
+Verified end-to-end on the synthetic fixture: both models score 100%
+balanced accuracy, both gates evaluate `True` (synthetic/well-separated,
+not a real-world claim). The paragraph below is kept for the historical
+record of why the amendment and the integration were deliberately
+sequenced, not because the gap it describes is still open.
+
+**What this amendment did NOT do, at the time it was written.**
+`tools/ina226_capture_pipeline.py`'s `run_study()` fully implemented the
+seven-node SOM path — fold splitting, per-fold normalization,
+majority/threshold/centroid baselines, gate checking — and had **not** been
+extended to also train and score `spu4_som_edge` per fold. Wiring
+`spu4_som_edge` into that pipeline was real, separate, tracked follow-up
+work — attempting it inside this same change alongside a frozen-contract
+amendment risked a rushed edit to pipeline code that already produces real
+evidence for the seven-node path. This amendment was the part that only had
+integrity if committed to *before* that integration and before real data
+existed; the integration itself safely happened after, since the gate it
+had to satisfy was already fixed and could not be tuned against results
+either way.
 
 ### What changed in v3, and why the earlier versions are still on disk
 

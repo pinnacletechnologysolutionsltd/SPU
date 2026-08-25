@@ -6,7 +6,13 @@ the actuator rating, supply current limit, INA226 shunt marking, and wiring
 checks below are complete.
 
 The contract entered Git at commit `ed16263`, before this ingestion code or
-any synthetic/physical score existed.
+any synthetic/physical score existed. It is now at **v4** (`ed16263` → v1 →
+`f11a3bf` v2 → `26faebe` v3 adds the `pulses` covariate → `a2ab6df` v4 adds an
+independent `spu4_som_edge` gate). This runbook was written against v1/v2 and
+is being brought current for v3/v4 as of 2026-08-20 — **not yet fully
+verified against real capture**, since no physical session has run since the
+encoder/pulses column was added. Treat every step below as reviewed-but-
+unexercised until the first real block-0 capture confirms it.
 
 ## 1. Prepare the manifest
 
@@ -73,6 +79,59 @@ INA226 breadboard wiring:
 | VBS | VIN− node | **bus-voltage sense — required** |
 | VIN+ | bench-supply positive | high side before shunt |
 | VIN- | actuator positive | high side after shunt |
+| Encoder OUT | GP6 (pin 9), internal pull-up | rotation pulses — **co-blocking, see §2a below** |
+| Encoder VCC/GND | 3V3/GND (shared with INA226) | encoder logic power |
+
+### 2a. Calibrate `ENC_PPR` — do this before block 0, ideally before anything else
+
+No calibration procedure existed anywhere in this repo before 2026-08-20;
+every prior note just said "set `ENC_PPR` before block 0" without saying how.
+This closes that gap. It needs the encoder mounted on its shaft and 3V3/GND
+wired, but **not** the INA226 or the actuator's power path — do it as soon as
+the encoder is physically fitted.
+
+1. Flash `tools/bench_metrics/ina226_logger_v2.py` as `main.py` with
+   `ENC_PPR = 0` (the shipped default — raw counts, no conversion).
+2. Start a capture with the shaft **stationary and disconnected from the
+   actuator** so only hand rotation contributes pulses:
+   ```sh
+   source .venv/bin/activate
+   python3 tools/bench_metrics/power_log.py --port /dev/ttyACM0 \
+     --probe tamiya_75026_v1 --label calibration --seconds 20 \
+     --out build/ina226_capture/enc_ppr_calibration.csv
+   ```
+3. While it runs, rotate the shaft by hand **exactly 10 full revolutions**,
+   marking the start position with tape or a felt-tip dot so the count is
+   unambiguous. Slow, steady turns — the debounce is 0 by default, so a
+   jerky turn can double-count a slot edge.
+4. Sum the `pulses` column across the whole file (every row, not just the
+   last) and divide by 10:
+   ```sh
+   python3 -c "
+   import csv
+   with open('build/ina226_capture/enc_ppr_calibration.csv') as f:
+       rows = list(csv.DictReader(f))
+   total = sum(int(r['pulses']) for r in rows)
+   print(f'{total} pulses / 10 rev = {total/10} pulses/rev')
+   "
+   ```
+5. Repeat steps 2–4 at least **three times** (same discipline as the supply
+   characterisation in §2 below — a single reading is not a result). If the
+   three counts don't agree to within one pulse, the mounting is slipping or
+   the debounce needs a nonzero value — fix that before trusting any
+   downstream rpm figure.
+6. Round to the nearest integer (a slotted wheel's PPR is a small integer by
+   construction — a ball-mouse encoder is typically 16–24), set `ENC_PPR` in
+   `ina226_logger_v2.py` to that value, and **re-flash before any real
+   capture**. Record the measured value and the wheel/encoder source in
+   `INA226_SESSION_HANDOFF.md`.
+7. Confirm the encoder counts **on the actual assembled rig**, motor
+   free-running, before block 0: `pulses` must be nonzero and roughly stable
+   sample-to-sample. An all-zero `pulses` column is indistinguishable from a
+   stalled motor (see the logger's own header comment) — this is the one
+   check with no downstream gate to catch it, so it must be eyeballed live.
+
+### 2b. Wiring (continued)
 
 The actuator negative returns directly to bench-supply ground. Do not put an
 FPGA board's supply through the INA226 for this experiment. Confirm the module
@@ -187,8 +246,11 @@ Before enabling the output:
 
 ## 3. Start the logger
 
-Copy `tools/bench_metrics/ina226_logger.py` to the RP2350 as `main.py`. Its
-startup identity check must not print `FAIL`.
+Copy `tools/bench_metrics/ina226_logger_v2.py` to the RP2350 as `main.py`
+(**not** `ina226_logger.py` — that's the v1 firmware with no `pulses`
+column, and the frozen contract has required `pulses` since v3). Its
+startup identity check must not print `FAIL`, and confirm `ENC_PPR` in the
+printed header line matches the value from §2a, not `0`.
 
 ### Bus-voltage channel check — run before every capture campaign
 
@@ -353,6 +415,15 @@ python3 tools/ina226_capture_pipeline.py run \
 Run it a second time to a separate output directory and byte-compare
 `ina226_coarse_monitor_result_v1.json`. Only a map that passes the predeclared
 replay gate proceeds to Tang and Artix SOM1 hardware replay.
+
+**Since the v4 contract, this scores two independent models per fold**, each
+against its own predeclared gate (`docs/INA226_COARSE_MONITOR_CONTRACT.md`):
+the existing seven-node SOM (`som_balanced=...% replay_eligible=...`) and
+`spu4_som_edge` (`spu4_som_edge_balanced=...% spu4_som_edge_replay_eligible=...`,
+the actual edge-node product per `docs/SESSION_HANDOVER_2026-08-16.md` §9).
+Both print in the `run` command's summary line. A negative on one does not
+relax the other's threshold, and passing one does not authorize a claim
+about the other.
 
 ### Rehearse the chain without a bench
 
