@@ -1,5 +1,10 @@
-// spu_dual_raster.v — Dual triangle rasterizer with priority blending
-// Unit 0 has priority over unit 1 (nearer triangle wins pixel).
+// spu_dual_raster.v — Dual triangle rasterizer with fixed-priority blending
+// pixel_r/g/b use FIXED priority only (unit 0 always wins when covered) --
+// this is NOT depth-based, despite an earlier version of this comment
+// claiming "nearer triangle wins pixel". For real depth-aware compositing,
+// use the cov0/cov1/r0../r1.. ports below with spu_depth_compare.v instead
+// of pixel_r/g/b (added 2026-08-25 alongside depth-v2, additive -- existing
+// consumers of pixel_r/g/b are unaffected).
 // Both units share setup/step signals; each carries independent geometry.
 // No framebuffer: output pixel is combinational on each clock.
 // CC0 1.0 Universal.
@@ -39,10 +44,16 @@ module spu_dual_raster (
     input  wire        step_y,
     input  wire signed [15:0] x_span,
 
-    // Output pixel (R4G4B4, background = 0)
+    // Output pixel (R4G4B4, background = 0) -- fixed priority, not depth
     output wire [3:0]  pixel_r,
     output wire [3:0]  pixel_g,
-    output wire [3:0]  pixel_b
+    output wire [3:0]  pixel_b,
+
+    // Raw per-unit signals for a depth-aware consumer (spu_depth_compare.v)
+    output wire        cov0_out,
+    output wire        cov1_out,
+    output wire [3:0]  r0_out, g0_out, b0_out,
+    output wire [3:0]  r1_out, g1_out, b1_out
 );
 
     wire cov0, cov1;
@@ -79,5 +90,10 @@ module spu_dual_raster (
     assign pixel_r = cov0 ? r0 : (cov1 ? r1 : 4'h0);
     assign pixel_g = cov0 ? g0 : (cov1 ? g1 : 4'h0);
     assign pixel_b = cov0 ? b0 : (cov1 ? b1 : 4'h0);
+
+    assign cov0_out = cov0;
+    assign cov1_out = cov1;
+    assign r0_out = r0; assign g0_out = g0; assign b0_out = b0;
+    assign r1_out = r1; assign g1_out = g1; assign b1_out = b1;
 
 endmodule
