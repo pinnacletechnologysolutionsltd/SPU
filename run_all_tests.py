@@ -670,6 +670,7 @@ def main():
         ("gpu_depth_dispatch_pass", "test_gpu_depth_dispatch_rtl_parity.py"),
         ("gpu_depth_compare_pass", "test_gpu_depth_compare_rtl_parity.py"),
         ("gpu_depth_compare_integration_pass", "test_gpu_depth_compare_integration.py"),
+        ("gpu_top_integration_pass", "test_gpu_top_integration.py"),
     ]
     gpu_depth_v2_results = {}
     for var_name, fname in gpu_depth_v2_tests:
@@ -698,6 +699,7 @@ def main():
     gpu_depth_dispatch_pass = gpu_depth_v2_results["gpu_depth_dispatch_pass"]
     gpu_depth_compare_pass = gpu_depth_v2_results["gpu_depth_compare_pass"]
     gpu_depth_compare_integration_pass = gpu_depth_v2_results["gpu_depth_compare_integration_pass"]
+    gpu_top_integration_pass = gpu_depth_v2_results["gpu_top_integration_pass"]
 
     # Padé batch inversion oracle
     pade_batch_pass = 0
@@ -1147,6 +1149,7 @@ def main():
         ("GPU Depth Dispatch RTL Parity", gpu_depth_dispatch_pass, 1 - gpu_depth_dispatch_pass),
         ("GPU Depth Compare RTL Parity", gpu_depth_compare_pass, 1 - gpu_depth_compare_pass),
         ("GPU Depth Compare Integration", gpu_depth_compare_integration_pass, 1 - gpu_depth_compare_integration_pass),
+        ("GPU Top Integration", gpu_top_integration_pass, 1 - gpu_top_integration_pass),
     ):
         print(f"\n{_label} Tests: {_p + _f}")
         print(f"Passed: {_p}")
@@ -1165,7 +1168,7 @@ def main():
         + gpu_raster_pass
         + gpu_vulkan_pass
         + gpu_recip_pass + gpu_attr_stepper_pass + gpu_depth_math_pass + gpu_depth_dispatch_pass
-        + gpu_depth_compare_pass + gpu_depth_compare_integration_pass
+        + gpu_depth_compare_pass + gpu_depth_compare_integration_pass + gpu_top_integration_pass
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
@@ -1180,6 +1183,7 @@ def main():
         + (1 - gpu_recip_pass) + (1 - gpu_attr_stepper_pass)
         + (1 - gpu_depth_math_pass) + (1 - gpu_depth_dispatch_pass)
         + (1 - gpu_depth_compare_pass) + (1 - gpu_depth_compare_integration_pass)
+        + (1 - gpu_top_integration_pass)
         # Previously absent: these four were summed into total_pass with no
         # fail counterpart, so a failing or missing oracle reduced the
         # headline while Total FAIL still printed 0.
