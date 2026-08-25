@@ -3511,6 +3511,70 @@ direction — is not blocked by any of this.
 
 ---
 
+### 3.7 GPU depth-v2 + reciprocal — first silicon (2026-08-25)
+
+**Date:** 2026-08-25 NZT.
+
+**Scope:** first silicon for the depth-v2 affine-interpolated-depth
+pipeline (`spu_depth_dispatch.v` → `spu_depth_math.v` →
+`spu_reciprocal_core.v` → `spu_shared_mult35.v` → `spu_attr_stepper.v`),
+scoped and implemented same-session per the GPU rasterizer thread (see
+`spu_strategy/contract_gpu_depth_v2_shared_multiplier_arch_2026-08-25.md`,
+gitignored planning layer). All five modules were testbench-verified
+against `software/lib/gpu_depth_v2_oracle.py` and synthesis-measured
+(41.8% Tang 25K, integrated) before this — this entry is the first time
+any of it ran on real hardware.
+
+**Build & load:**
+
+```bash
+bash build_25k_spu13_depth_v2_silicon_probe.sh
+openFPGALoader -b tangprimer25k build/tang_primer_25k_spu13_depth_v2_silicon_probe.fs
+```
+
+Bitstream SHA-256:
+`70babbad19589b1a552654974842c5415b43729bb52de60de430339b71d390aa`.
+
+**Fixture:** the "small, screen-corner" triangle already used across
+the depth-v2 oracle/RTL parity tests — v0=(10,10) z0=0, v1=(600,30)
+z1=65535, v2=(300,460) z2=32768. The probe pulses `depth_setup0` once
+(exercising the full setup arithmetic: 9 dot-product multiplies,
+`D=c0+c1+c2`, the reciprocal core's normalize/LUT/Newton-Raphson, 3
+final-scale multiplies), then steps `spu_attr_stepper` 200 rows + 300
+columns from the origin to pixel (300,200) — a point independently
+confirmed inside this triangle — and self-checks `A_z0/B_z0/C_z0/
+frac_bits0` and the resulting per-pixel depth against oracle-derived
+constants hardcoded at build time.
+
+**UART proof — stable, repeating:**
+
+```
+DEPTH2:P D=00007EB7
+```
+
+`D=00007EB7` = 32439 decimal, the oracle's exact expected interpolated
+depth at (300,200) for this triangle — bit-exact match, not a
+tolerance/rounding check. `P` requires **all five** hardcoded
+expected values (`A_z0`, `B_z0`, `C_z0`, `frac_bits0`, and the final
+per-pixel depth) to match simultaneously; any single mismatch reports
+`F` instead.
+
+**What this establishes.** The full depth-v2 arithmetic chain — dot
+products, the denominator-from-existing-coefficients shortcut, the
+multiply-only reciprocal (leading-one detector, 256-entry ROM, one
+Newton-Raphson iteration), the shared 40×17 multiplier, and 500 cycles
+of per-pixel incremental accumulation — works end to end on real Tang
+25K silicon, on a fixture an independent Python oracle also computed.
+**What this does NOT establish:** perspective-correct texture mapping
+(explicitly out of scope, needs a genuinely per-pixel reciprocal, not
+this setup-time one); real multi-triangle-per-frame throughput (this
+probe runs the setup once, not repeatedly); or a second triangle
+unit / the pending-queue dispatch logic under real timing (only unit 0
+was exercised here — `spu_depth_dispatch`'s queue behavior is
+testbench-verified only, per `test_gpu_depth_dispatch_rtl_parity.py`).
+
+---
+
 ## 4. Synthesis Resource Reports
 
 ### 4.1 SPU-13 RPLU + Math + SDRAM + Lattice (full probe)
