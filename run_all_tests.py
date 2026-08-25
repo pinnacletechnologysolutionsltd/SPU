@@ -658,6 +658,43 @@ def main():
         else:
             print(f"\n  test_gpu_raster_oracle_vulkan_parity.py FAILED:\n{result_gpu_vulkan.stdout[-500:]}")
 
+    # GPU depth-v2 RTL parity (hardware/rtl/gpu/, added 2026-08-25 during
+    # the Halt-and-Flag implementation pass -- spu_reciprocal_core.v,
+    # spu_attr_stepper.v, spu_depth_math.v, spu_depth_dispatch.v; each
+    # test caught a real bug during development, see
+    # spu_strategy/contract_gpu_depth_v2_shared_multiplier_arch_2026-08-25.md)
+    gpu_depth_v2_tests = [
+        ("gpu_recip_pass", "test_gpu_reciprocal_core_rtl_parity.py"),
+        ("gpu_attr_stepper_pass", "test_gpu_attr_stepper_rtl_parity.py"),
+        ("gpu_depth_math_pass", "test_gpu_depth_math_rtl_parity.py"),
+        ("gpu_depth_dispatch_pass", "test_gpu_depth_dispatch_rtl_parity.py"),
+    ]
+    gpu_depth_v2_results = {}
+    for var_name, fname in gpu_depth_v2_tests:
+        test_path = os.path.join(root_dir, "software", "tests", fname)
+        # NOTE: do not name this `passed` -- Python has function scope, not
+        # block scope, so that would silently reassign the outer `passed`
+        # (the main Verilog harness's running total) on every iteration of
+        # this loop. Exactly this bug shipped once already in this session
+        # (dropped the reported total from 216 to 62) before being caught.
+        this_test_passed = 0
+        if os.path.exists(test_path):
+            result = subprocess.run(
+                [sys.executable, test_path],
+                capture_output=True, text=True, timeout=120
+            )
+            if result.stdout.strip().endswith("PASS"):
+                this_test_passed = 1
+            else:
+                print(f"\n  {fname} FAILED:\n{result.stdout[-500:]}")
+        else:
+            print(f"\n  {fname} MISSING — counted as a failure.")
+        gpu_depth_v2_results[var_name] = this_test_passed
+    gpu_recip_pass = gpu_depth_v2_results["gpu_recip_pass"]
+    gpu_attr_stepper_pass = gpu_depth_v2_results["gpu_attr_stepper_pass"]
+    gpu_depth_math_pass = gpu_depth_v2_results["gpu_depth_math_pass"]
+    gpu_depth_dispatch_pass = gpu_depth_v2_results["gpu_depth_dispatch_pass"]
+
     # Padé batch inversion oracle
     pade_batch_pass = 0
     pade_batch_fail = 0
@@ -1100,6 +1137,10 @@ def main():
         ("Composition Policy Trace",  composition_pass,   1 - composition_pass),
         ("GPU Raster Oracle/RTL Parity", gpu_raster_pass, 1 - gpu_raster_pass),
         ("GPU Raster Oracle/Vulkan Parity", gpu_vulkan_pass, 1 - gpu_vulkan_pass),
+        ("GPU Reciprocal Core RTL Parity", gpu_recip_pass, 1 - gpu_recip_pass),
+        ("GPU Attr Stepper RTL Parity", gpu_attr_stepper_pass, 1 - gpu_attr_stepper_pass),
+        ("GPU Depth Math RTL Parity", gpu_depth_math_pass, 1 - gpu_depth_math_pass),
+        ("GPU Depth Dispatch RTL Parity", gpu_depth_dispatch_pass, 1 - gpu_depth_dispatch_pass),
     ):
         print(f"\n{_label} Tests: {_p + _f}")
         print(f"Passed: {_p}")
@@ -1117,6 +1158,7 @@ def main():
         + composition_pass
         + gpu_raster_pass
         + gpu_vulkan_pass
+        + gpu_recip_pass + gpu_attr_stepper_pass + gpu_depth_math_pass + gpu_depth_dispatch_pass
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
@@ -1128,6 +1170,8 @@ def main():
         + bench_metrics_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
         + (1 - composition_pass) + (1 - gpu_raster_pass) + (1 - gpu_vulkan_pass)
+        + (1 - gpu_recip_pass) + (1 - gpu_attr_stepper_pass)
+        + (1 - gpu_depth_math_pass) + (1 - gpu_depth_dispatch_pass)
         # Previously absent: these four were summed into total_pass with no
         # fail counterpart, so a failing or missing oracle reduced the
         # headline while Total FAIL still printed 0.
