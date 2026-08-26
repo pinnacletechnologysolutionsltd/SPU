@@ -82,7 +82,15 @@ SAMPLE_HZ = 100
 ENC_PIN = 6
 # Pulses per revolution. 0 = "not declared". Raw counts are still logged;
 # the host cannot convert to rpm until this is set truthfully.
-ENC_PPR = 0
+#
+# Measured 2026-08-26 per docs/INA226_CAPTURE_RUNBOOK.md §2a: 12 pulses /
+# 10 hand-turned revolutions = 1.2, rounded to 1 -- reproduced identically
+# across 3 independent trials (12/12/12). Consistent with a single-slot
+# photointerrupter-style RPM sensor disc directly on the hand wheel (no
+# gearbox between the disc and what was turned), not a fine multi-slot
+# shaft encoder -- rpm resolution from this covariate is coarse by
+# construction, not a fault.
+ENC_PPR = 1
 # Minimum microseconds between accepted edges. 0 disables debouncing.
 # A nonzero value imposes a hard ceiling:
 #     max_rpm = 60_000_000 / (debounce_us * ppr)
@@ -169,15 +177,33 @@ def main():
 
     # Identity check: the INA219 has no ID registers, so a wrong module on
     # the socket fails here instead of producing plausible garbage.
-    mfg = read16(i2c, REG_MFG_ID)
-    die = read16(i2c, REG_DIE_ID)
-    if mfg != MFG_ID_EXPECT or die != DIE_ID_EXPECT:
-        print("# ina226_logger FAIL id mfg=0x%04X die=0x%04X "
-              "(expect 0x%04X/0x%04X) — wrong module or wiring?"
-              % (mfg, die, MFG_ID_EXPECT, DIE_ID_EXPECT))
-        return
-
-    i2c.writeto_mem(ADDR, REG_CONFIG, bytes([CONFIG >> 8, CONFIG & 0xFF]))
+    #
+    # calibration_only: docs/INA226_CAPTURE_RUNBOOK.md §2a runs this file
+    # with only the encoder wired, INA226 deliberately absent -- found
+    # 2026-08-26 that main() had no path for that (an unhandled OSError on
+    # the very first I2C read), contradicting what §2a promises. This is
+    # NOT a substitute for the identity check on a real capture: any real
+    # capture still needs mfg/die to match, and this branch makes that
+    # unmistakable in the stream (banner + sentinel columns) rather than
+    # silently emitting plausible-looking zeros.
+    calibration_only = False
+    try:
+        mfg = read16(i2c, REG_MFG_ID)
+        die = read16(i2c, REG_DIE_ID)
+    except OSError as e:
+        print("# ina226_logger CALIBRATION-ONLY MODE — INA226 not detected "
+              "(%s). bus_mV/shunt_uV/current_uA below are SENTINEL ZEROS, "
+              "not real readings. Only valid for the ENC_PPR pulse-count "
+              "procedure in docs/INA226_CAPTURE_RUNBOOK.md §2a — do not use "
+              "this stream for a real capture." % e)
+        calibration_only = True
+    else:
+        if mfg != MFG_ID_EXPECT or die != DIE_ID_EXPECT:
+            print("# ina226_logger FAIL id mfg=0x%04X die=0x%04X "
+                  "(expect 0x%04X/0x%04X) — wrong module or wiring?"
+                  % (mfg, die, MFG_ID_EXPECT, DIE_ID_EXPECT))
+            return
+        i2c.writeto_mem(ADDR, REG_CONFIG, bytes([CONFIG >> 8, CONFIG & 0xFF]))
 
     encoder = EdgeCounter(ENC_PIN, ENC_DEBOUNCE_US)
 
@@ -193,12 +219,15 @@ def main():
     while True:
         next_t = time.ticks_add(next_t, period_ms)
 
-        shunt_raw = s16(read16(i2c, REG_SHUNT))
-        bus_raw = read16(i2c, REG_BUS)
-        shunt_uV = shunt_raw * 5 // 2
-        bus_mV = bus_raw * 5 // 4
-        # Exact with the R100 shunt: I = V/R = (raw * 2.5 uV) / 0.1 ohm
-        current_uA = shunt_raw * 25
+        if calibration_only:
+            shunt_uV = bus_mV = current_uA = 0
+        else:
+            shunt_raw = s16(read16(i2c, REG_SHUNT))
+            bus_raw = read16(i2c, REG_BUS)
+            shunt_uV = shunt_raw * 5 // 2
+            bus_mV = bus_raw * 5 // 4
+            # Exact with the R100 shunt: I = V/R = (raw*2.5uV) / 0.1 ohm
+            current_uA = shunt_raw * 25
         pulses = encoder.read_and_clear()
 
         print("%d,%d,%d,%d,%d"

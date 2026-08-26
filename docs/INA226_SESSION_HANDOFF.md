@@ -12,6 +12,44 @@ delete it from here.
 
 ---
 
+## 2026-08-26 — encoder + INA226 parts landed; ENC_PPR calibrated
+
+**Parts arrived** ([[session-2026-08-17-hardware-order-timing]]). Encoder
+wired per the runbook §2 table (O1 -> GP6, O2 unused — this is a quadrature
+module but the firmware only counts single-channel rising edges, no
+direction decode). INA226 not yet wired — calibration only needs the encoder.
+
+**Real bug found and fixed**: `ina226_logger_v2.py`'s `main()` did an
+unconditional, unhandled I2C read to the INA226 as its first action, so
+running it with only the encoder wired (exactly what §2a's own text
+describes) crashed immediately (`OSError: [Errno 5] EIO`) — contradicting
+the runbook. Patched: the identity-check read is now wrapped in
+`try/except OSError`; on failure the logger prints an explicit
+`CALIBRATION-ONLY MODE` banner and streams `pulses` with sentinel-zero
+`bus_mV`/`shunt_uV`/`current_uA` (never silently fabricated as if real).
+A real capture with the INA226 present is unaffected — same identity-check
+failure mode as before if the wrong module is on the socket.
+
+**ENC_PPR calibrated: `ENC_PPR = 1`.** 12 pulses / 10 hand-turned
+revolutions = 1.2, rounded to 1. Reproduced identically across 3 independent
+trials (12/12/12) after two earlier attempts (10, 112) were discarded as
+mistimed hand-turns, not hardware faults — the fixed-duration capture window
+made it too easy to mismatch "exactly 10 revolutions" against a chat-relayed
+"start now"; switching to an open-ended capture (start turning whenever
+ready, signal when done, stop the capture after) fixed that and gave the
+three matching reads. Encoder is directly on the hand wheel, no gearbox
+between it and what was turned. A PPR this low is consistent with a
+single-slot photointerrupter-style RPM sensor disc (common on hobby gearbox
+kits like this one), not a fine multi-slot shaft encoder — `pulses`
+resolution as a covariate will be coarse by construction, not a defect.
+Reflashed and confirmed live: board reports `ppr=1` in its startup line, no
+`WARNING ppr=0`.
+
+**Next**: wire the INA226 (§2b), confirm real pulse counts on the fully
+assembled rig with the motor free-running (§2a step 7), then block 0.
+
+---
+
 ## 2026-08-09 — bench work parked until the spare arrives; soldering is settled
 
 **Decision (John, 2026-08-09): park the remaining bench characterisation until
