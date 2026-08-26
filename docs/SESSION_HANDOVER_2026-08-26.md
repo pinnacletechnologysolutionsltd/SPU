@@ -134,7 +134,12 @@ mid-experiment tonight, not concluded.**
   signature again. Closed out per that agreement — this needs a session
   where the bench itself gets debugged first (reseat cables, try a
   different USB port/cable, check for a marginal power/ground issue),
-  before the actual RTL question can be answered.
+  before the actual RTL question can be answered. **A logic probe is now
+  available** — put it directly on the UART TX line (and maybe reset/clock)
+  to settle whether the FPGA is genuinely still transmitting and the host
+  is losing it, versus the design itself going quiet, instead of inferring
+  this indirectly through USB identity and read-progress checks as done
+  tonight.
 
 **If this resumes**: the settle-time experiment is half-built and ready —
 just needs a clean re-flash-and-read of
