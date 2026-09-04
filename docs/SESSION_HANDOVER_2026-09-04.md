@@ -2,10 +2,12 @@
 
 ## 0. One-line state
 
-Artix-7 bench went from **silently non-functional** to **a verified 640x480
-VGA pipeline driving a real monitor**; HDMI is blocked upstream, the RP2040
-programmer died to a ground loop, and tensegrity's active-control primitive
-was falsified before any RTL was written.
+**FIRST VIDEO OUTPUT.** Eight colour bars with a scrolling marker line
+displayed on a physical monitor — see `hardware_evidence.md` §3.8. The
+Artix-7 bench went from **silently non-functional** to **pixels on glass** in
+one session. HDMI remains blocked upstream, the RP2350-Zero programmer was
+destroyed mid-session, and tensegrity's active-control primitive was
+falsified before any RTL was written.
 
 ---
 
@@ -92,7 +94,7 @@ data + 4000 disparity + 2 negative controls). **Mutation-tested 3/3**:
 corrupted control word, broken DC-balance term, flipped `xnor_mode`
 threshold all caught. The encoder itself is correct.
 
-### 2.4 VGA: WORKS
+### 2.4 VGA: WORKING, DISPLAYED ON A MONITOR
 
 Single-ended LVCMOS33, no OSERDESE2, **no MMCM** (640x480@60 wants 25 MHz;
 the board oscillator is exactly 50 MHz, so divide by two). Reuses the
@@ -115,14 +117,34 @@ pre-existing `hal_vga.v`, already wired into `spu_gpu_top`.
 All three colour channels read ~36.4% high against 36.6% predicted
 (40% x 480/525) — vertical blanking confirmed independently in each.
 
-**A real monitor locked (green LED, no "no signal") on `VGAREV`.**
+**Displayed on a physical monitor: eight colour bars in the correct order
+(white, yellow, cyan, green, magenta, red, blue, black) with the marker line
+scrolling vertically.** Bitstream `build/spu_a7_100t_VGAFIX.bit`, SHA-256
+`a80b6d0c...`, commit `bf00be0`. Ledger entry §3.8.
 
-### 2.5 J10 pin order — settled by experiment
+### 2.5 J10 pin order — settled by MEASUREMENT, after three wrong guesses
 
 The QMTech README and the LiteX platform file list J10's pins in **opposite**
-orders and neither states which is physical. **`VGAREV` is the one that
-locks a monitor**, so the README order is physical. Both xdc variants are
-kept; `spu_a7_vga_rev.xdc` is the correct one.
+orders and neither states which is physical. **Neither is wholly right.**
+
+`J10IDENT` probed at the VGA plug gave the answer:
+
+```
+VGA pin 13 (HSYNC) <- FPGA D5    6103.0 Hz, 0.0% error
+VGA pin 14 (VSYNC) <- FPGA E5     381.5 Hz, 0.0% error
+```
+
+J10's **top row follows the LiteX order** (hole 1 = D5, so 2/3/4 =
+G5/G7/G8 = blue/green/red); its **bottom row does not** (VSYNC on E5, not
+G6). `spu_a7_vga.xdc` had HSYNC right and VSYNC wrong; `spu_a7_vga_rev.xdc`
+had the reverse. **`spu_a7_vga_fix.xdc` is the authoritative mapping**; the
+other two are kept only as the record of how it was narrowed.
+
+**Two process lessons, both expensive.** A green monitor LED was read as
+"sync locked" when it only meant "monitor awake" — that misread drove the
+search in the wrong direction for a long stretch. And three bitstreams were
+built on mappings *inferred from vendor documentation* before anyone measured
+the actual pins, which took two minutes once attempted.
 
 `J10IDENT` drives all eight J10 pins at frequencies a factor of two apart,
 making every pin self-identifying. It repeatedly caught probes that had lost
@@ -244,17 +266,15 @@ untracked `SESSION_HANDOVER_2026-08-27/09-01/09-02/09-03`,
 
 ## 7. Next session
 
-**Resume condition is concrete and short.** Fit the USB isolator, connect
-three colour wires (J10-2/3/4 through 270R to VGA pins 3/2/1), load
-`build/spu_a7_100t_VGAREV.bit`, expect eight colour bars with a red line
-scrolling down. Twenty minutes.
+**The display milestone is DONE.** `build/spu_a7_100t_VGAFIX.bit` produces
+colour bars on a monitor. Next, in rough priority order:
 
-Then, in rough priority order:
-
-1. **GPU on the proven display path.** `spu_gpu_top.v` already has
-   `vga_r/g/b`, `vga_hsync`, `vga_vsync` and already instantiates `hal_vga`.
-   Wiring the real rasterizer to a verified VGA path is a small change, not a
-   project. Needs a resource check against LUCAS's ~20%.
+1. **GPU on the proven display path — the obvious next move.**
+   `spu_gpu_top.v` already has `vga_r/g/b`, `vga_hsync`, `vga_vsync` and
+   already instantiates `hal_vga`. The display path is now measured working
+   end to end, so wiring the real rasterizer to it is a small change, not a
+   project. Needs a resource check against LUCAS's ~20%. Use
+   `spu_a7_vga_fix.xdc`'s mapping.
 2. **Southbridge SPI throughput** — the §4 priority from 09-03, untouched
    today. It is also the processor->display link for a live scene, so it is
    not competing with the GPU work.
