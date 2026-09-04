@@ -1,0 +1,14 @@
+read_verilog -lib +/xilinx/cells_sim.v
+read_verilog -sv hardware/rtl/gpu/spu_video_timing.v
+read_verilog -sv hardware/rtl/gpu/spu_video_pattern.v
+read_verilog -sv hardware/rtl/hal/hal_hdmi_tmds.v
+read_verilog -sv hardware/rtl/hal/hal_hdmi_serdes_a7.v
+read_verilog -sv hardware/rtl/hal/hal_hdmi.v
+read_verilog -sv -D SYNTHESIS hardware/boards/artix7/spu_a7_video_top.v
+
+# hal_hdmi defaults to DEVICE="GW5A". The generate branch for Gowin
+# references OSER10/ELVDS_OBUF, which do not exist in a Xilinx flow, and
+# yosys's hierarchy pass elaborates the module's default parameterisation
+# before the instantiation's override applies. Force the default to the
+# Xilinx branch so only OSERDESE2/OBUFDS are pulled in.
+chparam -set DEVICE "A7" hal_hdmi
