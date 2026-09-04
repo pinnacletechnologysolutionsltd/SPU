@@ -30,6 +30,23 @@ case ":${PYTHONPATH:-}:" in
     *) export PYTHONPATH="$OPENXC7_ROOT/lib/python${PYTHONPATH:+:$PYTHONPATH}" ;;
 esac
 
+# Optional Boost ABI shim. openXC7's prebuilt bbasm/nextpnr-xilinx are linked
+# against a specific Boost minor version; Boost does not keep ABI compatibility
+# across minor releases, so a distribution upgrade silently breaks both (bbasm
+# dies on an undefined boost::program_options symbol, nextpnr-xilinx reports
+# missing libraries). If a matching set of Boost shared objects has been placed
+# in $OPENXC7_ROOT/lib/boost-<version>, prepend it. Absent on most machines,
+# where this block does nothing.
+for _openxc7_boost in "$OPENXC7_ROOT"/lib/boost-*; do
+    if [ -d "$_openxc7_boost" ]; then
+        case ":${LD_LIBRARY_PATH:-}:" in
+            *":$_openxc7_boost:"*) ;;
+            *) export LD_LIBRARY_PATH="$_openxc7_boost${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ;;
+        esac
+    fi
+done
+unset _openxc7_boost
+
 export OPENXC7_ROOT
 export NEXTPNR_XILINX_PYTHON_DIR="$OPENXC7_ROOT/lib/python"
 export PRJXRAY_DB_DIR="$OPENXC7_ROOT/share/nextpnr/prjxray-db"
