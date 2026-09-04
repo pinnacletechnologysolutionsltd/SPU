@@ -3758,6 +3758,23 @@ scrolling vertically, on a physical VGA monitor. The scrolling marker is the
 liveness control: static bars cannot distinguish a running pipeline from a
 frozen one.
 
+Photograph: `docs/bench_captures/2026-09-04_first_video_vga_colour_bars.jpeg`
+(image is rotated 180 degrees; the bar order reads correctly when inverted).
+The photograph independently confirms a stable image with no tearing, shear or
+roll; bars spanning the full active width; and clean secondary colours --
+yellow, cyan and magenta are each unmixed, which means all three channels
+reach the correct level through the 270 ohm DAC rather than merely being
+present. The wavy pattern across the bars is camera moire against the LCD
+pixel grid, not a signal artifact.
+
+**Observed on this display, cause not established:** a slight halo on the
+moving marker line. This is an axis-aligned line stepping one integer row per
+frame, so it lands exactly on pixel boundaries and cannot be spatially
+aliased -- the likelier causes are the LCD's analog sampling PLL, panel
+response time, or ringing on an unterminated hand-wired harness (270 ohm
+series into a 75 ohm input is a large impedance mismatch). Untested. See the
+queued CRT control in `SESSION_HANDOVER_2026-09-04.md` §7.
+
 **Pin mapping was MEASURED, not read.** The QMTech README and the LiteX
 `qmtech_wukong` platform file list J10 in opposite orders and neither states
 which is physical. Three bitstream variants built on inferred mappings all

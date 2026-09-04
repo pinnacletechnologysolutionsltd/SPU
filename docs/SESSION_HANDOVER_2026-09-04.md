@@ -283,6 +283,38 @@ colour bars on a monitor. Next, in rough priority order:
    grounds that series resistors mitigate the damage class; tonight is
    evidence against that.
 
+5. **QUEUED EXPERIMENT: repeat §3.8 on a CRT as a display-artifact control.**
+
+   A slight halo was observed on the moving marker line (§3.8). John has seen
+   similar haloing before in the compute-shader rational-graphics work and
+   suspects aliasing against the Bresenham grid. That explanation does not fit
+   *this* artifact: the marker is axis-aligned and steps one integer row per
+   frame, so it lands exactly on pixel boundaries and cannot be spatially
+   aliased.
+
+   A CRT is the right instrument to settle it, and not as indulgence. It has
+   no fixed pixel grid, so no sampling PLL and no phase error; no
+   response-time ghosting; and no scaler. VGA is its native signal.
+
+   **Falsifier.** If the halo VANISHES on a CRT, it was the LCD's analog
+   frontend and there is nothing in the signal. If it PERSISTS on a CRT, it is
+   real and in the signal or the geometry.
+
+   Cheaper tests first, on the current LCD: press auto-adjust (if the halo
+   changes, it is the sampling PLL, settled); and compare a static bar edge
+   against the moving line (if only the moving one halos, it is panel response
+   time).
+
+   This also sets up the deeper question. If the rasterizer later renders
+   rotated geometry at 90 degrees versus a 60 degree IVM arrangement, a CRT is
+   the only display that will not impose its own square sampling grid on the
+   comparison and confound the effect being looked for.
+
+   **Safety when connecting the CRT:** disconnect the programmer first. A CRT
+   is a heavy mains-earthed appliance, so the ground-loop exposure is larger,
+   not smaller. 640x480@60 is squarely inside any VGA CRT's range, so the
+   out-of-range hazard does not apply to this mode.
+
 ## References
 
 - `spu_strategy/contract_tensegrity_active_control_2026-09-04.md`
