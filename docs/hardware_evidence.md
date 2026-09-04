@@ -3702,3 +3702,85 @@ or timing regression.
 ---
 
 *CC0 1.0 Universal — public domain*
+
+---
+
+### 3.8 First video output — 640x480 VGA on a monitor (2026-09-04)
+
+**Date:** 2026-09-04 NZT.
+**Board:** QMTech Wukong Artix-7 XC7A100T-FGG676, 50 MHz oscillator.
+**Claim:** the SPU display path produces a correct, standards-conformant
+640x480@60 VGA signal that a physical monitor locks to and displays.
+
+This is the **first video output of any kind** from this project on any board.
+
+**Source anchor** (both, deliberately — §3.6 notes most historical entries
+carry a bitstream hash but no commit and often no build command):
+
+```
+commit    bf00be0  a7: VGAFIX -- the measured J10 pin mapping, and first pixels
+bitstream build/spu_a7_100t_VGAFIX.bit
+          3,825,920 bytes
+          SHA-256 a80b6d0cde560f71c85dcd4a8896019ae21f9149a5eed6cf26e35b154b69e379
+build     bash hardware/boards/artix7/build_a7.sh 100t vgafix all
+load      openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_VGAFIX.bit
+          -> isc_done 1  init 1  done 1
+```
+
+**Design.** `spu_a7_video_top`-class VGA spin: 50 MHz divided by two for a
+25 MHz pixel clock (no MMCM, no PLL), `spu_video_timing`, `spu_video_pattern`
+(eight colour bars plus a vertically scrolling marker), `hal_vga`. Output is
+1 bit per channel through an external three-resistor DAC. `clk_pixel` closes
+at 170.97 MHz against the 25 MHz requirement; 246 LUTs, 54 FFs.
+
+**Instrumented measurements** (fx2lafw on J10, 2 s captures):
+
+| quantity | measured | expected | error |
+|---|---|---|---|
+| HSYNC frequency | 31248.25 Hz | 31250 | **0.006%** |
+| HSYNC duty | 88.01% | 88.00% | exact |
+| implied pixel clock | 24.9986 MHz | 25.0000 | 0.006% |
+| implied frame rate | 59.520 Hz | 59.524 | 0.007% |
+| GREEN | 1.00 runs/line | bars 0-3 contiguous | — |
+| RED | 2.00 runs/line | bars 0,1 + 4,5 | — |
+| BLUE | 3.64 runs/line | bars 0,2,4,6 x 480/525 | — |
+| R/G/B duty | 36.4 / 36.4 / 36.7% | 36.6% | — |
+
+The 88.01% duty is the VESA 640x480@60 sync pulse exactly (96 low of 800),
+so this is standards-conformant timing rather than merely a square wave at
+about the right rate. The colour run counts fall directly out of the bar
+layout, and the 40% -> 36.6% scaling from vertical blanking appears
+independently in all three channels.
+
+**Visual confirmation.** Eight vertical colour bars in the correct order
+(white, yellow, cyan, green, magenta, red, blue, black) with the marker line
+scrolling vertically, on a physical VGA monitor. The scrolling marker is the
+liveness control: static bars cannot distinguish a running pipeline from a
+frozen one.
+
+**Pin mapping was MEASURED, not read.** The QMTech README and the LiteX
+`qmtech_wukong` platform file list J10 in opposite orders and neither states
+which is physical. Three bitstream variants built on inferred mappings all
+failed. `J10IDENT` (every J10 pin driven at a distinct frequency) probed at
+the VGA plug gave:
+
+```
+VGA pin 13 (HSYNC) <- FPGA D5    6103.0 Hz, 0.0% error
+VGA pin 14 (VSYNC) <- FPGA E5     381.5 Hz, 0.0% error
+```
+
+J10's top row follows the LiteX order; its bottom row does not. Each earlier
+variant had exactly one half right.
+
+**What this does NOT establish.**
+
+- **Nothing about HDMI/DVI.** That path cannot currently be built at all —
+  nextpnr-xilinx cannot place differential outputs (openXC7 issue #66, open
+  and unimplemented). `spu_a7_video_top` and `hal_hdmi_serdes_a7.v` exist and
+  synthesise, but have never been placed, packed or loaded.
+- **Nothing about the GPU.** This is a test-pattern generator. The rasterizer,
+  depth-v2 and reciprocal blocks are not in this bitstream.
+- **Colour depth is 1 bit per channel** (8 colours). The 4-bit ladder is
+  unbuilt.
+- **Single observation.** One monitor, one session. Not an N>=10 result and
+  not offered as one.
