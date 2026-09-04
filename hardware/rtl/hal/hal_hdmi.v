@@ -1,7 +1,16 @@
 // HAL_HDMI.v — HDMI output driver supporting GW5A (Gowin) and Artix-7 (Xilinx)
 // 3× TMDS channels + clock channel.
 // clk_pixel = 25 MHz (640×480@60Hz pixel clock)
-// clk_tmds  = 250 MHz (10× pixel clock for 10:1 serialisation)
+//
+// clk_tmds RATE DEPENDS ON `DEVICE` -- read this before wiring a top level:
+//   DEVICE="GW5A"     clk_tmds = 250 MHz = 10x pixel.  Gowin OSER10 is SDR,
+//                     so it needs one serial edge per bit.
+//   DEVICE="A7"/"XILINX"
+//                     clk_tmds = 125 MHz =  5x pixel.  OSERDESE2 runs DDR,
+//                     two bits per serial clock, so half the rate.
+// Feeding an A7 build 250 MHz here produces a 2x-fast, unsyncable link, and
+// feeding a Gowin build 125 MHz halves the pixel rate. Same port, two
+// contracts, chosen by DEVICE.
 // CC0 1.0 Universal.
 
 module hal_hdmi #(
@@ -73,50 +82,26 @@ module hal_hdmi #(
             ELVDS_OBUF u_obuf_r   (.I(ser_r),   .O(tmds_d_p[2]), .OB(tmds_d_n[2]));
 
         end else begin: xilinx_serdes
-            // ── Synchronize clk_pixel to clk_tmds to generate load pulse ──
-            reg [2:0] clk_pixel_sync;
-            always @(posedge clk_tmds or negedge rst_n) begin
-                if (!rst_n) begin
-                    clk_pixel_sync <= 3'd0;
-                end else begin
-                    clk_pixel_sync <= {clk_pixel_sync[1:0], clk_pixel};
-                end
-            end
-
-            wire load_p = (clk_pixel_sync[1] && !clk_pixel_sync[2]);
-
-            // ── Xilinx 10:1 Shift Registers (LSB first) ────────────────────
-            reg [9:0] shift_r, shift_g, shift_b, shift_clk;
-
-            always @(posedge clk_tmds or negedge rst_n) begin
-                if (!rst_n) begin
-                    shift_r   <= 10'd0;
-                    shift_g   <= 10'd0;
-                    shift_b   <= 10'd0;
-                    shift_clk <= 10'b1111100000;
-                end else if (load_p) begin
-                    shift_r   <= tmds_r;
-                    shift_g   <= tmds_g;
-                    shift_b   <= tmds_b;
-                    shift_clk <= 10'b1111100000; // 5-ones, 5-zeros clock pattern
-                end else begin
-                    shift_r   <= {1'b0, shift_r[9:1]};
-                    shift_g   <= {1'b0, shift_g[9:1]};
-                    shift_b   <= {1'b0, shift_b[9:1]};
-                    shift_clk <= {1'b0, shift_clk[9:1]};
-                end
-            end
-
-            wire ser_r   = shift_r[0];
-            wire ser_g   = shift_g[0];
-            wire ser_b   = shift_b[0];
-            wire ser_clk = shift_clk[0];
-
-            // ── Xilinx Differential output buffers ──────────────────────────
-            OBUFDS u_obuf_clk (.I(ser_clk), .O(tmds_clk_p), .OB(tmds_clk_n));
-            OBUFDS u_obuf_b   (.I(ser_b),   .O(tmds_d_p[0]), .OB(tmds_d_n[0]));
-            OBUFDS u_obuf_g   (.I(ser_g),   .O(tmds_d_p[1]), .OB(tmds_d_n[1]));
-            OBUFDS u_obuf_r   (.I(ser_r),   .O(tmds_d_p[2]), .OB(tmds_d_n[2]));
+            // Artix-7: hard OSERDESE2 serialisers, 5x pixel clock at DDR.
+            // Until 2026-09-04 this branch shifted a 10-bit register in
+            // general fabric at 10x pixel (250 MHz), which does not close
+            // timing on a -1 part. See hal_hdmi_serdes_a7.v.
+            hal_hdmi_serdes_a7 u_ser_clk (
+                .clk_pixel(clk_pixel), .clk_serial(clk_tmds), .rst(!rst_n),
+                .data(10'b1111100000),
+                .tmds_p(tmds_clk_p), .tmds_n(tmds_clk_n));
+            hal_hdmi_serdes_a7 u_ser_b (
+                .clk_pixel(clk_pixel), .clk_serial(clk_tmds), .rst(!rst_n),
+                .data(tmds_b),
+                .tmds_p(tmds_d_p[0]), .tmds_n(tmds_d_n[0]));
+            hal_hdmi_serdes_a7 u_ser_g (
+                .clk_pixel(clk_pixel), .clk_serial(clk_tmds), .rst(!rst_n),
+                .data(tmds_g),
+                .tmds_p(tmds_d_p[1]), .tmds_n(tmds_d_n[1]));
+            hal_hdmi_serdes_a7 u_ser_r (
+                .clk_pixel(clk_pixel), .clk_serial(clk_tmds), .rst(!rst_n),
+                .data(tmds_r),
+                .tmds_p(tmds_d_p[2]), .tmds_n(tmds_d_n[2]));
         end
     endgenerate
 
