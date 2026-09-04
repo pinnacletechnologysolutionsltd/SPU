@@ -48,6 +48,7 @@ RTL_FILES = [
     "hardware/rtl/hal/hal_vga.v",
     "hardware/rtl/hal/hal_hdmi.v",
     "hardware/rtl/hal/hal_hdmi_tmds.v",
+    "hardware/rtl/hal/hal_hdmi_serdes_a7.v",
 ]
 
 V0_0, V1_0, V2_0 = (50, 50), (400, 60), (200, 300)
@@ -77,6 +78,35 @@ TB_TEMPLATE = r"""
 module OBUFDS (input wire I, output wire O, output wire OB);
     assign O = I;
     assign OB = ~I;
+endmodule
+
+// Simulation-only stub for the same reason as OBUFDS above. Added
+// 2026-09-04, when hal_hdmi.v's A7 branch stopped serialising in fabric and
+// moved to hal_hdmi_serdes_a7.v's OSERDESE2 pair -- the fabric version this
+// test was written against no longer exists. The real serialiser module IS
+// compiled (see RTL_FILES) so it stays syntax-checked; only the Xilinx hard
+// primitive is stubbed. TMDS serialisation itself is not checked here, and
+// was not checked before either.
+module OSERDESE2 #(
+    parameter DATA_RATE_OQ = "DDR", parameter DATA_RATE_TQ = "SDR",
+    parameter DATA_WIDTH = 10, parameter SERDES_MODE = "MASTER",
+    parameter TRISTATE_WIDTH = 1, parameter TBYTE_CTL = "FALSE",
+    parameter TBYTE_SRC = "FALSE"
+) (
+    output wire OQ, output wire OFB, output wire TQ, output wire TFB,
+    output wire TBYTEOUT, output wire SHIFTOUT1, output wire SHIFTOUT2,
+    input wire CLK, input wire CLKDIV,
+    input wire D1, input wire D2, input wire D3, input wire D4,
+    input wire D5, input wire D6, input wire D7, input wire D8,
+    input wire OCE, input wire RST,
+    input wire SHIFTIN1, input wire SHIFTIN2,
+    input wire T1, input wire T2, input wire T3, input wire T4,
+    input wire TBYTEIN, input wire TCE
+);
+    assign OQ = RST ? 1'b0 : D1;
+    assign OFB = 1'b0; assign TQ = 1'b0; assign TFB = 1'b0;
+    assign TBYTEOUT = 1'b0;
+    assign SHIFTOUT1 = 1'b0; assign SHIFTOUT2 = 1'b0;
 endmodule
 
 module gpu_top_integration_tb;
