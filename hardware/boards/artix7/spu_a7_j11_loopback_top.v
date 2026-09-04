@@ -23,7 +23,7 @@ module spu_a7_j11_loopback_top (
     input  wire        spi_cs_n, spi_sck, spi_mosi,
     output wire        spi_miso,
     output wire        uart_tx,
-    output wire [3:0]  hdmi_d_p, hdmi_d_n,
+    output wire [2:0]  hdmi_d_p, hdmi_d_n,
     output wire        hdmi_clk_p, hdmi_clk_n,
     output wire        i2s_bclk, i2s_lrclk, i2s_dout,
     input  wire [7:0]  sensor_in,
@@ -43,8 +43,8 @@ module spu_a7_j11_loopback_top (
         ctr <= ctr + 27'd1;
     assign led_out = {ctr[26], ctr[25], ctr[24], ctr[23]};
     assign fault_led = 1'b0;
-    assign hdmi_d_p = 4'd0;
-    assign hdmi_d_n = 4'd0;
+    assign hdmi_d_p = 3'd0;
+    assign hdmi_d_n = 3'd0;
     assign hdmi_clk_p = 1'b0;
     assign hdmi_clk_n = 1'b0;
     assign i2s_bclk = 1'b0;

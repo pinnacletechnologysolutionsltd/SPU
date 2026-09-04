@@ -243,7 +243,7 @@ The current stub needs two upgrades:
 |------------|------|-----------------|
 | SDR SDRAM (25K module) | `HAL_SDRAM_Winbond.v` | ✅ Ready (for 25K/9K only) |
 | DDR3 (20K onboard 128MB) | `spu_mem_bridge_ddr3.v` | ❌ Not yet written — needs Gowin `DDRC` PHY |
-| HDMI display | `spu_hal_vga.v` + `HAL_Native_Hex.v` | ✅ Ready |
+| HDMI display | `hal_hdmi.v` + `hal_hdmi_tmds.v` | ❌ **Unintegrated.** Corrected 2026-09-04: this row previously claimed "✅ Ready" and cited `spu_hal_vga.v` + `HAL_Native_Hex.v`, neither of which exists anywhere in the repo. The real HDMI RTL is `hal_hdmi.v`, which is instantiated by no top level on any board, has zero testbenches and zero `docs/hardware_evidence.md` entries. Its Xilinx branch also serialises in fabric at 250 MHz rather than using `OSERDESE2`. |
 | RP2350 SPI/UART | `rp2350_spu_interface.c` | ✅ Core firmware complete |
 | Whisper TX/RX | `SPU_WHISPER_TX/RX.v` | ✅ Tested |
 | Artery cluster FIFO | `SPU_ARTERY_FIFO.v` | ✅ Tested |

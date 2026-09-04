@@ -121,16 +121,33 @@ set_property IOSTANDARD LVCMOS33 [get_ports {sensor_in[6]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {sensor_in[7]}]
 
 # ── HDMI/DVI (TMDS differential) ─────────────────────────
-# LUCAS/ROBOTICS bring-up drives these low, but nextpnr still emits PADs.
-# The video spin should revisit these as real TMDS constraints.
+# Pinout verified 2026-09-04 against the LiteX qmtech_wukong platform file
+# (litex-hub/litex-boards, covers board revs 1-3) and cross-checked against
+# prjxray package_pins.csv for xc7a100tfgg676-1. All eight pins below are
+# genuine differential pairs in bank 35 (RIOB33), correct P/N polarity.
+#
+# A fourth data pair on D5/E5 was constrained here until 2026-09-04 as
+# hdmi_d_p/n[3]. That was wrong: D5 and E5 belong to the J10 expansion
+# connector, not the HDMI socket, and the polarity was inverted besides
+# (D5 is IO_L13N, E5 is IO_L13P). Every A7 bitstream was therefore driving
+# two J10 header pins to 0. Removed; the port is now [2:0].
+#
+# The board also brings out DDC scl/sda (B2/A2), hot-plug detect (A3) and
+# CEC (B1) as LVCMOS33. None are constrained yet -- add them when the video
+# spin needs EDID or HPD.
+#
+# IOSTANDARD is LVCMOS33 here only because the current non-video tops tie
+# these pins low as two independent single-ended outputs. Real video output
+# requires IOSTANDARD TMDS_33, which is a differential standard and needs
+# the pins owned by an OBUFDS primitive -- change the RTL and the standard
+# together, never the standard alone. TMDS_33 is supported by this open
+# toolchain (prjxray RIOB33.IOB_Y0.TMDS_33.OUT; nextpnr-xilinx TMDS_33_A).
 set_property PACKAGE_PIN E1 [get_ports {hdmi_d_p[0]}]
 set_property PACKAGE_PIN D1 [get_ports {hdmi_d_n[0]}]
 set_property PACKAGE_PIN F2 [get_ports {hdmi_d_p[1]}]
 set_property PACKAGE_PIN E2 [get_ports {hdmi_d_n[1]}]
 set_property PACKAGE_PIN G2 [get_ports {hdmi_d_p[2]}]
 set_property PACKAGE_PIN G1 [get_ports {hdmi_d_n[2]}]
-set_property PACKAGE_PIN D5 [get_ports {hdmi_d_p[3]}]
-set_property PACKAGE_PIN E5 [get_ports {hdmi_d_n[3]}]
 set_property PACKAGE_PIN D4 [get_ports hdmi_clk_p]
 set_property PACKAGE_PIN C4 [get_ports hdmi_clk_n]
 set_property IOSTANDARD LVCMOS33 [get_ports {hdmi_d_p[0]}]
@@ -139,8 +156,6 @@ set_property IOSTANDARD LVCMOS33 [get_ports {hdmi_d_p[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {hdmi_d_n[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {hdmi_d_p[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {hdmi_d_n[2]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {hdmi_d_p[3]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {hdmi_d_n[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports hdmi_clk_p]
 set_property IOSTANDARD LVCMOS33 [get_ports hdmi_clk_n]
 
