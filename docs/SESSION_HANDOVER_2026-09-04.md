@@ -281,9 +281,81 @@ colour bars on a monitor. Next, in rough priority order:
 3. **Vivado decision** for real HDMI, with a working display already in hand.
 4. **Buy the power-ready interlock parts.** Deferred in August on the
    grounds that series resistors mitigate the damage class; tonight is
-   evidence against that.
+   evidence against that. Note the bench-safety ranking in
+   `spu_strategy/contract_graphics_first_priority_2026-09-04.md` §7 puts four
+   near-free measures ahead of it.
 
-5. **QUEUED EXPERIMENT: repeat §3.8 on a CRT as a display-artifact control.**
+**OUTREACH HOLD LIFTED 2026-09-04.** Supersedes the 08-19 scope clarification
+and the 08-04 timing gate. Its precondition was "no campaign until the
+real-sensor result" — that result was the SOM wedge, shelved 09-03, so the
+hold was waiting on a trigger that no longer exists. The artifact-led (not
+education-led) channel preference from 07-18 still stands. This unblocks
+falsifier F2.
+
+5. **QUEUED EXPERIMENT: SOM fixed-load retest.** John's call 2026-09-04 —
+   run it next session.
+
+   **Why it is worth a session.** The 30-session campaign's methodology was
+   sound: real captures (synthetic was used only to validate the pipeline
+   machinery), 5-fold cross-validation (`fold = block mod 5`), a three-part
+   gate (90% aggregate / 80% worst-fold / 80% per-class) and an explicit
+   warning against tuning on held-out scores. `normal` and `stall` both hit
+   90% recall. Only `elevated_load` failed, and the contaminating blocks are
+   named and quantified in `docs/INA226_SESSION_HANDOFF.md` — **b06 at
+   138.3 mA against b07 at 124.0 mA.** The class definition itself moved
+   between sessions.
+
+   There is already a training-fold min/max affine map, but it absorbs
+   *constant gain error*; session-to-session load variation is the class
+   distribution shifting underneath, which normalisation cannot fix.
+
+   **So the result is ambiguous, not negative.** Good experiment, contaminated
+   physical input. Running it converts an ambiguous shelving into a clean one
+   either way.
+
+   **NO WEIGHTS ARE NEEDED.** 5-fold CV derives weights per fold from the
+   training blocks; the trainer produces them as part of the evaluation. The
+   `som_weights_f*.mem` files and `tools/upload_som_weights.py` are for
+   *deploying* a trained model to an edge device — a different job. What the
+   retest needs is clean data.
+
+   **THE ACTUAL BLOCKER IS A LOAD FIXTURE, and it is mechanical, not
+   software.** The Tamiya motor's rubber tube was applied by hand and produced
+   ~14 mA of session-to-session drift. The requirement is a load that can be
+   set **identically every time without judgement**: a screw clamp at a defined
+   position, a weight-and-pulley, or a fixed mechanical stop. Design it before
+   the session rather than improvising at the bench — improvising is what
+   produced the original result.
+
+   **DESIGN RULE: change exactly one variable.** Same block count, same fold
+   assignment, same gate, same pipeline, same features. Only the load
+   application changes. Anything else moving at the same time and the
+   comparison is worthless. (`controlled-mechanism-experiment-template`.)
+
+   **Falsifier.** Passes the gate -> a working thing was shelved, and the
+   feature improvements below become optional polish. Still fails -> the
+   classifier is genuinely the problem, feature work is justified, and the
+   shelving is clean.
+
+   **Feature improvements, only if it still fails.** All four features
+   (`mean_current_mA`, `peak_to_peak_mA`, `mean_abs_delta_mA`,
+   `mean_abs_deviation_mA`) are magnitude statistics, so all four move with
+   applied load and none is invariant to it. In priority order: (a) add a
+   dimensionless ripple ratio, e.g. `mean_abs_delta / mean_current`, sensitive
+   to load *texture* rather than *level* — the SPU's exact rational arithmetic
+   makes a ratio native; (b) **use the confidence gap to abstain** —
+   `spu_som_bmu.v` already outputs `confidence_gap`, `second_q`, `second_node_id`
+   and `has_second`, so this needs a policy, not new RTL, and 95% on 90% of
+   cases with 10% declined beats 83% with no abstain for maintenance work;
+   (c) multi-scale windows; (d) frequency content, the biggest lift and hardest
+   under the no-float/no-division rules.
+
+   **Natural integration if it survives:** robotics. `software/lib/rational_robotics.py`
+   exists and the ROBOTICS spin is silicon-verified over J11 — current-signature
+   fault detection on joint actuators is the same sensor modality with existing
+   assets on both sides. Not the GPU; there is no honest connection there.
+
+6. **QUEUED EXPERIMENT: repeat §3.8 on a CRT as a display-artifact control.**
 
    A slight halo was observed on the moving marker line (§3.8). John has seen
    similar haloing before in the compute-shader rational-graphics work and
