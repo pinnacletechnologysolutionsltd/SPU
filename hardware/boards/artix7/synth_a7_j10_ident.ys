@@ -1,0 +1,2 @@
+read_verilog -lib +/xilinx/cells_sim.v
+read_verilog -sv -D SYNTHESIS hardware/boards/artix7/spu_a7_j10_ident_top.v

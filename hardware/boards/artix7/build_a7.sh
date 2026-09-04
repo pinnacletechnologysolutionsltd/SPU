@@ -159,6 +159,17 @@ fi
 case "$SPIN" in
     IROTC)            A7_FREQ_DEFAULT=2;;
     TENSEGRITYPROBE|TENSEGRITYLINK) A7_FREQ_DEFAULT=25;;
+    # VIDEO's fabric is almost entirely the 25 MHz pixel domain; the 125 MHz
+    # serial domain is hard OSERDESE2 plus two reset-sync flops. nextpnr-xilinx
+    # 0.8.2 takes ONE global --freq and ignores XDC timing, so it cannot
+    # express two clock domains -- constraining to 125 would over-constrain
+    # every pixel-domain path. The 125 MHz serial path is therefore NOT
+    # independently timing-verified by this flow.
+    VIDEO)            A7_FREQ_DEFAULT=25;;
+    VGA)              A7_FREQ_DEFAULT=25;;
+    VGAREV)           A7_FREQ_DEFAULT=25;;
+    VGABCAST)         A7_FREQ_DEFAULT=25;;
+    J10IDENT)         A7_FREQ_DEFAULT=50;;
     *)                A7_FREQ_DEFAULT=50;;
 esac
 A7_FREQ="${A7_FREQ_ENV:-$A7_FREQ_DEFAULT}"
@@ -287,6 +298,26 @@ elif [ "$SPIN" = "FP4EVIDENCE" ]; then
     YS="hardware/boards/artix7/synth_a7_fp4_inverter_evidence.ys"
     XDC="hardware/boards/artix7/spu_a7_fp4_inverter_evidence.xdc"
     TOP="spu_a7_fp4_inverter_evidence_top"
+elif [ "$SPIN" = "VIDEO" ]; then
+    YS="hardware/boards/artix7/synth_a7_video.ys"
+    XDC="hardware/boards/artix7/spu_a7_video.xdc"
+    TOP="spu_a7_video_top"
+elif [ "$SPIN" = "VGA" ]; then
+    YS="hardware/boards/artix7/synth_a7_vga.ys"
+    XDC="hardware/boards/artix7/spu_a7_vga.xdc"
+    TOP="spu_a7_vga_top"
+elif [ "$SPIN" = "VGAREV" ]; then
+    YS="hardware/boards/artix7/synth_a7_vga_rev.ys"
+    XDC="hardware/boards/artix7/spu_a7_vga_rev.xdc"
+    TOP="spu_a7_vga_top"
+elif [ "$SPIN" = "VGABCAST" ]; then
+    YS="hardware/boards/artix7/synth_a7_vga_bcast.ys"
+    XDC="hardware/boards/artix7/spu_a7_vga_bcast.xdc"
+    TOP="spu_a7_vga_bcast_top"
+elif [ "$SPIN" = "J10IDENT" ]; then
+    YS="hardware/boards/artix7/synth_a7_j10_ident.ys"
+    XDC="hardware/boards/artix7/spu_a7_j10_ident.xdc"
+    TOP="spu_a7_j10_ident_top"
 fi
 
 echo "=== SPU-13 Artix-7 Build ==="
