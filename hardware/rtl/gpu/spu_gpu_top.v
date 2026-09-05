@@ -17,7 +17,13 @@
 // CC0 1.0 Universal.
 
 module spu_gpu_top #(
-    parameter DEVICE = "GW5A"
+    parameter DEVICE = "GW5A",
+    // ENABLE_HDMI=0 omits hal_hdmi entirely and ties the TMDS outputs low.
+    // Required on openXC7/nextpnr-xilinx, whose placer HANGS on differential
+    // output (OBUFDS/TMDS_33) -- upstream issue #66, open and unimplemented,
+    // so a toolchain rebuild will not fix it. Default 1 preserves the
+    // pre-existing behaviour for the Gowin path and for any Vivado flow.
+    parameter ENABLE_HDMI = 1
 ) (
     input  wire        clk_pixel,    // 25 MHz
     input  wire        clk_tmds,     // 250 MHz
@@ -166,10 +172,22 @@ module spu_gpu_top #(
         .vga_hsync(vga_hsync), .vga_vsync(vga_vsync));
 
     // ── hal_hdmi ─────────────────────────────────────────────────────────
-    hal_hdmi #(.DEVICE(DEVICE)) u_hdmi (.clk_pixel(clk_pixel), .clk_tmds(clk_tmds), .rst_n(rst_n),
-        .r({rast_r, 4'h0}), .g({rast_g, 4'h0}), .b({rast_b, 4'h0}),
-        .hsync(hsync_d), .vsync(vsync_d), .active(active_d),
-        .tmds_clk_p(tmds_clk_p), .tmds_clk_n(tmds_clk_n),
-        .tmds_d_p(tmds_d_p), .tmds_d_n(tmds_d_n));
+    generate
+        if (ENABLE_HDMI) begin: hdmi_out
+            hal_hdmi #(.DEVICE(DEVICE)) u_hdmi (.clk_pixel(clk_pixel), .clk_tmds(clk_tmds), .rst_n(rst_n),
+                .r({rast_r, 4'h0}), .g({rast_g, 4'h0}), .b({rast_b, 4'h0}),
+                .hsync(hsync_d), .vsync(vsync_d), .active(active_d),
+                .tmds_clk_p(tmds_clk_p), .tmds_clk_n(tmds_clk_n),
+                .tmds_d_p(tmds_d_p), .tmds_d_n(tmds_d_n));
+        end else begin: no_hdmi
+            // VGA-only build: no differential primitive is instantiated at
+            // all, so nothing for the openXC7 placer to trip over. clk_tmds
+            // is unused in this configuration.
+            assign tmds_clk_p = 1'b0;
+            assign tmds_clk_n = 1'b0;
+            assign tmds_d_p   = 3'b000;
+            assign tmds_d_n   = 3'b000;
+        end
+    endgenerate
 
 endmodule
