@@ -73,8 +73,18 @@ module spu_4_alu_fold_tb;
     integer failures;
 
     initial begin
-        $dumpfile("fold_trace.vcd");
-        $dumpvars(0, spu_4_alu_fold_tb);
+        // Waveform dump is OPT-IN (`vvp <bench>.vvp +dump`). It used to be
+        // unconditional and wrote to the CURRENT DIRECTORY, which is the
+        // repository root when run_all_tests.py drives it -- the root `.vcd`
+        // dumps AGENTS.md section 3.6 prohibits and tools/verify_repo.sh
+        // checks for. That made the gate fail on its own side effects: step 1
+        // (hygiene) passed on a clean tree, step 3 (the suite) recreated the
+        // files, and the NEXT invocation failed at step 1. Sweeping the files
+        // by hand, as on 2026-09-05, does not fix the cause.
+        if ($test$plusargs("dump")) begin
+            $dumpfile("fold_trace.vcd");
+            $dumpvars(0, spu_4_alu_fold_tb);
+        end
 
         clk = 0; reset = 1; rst_n_s = 0;
         start = 0; mode_auto = 0; bloom = 8'hFF; // max intensity = no scaling

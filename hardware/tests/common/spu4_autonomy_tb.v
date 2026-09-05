@@ -36,8 +36,18 @@ module spu4_autonomy_tb;
 
     integer i;
     initial begin
-        $dumpfile("autonomy_dream.vcd");
-        $dumpvars(0, spu4_autonomy_tb);
+        // Waveform dump is OPT-IN (`vvp <bench>.vvp +dump`). It used to be
+        // unconditional and wrote to the CURRENT DIRECTORY, which is the
+        // repository root when run_all_tests.py drives it -- the root `.vcd`
+        // dumps AGENTS.md section 3.6 prohibits and tools/verify_repo.sh
+        // checks for. That made the gate fail on its own side effects: step 1
+        // (hygiene) passed on a clean tree, step 3 (the suite) recreated the
+        // files, and the NEXT invocation failed at step 1. Sweeping the files
+        // by hand, as on 2026-09-05, does not fix the cause.
+        if ($test$plusargs("dump")) begin
+            $dumpfile("autonomy_dream.vcd");
+            $dumpvars(0, spu4_autonomy_tb);
+        end
         
         clk = 0; reset = 1;
         prog_en = 0; prog_addr = 0; prog_data = 0;
