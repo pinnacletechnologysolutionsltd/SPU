@@ -78,7 +78,22 @@ row 0 is wrong:
 depth0 vs oracle over the active area: 80/4800 pixels wrong (1 row of 60)
 ```
 
-Off by a constant 2000, about 11 pixels of `A_z`.
+**A correction, kept rather than quietly fixed.** Commit `8c2d2cc`'s message
+says the row is "off by a constant 2000 (about 11 pixels of A_z)". That was
+generalised from the first six mismatches the probe happened to print, all of
+which fell in one regime. Profiling the whole row afterwards shows **two**:
+
+| x | measured error | in pixels of `A_z` |
+|---|---|---|
+| 0 – 23 | +2000 | ~10 |
+| 24 – 79 | +4363 | ~23 |
+
+`x=0..23` are pixels the scan had already passed before the anchor landed, so
+they carry the previous frame's over-accumulated value; `x=24..79` are stepped
+correctly but from an origin 24 pixels late. The count (80/4800, one full
+scanline) was right; the magnitude was one regime reported as the whole row.
+Same failure mode as 09-05's `1c4476c`: a reasoned number where a measured one
+belonged.
 
 **Latent, not observed — stated precisely.** §3.9 draws ONE triangle, and with
 only unit 0 armed `spu_depth_compare`'s `unit0_wins` reduces to `cov0` and

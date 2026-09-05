@@ -238,8 +238,12 @@ module spu_gpu_top #(
     // The damage is bounded, and the bound was measured, not reasoned:
     // acc_row is re-seeded from the row wrap, so the field self-corrects
     // from row 1 and ONLY row 0 is wrong -- 80/4800 active pixels on the
-    // 80x60 bench frame, one full scanline, every frame, off by a constant
-    // 2000 (about 11 pixels of A_z).
+    // 80x60 bench frame, one full scanline, every frame. The row has TWO
+    // error regimes, not one: x=0..23 are the pixels the scan had already
+    // passed before the anchor landed, and carry the previous frame's
+    // over-accumulated value (measured error +2000, ~10 pixels of A_z);
+    // x=24..79 are stepped correctly but from an origin 24 pixels late
+    // (measured +4363, ~23 pixels of A_z).
     //
     // Latent, not observed: section 3.9 draws ONE triangle, and with only
     // unit 0 armed spu_depth_compare's unit0_wins reduces to cov0 and never
