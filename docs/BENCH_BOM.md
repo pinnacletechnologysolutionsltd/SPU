@@ -54,10 +54,25 @@ Check the `R100` marking before wiring anything.
 > is a mechanical fixture, not a part — see `SESSION_HANDOVER_2026-09-04.md` §5,
 > which also records two zero-bench pre-steps that need no purchase at all.
 >
-> **Do not buy this section to unblock work.** If the retest is revived and the
-> spare INA226 argument (no partial-redo path across thirty sessions) still
-> holds, it holds then. The logic analyzer has been bought and moved to §1.
-> The active bench track is now graphics — see §2a.
+> **AMENDED 2026-09-05, later same day: the retest IS going ahead** (John's
+> call). So this section is not dead — it is *conditional*, on a scoping
+> question that has not been answered:
+>
+> - **If the retest recaptures all 30 sessions** (a genuinely single-variable
+>   experiment — only the load application changes), the spare-INA226 argument
+>   is fully live again: `all_capture_sessions_must_validate: true` with no
+>   partial-redo path means a module failure mid-campaign costs every session
+>   captured so far. **Buy the spare.**
+> - **If it recaptures only the 10 `elevated_load` sessions**, the exposure is
+>   a third the size, and the spare is a judgement call rather than a
+>   necessity.
+>
+> **Decide the scope before ordering, not after.** The encoder's co-blocking
+> argument below also only applies to a full recapture — RPM cannot be
+> retro-fitted to sessions that are being kept.
+>
+> The logic analyzer has been bought and moved to §1. The active *engineering*
+> track remains graphics — see §2a.
 
 **The list is three items as of 2026-08-16** — John confirmed diodes and enamel
 wire are already on hand, so both moved to §1.
