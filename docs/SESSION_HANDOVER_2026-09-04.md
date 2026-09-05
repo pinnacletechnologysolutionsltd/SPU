@@ -319,6 +319,17 @@ falsifier F2.
    *deploying* a trained model to an edge device — a different job. What the
    retest needs is clean data.
 
+   **THE CAPTURES WERE AT RISK — now rescued (2026-09-05).** All 30 real
+   captures existed only in `build/ina226_capture/captures/`, which
+   `.gitignore:23` excludes, so `git ls-files` returned **0**. Two hours of
+   hand-loaded bench work, **unreproducible by definition** — the fixture that
+   would make it repeatable is the thing that does not exist yet — sitting in
+   the directory everything treats as disposable. Copied to
+   `docs/bench_captures/2026-09-03-ina226-som/` (30 CSVs, 400K, with
+   `SHA256SUMS`), which is tracked and is where raw bench evidence already
+   lives. **Commit them before any further SOM work.** Everything in the
+   offline pre-steps below depends on this data surviving.
+
    **THE ACTUAL BLOCKER IS A LOAD FIXTURE, and it is mechanical, not
    software.** The Tamiya motor's rubber tube was applied by hand and produced
    ~14 mA of session-to-session drift. The requirement is a load that can be
@@ -336,6 +347,43 @@ falsifier F2.
    feature improvements below become optional polish. Still fails -> the
    classifier is genuinely the problem, feature work is justified, and the
    shelving is clean.
+
+   **TEMPORAL VOTING IS ALREADY IMPLEMENTED — do not queue it as a fix.**
+   Amended 2026-09-05 after an external strategy note proposed
+   "require 3 consecutive window agreements" as a new improvement. It is not
+   new. `tools/ina226_capture_pipeline.py:128` (`session_pairs`) requires
+   exactly four windows per session and scores
+   `plurality(predictor(row.features) for row in session)`; the SOM1 oracle
+   path at :232 does the same. **The 60-70% `elevated_load` recall is the
+   post-vote number.** There is also no room to strengthen it: four windows
+   per ~1.4 s session means a 3-consecutive rule spans nearly the whole
+   capture. Strengthening the vote would require longer captures, which is a
+   second variable and therefore out of scope for the retest.
+
+   **ZERO-BENCH PRE-STEPS. Both run on the rescued data, before the bench
+   session, and neither touches the one-variable rule.**
+
+   (i) **Training-order sensitivity sweep.** The pipeline is deterministic end
+   to end — SHA256-seeded fold assignment
+   (`spu4_som_edge_cross_validate.py:66`), SHA256-seeded epoch order
+   (`spu4_som_edge_trainer.py:231`), deterministic init — so re-running it
+   unchanged returns bit-identical output. Repeating and averaging *identical*
+   runs is a no-op. The informative version sweeps `--order-seed` over N values
+   and reports mean and spread per class. **Nobody has measured this.** If
+   `elevated_load` recall swings materially on seed alone, the
+   physical-contamination explanation is incomplete and the single-seed result
+   was partly variance the original run could not see. Either outcome sharpens
+   the retest; it is not a substitute for it.
+
+   (ii) **Drift-invariance check on the ripple ratio, not an accuracy check.**
+   Rescoring the old contaminated data with candidate features and keeping
+   whichever scores best is **tuning on the held-out set**, which burns the
+   retest's cleanliness — see the explicit warning in the original campaign.
+   The admissible offline question is physics, not accuracy: across the named
+   contaminated blocks (**b06 at 138.3 mA vs b07 at 124.0 mA**), does
+   `mean_abs_delta / mean_current` move less than `mean_current` does? That is
+   decidable without looking at a single fold score, and it either justifies
+   the ripple ratio before the bench session or kills it for free.
 
    **Feature improvements, only if it still fails.** All four features
    (`mean_current_mA`, `peak_to_peak_mA`, `mean_abs_delta_mA`,
