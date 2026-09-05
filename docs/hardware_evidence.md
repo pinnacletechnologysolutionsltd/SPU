@@ -3801,3 +3801,122 @@ variant had exactly one half right.
   unbuilt.
 - **Single observation.** One monitor, one session. Not an N>=10 result and
   not offered as one.
+
+### 3.9 First rasterized geometry — GPU triangle on a monitor (2026-09-05)
+
+**Date:** 2026-09-05 NZT.
+**Board:** QMTech Wukong Artix-7 XC7A100T-FGG676, 50 MHz oscillator.
+**Claim:** `spu_gpu_top`'s coverage rasterizer produces correct, stable
+geometry on silicon, displayed through the VGA path proven in §3.8.
+
+This is the **first rasterized geometry** from this project on any display.
+`spu_gpu_top` had never been instantiated by any top on any board before
+today — every prior reference to it in the tree was a comment, and the ECP5
+build listed the file without its top ever using it.
+
+**Source anchor:**
+
+```
+commit    dfbefd3  gpu: re-anchor the edge accumulators every frame, and the
+                   first spu_gpu_top testbench
+bitstream build/spu_a7_100t_GPUVGA.bit
+          3,825,920 bytes
+          SHA-256 b6045458d149e0ad90d87dfa19c3f89b9a05dcb7613af8722d5ca82ce13e2e1e
+build     bash hardware/boards/artix7/build_a7.sh 100t gpuvga all
+detect    openFPGALoader -c dirtyJtag --freq 1000000 --detect -v
+          -> 1 device, idcode 0x3631093, xc7a100, irlength 6
+load      openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_GPUVGA.bit
+          -> Load SRAM 100%, isc_done 1, isc_ena 0, init 1, done 1
+```
+
+**Design.** `spu_a7_gpu_vga_top` swaps `spu_video_pattern` for `spu_gpu_top`
+and changes nothing else about the §3.8 display path: 50 MHz / 2 for a 25 MHz
+pixel clock (no MMCM), same reset debounce, same `hal_vga`, same
+three-resistor DAC, same MEASURED `spu_a7_vga_fix.xdc` mapping. Built with
+`DEVICE("A7")` and `ENABLE_HDMI(0)` — the latter is required, since
+`hal_hdmi` emits OBUFDS and nextpnr-xilinx cannot place differential output
+(openXC7 issue #66). One hardcoded triangle, no host link: if the shape
+appears the rasterizer works, and if it does not the fault cannot be in a
+link that would otherwise need debugging at the same time.
+
+Post-route: 7,890/126,800 SLICE_LUTX (6%), 2,417/126,800 SLICE_FFX (1%),
+2/240 DSP48E1, `clk_pixel` 40.28 MHz against the 25 MHz requirement.
+
+**Triangle.** V0(320,100) V1(150,380) V2(490,380) in screen coordinates, flat
+red on black. Edge coefficients computed by hand; each edge evaluates to
++95200 at its opposite vertex, so the winding is consistent.
+
+**Geometric verification.** Measured off the photograph against the design:
+
+| quantity | predicted | measured | note |
+|---|---:|---:|---|
+| base width / screen width | 53% | ~55% | 340/640 |
+| height / screen height | 58% | ~60% | 280/480 |
+| apex centred over base | yes | yes | isoceles |
+
+Handheld-photo precision, so this confirms the shape is *correct* rather than
+merely *present* — the edge coefficients, stepper arithmetic and coverage
+test all agree with the intended geometry.
+
+**Aliasing, as designed.** `spu_edge_stepper`'s `inside_out` is a hard
+`(f >= 0)` test with no coverage fraction, so the two slanted edges stair-step
+symmetrically at the predicted ~0.607 px/row while the horizontal edge
+(`A = 0`) is straight with no steps. A jagged horizontal edge would have
+indicated a fault; it is clean. `software/tools/golden_primes.py` exists but
+is referenced nowhere in `hardware/rtl/` — no smoothing of any kind is applied
+in this design.
+
+Photograph: `docs/bench_captures/2026-09-05_first_triangle_gpu_vga.jpeg`
+(rotated 180 degrees, as §3.8's is; the apex points up when inverted). The
+blue-purple field is LCD backlight bleed and camera white balance — the design
+emits zero on all channels outside the triangle, and the background reads
+black by eye. The concentric fringes inside the red area are camera moire
+against the pixel grid: the interior is one bit of red fully on at every
+covered pixel and is uniform by construction.
+
+**Three RTL defects were fixed to reach this**, all in never-built code and
+all found the same day (`dfbefd3`, and `9c5d4e0`/`65ec1ef` before it):
+
+1. **Frame drift.** `step_y` derives from the horizontal wrap alone, firing on
+   all 525 lines while only 480 are displayed, and nothing re-anchored the
+   accumulators after `setup`. Measured on the pre-fix RTL with B=170, `f_row`
+   at successive frame starts: -17520, 71730, 160980 — a constant 89250 =
+   525*170 step per frame. A triangle set up once left the screen almost
+   immediately. `spu_gpu_top` now re-pulses setup at (0,0).
+2. **`spu_depth_dispatch` never reset its coefficient outputs.** On an FPGA
+   they come up at 0; in simulation they are X, an X depth reaches
+   `spu_depth_compare`, and every pixel on the screen goes X. This is why
+   `spu_gpu_top` had never been simulated — it could not be.
+3. **An un-set-up raster unit covered the whole screen.** Its accumulators
+   reset to 0 and `inside` is `(f >= 0)`, so all three edges reported inside.
+   Coverage is now gated by an `armed` latch.
+
+Covered by `hardware/tests/common/spu_gpu_top_frame_anchor_tb.v`, the first
+testbench ever to instantiate `spu_gpu_top`: three frames from a single setup
+must be identical by lit-pixel count and position-weighted checksum. PASS at
+lit=47781 against a geometric area of 0.5*340*280 = 47600 (0.4%); FAIL with
+the re-anchor disabled.
+
+**What this does NOT establish.**
+
+- **Nothing 3D.** No transform, no projection, no perspective. The edge
+  coefficients are 2D constants written by hand.
+- **No depth test was exercised.** Unit 1 is disarmed and all three z values
+  are 1000, so `spu_depth_compare` never decided a pixel on depth. The depth
+  path ran; nothing depended on its result.
+- **No shading.** One flat colour per triangle is all the RTL can express;
+  there is no shader stage of any kind.
+- **No host link.** The triangle is hardcoded in the top.
+- **One triangle.** Says nothing about triangle residency, the architectural
+  limit of a framebuffer-less streaming rasterizer.
+- **Single observation**, one monitor, one session. Not an N>=10 result.
+
+**Bench caveat, recorded because it will recur.** The display was initially
+black and came up after the operator prodded the hand-wired harness. The
+connection is therefore marginal, and this result was obtained on a bench that
+responds to being touched. That is a fault in the harness, not in the design —
+but a future session must not assume clean wiring, and a marginal lead will
+eventually fail in a way that resembles an RTL bug. It is the same
+flying-lead class that the harness adapter board in
+`spu_strategy/contract_graphics_first_priority_2026-09-04.md` §7 addresses.
+The result was not re-confirmed after a deliberate reseat or a power cycle.
