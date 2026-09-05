@@ -85,7 +85,7 @@ module depth_compare_integration_tb;
         .a1_1({A1_1}), .b1_1({B1_1}), .c1_1({C1_1}),
         .a2_1({A2_1}), .b2_1({B2_1}), .c2_1({C2_1}),
         .tri_r1(4'd{TRI_R1}), .tri_g1(4'd{TRI_G1}), .tri_b1(4'd{TRI_B1}),
-        .step_x(step_x), .step_y(step_y), .x_span(16'sd640),
+        .step_x(step_x), .step_y(step_y),
         .pixel_r(dummy_pixel_r), .pixel_g(dummy_pixel_g), .pixel_b(dummy_pixel_b),
         .cov0_out(cov0), .cov1_out(cov1),
         .r0_out(r0), .g0_out(g0), .b0_out(b0),

@@ -272,6 +272,12 @@ the fix, confirmed rather than assumed. `clk_pixel` passes at 25 MHz required.
 (Both figures are the **last** "Max frequency" line: nextpnr prints two and
 the earlier pair — 32.96 MHz here — is the pre-route estimate.)
 
+**Superseded by §8.** `x_span` was removed after this build, so the tree no
+longer produces this bitstream, and §8 also establishes that the A7 `.bit`
+hash is not reproducible across builds anyway. The utilisation and Fmax
+comparison above still stands; treat the hash as a record of what was built at
+that moment, not as something to reproduce.
+
 **This bitstream has NOT been loaded onto hardware.** No silicon claim is made
 for it and `hardware_evidence.md` is untouched. §3.9 still refers to
 `dfbefd3`'s bitstream, which is the one that was actually observed on a
@@ -282,17 +288,8 @@ combine next session's items 1 and 2 into a single bench trip.
 
 ## 6. Audit findings NOT acted on — decisions for you
 
-**`x_span` is a dead port threaded through four levels.**
-`spu_edge_stepper` declares it, never reads it; `spu_raster_unit`,
-`spu_dual_raster`, `spu_gpu_top` and three board probes all wire it up. The
-row restart works off `f_row` instead, so nothing is broken.
-
-But it is already carrying a wrong value undetected. Two Tang probes pass
-`10'sd640` into a 16-bit signed port, and **`10'sd640` sign-extends to −384**
-(measured, not assumed — 640 does not fit in 10 signed bits). Harmless only
-because nothing reads it. That is a landmine for whoever uses the port next.
-Removing it touches 4 RTL files, 3 board tops and 1 bench — small, but a
-refactor, so **your call, not mine.**
+**`x_span` — DONE, see §8.** Was left as a decision; the call came back to
+remove it, and it is removed.
 
 **`spu_texture_dma.v`** — the only fully dead module under `rtl/gpu/`. Read it:
 it is a clean SDRAM-burst template, correctly reset, not rotting code. Delete
@@ -329,7 +326,9 @@ real bug this module's own testbench caught" — that bench is not in the tree.
    spin was rebuilt (§5) but never loaded; per `board-builds-are-never-rebuilt`
    simulation-green says nothing about a spin. Fold this into the same bench
    trip as item 1.
-3. **Decide the §6 items**, particularly `x_span`.
+3. **Decide the remaining §6 items** — `spu_texture_dma`, and whether the
+   dead SPU-13 core generation behind the dead Colorlight/ECP5 tops is kept
+   deliberately or retired. (`x_span` is done, §8.)
 4. Then 09-05 §7's CRT control, unchanged and still wanting the GPU raw and
    unsmoothed.
 
@@ -338,6 +337,80 @@ not "is it exercised". `NO-TB` (36) contains modules that reach silicon with
 no simulation at all. Board tops belong there legitimately; `spu_video_pattern`
 — which produced the §3.8 first-video result — does not, and still has no
 bench.
+
+---
+
+
+## 8. `x_span` removed — and what the rebuild turned up
+
+The dead port is gone from all four levels: `spu_edge_stepper` (which declared
+and never read it), `spu_raster_unit` (three POSITIONAL connections, so the
+port-list change had to be matched there), `spu_dual_raster`, `spu_gpu_top`,
+`spu_raster_tb`, and the three Tang GPU probes. A comment in
+`spu_edge_stepper` now says why no row width is needed — `f` is re-seeded from
+`f_row` rather than unwound by the number of x steps — so nobody re-adds it.
+
+With it went the wrong value it was carrying: two Tang probes passed
+`10'sd640` into a 16-bit signed port, and **`10'sd640` sign-extends to −384**
+(measured). Harmless only because nothing read it.
+
+**Two tests broke, and a grep taught me something.** `grep -rn x_span
+hardware/` was the wrong scope. `test_gpu_raster_oracle_rtl_parity.py` and
+`test_gpu_depth_compare_integration.py` both **generate their testbench as a
+Python string**, so their `.x_span(...)` connections are invisible to any
+grep of the RTL tree. The gate caught them:
+
+```
+Total PASS:  224
+Total FAIL:  2
+❌ ERROR: test suite reported failures (run_all_tests.py exit 1).
+```
+
+That is 09-05 §1's fix doing exactly its job on its first real regression —
+before that commit this would have printed a green tick. Fixed, and the two
+now pass with full 640x480 exact pixel-set parity and 6,155/6,155 overlap
+pixels correctly won. Final: **226 PASS, 0 FAIL**, gate exit 0.
+
+**Verified a no-op, not assumed.** Simulation is bit-identical
+(`lit=794 csum=229874`, 0 wrong depth pixels), and all **40 post-route
+resource rows** are unchanged: 7,896 LUT / 2,419 FF / 2 DSP. All three Tang
+GPU probes rebuild (exit 0) — they are in **no** build manifest, so nothing
+was checking them.
+
+### A7 bitstreams are not byte-reproducible
+
+Chasing whether the hash change meant a logic change turned up something
+worth recording on its own. Four builds:
+
+| build | source | SHA-256 (first 8) | clk_pixel |
+|---|---|---|---|
+| pre-removal | with `x_span` | `5975b17d` | 40.73 MHz |
+| post-removal | without | `2d99716e` | 38.69 MHz |
+| control | **identical to post-removal** | `0cc3eaef` | 38.69 MHz |
+| control 2 | **identical again** | `cc0d0f2a` | — |
+
+Two builds from byte-identical source give different hashes. `cmp -l` on the
+last pair: **exactly 3 bytes differ, at offsets 122–125**, ASCII digits in the
+header — a build timestamp (`10:38` vs `10:40`). All 3.8 MB of configuration
+data is identical.
+
+So the **logic** is reproducible; the **file hash** is not. That matters
+because `docs/hardware_evidence.md` records A7 bitstream SHA-256s as evidence:
+those hashes identify the exact artifact that was flashed, and are correct for
+that, but **they cannot be regenerated by rebuilding** — a mismatch on a
+rebuild proves nothing on its own. This is why `board_build_manifest.json`
+lists Gowin targets only; the comment there says A7 was excluded for chipdb
+build time, which is true but not the whole reason.
+
+The Fmax difference (40.73 → 38.69, both far above the 25 MHz required) is
+reproducible across the two identical-source builds, so it is placement
+ordering changing with port-list ordering, not a logic change — and the
+40-row resource diff confirms that independently.
+
+**Not chased:** whether `xc7frames2bit` can be made to emit a fixed timestamp.
+If it can, A7 targets could join the build manifest and get the same
+rebuild-and-compare protection the Gowin ones have. That is the real prize
+here and it is not queued.
 
 ---
 

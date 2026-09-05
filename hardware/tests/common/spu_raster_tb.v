@@ -19,7 +19,7 @@ module spu_raster_tb;
         .a0(16'sd0),  .b0(16'sd1),  .c0(-32'sd90),
         .a1(16'sd1),  .b1(16'sd0),  .c1(-32'sd90),
         .a2(-16'sd1), .b2(-16'sd1), .c2(32'sd240),
-        .step_x(step_x), .step_y(step_y), .x_span(16'sd640),
+        .step_x(step_x), .step_y(step_y),
         .tri_r(4'hF), .tri_g(4'hA), .tri_b(4'h5),
         .covered(covered), .pixel_r(pr), .pixel_g(pg), .pixel_b(pb));
 

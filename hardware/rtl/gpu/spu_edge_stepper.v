@@ -1,4 +1,4 @@
-module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, x_span, inside_out);
+module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, inside_out);
 
     input wire clk;
     input wire rst_n;
@@ -6,7 +6,6 @@ module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, x_span, in
     input wire [63:0] coef_pack;
     input wire step_x;
     input wire step_y;
-    input wire signed [15:0] x_span;
     output wire inside_out;
 
     // Unpack packed coefficients: {coef_a[15:0], coef_b[15:0], coef_c[31:0]}
@@ -31,6 +30,11 @@ module spu_edge_stepper(clk, rst_n, setup, coef_pack, step_x, step_y, x_span, in
             f     <= coef_c;
             f_row <= coef_c;
         end else if (step_y) begin
+            // No row width is needed here, and there is deliberately no
+            // x_span port: f is re-seeded from f_row rather than unwound by
+            // the number of x steps taken, so the carriage return is exact
+            // whatever the row width was. A dead x_span input sat unread on
+            // this module until 2026-09-06; do not reintroduce it.
             f_row <= f_row + {{16{b_r[15]}}, b_r};
             f     <= f_row + {{16{b_r[15]}}, b_r};
         end else if (step_x) begin

@@ -67,7 +67,7 @@ module gpu_raster_parity_tb;
         .a0({A0}), .b0({B0}), .c0({C0}),
         .a1({A1}), .b1({B1}), .c1({C1}),
         .a2({A2}), .b2({B2}), .c2({C2}),
-        .step_x(step_x), .step_y(step_y), .x_span(16'sd{WIDTH}),
+        .step_x(step_x), .step_y(step_y),
         .tri_r(4'hF), .tri_g(4'hF), .tri_b(4'hF),
         .covered(covered), .pixel_r(pr), .pixel_g(pg), .pixel_b(pb));
 

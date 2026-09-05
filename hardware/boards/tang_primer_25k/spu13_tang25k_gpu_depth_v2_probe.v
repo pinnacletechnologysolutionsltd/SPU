@@ -102,7 +102,7 @@ module spu13_tang25k_gpu_depth_v2_probe (
         .a1_1(a1_1), .b1_1(b1_1), .c1_1(c1_1),
         .a2_1(a2_1), .b2_1(b2_1), .c2_1(c2_1),
         .tri_r1(tri_r1), .tri_g1(tri_g1), .tri_b1(tri_b1),
-        .step_x(step_x), .step_y(step_y), .x_span(10'sd640),
+        .step_x(step_x), .step_y(step_y),
         .pixel_r(pixel_r), .pixel_g(pixel_g), .pixel_b(pixel_b)
     );
 

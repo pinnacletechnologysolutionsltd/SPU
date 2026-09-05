@@ -13,7 +13,6 @@ module spu_raster_unit (
     a2, b2, c2,
     step_x,
     step_y,
-    x_span,
     tri_r,
     tri_g,
     tri_b,
@@ -46,7 +45,6 @@ module spu_raster_unit (
     // Pixel clock advance
     input  wire        step_x;
     input  wire        step_y;
-    input  wire signed [15:0] x_span;
 
     // Flat colour for this triangle (R4G4B4)
     input  wire [3:0]  tri_r;
@@ -64,21 +62,21 @@ module spu_raster_unit (
     spu_edge_stepper u_e0 (
         clk, rst_n, setup,
         {a0, b0, c0},
-        step_x, step_y, x_span,
+        step_x, step_y,
         inside0
     );
 
     spu_edge_stepper u_e1 (
         clk, rst_n, setup,
         {a1, b1, c1},
-        step_x, step_y, x_span,
+        step_x, step_y,
         inside1
     );
 
     spu_edge_stepper u_e2 (
         clk, rst_n, setup,
         {a2, b2, c2},
-        step_x, step_y, x_span,
+        step_x, step_y,
         inside2
     );
 

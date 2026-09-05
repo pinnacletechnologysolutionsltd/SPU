@@ -192,7 +192,7 @@ module spu_gpu_top #(
         .a1_1(tri1_a1), .b1_1(tri1_b1), .c1_1(tri1_c1),
         .a2_1(tri1_a2), .b2_1(tri1_b2), .c2_1(tri1_c2),
         .tri_r1(tri1_r), .tri_g1(tri1_g), .tri_b1(tri1_b),
-        .step_x(step_x), .step_y(step_y), .x_span(16'sd640),
+        .step_x(step_x), .step_y(step_y),
         .pixel_r(fixed_priority_r), .pixel_g(fixed_priority_g), .pixel_b(fixed_priority_b),
         .cov0_out(cov0), .cov1_out(cov1),
         .r0_out(r0), .g0_out(g0), .b0_out(b0),
