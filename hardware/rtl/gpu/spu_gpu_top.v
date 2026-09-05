@@ -273,8 +273,22 @@ module spu_gpu_top #(
         end
     end
 
-    wire attr_setup0 = ready0 | (frame_start & depth_armed0);
-    wire attr_setup1 = ready1 | (frame_start & depth_armed1);
+    // The `ready` term is the INITIAL load only, and must stop there. A board
+    // top may hold `tri0_setup` asserted or re-pulse it every frame --
+    // spu_a7_gpu_vga_top.v wires .tri0_setup(frame_start) and does exactly
+    // that -- in which case the dispatcher re-runs and `ready0` pulses again
+    // mid-scanline every frame, re-anchoring after the correct frame_start
+    // anchor and reinstating the very bug this block removes. MEASURED under
+    // that drive pattern with an unguarded `ready0` term: 55 pixels wrong for
+    // unit 0 and 32 for unit 1.
+    //
+    // depth_armed0 is still low on the cycle its own `ready0` is high, so the
+    // first pulse arms and anchors; every later one is suppressed and the
+    // frame_start term owns the anchor from then on. A triangle whose
+    // coefficients change therefore takes effect at the next frame boundary
+    // rather than part-way down the screen, which is also what you want.
+    wire attr_setup0 = (ready0 & ~depth_armed0) | (frame_start & depth_armed0);
+    wire attr_setup1 = (ready1 & ~depth_armed1) | (frame_start & depth_armed1);
 
     wire signed [55:0] depth0, depth1;
     spu_attr_stepper u_attr0 (.clk(clk_pixel), .rst_n(rst_n), .setup(attr_setup0),

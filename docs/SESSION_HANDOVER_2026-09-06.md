@@ -412,6 +412,80 @@ If it can, A7 targets could join the build manifest and get the same
 rebuild-and-compare protection the Gowin ones have. That is the real prize
 here and it is not queued.
 
+
+---
+
+## 9. THE FIX IN §2 WAS INCOMPLETE — caught by the "should I flash it?" question
+
+Asked whether the bench was ready, I went to check what
+`spu_a7_gpu_vga_top.v` actually draws. Line 105:
+
+```verilog
+.tri0_setup(frame_start),
+```
+
+**The board top re-pulses setup at (0,0) of every frame.** My bench pulsed it
+once. They are not equivalent, and the difference is exactly the bug:
+
+- `depth_setup0 = tri0_setup` (§2's change) then fires every frame,
+- so the dispatcher re-runs and `ready0` pulses again mid-scanline every frame,
+- and `attr_setup0 = ready0 | (frame_start & depth_armed0)` re-anchors on it,
+  **after** the correct frame-start anchor.
+
+Measured on `60f3b40`'s RTL under the board's drive pattern: **55 pixels wrong
+for unit 0, 32 for unit 1.** The commit that claimed to fix this shipped a
+version still broken on the only top that instantiates it.
+
+**Fix:** the `ready` term is the initial load only.
+
+```verilog
+wire attr_setup0 = (ready0 & ~depth_armed0) | (frame_start & depth_armed0);
+```
+
+`depth_armed0` is still low on the cycle its own `ready0` is high, so the first
+pulse arms and anchors and every later one is suppressed. A triangle whose
+coefficients change now takes effect at the next frame boundary rather than
+part-way down the screen, which is also the behaviour you want.
+
+**The bench now runs BOTH drive patterns**, and the controls discriminate:
+
+| RTL under test | phase A (one-shot) | phase B (per-frame) |
+|---|---|---|
+| original, pre-fix | 80 / 80 wrong | 80 / 80 wrong |
+| §2's fix, `ready` unguarded | **0 / 0 wrong** | **55 / 32 wrong** |
+| current | 0 / 0 wrong | 0 / 0 wrong |
+
+**That middle row is the whole lesson, and it is mine, not inherited.** §2 of
+this very handover diagnoses "the test hand-wired the correct sequencing and
+never instantiated the real top" — and then I wrote a bench that drove
+`spu_gpu_top` in a way the real top does not, and shipped it. One iteration
+later, same mistake, in a session whose headline finding was that mistake.
+
+**How it was actually caught:** not by a test, not by review. By being asked
+whether the thing was ready to flash, and going to read what the board top
+does before answering. Reading the *consumer* is what closed it, both times.
+
+Suite 226 PASS, 0 FAIL. Rebuilt:
+
+```
+bitstream build/spu_a7_100t_GPUVGA.bit
+          SHA-256 2e972b5d40a44f88391d4c97b5f823216ab4295bee6177138f82c74fb7b3e8ed
+          7,896 LUT / 2,419 FF / 2 DSP, clk_pixel 39.24 MHz against 25 required
+build     bash hardware/boards/artix7/build_a7.sh 100t gpuvga all   (A7_FREQ=25)
+load      openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_GPUVGA.bit
+```
+
+Resource usage is unchanged from every build today -- the guard costs no
+cells, it only removes a term from an existing expression. Per §8 the hash is
+not reproducible across builds; this one identifies the artifact now sitting
+in `build/`.
+
+**This bitstream still draws ONE triangle with constant depth**
+(`tri1_setup(1'b0)`, `tri0_z0=z1=z2=1000`), so flashing it CANNOT exercise any
+of this. It confirms no regression in the display path and nothing more. A
+silicon test of the depth path needs a two-triangle scene in
+`spu_a7_gpu_vga_top.v`, which does not exist yet.
+
 ---
 
 ## References

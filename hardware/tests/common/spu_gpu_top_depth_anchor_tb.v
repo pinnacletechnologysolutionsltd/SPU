@@ -24,9 +24,20 @@
 // FALSIFICATION. Both units armed, both with depth sloped in x AND y, and
 // every active pixel of a steady-state frame checked against the affine
 // oracle z(x,y) = (C_z + x*A_z + y*B_z) >>> frac_bits. Run against the
-// pre-fix RTL this reports 80/4800 wrong for unit 0 and 80/4800 for unit 1 --
-// one full scanline each -- and FAILS. A bench that only passes proves
-// nothing.
+// pre-fix RTL this FAILS. A bench that only passes proves nothing.
+//
+// NEGATIVE CONTROLS, all run:
+//
+//   RTL under test              phase A (one-shot)   phase B (per-frame)
+//   --------------------------  ------------------   -------------------
+//   original, pre-fix           80 / 80 wrong        80 / 80 wrong
+//   incomplete fix, `ready`
+//     term left unguarded        0 /  0 wrong        55 / 32 wrong
+//   current                      0 /  0 wrong         0 /  0 wrong
+//
+// The middle row is why phase B is here. That version passed every test that
+// existed, including the first version of THIS bench, and was still broken on
+// the drive pattern the board actually uses.
 //
 // SCOPE, stated so it is not overread. The oracle is built from the DUT's own
 // A_z/B_z/C_z/frac_bits, so this checks that the per-pixel accumulator is
@@ -89,14 +100,96 @@ module spu_gpu_top_depth_anchor_tb;
         .tmds_clk_p(), .tmds_clk_n(), .tmds_d_p(), .tmds_d_n());
 
     integer x, y;
-    integer bad0 = 0, bad1 = 0, checked = 0;
+    integer bad0, bad1, checked;
     integer errors = 0;
-    integer shown = 0;
+    integer shown;
     integer exp0, exp1;
+    reg drive_every_frame = 1'b0;
+
+    // Board pattern: spu_a7_gpu_vga_top.v wires .tri0_setup(frame_start).
+    always @(posedge clk) begin
+        if (drive_every_frame) begin
+            tri0_setup <= (dut.vx == 10'd0 && dut.vy == 10'd0);
+            tri1_setup <= (dut.vx == 10'd0 && dut.vy == 10'd0);
+        end
+    end
 
     task align_to_frame_start;
         begin
             while (!(dut.vx == 10'd0 && dut.vy == 10'd0)) @(posedge clk);
+        end
+    endtask
+
+    // Check every active pixel of one frame against the affine oracle.
+    task measure_frame(input [8*16:1] phase);
+        begin
+            bad0 = 0; bad1 = 0; checked = 0; shown = 0;
+            for (y = 0; y < V_ACTIVE; y = y + 1) begin
+                for (x = 0; x < H_ACTIVE; x = x + 1) begin
+                    @(posedge clk);
+                    exp0 = ($signed(dut.C_z0) + x * $signed(dut.A_z0)
+                                              + y * $signed(dut.B_z0)) >>> dut.frac_bits0;
+                    exp1 = ($signed(dut.C_z1) + x * $signed(dut.A_z1)
+                                              + y * $signed(dut.B_z1)) >>> dut.frac_bits1;
+                    checked = checked + 1;
+                    if ($signed(dut.depth0) !== exp0) begin
+                        bad0 = bad0 + 1;
+                        if (shown < 4) begin
+                            $display("  unit0 (%0d,%0d): depth %0d, expected %0d",
+                                     x, y, $signed(dut.depth0), exp0);
+                            shown = shown + 1;
+                        end
+                    end
+                    if ($signed(dut.depth1) !== exp1) begin
+                        bad1 = bad1 + 1;
+                        if (shown < 8) begin
+                            $display("  unit1 (%0d,%0d): depth %0d, expected %0d",
+                                     x, y, $signed(dut.depth1), exp1);
+                            shown = shown + 1;
+                        end
+                    end
+                end
+                while (dut.vx != 10'd0) @(posedge clk);   // skip blanking
+            end
+
+            $display("%0s: checked %0d active pixels: unit0 %0d wrong, unit1 %0d wrong",
+                     phase, checked, bad0, bad1);
+
+            if (checked != H_ACTIVE * V_ACTIVE) begin
+                $display("FAIL: %0s checked %0d pixels, expected %0d",
+                         phase, checked, H_ACTIVE * V_ACTIVE);
+                errors = errors + 1;
+            end
+            if (bad0 != 0) begin
+                $display("FAIL: %0s unit 0 depth field is not anchored at (0,0) -- %0d pixels wrong",
+                         phase, bad0);
+                errors = errors + 1;
+            end
+            if (bad1 != 0) begin
+                $display("FAIL: %0s unit 1 depth field is not anchored at (0,0) -- %0d pixels wrong",
+                         phase, bad1);
+                errors = errors + 1;
+            end
+        end
+    endtask
+
+    // A constant depth field matches ANY anchor, so it would pass this bench
+    // on the broken RTL. Both gradients must be real and both units armed.
+    task check_not_vacuous;
+        begin
+            if (dut.A_z0 === 56'sd0 || dut.B_z0 === 56'sd0 ||
+                dut.A_z1 === 56'sd0 || dut.B_z1 === 56'sd0) begin
+                $display("FAIL: a depth gradient is zero (A_z0=%0d B_z0=%0d A_z1=%0d B_z1=%0d)",
+                         dut.A_z0, dut.B_z0, dut.A_z1, dut.B_z1);
+                $display("      the field would not vary with position and this bench");
+                $display("      could not distinguish a correct anchor from any other");
+                errors = errors + 1;
+            end
+            if (!dut.depth_armed0 || !dut.depth_armed1) begin
+                $display("FAIL: depth_armed0=%b depth_armed1=%b -- a unit never completed setup",
+                         dut.depth_armed0, dut.depth_armed1);
+                errors = errors + 1;
+            end
         end
     endtask
 
@@ -105,81 +198,28 @@ module spu_gpu_top_depth_anchor_tb;
         rst_n = 1'b1;
         repeat (4) @(posedge clk);
 
-        // One setup for both units, then let two whole frames pass so the
-        // measured frame is steady state and not the setup transient (the
-        // frame a triangle is first set up in still anchors mid-row -- the
-        // coefficients do not exist before then -- and that is by design).
+        // ── Phase A: setup pulsed ONCE ───────────────────────────────────
+        // Two whole frames pass first, so the measured frame is steady state
+        // and not the setup transient (the frame a triangle is first set up
+        // in still anchors mid-row, by design -- the coefficients do not
+        // exist before then).
         align_to_frame_start;
         @(negedge clk); tri0_setup = 1'b1; tri1_setup = 1'b1;
         @(negedge clk); tri0_setup = 1'b0; tri1_setup = 1'b0;
         repeat (2) begin align_to_frame_start; @(posedge clk); end
         align_to_frame_start;
+        check_not_vacuous;
+        measure_frame("one-shot setup");
 
-        // ── Vacuous-pass guards ──────────────────────────────────────────
-        // A constant depth field matches any anchor, so it would pass this
-        // bench on the broken RTL. Both gradients must be real, and both
-        // units must actually be armed.
-        if (dut.A_z0 === 56'sd0 || dut.B_z0 === 56'sd0 ||
-            dut.A_z1 === 56'sd0 || dut.B_z1 === 56'sd0) begin
-            $display("FAIL: a depth gradient is zero (A_z0=%0d B_z0=%0d A_z1=%0d B_z1=%0d)",
-                     dut.A_z0, dut.B_z0, dut.A_z1, dut.B_z1);
-            $display("      the field would not vary with position and this bench");
-            $display("      could not distinguish a correct anchor from any other");
-            errors = errors + 1;
-        end
-        if (!dut.depth_armed0 || !dut.depth_armed1) begin
-            $display("FAIL: depth_armed0=%b depth_armed1=%b -- a unit never completed setup",
-                     dut.depth_armed0, dut.depth_armed1);
-            errors = errors + 1;
-        end
-
-        // ── The measurement ──────────────────────────────────────────────
-        for (y = 0; y < V_ACTIVE; y = y + 1) begin
-            for (x = 0; x < H_ACTIVE; x = x + 1) begin
-                @(posedge clk);
-                exp0 = ($signed(dut.C_z0) + x * $signed(dut.A_z0)
-                                          + y * $signed(dut.B_z0)) >>> dut.frac_bits0;
-                exp1 = ($signed(dut.C_z1) + x * $signed(dut.A_z1)
-                                          + y * $signed(dut.B_z1)) >>> dut.frac_bits1;
-                checked = checked + 1;
-                if ($signed(dut.depth0) !== exp0) begin
-                    bad0 = bad0 + 1;
-                    if (shown < 4) begin
-                        $display("  unit0 (%0d,%0d): depth %0d, expected %0d",
-                                 x, y, $signed(dut.depth0), exp0);
-                        shown = shown + 1;
-                    end
-                end
-                if ($signed(dut.depth1) !== exp1) begin
-                    bad1 = bad1 + 1;
-                    if (shown < 8) begin
-                        $display("  unit1 (%0d,%0d): depth %0d, expected %0d",
-                                 x, y, $signed(dut.depth1), exp1);
-                        shown = shown + 1;
-                    end
-                end
-            end
-            while (dut.vx != 10'd0) @(posedge clk);   // skip blanking
-        end
-
-        $display("checked %0d active pixels: unit0 %0d wrong, unit1 %0d wrong",
-                 checked, bad0, bad1);
-
-        if (checked != H_ACTIVE * V_ACTIVE) begin
-            $display("FAIL: checked %0d pixels, expected %0d", checked, H_ACTIVE * V_ACTIVE);
-            errors = errors + 1;
-        end
-        if (bad0 != 0) begin
-            $display("FAIL: unit 0 depth field is not anchored at (0,0) -- %0d pixels wrong", bad0);
-            errors = errors + 1;
-        end
-        if (bad1 != 0) begin
-            $display("FAIL: unit 1 depth field is not anchored at (0,0) -- %0d pixels wrong", bad1);
-            errors = errors + 1;
-        end
+        // ── Phase B: setup re-pulsed EVERY frame, as the board top does ──
+        drive_every_frame = 1'b1;
+        repeat (2) begin align_to_frame_start; @(posedge clk); end
+        align_to_frame_start;
+        check_not_vacuous;
+        measure_frame("per-frame setup");
 
         if (errors == 0)
-            $display("PASS: both depth fields anchored at (0,0) across %0d active pixels", checked);
+            $display("PASS: both depth fields anchored at (0,0) under both drive patterns");
         else
             $display("FAILED with %0d error(s)", errors);
         $finish;
