@@ -1193,5 +1193,13 @@ def main():
     print(f"Total FAIL:  {total_fail}")
     print("=============================================")
 
+    # Exit non-zero when anything failed. Until 2026-09-05 this script had NO
+    # sys.exit call at all, so it always returned 0 -- "Total FAIL: 2" and a
+    # green result were the same exit code. That silently disarmed both
+    # tools/verify_repo.sh (which runs this under `set -e`) and
+    # .github/workflows/ci.yml, which invokes it directly. Neither gate could
+    # ever fail on a test, for as long as both have existed.
+    return 1 if total_fail > 0 else 0
+
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -7,7 +7,8 @@
 # 2. Evidence gate: checks that NEWLY ADDED silicon-verification claims (lines
 #    changed since HEAD) cite docs/hardware_evidence.md. Scoped to the diff, not
 #    the whole tree, so pre-existing docs don't need to be cleared to pass.
-# 3. Test regression: optionally runs python3 run_all_tests.py.
+# 3. Test regression: runs python3 run_all_tests.py and FAILS the gate on
+#    any test failure (set SKIP_TESTS=1 to skip deliberately).
 # ==============================================================================
 
 set -euo pipefail
@@ -18,7 +19,7 @@ cd "$REPO_ROOT"
 ERRORS=0
 
 echo "=== [1/3] Checking Root Directory Hygiene ==="
-ROOT_CLUTTER=$(find . -maxdepth 1 -type f \( -name "tmp_*" -o -name "scratch_*" -o -name "*.bak" -o -name "*~" \))
+ROOT_CLUTTER=$(find . -maxdepth 1 -type f \( -name "tmp_*" -o -name "scratch_*" -o -name "*.bak" -o -name "*~" -o -name "*.vcd" \))
 if [ -n "$ROOT_CLUTTER" ]; then
     echo "❌ ERROR: Root directory contains temporary/scratch files:"
     echo "$ROOT_CLUTTER"
@@ -62,7 +63,17 @@ echo "=== [3/3] Running Test Suite Regression Gate ==="
 if [ "${SKIP_TESTS:-0}" = "1" ]; then
     echo "⏩ SKIP_TESTS=1 set; skipping test execution."
 else
-    python3 run_all_tests.py
+    # Check the suite's exit code explicitly. `set -e` did not catch this,
+    # because run_all_tests.py had no sys.exit call and returned 0 even while
+    # printing "Total FAIL: 2". Both ends are fixed as of 2026-09-05; this
+    # half is the defence in depth, so a future regression in the runner's
+    # exit code cannot silently disarm the gate a second time.
+    if python3 run_all_tests.py; then
+        echo "✅ Test suite passed."
+    else
+        echo "❌ ERROR: test suite reported failures (run_all_tests.py exit $?)."
+        ERRORS=$((ERRORS + 1))
+    fi
 fi
 
 if [ "$ERRORS" -gt 0 ]; then
