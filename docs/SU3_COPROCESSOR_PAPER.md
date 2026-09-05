@@ -10,9 +10,16 @@
 testbenches verified in simulation. Wukong Artix-7 SU3 and SU3SHARE spins
 `synth_xilinx` check clean, route at the 2 MHz bring-up target, emit bitstreams,
 and configure over DirtyJTAG. Functional SU3 SPI readback over Wukong J11 is now
-silicon-proven with all nine dense-matrix QR commit checks on the
-shared-multiplier SU3SHARE image, which also preserves the RPLU2 config/QR
-regression.
+silicon-proven with all nine dense-matrix QR commit checks on **both** the
+standalone SU3 image and the shared-multiplier SU3SHARE image; the latter also
+preserves the RPLU2 config/QR regression.
+
+**Companion LaTeX source:** `docs/SU3_COPROCESSOR_PAPER.tex` (IEEEtran
+`conference`) is the submission version and carries identical claims. It
+deliberately omits Appendix A below — the abridged oracle listing does not fit
+the four-page conference format. Any change to a silicon or resource claim must
+be made in **both** files; they diverged once already, on the nine-element
+standalone result, and were reconciled 2026-09-05.
 
 **Implementation state:** Standalone SU3 uses a dedicated M31 multiplier
 instance; integrated SU3SHARE uses a top-level shared instance. Artix-7
@@ -97,10 +104,11 @@ cases. The Wukong Artix-7 SU3 and SU3SHARE spins also synthesize cleanly with
 the streaming sidecar and have produced routed 2 MHz bring-up bitstreams that
 configure over DirtyJTAG. The SU3 SPI protocol has now been functionally tested
 on FPGA hardware: an RP2350 streamed the dense A/B fixture over Wukong J11 and
-read exact QR commits for three selected result elements on the standalone
-sidecar proof, then for all nine result elements on the SU3SHARE image. The
-SU3SHARE image then passed the RPLU2 config/QR regression on the same FPGA
-bitstream.
+read exact QR commits for all nine result elements, on the SU3SHARE image and
+on the standalone sidecar spin alike (§4.4). The SU3SHARE image then passed the
+RPLU2 config/QR regression on the same FPGA bitstream. An earlier 2026-07-04
+capture on the standalone spin covered only three selected elements; the
+2026-08-07 re-proof supersedes it.
 
 ---
 

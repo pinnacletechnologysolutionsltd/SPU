@@ -6,6 +6,8 @@
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc,decorations.pathreplacing}
 
 \lstset{
     basicstyle=\ttfamily\footnotesize,
@@ -48,8 +50,8 @@ checks, and the SPI-visible streaming protocol. The RTL is open-source and
 integrated in the Artix-7 SU3 and SU3SHARE spins; this paper reports
 simulation, synthesis, Wukong Artix-7 2\,MHz route/bitstream results, JTAG
 configuration, and functional SPI/QR silicon verification over the Wukong
-J11 header, including all nine dense-matrix result elements on the
-shared-multiplier SU3SHARE image.
+J11 header, including all nine dense-matrix result elements on both the
+standalone SU3 image and the shared-multiplier SU3SHARE image.
 \end{abstract}
 
 \section{Introduction}
@@ -93,9 +95,11 @@ SU3 and SU3SHARE spins synthesize cleanly with the streaming sidecar and
 have produced routed 2\,MHz bring-up bitstreams that configure over
 DirtyJTAG. The SU3 SPI protocol has been functionally tested on FPGA
 hardware: an RP2350 streamed the dense A/B fixture over Wukong J11 and read
-exact QR commits for three selected result elements on the standalone
-sidecar proof, then for all nine result elements on the SU3SHARE image,
-which also preserves the RPLU2 config/QR regression on the same bitstream.
+exact QR commits for all nine result elements, on the SU3SHARE image and on
+the standalone sidecar spin alike (Section~\ref{sec:reproof}); the SU3SHARE
+image also preserves the RPLU2 config/QR regression on the same bitstream. An
+earlier 2026-07-04 capture on the standalone spin covered only three selected
+elements; the 2026-08-07 re-proof supersedes it.
 This paper does not claim lattice-QCD-scale capability or timing closure
 beyond the 2\,MHz bring-up target.
 
@@ -170,7 +174,7 @@ RPLU~v2 pipeline. Each $A_{31}$ product (4 components, 16 logical parallel
 $32\times32$ integer products) completes with 2-cycle throughput; Artix-7
 synthesis maps the logical products to 64 DSP48E1 slices. A complex
 $A_{31}[i]$ multiply is sequenced as four phases through this multiplier
-(Table~\ref{tab:phases}).
+(Table~\ref{tab:phases}, Fig.~\ref{fig:tdm}).
 
 \begin{table}[ht]
 \centering
@@ -195,6 +199,66 @@ addition). Each complex multiply takes 8 cycles total, fully pipelined: the
 multiplier starts a new $A_{31}$ product every 2 cycles while the previous
 result is being accumulated.
 
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize,
+  box/.style={draw, rounded corners=1pt, minimum height=5mm, inner sep=2.5pt, align=center},
+  op/.style={box, fill=gray!8},
+  acc/.style={box, fill=gray!18},
+  >={Stealth[length=4pt]},
+]
+% operands
+\node[op] (a) at (0,1.5) {$A_{31}[i]$ operand $A$\\{\scriptsize 4 imag $\|$ 4 real}};
+\node[op] (b) at (0,0.35) {$A_{31}[i]$ operand $B$\\{\scriptsize 4 imag $\|$ 4 real}};
+
+% phase selector
+\node[box, fill=gray!25, minimum height=13mm] (sel) at (2.35,0.925)
+  {phase\\sel.\\{\scriptsize 0..3}};
+
+% shared multiplier
+\node[box, fill=gray!12, minimum height=15mm, text width=21mm] (mul) at (4.75,0.925)
+  {\texttt{spu13\_m31\_}\\\texttt{multiplier}\\[1pt]
+   {\scriptsize 2-stage pipelined}\\
+   {\scriptsize 16 logical products}\\
+   {\scriptsize 64 DSP48E1}};
+
+\draw[->] (a.east) -- ([yshift=3.5mm]sel.west);
+\draw[->] (b.east) -- ([yshift=-3.5mm]sel.west);
+\draw[->] (sel.east) -- node[above,inner sep=1pt]{\scriptsize 2 cyc/phase} (mul.west);
+
+% partials
+\node[op] (rr) at (7.55,1.85) {$RR$};
+\node[op] (ii) at (7.55,1.15) {$II$};
+\node[op] (ri) at (7.55,0.55) {$RI$};
+\node[op] (ir) at (7.55,-0.15) {$IR$};
+\foreach \n in {rr,ii,ri,ir} { \draw[->] (mul.east) -- (\n.west); }
+
+% accumulators
+\node[acc, text width=27mm] (cr) at (10.9,1.5) {$c_{\mathrm{real}} \mathrel{+}= RR - II$};
+\node[acc, text width=27mm] (ci) at (10.9,0.2) {$c_{\mathrm{imag}} \mathrel{+}= RI + IR$};
+\draw[->] (rr.east) -- (cr.west);
+\draw[->] (ii.east) -- (cr.west);
+\draw[->] (ri.east) -- (ci.west);
+\draw[->] (ir.east) -- (ci.west);
+
+% feedback
+\draw[->, dashed] (cr.north) -- ++(0,0.45) -| node[pos=0.25,above,inner sep=1pt]
+  {\scriptsize next $k$-term} (sel.north);
+
+\node[align=center, font=\scriptsize] at (5.45,-0.95)
+  {One complex $A_{31}[i]$ multiply = 4 phases $\times$ 2 cycles = \textbf{8 cycles}.\\
+   The multiplier issues a new $A_{31}$ product every 2 cycles while the previous
+   result accumulates.};
+\end{tikzpicture}
+\caption{Four-phase time-division multiplexing. A single $A_{31}$ multiplier
+instance is time-shared across the four real/imaginary cross-products of one
+complex multiply; no second multiplier is instantiated, which is what keeps the
+DSP48E1 count at 64 rather than 256.}
+\label{fig:tdm}
+\end{figure*}
+
 \subsection{$3\times3$ Matrix Multiply FSM}
 
 The FSM implements
@@ -208,7 +272,53 @@ imaginary then four real 32-bit components. The FSM sequences 27 complex
 multiplies in row-major order; each result element is emitted as soon as
 its three $k$-terms are accumulated, so the result stream is part of the
 compute schedule rather than a separate drain stage. Total latency is
-approximately 224 compute cycles.
+approximately 224 compute cycles (Fig.~\ref{fig:fsm}).
+
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize,
+  >={Stealth[length=4pt]},
+  cell/.style={draw, minimum height=5.5mm, minimum width=4.6mm, inner sep=0pt, font=\scriptsize},
+  k0/.style={cell, fill=gray!6},
+  k1/.style={cell, fill=gray!14},
+  k2/.style={cell, fill=gray!24},
+]
+% nine result elements, each three k-terms
+\foreach \idx/\lbl in {0/{$C_{00}$},1/{$C_{01}$},2/{$C_{02}$},3/{$C_{10}$},4/{$C_{11}$},
+                       5/{$C_{12}$},6/{$C_{20}$},7/{$C_{21}$},8/{$C_{22}$}} {
+  \pgfmathsetmacro{\xo}{\idx*1.70}
+  \node[k0] (a\idx) at (\xo,0)      {$k_0$};
+  \node[k1] (b\idx) at (\xo+0.48,0) {$k_1$};
+  \node[k2] (c\idx) at (\xo+0.96,0) {$k_2$};
+  \node[font=\scriptsize] at (\xo+0.48,0.55) {\lbl};
+  % emit pulse
+  \draw[->] (c\idx.east) -- ++(0.30,0) node[right, inner sep=1pt, font=\scriptsize] {};
+  \node[font=\scriptsize, anchor=west] at (\xo+1.30,0) {\raisebox{0pt}{$\downarrow$}};
+}
+% brace for one element
+\draw[decorate, decoration={brace, amplitude=3pt, mirror}]
+  (-0.24,-0.42) -- (1.20,-0.42)
+  node[midway, below, inner sep=3pt, font=\scriptsize]
+  {3 complex multiplies $\times$ 8 cyc = \textbf{24 cyc}};
+
+% total
+\draw[decorate, decoration={brace, amplitude=4pt, mirror}]
+  (-0.24,-1.28) -- (14.36,-1.28)
+  node[midway, below, inner sep=4pt, font=\scriptsize]
+  {9 elements $\times$ 24 cyc = \textbf{216 compute cycles};
+   with load/commit overhead, \textbf{$\approx$224 cycles} end to end};
+
+\end{tikzpicture}
+\caption{Row-major schedule of the $3\times3$ multiply. Each result element
+accumulates its three $k$-terms and is emitted ($\downarrow$) as soon as it
+completes, so the
+result stream is part of the compute schedule rather than a separate drain
+stage. The $\approx$224-cycle latency is 216 cycles of arithmetic plus load and
+commit overhead --- there is no reorder buffer and no output queue.}
+\label{fig:fsm}
+\end{figure*}
 
 \subsection{Resource Utilisation}
 
@@ -216,6 +326,8 @@ approximately 224 compute cycles.
 \centering
 \caption{Resource and timing snapshot (Wukong Artix-7 100T).}
 \label{tab:resources}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{lc}
 \toprule
 Item & Value \\
@@ -302,6 +414,7 @@ reported exact matches for every element, and the same bitstream then
 passed the RPLU2 config/QR regression.
 
 \subsection{Re-proof and Correction (2026-08-07)}
+\label{sec:reproof}
 
 The 2026-07-04 run above was never entered in the project's hardware
 evidence ledger, and its exact conditions are not reproducible from
