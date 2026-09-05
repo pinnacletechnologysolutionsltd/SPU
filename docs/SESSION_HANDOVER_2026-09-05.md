@@ -44,11 +44,24 @@ own header claiming it checked waveforms. Added.
 | gate with a stray `.vcd` | exit 1, file named | 1, named |
 | clean tree, tests skipped | exit 0 | 0 |
 
-**OPEN: six `.vcd` dumps sit in the repo root** (`autonomy_dream` 12 MB,
-`sentinel_sqr` 3.5 MB, `precession_trace`, `i2s_trace`, `fold_trace`,
-`spu13_regen_tb`; ~16 MB). Untracked and gitignored, so nothing was committed,
-but **the gate now fails until they are swept**. That is intended. They were
-left in place deliberately — they are the operator's to delete.
+**RESOLVED same session: the six root `.vcd` dumps were swept** (~16 MB:
+`autonomy_dream` 12 MB, `sentinel_sqr` 3.5 MB, `precession_trace`, `i2s_trace`,
+`fold_trace`, `spu13_regen_tb`). All confirmed untracked before deletion, so
+nothing left git history, and they regenerate by re-running their testbenches.
+Scoped `-maxdepth 1`: the `.vcd` files under `build/` are untouched, since
+AGENTS.md prohibits them in the root and `build/` is gitignored working space.
+
+**The gate then passed end to end, for the first time meaningfully:**
+
+```
+Total PASS:  225
+Total FAIL:  0
+✅ Test suite passed.
+✅ All verification checks completed successfully.
+```
+
+That `✅ Test suite passed.` line is new. Before today the same success output
+would have appeared with 2 failures, or 200.
 
 **OPEN: what, if anything, to say publicly.** The README's fresh-clone-verified
 test count was true when measured; the automation behind it was not real. No
@@ -197,19 +210,18 @@ that question was three defects for one module.
 
 ## 7. Next session
 
-1. **Sweep the six root `.vcd` files.** The gate fails until they are gone.
-2. **Re-confirm §3.9 after a deliberate reseat and a power cycle.** The
+1. **Re-confirm §3.9 after a deliberate reseat and a power cycle.** The
    marginal harness makes the result single-observation in a stronger sense
    than usual.
-3. **The zero-instantiation audit** (§5). Highest expected yield.
-4. **CRT control**, now with a real subject — genuine diagonal geometry with a
+2. **The zero-instantiation audit** (§5). Highest expected yield.
+3. **CRT control**, now with a real subject — genuine diagonal geometry with a
    predicted stair-step, rather than an axis-aligned marker that could not
    spatially alias. **Keep the GPU raw and unsmoothed until this runs**:
    coverage antialiasing would blur exactly the artifact the experiment
    exists to observe. Operator will not cut the VGA cable; the harness plug
    should already omit pins 9/12/15 by construction — verify with continuity
    rather than assuming.
-5. **Then**, if wanted, analytic coverage AA. `f = Ax+By+C` is proportional to
+4. **Then**, if wanted, analytic coverage AA. `f = Ax+By+C` is proportional to
    signed distance; `1/|(A,B)|` is constant per edge and belongs in setup,
    where `spu_reciprocal_core` already sits with ~11 ns of slack. Forces the
    R-2R ladder, so it is hardware work, not an RTL afternoon.
@@ -219,6 +231,68 @@ that question was three defects for one module.
 papers, the Lithic programs and the software oracles, not in the rasterizer.
 Today's milestone is "we have a rasterizer", not "we have a synergetic
 rasterizer". The distinctive machine is still ahead.
+
+## 8. Outreach and purchasing — decided late in the session
+
+**Strategic direction: continue graphics, do not open the stack.** Everything
+parked (SOM, southbridge, HDMI/Vivado, the papers) was parked for reasons that
+still hold, and nothing became more urgent this week. Graphics produced two
+visible milestones in two days and is the only track generating artifacts.
+**One exception, and it is not really backlog:** the zero-instantiation audit
+(§5) is graphics hygiene — the next GPU integration hits the same class.
+
+**`docs/BENCH_BOM.md` §2a added** — the graphics-bench shopping list, ranked by
+loss prevented per dollar: standoffs/non-slip mat (10–15), spare programmer
+(10–20, **local** — a spare arriving in three weeks is not a spare), DE-15
+connectors + proto board (10–15), sacrificial VGA gender changer (~5), ADuM3160
+isolator (20–30, slow route, no longer a gate). Under NZD 60 excluding the
+isolator. The two free measures — one power strip, laptop on battery — outrank
+most of it.
+
+**`docs/BENCH_BOM.md` §2 flagged STALE.** All three items there are scoped to
+the shelved INA226/SOM campaign, while the section still reads "the experiment
+is stopped until one arrives". Following it would mean buying parts for a
+discontinued experiment. The logic analyzer moved to §1 — bought, and it
+immediately earned it: every §3.8 timing figure came from it and `J10IDENT` is
+impossible without one. It is **High Speed USB and must not sit behind a
+Full-Speed isolator**, which matters because both could arrive in one order.
+
+**Website plan (operator doing this fresh, next day).** Hugo, blog as a section
+of the same site rather than a separate thing — deciding later means
+restructuring. Five pages and no more: Home, **Evidence**, Blog, Papers,
+About/Contact.
+
+- **The Evidence page is the differentiator.** Short intro on the discipline
+  (silicon-verified / testbench-verified / unmeasured, and that every entry
+  states what it does NOT establish), three headline results with photographs,
+  then a link to the full ledger in the repo. Do not hand-maintain a copy of a
+  3,900-line file; it drifts within a month.
+- **Structural rule to build in from page one:** every claim on the site links
+  to evidence — RTL, theorem, synthesis output, or a ledger entry. Same
+  discipline as the repo.
+- **Leave the GitHub Pages docs site alone** (`.github/workflows/site.yml`). It
+  auto-generates from repo markdown and stays in sync for free. Link to it as
+  technical reference; do not spend a day migrating something that works.
+- **Do not theme-shop.** Pick a minimal Hugo theme in ten minutes. Write the
+  homepage last, once the other pages exist.
+
+**CARRIED FORWARD: `spu_strategy/infrastructure_plan_2026-08-19.md` is stale in
+the same way §2 of the BOM was.** Its homepage brief is framed "around the
+SOM/anomaly-detection wedge", shelved 2026-09-03. Following the checklist as
+written produces a website about a discontinued product. Settle the framing —
+graphics — before writing copy.
+
+**Outreach corrections, recorded because the same three errors have now come
+from an external adviser more than once:** there is **no spliced VGA cable**
+(hand-wired harness, three-resistor DAC on J10 — the operator has stated the
+CRT cable will not be cut); there is **nothing 3D and no shading** anywhere in
+the RTL; the triangle is **static**, not 60 FPS animation. The claim discipline
+is the project's best asset and must not be diluted at the outreach layer.
+
+**Hackaday timing:** pitch the **toolchain bring-up story now**, not a future
+"3D shaded triangle" that would require a framebuffer and a shading stage that
+neither exist nor are queued. The dead-toolchain / unplaceable-differential /
+octave-beacon narrative is already written and already true.
 
 ## References
 
