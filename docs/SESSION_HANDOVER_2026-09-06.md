@@ -1,0 +1,335 @@
+# Session Handover — 2026-09-06
+
+## 0. One-line state
+
+The zero-instantiation audit from 09-05 §5 was run. It is now a committed
+tool, not an afternoon's grep. It immediately paid for itself: **the depth-v2
+attribute field was never anchored at (0,0)** — one full scanline of wrong
+depth, every frame, in the module that reached silicon yesterday.
+
+Running the gate twice then turned up a **second** gate defect, of the same
+family as 09-05 §1: `verify_repo.sh` was never idempotent, because the suite
+it runs at step 3 recreated the root `.vcd` files it prohibits at step 1 (§3).
+
+No bench work this session. §3.9 is **still single-observation** — item 1 of
+09-05 §7 is untouched and still the first thing to do at the bench.
+
+---
+
+## 1. The zero-instantiation audit — `tools/rtl_instantiation_audit.py`
+
+Roots are taken from the build scripts themselves (`-top X`, `TOP=X`), so a
+board top no build script names is correctly reported as unreachable. Three
+classes over 426 modules:
+
+| class | meaning | count |
+|---|---|---|
+| DEAD | no board top, no testbench | 54 |
+| TB-ONLY | simulated, never integrated into any top | 39 |
+| NO-TB | reaches silicon, never simulated | 36 |
+
+**It is a regex parser, not an elaborator**, and the docstring says so. It
+resolves by module name, ignores `` `ifdef ``, and cannot see through a
+generate branch it fails to parse. A hit means "go and look". `yosys
+hierarchy -check -top <top>` remains the authority for any single top; this is
+the sweep across all of them, which is what no existing check did.
+
+Validated against known ground truth before being trusted: `hal_hdmi` and
+`spu_gpu_top` both resolve to their post-fix parents, and the root set was
+diffed against a hand sweep. That diff caught two genuinely missing tops —
+`tang25k_blinky_uart` and `tang25k_blinky_uart_div2`, whose build scripts sit
+in the **repository root** (`build_25k_blinky_uart*.sh`, both tracked). Fixed
+by searching `.` too. Worth noting separately that AGENTS.md §3.6 prohibits
+root clutter and `verify_repo.sh` does not check for stray root `.sh` files.
+
+---
+
+## 2. THE FINDING: the depth field was anchored a quarter-scanline late
+
+`spu_attr_stepper.v` accumulates exactly like `spu_edge_stepper.v` — seed on
+`setup`, `+= B` per `step_y`, `+= A` per `step_x` — so it needs the same
+per-frame re-anchor the coverage path got on 09-05. It could not be given the
+same `setup0` pulse: its coefficients do not exist until
+`spu_depth_dispatch` has run a reciprocal. So it was anchored on `ready0`.
+
+`setup0` pulsing at (0,0) therefore made `ready0` land wherever the setup
+latency happened to end.
+
+**Measured, not reasoned:**
+
+```
+unit0 depth anchored at pixel (vx=25, vy=0)
+unit1 depth anchored at pixel (vx=48, vy=0)
+  -> the two units are anchored 23 pixels apart
+```
+
+The two differ because `spu_depth_dispatch` dispatches them sequentially
+through one shared multiplier. `spu_attr_stepper`'s `setup` loads
+`acc <= c_coef`, the depth **at (0,0)** — so each unit declared "I am at x=0"
+a quarter of a scanline in, and the two units disagreed about where they were
+by 23 pixels while their depths were compared against each other pixel by
+pixel.
+
+**The damage is bounded, and the bound was measured too.** `acc_row` is
+re-seeded from the row wrap, so the field self-corrects from row 1 and only
+row 0 is wrong:
+
+```
+depth0 vs oracle over the active area: 80/4800 pixels wrong (1 row of 60)
+```
+
+Off by a constant 2000, about 11 pixels of `A_z`.
+
+**Latent, not observed — stated precisely.** §3.9 draws ONE triangle, and with
+only unit 0 armed `spu_depth_compare`'s `unit0_wins` reduces to `cov0` and
+never reads a depth. **Nothing on silicon was ever wrong.** It would have
+appeared on the first two-triangle scene.
+
+### The fix (`spu_gpu_top.v`)
+
+Give the depth path the coverage path's shape rather than a compensating
+offset:
+
+- `depth_setup0/1` are now `tri0_setup`/`tri1_setup`, not `setup0`/`setup1`.
+  The depth coefficients are a pure function of the triangle, so the math runs
+  **once per triangle** instead of re-running a reciprocal every frame for a
+  result that cannot change.
+- `attr_setup0 = ready0 | (frame_start & depth_armed0)`, mirroring the
+  coverage path's `armed0` gate for the same reason: a unit whose coefficients
+  have never been computed must not load them.
+
+The frame in which a triangle is first set up still anchors mid-row — the
+coefficients do not exist before then — so that one frame has one wrong
+scanline. Every frame after it is exact.
+
+### Why nothing caught it — and this is the interesting part
+
+`software/tests/test_gpu_depth_compare_integration.py` **already tested this
+exact assembly with two overlapping triangles and an independent oracle.** It
+passes, and it always did. Look at what it does:
+
+```verilog
+while (!(seen_ready0 && seen_ready1)) @(negedge clk);
+attr_setup0 = 1; attr_setup1 = 1;    // both, together, THEN scan from (0,0)
+```
+
+The test hand-wired the **correct** sequencing. `spu_gpu_top` wired it
+differently, and the test never instantiated `spu_gpu_top`. The subsystem was
+proven correct in a harness that reassembled it properly, while the real top
+assembled it wrongly.
+
+That is the same disease as §5 of the 09-05 handover, one level up: not
+"module never instantiated" but **"test builds its own top instead of testing
+the real one"**. An integration test that constructs its own DUT proves the
+parts compose, not that they *were* composed.
+
+### The bench — `spu_gpu_top_depth_anchor_tb.v`
+
+First testbench to read a depth value out of `spu_gpu_top`. Both units armed,
+both with depth sloped in x and y, every active pixel of a steady-state frame
+checked against the affine oracle.
+
+**Negative control run, as required:**
+
+| RTL | expected | result |
+|---|---|---|
+| post-fix | 0 wrong, PASS | `unit0 0 wrong, unit1 0 wrong` → PASS |
+| pre-fix | 80/4800 per unit, FAIL | `unit0 80 wrong, unit1 80 wrong` → FAILED with 2 errors |
+
+Vacuous-pass guards, because a constant depth field matches *any* anchor and
+would pass on the broken RTL: all four gradients `A_z0/B_z0/A_z1/B_z1` must be
+non-zero, both units must be armed, and the checked-pixel count must equal the
+active area.
+
+**Scope stated in the header so it is not overread:** the oracle is built from
+the DUT's own `A_z/B_z/C_z/frac_bits`, so this proves the accumulator is
+anchored and stepped consistently with the coefficients the setup stage
+produced. It does **not** check that those coefficients are right.
+
+Runs in 0.57 s. Suite: **226 PASS, 0 FAIL** (was 225).
+
+---
+
+## 3. SECOND GATE DEFECT: `verify_repo.sh` failed on its own side effects
+
+Found by running the gate twice. It is not idempotent, and never was.
+
+`verify_repo.sh` runs hygiene at step 1 and the test suite at step 3. Six
+testbenches called `$dumpfile("...vcd")` **unconditionally, with a relative
+path**, so they wrote into the current directory — the repository root when
+`run_all_tests.py` drives them. Those are exactly the root `.vcd` dumps
+AGENTS.md §3.6 prohibits and step 1 checks for.
+
+So: step 1 passes on a clean tree, step 3 recreates the prohibited files, the
+gate exits 0, and the **next** invocation fails at step 1.
+
+Observed directly this session, not inferred:
+
+```
+gate run 1  -> exit 0
+gate run 2  -> ❌ ERROR: Root directory contains temporary/scratch files:
+               ./spu13_regen_tb.vcd ./autonomy_dream.vcd ./sentinel_sqr.vcd
+               ./fold_trace.vcd ./precession_trace.vcd ./i2s_trace.vcd
+```
+
+**These are the same six files 09-05 §1 swept.** That sweep removed the files;
+it did not remove the cause, so they came back on the first suite run. The
+09-05 handover records the sweep as "RESOLVED same session" — accurate about
+the files, not about the mechanism.
+
+**Fix.** Waveform dumping is now opt-in in all six benches:
+
+```verilog
+if ($test$plusargs("dump")) begin
+    $dumpfile("autonomy_dream.vcd");
+    $dumpvars(0, spu4_autonomy_tb);
+end
+```
+
+A regression run does not need waveforms; a developer debugging one runs
+`vvp <bench>.vvp +dump`. Verified both ways on `tb_spu_i2s`: no file without
+the plusarg, the same 226,384-byte file with it. It also stops the suite
+writing ~16 MB per run, of which `autonomy_dream.vcd` alone is 12 MB.
+
+**Confirmed by running the gate twice back to back after the fix** — the
+control this finding demands, since one pass is exactly what the broken
+version also produced:
+
+```
+GATE RUN 1 -> 226 PASS, 0 FAIL, RUN1_EXIT=0
+root .vcd after run 1: (none)
+GATE RUN 2 -> hygiene ✅, 226 PASS, 0 FAIL, RUN2_EXIT=0
+```
+
+**Rejected alternative:** prefixing the paths with `build/`. A `$dumpfile`
+into a directory that does not exist makes `vvp` **exit 1** (measured), which
+would break any of these benches run from a directory without a `build/`.
+
+**Why this keeps happening.** Both gate defects — 09-05's missing `sys.exit`
+and this one — are the gate failing to constrain the thing it names. Neither
+was found by reading it. Both were found by *running* it in a way it had not
+been run before: once with a failing test, once twice in a row. Running the
+gate twice is now worth doing after any change to the suite.
+
+---
+
+## 4. Also fixed: `tools/env_openxc7.fish` had no Boost shim
+
+`env_openxc7.sh` has a `lib/boost-<version>` `LD_LIBRARY_PATH` block for the
+recorded openXC7 Boost-ABI breakage. **The fish version never had one.**
+Sourcing it in fish left `LD_LIBRARY_PATH` empty, so `nextpnr-xilinx` and
+`bbasm` stayed broken and every A7 bitstream build with them — in the shell
+this project is actually driven from.
+
+Verified before and after: empty → `/home/john/.local/openxc7/lib/boost-1.91`,
+and `nextpnr-xilinx --version` answers. The repopulation recipe (take the
+`.so` files from the OLD package in the pacman cache; symlinking the new
+version does **not** work) is now a comment in the script rather than only in
+someone's memory.
+
+**A correction worth recording.** I first read a bare `ldd` as the toolchain
+being broken again and installed a second shim directory. It was not broken —
+the working `lib/boost-1.91` from 09-04 was there all along and my `ldd` simply
+had no env sourced. Duplicate removed. The fish gap was real and separate.
+
+---
+
+## 5. The GPUVGA spin was rebuilt — but NOT loaded
+
+Per `board-builds-are-never-rebuilt`, simulation-green says nothing about a
+spin, so the RTL change was carried through a full rebuild.
+
+```
+build     bash hardware/boards/artix7/build_a7.sh 100t gpuvga all   (A7_FREQ=25)
+bitstream build/spu_a7_100t_GPUVGA.bit
+          SHA-256 5975b17d267633e9adb4d52646cbec299dc65f848d79d22fef1aa4721c398c0e
+```
+
+|  | 09-05 (`dfbefd3`) | today |
+|---|---|---|
+| SLICE_LUTX | 7,890 (6%) | 7,896 (6%) |
+| SLICE_FFX | 2,417 (1%) | **2,419** (1%) |
+| DSP48E1 | 2/240 | 2/240 |
+| `clk_pixel` | 40.28 MHz | 40.73 MHz |
+
+**+2 flip-flops is exactly `depth_armed0` and `depth_armed1`** — the cost of
+the fix, confirmed rather than assumed. `clk_pixel` passes at 25 MHz required.
+(Both figures are the **last** "Max frequency" line: nextpnr prints two and
+the earlier pair — 32.96 MHz here — is the pre-route estimate.)
+
+**This bitstream has NOT been loaded onto hardware.** No silicon claim is made
+for it and `hardware_evidence.md` is untouched. §3.9 still refers to
+`dfbefd3`'s bitstream, which is the one that was actually observed on a
+monitor. Loading this one and re-confirming the triangle is the natural way to
+combine next session's items 1 and 2 into a single bench trip.
+
+---
+
+## 6. Audit findings NOT acted on — decisions for you
+
+**`x_span` is a dead port threaded through four levels.**
+`spu_edge_stepper` declares it, never reads it; `spu_raster_unit`,
+`spu_dual_raster`, `spu_gpu_top` and three board probes all wire it up. The
+row restart works off `f_row` instead, so nothing is broken.
+
+But it is already carrying a wrong value undetected. Two Tang probes pass
+`10'sd640` into a 16-bit signed port, and **`10'sd640` sign-extends to −384**
+(measured, not assumed — 640 does not fit in 10 signed bits). Harmless only
+because nothing reads it. That is a landmine for whoever uses the port next.
+Removing it touches 4 RTL files, 3 board tops and 1 bench — small, but a
+refactor, so **your call, not mine.**
+
+**`spu_texture_dma.v`** — the only fully dead module under `rtl/gpu/`. Read it:
+it is a clean SDRAM-burst template, correctly reset, not rotting code. Delete
+or keep deliberately, but it should not sit in the "nobody knows" state.
+
+**The DEAD list is mostly one story.** Of the 54, a large block is an entire
+SPU-13 core generation — `spu13_top`, `spu13_sequencer`, `spu13_scoreboard`,
+`spu13_cluster_controller`, `spu_core`, `spu_execution_unit`,
+`spu_instruction_decoder`, `spu_register_file`, `spu_folded_alu`,
+`spu_system` — reachable only through `spu_colorlight_i9_top` and
+`spu_ecp5_top`, which are themselves in no build script. A dead core behind
+dead boards. Vendor primitives (`SB_HFOSC`, `gowin_bsram`, `PLLA`) are
+expected here and are not findings.
+
+**TB-ONLY includes the SPU-4 core proper** — `spu4_core`, `spu4_top`,
+`spu4_sentinel` are reached only by testbenches. The SPU-4 silicon in §3.2j
+runs `spu4_som_edge_wrapper`, a different module. Not a defect; worth knowing
+before anyone cites "SPU-4 is in silicon" as covering `spu4_core`.
+
+**The depth-v2 subsystem has no unit bench of its own.** `spu_depth_math`,
+`spu_depth_dispatch`, `spu_attr_stepper`, `spu_depth_compare` and
+`spu_reciprocal_core` have no `*_tb.v`. Coverage is the Python parity tests
+plus, as of today, this one. `spu_attr_stepper.v`'s own header refers to "a
+real bug this module's own testbench caught" — that bench is not in the tree.
+
+---
+
+## 7. Next session
+
+1. **Still item 1 from 09-05.** Re-confirm §3.9 after a deliberate reseat and
+   a power cycle. Nothing this session touched the bench, and the result is
+   still single-observation against a harness that needed prodding.
+2. **Load the rebuilt GPUVGA spin and re-confirm.** The RTL changed and the
+   spin was rebuilt (§5) but never loaded; per `board-builds-are-never-rebuilt`
+   simulation-green says nothing about a spin. Fold this into the same bench
+   trip as item 1.
+3. **Decide the §6 items**, particularly `x_span`.
+4. Then 09-05 §7's CRT control, unchanged and still wanting the GPU raw and
+   unsmoothed.
+
+**Not done, named so it is not lost:** the audit answers "is it reachable",
+not "is it exercised". `NO-TB` (36) contains modules that reach silicon with
+no simulation at all. Board tops belong there legitimately; `spu_video_pattern`
+— which produced the §3.8 first-video result — does not, and still has no
+bench.
+
+---
+
+## References
+
+- `docs/SESSION_HANDOVER_2026-09-05.md` (previous) §5, §7
+- `docs/hardware_evidence.md` §3.9 · §3.8
+- `tools/rtl_instantiation_audit.py`
+- `hardware/tests/common/spu_gpu_top_depth_anchor_tb.v`
+- `tools/verify_repo.sh` · `tools/env_openxc7.fish`
