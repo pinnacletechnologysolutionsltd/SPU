@@ -203,8 +203,12 @@ module spu_gpu_top #(
     wire [6:0] frac_bits0, frac_bits1;
     wire ready0, ready1;
 
+    // depth_setup0/1 are tri0_setup/tri1_setup, NOT setup0/setup1: the depth
+    // coefficients depend only on the triangle, so recomputing them at every
+    // frame start was both wasted work and the cause of the mid-row anchor
+    // documented above.
     spu_depth_dispatch u_depth_dispatch (.clk(clk_pixel), .rst_n(rst_n),
-        .depth_setup0(setup0), .depth_setup1(setup1),
+        .depth_setup0(tri0_setup), .depth_setup1(tri1_setup),
         .a0_0(tri0_a0), .b0_0(tri0_b0), .a1_0(tri0_a1), .b1_0(tri0_b1),
         .a2_0(tri0_a2), .b2_0(tri0_b2),
         .c0_0(tri0_c0), .c1_0(tri0_c1), .c2_0(tri0_c2),
@@ -216,12 +220,64 @@ module spu_gpu_top #(
         .A_z0(A_z0), .B_z0(B_z0), .C_z0(C_z0), .frac_bits0(frac_bits0), .ready0(ready0),
         .A_z1(A_z1), .B_z1(B_z1), .C_z1(C_z1), .frac_bits1(frac_bits1), .ready1(ready1));
 
+    // ── Depth-v2 re-anchor ───────────────────────────────────────────────
+    // BUG FIX 2026-09-06. The coverage path above re-anchors at (0,0); the
+    // depth path did not, and could not, by re-pulsing the same setup.
+    //
+    // spu_attr_stepper.v accumulates exactly like spu_edge_stepper.v, so it
+    // needs the same per-frame re-anchor. Feeding it `setup0` was impossible
+    // -- its coefficients do not exist until spu_depth_dispatch has run the
+    // reciprocal -- so it was anchored on `ready0` instead. `setup0` pulsing
+    // at (0,0) therefore made `ready0` land WHEREVER the setup latency
+    // happened to end: MEASURED at vx=25, vy=0 for unit 0 and vx=48, vy=0
+    // for unit 1, the two units 23 pixels apart because spu_depth_dispatch
+    // dispatches them sequentially. spu_attr_stepper's `setup` loads
+    // acc <= c_coef, the depth AT (0,0), so it declared "I am at x=0" a
+    // quarter of a scanline into the frame.
+    //
+    // The damage is bounded, and the bound was measured, not reasoned:
+    // acc_row is re-seeded from the row wrap, so the field self-corrects
+    // from row 1 and ONLY row 0 is wrong -- 80/4800 active pixels on the
+    // 80x60 bench frame, one full scanline, every frame, off by a constant
+    // 2000 (about 11 pixels of A_z).
+    //
+    // Latent, not observed: section 3.9 draws ONE triangle, and with only
+    // unit 0 armed spu_depth_compare's unit0_wins reduces to cov0 and never
+    // reads a depth. It would have appeared on the first two-triangle scene.
+    //
+    // The fix is to give the depth path the coverage path's shape rather
+    // than a compensating offset. The depth coefficients are a pure function
+    // of the triangle, so the math need only run ONCE per triangle -- hence
+    // `tri0_setup` below, not `setup0`, which also stops re-running a
+    // reciprocal every frame for a result that cannot change. The attribute
+    // accumulator is then re-anchored at (0,0) from the latched
+    // coefficients, gated by `depth_armed` for the same reason `armed0`
+    // gates the coverage re-anchor: a unit whose coefficients have never
+    // been computed must not load them.
+    //
+    // The frame in which a triangle is first set up still anchors mid-row --
+    // unavoidable, the coefficients do not exist before then -- so that one
+    // frame has one wrong scanline. Every frame after it is exact.
+    reg depth_armed0, depth_armed1;
+    always @(posedge clk_pixel or negedge rst_n) begin
+        if (!rst_n) begin
+            depth_armed0 <= 1'b0;
+            depth_armed1 <= 1'b0;
+        end else begin
+            if (ready0) depth_armed0 <= 1'b1;
+            if (ready1) depth_armed1 <= 1'b1;
+        end
+    end
+
+    wire attr_setup0 = ready0 | (frame_start & depth_armed0);
+    wire attr_setup1 = ready1 | (frame_start & depth_armed1);
+
     wire signed [55:0] depth0, depth1;
-    spu_attr_stepper u_attr0 (.clk(clk_pixel), .rst_n(rst_n), .setup(ready0),
+    spu_attr_stepper u_attr0 (.clk(clk_pixel), .rst_n(rst_n), .setup(attr_setup0),
         .a_coef(A_z0), .b_coef(B_z0), .c_coef(C_z0),
         .step_x(step_x), .step_y(step_y), .frac_bits(frac_bits0),
         .value_out(depth0));
-    spu_attr_stepper u_attr1 (.clk(clk_pixel), .rst_n(rst_n), .setup(ready1),
+    spu_attr_stepper u_attr1 (.clk(clk_pixel), .rst_n(rst_n), .setup(attr_setup1),
         .a_coef(A_z1), .b_coef(B_z1), .c_coef(C_z1),
         .step_x(step_x), .step_y(step_y), .frac_bits(frac_bits1),
         .value_out(depth1));
