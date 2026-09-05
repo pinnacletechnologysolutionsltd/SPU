@@ -17,7 +17,12 @@
 // CC0 1.0 Universal.
 
 module spu_gpu_top #(
-    parameter DEVICE = "GW5A",
+    // DEVICE has NO usable default on purpose. It used to default to "GW5A",
+    // which meant an Artix-7 top that forgot to set it synthesised the Gowin
+    // branch and died on ELVDS_OBUF -- or worse, would have picked a silently
+    // wrong serialiser contract. Every instantiation must name its board.
+    // Valid: "GW5A" (Gowin), "A7" or "XILINX" (Artix-7).
+    parameter DEVICE = "UNSET",
     // ENABLE_HDMI=0 omits hal_hdmi entirely and ties the TMDS outputs low.
     // Required on openXC7/nextpnr-xilinx, whose placer HANGS on differential
     // output (OBUFDS/TMDS_33) -- upstream issue #66, open and unimplemented,
@@ -170,6 +175,14 @@ module spu_gpu_top #(
         .hsync(hsync_d), .vsync(vsync_d), .active(active_d),
         .vga_r(vga_r), .vga_g(vga_g), .vga_b(vga_b),
         .vga_hsync(vga_hsync), .vga_vsync(vga_vsync));
+
+    // Elaboration-time guard: an unset or misspelled DEVICE fails here with a
+    // readable module name rather than deep inside a vendor primitive.
+    generate
+        if (DEVICE != "GW5A" && DEVICE != "A7" && DEVICE != "XILINX") begin: bad_device
+            spu_gpu_top_DEVICE_must_be_GW5A_or_A7_or_XILINX u_unset_device ();
+        end
+    endgenerate
 
     // ── hal_hdmi ─────────────────────────────────────────────────────────
     generate
