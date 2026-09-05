@@ -88,6 +88,13 @@ module spu_depth_dispatch (
             math_start_r <= 1'b0;
             ready0 <= 1'b0;
             ready1 <= 1'b0;
+            // The coefficient outputs were left unreset. On an FPGA they come
+            // up at 0 and nothing notices, but in simulation they are X until
+            // a setup lands, and an X depth propagates through
+            // spu_depth_compare to every pixel on the screen. That is why
+            // spu_gpu_top had never been simulated. Added 2026-09-05.
+            A_z0 <= 56'sd0; B_z0 <= 56'sd0; C_z0 <= 56'sd0; frac_bits0 <= 7'd0;
+            A_z1 <= 56'sd0; B_z1 <= 56'sd0; C_z1 <= 56'sd0; frac_bits1 <= 7'd0;
         end else begin
             ready0 <= 1'b0;
             ready1 <= 1'b0;

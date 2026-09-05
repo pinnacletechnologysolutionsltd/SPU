@@ -82,8 +82,15 @@ module spu_gpu_top #(
         .x(vx), .y(vy), .hsync(hsync), .vsync(vsync), .active(active));
 
     // step_y when x wraps (start of each new visible row)
+    // vx_d is reset like every other pipeline register in this module; it
+    // previously had none, so step_y was X on the first simulation cycle and
+    // propagated X into all six edge accumulators. Benign on an FPGA, where
+    // flops come up at 0, but it made any testbench of this module unusable.
     reg [9:0] vx_d;
-    always @(posedge clk_pixel) vx_d <= vx;
+    always @(posedge clk_pixel or negedge rst_n) begin
+        if (!rst_n) vx_d <= 10'd0;
+        else        vx_d <= vx;
+    end
     assign step_y = (vx == 10'd0) && (vx_d != 10'd0);
 
     // BUG FIX 2026-08-25 (pre-existing, found while building the first
@@ -111,18 +118,60 @@ module spu_gpu_top #(
         end
     end
 
+    // ── Frame-start re-anchor ────────────────────────────────────────────
+    // BUG FIX 2026-09-05. step_y is derived from the horizontal wrap alone,
+    // so it fires on all 525 lines of a frame while only 480 are displayed,
+    // and nothing ever re-anchored the accumulators after `setup`. f_row
+    // therefore reached C + 525*B at the start of the next frame instead of
+    // returning to C, so a triangle set up once walked 525*B every frame --
+    // the FULL frame's accumulation, since nothing re-anchored at all --
+    // until it left the screen. Measured on the pre-fix RTL with B=170:
+    // f_row at successive frame starts was -17520, 71730, 160980, a constant
+    // step of 89250 = 525*170. Any consumer hit this; none existed to notice.
+    //
+    // Re-pulsing setup at (0,0) reloads f and f_row from the coefficient
+    // inputs. spu_edge_stepper's `setup` branch precedes `step_y` in its
+    // else-if chain, so on the cycle both are true the reload wins -- which
+    // is what makes (0,0) the correct instant to do this rather than one
+    // cycle either side of it.
+    //
+    // Gated by `armed`. A unit that has never been set up must not be
+    // re-anchored: it would latch whatever sits on its coefficient inputs,
+    // and with C=0 every edge reports inside (f >= 0) and the unit covers
+    // the entire screen.
+    //
+    // Coefficients must be held stable by the caller for as long as the
+    // triangle is to be drawn. That was already true -- `setup` latched them
+    // and nothing re-read them -- but it is now a standing requirement rather
+    // than a one-shot one.
+    wire frame_start = (vx == 10'd0) && (vy == 10'd0);
+
+    reg armed0, armed1;
+    always @(posedge clk_pixel or negedge rst_n) begin
+        if (!rst_n) begin
+            armed0 <= 1'b0;
+            armed1 <= 1'b0;
+        end else begin
+            if (tri0_setup) armed0 <= 1'b1;
+            if (tri1_setup) armed1 <= 1'b1;
+        end
+    end
+
+    wire setup0 = tri0_setup | (frame_start & armed0);
+    wire setup1 = tri1_setup | (frame_start & armed1);
+
     // ── Dual rasterizer (coverage) ──────────────────────────────────────
     wire [3:0] fixed_priority_r, fixed_priority_g, fixed_priority_b;  // unused
     wire cov0, cov1;
     wire [3:0] r0, g0, b0, r1, g1, b1;
 
     spu_dual_raster u_rast (.clk(clk_pixel), .rst_n(rst_n),
-        .setup0(tri0_setup),
+        .setup0(setup0),
         .a0_0(tri0_a0), .b0_0(tri0_b0), .c0_0(tri0_c0),
         .a1_0(tri0_a1), .b1_0(tri0_b1), .c1_0(tri0_c1),
         .a2_0(tri0_a2), .b2_0(tri0_b2), .c2_0(tri0_c2),
         .tri_r0(tri0_r), .tri_g0(tri0_g), .tri_b0(tri0_b),
-        .setup1(tri1_setup),
+        .setup1(setup1),
         .a0_1(tri1_a0), .b0_1(tri1_b0), .c0_1(tri1_c0),
         .a1_1(tri1_a1), .b1_1(tri1_b1), .c1_1(tri1_c1),
         .a2_1(tri1_a2), .b2_1(tri1_b2), .c2_1(tri1_c2),
@@ -139,7 +188,7 @@ module spu_gpu_top #(
     wire ready0, ready1;
 
     spu_depth_dispatch u_depth_dispatch (.clk(clk_pixel), .rst_n(rst_n),
-        .depth_setup0(tri0_setup), .depth_setup1(tri1_setup),
+        .depth_setup0(setup0), .depth_setup1(setup1),
         .a0_0(tri0_a0), .b0_0(tri0_b0), .a1_0(tri0_a1), .b1_0(tri0_b1),
         .a2_0(tri0_a2), .b2_0(tri0_b2),
         .c0_0(tri0_c0), .c1_0(tri0_c1), .c2_0(tri0_c2),
@@ -165,8 +214,17 @@ module spu_gpu_top #(
     // fixed-priority pixel_r/g/b, which remains available above,
     // unused, for any consumer that wants coverage-only priority) ──────
     wire [3:0] rast_r, rast_g, rast_b;
+    // A unit that has never been set up must not cover anything. Its edge
+    // accumulators reset to 0 and `inside` is (f >= 0), so all three edges
+    // report inside and the unit claims EVERY pixel. Until now that was
+    // masked by unit 0 winning wherever it was covered, and by unit 1's
+    // colour happening to be zero -- a non-zero tri1_r with no tri1_setup
+    // would have filled the screen.
+    wire cov0_armed = cov0 & armed0;
+    wire cov1_armed = cov1 & armed1;
+
     spu_depth_compare u_depth_compare (
-        .cov0(cov0), .cov1(cov1), .depth0(depth0), .depth1(depth1),
+        .cov0(cov0_armed), .cov1(cov1_armed), .depth0(depth0), .depth1(depth1),
         .r0(r0), .g0(g0), .b0(b0), .r1(r1), .g1(g1), .b1(b1),
         .pixel_r(rast_r), .pixel_g(rast_g), .pixel_b(rast_b));
 

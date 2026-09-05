@@ -56,8 +56,13 @@ module spu_a7_gpu_vga_top (
     // horizontal wrap alone, so step_y fires on all 525 lines of the frame
     // while only 480 are active. The edge accumulators are anchored to (0,0)
     // by `setup` and never re-anchored, so a triangle set up once drifts by
-    // 45*B per frame and leaves the screen within a few frames. Re-pulsing
-    // setup at (0,0) every frame re-anchors it.
+    // 525*B per frame -- measured, see spu_gpu_top_frame_anchor_tb.v -- and
+    // leaves the screen almost immediately.
+    //
+    // As of 2026-09-05 spu_gpu_top does this re-anchoring itself, so this
+    // pulse is redundant. It is kept because it is also what arms the unit,
+    // and pulsing setup at (0,0) is exactly what the internal fix does; the
+    // two coincide rather than conflict.
     //
     // This second spu_video_timing instance exists only to see (x,y): it is
     // a pure counter on the same clock and reset as the one inside
