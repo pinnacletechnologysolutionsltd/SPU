@@ -20,27 +20,40 @@
 
 module spu_gpu_top_frame_anchor_tb;
 
-    localparam H_TOTAL = 800;
-    localparam V_TOTAL = 525;
+    // A SMALL frame, not 640x480. Three full-size frames is 1.26M cycles and
+    // ~28 s of iverilog against run_all_tests.py's 15 s limit -- the first
+    // version of this bench timed out in the suite while passing standalone.
+    // The drift being tested is a property of the accumulator update rule,
+    // not of the frame size, so a small frame tests it identically and 1000x
+    // faster. Full-size behaviour is covered by the silicon result, section 3.9.
+    localparam H_ACTIVE = 80, H_FP = 4, H_SYNC = 8, H_BP = 8;   // H_TOTAL 100
+    localparam V_ACTIVE = 60, V_FP = 2, V_SYNC = 2, V_BP = 6;   // V_TOTAL  70
+    localparam H_TOTAL = H_ACTIVE + H_FP + H_SYNC + H_BP;
+    localparam V_TOTAL = V_ACTIVE + V_FP + V_SYNC + V_BP;
 
     reg clk = 1'b0;
     reg rst_n = 1'b0;
     always #1 clk = ~clk;
 
-    // Triangle V0(320,100) V1(150,380) V2(490,380); +95200 at each opposite
-    // vertex, so the winding is consistent and the interior is well defined.
-    localparam signed [15:0] E0_A = 16'sd280,  E0_B = 16'sd170;
-    localparam signed [31:0] E0_C = -32'sd106600;
-    localparam signed [15:0] E1_A = 16'sd0,    E1_B = -16'sd340;
-    localparam signed [31:0] E1_C = 32'sd129200;
-    localparam signed [15:0] E2_A = -16'sd280, E2_B = 16'sd170;
-    localparam signed [31:0] E2_C = 32'sd72600;
+    // Triangle V0(40,12) V1(18,47) V2(62,47), scaled to the small frame.
+    // Each edge evaluates to +1540 at its opposite vertex, so the winding is
+    // consistent and the interior is well defined. Area = 0.5*44*35 = 770.
+    localparam signed [15:0] E0_A = 16'sd35,  E0_B = 16'sd22;
+    localparam signed [31:0] E0_C = -32'sd1664;
+    localparam signed [15:0] E1_A = 16'sd0,   E1_B = -16'sd44;
+    localparam signed [31:0] E1_C = 32'sd2068;
+    localparam signed [15:0] E2_A = -16'sd35, E2_B = 16'sd22;
+    localparam signed [31:0] E2_C = 32'sd1136;
 
     reg tri0_setup = 1'b0;
     wire [3:0] vga_r, vga_g, vga_b;
     wire vga_hsync, vga_vsync;
 
-    spu_gpu_top #(.DEVICE("A7"), .ENABLE_HDMI(0)) dut (
+    spu_gpu_top #(
+        .DEVICE("A7"), .ENABLE_HDMI(0),
+        .H_ACTIVE(H_ACTIVE), .H_FP(H_FP), .H_SYNC(H_SYNC), .H_BP(H_BP),
+        .V_ACTIVE(V_ACTIVE), .V_FP(V_FP), .V_SYNC(V_SYNC), .V_BP(V_BP)
+    ) dut (
         .clk_pixel(clk), .clk_tmds(clk), .rst_n(rst_n),
         .tri0_setup(tri0_setup),
         .tri0_a0(E0_A), .tri0_b0(E0_B), .tri0_c0(E0_C),
@@ -112,8 +125,12 @@ module spu_gpu_top_frame_anchor_tb;
         $display("frame 2: lit=%0d csum=%0d", lit[2], csum[2]);
 
         // A triangle must actually be drawn, or "identical" is vacuous.
-        if (lit[0] < 1000) begin
-            $display("FAIL: frame 0 lit %0d pixels, expected a triangle of thousands", lit[0]);
+        // Guard against a vacuous pass. Without it, the pre-fix RTL draws
+        // NOTHING in any measured frame and three identically empty frames
+        // compare equal -- the bench would pass on broken RTL. Expected area
+        // is 770; require most of it.
+        if (lit[0] < 600) begin
+            $display("FAIL: frame 0 lit %0d pixels, expected ~770", lit[0]);
             errors = errors + 1;
         end
 

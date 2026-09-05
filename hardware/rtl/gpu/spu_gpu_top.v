@@ -23,6 +23,19 @@ module spu_gpu_top #(
     // wrong serialiser contract. Every instantiation must name its board.
     // Valid: "GW5A" (Gowin), "A7" or "XILINX" (Artix-7).
     parameter DEVICE = "UNSET",
+    // Video timing, forwarded to spu_video_timing. Defaults are 640x480@60
+    // and every board top relies on them. They exist so a testbench can use a
+    // small frame: at full size three frames is 1.26M cycles and ~28 s of
+    // iverilog, nearly twice run_all_tests.py's 15 s per-bench limit, which
+    // is what made the first version of the frame-anchor bench time out.
+    parameter H_ACTIVE = 640,
+    parameter H_FP     = 16,
+    parameter H_SYNC   = 96,
+    parameter H_BP     = 48,
+    parameter V_ACTIVE = 480,
+    parameter V_FP     = 10,
+    parameter V_SYNC   = 2,
+    parameter V_BP     = 33,
     // ENABLE_HDMI=0 omits hal_hdmi entirely and ties the TMDS outputs low.
     // Required on openXC7/nextpnr-xilinx, whose placer HANGS on differential
     // output (OBUFDS/TMDS_33) -- upstream issue #66, open and unimplemented,
@@ -78,7 +91,10 @@ module spu_gpu_top #(
     assign step_x = active;
     wire step_y;  // one cycle after hsync falling (end of line)
 
-    spu_video_timing u_timing (.clk(clk_pixel), .rst_n(rst_n),
+    spu_video_timing #(
+        .H_ACTIVE(H_ACTIVE), .H_FP(H_FP), .H_SYNC(H_SYNC), .H_BP(H_BP),
+        .V_ACTIVE(V_ACTIVE), .V_FP(V_FP), .V_SYNC(V_SYNC), .V_BP(V_BP)
+    ) u_timing (.clk(clk_pixel), .rst_n(rst_n),
         .x(vx), .y(vy), .hsync(hsync), .vsync(vsync), .active(active));
 
     // step_y when x wraps (start of each new visible row)
@@ -176,7 +192,7 @@ module spu_gpu_top #(
         .a1_1(tri1_a1), .b1_1(tri1_b1), .c1_1(tri1_c1),
         .a2_1(tri1_a2), .b2_1(tri1_b2), .c2_1(tri1_c2),
         .tri_r1(tri1_r), .tri_g1(tri1_g), .tri_b1(tri1_b),
-        .step_x(step_x), .step_y(step_y), .x_span(10'd640),
+        .step_x(step_x), .step_y(step_y), .x_span(16'sd640),
         .pixel_r(fixed_priority_r), .pixel_g(fixed_priority_g), .pixel_b(fixed_priority_b),
         .cov0_out(cov0), .cov1_out(cov1),
         .r0_out(r0), .g0_out(g0), .b0_out(b0),
