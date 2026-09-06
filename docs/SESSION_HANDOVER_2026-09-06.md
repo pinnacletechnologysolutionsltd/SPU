@@ -685,6 +685,145 @@ is getting geometry in at runtime.
 
 ---
 
+## 12. DECIDED: the GPU is a native IVM rasterizer, not a GPU with Quadray inputs
+
+Operator decision, 2026-09-06, taken at the end of the session and recorded
+here as the first thing to read tomorrow. **Everything in Quadray coordinates,
+everything in Wildberger quadrance. Rasterize natively on the IVM lattice.**
+Per the operator this was always the plan in the original repository, and the
+documentation supports that.
+
+**TWO OUTPUT PATHS, not one pipeline with a mandatory conversion:**
+
+1. **Native 60° output** — the first-class path. The lattice is the output,
+   not an internal representation that must be converted away.
+2. **A Bresenham converter for conventional displays** — a *compatibility
+   adapter*, not a pipeline stage.
+
+That distinction matters architecturally. A mandatory resample would make the
+IVM lattice an internal detail; a compatibility adapter makes it the actual
+output and the square grid the special case. It also means §3.10's
+framebuffer-less streaming property may survive on the native path even if
+the adapter needs buffering.
+
+### Why this is not a new direction
+
+`knowledge/MATHEMATICAL_FOUNDATIONS.md` §3 — *"Why Q(√3) is the Required
+Field"* — states it outright:
+
+> The IVM lattice has 60° angles. The hexagonal cross-sections of this lattice
+> involve cos(60°) = 1/2 and sin(60°) = √3/2. Therefore, any algebraic
+> computation in the IVM will encounter √3.
+
+**Q(√3) exists in this project *because of* IVM rasterization.** The arithmetic
+foundation was derived for exactly this and has been waiting for a consumer.
+09-05 §7's observation — that the graphics RTL contains no surd, Quadray, A₃₁
+or φ types and that "the distinctive machine is still ahead" — describes the
+gap this decision closes.
+
+### The architectural fact that shapes the pipeline
+
+`knowledge/RATIONAL_CURVES_SPEC.md`: **"In the IVM lattice, quadrances are
+exact integers."** For a right spread, `Q₃ = Q₁ + Q₂` — Pythagoras without a
+square root.
+
+That gives a clean split, and it is the opposite of what one might assume:
+
+| stage | arithmetic |
+|---|---|
+| **IVM rasterizer core** | **exact integers.** Quadrances are integral in the lattice, so edge functions, coverage and depth need no surds at all |
+| **Bresenham adapter to a square grid** | **Q(√3).** The 60° → 90° basis change is where √3 appears, and where the surd hardware earns its place |
+
+So the surd ALU belongs at the **output boundary**, not in the hot path — and
+the hot path gets *simpler*, not harder, by moving to IVM. That is worth
+verifying before it is relied on, but if it holds it inverts the usual
+expectation that exact arithmetic costs performance.
+
+### What this changes in the tranche
+
+- **T3 is not "hardware triangle setup" as the contract describes it.** Setup
+  in a 4-axis basis with integer quadrances is a different module from the
+  `A = yj-yi, B = -(xj-xi)` screen-space computation currently specified.
+  The contract needs revising before T3, and probably before T2.
+- **T1's command format should speak Quadray from day one.** It is the next
+  piece of work and the cheapest possible moment to decide its vocabulary. A
+  loader that speaks screen-space triangles would have to be redone.
+- **A Bresenham adapter joins the design** as a compatibility block feeding
+  `hal_vga`. It does not exist and is not in the contract. The native path
+  needs its own output definition, which also does not exist.
+- **`spu_quadrance_accum.v` gains a consumer.** The zero-instantiation audit
+  (§1) found it DEAD — no top, no testbench. This decision is what it was
+  written for.
+
+### The native path is a bet on displays catching up — and it has literature
+
+Operator, same session: *"of course we're waiting for display technologies to
+catch up with hexagonal grids."* Recorded as the strategic position it is,
+because it is defensible rather than wistful.
+
+**The hexagonal lattice is the optimal 2D sampling lattice.** For an
+isotropically band-limited signal the hexagonal sampling density is √3/2 ≈
+0.866 of the square-grid density — **13.4% fewer samples for the same
+reconstruction quality**. This is standard multidimensional sampling theory
+(Petersen & Middleton, 1962), not an SPU claim: the hexagonal lattice is the
+densest circle packing, so it covers a circular band-limit with the fewest
+points. **Square pixel grids are a convenience of manufacture, not an
+optimum.**
+
+So the position is not "we prefer triangles". It is that the display industry
+standardised on a provably suboptimal lattice for manufacturing reasons, the
+arithmetic to work natively in the optimal one already exists here in
+`Q(√3)`, and the Bresenham adapter is what pays the conversion tax **for as
+long as the displays require it**.
+
+That reframes the CRT point above: the CRT is not a nostalgia exercise, it is
+the one display available today whose sample positions are set by timing
+rather than by a fixed matrix.
+
+**Not claimed:** that 13.4% fewer samples translates into any measured
+advantage in this design. It is the theoretical basis for the direction, and
+nothing here has been measured.
+
+### What is NOT yet decided, and should be taken rested
+
+1. **The lattice-to-pixel mapping itself.** Rendering on a 60° lattice and
+   resampling to a 90° grid is the entire novel content, and nothing here
+   specifies it. Nearest-lattice-site, area-weighted, or something exact in
+   Q(√3) are all open.
+2. **Whether the resample is where antialiasing lives.** It may subsume the
+   analytic-coverage AA in 09-05 §7 item 4 entirely, which would make that
+   item moot rather than deferred.
+3. **THE CRT MAY BE THE NATIVE 60° DISPLAY — worth checking early.**
+   An LCD has a fixed square pixel matrix and physically cannot present a
+   triangular lattice. A CRT has no pixel grid at all: it is a continuous
+   phosphor surface scanned by a beam, and the sample positions along each
+   line are set by analog timing. **Staggering alternate scanlines by half a
+   sample pitch yields a triangular lattice on a CRT and is impossible on an
+   LCD.**
+
+   If that holds, the CRT is not a side quest and not merely an
+   aliasing-observation rig — **it is the only display in the building that
+   can show the native output**, and the Bresenham adapter exists precisely
+   for everything that is not a CRT. That would also make the queued CRT
+   experiment the test of the 60°-vs-90° hypothesis recorded in
+   `ivm-perceptual-motivation` (exact maths still shimmered on a Bresenham
+   grid; IVM viewing produced a magic-eye pop-out), rather than a
+   stair-stepping check.
+
+   **This is an inference from how CRTs work, not an established result.** It
+   needs the half-pitch stagger demonstrated before anything is built on it.
+   It is cheap to test: it is a timing change, not new hardware.
+4. **Whether §3.10's streaming, framebuffer-less property survives.** An IVM
+   rasterizer plus a resample stage may need a buffer between them. If so the
+   "no framebuffer" claim changes, and T2's BRAM budget was computed for a
+   square 320x240 grid — a triangular lattice of equivalent coverage is a
+   different count.
+
+**Nothing here is built and nothing is claimed.** §3.10 and §3.11 remain the
+last silicon results.
+
+---
+
 ## References
 
 - `docs/SESSION_HANDOVER_2026-09-05.md` (previous) §5, §7
