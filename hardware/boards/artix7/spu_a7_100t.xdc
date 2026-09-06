@@ -59,9 +59,16 @@ set_property IOSTANDARD LVCMOS33 [get_ports spi_sck]
 set_property IOSTANDARD LVCMOS33 [get_ports spi_mosi]
 set_property IOSTANDARD LVCMOS33 [get_ports spi_miso]
 
-# ── Onboard CP2102N USB-UART ────────────────────────────
-# CP2102N RXD is the FPGA transmit path. CP2102N TXD is available on F3, but
-# spu_a7_top currently exposes TX only.
+# ── Onboard USB-UART bridge ─────────────────────────────
+# CORRECTED 2026-09-06: this unit's bridge is a CH340 (USB 1a86:7523), NOT a
+# CP2102N. No Silicon Labs device (10c4:*) enumerates on this board at all.
+# The chip name was wrong here for months; the PIN MAPPING was correct and is
+# unchanged. Mis-reading the absent CP2102N as an absent connection cost a
+# diagnostic detour on 2026-09-06 -- see hardware_evidence.md 3.11.
+#
+# Bridge RXD is the FPGA transmit path (E3). Bridge TXD is on F3; RX is now
+# silicon-proven there, 20/20 echo, hardware_evidence.md 3.11. spu_a7_top
+# itself still exposes TX only.
 # CONFIRMED HEALTHY on this unit (2026-07-13): same bank as damaged J11
 # (Bank 35), but E3 itself ran a clean, correctly-timed UART stream —
 # proves clk_100mhz and core logic execution are genuinely intact. This is

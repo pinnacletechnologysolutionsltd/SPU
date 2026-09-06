@@ -4081,3 +4081,76 @@ the same panel behaviour ("the background reads black by eye"). This is a
 the discriminating test of loading a different image
 (`build/spu_a7_100t_VGAFIX.bit`, the §3.8 colour bars) would settle it and has
 not been run.
+
+---
+
+### 3.11 UART receive on F3 — first use of the inbound direction (2026-09-06)
+
+**Date:** 2026-09-06 NZT.
+**Board:** QMTech Wukong Artix-7 XC7A100T-FGG676, 50 MHz oscillator.
+**Claim:** the FPGA receives UART bytes on pin F3 and echoes them, at 115200
+8N1, through the onboard USB-serial bridge.
+
+`spu_a7_100t.xdc` has recorded for months that the bridge's TXD line "is
+available on F3, but `spu_a7_top` currently exposes TX only". **This is the
+first use of the receive direction on this board.** It is gate step 1 of the
+GPU tranche's T1 (`spu_strategy/contract_gpu_pipeline_tranche_2026-09-06.md`),
+which requires the link proven in isolation before a triangle loader is
+attached to it.
+
+**Source anchor:**
+
+```
+commit    757e998  gpu: T1 gate step 1 -- UART RX on F3
+bitstream build/spu_a7_100t_UARTLOOP.bit
+          3,825,922 bytes
+          SHA-256 01b559f46dcc517d9fafba08e63ae44a40a1e43e0e2394e62cf2901a272e3b99
+build     A7_FREQ=50 bash hardware/boards/artix7/build_a7.sh 100t uartloop all
+load      openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_UARTLOOP.bit
+          -> Load SRAM 100%, isc_done 1, isc_ena 0, init 1, done 1
+port      /dev/ttyUSB0 at 115200 8N1, raw
+```
+
+Post-route: 472/126,800 SLICE_LUTX (0%), 126 SLICE_FFX (0%), `sys_clk`
+230.52 MHz against the 50 MHz requirement. Nine cells placed by constraints,
+F3 among them.
+
+**Measurements.**
+
+| check | result |
+|---|---|
+| banner `UARTLOOP:READY` observed with no input | yes, repeating ~1 Hz |
+| echo rate, 20 pseudo-random bytes (seed 20260906) | **20 / 20** |
+| non-banner bytes emitted in a 3 s quiet window | **0** (3 banners, 0 stray) |
+
+The negative control is the one that matters: a probe emitting bytes
+spontaneously would report a receive path that does not exist. Zero stray
+bytes means the echo is caused by the input. The 20 probes are random rather
+than chosen, and include non-ASCII values, so a terminal-side artifact cannot
+account for them.
+
+**The banner is the positive control, not an LED — deliberately.** This same
+file records `led_out[3:0]` (V17/W21/Y21/V26) on this unit as a stable,
+reproducible I/O anomaly, "closed, not fixed", with the standing instruction
+not to trust those pins for a new claim. Liveness is carried on E3, which is
+already silicon-proven for that duty.
+
+**A documentation error corrected by this result.** `spu_a7_100t.xdc` and the
+bring-up guide describe the onboard bridge as a **CP2102N**. On this unit it
+is a **CH340** (USB `1a86:7523`, `/dev/ttyUSB0`); no Silicon Labs device
+(`10c4:*`) enumerates at all. The chip name was wrong, not the pin mapping —
+E3 and F3 are correct as documented. This cost a diagnostic detour: the
+absence of a CP2102N was read as a missing connection, and a Mini-USB cable
+was connected in response, when the bridge had been present the whole time.
+
+**What this does NOT establish.**
+
+- **Echo only.** A byte in is a byte out. No framing errors were induced, no
+  sustained throughput was measured, and no flow control exists.
+- **No triangle loader**, no command decoding, no shadow bank — those are the
+  rest of T1 and none of them is built.
+- **Single session.** 20/20 within one session is a rate, not a
+  reproducibility claim across power cycles or reflashes.
+- **`frame_err` from `spu_uart_rx` is not surfaced** anywhere in this probe,
+  so a marginal baud match would show as a wrong echoed byte rather than an
+  explicit error.

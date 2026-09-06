@@ -1,8 +1,8 @@
 // spu_a7_uart_loopback_top.v — GPU tranche T1, gate step 1: prove UART RX on
 // pin F3 IN ISOLATION, before any loader touches the GPU.
 //
-// WHY THIS EXISTS AS ITS OWN SPIN. spu_a7_100t.xdc records that "CP2102N TXD
-// is available on F3, but spu_a7_top currently exposes TX only" -- the
+// WHY THIS EXISTS AS ITS OWN SPIN. spu_a7_100t.xdc records that the bridge's
+// TXD "is available on F3, but spu_a7_top currently exposes TX only" -- the
 // receive direction has never been used on this board. The GPU tranche
 // contract (spu_strategy/contract_gpu_pipeline_tranche_2026-09-06.md, T1)
 // requires an actual loopback bitstream built and loaded before the triangle
@@ -13,7 +13,7 @@
 // WHAT IT DOES, on the uart_tx line only:
 //   - idle: emits "UARTLOOP:READY\r\n" about once per second
 //   - on a received byte: echoes it immediately, banner deferred
-// A terminal at 115200 8N1 on the onboard CP2102N (Mini-USB J4) shows the
+// A terminal at 115200 8N1 on the onboard bridge (/dev/ttyUSB0 here) shows the
 // banner repeating; typing a character returns that character.
 //
 // THE POSITIVE CONTROL IS THE BANNER, NOT AN LED -- deliberately.
@@ -51,8 +51,8 @@ module spu_a7_uart_loopback_top #(
 ) (
     input  wire sys_clk,     // M21, 50 MHz
     input  wire rst_n,       // H7, active low, board PULLUP
-    input  wire uart_rx,     // F3, CP2102N TXD -> FPGA
-    output wire uart_tx      // E3, FPGA -> CP2102N RXD
+    input  wire uart_rx,     // F3, USB-UART bridge TXD -> FPGA
+    output wire uart_tx      // E3, FPGA -> USB-UART bridge RXD
 );
 
     localparam BIT_CYC = CLK_HZ / BAUD;

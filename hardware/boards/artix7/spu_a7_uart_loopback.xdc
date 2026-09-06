@@ -1,10 +1,12 @@
 # GPU tranche T1 gate step 1: UART RX on F3, proven in isolation.
 #
-# F3 is the CP2102N TXD line (host -> FPGA). spu_a7_100t.xdc documents it as
-# available but unused: "CP2102N TXD is available on F3, but spu_a7_top
-# currently exposes TX only." This spin is the first use of it.
+# F3 is the USB-UART bridge's TXD line (host -> FPGA). The bridge on this
+# unit is a CH340 (1a86:7523), not the CP2102N named elsewhere -- corrected
+# 2026-09-06, see hardware_evidence.md 3.11. spu_a7_100t.xdc documents it as
+# available but unused: TXD "is available on F3, but spu_a7_top currently
+# exposes TX only." This spin is the first use of it.
 #
-# E3 (FPGA -> CP2102N RXD) is the transmit line already proven in silicon --
+# E3 (FPGA -> bridge RXD) is the transmit line already proven in silicon --
 # hardware_evidence.md records UARTPROBE repeating "UART:P" cleanly on it.
 set_property PACKAGE_PIN M21 [get_ports sys_clk]
 set_property IOSTANDARD LVCMOS33 [get_ports sys_clk]
