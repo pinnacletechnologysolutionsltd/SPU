@@ -1,5 +1,6 @@
 // spu_a7_gpu_vga_top.v — Wukong Artix-7 spin: the real rasterizer on the
-// proven VGA display path. One static triangle, no host link.
+// proven VGA display path. Two static overlapping triangles resolved by
+// per-pixel depth, no host link.
 //
 // Why this exists. hardware_evidence.md §3.8 established the VGA path in
 // silicon (640x480@60, 0.006% timing error, colour bars on a monitor) using
@@ -79,19 +80,62 @@ module spu_a7_gpu_vga_top (
     // cycle the counters read (0,0).
     wire frame_start = (tx == 10'd0) && (ty == 10'd0);
 
-    // ── The triangle ─────────────────────────────────────────────────────
-    // Vertices, screen coordinates, y down:
-    //     V0 (320, 100)   V1 (150, 380)   V2 (490, 380)
+    // ── The scene: two overlapping triangles, resolved by depth ──────────
     // Edge function for V_i -> V_j, inside when >= 0:
     //     A = yj - yi        B = -(xj - xi)        C = -(A*xi + B*yi)
-    // Each edge evaluates to +95200 at the opposite vertex, so the winding
-    // is consistent and all three half-planes agree on the interior.
-    localparam signed [15:0] E0_A = 16'sd280,  E0_B = 16'sd170;
-    localparam signed [31:0] E0_C = -32'sd106600;   // V0 -> V1
-    localparam signed [15:0] E1_A = 16'sd0,    E1_B = -16'sd340;
-    localparam signed [31:0] E1_C = 32'sd129200;    // V1 -> V2
-    localparam signed [15:0] E2_A = -16'sd280, E2_B = 16'sd170;
-    localparam signed [31:0] E2_C = 32'sd72600;     // V2 -> V0
+    // For both triangles every edge evaluates to +257600 at its opposite
+    // vertex, so the winding is consistent and all three half-planes agree
+    // on the interior. That common value is D, and sum_i E_i(x,y) == D
+    // identically, which is what makes E_i the barycentric weight the depth
+    // interpolator uses.
+    //
+    // Both triangles share the top edge y=0 from x=40 to x=600 and differ
+    // only in where their apex falls, so they overlap in a large region
+    // that INCLUDES SCANLINE 0. That is deliberate: the depth-anchor defect
+    // fixed on 2026-09-06 was row-0-only, so a scene that does not reach
+    // row 0 could not show that class of fault on a monitor.
+    //
+    //   tri0 (red)   V0 (600,0)  V1 (40,0)  V2 (120,460)   apex bottom-left
+    //   tri1 (green) V0 (600,0)  V1 (40,0)  V2 (520,460)   apex bottom-right
+    localparam signed [15:0] T0_E0_A = 16'sd0,    T0_E0_B = 16'sd560;
+    localparam signed [31:0] T0_E0_C = 32'sd0;          // V0 -> V1
+    localparam signed [15:0] T0_E1_A = 16'sd460,  T0_E1_B = -16'sd80;
+    localparam signed [31:0] T0_E1_C = -32'sd18400;     // V1 -> V2
+    localparam signed [15:0] T0_E2_A = -16'sd460, T0_E2_B = -16'sd480;
+    localparam signed [31:0] T0_E2_C = 32'sd276000;     // V2 -> V0
+
+    localparam signed [15:0] T1_E0_A = 16'sd0,    T1_E0_B = 16'sd560;
+    localparam signed [31:0] T1_E0_C = 32'sd0;          // V0 -> V1
+    localparam signed [15:0] T1_E1_A = 16'sd460,  T1_E1_B = -16'sd480;
+    localparam signed [31:0] T1_E1_C = -32'sd18400;     // V1 -> V2
+    localparam signed [15:0] T1_E2_A = -16'sd460, T1_E2_B = -16'sd80;
+    localparam signed [31:0] T1_E2_C = 32'sd276000;     // V2 -> V0
+
+    // ── Depth ────────────────────────────────────────────────────────────
+    // z(x,y) = sum_i z_i * E_i(x,y) / D. At V0 only E1 is non-zero, at V1
+    // only E2, at V2 only E0 -- so the port z0 is the depth AT V2, z1 at V0,
+    // and z2 at V1. That permutation is easy to get wrong; it was derived
+    // from the edge functions above and then confirmed by rendering a full
+    // 640x480 frame and comparing every pixel against an independent oracle.
+    //
+    // tri0 is NEAR on the left and FAR on the right; tri1 the reverse. Both
+    // interpolate 400..3600 across the top edge, so in the overlap they cross
+    // exactly where the two are equidistant:
+    //
+    //     400 + (x-40)*(3200/560) = 3600 - (x-40)*(3200/560)  =>  x = 320
+    //
+    // THE PREDICTION, and the whole point of this spin: a colour boundary at
+    // x = 320, the exact horizontal centre of the screen, running straight
+    // down from the top edge to where the two triangles separate at y ~= 268.
+    // It is vertical because both depth planes have the same y gradient, so
+    // their difference has no y term. Below y ~= 268 the triangles no longer
+    // overlap and the picture is simply red on the left, green on the right.
+    //
+    // Nothing in the geometry puts an edge at x=320. A boundary anywhere else
+    // is a depth fault, not a coverage fault -- which is what makes this a
+    // test of the depth path rather than of the rasterizer.
+    localparam [15:0] T0_Z0 = 16'd700,  T0_Z1 = 16'd3600, T0_Z2 = 16'd400;
+    localparam [15:0] T1_Z0 = 16'd700,  T1_Z1 = 16'd400,  T1_Z2 = 16'd3600;
 
     // ── GPU ──────────────────────────────────────────────────────────────
     wire [3:0] gr, gg, gb;
@@ -103,21 +147,18 @@ module spu_a7_gpu_vga_top (
         .rst_n    (pix_rst_n),
 
         .tri0_setup(frame_start),
-        .tri0_a0(E0_A), .tri0_b0(E0_B), .tri0_c0(E0_C),
-        .tri0_a1(E1_A), .tri0_b1(E1_B), .tri0_c1(E1_C),
-        .tri0_a2(E2_A), .tri0_b2(E2_B), .tri0_c2(E2_C),
-        .tri0_r(4'hF), .tri0_g(4'h0), .tri0_b(4'h0),   // red on black
-        .tri0_z0(16'd1000), .tri0_z1(16'd1000), .tri0_z2(16'd1000),
+        .tri0_a0(T0_E0_A), .tri0_b0(T0_E0_B), .tri0_c0(T0_E0_C),
+        .tri0_a1(T0_E1_A), .tri0_b1(T0_E1_B), .tri0_c1(T0_E1_C),
+        .tri0_a2(T0_E2_A), .tri0_b2(T0_E2_B), .tri0_c2(T0_E2_C),
+        .tri0_r(4'hF), .tri0_g(4'h0), .tri0_b(4'h0),   // red
+        .tri0_z0(T0_Z0), .tri0_z1(T0_Z1), .tri0_z2(T0_Z2),
 
-        // Unit 1 unused. cov1=0 makes spu_depth_compare select unit 0
-        // whenever it is covered, regardless of depth, so unit 1 being
-        // never set up cannot affect what is displayed.
-        .tri1_setup(1'b0),
-        .tri1_a0(16'sd0), .tri1_b0(16'sd0), .tri1_c0(32'sd0),
-        .tri1_a1(16'sd0), .tri1_b1(16'sd0), .tri1_c1(32'sd0),
-        .tri1_a2(16'sd0), .tri1_b2(16'sd0), .tri1_c2(32'sd0),
-        .tri1_r(4'h0), .tri1_g(4'h0), .tri1_b(4'h0),
-        .tri1_z0(16'd0), .tri1_z1(16'd0), .tri1_z2(16'd0),
+        .tri1_setup(frame_start),
+        .tri1_a0(T1_E0_A), .tri1_b0(T1_E0_B), .tri1_c0(T1_E0_C),
+        .tri1_a1(T1_E1_A), .tri1_b1(T1_E1_B), .tri1_c1(T1_E1_C),
+        .tri1_a2(T1_E2_A), .tri1_b2(T1_E2_B), .tri1_c2(T1_E2_C),
+        .tri1_r(4'h0), .tri1_g(4'hF), .tri1_b(4'h0),   // green
+        .tri1_z0(T1_Z0), .tri1_z1(T1_Z1), .tri1_z2(T1_Z2),
 
         .vga_r(gr), .vga_g(gg), .vga_b(gb),
         .vga_hsync(g_hsync), .vga_vsync(g_vsync),

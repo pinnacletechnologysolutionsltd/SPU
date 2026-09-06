@@ -488,6 +488,57 @@ silicon test of the depth path needs a two-triangle scene in
 
 ---
 
+## 10. Two-triangle depth scene — built, verified in simulation, NOT flashed
+
+`spu_a7_gpu_vga_top.v` now drives two overlapping triangles resolved by
+per-pixel depth, replacing the single flat-depth triangle. This is what makes
+a bench trip test the depth path at all: the previous spin had
+`tri1_setup(1'b0)` and `z0=z1=z2=1000`, so `unit0_wins` reduced to `cov0` and
+no depth value was ever read.
+
+Both triangles share the top edge y=0 from x=40 to x=600, so **both cover
+scanline 0** — deliberate, because the defect in §2/§9 was row-0-only and a
+scene that does not reach row 0 cannot show that class of fault on a monitor.
+
+**THE PREDICTION:** a vertical colour boundary at **x = 320**, the exact
+horizontal centre of the screen, from the top edge down to y ≈ 268 where the
+triangles separate. Nothing in the geometry puts an edge there — it exists
+only because depth is being compared per pixel. A boundary anywhere else is a
+depth fault, not a coverage fault.
+
+**Verified before building.** The frame was rendered out of `spu_gpu_top` in
+simulation at full 640x480 and compared against an independent Python oracle
+built from the geometry: **0 mismatches over 307,200 pixels**, boundary at
+x=320 on every overlap row, red 91,525 px / green 91,256 px. The reference
+image and what to look for are in
+`docs/bench_captures/2026-09-06_predicted_two_triangle_scene.{png,md}` — a
+render, explicitly not a photograph.
+
+**A trap found and avoided in the process.** The first render mismatched by 2
+pixels, both on row 0. Not the RTL: my bench REGISTERED the setup pulse
+(`t0 <= ...`) while the board top drives it combinationally
+(`wire frame_start = ...`), which delays setup by a cycle and shifts scanline
+0 right by one pixel. Third instance today of the same mistake — a bench that
+does not drive the DUT the way the real top does. Fixed, then 0 mismatches.
+
+```
+bitstream build/spu_a7_100t_GPUVGA.bit
+          SHA-256 ce5bdc70753fc88d1a6e91bc1e573dff2c40756f66e9d689f9880139285e25e2
+          7,896 LUT / 2,419 FF / 2 DSP, clk_pixel 41.36 MHz against 25 required
+build     bash hardware/boards/artix7/build_a7.sh 100t gpuvga all   (A7_FREQ=25)
+load      openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_GPUVGA.bit
+```
+
+Utilisation is **identical** to the one-triangle spin, which looked wrong
+until checked: `u_attr0` and `u_attr1` are both present as instances in the
+netlist, so both units were always synthesised and only the constants feeding
+them changed. Not a stale build — the yosys log shows it read the edited top.
+
+**NOT LOADED. No silicon claim. `hardware_evidence.md` untouched.** Suite 226
+PASS, 0 FAIL, gate exit 0.
+
+---
+
 ## References
 
 - `docs/SESSION_HANDOVER_2026-09-05.md` (previous) §5, §7
