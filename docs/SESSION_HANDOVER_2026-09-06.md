@@ -824,6 +824,106 @@ last silicon results.
 
 ---
 
+## 13. RTL inventory for the IVM decision — and three gaps in the audit tool
+
+Prompted by the operator asking whether existing or recovered RTL already
+covers the Quadray/IVM conversions before any is written. It partly does, and
+asking the question exposed three blind spots in `tools/rtl_instantiation_audit.py`
+that have now been closed.
+
+### What exists, and whether it is wired
+
+| module | status | verdict for §12 |
+|---|---|---|
+| `spu_quadray_permute` | **wired** (top + bench) | Quadray register infrastructure is real and proven |
+| `spu_quadray_regfile` | **wired** | ditto |
+| `spu_quadray_regfile_ecc` | **wired** | ditto |
+| `spu_bresenham_raster` | TB-ONLY | **closest thing to the Bresenham adapter** — integer-only, and already emits quadrance `Q = Δx² + Δy²` |
+| `spu_cartesian_quantizer` | TB-ONLY | **wrong direction** — sensor *ingest* (S24.8 → surd), not a geometric conversion |
+| `spu_quadrance_accum` | **DEAD** | the module §12 gives a purpose to |
+| `spu_ivm_laplacian` | **DEAD** | genuinely IVM, wrong job — see below |
+| `spu13_lattice` | TB-ONLY | **wrong "lattice"** — see below |
+| `spu_rau` | TB-ONLY | — |
+| `spu_permute_13` | **DEAD** | — |
+
+**Only three of ten are wired**, and all three are register-file infrastructure.
+Every geometric module is stranded. That is the same zero-instantiation
+pattern as §1, and the same caution applies: these are a head start, not a
+shortcut. `hal_hdmi` and `spu_gpu_top` were in exactly this state on 09-04 and
+each contained real defects the moment it was built.
+
+### Two modules whose names promise more than they deliver
+
+**`spu13_lattice.v` — the wrong sense of "lattice".** Its own header: *"This
+is intentionally minimal and serves as a hook for floorplanner instance
+naming."* It wires 13 `laminar_node` primitives and a "phinary stitcher".
+"Lattice" here means the **13-node processor topology**, not a sampling
+lattice. Unrelated to rasterization, and it depends on
+`rational_surd5_mul64`, itself DEAD — dead code standing on dead code.
+
+**`spu_ivm_laplacian.v` — real IVM geometry, wrong job.** A 12-neighbour
+Laplacian on the 12-around-1 coordination shell in `Q(√3)` arithmetic, with
+threshold-gated residual and equilibrium detection. That genuinely is the
+cuboctahedral lattice. But it answers *"has this field settled?"*, not
+*"which lattice sites does this triangle cover?"*. Relaxation, not sampling.
+
+**Two defects in it, found by reading, NOT FIXED** (it is dead code):
+
+1. **Silent overflow.** `sum_a`/`sum_b` accumulate twelve signed 16-bit
+   neighbours into 32 bits, then the output takes `sum_a[15:0]`. Twelve
+   neighbours at full scale is ±393,204, needing 20 signed bits — **the
+   residual wraps instead of saturating.** That contradicts the house rule
+   stated in `docs/CARTESIAN_BRIDGE_SPEC.md`: *"Saturation, never silent
+   loss."*
+2. **Reset polarity inverted from the rest of the repo.** It takes
+   `input wire reset`, active high, with `always @(posedge clk or posedge
+   reset)`. Everything else uses active-low `rst_n` with `negedge rst_n`.
+   Wiring this into a top is a trap, and reset polarity is what cost this
+   project three weeks on the A7 (§3.2m).
+
+### The conversion that does NOT exist
+
+**There is no Quadray → lattice → sample path in RTL.** `spu_bresenham_raster`
+is the nearest primitive and already works in screen `(x,y)`. So the native
+IVM rasterizer of §12 is **new RTL**, not a wiring-up exercise. Better to know
+that before planning around module names.
+
+### Three gaps this exposed in the audit tool, now closed
+
+1. **It never scanned outside `hardware/`.** `archive/recovered/` holds **8
+   `.v` files** invisible to every check — including **`su3_pade66_accel.v`
+   (497 lines)** and **`su3_taylor_accel.v` (329 lines)**, substantial SU(3)
+   accelerator RTL that is *not* in the tree. Directly relevant to the paper
+   track: it needs a decision on whether it is superseded, citable, or
+   forgotten. `--class archive` now lists them.
+2. **It never reported modules defined more than once.** Fourteen exist.
+   Name-based resolution means a simulator picks by file order, and this
+   repository has already been bitten by that — filesystem-order module dedup
+   broke three testbenches on a fresh clone. `--class dup` now reports them.
+3. **A stub can shadow a real implementation invisibly.** Three do:
+
+```
+spu13_tang25k_southbridge_top   x3   <-- a build script selects this name as TOP
+spu_annealer                    x2   <-- stub shadows implementation
+spu_i2s_out                     x2   <-- stub shadows implementation
+spu_proprioception              x2   <-- stub shadows implementation
+```
+
+The other ten duplicates are vendor primitives (BUFG, MULT18X18, SDPB …)
+legitimately redefined per board file and per simulation stub. The tool
+distinguishes them: a name is only flagged as an ambiguous top when a **build
+script actually selects it as `TOP`**, which is the case that can silently
+build the wrong design.
+
+**`spu13_tang25k_southbridge_top` defined in three files, and named by a build
+script, is the one to look at first.** Which of the three a build picks is
+determined by file order.
+
+**Nothing here is fixed.** Findings only, and all of it is in code that no top
+instantiates today.
+
+---
+
 ## References
 
 - `docs/SESSION_HANDOVER_2026-09-05.md` (previous) §5, §7

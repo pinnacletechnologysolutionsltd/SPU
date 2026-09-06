@@ -33,6 +33,11 @@ Classes:
     tb-only   a testbench reaches it, no board top does  (the hal_hdmi class)
     no-tb     a board top reaches it, no testbench does  (goes to silicon
               unsimulated; board tops themselves are expected here)
+    dup       modules DEFINED in more than one file. Which definition wins
+              depends on elaboration order, so a stub can silently shadow a
+              real implementation. Vendor-primitive simulation stubs are
+              expected here; a stub/implementation pair is not.
+    archive   .v files outside hardware/ that no scan covers
 
 CC0 1.0 Universal.
 """
@@ -165,11 +170,52 @@ def reachable(seeds, instantiates, defines):
     return seen
 
 
+def check_duplicates(defines, build_roots=frozenset()):
+    """Modules defined in more than one file.
+
+    Added 2026-09-06, after the operator asked whether recovered RTL needed
+    auditing. Name-based resolution means a stub and a real implementation
+    sharing a name are indistinguishable to this tool -- and to a simulator,
+    which picks by file order. This repository has been bitten by exactly
+    that: filesystem-order module dedup broke three testbenches on a fresh
+    clone (the test-runner nondeterminism fix).
+    """
+    out = []
+    for module, paths in sorted(defines.items()):
+        if len(paths) < 2:
+            continue
+        stubby = any('optional_stubs' in p for p in paths)
+        real = any('/rtl/' in p and 'optional_stubs' not in p for p in paths)
+        # Only a name a BUILD SCRIPT selects as TOP is genuinely ambiguous.
+        # Vendor primitives (BUFG, MULT18X18 ...) are legitimately redefined
+        # per board file and per simulation stub; flagging those is noise.
+        ambiguous_top = module in build_roots and len(paths) > 1
+        out.append({'module': module, 'count': len(paths), 'paths': paths,
+                    'stub_shadows_impl': bool(stubby and real),
+                    'ambiguous_build_top': ambiguous_top})
+    return out
+
+
+def check_archive():
+    """Verilog outside hardware/ that no reachability check here covers."""
+    found = []
+    for base in ('archive',):
+        if not os.path.isdir(base):
+            continue
+        for dirpath, dirnames, filenames in os.walk(base):
+            dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+            for name in sorted(filenames):
+                if name.endswith(('.v', '.sv')):
+                    found.append({'file': os.path.join(dirpath, name)})
+    return found
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--class', dest='klass',
-                        choices=['dead', 'tb-only', 'no-tb', 'all'], default='all')
+                        choices=['dead', 'tb-only', 'no-tb', 'dup', 'archive', 'all'],
+                        default='all')
     parser.add_argument('--json', action='store_true')
     args = parser.parse_args()
 
@@ -185,6 +231,8 @@ def main():
     every = set(defines)
 
     result = {
+        'dup': check_duplicates(defines, tops),
+        'archive': check_archive(),
         'dead': sorted(every - from_top - from_tb),
         'tb-only': sorted((from_tb - from_top) - benches),
         'no-tb': sorted(from_top - from_tb),
@@ -208,6 +256,28 @@ def main():
           f"build scripts, {counts['testbench_roots']} testbench roots")
     print(f"reachable from a top: {counts['reachable_from_a_top']}   "
           f"from a testbench: {counts['reachable_from_a_testbench']}")
+
+    dups = result.get('dup', [])
+    shadow = [d for d in dups if d['stub_shadows_impl']]
+    if args.klass in ('dup', 'all'):
+        print(f"\n== DUPLICATE MODULE DEFINITIONS ({len(dups)}) ==")
+        amb = [d for d in dups if d.get('ambiguous_build_top')]
+        print(f"   stub may shadow an implementation: {len(shadow)}")
+        print(f"   name a build script selects as TOP: {len(amb)}")
+        for d in dups:
+            mark = '  <-- STUB SHADOWS IMPL' if d['stub_shadows_impl'] else ''
+            if d.get('ambiguous_build_top'):
+                mark = '  <-- A BUILD SCRIPT SELECTS THIS NAME AS TOP'
+            print(f"   {d['module']:<34} x{d['count']}{mark}")
+            if d['stub_shadows_impl'] or d.get('ambiguous_build_top'):
+                for p_ in d['paths']:
+                    print(f"        {p_}")
+    if args.klass in ('archive', 'all'):
+        arc = result.get('archive', [])
+        print(f"\n== VERILOG OUTSIDE hardware/ ({len(arc)}) ==")
+        print("   Not covered by any reachability check above.")
+        for a in arc:
+            print(f"   {a['file']}")
 
     headings = {
         'dead': "DEAD — no board top, no testbench",
