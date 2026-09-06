@@ -82,14 +82,15 @@ IDE. That constraint is load-bearing rather than incidental: openXC7 cannot
 place differential outputs, so HDMI is unreachable and the VGA path exists
 because it is what a fully open flow can actually build.
 
-### Previously: SOM edge classification — shelved 2026-09-03
+### Paused: SOM edge classification and SPU-4
 
 The SOM/anomaly-detection sidecar was the prior product direction, and its
 results stand: all 150 SOM1 records matched the exact software oracle on both
 Tang Primer 25K and Wukong Artix-7, with the Iris map scoring 147/150
-semantically. It was **shelved on 2026-09-03** in favour of processor and
-graphics work. The material remains as a completed result, not an active
-direction — see
+semantically. Development was **paused on 2026-09-03** in favour of processor
+and graphics work. It is not abandoned: a retest is going ahead
+(`docs/BENCH_BOM.md` §2 records it as conditional, not dead), and a return to
+active development depends on that retest reaching parity — see
 [`docs/SOM_V1_PRODUCT_CONTRACT.md`](docs/SOM_V1_PRODUCT_CONTRACT.md).
 
 The **SPU-4 Sentinel** edge node was developed alongside it as a reusable
