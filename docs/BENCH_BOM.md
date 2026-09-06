@@ -203,9 +203,32 @@ destroying things and stops producing results that cannot be trusted.
 |---|---|---:|---|---|
 | **Nylon standoffs/spacers + M3 screws; non-slip mat** | — | 10–15 | Jaycar | **Top of the safety ranking, and the cheapest item on it.** `BENCH_ELECTRICAL_SAFETY.md` records the leading explanation for the RP2040-Zero's death as an unsecured programmer drifting against the Wukong's headers — its castellated edge carries VBUS, 3V3, GND and GPIO, so any contact bridges two powered systems arbitrarily. Two boards have been lost; this addresses the mechanism of the most recent one |
 | **Spare RP2040/RP2350 board** | 1 | 10–20 | **Local** | One destroyed 2026-09-04, one in service, **zero spares**. A dead programmer stops all FPGA work outright. Buy local specifically: a spare that arrives in three weeks is not a spare |
-| **DE-15 solder-cup connectors + hoods, small proto board** | 2 | 10–15 | Jaycar | §3.9 was obtained on a harness that **came up only after being prodded** — recorded as a caveat on that entry. Moves the three-resistor DAC off flying leads onto a board with a real connector, and gives a second harness for the CRT without disturbing the working one |
-| **VGA gender changer / coupler (sacrificial)** | 1 | ~5 | Jaycar | So pins 9 (+5 V) and 12/15 (DDC) can be isolated per `BENCH_ELECTRICAL_SAFETY.md` **without cutting a cable** — John's stated constraint for the CRT. Sacrifice a $5 adapter, not a cable |
+| **DE-15 (HD-15) *FEMALE* solder-cup sockets + hoods, small proto board** | 2 | 10–15 | Jaycar | §3.9 was obtained on a harness that **came up only after being prodded** — recorded as a caveat on that entry. Moves the three-resistor DAC off flying leads onto a board with a real connector, and gives a second harness for the CRT without disturbing the working one. **Female**: standard VGA cables and the CRT's plug are male, so the FPGA side must be the socket. See the pin list below — it matters, and it replaces the gender changer |
+| ~~VGA gender changer / coupler (sacrificial)~~ | — | ~~5~~ | — | **DROPPED 2026-09-06, superseded.** It existed only to isolate pins 9/12/15 without cutting a cable. Soldering your own socket isolates them **by construction** — an unpopulated pin needs no clipping, no insulating and no continuity check. Strictly better and NZD 5 cheaper |
 | ADuM3160 USB isolator board | 1 | 20–30 | AliExpress | **Not blocking, slow route is fine.** The 09-04 handover said "do not reconnect the monitor until an isolator is fitted", but that rested on the mains-earth ground-loop hypothesis, which `BENCH_ELECTRICAL_SAFETY.md` later **demoted** in favour of mechanical contact. Still worth having; no longer a gate. Full Speed suffices — and keep the fx2lafw analyzer off it, it is High Speed |
+
+### DE-15 pin list — wire exactly these nine
+
+Decided 2026-09-06. Per `BENCH_ELECTRICAL_SAFETY.md` §36, pin 9 (+5 V) and DDC
+(12/15) must be isolated so nothing external can source current inward.
+
+| Pin | Signal |
+|---|---|
+| 1, 2, 3 | Red, Green, Blue |
+| 6, 7, 8 | **separate** Red / Green / Blue returns |
+| 10 | sync return |
+| 13, 14 | HSync, VSync |
+
+**Leave unpopulated: 9 (+5 V), 12 and 15 (DDC), 4 and 11 (ID).** Not clipped —
+never soldered.
+
+**6/7/8 must be three separate returns, not one shared ground.** The present
+flying-lead harness shares a return. On 2026-09-06 a per-channel analysis of
+the colour-bar photograph could not distinguish own-channel settling from
+inter-channel coupling (ripple vs the channel's own transition r = +0.394, vs
+the total across all three r = +0.300, n = 12 — indistinguishable). Separate
+returns is the standard fix and costs nothing beyond three more wires. It also
+means a future measurement of the same kind will not be ambiguous.
 
 **Free measures that outrank most of the above:** everything on one power
 strip, and the host laptop on battery. Both cost nothing and both address the

@@ -319,13 +319,12 @@ real bug this module's own testbench caught" — that bench is not in the tree.
 
 ## 7. Next session
 
-1. **Still item 1 from 09-05.** Re-confirm §3.9 after a deliberate reseat and
-   a power cycle. Nothing this session touched the bench, and the result is
-   still single-observation against a harness that needed prodding.
-2. **Load the rebuilt GPUVGA spin and re-confirm.** The RTL changed and the
-   spin was rebuilt (§5) but never loaded; per `board-builds-are-never-rebuilt`
-   simulation-green says nothing about a spin. Fold this into the same bench
-   trip as item 1.
+1. ~~Re-confirm §3.9 after a reseat and power cycle~~ — **DONE**, §3.10 second
+   observation. Both loads came up without prodding.
+2. ~~Load the rebuilt GPUVGA spin~~ — **DONE**, §3.10.
+2b. **Tensegrity Option A in Python (§11).** The named next work: enumerate
+   coordinated group rotations against the existing exact oracle, gated on
+   "genuinely new geometry", not on the guard's verdict. Zero RTL, zero bench.
 3. **Decide the remaining §6 items** — `spu_texture_dma`, and whether the
    dead SPU-13 core generation behind the dead Colorlight/ECP5 tops is kept
    deliberately or retired. (`x_span` is done, §8.)
@@ -488,7 +487,7 @@ silicon test of the depth path needs a two-triangle scene in
 
 ---
 
-## 10. Two-triangle depth scene — built, verified in simulation, NOT flashed
+## 10. Two-triangle depth scene — built, verified in simulation, then FLASHED
 
 `spu_a7_gpu_vga_top.v` now drives two overlapping triangles resolved by
 per-pixel depth, replacing the single flat-depth triangle. This is what makes
@@ -534,8 +533,118 @@ until checked: `u_attr0` and `u_attr1` are both present as instances in the
 netlist, so both units were always synthesised and only the constants feeding
 them changed. Not a stale build — the yosys log shows it read the edited top.
 
-**NOT LOADED. No silicon claim. `hardware_evidence.md` untouched.** Suite 226
-PASS, 0 FAIL, gate exit 0.
+**LOADED AND MEASURED — see `hardware_evidence.md` §3.10**, written the same
+day. Two observations, the second across a confirmed power cycle and a harness
+reseat: boundary at 0.5062 and 0.4986 of lit width against 0.5000 predicted,
+and scanline 0 displaced 0.46 px where an unfixed anchor would have displaced
+it ~24 px. Suite 226 PASS, 0 FAIL, gate exit 0.
+
+---
+
+## 11. NEXT WORK: tensegrity, refactored — what to test and what not to trust
+
+Prompted by an external analysis reviewed 2026-09-06. Its tensegrity section
+was **checked against the contract and is accurate**; its graphics section
+repeats errors this project has already corrected twice. Both are recorded,
+because the mix is the point: the same document can be right where it reasons
+from a source and wrong where it reasons from enthusiasm.
+
+### What is actually established
+
+`spu_strategy/contract_tensegrity_active_control_2026-09-04.md` FALSIFIED the
+single-strut octahedral-rotation primitive. Verified line by line today:
+
+| Outcome of all 144 single rotations from the balanced canonical state | Count |
+|---|---:|
+| Balanced results | 24 / 144 |
+| — identical geometry AND identical node labels | **24** |
+| — genuinely new geometry | **0** |
+
+All 24 are the `C₄` stabiliser of each strut's own axis: they map the strut
+onto itself pointwise and do not move the structure. The naive gate answer was
+"120/120 recoverable, VIABLE"; the real answer is **recovery by not moving**,
+and a controller whose reachable set is one point performs no control. §7 HALT
+applies, no RTL. The guard itself (`spu13_tensegrity_guard.v`) is sound and
+has silicon evidence at §3.2l — nothing about it was refuted.
+
+### The proposed refactor, and the trap it must clear
+
+**Option A — coordinated multi-strut group rotation ("Jitterbug mode").**
+Actuate the three orthogonal strut pairs together in symmetric opposition
+rather than one strut alone. The claim is that cable lengths stay uniform, the
+force densities stay balanced, and the structure moves through a continuum of
+valid shapes; and that `spu13_tensegrity_guard.v` evaluates such a proposal
+unchanged, since the guard only ever sees a node table.
+
+The guard claim is plausible and cheap to confirm. **The physics claim is
+asserted, not tested** — and it is the same shape as "100% recovery, VIABLE"
+was on 09-04, one day before it turned out to mean nothing.
+
+Two things to know before spending time on it:
+
+1. **Jitterbug is not implemented anywhere in this repo.** It appears in docs
+   and in `hardware/rp2040/rp2040_visualiser.c`. There is no RTL and no
+   software model. It is a concept here, not a verified mechanism.
+2. **The gate must be "genuinely new geometry", not "balanced".** The
+   falsified primitive returned `ST_BALANCED` twenty-four times. Any Option A
+   test that stops at the guard's verdict will reproduce exactly the 09-04
+   mistake. The comparison must be against the canonical node table, checking
+   for *displacement*, with relabeling handled explicitly — the 09-04 sweep
+   separated "identical geometry, relabeled endpoints" from "genuinely new"
+   and found 0 of the latter. Keep that column.
+
+**The tooling already exists.** `software/lib/tensegrity_balancer.py` is an
+exact oracle — rational arithmetic, Q(√3) sign checks, Z[φ] coordinates, no
+floating point — and `software/tests/test_tensegrity_balancer.py` drives it.
+This is a Python afternoon, zero RTL, zero bench time.
+
+**Option B — tendon / cable rest-length control.** Physically what real
+tensegrity robots do (NASA SuperBall). Needs a non-uniform self-stress solver,
+because asymmetric cable pulling produces varying force densities that the
+current type-uniform guard cannot express. Strictly more machinery than
+Option A. Not next.
+
+**Option C — keep TGR1 as a safety admission guard.** This is not a refactor;
+it is what the guard already is, and it already has silicon evidence (§3.2l).
+Worth stating plainly so it is not re-derived as a discovery.
+
+### Recommended sequence
+
+1. Enumerate Option A's group transforms in Python against the existing exact
+   oracle, with the **"genuinely new geometry"** column as the gate.
+2. If the reachable set is still a single point, record the negative and stop —
+   the 09-04 contract is the template for how to write that up.
+3. Only if it genuinely moves does a contract or any RTL become justified.
+
+### Corrections to the same analysis, recorded because they recur
+
+Its graphics section repeats the three errors 09-05 §8 already logged as
+having come from an external adviser more than once:
+
+| claim | reality |
+|---|---|
+| "60 FPS streaming to display beam" | the triangle is **static**; the panel refreshes at 60 Hz, nothing animates |
+| "render **3D** polygons in real-time hardware" | nothing 3D anywhere — §3.10 records no 3D, no projection, no transform; coefficients are hand-written 2D constants |
+| "Padé rational inversion in 114c" | misattributed. ~114 cycles is the **A₃₁[i] inverter for SU(3)** (`SU3_EXTENSION_PLAN.md`), an estimate, not a silicon measurement, and unrelated to Padé |
+
+**And one correction that went the other way.** 09-05 §8 listed "there is no
+spliced VGA cable" among the outreach corrections. The operator confirms on
+2026-09-06 that **a VGA cable was in fact spliced** for the LCD harness. That
+line is now corrected in place in the 09-05 handover. The narrower claim it
+was reaching for is true and still holds: **the CRT cable will not be cut.**
+A list of corrections is worth less than nothing if it is not itself checked
+with the operator — which is how this one survived three weeks.
+
+What it gets right: framebuffer-less streaming with no VRAM bandwidth; depth-v2
+silicon-verified (true as of §3.10, today); SU(3) over the degree-8 A₃₁[i]
+extension.
+
+Its closing suggestion — "get rotating Quadray/Jitterbug geometry driving the
+monitor" — skips a **transform pipeline, a projection stage and a host link**,
+none of which exist. Today's scene is `localparam` constants; changing it means
+resynthesis. That is the real wall, and it is the same one §10 names: two
+triangles proved depth, a third proves nothing, and the next actual capability
+is getting geometry in at runtime.
 
 ---
 

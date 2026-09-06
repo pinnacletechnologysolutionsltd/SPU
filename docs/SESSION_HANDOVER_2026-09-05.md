@@ -282,12 +282,22 @@ SOM/anomaly-detection wedge", shelved 2026-09-03. Following the checklist as
 written produces a website about a discontinued product. Settle the framing —
 graphics — before writing copy.
 
-**Outreach corrections, recorded because the same three errors have now come
-from an external adviser more than once:** there is **no spliced VGA cable**
-(hand-wired harness, three-resistor DAC on J10 — the operator has stated the
-CRT cable will not be cut); there is **nothing 3D and no shading** anywhere in
-the RTL; the triangle is **static**, not 60 FPS animation. The claim discipline
-is the project's best asset and must not be diluted at the outreach layer.
+**Outreach corrections, recorded because the same errors have now come
+from an external adviser more than once:** there is **nothing 3D and no
+shading** anywhere in the RTL; the triangle is **static**, not 60 FPS
+animation. The claim discipline is the project's best asset and must not be
+diluted at the outreach layer.
+
+> **CORRECTED 2026-09-06.** This paragraph originally also asserted "there is
+> **no spliced VGA cable**". **That is false.** The operator confirms a VGA
+> cable WAS spliced for the LCD harness. The accurate statement, and the one
+> that was being reached for, is narrower: **the CRT cable will not be cut** —
+> that is the operator's stated constraint, and it still holds. The LCD side
+> was always a spliced, hand-wired harness with a three-resistor DAC on J10.
+>
+> Recorded rather than silently edited, because this entry existed to correct
+> outside claims and was itself wrong. A correction list is worth less than
+> nothing if it is not checked against the operator.
 
 **Hackaday timing:** pitch the **toolchain bring-up story now**, not a future
 "3D shaded triangle" that would require a framebuffer and a shading stage that
