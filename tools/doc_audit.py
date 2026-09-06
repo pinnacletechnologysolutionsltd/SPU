@@ -195,7 +195,8 @@ def check_stale(files, actual):
     """Numeric suite totals that disagree with the measured value."""
     hits = []
     for f in files:
-        if any(k in f for k in SKIP_PARTS):
+        # DOC_AUDIT_* quotes stale values by design when reporting them.
+        if any(k in f for k in SKIP_PARTS) or 'DOC_AUDIT_' in f:
             continue
         txt = read(f)
         for m in TOTAL.finditer(txt):
@@ -211,7 +212,7 @@ def check_orphans(files):
     for f in files:
         d = os.path.dirname(f)
         for m in LINK.finditer(read(f)):
-            t = m.group(1) and m.group(2).split('#')[0].strip()
+            t = m.group(2).split('#')[0].strip()
             if not t or t.startswith(('http', 'mailto')):
                 continue
             linked.add(t.lstrip('/') if t.startswith('/') else os.path.normpath(os.path.join(d, t)))

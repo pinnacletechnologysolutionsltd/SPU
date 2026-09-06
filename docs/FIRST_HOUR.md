@@ -37,11 +37,8 @@ The suite compiles and runs Verilog, C++, and Python checks. The final summary
 at this revision is:
 
 ```text
-Verilog Tests: 130
-Passed:      130
-Failed:      0
 ...
-Total PASS:  173
+Total PASS:  226
 Total FAIL:  0
 ```
 

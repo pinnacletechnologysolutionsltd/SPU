@@ -111,7 +111,7 @@ the §3.2e.6 standard (no date, no bitstream SHA-256) and are partial backing.
   constant Padé cases, with status `raw=7F 2A 13 00`, `crc_error=0`,
   and `busy=0`. — §3.2f. The 2 MHz bring-up target quoted here is `A7_CLK_DIV_LOG2=6`, i.e. `clk_fast` = 781.25 kHz; the spin ships at 25 MHz and 50 MHz is a measured negative result (2026-08-10)
 - Full repository regression on 2026-07-20: `python3 run_all_tests.py` reported
-  `Total PASS: 173`, `Total FAIL: 0`. **[SUPERSEDED]** — 188/188 as of 2026-08-10; this line records the 07-20 state and should not be quoted as current
+  `Total PASS: 173`, `Total FAIL: 0`. **[SUPERSEDED]** — **226 as of 2026-09-06**; this line records the 07-20 state and must not be quoted as current
 - Tang 25K `irotc_spi` southbridge image is silicon-verified over the real
   RP2350 SPI link, 6/6 PASS, including the conjugate-catalog rotation
   (case 3) and CATMIX no-commit (case 4) — first conjugate-icosahedron

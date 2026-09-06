@@ -1,10 +1,15 @@
 # SPU-13 Synergetic Processing Unit
 
-**A deterministic exact-arithmetic FPGA platform. Its current proven product
-path is an edge-classification sidecar: labeled CSV in, checksummed rational
-SOM map out, followed by bit-exact hardware inference and a CRC-protected
-decision-evidence frame. The same writable seven-node model is silicon-proven
-on Gowin and Xilinx FPGAs with no software-to-hardware implementation mismatch.**
+**A deterministic exact-arithmetic FPGA platform: no floating point, no
+division and no transcendentals anywhere in the RTL. Arithmetic is exact over
+`Q(√3)`, `A₃₁` and `Z[φ]/L_p`, and correctness is decided by bit-exact
+agreement with an independent software oracle rather than by code review.**
+
+**Current direction: graphics.** A framebuffer-less streaming rasterizer that
+reached silicon across three consecutive days — first video output (§3.8),
+first rasterized geometry (§3.9) and depth-resolved geometry (§3.10) in
+[`docs/hardware_evidence.md`](docs/hardware_evidence.md) — each measured
+against a prediction registered before the bitstream was built.
 
 [![CI](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml/badge.svg)](https://github.com/pinnacletechnologysolutionsltd/SPU/actions/workflows/ci.yml)
 [![Hardware: CERN-OHL-W-2.0](https://img.shields.io/badge/Hardware-CERN--OHL--W--2.0-blue.svg)](hardware/LICENSE)
@@ -41,7 +46,7 @@ Two consequences you can verify rather than take on faith:
   [`docs/hardware_evidence.md`](docs/hardware_evidence.md) — date, build and
   load commands, bitstream SHA-256, raw captured proof lines. Claims that have
   no such section are labelled `[NO ENTRY]` in place rather than quietly
-  asserted. There are currently seven.
+  asserted.
 - **Negative results stay published.** Failed hypotheses, retracted
   conclusions and measurements that did not go our way are kept in the record,
   not deleted. See `AGENTS.md` for the standing example.
@@ -55,45 +60,57 @@ Two consequences you can verify rather than take on faith:
 - **[Hardware-free demo tour](docs/DEMO_TOUR.md)** — robotics, LUCAS, Iris SOM,
   and exact Voronoi decision evidence, each with an explicit claim boundary
 
-## Proven SOM Product Path
+## Current direction — graphics
 
-The current product-shaped artifact is the SPU-13 SOM sidecar:
+The active work is a rasterizer that streams pixels synchronously with the
+display beam and holds **no framebuffer at all**. Three results on the Wukong
+Artix-7, each with its bitstream pinned by SHA-256 and its measurement method
+recorded, in [`docs/hardware_evidence.md`](docs/hardware_evidence.md):
 
-```text
-labeled CSV -> deterministic integer trainer -> checksummed SOM map
-            -> writable FPGA sidecar -> 52-byte SOM1 evidence frame
-```
+| | result | what was measured |
+|---|---|---|
+| **§3.8** | First video output | 640×480 @ 60 Hz colour bars, 0.006% timing error |
+| **§3.9** | First rasterized geometry | Triangle base 55% of screen width against 53% predicted; stair-stepping at the predicted ~0.607 px/row |
+| **§3.10** | First depth-resolved image | Two overlapping triangles; depth boundary at 0.5062 and 0.4986 of lit width against 0.5000 predicted, across two observations either side of a power cycle |
 
-The checked Iris model achieves 147/150 semantic classifications. More
-importantly, all 150 complete SOM1 records match the exact software oracle on
-both Tang Primer 25K and Wukong Artix-7 hardware: winner, runner-up,
-quadrances, confidence gap, ambiguity, generations, status, and CRC. The
-synthetic current-signature replay provides the hardware-independent path for
-the first anomaly-monitoring demo; physical INA226 acquisition remains the
-next sensor bench step. See [`docs/SOM_V1_PRODUCT_CONTRACT.md`](docs/SOM_V1_PRODUCT_CONTRACT.md).
+§3.10 also states what it does **not** establish: no 3D, no projection, no
+transform, no shading, no texturing, no antialiasing, no host link. The
+triangles are hardcoded constants and the scene is static.
 
-This SOM path is the current SPU-13 platform wedge. The separate commercial
-direction is now the smaller SPU-4 Sentinel, developed as a reusable product
-block; see [`knowledge/SPU4_ARCHITECTURE.md`](knowledge/SPU4_ARCHITECTURE.md)
-and [`docs/SPU4_PRODUCT_CLAIMS.md`](docs/SPU4_PRODUCT_CLAIMS.md) for the
-current claim ledger and product gates.
+The toolchain is fully open — Yosys and nextpnr-xilinx via openXC7, no vendor
+IDE. That constraint is load-bearing rather than incidental: openXC7 cannot
+place differential outputs, so HDMI is unreachable and the VGA path exists
+because it is what a fully open flow can actually build.
 
-## Current Hardware Direction
+### Previously: SOM edge classification — shelved 2026-09-03
 
-The SPU-13 bench stack is split across a microcontroller southbridge and an
-FPGA target connected by SPI:
+The SOM/anomaly-detection sidecar was the prior product direction, and its
+results stand: all 150 SOM1 records matched the exact software oracle on both
+Tang Primer 25K and Wukong Artix-7, with the Iris map scoring 147/150
+semantically. It was **shelved on 2026-09-03** in favour of processor and
+graphics work. The material remains as a completed result, not an active
+direction — see
+[`docs/SOM_V1_PRODUCT_CONTRACT.md`](docs/SOM_V1_PRODUCT_CONTRACT.md).
 
-```
-SD Card → RP2350 (RISC-V southbridge) → SPI @ 2 MHz → FPGA SPU-13 core
-```
+The **SPU-4 Sentinel** edge node was developed alongside it as a reusable
+product block and is shelved on the same date. Its silicon results and claim
+ledger stand — [`knowledge/SPU4_ARCHITECTURE.md`](knowledge/SPU4_ARCHITECTURE.md)
+and [`docs/SPU4_PRODUCT_CLAIMS.md`](docs/SPU4_PRODUCT_CLAIMS.md). Kept linked
+deliberately: shelved work stays discoverable rather than becoming
+unreachable, which is how documents drift out of review in the first place.
 
-- **RP2350** does: boot, filesystem, chord streaming, USB CDC telemetry
-- **FPGA** does: rational arithmetic, QR register file, RPLU2 pipeline control
+## Boards
 
-The Tang Primer 25K remains the proven regression/probe board. The Wukong
-Artix-7 100T is the primary Artix silicon-evidence and constrained integration
-board. Full concurrent integration with live RPLU2, sidecars, and safety layers
-is an Artix-7 200T / Kintex-class funding target. See
+| Board | Role |
+|---|---|
+| **Wukong Artix-7 100T** | Primary silicon-evidence board; all current graphics results |
+| **Tang Primer 25K** | Gowin regression and probe board |
+
+A microcontroller southbridge (RP2350 over SPI, protocol v1.2) exists and is
+documented in
+[`docs/SOUTHBRIDGE_SPI_PROTOCOL.md`](docs/SOUTHBRIDGE_SPI_PROTOCOL.md). It is
+**parked**, not retired: the current graphics work needs no host link, and
+opening that track was deliberately deferred. See
 [`docs/CURRENT_STATUS.md`](docs/CURRENT_STATUS.md).
 
 ## Experimental ISA Profile (Wheeler–Feynman v1.0)
@@ -129,19 +146,11 @@ See [LICENSING.md](LICENSING.md) for precedence and mixed-directory details.
 
 ---
 
-## Defensive Publication Notice
+## Prior art and contributions
 
-The SPU-13 architecture, including the dual-ring arithmetic framework, the Barycentric Transmutation Unit (BTU) bridge, the $\mathbb{Z}/M_{31}$ Mersenne-ring core, and the $\mathbb{Z}[\phi]/L_p$ Lucas Phinary co-processor, is publicly disclosed in this repository and associated publications as **defensive prior art**.
-
-The intended disclosure scope includes:
-1. **Dual-Ring Execution Topology:** The co-processor coupling of a $\mathbb{Z}/M_{31}$ binary ring with a $\mathbb{Z}[\phi]/L_p$ phinary ring, connected via a spatial routing bridge (BTU).
-2. **Lucas Barrett Reduction in Hardware:** The hardware-native remainder calculation for Lucas prime moduli ($q = (x \cdot \mu) \gg 31$, $r = x - q \cdot L_p$) using elaboration-time precalculated scale constants ($\mu = \lfloor 2^k / L_p \rfloor$).
-3. **Chirality & Scaling Intercepts:** The instruction intercept (`lucas_inst_claimed`) and register commit override path mapped in [spu_a7_top.v](hardware/boards/artix7/spu_a7_top.v) for `0xD0` (PSCALE) and `0xD1` (PCHIRAL).
-
-This notice records publication intent; it is not legal advice or a guarantee of
-the treatment any patent office will give a particular claim. Contributions
-require sign-off under the [Developer Certificate of Origin (DCO)](CONTRIBUTING.md).
-
+Everything here is published openly as prior art; the licences above govern
+reuse. Contributions require sign-off under the
+[Developer Certificate of Origin (DCO)](CONTRIBUTING.md).
 
 ## Check it yourself (no trust required)
 
@@ -151,7 +160,7 @@ outputs are explicit, and the current headline was re-run from source on
 
 ```bash
 # 1. Full regression — RTL testbenches, C++ and Python oracles
-python3 run_all_tests.py                          # currently prints "Total PASS: 193"
+python3 run_all_tests.py                          # currently prints "Total PASS: 226"
                                                   # and "Total FAIL: 0"
 
 # 2. The product path, end to end
@@ -196,11 +205,16 @@ python3 software/tests/test_rotc_vm_rtl_trace.py  # VM-vs-RTL TRACE EQUIVALENCE
                                                   # (angles 0-35): PASS
 ```
 
-The current headline was re-derived from a fresh clone of the immutable
-`v1.2-typestate` tag on 2026-08-13: 141 discovered Verilog benches, 148
-Verilog executions including parameter variants, 12 C++ tests, and all
-auxiliary suites; `Total PASS: 193`, `Total FAIL: 0`. Individual hardware
-evidence entries remain date- and artifact-specific.
+The current headline is `Total PASS: 226`, `Total FAIL: 0`, measured
+2026-09-06 via `bash tools/verify_repo.sh`. Individual hardware evidence
+entries remain date- and artifact-specific.
+
+**One caveat on that gate, recorded because it was wrong for a long time.**
+Until 2026-09-05 `run_all_tests.py` had no `sys.exit` call: it printed
+`Total FAIL: 2` and returned 0, so both `verify_repo.sh` and CI reported
+success regardless of test failures. Fixed at both ends, with negative
+controls. Test counts quoted before that date were true when measured, but the
+automation behind them was not enforcing anything.
 
 **What you cannot check from a clone, and why.** Bitstreams are build artifacts
 and are not committed; `build/` is gitignored. Silicon results are therefore
@@ -280,7 +294,7 @@ integration is reserved for a larger FPGA.
 | 5 Regression | **Tang Primer 25K** | GW5A-25A | ✅ Split probes + southbridge |
 | 6 Evidence / Constrained Integration | **Wukong Artix-7 100T** | XC7A100T | J11 silicon proofs, sidecars, shared-multiplier baseline |
 | 7 Open HW | **SPU-13 ECP5 Evaluator** | LFE5U-85F / LFE5U-44F | Draft OSHWA concept; KiCad ERC/DRC audit pending |
-| 8 Full Integration | Artix-7 200T / Kintex-class | TBD | Funding-dependent full concurrent target |
+| 8 Full Integration | Artix-7 200T / Kintex-class | TBD | Not pursued; would need a larger part than the project owns |
 
 ---
 
