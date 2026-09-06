@@ -328,6 +328,21 @@ real bug this module's own testbench caught" — that bench is not in the tree.
 3. **Decide the remaining §6 items** — `spu_texture_dma`, and whether the
    dead SPU-13 core generation behind the dead Colorlight/ECP5 tops is kept
    deliberately or retired. (`x_span` is done, §8.)
+3b. **Revise the GPU contract for §12's IVM decision** before T2 or T3. T3 as
+   written specifies screen-space `A = yj-yi` setup, which is not what a
+   4-axis basis with integer quadrances needs. T1's command format should
+   speak Quadray from the start — it is the next work and the cheapest moment
+   to fix its vocabulary.
+3c. **Skeleton architecture draft (§14)** — assembly, not authorship; draft
+   the stable chapters, hold graphics and SU(3).
+3d. **SU(3) claim pass**, ~2 hours: scope the `det` sentence, make the
+   su(3)/SU(3) distinction explicit, check numbers against §3.2e.5/§3.2e.6,
+   label projected vs measured, publish from the `.tex` not the `.md`, get a
+   DOI. Plus a decision on `archive/recovered/su3_*_accel.v` (826 lines,
+   never audited) before the DOI exists.
+3e. **SOM: the two zero-bench measurements**, ~1 hour — the `--order-seed`
+   sweep and the drift-invariance check. Not tuning; they establish whether
+   the existing number means anything.
 4. Then 09-05 §7's CRT control, unchanged and still wanting the GPU raw and
    unsmoothed.
 
@@ -921,6 +936,68 @@ determined by file order.
 
 **Nothing here is fixed.** Findings only, and all of it is in code that no top
 instantiates today.
+
+---
+
+## 14. NEXT ITEM: a skeleton SPU-13 architecture draft, to tie it together
+
+Operator, 2026-09-06: publish a skeleton draft of the whole SPU-13
+architecture so the parts read as one thing. Recorded as a named next item,
+scope deliberately not fixed tonight.
+
+### It is assembly, not authorship
+
+The material largely exists:
+
+| document | lines | covers |
+|---|---:|---|
+| `knowledge/SPU13_ARCHITECTURE.md` | 393 | data representation, dispatch, Davis Gate, ISA, sidecars, module map, interconnect |
+| `knowledge/MATHEMATICAL_FOUNDATIONS.md` | 417 | Q(√3) derivation from the IVM, A₃₁ split algebra, quadratic residues |
+| `knowledge/LITHIC_L_LANGUAGE_SPEC.md` | 841 | the field-native language |
+| `docs/SPU13_IDENTITY_AND_BOUNDARIES.md` | 183 | scope and claim boundaries |
+
+The job is **re-framing and joining**, not writing from scratch. That makes it
+far smaller than it sounds — and it is the document that turns four silicon
+entries and a pile of specs into something a stranger grasps in one read,
+which is exactly what the ecosystem goal needs.
+
+### Two rules to build in on page one
+
+Both come from this session's findings, and neither can be retrofitted
+cheaply.
+
+1. **Every claim points at its evidence.** An architecture overview is *by
+   nature* a summary document, and §1/§9's audit showed summary documents are
+   where drift accumulates: the README's shelved product path, the "field"
+   terminology, 34 uncited silicon claims. **`SPU13_ARCHITECTURE.md` is
+   already among the worst offenders in that list.** A new tying-together
+   document inherits that risk unless the rule is structural from the start.
+2. **It must state what the architecture does NOT do.** The §3.10 pattern —
+   every result declaring its own limits — applied at architecture level. That
+   is what makes it credible to the peers this is meant to attract, rather
+   than a capabilities brochure. It is also the project's only real
+   differentiator in a field where everyone's overview claims everything.
+
+### Sequencing
+
+- **Draft now:** arithmetic, dispatch, Davis Gate, ISA, register file,
+  interconnect. Stable, and unaffected by anything in flight.
+- **Wait:** the graphics chapter. §12's IVM decision changes it substantially
+  and T1–T4 are unbuilt. Writing it now means rewriting it.
+- **Wait:** the SU(3) chapter, until the claim scoping in §11's discussion is
+  done — the `det` sentence and the su(3)/SU(3) distinction.
+
+### Audience note
+
+Three distinct communities, three different hooks, and pitching all of them
+in one voice dilutes each: **open-toolchain FPGA** people want the openXC7
+bring-up story; **computer-arithmetic** people want A₃₁ and the SU(3)
+coprocessor; **synergetics/Fuller** people want Quadray and the IVM lattice.
+Worth deciding which one the skeleton draft addresses first.
+
+**The software on-ramp already works** and is the realistic entry point for a
+peer: a stranger can clone and reach 227/227 with no board — oracles, the VM,
+Lithic-L, the demo tour. Silicon needs hardware; the mathematics does not.
 
 ---
 
