@@ -199,11 +199,20 @@ def check_stale(files, actual):
         if any(k in f for k in SKIP_PARTS) or 'DOC_AUDIT_' in f:
             continue
         txt = read(f)
+        lines = txt.split('\n')
         for m in TOTAL.finditer(txt):
             n = int(m.group(1))
-            if actual is not None and n != actual:
-                hits.append({'file': f, 'line': txt[:m.start()].count('\n') + 1,
-                             'claims': n, 'actual': actual})
+            if actual is None or n == actual:
+                continue
+            # A total explicitly marked as history is a RECORD, not drift.
+            # docs/CURRENT_STATUS.md:114 deliberately preserves the 07-20
+            # figure behind a [SUPERSEDED] marker; flagging it forever would
+            # train readers to ignore this check.
+            i = txt[:m.start()].count('\n')
+            near = ' '.join(lines[max(0, i - 1):i + 2])
+            if re.search(r'\[SUPERSEDED\]|\[HISTORICAL\]|historical record', near, re.I):
+                continue
+            hits.append({'file': f, 'line': i + 1, 'claims': n, 'actual': actual})
     return hits
 
 

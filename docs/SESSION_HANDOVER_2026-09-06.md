@@ -608,13 +608,50 @@ Option A. Not next.
 it is what the guard already is, and it already has silicon evidence (§3.2l).
 Worth stating plainly so it is not re-derived as a discovery.
 
-### Recommended sequence
+### RESULT — Option A FALSIFIED on the octahedral catalogue
 
-1. Enumerate Option A's group transforms in Python against the existing exact
-   oracle, with the **"genuinely new geometry"** column as the gate.
-2. If the reachable set is still a single point, record the negative and stop —
-   the 09-04 contract is the template for how to write that up.
-3. Only if it genuinely moves does a contract or any RTL become justified.
+Run: `python3 software/tools/tensegrity_group_rotation_sweep.py`.
+
+Each strut is rotated about **its own midpoint** — not a global rotation of
+the structure, which is what makes new geometry possible at all. Four schemes:
+the same rotation applied to all six struts, and three "symmetric opposition"
+variants (R to one orthogonal pair, R⁻¹ to another, identity to the third).
+
+| scheme | balanced | genuinely new geometry |
+|---|---:|---:|
+| all | 1 / 24 | **0** |
+| opposed, hold pair 0 | 1 / 24 | **0** |
+| opposed, hold pair 1 | 1 / 24 | **0** |
+| opposed, hold pair 2 | 1 / 24 | **0** |
+
+The single balanced case is the identity, in every scheme.
+
+**Two controls, because without them the negative is worth nothing:**
+
+- **Every rotation preserves every strut's quadrance.** A broken rotation
+  would fail all 24 candidates and produce exactly the same "0 new geometry"
+  answer as a genuine falsification. This is the control that separates them.
+- **The fault distribution is real**: 16 `STRUT_INTERSECTION`,
+  7 `NOT_IN_EQUILIBRIUM`, 1 `BALANCED` — not one degenerate mode.
+
+### The scope limit is the more useful half
+
+What is falsified is coordinated group rotation drawn from the **24 discrete
+octahedral rotations** — the subset the 09-04 contract identified as
+"unambiguously representable in the RTL's integer `Z[φ]` ABI".
+
+**The Fuller Jitterbug is a *continuous* motion**, and its intermediate states
+are generally not representable in that ABI at all. So this result does **not**
+say the Jitterbug mechanism is wrong. It says the exact catalogue the hardware
+can express does not contain it.
+
+That is a statement about the **representation**, not the mechanics, and it
+reframes the question: the obstacle to tensegrity active control here may be
+the ABI rather than the physics. Whether a richer exact catalogue — finer
+rotations still closed over `Z[φ]`, or a different actuation primitive
+entirely — contains a reachable balanced set is **open and untested**.
+
+**Still no RTL, and none justified.** §7 HALT continues to apply.
 
 ### Corrections to the same analysis, recorded because they recur
 
