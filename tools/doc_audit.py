@@ -10,9 +10,11 @@ does not replace it.
 WHAT IT CHECKS
   links      internal markdown links whose target does not exist
   claims     assertive "silicon-verified/proven" statements with no
-             hardware_evidence reference within +/-10 lines
+             hardware_evidence reference anywhere in their enclosing
+             markdown section
   stale      numeric claims (test totals) that disagree with the suite
   orphans    tracked .md files linked from no other tracked .md
+  contra     documents asserting a status a later decision superseded
 
 WHAT IT IS NOT. Regex over prose. Every hit needs a human or a reviewer to
 judge; several classes have legitimate exceptions (a spec may cite evidence
@@ -36,6 +38,31 @@ CLAIM = re.compile(r'(silicon[- ](verified|proven)|verified in silicon|proven (o
 NEG = re.compile(r'\b(not|never|no|without|nor|cannot|un)\b[^.]{0,60}$', re.I)
 CITE = re.compile(r'hardware_evidence|§ ?3\.\d|section 3\.\d', re.I)
 TOTAL = re.compile(r'Total PASS:? *`?(\d+)')
+
+# Superseded-status table. This encodes JUDGEMENT explicitly rather than
+# pretending to derive it: each entry names the decision that superseded the
+# topic, so a reviewer can dispute the entry itself rather than the output.
+# Add to it when a direction is shelved; that is the maintenance cost.
+SUPERSEDED = [
+    {'topic': 'SOM / anomaly-detection wedge',
+     'since': '2026-09-03',
+     'decision': 'spu_strategy/contract_som_vs_processor_priority_2026-09-03.md',
+     'asserts_current': re.compile(
+         r'current (proven )?product path|current SPU-13 platform wedge|'
+         r'the current wedge|next sensor bench step|current product-shaped artifact', re.I)},
+    {'topic': 'SPU-4 as the commercial direction',
+     'since': '2026-09-03',
+     'decision': 'superseded by the graphics-first decision',
+     'asserts_current': re.compile(r'separate commercial direction is now', re.I)},
+    {'topic': 'southbridge SPI stack as the hardware direction',
+     'since': '2026-09-05',
+     'decision': 'docs/SESSION_HANDOVER_2026-09-05.md section 8 (parked)',
+     'asserts_current': re.compile(r'## Current Hardware Direction', re.I)},
+    {'topic': 'funding-gated scaling',
+     'since': '2026-09-03',
+     'decision': 'bootstrap posture; see strategy-pivot record',
+     'asserts_current': re.compile(r'funding target', re.I)},
+]
 
 
 def tracked_md():
@@ -66,20 +93,101 @@ def check_links(files):
     return bad
 
 
+HEADING = re.compile(r'^#{1,6} ')
+
+
+def _section_bounds(lines, i):
+    """Enclosing markdown section: nearest heading at/above i, to the next one.
+
+    Rev 2 (external review, 2026-09-06): a +/-10 line window multi-counted
+    table rows and missed citations that sit legitimately elsewhere in the
+    same section. A 7-row instruction table whose section cites its evidence
+    once was counted as 6 separate violations.
+    """
+    start = 0
+    for j in range(i, -1, -1):
+        if HEADING.match(lines[j]):
+            start = j
+            break
+    end = len(lines)
+    for j in range(i + 1, len(lines)):
+        if HEADING.match(lines[j]):
+            end = j
+            break
+    return start, end
+
+
+def _block_bounds(lines, i):
+    """Enclosing blank-line-delimited block: one paragraph, or one table."""
+    a = i
+    while a > 0 and lines[a - 1].strip() and not HEADING.match(lines[a - 1]):
+        a -= 1
+    b = i
+    while b + 1 < len(lines) and lines[b + 1].strip() and not HEADING.match(lines[b + 1]):
+        b += 1
+    return a, b + 1
+
+
+def _section_declares_source(lines, sec_a, sec_b):
+    """True if the section's OPENING paragraph cites evidence.
+
+    That is what "the section explicitly declares a shared evidence source"
+    means operationally: a citation in the lead paragraph covers the section.
+    A citation buried in an unrelated paragraph further down does NOT.
+    """
+    j = sec_a + 1
+    while j < sec_b and not lines[j].strip():
+        j += 1
+    if j >= sec_b:
+        return False
+    k = j
+    while k < sec_b and lines[k].strip():
+        k += 1
+    return bool(CITE.search('\n'.join(lines[j:k])))
+
+
 def check_claims(files):
-    """Assertive silicon claims with no nearby evidence reference."""
+    """Assertive silicon claims with no evidence pointer covering them.
+
+    Scope model (external review + operator, 2026-09-06). A claim is covered
+    when a citation appears in EITHER its own paragraph/table block, OR the
+    opening paragraph of its section -- the latter being the only thing that
+    counts as declaring a shared source. Whole-section scope was rejected as
+    too generous: it would bless unrelated claims in a long section.
+    Consecutive rows of one table are reported as ONE grouped finding.
+    """
     hits = []
     for f in files:
         if any(k in f for k in SKIP_PARTS) or '/blog/' in f:
             continue
         lines = read(f).split('\n')
+        seen_blocks = set()
         for i, line in enumerate(lines):
             m = CLAIM.search(line)
-            if not m or NEG.search(line[:m.start()]):
+            if not m:
                 continue
-            if CITE.search('\n'.join(lines[max(0, i - 10):i + 11])):
+            # Negation may sit on the PREVIOUS line -- 80-column prose wraps
+            # "...no\nregression risk to anything currently silicon-proven."
+            prev = lines[i - 1] if i > 0 else ''
+            if NEG.search((prev + ' ' + line[:m.start()])[-90:]):
                 continue
-            hits.append({'file': f, 'line': i + 1, 'text': line.strip()[:100]})
+            sec_a, sec_b = _section_bounds(lines, i)
+            blk_a, blk_b = _block_bounds(lines, i)
+            if CITE.search('\n'.join(lines[blk_a:blk_b])):
+                continue
+            if _section_declares_source(lines, sec_a, sec_b):
+                continue
+            key = (f, blk_a)
+            if key in seen_blocks:
+                for h in hits:
+                    if h.get('_key') == key:
+                        h['rows'] += 1
+                continue
+            seen_blocks.add(key)
+            hits.append({'file': f, 'line': i + 1, 'text': line.strip()[:100],
+                         'rows': 1, '_key': key})
+    for h in hits:
+        h.pop('_key', None)
     return hits
 
 
@@ -114,10 +222,31 @@ def check_orphans(files):
             and os.path.basename(f) not in roots]
 
 
+def check_contradictions(files):
+    """Assertions of a status that a later recorded decision superseded."""
+    hits = []
+    for f in files:
+        # DOC_AUDIT_* quotes the offending text by design; excluding it stops
+        # the audit flagging itself for reporting what it found.
+        if any(k in f for k in ('docs/archive/', 'SESSION_HANDOVER',
+                                'spu_strategy/', 'DOC_AUDIT_')):
+            continue
+        txt = read(f)
+        for entry in SUPERSEDED:
+            for m in entry['asserts_current'].finditer(txt):
+                hits.append({'file': f, 'line': txt[:m.start()].count('\n') + 1,
+                             'topic': entry['topic'], 'since': entry['since'],
+                             'decision': entry['decision'],
+                             'text': m.group(0)[:60]})
+    return hits
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--check', choices=['links', 'claims', 'stale', 'orphans', 'all'], default='all')
+    ap.add_argument('--check',
+                    choices=['links', 'claims', 'stale', 'orphans', 'contra', 'all'],
+                    default='all')
     ap.add_argument('--json', action='store_true')
     ap.add_argument('--actual-pass', type=int, default=None,
                     help='measured "Total PASS" to compare stale claims against')
@@ -136,6 +265,8 @@ def main():
         res['stale'] = check_stale(files, args.actual_pass)
     if args.check in ('orphans', 'all'):
         res['orphans'] = check_orphans(files)
+    if args.check in ('contra', 'all'):
+        res['contra'] = check_contradictions(files)
 
     if args.json:
         json.dump(res, sys.stdout, indent=1)
@@ -144,9 +275,10 @@ def main():
 
     print(f"scanned {len(files)} tracked markdown files\n")
     for key, label in [('links', 'BROKEN INTERNAL LINKS'),
-                       ('claims', 'UNCITED SILICON CLAIMS (assertive, +/-10 line window)'),
+                       ('claims', 'UNCITED SILICON CLAIMS (assertive, paragraph-scoped, tables grouped)'),
                        ('stale', 'STALE SUITE TOTALS'),
-                       ('orphans', 'ORPHANED DOCS (linked from no other tracked .md)')]:
+                       ('orphans', 'ORPHANED DOCS (linked from no other tracked .md)'),
+                       ('contra', 'SUPERSEDED STATUS ASSERTED AS CURRENT')]:
         if key not in res:
             continue
         rows = res[key]
