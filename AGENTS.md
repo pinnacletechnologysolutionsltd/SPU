@@ -7,7 +7,7 @@ This file defines the mandatory engineering constraints, functional agent roles,
 ## 1. System Context & Tech Stack
 
 * **Architecture:** SPU-13 (13-axis cuboctahedral manifold cortex) & SPU-4 Sentinel (4-axis Quadray satellite/edge node).
-* **Arithmetic Fields:** Bit-exact, deterministic arithmetic over $\mathbb{Q}(\sqrt{3})$, $A_{31}$ (Mersenne 31 field $[1, \sqrt{3}, \sqrt{5}, \sqrt{15}]$), and $\mathbb{Z}[\varphi]/L_p$ (Lucas Phinary).
+* **Exact Arithmetic Domains:** Bit-exact, deterministic arithmetic over $\mathbb{Q}(\sqrt{3})$, $A_{31}$, and $\mathbb{Z}[\varphi]/L_p$ (Lucas Phinary). **$A_{31}$ is an algebra, not a field** — the 4-dimensional split biquadratic algebra $\mathbb{F}_p[x,y]/(x^2-3,\,y^2-5)$ over $p = M_{31}$, with basis $[1, \sqrt{3}, \sqrt{5}, \sqrt{15}]$. Because 3 and 5 are both quadratic non-residues mod $M_{31}$, their product 15 is a residue, so $\sqrt{15}$ already lies in $\mathbb{F}_p$ and the extension **splits**: $A_{31}$ contains zero divisors and not every non-zero element is invertible. The hardware traps these via `FLAGS.V`. See `knowledge/MATHEMATICAL_FOUNDATIONS.md` §8.3 and the `A₃₁` entry in `knowledge/SPU_LEXICON.md`.
 * **Hardware Toolchain:** Verilog HDL with OSS CAD Suite (Yosys + nextpnr-himbaechel). Primary hardware targets: Tang Primer 25K (probe/bring-up) and Wukong Artix-7 100T (silicon evidence).
 * **Software Toolchain:** Python 3.10+ (emulator, oracles, assemblers), C++17 (oracle bit-parity).
 * **Design Rule:** Single-purpose "Lithic" modules (50–150 lines). Split concerns rather than growing oversized files.

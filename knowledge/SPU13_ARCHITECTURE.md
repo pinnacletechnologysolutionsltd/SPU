@@ -258,7 +258,8 @@ quadrance pipeline), `spu13_typestate_guard.v` / `spu13_sva_guard.v`
 (φ-plane typestate lattice, two independent implementations for
 cross-check), `spu13_composition_policy.v` (accept/hold/escalate policy).
 
-**Field arithmetic — `A₃₁` / M31**
+**Exact modular arithmetic — `A₃₁` / M31**  
+(M31 is a prime field; `A₃₁` over it is a split algebra with zero divisors — see `knowledge/SPU_LEXICON.md`.)
 `spu13_m31_multiplier.v` (+ `_seq`, `_structured` variants),
 `spu13_m31_inverter.v` (binary extended Euclidean over M31),
 `spu13_fp4_inverter.v` / `_structured` / `_structured_arithmetic`

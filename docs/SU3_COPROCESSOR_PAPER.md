@@ -81,7 +81,7 @@ destroy the structural invariants that define the group.
 
 We extend the existing A₃₁ split biquadratic algebra over the
 Mersenne prime M31 (2³¹−1) by adjoining √−1, giving the degree-8
-algebra A₃₁[i]. This field contains both √3 (from A₃₁) and √−1
+algebra A₃₁[i]. This algebra contains both √3 (from A₃₁) and √−1
 (the complex unit), enabling exact representation of the SU(3)
 generators as matrices over A₃₁[i]. All arithmetic is exact modular
 arithmetic — no floating point, no rounding, no division in hot paths.
