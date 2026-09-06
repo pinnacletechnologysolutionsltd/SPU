@@ -3920,3 +3920,144 @@ eventually fail in a way that resembles an RTL bug. It is the same
 flying-lead class that the harness adapter board in
 `spu_strategy/contract_graphics_first_priority_2026-09-04.md` §7 addresses.
 The result was not re-confirmed after a deliberate reseat or a power cycle.
+
+---
+
+### 3.10 First depth-resolved image — two triangles on a monitor (2026-09-06)
+
+**Date:** 2026-09-06 NZT.
+**Board:** QMTech Wukong Artix-7 XC7A100T-FGG676, 50 MHz oscillator.
+**Claim:** `spu_depth_compare` selects between two overlapping triangles on a
+per-pixel basis on silicon, using depth interpolated by `spu_attr_stepper`
+from coefficients computed at setup by `spu_depth_math`.
+
+§3.9 established coverage rasterization but explicitly recorded that **no
+depth test was exercised** — unit 1 was disarmed and all three z values were
+equal, so `unit0_wins` reduced to `cov0` and nothing depended on the depth
+result. This entry closes that gap.
+
+**Source anchor:**
+
+```
+commit    eb27177  gpu: two overlapping triangles resolved by depth, so a
+                   bench trip tests depth
+bitstream build/spu_a7_100t_GPUVGA.bit
+          3,825,920 bytes
+          SHA-256 ce5bdc70753fc88d1a6e91bc1e573dff2c40756f66e9d689f9880139285e25e2
+build     bash hardware/boards/artix7/build_a7.sh 100t gpuvga all   (A7_FREQ=25)
+detect    openFPGALoader -c dirtyJtag --freq 1000000 --detect -v
+          -> 1 device, idcode 0x3631093, xc7a100, irlength 6
+load      openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_GPUVGA.bit
+          -> Load SRAM 100%, isc_done 1, isc_ena 0, init 1, done 1
+```
+
+Post-route: 7,896/126,800 SLICE_LUTX (6%), 2,419/126,800 SLICE_FFX (1%),
+2/240 DSP48E1, `clk_pixel` 41.36 MHz against the 25 MHz requirement. Display
+path unchanged from §3.8/§3.9: 50 MHz / 2, no MMCM, same reset debounce, same
+`hal_vga`, same three-resistor DAC on J10, same MEASURED `spu_a7_vga_fix.xdc`.
+
+**Scene.** Two triangles sharing the top edge y=0 from x=40 to x=600:
+
+| | tri0 (red) | tri1 (green) |
+|---|---|---|
+| V0 / V1 / V2 | (600,0) (40,0) (120,460) | (600,0) (40,0) (520,460) |
+| depth at V0 / V1 / V2 | 3600 / 400 / 700 | 400 / 3600 / 700 |
+
+tri0 is near on the left and far on the right; tri1 the reverse. Both
+interpolate 400..3600 across the shared edge in opposite directions, so they
+are equidistant at x = 320 — the exact horizontal centre of the screen.
+**Nothing in the geometry places an edge there.** The boundary exists only
+because depth is compared per pixel, which is what makes this a test of the
+depth path rather than of the rasterizer.
+
+**Prediction registered before the bitstream was built.** The frame was
+rendered out of `spu_gpu_top` in simulation at full 640x480 and checked
+against an independent oracle built from the geometry: 0 mismatches over
+307,200 pixels. The render and the checklist are in
+`docs/bench_captures/2026-09-06_predicted_two_triangle_scene.{png,md}`.
+
+**Photographic measurement.** Photograph
+`docs/bench_captures/2026-09-06_two_triangle_depth_vga.jpeg`, 2016x1512. The
+monitor is physically inverted, as in §3.8 and §3.9, so design y=0 appears at
+the bottom of the frame and red appears on the right. Red and green pixels
+were classified by channel dominance and the boundary taken as the midpoint
+between the green and red runs on each scanline.
+
+| quantity | predicted | measured | error |
+|---|---:|---:|---:|
+| depth boundary, fraction of lit width | 0.5000 | 0.5058 (sd 0.0010, 24 scanlines) | 0.58% of screen width, ~3.7 px in 640 |
+| boundary straightness | vertical | sd 0.08 photo px over design rows 50..235 | — |
+| triangles separate at design y | 268.3 | 271.5 | 3.2 rows, 0.66% of screen height |
+
+**The row-0 check, and why it is the point of this scene.** The depth-anchor
+defect fixed the same day (`8c2d2cc`, completed in `07a50f1`) was **row-0
+only** — `spu_attr_stepper` was anchored wherever the setup latency ended
+rather than at (0,0), and `acc_row` re-seeding from the row wrap meant the
+field self-corrected from row 1. Both triangles were therefore given a shared
+top edge so that scanline 0 is inside the overlap and a residual fault would
+be visible:
+
+```
+boundary x over design rows ~50..235 : mean 1018.5 photo px, sd 0.08
+boundary x over design rows 0..19    : mean 1017.5 photo px, sd 0.11
+difference                           : 1.0 photo px = 0.46 screen px
+```
+
+An unfixed anchor would have displaced scanline 0 by roughly 24 screen
+pixels. The measured displacement is **0.46 px**, within the noise of the
+classification. No notch, no colour flip, no displacement on the top line.
+
+**What this does NOT establish.**
+
+- **Two triangles, not a scene.** Says nothing about triangle residency or
+  about a framebuffer-less streaming rasterizer's architectural limit.
+- **Still no 3D, no projection, no transform.** The edge and depth
+  coefficients are constants written by hand; the "depth" is an interpolated
+  scalar, not a camera-space z from a projection matrix.
+- **No shading, no texturing, no antialiasing.** One flat colour per triangle.
+- **No host link.** The scene is hardcoded in the top.
+- **The y-direction depth gradient is untested by this scene.** Both depth
+  planes share the same y gradient, so their difference has no y term and the
+  boundary is vertical. That was a deliberate trade for a prediction checkable
+  by eye; it means an x-direction depth error would show and a y-direction one
+  would not.
+- **Single observation**, one monitor, one session. Not an N>=10 result, and
+  **not re-confirmed after a deliberate reseat or power cycle** — the §3.9
+  bench caveat below still stands and is still outstanding.
+- **The bitstream hash is not reproducible.** Rebuilding from the same commit
+  produces a different SHA-256: A7 `.bit` files carry a build timestamp in
+  their header (measured 2026-09-06 — two builds from byte-identical source
+  differed in exactly 3 bytes at offsets 122-125, all configuration data
+  identical). The hash above identifies the artifact that was flashed; it
+  cannot be regenerated by rebuilding.
+
+**Bench caveat.** Unchanged from §3.9: the harness is hand-wired flying leads
+and responds to being touched. On the load this entry measures, the display
+came up without prodding, but one clean start is not evidence that the
+connection is sound.
+
+**OPEN — second load, unexplained artifact.** The board was power-cycled (both
+USB devices re-enumerated, dirtyJtag bus 1 device 6 -> 9 and the CH340 5 -> 8,
+so the cycle is confirmed rather than asserted), the harness was reseated, and
+the same bitstream was reloaded to the same `done 1` signature. The operator
+then reported **a grey shadow image underneath the colours**.
+
+That cannot originate in the design. The board top brings out one bit per
+channel through the three-resistor DAC and the scene contains exactly two
+colours, `(F,0,0)` and `(0,F,0)`; the complete set of emittable outputs is
+red, green and black, and depth is never routed to any output — it only feeds
+the comparator that selects between the two colours. No RTL path produces an
+intermediate level.
+
+The photograph analysed above was taken *before* the power cycle and shows no
+such artifact: the black V-notch measures luminance 12-21 against an unlit
+bezel reference of 19-27. That is suggestive but not conclusive, since a faint
+shadow need not survive the camera exposure.
+
+**Leading hypothesis, not demonstrated:** an analog fault on the reseated
+harness — a degraded return path or reflection off unterminated flying leads,
+both of which ghost. The discriminating test is to load a different image
+(`build/spu_a7_100t_VGAFIX.bit`, the §3.8 colour bars): a shadow that still
+shows triangles is monitor image retention, a shadow that follows the bars is
+analog. **Not yet run.** Until it is, §3.9's re-confirmation remains
+outstanding and this entry stands as a single observation.
