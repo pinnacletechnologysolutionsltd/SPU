@@ -4036,28 +4036,48 @@ and responds to being touched. On the load this entry measures, the display
 came up without prodding, but one clean start is not evidence that the
 connection is sound.
 
-**OPEN — second load, unexplained artifact.** The board was power-cycled (both
-USB devices re-enumerated, dirtyJtag bus 1 device 6 -> 9 and the CH340 5 -> 8,
-so the cycle is confirmed rather than asserted), the harness was reseated, and
-the same bitstream was reloaded to the same `done 1` signature. The operator
-then reported **a grey shadow image underneath the colours**.
+**SECOND OBSERVATION — §3.9's outstanding re-confirmation, now closed.** The
+board was power-cycled (both USB devices re-enumerated: dirtyJtag bus 1
+device 6 -> 9, CH340 5 -> 8, so the cycle is confirmed rather than asserted),
+the harness was physically reseated, and the same bitstream was reloaded to
+the same `done 1` signature. Configuration is SRAM-only, so the fabric was
+genuinely unconfigured in between. The display came up **without prodding**.
 
-That cannot originate in the design. The board top brings out one bit per
-channel through the three-resistor DAC and the scene contains exactly two
-colours, `(F,0,0)` and `(0,F,0)`; the complete set of emittable outputs is
-red, green and black, and depth is never routed to any output — it only feeds
-the comparator that selects between the two colours. No RTL path produces an
-intermediate level.
+Photograph `docs/bench_captures/2026-09-06_two_triangle_depth_vga_obs2.jpeg`,
+measured by the same method:
 
-The photograph analysed above was taken *before* the power cycle and shows no
-such artifact: the black V-notch measures luminance 12-21 against an unlit
-bezel reference of 19-27. That is suggestive but not conclusive, since a faint
-shadow need not survive the camera exposure.
+| | boundary as fraction of lit width | scanlines |
+|---|---:|---:|
+| predicted | 0.5000 | — |
+| observation 1, pre power-cycle | 0.5062 | 989 |
+| observation 2, post power-cycle + reseat | 0.4986 | 939 |
 
-**Leading hypothesis, not demonstrated:** an analog fault on the reseated
-harness — a degraded return path or reflection off unterminated flying leads,
-both of which ghost. The discriminating test is to load a different image
-(`build/spu_a7_100t_VGAFIX.bit`, the §3.8 colour bars): a shadow that still
-shows triangles is monitor image retention, a shadow that follows the bars is
-analog. **Not yet run.** Until it is, §3.9's re-confirmation remains
-outstanding and this entry stands as a single observation.
+The two observations bracket the prediction and differ from each other by
+0.76% of screen width (4.85 px in 640), which is the difference between two
+handheld camera positions, not a change in the design. **Two independent
+observations, one of them across a confirmed power cycle and a reseat.**
+
+**The grey shadow reported on the second load: measured, not the design.** The
+operator reported a grey shadow beneath the colours. It cannot originate in
+the design — one bit per channel through the three-resistor DAC, two flat
+colours, and depth never routed to any output. Measurement of the dark region
+in the second photograph:
+
+- It is a **smooth gradient**, not a ghost. Luminance rises 37 -> 70 walking
+  down the left dark wedge, and the horizontal gradient inside the dark region
+  is mean 2.86 and p99 11.0 per pixel. A ghosted or reflected image produces
+  localised step edges at the shape boundaries; there are none, and no
+  displaced copy of the triangles appears anywhere under a 4x contrast stretch.
+- **The black level did not change across the power cycle.** Dark-region mean
+  luminance is 33.4 in observation 1 and 36.8 in observation 2, against
+  ambient references of 121.8 and 128.6 — the small rise tracks the brighter
+  room, not the signal. A degraded return path would have lifted the black
+  level markedly and uniformly; it did not.
+
+**Conclusion: LCD backlight bleed and ambient reflection, amplified by a
+brighter room and an off-axis view of a tilted panel.** §3.8 and §3.9 recorded
+the same panel behaviour ("the background reads black by eye"). This is a
+**leading explanation supported by measurement, not a demonstrated cause** —
+the discriminating test of loading a different image
+(`build/spu_a7_100t_VGAFIX.bit`, the §3.8 colour bars) would settle it and has
+not been run.
