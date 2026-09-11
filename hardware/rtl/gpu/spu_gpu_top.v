@@ -41,7 +41,10 @@ module spu_gpu_top #(
     // output (OBUFDS/TMDS_33) -- upstream issue #66, open and unimplemented,
     // so a toolchain rebuild will not fix it. Default 1 preserves the
     // pre-existing behaviour for the Gowin path and for any Vivado flow.
-    parameter ENABLE_HDMI = 1
+    parameter ENABLE_HDMI = 1,
+    // T1c byte-level prepared-scene path. Default 0 preserves every existing
+    // direct-triangle caller; no physical UART is instantiated here.
+    parameter PREPARED_SCENE = 0
 ) (
     input  wire        clk_pixel,    // 25 MHz
     input  wire        clk_tmds,     // 250 MHz
@@ -74,6 +77,10 @@ module spu_gpu_top #(
     input  wire signed [31:0] tri1_c2,
     input  wire [3:0]  tri1_r, tri1_g, tri1_b,
     input  wire [15:0] tri1_z0, tri1_z1, tri1_z2,
+
+    // Already-decoded byte stream used only when PREPARED_SCENE=1.
+    input  wire [7:0]  scene_rx_byte,
+    input  wire        scene_rx_valid,
 
     // VGA PMOD outputs
     output wire [3:0]  vga_r, vga_g, vga_b,
@@ -162,19 +169,87 @@ module spu_gpu_top #(
     // than a one-shot one.
     wire frame_start = (vx == 10'd0) && (vy == 10'd0);
 
+    // ── T1c raw scene banking and canonical unpack ──────────────────────
+    wire [503:0] active_scene, candidate_scene;
+    wire scene_commit_pending;
+    wire activate_scene;
+    wire prepared_rx_valid = PREPARED_SCENE ? scene_rx_valid : 1'b0;
+
+    spu_scene_loader u_scene_loader (
+        .clk(clk_pixel), .rst_n(rst_n), .rx_byte(scene_rx_byte),
+        .rx_valid(prepared_rx_valid), .activate_raw_bank(activate_scene),
+        .active_scene(active_scene), .candidate_scene(candidate_scene),
+        .commit_pending(scene_commit_pending));
+
+    wire signed [15:0] ar_a0_0, ar_b0_0, ar_a1_0, ar_b1_0, ar_a2_0, ar_b2_0;
+    wire signed [31:0] ar_c0_0, ar_c1_0, ar_c2_0;
+    wire [3:0] ar_r0, ar_g0, ar_b_0;
+    wire [15:0] ar_z0_0, ar_z1_0, ar_z2_0;
+    wire signed [15:0] ar_a0_1, ar_b0_1, ar_a1_1, ar_b1_1, ar_a2_1, ar_b2_1;
+    wire signed [31:0] ar_c0_1, ar_c1_1, ar_c2_1;
+    wire [3:0] ar_r1, ar_g1, ar_b_1;
+    wire [15:0] ar_z0_1, ar_z1_1, ar_z2_1;
+    wire signed [15:0] ca_a0_0, ca_b0_0, ca_a1_0, ca_b1_0, ca_a2_0, ca_b2_0;
+    wire signed [31:0] ca_c0_0, ca_c1_0, ca_c2_0;
+    wire [3:0] ca_r0, ca_g0, ca_b_0;
+    wire [15:0] ca_z0_0, ca_z1_0, ca_z2_0;
+    wire signed [15:0] ca_a0_1, ca_b0_1, ca_a1_1, ca_b1_1, ca_a2_1, ca_b2_1;
+    wire signed [31:0] ca_c0_1, ca_c1_1, ca_c2_1;
+    wire [3:0] ca_r1, ca_g1, ca_b_1;
+    wire [15:0] ca_z0_1, ca_z1_1, ca_z2_1;
+
+    spu_scene_unpack u_active_tri0 (.scene(active_scene[251:0]),
+        .a0(ar_a0_0), .b0(ar_b0_0), .c0(ar_c0_0), .a1(ar_a1_0), .b1(ar_b1_0), .c1(ar_c1_0),
+        .a2(ar_a2_0), .b2(ar_b2_0), .c2(ar_c2_0), .r(ar_r0), .g(ar_g0), .b(ar_b_0),
+        .z0(ar_z0_0), .z1(ar_z1_0), .z2(ar_z2_0));
+    spu_scene_unpack u_active_tri1 (.scene(active_scene[503:252]),
+        .a0(ar_a0_1), .b0(ar_b0_1), .c0(ar_c0_1), .a1(ar_a1_1), .b1(ar_b1_1), .c1(ar_c1_1),
+        .a2(ar_a2_1), .b2(ar_b2_1), .c2(ar_c2_1), .r(ar_r1), .g(ar_g1), .b(ar_b_1),
+        .z0(ar_z0_1), .z1(ar_z1_1), .z2(ar_z2_1));
+    spu_scene_unpack u_candidate_tri0 (.scene(candidate_scene[251:0]),
+        .a0(ca_a0_0), .b0(ca_b0_0), .c0(ca_c0_0), .a1(ca_a1_0), .b1(ca_b1_0), .c1(ca_c1_0),
+        .a2(ca_a2_0), .b2(ca_b2_0), .c2(ca_c2_0), .r(ca_r0), .g(ca_g0), .b(ca_b_0),
+        .z0(ca_z0_0), .z1(ca_z1_0), .z2(ca_z2_0));
+    spu_scene_unpack u_candidate_tri1 (.scene(candidate_scene[503:252]),
+        .a0(ca_a0_1), .b0(ca_b0_1), .c0(ca_c0_1), .a1(ca_a1_1), .b1(ca_b1_1), .c1(ca_c1_1),
+        .a2(ca_a2_1), .b2(ca_b2_1), .c2(ca_c2_1), .r(ca_r1), .g(ca_g1), .b(ca_b_1),
+        .z0(ca_z0_1), .z1(ca_z1_1), .z2(ca_z2_1));
+
+    // Coverage samples candidate coefficients on the activation edge; after
+    // that edge T1a's active bank has advanced and supplies the same scene.
+    wire use_candidate_now = PREPARED_SCENE && activate_scene;
+    wire signed [15:0] cv_a0_0 = PREPARED_SCENE ? (use_candidate_now ? ca_a0_0 : ar_a0_0) : tri0_a0;
+    wire signed [15:0] cv_b0_0 = PREPARED_SCENE ? (use_candidate_now ? ca_b0_0 : ar_b0_0) : tri0_b0;
+    wire signed [31:0] cv_c0_0 = PREPARED_SCENE ? (use_candidate_now ? ca_c0_0 : ar_c0_0) : tri0_c0;
+    wire signed [15:0] cv_a1_0 = PREPARED_SCENE ? (use_candidate_now ? ca_a1_0 : ar_a1_0) : tri0_a1;
+    wire signed [15:0] cv_b1_0 = PREPARED_SCENE ? (use_candidate_now ? ca_b1_0 : ar_b1_0) : tri0_b1;
+    wire signed [31:0] cv_c1_0 = PREPARED_SCENE ? (use_candidate_now ? ca_c1_0 : ar_c1_0) : tri0_c1;
+    wire signed [15:0] cv_a2_0 = PREPARED_SCENE ? (use_candidate_now ? ca_a2_0 : ar_a2_0) : tri0_a2;
+    wire signed [15:0] cv_b2_0 = PREPARED_SCENE ? (use_candidate_now ? ca_b2_0 : ar_b2_0) : tri0_b2;
+    wire signed [31:0] cv_c2_0 = PREPARED_SCENE ? (use_candidate_now ? ca_c2_0 : ar_c2_0) : tri0_c2;
+    wire signed [15:0] cv_a0_1 = PREPARED_SCENE ? (use_candidate_now ? ca_a0_1 : ar_a0_1) : tri1_a0;
+    wire signed [15:0] cv_b0_1 = PREPARED_SCENE ? (use_candidate_now ? ca_b0_1 : ar_b0_1) : tri1_b0;
+    wire signed [31:0] cv_c0_1 = PREPARED_SCENE ? (use_candidate_now ? ca_c0_1 : ar_c0_1) : tri1_c0;
+    wire signed [15:0] cv_a1_1 = PREPARED_SCENE ? (use_candidate_now ? ca_a1_1 : ar_a1_1) : tri1_a1;
+    wire signed [15:0] cv_b1_1 = PREPARED_SCENE ? (use_candidate_now ? ca_b1_1 : ar_b1_1) : tri1_b1;
+    wire signed [31:0] cv_c1_1 = PREPARED_SCENE ? (use_candidate_now ? ca_c1_1 : ar_c1_1) : tri1_c1;
+    wire signed [15:0] cv_a2_1 = PREPARED_SCENE ? (use_candidate_now ? ca_a2_1 : ar_a2_1) : tri1_a2;
+    wire signed [15:0] cv_b2_1 = PREPARED_SCENE ? (use_candidate_now ? ca_b2_1 : ar_b2_1) : tri1_b2;
+    wire signed [31:0] cv_c2_1 = PREPARED_SCENE ? (use_candidate_now ? ca_c2_1 : ar_c2_1) : tri1_c2;
+
     reg armed0, armed1;
     always @(posedge clk_pixel or negedge rst_n) begin
         if (!rst_n) begin
             armed0 <= 1'b0;
             armed1 <= 1'b0;
         end else begin
-            if (tri0_setup) armed0 <= 1'b1;
-            if (tri1_setup) armed1 <= 1'b1;
+            if (PREPARED_SCENE ? activate_scene : tri0_setup) armed0 <= 1'b1;
+            if (PREPARED_SCENE ? activate_scene : tri1_setup) armed1 <= 1'b1;
         end
     end
 
-    wire setup0 = tri0_setup | (frame_start & armed0);
-    wire setup1 = tri1_setup | (frame_start & armed1);
+    wire setup0 = (PREPARED_SCENE ? activate_scene : tri0_setup) | (frame_start & armed0);
+    wire setup1 = (PREPARED_SCENE ? activate_scene : tri1_setup) | (frame_start & armed1);
 
     // ── Dual rasterizer (coverage) ──────────────────────────────────────
     wire [3:0] fixed_priority_r, fixed_priority_g, fixed_priority_b;  // unused
@@ -183,15 +258,19 @@ module spu_gpu_top #(
 
     spu_dual_raster u_rast (.clk(clk_pixel), .rst_n(rst_n),
         .setup0(setup0),
-        .a0_0(tri0_a0), .b0_0(tri0_b0), .c0_0(tri0_c0),
-        .a1_0(tri0_a1), .b1_0(tri0_b1), .c1_0(tri0_c1),
-        .a2_0(tri0_a2), .b2_0(tri0_b2), .c2_0(tri0_c2),
-        .tri_r0(tri0_r), .tri_g0(tri0_g), .tri_b0(tri0_b),
+        .a0_0(cv_a0_0), .b0_0(cv_b0_0), .c0_0(cv_c0_0),
+        .a1_0(cv_a1_0), .b1_0(cv_b1_0), .c1_0(cv_c1_0),
+        .a2_0(cv_a2_0), .b2_0(cv_b2_0), .c2_0(cv_c2_0),
+        .tri_r0(PREPARED_SCENE ? ar_r0 : tri0_r),
+        .tri_g0(PREPARED_SCENE ? ar_g0 : tri0_g),
+        .tri_b0(PREPARED_SCENE ? ar_b_0 : tri0_b),
         .setup1(setup1),
-        .a0_1(tri1_a0), .b0_1(tri1_b0), .c0_1(tri1_c0),
-        .a1_1(tri1_a1), .b1_1(tri1_b1), .c1_1(tri1_c1),
-        .a2_1(tri1_a2), .b2_1(tri1_b2), .c2_1(tri1_c2),
-        .tri_r1(tri1_r), .tri_g1(tri1_g), .tri_b1(tri1_b),
+        .a0_1(cv_a0_1), .b0_1(cv_b0_1), .c0_1(cv_c0_1),
+        .a1_1(cv_a1_1), .b1_1(cv_b1_1), .c1_1(cv_c1_1),
+        .a2_1(cv_a2_1), .b2_1(cv_b2_1), .c2_1(cv_c2_1),
+        .tri_r1(PREPARED_SCENE ? ar_r1 : tri1_r),
+        .tri_g1(PREPARED_SCENE ? ar_g1 : tri1_g),
+        .tri_b1(PREPARED_SCENE ? ar_b_1 : tri1_b),
         .step_x(step_x), .step_y(step_y),
         .pixel_r(fixed_priority_r), .pixel_g(fixed_priority_g), .pixel_b(fixed_priority_b),
         .cov0_out(cov0), .cov1_out(cov1),
@@ -202,23 +281,53 @@ module spu_gpu_top #(
     wire signed [55:0] A_z0, B_z0, C_z0, A_z1, B_z1, C_z1;
     wire [6:0] frac_bits0, frac_bits1;
     wire ready0, ready1;
+    wire candidate_prepare0, candidate_prepare1;
+    wire prepared_ready0, prepared_ready1, prepared_generation_matches;
+    wire signed [55:0] active_A_z0, active_B_z0, active_C_z0;
+    wire signed [55:0] active_A_z1, active_B_z1, active_C_z1;
+    wire [6:0] active_frac_bits0, active_frac_bits1;
+    wire depth_setup0 = PREPARED_SCENE ? candidate_prepare0 : tri0_setup;
+    wire depth_setup1 = PREPARED_SCENE ? candidate_prepare1 : tri1_setup;
 
     // depth_setup0/1 are tri0_setup/tri1_setup, NOT setup0/setup1: the depth
     // coefficients depend only on the triangle, so recomputing them at every
     // frame start was both wasted work and the cause of the mid-row anchor
     // documented above.
     spu_depth_dispatch u_depth_dispatch (.clk(clk_pixel), .rst_n(rst_n),
-        .depth_setup0(tri0_setup), .depth_setup1(tri1_setup),
-        .a0_0(tri0_a0), .b0_0(tri0_b0), .a1_0(tri0_a1), .b1_0(tri0_b1),
-        .a2_0(tri0_a2), .b2_0(tri0_b2),
-        .c0_0(tri0_c0), .c1_0(tri0_c1), .c2_0(tri0_c2),
-        .z0_0(tri0_z0), .z1_0(tri0_z1), .z2_0(tri0_z2),
-        .a0_1(tri1_a0), .b0_1(tri1_b0), .a1_1(tri1_a1), .b1_1(tri1_b1),
-        .a2_1(tri1_a2), .b2_1(tri1_b2),
-        .c0_1(tri1_c0), .c1_1(tri1_c1), .c2_1(tri1_c2),
-        .z0_1(tri1_z0), .z1_1(tri1_z1), .z2_1(tri1_z2),
+        .depth_setup0(depth_setup0), .depth_setup1(depth_setup1),
+        .a0_0(PREPARED_SCENE ? ca_a0_0 : tri0_a0), .b0_0(PREPARED_SCENE ? ca_b0_0 : tri0_b0),
+        .a1_0(PREPARED_SCENE ? ca_a1_0 : tri0_a1), .b1_0(PREPARED_SCENE ? ca_b1_0 : tri0_b1),
+        .a2_0(PREPARED_SCENE ? ca_a2_0 : tri0_a2), .b2_0(PREPARED_SCENE ? ca_b2_0 : tri0_b2),
+        .c0_0(PREPARED_SCENE ? ca_c0_0 : tri0_c0), .c1_0(PREPARED_SCENE ? ca_c1_0 : tri0_c1),
+        .c2_0(PREPARED_SCENE ? ca_c2_0 : tri0_c2),
+        .z0_0(PREPARED_SCENE ? ca_z0_0 : tri0_z0), .z1_0(PREPARED_SCENE ? ca_z1_0 : tri0_z1),
+        .z2_0(PREPARED_SCENE ? ca_z2_0 : tri0_z2),
+        .a0_1(PREPARED_SCENE ? ca_a0_1 : tri1_a0), .b0_1(PREPARED_SCENE ? ca_b0_1 : tri1_b0),
+        .a1_1(PREPARED_SCENE ? ca_a1_1 : tri1_a1), .b1_1(PREPARED_SCENE ? ca_b1_1 : tri1_b1),
+        .a2_1(PREPARED_SCENE ? ca_a2_1 : tri1_a2), .b2_1(PREPARED_SCENE ? ca_b2_1 : tri1_b2),
+        .c0_1(PREPARED_SCENE ? ca_c0_1 : tri1_c0), .c1_1(PREPARED_SCENE ? ca_c1_1 : tri1_c1),
+        .c2_1(PREPARED_SCENE ? ca_c2_1 : tri1_c2),
+        .z0_1(PREPARED_SCENE ? ca_z0_1 : tri1_z0), .z1_1(PREPARED_SCENE ? ca_z1_1 : tri1_z1),
+        .z2_1(PREPARED_SCENE ? ca_z2_1 : tri1_z2),
         .A_z0(A_z0), .B_z0(B_z0), .C_z0(C_z0), .frac_bits0(frac_bits0), .ready0(ready0),
         .A_z1(A_z1), .B_z1(B_z1), .C_z1(C_z1), .frac_bits1(frac_bits1), .ready1(ready1));
+
+    spu_prepared_scene_control u_prepared_control (
+        .clk(clk_pixel), .rst_n(rst_n),
+        .commit_pending(PREPARED_SCENE ? scene_commit_pending : 1'b0),
+        .frame_start(frame_start), .ready0(ready0), .ready1(ready1),
+        .candidate_A_z0(A_z0), .candidate_B_z0(B_z0), .candidate_C_z0(C_z0),
+        .candidate_frac_bits0(frac_bits0),
+        .candidate_A_z1(A_z1), .candidate_B_z1(B_z1), .candidate_C_z1(C_z1),
+        .candidate_frac_bits1(frac_bits1),
+        .prepare0(candidate_prepare0), .prepare1(candidate_prepare1),
+        .activate_scene(activate_scene),
+        .ready0_seen(prepared_ready0), .ready1_seen(prepared_ready1),
+        .generation_matches(prepared_generation_matches),
+        .active_A_z0(active_A_z0), .active_B_z0(active_B_z0), .active_C_z0(active_C_z0),
+        .active_frac_bits0(active_frac_bits0),
+        .active_A_z1(active_A_z1), .active_B_z1(active_B_z1), .active_C_z1(active_C_z1),
+        .active_frac_bits1(active_frac_bits1));
 
     // ── Depth-v2 re-anchor ───────────────────────────────────────────────
     // BUG FIX 2026-09-06. The coverage path above re-anchors at (0,0); the
@@ -268,8 +377,8 @@ module spu_gpu_top #(
             depth_armed0 <= 1'b0;
             depth_armed1 <= 1'b0;
         end else begin
-            if (ready0) depth_armed0 <= 1'b1;
-            if (ready1) depth_armed1 <= 1'b1;
+            if (PREPARED_SCENE ? activate_scene : ready0) depth_armed0 <= 1'b1;
+            if (PREPARED_SCENE ? activate_scene : ready1) depth_armed1 <= 1'b1;
         end
     end
 
@@ -287,17 +396,36 @@ module spu_gpu_top #(
     // frame_start term owns the anchor from then on. A triangle whose
     // coefficients change therefore takes effect at the next frame boundary
     // rather than part-way down the screen, which is also what you want.
-    wire attr_setup0 = (ready0 & ~depth_armed0) | (frame_start & depth_armed0);
-    wire attr_setup1 = (ready1 & ~depth_armed1) | (frame_start & depth_armed1);
+    wire attr_setup0 = PREPARED_SCENE ?
+        (activate_scene | (frame_start & depth_armed0)) :
+        ((ready0 & ~depth_armed0) | (frame_start & depth_armed0));
+    wire attr_setup1 = PREPARED_SCENE ?
+        (activate_scene | (frame_start & depth_armed1)) :
+        ((ready1 & ~depth_armed1) | (frame_start & depth_armed1));
+
+    wire signed [55:0] attr_A_z0 = PREPARED_SCENE ?
+        (activate_scene ? A_z0 : active_A_z0) : A_z0;
+    wire signed [55:0] attr_B_z0 = PREPARED_SCENE ?
+        (activate_scene ? B_z0 : active_B_z0) : B_z0;
+    wire signed [55:0] attr_C_z0 = PREPARED_SCENE ?
+        (activate_scene ? C_z0 : active_C_z0) : C_z0;
+    wire [6:0] attr_frac_bits0 = PREPARED_SCENE ? active_frac_bits0 : frac_bits0;
+    wire signed [55:0] attr_A_z1 = PREPARED_SCENE ?
+        (activate_scene ? A_z1 : active_A_z1) : A_z1;
+    wire signed [55:0] attr_B_z1 = PREPARED_SCENE ?
+        (activate_scene ? B_z1 : active_B_z1) : B_z1;
+    wire signed [55:0] attr_C_z1 = PREPARED_SCENE ?
+        (activate_scene ? C_z1 : active_C_z1) : C_z1;
+    wire [6:0] attr_frac_bits1 = PREPARED_SCENE ? active_frac_bits1 : frac_bits1;
 
     wire signed [55:0] depth0, depth1;
     spu_attr_stepper u_attr0 (.clk(clk_pixel), .rst_n(rst_n), .setup(attr_setup0),
-        .a_coef(A_z0), .b_coef(B_z0), .c_coef(C_z0),
-        .step_x(step_x), .step_y(step_y), .frac_bits(frac_bits0),
+        .a_coef(attr_A_z0), .b_coef(attr_B_z0), .c_coef(attr_C_z0),
+        .step_x(step_x), .step_y(step_y), .frac_bits(attr_frac_bits0),
         .value_out(depth0));
     spu_attr_stepper u_attr1 (.clk(clk_pixel), .rst_n(rst_n), .setup(attr_setup1),
-        .a_coef(A_z1), .b_coef(B_z1), .c_coef(C_z1),
-        .step_x(step_x), .step_y(step_y), .frac_bits(frac_bits1),
+        .a_coef(attr_A_z1), .b_coef(attr_B_z1), .c_coef(attr_C_z1),
+        .step_x(step_x), .step_y(step_y), .frac_bits(attr_frac_bits1),
         .value_out(depth1));
 
     // ── Real depth-aware pixel selection (replaces spu_dual_raster's

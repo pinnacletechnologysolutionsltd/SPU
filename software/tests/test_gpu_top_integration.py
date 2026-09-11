@@ -36,6 +36,9 @@ from gpu_depth_v2_oracle import triangle_edges  # noqa: E402
 RTL_FILES = [
     "hardware/rtl/gpu/spu_gpu_top.v",
     "hardware/rtl/gpu/spu_video_timing.v",
+    "hardware/rtl/gpu/spu_scene_loader.v",
+    "hardware/rtl/gpu/spu_scene_unpack.v",
+    "hardware/rtl/gpu/spu_prepared_scene_control.v",
     "hardware/rtl/gpu/spu_dual_raster.v",
     "hardware/rtl/gpu/spu_raster_unit.v",
     "hardware/rtl/gpu/spu_edge_stepper.v",
