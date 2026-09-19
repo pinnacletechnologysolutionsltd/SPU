@@ -6,6 +6,8 @@
 # and requires the Artix-7 build. This probe uses PIPELINE=0 (config only).
 
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 
 mkdir -p build
 

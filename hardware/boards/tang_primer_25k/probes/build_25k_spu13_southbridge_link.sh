@@ -2,6 +2,8 @@
 # build_25k_spu13_southbridge_link.sh — SPI link-only probe
 # Proves the RP2350↔FPGA SPI link without any core compute overhead.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (SPI link-only) ---"

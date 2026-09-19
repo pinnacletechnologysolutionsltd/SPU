@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # build_25k_spu13_neuro_sidecar_probe.sh -- Tang 25K neuro sidecar adapter probe
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (neuro sidecar adapter probe) ---"

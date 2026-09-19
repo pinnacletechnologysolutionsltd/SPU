@@ -3,6 +3,8 @@
 # Synthesise, place-and-route, and generate bitstream for the
 # exponent-tagged ROTC probe on Tang Primer 25K.
 set -euo pipefail
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 
 BOARD_DIR="hardware/boards/tang_primer_25k"
 BUILD_DIR="build"

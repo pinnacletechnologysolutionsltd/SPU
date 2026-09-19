@@ -4,6 +4,8 @@
 # measurement (see spu_strategy/contract_gpu_mult42_isolation_probe_2026-08-25.md),
 # not a silicon claim.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (42x42 shared-multiplier probe) ---"

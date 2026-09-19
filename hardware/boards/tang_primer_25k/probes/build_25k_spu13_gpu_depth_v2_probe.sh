@@ -2,6 +2,8 @@
 # build_25k_spu13_gpu_depth_v2_probe.sh — integrated coverage + depth-v2
 # area probe. Synthesis + place/route only, not a silicon claim.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (integrated coverage + depth-v2 probe) ---"

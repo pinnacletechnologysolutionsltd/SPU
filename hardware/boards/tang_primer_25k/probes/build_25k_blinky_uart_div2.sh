@@ -5,6 +5,8 @@
 # Isolates whether that divider is alive on real silicon. Expect three
 # blink rates and "DIV2K" lines at 115200 baud.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- Yosys Synthesis (blinky+uart+clkdiv sanity probe) ---"

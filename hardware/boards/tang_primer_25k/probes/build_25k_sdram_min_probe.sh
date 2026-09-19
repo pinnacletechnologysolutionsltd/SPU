@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # build_25k_sdram_min_probe.sh — Clean SDRAM test for Tang Primer 25K
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 
 mkdir -p build
 

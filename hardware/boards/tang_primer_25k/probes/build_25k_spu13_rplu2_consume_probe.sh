@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # build_25k_spu13_rplu2_consume_probe.sh -- Tang 25K RPLU2 table-consumption proof
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 
 mkdir -p build
 

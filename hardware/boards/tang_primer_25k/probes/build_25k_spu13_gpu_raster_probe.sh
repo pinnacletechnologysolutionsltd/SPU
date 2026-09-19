@@ -4,6 +4,8 @@
 # measurement (see spu_strategy/contract_gpu_raster_synth_probe_2026-08-25.md),
 # not a silicon claim.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (GPU raster coverage-path probe) ---"

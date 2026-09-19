@@ -14,6 +14,8 @@
 # I is ABI v1.1's id port (SPU4_ABI.md 2a) -- wired through here for the
 # first time, so a matching I=1110 off real silicon is what this build adds.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (SPU-4 ABI probe) ---"

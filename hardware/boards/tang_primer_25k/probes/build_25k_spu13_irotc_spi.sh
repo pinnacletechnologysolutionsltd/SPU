@@ -2,6 +2,8 @@
 # build_25k_spu13_irotc_spi.sh — Tang 25K IROTC over southbridge SPI
 # MATH=1 southbridge + CORE_ENABLE_IROTC=1: A5 rotations via SPI 0xB1, results via 0xAE.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 
 mkdir -p build
 

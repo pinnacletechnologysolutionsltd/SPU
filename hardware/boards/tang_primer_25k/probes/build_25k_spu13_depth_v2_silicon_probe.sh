@@ -4,6 +4,8 @@
 # and one per-pixel depth sample against hardcoded oracle-derived
 # expected values, reports P/F + the raw depth over UART (115200 baud).
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (depth-v2 silicon probe) ---"

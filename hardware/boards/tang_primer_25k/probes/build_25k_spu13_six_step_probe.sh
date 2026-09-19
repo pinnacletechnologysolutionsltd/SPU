@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # build_25k_spu13_six_step_probe.sh -- Tang 25K six-step robotics probe
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (six-step robotics probe) ---"

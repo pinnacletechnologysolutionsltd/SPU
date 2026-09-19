@@ -36,6 +36,8 @@
 # (arbitrary queries) or tools/spu4_som_edge_smoketest.py does NOT apply
 # here -- that one is the fixed probe's smoke test, not this probe's.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (SPU-4 SOM edge interactive probe) ---"

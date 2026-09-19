@@ -4,6 +4,8 @@
 # rendered image over UART (115200 baud) for a host to reconstruct --
 # no video PMOD/PLL needed or available on this board.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (framebuffer readout probe) ---"

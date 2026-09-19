@@ -3,6 +3,8 @@
 # No SPU logic. Isolates bitstream load, clock, LED pins, and the C3->BL616
 # USB-CDC UART leg. Expect three blink rates and "BLINK" lines at 115200.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- Yosys Synthesis (blinky+uart sanity probe) ---"

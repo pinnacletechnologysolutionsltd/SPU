@@ -2,6 +2,8 @@
 # build_25k_spu13_mult35_probe.sh — corrected shared-multiplier isolation probe
 # Synthesis + place/route only, not a silicon claim.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (35x17 shared-multiplier probe) ---"

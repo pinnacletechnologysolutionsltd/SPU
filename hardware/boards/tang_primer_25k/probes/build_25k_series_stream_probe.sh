@@ -18,6 +18,8 @@
 # Hyper-Catalan series evaluator with ONE shared M31 multiplier muxed
 # between the Fp4 tower and the stream.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 CST="${CST:-hardware/boards/tang_primer_25k/tang_primer_25k.cst}"

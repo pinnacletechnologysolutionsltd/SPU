@@ -3,6 +3,8 @@
 # Synthesise, place-and-route, and generate bitstream for the
 # Whisper v1 emitter+listener loopback probe on Tang Primer 25K.
 set -euo pipefail
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BOARD_DIR="$SCRIPT_DIR/hardware/boards/tang_primer_25k"

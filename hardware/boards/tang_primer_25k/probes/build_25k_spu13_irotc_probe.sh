@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # build_25k_spu13_irotc_probe.sh — IROTC Engine standalone probe
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (IROTC engine probe) ---"

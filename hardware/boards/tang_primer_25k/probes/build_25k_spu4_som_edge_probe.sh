@@ -19,6 +19,8 @@
 # oracle fixture's feature-3-dependent case -- see the probe's header for
 # why an exact-match query could not have caught the bug this proves fixed.
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (SPU-4 SOM edge probe) ---"

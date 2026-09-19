@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # build_25k_spu13_neuro_guard_probe.sh -- Tang 25K neuro-safe guard probe
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 mkdir -p build
 
 echo "--- 1. Yosys Synthesis (neuro-safe guard probe) ---"

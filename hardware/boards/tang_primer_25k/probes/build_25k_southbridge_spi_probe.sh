@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # build_25k_southbridge_spi_probe.sh — Tang 25K SPI-only southbridge telemetry probe
 set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+cd "$REPO_ROOT"
 
 mkdir -p build
 
