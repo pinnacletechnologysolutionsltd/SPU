@@ -19,9 +19,15 @@
 //
 // CC0 1.0 Universal.
 
-module spu_a7_gpu_vga_top (
+module spu_a7_gpu_vga_top #(
+    parameter PREPARED_SCENE = 0,
+    parameter COST_STIMULUS  = 0
+) (
     input  wire        sys_clk,      // M21, 50 MHz
     input  wire        rst_n,        // H7, active low, board PULLUP
+`ifdef GPU_T1D_UART
+    input  wire        uart_rx,      // F3, onboard CH340 TXD
+`endif
     output wire        vga_r,        // 1 bit per channel through 3 resistors
     output wire        vga_g,
     output wire        vga_b,
@@ -51,6 +57,41 @@ module spu_a7_gpu_vga_top (
     reg [2:0] pix_rst_sync = 3'b000;
     always @(posedge clk_pixel) pix_rst_sync <= {pix_rst_sync[1:0], rst_n_db};
     wire pix_rst_n = pix_rst_sync[2];
+
+    // Synthesis-cost stimulus only. Canonical and physical builds leave
+    // COST_STIMULUS=0, so this state and the prepared-scene path disappear.
+    wire [7:0] scene_rx_byte;
+    wire       scene_rx_valid;
+    generate
+`ifdef GPU_T1D_UART
+        if (1'b1) begin : t1d_uart_input
+            wire [7:0] uart_data;
+            wire       uart_valid;
+            wire       uart_frame_err;
+            spu_uart_rx #(.CLK_HZ(25_000_000), .BAUD(115200)) u_uart (
+                .clk(clk_pixel), .rst_n(pix_rst_n), .rx(uart_rx),
+                .data(uart_data), .valid(uart_valid),
+                .frame_err(uart_frame_err));
+            assign scene_rx_byte  = uart_data;
+            assign scene_rx_valid = uart_valid;
+        end
+`else
+        if (COST_STIMULUS) begin : cost_stimulus
+            (* keep *) reg [8:0] lfsr = 9'h001;
+            always @(posedge clk_pixel) begin
+                if (!pix_rst_n)
+                    lfsr <= 9'h001;
+                else
+                    lfsr <= {lfsr[7:0], lfsr[8] ^ lfsr[4]};
+            end
+            assign scene_rx_byte  = lfsr[7:0];
+            assign scene_rx_valid = lfsr[8];
+        end else begin : no_cost_stimulus
+            assign scene_rx_byte  = 8'h00;
+            assign scene_rx_valid = 1'b0;
+        end
+`endif
+    endgenerate
 
     // ── Frame-start pulse for triangle setup ─────────────────────────────
     // REQUIRED, not an optimisation. spu_gpu_top derives step_y from the
@@ -141,7 +182,10 @@ module spu_a7_gpu_vga_top (
     wire [3:0] gr, gg, gb;
     wire g_hsync, g_vsync;
 
-    spu_gpu_top #(.DEVICE("A7"), .ENABLE_HDMI(0)) u_gpu (
+    spu_gpu_top #(
+        .DEVICE("A7"), .ENABLE_HDMI(0),
+        .PREPARED_SCENE(PREPARED_SCENE)
+    ) u_gpu (
         .clk_pixel(clk_pixel),
         .clk_tmds (clk_pixel),   // unused with ENABLE_HDMI=0
         .rst_n    (pix_rst_n),
@@ -159,6 +203,9 @@ module spu_a7_gpu_vga_top (
         .tri1_a2(T1_E2_A), .tri1_b2(T1_E2_B), .tri1_c2(T1_E2_C),
         .tri1_r(4'h0), .tri1_g(4'hF), .tri1_b(4'h0),   // green
         .tri1_z0(T1_Z0), .tri1_z1(T1_Z1), .tri1_z2(T1_Z2),
+
+        .scene_rx_byte(scene_rx_byte),
+        .scene_rx_valid(scene_rx_valid),
 
         .vga_r(gr), .vga_g(gg), .vga_b(gb),
         .vga_hsync(g_hsync), .vga_vsync(g_vsync),

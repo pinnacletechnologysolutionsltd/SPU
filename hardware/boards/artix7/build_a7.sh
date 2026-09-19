@@ -36,6 +36,26 @@ DEVICE_CHIP="${1:-100t}"
 SPIN="${2:-full}"
 STEP="${3:-all}"
 A7_FREQ_ENV="${A7_FREQ:-}"
+if [ -n "${GPU_PREPARED_SCENE+x}" ]; then
+    GPU_PREPARED_EXPLICIT=1
+else
+    GPU_PREPARED_EXPLICIT=0
+fi
+GPU_PREPARED_SCENE="${GPU_PREPARED_SCENE:-0}"
+case "$GPU_PREPARED_SCENE" in
+    0|1) ;;
+    *) echo "Invalid GPU_PREPARED_SCENE: $GPU_PREPARED_SCENE (use 0|1)"; exit 1;;
+esac
+GPU_T1D_UART="${GPU_T1D_UART:-0}"
+case "$GPU_T1D_UART" in
+    0|1) ;;
+    *) echo "Invalid GPU_T1D_UART: $GPU_T1D_UART (use 0|1)"; exit 1;;
+esac
+if [ "$GPU_T1D_UART" = "1" ] && [ "$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')" != "GPUVGA" ]; then
+    echo "GPU_T1D_UART applies only to GPUVGA (spin is $SPIN)"
+    exit 1
+fi
+A7_ARTIFACT_TAG="${A7_ARTIFACT_TAG:-}"
 # TEMPORARY bring-up aid, explicit opt-in only, no spin defaults this to 1 --
 # see spu_a7_top.v's A7_UART_DIAG parameter doc.
 A7_UART_DIAG="${A7_UART_DIAG:-0}"
@@ -146,6 +166,10 @@ fi
 
 # Resolve spin to uppercase
 SPIN=$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')
+if [ "$GPU_PREPARED_EXPLICIT" = "1" ] && [ "$SPIN" != "GPUVGA" ]; then
+    echo "GPU_PREPARED_SCENE applies only to GPUVGA (spin is $SPIN)"
+    exit 1
+fi
 if [ "$PADE_DEBUG_TRACE" = "1" ] && [ "$SPIN" != "RPLU2PADE" ]; then
     echo "PADE_DEBUG_TRACE=1 applies only to RPLU2PADE (spin is $SPIN)"
     exit 1
@@ -179,6 +203,32 @@ A7_FREQ="${A7_FREQ_ENV:-$A7_FREQ_DEFAULT}"
 # Make nextpnr's seed explicit in logs and metrics. A7_SEED remains available
 # for deterministic placement exploration without changing the default flow.
 A7_SEED="${A7_SEED:-1}"
+
+GPU_VARIANT=""
+GPU_COST_STIMULUS=0
+if [ "$GPU_PREPARED_EXPLICIT" = "1" ]; then
+    GPU_VARIANT="_PS${GPU_PREPARED_SCENE}_S${A7_SEED}"
+    GPU_COST_STIMULUS=1
+fi
+if [ -n "$A7_ARTIFACT_TAG" ]; then
+    case "$A7_ARTIFACT_TAG" in
+        T1D_B0_S1|T1D_B1_S1) ;;
+        *) echo "Invalid A7_ARTIFACT_TAG: $A7_ARTIFACT_TAG"; exit 1;;
+    esac
+    GPU_VARIANT="_${A7_ARTIFACT_TAG}"
+fi
+if [ "$GPU_T1D_UART" = "1" ]; then
+    if [ "$GPU_PREPARED_EXPLICIT" = "1" ] || [ "$GPU_PREPARED_SCENE" != "0" ]; then
+        echo "GPU_T1D_UART cannot be combined with GPU_PREPARED_SCENE"
+        exit 1
+    fi
+    if [ -n "$A7_ARTIFACT_TAG" ] && [ "$A7_ARTIFACT_TAG" != "T1D_B1_S1" ]; then
+        echo "GPU_T1D_UART requires A7_ARTIFACT_TAG=T1D_B1_S1"
+        exit 1
+    fi
+    GPU_VARIANT="_T1D_B1_S1"
+    GPU_COST_STIMULUS=0
+fi
 
 # Selector for the two tensegrity A/B spins, defaulting to the Phase 5
 # production candidate (Karatsuba three-product multiplier). Reject invalid
@@ -256,20 +306,20 @@ case "$DEVICE_CHIP" in
         PART="xc7a35tcsg324-1"; XDC="hardware/boards/artix7/spu_a7_35t.xdc"
         DEVICE_PARAM="A7_35T"
         CHIPDB="build/chipdb/xc7a35t.bin"
-        JSON="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.json"
-        BITSTREAM="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.bit";;
+        JSON="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.json"
+        BITSTREAM="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.bit";;
     100t)
         PART="xc7a100tfgg676-1"; XDC="hardware/boards/artix7/spu_a7_100t.xdc"
         DEVICE_PARAM="A7_100T"
         CHIPDB="build/chipdb/xc7a100tfgg676.bin"
-        JSON="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.json"
-        BITSTREAM="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.bit";;
+        JSON="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.json"
+        BITSTREAM="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.bit";;
     200t)
         PART="xc7a200tsbg484-1"; XDC="hardware/boards/artix7/spu_a7_200t.xdc"
         DEVICE_PARAM="A7_200T"
         CHIPDB="build/chipdb/xc7a200t.bin"
-        JSON="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.json"
-        BITSTREAM="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}.bit";;
+        JSON="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.json"
+        BITSTREAM="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.bit";;
     *) echo "Unknown device: $DEVICE_CHIP (use 35t|100t|200t)"; exit 1;;
 esac
 
@@ -313,8 +363,13 @@ elif [ "$SPIN" = "VGAFIX" ]; then
     XDC="hardware/boards/artix7/spu_a7_vga_fix.xdc"
     TOP="spu_a7_vga_top"
 elif [ "$SPIN" = "GPUVGA" ]; then
-    YS="hardware/boards/artix7/synth_a7_gpu_vga.ys"
-    XDC="hardware/boards/artix7/spu_a7_gpu_vga.xdc"
+    if [ "$GPU_T1D_UART" = "1" ]; then
+        YS="hardware/boards/artix7/synth_a7_gpu_vga_t1d.ys"
+        XDC="hardware/boards/artix7/spu_a7_gpu_vga_t1d.xdc"
+    else
+        YS="hardware/boards/artix7/synth_a7_gpu_vga.ys"
+        XDC="hardware/boards/artix7/spu_a7_gpu_vga.xdc"
+    fi
     TOP="spu_a7_gpu_vga_top"
 elif [ "$SPIN" = "VGAREV" ]; then
     YS="hardware/boards/artix7/synth_a7_vga_rev.ys"
@@ -340,6 +395,9 @@ echo "  Spin:   $SPIN"
 echo "  Step:   $STEP"
 echo "  Freq:   ${A7_FREQ} MHz"
 echo "  Seed:   ${A7_SEED}"
+echo "  GPU prepared: ${GPU_PREPARED_SCENE} (cost stimulus=${GPU_COST_STIMULUS})"
+echo "  GPU T1d UART: ${GPU_T1D_UART}"
+echo "  Artifact tag: ${A7_ARTIFACT_TAG:-none}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
 echo "  Fp4Inv: structured=${FP4_STRUCTURED} request-sequential=${FP4_STRUCTURED_SEQUENTIAL} backend-sequential=${FP4_BACKEND_SEQUENTIAL}"
 echo "  Trace:  PADE_DEBUG_TRACE=${PADE_DEBUG_TRACE}"
@@ -369,6 +427,22 @@ synth() {
             hierarchy -check -top $TOP \
                       -chparam USE_STRUCTURED $FP4_STRUCTURED \
                       -chparam SEQUENTIAL $FP4_BACKEND_SEQUENTIAL; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    elif [ "$SPIN" = "GPUVGA" ] && [ "$GPU_T1D_UART" = "1" ]; then
+        yosys -p "script $YS; \
+            chparam -set PREPARED_SCENE 1 \
+                    -set COST_STIMULUS 0 \
+                    $TOP; \
+            hierarchy -top $TOP; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    elif [ "$SPIN" = "GPUVGA" ] && [ "$GPU_PREPARED_EXPLICIT" = "1" ]; then
+        yosys -p "script $YS; \
+            hierarchy -top $TOP \
+                      -chparam PREPARED_SCENE $GPU_PREPARED_SCENE \
+                      -chparam COST_STIMULUS $GPU_COST_STIMULUS; \
+            hierarchy -check -top $TOP; \
             synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
             stat -top $TOP"
     elif [ "$TOP" != "spu_a7_top" ]; then
@@ -419,7 +493,7 @@ pnr() {
 
     nextpnr-xilinx "${NEXTPNR_ARGS[@]}"
 
-    METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}"
+    METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}"
     METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; FP4_STRUCTURED=${FP4_STRUCTURED}; FP4_BACKEND_SEQUENTIAL=${FP4_BACKEND_SEQUENTIAL}; PADE_DEBUG_TRACE=${PADE_DEBUG_TRACE}; post-route metrics from nextpnr-xilinx."
     if [ -n "$TENSEGRITY_VARIANT" ]; then
         METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; ZPHI_KARATSUBA=${ZPHI_KARATSUBA}; post-route metrics from nextpnr-xilinx."
@@ -545,7 +619,7 @@ flash() {
 }
 
 case "$STEP" in
-    synth) synth;;  pnr) pnr;;  pack) pack;;  flash) flash;;
+    synth) synth;;  pnr) pnr;;  synth_pnr) synth && pnr;;  pack) pack;;  flash) flash;;
     all) synth && pnr && pack;;
     *) echo "Unknown step: $STEP"; exit 1;;
 esac

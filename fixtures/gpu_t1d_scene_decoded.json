@@ -1,0 +1,9 @@
+{
+  "format": "gpu_t1d_scene_payload_v1",
+  "payload_bytes": 63,
+  "wire_bytes": 64,
+  "start_byte": "A5",
+  "packing": "payload byte i maps to scene[8*i +: 8]",
+  "source": "hardware/tests/common/spu_scene_loader_tb.v SCENE_A",
+  "scene_hex_msb_first": "bbb8b5b2afaca9a6a3a09d9a9794918e8b8885827f7c797673706d6a6764615e5b5855524f4c494643403d3a3734312e2b2825221f1c191613100d0a070401"
+}
