@@ -108,8 +108,7 @@ tools/rp2040_tooling/repos/
 hardware/tests/**/*_formal/
 hardware/tests/**/*_formal_*/
 
-# ─── Business strategy — private, stays out of the public repo ───────────
-spu_strategy/
+# ─── Strategy contracts are source records and must be reviewable ─────────
 
 # ─── Local flash-dump backups (proprietary bootloader content) ───────────
 /local_flash_backups/

@@ -105,6 +105,10 @@ module spu_t1d_uart_loader_tb;
         check(!commit_pending, "start byte alone cannot commit");
         send_byte(SCENE[0 +: 8]);
         check(!commit_pending, "one payload byte cannot commit");
+        reset_dut();
+        check(!commit_pending && active_scene === 504'b0,
+              "early reset during reception clears loader state");
+        send_byte(8'hA5);
         for (i = 1; i < 32; i = i + 1)
             send_byte(SCENE[i*8 +: 8]);
         check(!commit_pending, "33 wire bytes cannot commit");
