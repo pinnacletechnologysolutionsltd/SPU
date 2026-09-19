@@ -53,8 +53,8 @@ This contract depends on, but does not reopen, the following project decisions a
 2. `spu_strategy/contract_gpu_pipeline_tranche_2026-09-06.md` remains a draft rev 5 and must not be treated as blanket authorization.
 3. `spu_strategy/contract_gpu_uart_scene_loader_t1a_2026-09-11.md` defines a loader that consumes `0xA5` followed by a 63-byte/504-bit payload. T1a is complete in simulation and does not itself provide physical UART ingress or GPU integration.
 4. `spu_strategy/contract_gpu_prepared_scene_t1b_2026-09-11.md` selects B1 atomic activation. That architecture is inherited unchanged.
-5. T1c prepared-state banking is recorded as closed PASS in `docs/WUKONG_GPU_CHECKPOINT_2026-09-11.md`. This contract integrates that implementation; it does not replace it.
-6. `spu_strategy/contract_wukong_gpu_prepared_cost_2026-09-13.md` and its completed PS0/PS1 evidence provide cost baselines. The stale prepared-cost terminal text in that contract and `docs/WUKONG_GPU_CHECKPOINT_2026-09-11.md` must both be reconciled during Stage A without rewriting the historical initial failure.
+5. T1c prepared-state banking is recorded as closed PASS in `docs/archive/bench_sessions/WUKONG_GPU_CHECKPOINT_2026-09-11.md`. This contract integrates that implementation; it does not replace it.
+6. `spu_strategy/contract_wukong_gpu_prepared_cost_2026-09-13.md` and its completed PS0/PS1 evidence provide cost baselines. The stale prepared-cost terminal text in that contract and `docs/archive/bench_sessions/WUKONG_GPU_CHECKPOINT_2026-09-11.md` must both be reconciled during Stage A without rewriting the historical initial failure.
 7. The existing `spu_a7_vga_top`/VGAFIX image is the known-good board, monitor, pinout, clock, sync, colour-channel, and harness test.
 8. The canonical `spu_a7_gpu_vga_top` configuration with prepared scene disabled and cost stimulus disabled is the known hardcoded red/green two-triangle GPU test.
 9. UART receive through the onboard CH340 on F3 is separately silicon-verified at 115200 8N1 by the 20/20-byte echo and zero-stray-byte negative control in `docs/hardware_evidence.md` Section 3.11.
@@ -79,7 +79,7 @@ Stage A deliverables are:
   - J10-3 / G7: GREEN
   - J10-4 / G8: RED
   - J10-7 / E5: VSYNC
-- [ ] Reconcile the completed PS0/PS1 result in both `spu_strategy/contract_wukong_gpu_prepared_cost_2026-09-13.md` and the stale prepared-cost entry at `docs/WUKONG_GPU_CHECKPOINT_2026-09-11.md:78`, preserving the historical initial failure.
+- [ ] Reconcile the completed PS0/PS1 result in both `spu_strategy/contract_wukong_gpu_prepared_cost_2026-09-13.md` and the stale prepared-cost entry at `docs/archive/bench_sessions/WUKONG_GPU_CHECKPOINT_2026-09-11.md:78`, preserving the historical initial failure.
 - [ ] Confirm that the repository contains the exact T1a, T1b/B1, and T1c artifacts referenced in Section 1.
 - [ ] Create and freeze the Section 5 payload, wire transaction, decoded reference, diagnostic pixels, oracle, and hashes.
 - [ ] Add `GPU_T1D_UART=1` as the B1 functional selector. It must elaborate `PREPARED_SCENE=1`, `COST_STIMULUS=0`, and physical UART RX enabled.

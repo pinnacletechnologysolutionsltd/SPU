@@ -44,7 +44,7 @@ Modify only:
 - `hardware/boards/artix7/build_a7.sh`
 - `software/tests/test_gpu_top_integration.py` only if its explicit source
   manifest must follow the synthesis manifest
-- `docs/WUKONG_GPU_CHECKPOINT_2026-09-11.md` after terminal evidence exists
+- `docs/archive/bench_sessions/WUKONG_GPU_CHECKPOINT_2026-09-11.md` after terminal evidence exists
 - this contract, status and terminal evidence only
 
 Do not modify `hardware/rtl/gpu/spu_gpu_top.v`, `spu_scene_loader.v`,
