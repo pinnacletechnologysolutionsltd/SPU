@@ -168,17 +168,27 @@ COMMANDS = {
     'verify':   (cmd_verify,   "Formal verification (requires SymbiYosys)"),
 }
 
+ALIASES = {
+    'sim': 'simulate',
+    'run': 'simulate',
+    'asm': 'assemble',
+}
+
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'):
-        print("Usage: python3 spu_forge.py <command> [args]\n")
+        print("Usage: spu <command> [args]\n")
         print("Commands:")
         for name, (_, desc) in COMMANDS.items():
             print(f"  {name:<12} {desc}")
+        print("\nAliases: sim, run -> simulate | asm -> assemble")
         return
 
     cmd = sys.argv[1]
     rest = sys.argv[2:]
+
+    if cmd in ALIASES:
+        cmd = ALIASES[cmd]
 
     if cmd not in COMMANDS:
         print(f"Unknown command: '{cmd}'")

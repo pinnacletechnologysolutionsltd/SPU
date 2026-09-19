@@ -644,7 +644,9 @@ def assemble(source: str, filename: str = "<input>",
 # CLI
 # ---------------------------------------------------------------------------
 
-def main(argv: list[str]) -> int:
+def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
     hex_mode  = '--hex'     in argv
     no_fold   = '--no-fold' in argv
     

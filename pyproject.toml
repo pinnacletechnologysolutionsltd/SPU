@@ -3,10 +3,10 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "spu-host"
-version = "0.1.0"
-description = "Python client for the SPU RP2350/RP2040 southbridge console"
-readme = "software/spu_host/README.md"
+name = "spu-toolkit"
+version = "0.2.0"
+description = "SPU-13 exact deterministic arithmetic and geometric processing unit toolchain"
+readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "software/LICENSE" }
 dependencies = [
@@ -19,8 +19,14 @@ classifiers = [
 ]
 
 [project.scripts]
+spu = "spu_forge:main"
+spu-forge = "spu_forge:main"
+spu-sim = "spu_vm:main"
+spu-as = "tools.spu13_asm:main"
+spu-lith = "spu_compiler:main"
 spu-host = "spu_host.__main__:main"
 
 [tool.setuptools]
 package-dir = {"" = "software"}
-packages = ["spu_host"]
+packages = ["spu_host", "lib", "tools"]
+py-modules = ["spu_forge", "spu_vm", "spu_compiler"]
