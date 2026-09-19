@@ -1,5 +1,7 @@
 # Compiled Verilog simulators (VVP binaries)
 *_sim
+!software/graphics/spu_hardware_sim/
+!software/graphics/spu_hardware_sim/**
 
 # Simulation waveform dumps
 *.vcd
