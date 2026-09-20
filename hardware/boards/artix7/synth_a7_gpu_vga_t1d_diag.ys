@@ -13,12 +13,12 @@ read_verilog -sv hardware/rtl/gpu/spu_depth_math.v
 read_verilog -sv hardware/rtl/gpu/spu_depth_dispatch.v
 read_verilog -sv hardware/rtl/gpu/spu_reciprocal_core.v
 read_verilog -sv hardware/rtl/gpu/spu_shared_mult35.v
-read_verilog -sv hardware/rtl/gpu/spu_scene_loader.v
+read_verilog -sv -D GPU_T1D_DIAG hardware/rtl/gpu/spu_scene_loader.v
 read_verilog -sv hardware/rtl/gpu/spu_scene_unpack.v
 read_verilog -sv hardware/rtl/gpu/spu_prepared_scene_control.v
 read_verilog -sv hardware/rtl/hal/hal_vga.v
 read_verilog -sv hardware/rtl/hal/hal_hdmi_tmds.v
 read_verilog -sv hardware/rtl/hal/hal_hdmi_serdes_a7.v
 read_verilog -sv hardware/rtl/hal/hal_hdmi.v
-read_verilog -sv hardware/rtl/gpu/spu_gpu_top.v
+read_verilog -sv -D GPU_T1D_DIAG hardware/rtl/gpu/spu_gpu_top.v
 read_verilog -sv -D SYNTHESIS -D GPU_T1D_UART -D GPU_T1D_DIAG hardware/boards/artix7/spu_a7_gpu_vga_top.v
