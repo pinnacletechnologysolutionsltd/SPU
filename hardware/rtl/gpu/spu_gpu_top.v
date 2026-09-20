@@ -89,6 +89,19 @@ module spu_gpu_top #(
     // HDMI differential outputs
     output wire        tmds_clk_p, tmds_clk_n,
     output wire [2:0]  tmds_d_p, tmds_d_n
+`ifdef GPU_T1D_DIAG
+    , output wire      diag_start_accepted,
+    output wire        diag_payload_accepted,
+    output wire [5:0]  diag_payload_count,
+    output wire        diag_receiving,
+    output wire        diag_active_bank,
+    output wire        diag_commit_pending,
+    output wire        diag_activate_scene,
+    output wire        diag_frame_start,
+    output wire        diag_ready0,
+    output wire        diag_ready1,
+    output wire        diag_generation_matches
+`endif
 );
 
     // ── Video timing ─────────────────────────────────────────────────────
@@ -179,7 +192,21 @@ module spu_gpu_top #(
         .clk(clk_pixel), .rst_n(rst_n), .rx_byte(scene_rx_byte),
         .rx_valid(prepared_rx_valid), .activate_raw_bank(activate_scene),
         .active_scene(active_scene), .candidate_scene(candidate_scene),
-        .commit_pending(scene_commit_pending));
+        .commit_pending(scene_commit_pending)
+`ifdef GPU_T1D_DIAG
+        , .diag_start_accepted(diag_start_accepted),
+        .diag_payload_accepted(diag_payload_accepted),
+        .diag_payload_count(diag_payload_count),
+        .diag_receiving(diag_receiving),
+        .diag_active_bank(diag_active_bank)
+`endif
+    );
+
+`ifdef GPU_T1D_DIAG
+    assign diag_commit_pending = scene_commit_pending;
+    assign diag_activate_scene = activate_scene;
+    assign diag_frame_start = frame_start;
+`endif
 
     wire signed [15:0] ar_a0_0, ar_b0_0, ar_a1_0, ar_b1_0, ar_a2_0, ar_b2_0;
     wire signed [31:0] ar_c0_0, ar_c1_0, ar_c2_0;
@@ -328,6 +355,12 @@ module spu_gpu_top #(
         .active_frac_bits0(active_frac_bits0),
         .active_A_z1(active_A_z1), .active_B_z1(active_B_z1), .active_C_z1(active_C_z1),
         .active_frac_bits1(active_frac_bits1));
+
+`ifdef GPU_T1D_DIAG
+    assign diag_ready0 = prepared_ready0;
+    assign diag_ready1 = prepared_ready1;
+    assign diag_generation_matches = prepared_generation_matches;
+`endif
 
     // ── Depth-v2 re-anchor ───────────────────────────────────────────────
     // BUG FIX 2026-09-06. The coverage path above re-anchors at (0,0); the

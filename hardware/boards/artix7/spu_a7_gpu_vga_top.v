@@ -33,6 +33,9 @@ module spu_a7_gpu_vga_top #(
     output wire        vga_b,
     output wire        vga_hsync,
     output wire        vga_vsync
+`ifdef GPU_T1D_DIAG
+    , output wire      diag_tx
+`endif
 );
 
     // ── Reset conditioning ───────────────────────────────────────────────
@@ -62,12 +65,12 @@ module spu_a7_gpu_vga_top #(
     // COST_STIMULUS=0, so this state and the prepared-scene path disappear.
     wire [7:0] scene_rx_byte;
     wire       scene_rx_valid;
+    wire       uart_frame_err;
     generate
 `ifdef GPU_T1D_UART
         if (1'b1) begin : t1d_uart_input
             wire [7:0] uart_data;
             wire       uart_valid;
-            wire       uart_frame_err;
             spu_uart_rx #(.CLK_HZ(25_000_000), .BAUD(115200)) u_uart (
                 .clk(clk_pixel), .rst_n(pix_rst_n), .rx(uart_rx),
                 .data(uart_data), .valid(uart_valid),
@@ -76,6 +79,9 @@ module spu_a7_gpu_vga_top #(
             assign scene_rx_valid = uart_valid;
         end
 `else
+        if (1'b1) begin : no_uart_input
+            assign uart_frame_err = 1'b0;
+        end
         if (COST_STIMULUS) begin : cost_stimulus
             (* keep *) reg [8:0] lfsr = 9'h001;
             always @(posedge clk_pixel) begin
@@ -181,6 +187,17 @@ module spu_a7_gpu_vga_top #(
     // ── GPU ──────────────────────────────────────────────────────────────
     wire [3:0] gr, gg, gb;
     wire g_hsync, g_vsync;
+`ifdef GPU_T1D_DIAG
+    wire       diag_start_accepted;
+    wire       diag_payload_accepted;
+    wire [5:0] diag_payload_count;
+    wire       diag_receiving;
+    wire       diag_active_bank;
+    wire       diag_commit_pending;
+    wire       diag_activate_scene;
+    wire       diag_frame_start;
+    wire       diag_ready0, diag_ready1, diag_generation_matches;
+`endif
 
     spu_gpu_top #(
         .DEVICE("A7"), .ENABLE_HDMI(0),
@@ -208,7 +225,20 @@ module spu_a7_gpu_vga_top #(
         .scene_rx_valid(scene_rx_valid),
 
         .vga_r(gr), .vga_g(gg), .vga_b(gb),
-        .vga_hsync(g_hsync), .vga_vsync(g_vsync),
+        .vga_hsync(g_hsync), .vga_vsync(g_vsync)
+`ifdef GPU_T1D_DIAG
+        , .diag_start_accepted(diag_start_accepted),
+        .diag_payload_accepted(diag_payload_accepted),
+        .diag_payload_count(diag_payload_count),
+        .diag_receiving(diag_receiving),
+        .diag_active_bank(diag_active_bank),
+        .diag_commit_pending(diag_commit_pending),
+        .diag_activate_scene(diag_activate_scene),
+        .diag_frame_start(diag_frame_start),
+        .diag_ready0(diag_ready0), .diag_ready1(diag_ready1),
+        .diag_generation_matches(diag_generation_matches)
+`endif
+        ,
 
         .tmds_clk_p(), .tmds_clk_n(), .tmds_d_p(), .tmds_d_n());
 
@@ -221,5 +251,33 @@ module spu_a7_gpu_vga_top #(
     assign vga_b     = gb[3];
     assign vga_hsync = g_hsync;
     assign vga_vsync = g_vsync;
+
+`ifdef GPU_T1D_DIAG
+    wire [127:0] diag_record_data;
+    wire         diag_record_valid;
+    wire         diag_record_ready;
+
+    spu_t1d_diag_record u_diag_record (
+        .clk(clk_pixel), .rst_n(pix_rst_n),
+        .ready_state(pix_rst_n),
+        .start_accepted(diag_start_accepted),
+        .payload_accepted(diag_payload_accepted),
+        .payload_byte(scene_rx_byte),
+        .frame_start(diag_frame_start),
+        .frame_error(uart_frame_err),
+        .loader_commit_pending(diag_commit_pending),
+        .scene_activate(diag_activate_scene),
+        .active_bank(diag_active_bank),
+        .record_ready(diag_record_ready),
+        .record_valid(diag_record_valid),
+        .record_data(diag_record_data));
+
+    spu_t1d_diag_uart_tx u_diag_uart_tx (
+        .clk(clk_pixel), .rst_n(pix_rst_n),
+        .record_data(diag_record_data),
+        .record_valid(diag_record_valid),
+        .record_ready(diag_record_ready),
+        .tx(diag_tx));
+`endif
 
 endmodule

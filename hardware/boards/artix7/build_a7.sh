@@ -51,8 +51,17 @@ case "$GPU_T1D_UART" in
     0|1) ;;
     *) echo "Invalid GPU_T1D_UART: $GPU_T1D_UART (use 0|1)"; exit 1;;
 esac
+GPU_T1D_DIAG="${GPU_T1D_DIAG:-0}"
+case "$GPU_T1D_DIAG" in
+    0|1) ;;
+    *) echo "Invalid GPU_T1D_DIAG: $GPU_T1D_DIAG (use 0|1)"; exit 1;;
+esac
 if [ "$GPU_T1D_UART" = "1" ] && [ "$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')" != "GPUVGA" ]; then
     echo "GPU_T1D_UART applies only to GPUVGA (spin is $SPIN)"
+    exit 1
+fi
+if [ "$GPU_T1D_DIAG" = "1" ] && [ "$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')" != "GPUVGA" ]; then
+    echo "GPU_T1D_DIAG applies only to GPUVGA (spin is $SPIN)"
     exit 1
 fi
 A7_ARTIFACT_TAG="${A7_ARTIFACT_TAG:-}"
@@ -212,7 +221,7 @@ if [ "$GPU_PREPARED_EXPLICIT" = "1" ]; then
 fi
 if [ -n "$A7_ARTIFACT_TAG" ]; then
     case "$A7_ARTIFACT_TAG" in
-        T1D_B0_S1|T1D_B1_S1) ;;
+        T1D_B0_S1|T1D_B1_S1|T1D_DIAG_S1) ;;
         *) echo "Invalid A7_ARTIFACT_TAG: $A7_ARTIFACT_TAG"; exit 1;;
     esac
     GPU_VARIANT="_${A7_ARTIFACT_TAG}"
@@ -222,12 +231,24 @@ if [ "$GPU_T1D_UART" = "1" ]; then
         echo "GPU_T1D_UART cannot be combined with GPU_PREPARED_SCENE"
         exit 1
     fi
-    if [ -n "$A7_ARTIFACT_TAG" ] && [ "$A7_ARTIFACT_TAG" != "T1D_B1_S1" ]; then
-        echo "GPU_T1D_UART requires A7_ARTIFACT_TAG=T1D_B1_S1"
-        exit 1
+    if [ "$GPU_T1D_DIAG" = "1" ]; then
+        if [ "$A7_ARTIFACT_TAG" != "T1D_DIAG_S1" ]; then
+            echo "GPU_T1D_DIAG requires A7_ARTIFACT_TAG=T1D_DIAG_S1"
+            exit 1
+        fi
+        GPU_VARIANT="_T1D_DIAG_S1"
+    else
+        if [ -n "$A7_ARTIFACT_TAG" ] && [ "$A7_ARTIFACT_TAG" != "T1D_B1_S1" ]; then
+            echo "GPU_T1D_UART requires A7_ARTIFACT_TAG=T1D_B1_S1"
+            exit 1
+        fi
+        GPU_VARIANT="_T1D_B1_S1"
     fi
-    GPU_VARIANT="_T1D_B1_S1"
     GPU_COST_STIMULUS=0
+fi
+if [ "$GPU_T1D_DIAG" = "1" ] && [ "$GPU_T1D_UART" != "1" ]; then
+    echo "GPU_T1D_DIAG requires GPU_T1D_UART=1"
+    exit 1
 fi
 
 # Selector for the two tensegrity A/B spins, defaulting to the Phase 5
@@ -363,7 +384,10 @@ elif [ "$SPIN" = "VGAFIX" ]; then
     XDC="hardware/boards/artix7/spu_a7_vga_fix.xdc"
     TOP="spu_a7_vga_top"
 elif [ "$SPIN" = "GPUVGA" ]; then
-    if [ "$GPU_T1D_UART" = "1" ]; then
+    if [ "$GPU_T1D_DIAG" = "1" ]; then
+        YS="hardware/boards/artix7/synth_a7_gpu_vga_t1d_diag.ys"
+        XDC="hardware/boards/artix7/spu_a7_gpu_vga_t1d_diag.xdc"
+    elif [ "$GPU_T1D_UART" = "1" ]; then
         YS="hardware/boards/artix7/synth_a7_gpu_vga_t1d.ys"
         XDC="hardware/boards/artix7/spu_a7_gpu_vga_t1d.xdc"
     else
@@ -397,6 +421,7 @@ echo "  Freq:   ${A7_FREQ} MHz"
 echo "  Seed:   ${A7_SEED}"
 echo "  GPU prepared: ${GPU_PREPARED_SCENE} (cost stimulus=${GPU_COST_STIMULUS})"
 echo "  GPU T1d UART: ${GPU_T1D_UART}"
+echo "  GPU T1d diag: ${GPU_T1D_DIAG}"
 echo "  Artifact tag: ${A7_ARTIFACT_TAG:-none}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
 echo "  Fp4Inv: structured=${FP4_STRUCTURED} request-sequential=${FP4_STRUCTURED_SEQUENTIAL} backend-sequential=${FP4_BACKEND_SEQUENTIAL}"

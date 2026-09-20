@@ -142,6 +142,19 @@ def main():
             ("PADE_PIPELINED", "1"),
         ], "v2_trace"),
     }
+    TEST_DEFINES = {
+        # These benches exercise the guarded Wukong T1d UART top-level path.
+        "spu_t1d_board_reset_tb.v": ["GPU_T1D_UART"],
+        "spu_t1d_board_transaction_tb.v": ["GPU_T1D_UART"],
+        # The diagnostic bench exercises the independent telemetry path as
+        # well as the guarded UART path.
+        "spu_t1d_repeatability_diag_tb.v": ["GPU_T1D_DIAG", "GPU_T1D_UART"],
+    }
+    TEST_TIMEOUTS = {
+        # D1 performs two UART transactions and drains two 16-byte telemetry
+        # records; its dedicated runner bounds each phase case at 45 seconds.
+        "spu_t1d_repeatability_diag_tb.v": 60,
+    }
     test_variants = [(f, "", None) for f in test_files]
     for f in test_files:
         spec = PARAM_VARIANTS.get(f.name)
@@ -352,7 +365,8 @@ def main():
                 f"-P{top_mod}.{pname}={pval}"
                 for pname, pval in param_override
             ]
-        cmd = iverilog_args + (["-s", top_mod] if top_mod else []) + param_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
+        test_defines = [f"-D{name}" for name in TEST_DEFINES.get(tb.name, [])]
+        cmd = iverilog_args + test_defines + (["-s", top_mod] if top_mod else []) + param_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
         compile_result = subprocess.run(cmd, capture_output=True, text=True)
 
         if compile_result.returncode != 0:
@@ -394,6 +408,7 @@ def main():
                 ]
                 for d in verilator_inc_dirs:
                     verilator_cmd.append("-I" + d)
+                verilator_cmd.extend(test_defines)
                 verilator_cmd.extend(src_unique + [tb_str])
                 verilator_cmd.extend(["--exe", str(sim_cpp)])
 
@@ -416,7 +431,10 @@ def main():
 
                 exe = build_dir / f"V{top_mod}"
                 try:
-                    rr = subprocess.run([str(exe)], capture_output=True, timeout=5)
+                    rr = subprocess.run(
+                        [str(exe)], capture_output=True,
+                        timeout=TEST_TIMEOUTS.get(tb.name, 5),
+                    )
                     output = rr.stdout.decode('utf-8', errors='replace') + rr.stderr.decode('utf-8', errors='replace')
                     if "FAIL" in output or "FAIL:" in output:
                         print(f"[{disp}] FAILED")
@@ -454,7 +472,10 @@ def main():
         # (measured 2026-07-10: three trials, 5.03-5.04s, $finish reached).
         run_cmd = ["vvp", str(out_vvp)]
         try:
-            run_result = subprocess.run(run_cmd, capture_output=True, timeout=15)
+            run_result = subprocess.run(
+                run_cmd, capture_output=True,
+                timeout=TEST_TIMEOUTS.get(tb.name, 15),
+            )
             try:
                 output = run_result.stdout.decode('utf-8', errors='replace')
             except UnicodeDecodeError:

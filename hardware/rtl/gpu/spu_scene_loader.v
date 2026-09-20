@@ -12,6 +12,13 @@ module spu_scene_loader (
     output wire [503:0] active_scene,
     output wire [503:0] candidate_scene,
     output reg          commit_pending
+`ifdef GPU_T1D_DIAG
+    , output wire       diag_start_accepted,
+    output wire         diag_payload_accepted,
+    output wire [5:0]   diag_payload_count,
+    output wire         diag_receiving,
+    output wire         diag_active_bank
+`endif
 );
 
     localparam [7:0] START_BYTE = 8'hA5;
@@ -24,6 +31,15 @@ module spu_scene_loader (
 
     assign active_scene = active_bank ? scene_bank1 : scene_bank0;
     assign candidate_scene = active_bank ? scene_bank0 : scene_bank1;
+
+`ifdef GPU_T1D_DIAG
+    assign diag_start_accepted = rx_valid && !receiving && !commit_pending &&
+        (rx_byte == START_BYTE);
+    assign diag_payload_accepted = rx_valid && receiving && !commit_pending;
+    assign diag_payload_count = payload_count;
+    assign diag_receiving = receiving;
+    assign diag_active_bank = active_bank;
+`endif
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
