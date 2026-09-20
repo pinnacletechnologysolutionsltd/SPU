@@ -1,4 +1,5 @@
 read_verilog -lib +/xilinx/cells_sim.v
+read_verilog -lib +/gowin/cells_sim.v
 read_verilog -sv hardware/rtl/peripherals/whisper/spu_uart_rx.v
 read_verilog -sv hardware/rtl/gpu/spu_video_timing.v
 read_verilog -sv hardware/rtl/gpu/spu_edge_stepper.v
@@ -14,5 +15,8 @@ read_verilog -sv hardware/rtl/gpu/spu_scene_loader.v
 read_verilog -sv hardware/rtl/gpu/spu_scene_unpack.v
 read_verilog -sv hardware/rtl/gpu/spu_prepared_scene_control.v
 read_verilog -sv hardware/rtl/hal/hal_vga.v
+read_verilog -sv hardware/rtl/hal/hal_hdmi_tmds.v
+read_verilog -sv hardware/rtl/hal/hal_hdmi_serdes_a7.v
+read_verilog -sv hardware/rtl/hal/hal_hdmi.v
 read_verilog -sv hardware/rtl/gpu/spu_gpu_top.v
 read_verilog -sv -D SYNTHESIS -D GPU_T1D_UART hardware/boards/artix7/spu_a7_gpu_vga_top.v

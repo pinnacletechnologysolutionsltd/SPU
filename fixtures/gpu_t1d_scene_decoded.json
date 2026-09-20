@@ -4,6 +4,22 @@
   "wire_bytes": 64,
   "start_byte": "A5",
   "packing": "payload byte i maps to scene[8*i +: 8]",
-  "source": "hardware/tests/common/spu_scene_loader_tb.v SCENE_A",
-  "scene_hex_msb_first": "bbb8b5b2afaca9a6a3a09d9a9794918e8b8885827f7c797673706d6a6764615e5b5855524f4c494643403d3a3734312e2b2825221f1c191613100d0a070401"
+  "source": "hardware/boards/artix7/spu_a7_gpu_vga_top.v T1d diagnostic geometry",
+  "scene_hex_msb_first": "0e10019002bc0f000043620ffb0fe34ffffb820fe2001cc000000000230000001900e1002bc00f00043620fe20fe34ffffb820ffb001cc0000000002300000",
+  "triangles": [
+    {
+      "a0": 0, "b0": 560, "c0": 0,
+      "a1": 460, "b1": -80, "c1": -18400,
+      "a2": -460, "b2": -480, "c2": 276000,
+      "r": 15, "g": 0, "b": 0,
+      "z0": 700, "z1": 3600, "z2": 400
+    },
+    {
+      "a0": 0, "b0": 560, "c0": 0,
+      "a1": 460, "b1": -480, "c1": -18400,
+      "a2": -460, "b2": -80, "c2": 276000,
+      "r": 0, "g": 15, "b": 0,
+      "z0": 700, "z1": 400, "z2": 3600
+    }
+  ]
 }

@@ -147,6 +147,7 @@ reclassification.
 **T1c is CLOSED T1c-A — PASS.** The original T1c-E remains preserved as the
 historical first terminal result, along with the manifest omission, bounded
 correction, focused PASS, and successful second gate. No synthesis or physical
+operation occurred for the T1c tranche.
 
 ## Prepared-state cost retry reconciliation — 2026-09-19
 
@@ -162,5 +163,4 @@ matched PS0/PS1 campaign after the corrected elaboration ordering:
   hierarchy.
 
 Classification: **A — PASS**, synthesis/P&R evidence only. No bitstream was
-loaded and no silicon claim is made. No synthesis or physical
-work occurred.
+loaded, no physical operation occurred, and no silicon claim is made.

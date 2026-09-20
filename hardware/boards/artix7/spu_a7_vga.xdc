@@ -29,6 +29,14 @@ set_property PULLTYPE PULLUP [get_ports rst_n]
 
 # ── VGA resistor DAC on J10 ──────────────────────────────────────────────
 #
+# Contract-frozen measured VGA signal mapping:
+#   J10-1 / D5: HSYNC
+#   J10-2 / G5: BLUE
+#   J10-3 / G7: GREEN
+#   J10-4 / G8: RED
+#   J10-7 / E5: VSYNC
+# The board-header net assignments are listed below separately.
+#
 #   J10-1 (G8) --[ 270R ]--> VGA pin 1   RED
 #   J10-2 (G7) --[ 270R ]--> VGA pin 2   GREEN
 #   J10-3 (G5) --[ 270R ]--> VGA pin 3   BLUE

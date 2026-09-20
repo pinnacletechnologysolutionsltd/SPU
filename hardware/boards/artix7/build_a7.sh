@@ -431,6 +431,7 @@ synth() {
             stat -top $TOP"
     elif [ "$SPIN" = "GPUVGA" ] && [ "$GPU_T1D_UART" = "1" ]; then
         yosys -p "script $YS; \
+            chparam -set DEVICE \"A7\" spu_gpu_top; \
             chparam -set PREPARED_SCENE 1 \
                     -set COST_STIMULUS 0 \
                     $TOP; \
