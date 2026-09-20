@@ -3,7 +3,7 @@
 **Date:** 2026-09-14  
 **Contract ID:** `contract_gpu_prepared_scene_hardware_t1d_2026-09-14.md`  
 **Revision:** 4 — incorporates third pre-execution review of 2026-09-15  
-**Status:** **DRAFT — HALT. No stage is authorized. Work may begin only under the separately signed Stage A, B, or C gate in Section 13, and only within that stage's scope. Authorization never carries forward automatically.**  
+**Status:** **ACTIVE — Stage A COMPLETE; Stage B/C HALT. Stage B or C requires a separate owner authorization and does not inherit Stage A authorization.**
 **Target:** Wukong Artix-7 `xc7a100tfgg676-1` GPU/VGA configuration; 50 MHz `sys_clk`, 25 MHz `clk_pixel`  
 **Configuration under test:** a new, uniquely named T1d hardware mode guaranteeing `PREPARED_SCENE=1`, `COST_STIMULUS=0`, and physical CH340 UART RX
 
@@ -480,23 +480,38 @@ Complete before any Stage A repository mutation or focused test:
 **Stage A date:** `2026-09-19`  
 **Stage A notes:** `Owner authorization received in session; Pico/RP2350 connection is explicitly out of scope.`
 
-### 13.1a Stage A progress record — 2026-09-19
+### 13.1a Stage A closeout record — 2026-09-20
 
-The following Stage A work is complete and remains under review before Stage B:
+Stage A completed on clean implementation commit
+`a6c52fa003a1a47ee5ae953c4d2a1658e786f2cb`. The following bounded work was
+performed and reviewed; Stage B and Stage C remain unauthorized:
 
 - Added compile-time `GPU_T1D_UART` mode with `PREPARED_SCENE=1`,
   `COST_STIMULUS=0`, and `spu_uart_rx` at 25 MHz / 115200 baud.
 - Added `A7_ARTIFACT_TAG` validation and dedicated T1d synthesis/XDC inputs.
-- Added the frozen 63-byte payload, 64-byte wire fixture, decoded reference,
-  and generated binary fixtures under `fixtures/`.
-- Focused fixture check passed:
-  `python3 software/tests/test_gpu_t1d_stage_a.py`.
-- T1d hierarchy elaboration passed with Yosys through `hierarchy -top`;
-  no synthesis/P&R was run.
-- Expanded UART simulation passed the frozen packet boundary cases, reset
-  interruption cases, four start-phase offsets (0, 10, 20, and 30 ns), exact
-  504-bit reconstruction, and frame-boundary activation:
-  `iverilog -g2012 ... spu_t1d_uart_loader_tb.v && vvp ...`.
+- Replaced the loader-only arbitrary `SCENE_A` byte pattern with the existing
+  red/green overlapping depth-crossing geometry, and froze its decoded fields,
+  exact integer edge/depth oracle, and diagnostic pixels.
+- Added the board-top reset/default-state and end-to-end transaction benches.
+- Corrected the T1d Yosys manifest to include the HDMI support modules needed
+  for hierarchy elaboration, and bound the generic `spu_gpu_top` elaboration to
+  `DEVICE="A7"` before the final hierarchy pass. These are elaboration/build
+  flow corrections only; no renderer RTL was changed.
+- Reconciled the prepared-cost retry result and the stale checkpoint sentence;
+  the original D/tool-flow failure remains preserved.
+- Corrected the measured VGA mapping comments in the canonical, fixed, and
+  legacy XDC files without changing constraints.
+
+Focused results:
+
+| Check | Result |
+|---|---|
+| `python3 software/tests/test_gpu_t1d_stage_a.py` | PASS: fixture packing, decoded fields, and six diagnostic pixels |
+| UART loader waveform bench | PASS: all 64 bytes, accepted-byte boundaries 1/2/33/63, reset interruption, 0/10/20/30 ns start offsets |
+| Board reset/default bench | PASS: 65,536-edge deassertion and reassertion windows plus three pixel stages; black/defined-sync/unarmed reset state |
+| Board transaction bench | PASS: exact 504-bit candidate, no mid-frame bank change, activation at internal `spu_gpu_top.frame_start` sampling edge |
+| T1d Yosys hierarchy-only elaboration | PASS; no synthesis/P&R/packing run |
+| `bash -n hardware/boards/artix7/build_a7.sh` | PASS |
 
 Static bindings for the Stage A integration are:
 
@@ -509,19 +524,22 @@ Static bindings for the Stage A integration are:
 | `commit_pending` | `spu_a7_gpu_vga_top.u_gpu.scene_commit_pending` |
 | `activate_scene` | `spu_a7_gpu_vga_top.u_gpu.activate_scene` |
 | internal frame boundary | `spu_a7_gpu_vga_top.u_gpu.frame_start` |
+| board-top timing pulse (not activation boundary) | `spu_a7_gpu_vga_top.frame_start` |
 
 All listed state and pulses are in `clk_pixel`; `uart_rx` is the only
-asynchronous pad and is synchronized inside `spu_uart_rx`. The T1d candidate
-contains no cost-stimulus generate branch, and `A7_ARTIFACT_TAG` is consumed
-only while constructing output artifact and metrics names; it does not alter
-the Yosys source, parameters, constraints, or hierarchy.
+asynchronous pad and is synchronized by `spu_uart_rx.rx_s1`/`rx_s2`. The
+loader writes only the structurally inactive bank. `commit_pending` is set on
+accepted payload byte 62, held while the prepared controller captures both
+depth results, and cleared only when `activate_scene` is sampled by the loader
+at the internal GPU `frame_start` edge. `active_bank` is written only by that
+loader activation branch. The T1d candidate has no cost-stimulus generate
+branch. Static inspection of `build_a7.sh` shows `A7_ARTIFACT_TAG` affects
+only validation, the `_T1D_B0_S1`/`_T1D_B1_S1` artifact suffix, and reporting;
+the B0 path selects the unchanged canonical Yosys/XDC inputs.
 
-The following required Stage A items remain open: waveform-level UART
-simulation through all 64 bytes, phase-offset and reset/incomplete-transaction
-coverage, exact hierarchy-binding record, B0 naming-only elaboration proof,
-reconciliation links in the historical prepared-cost records, and a clean
-Stage A commit. Stage A therefore remains **in progress**, and Stage B/C are
-not authorized.
+No repository-wide regression, synthesis/P&R, packing, bitstream loading,
+programming, or hardware operation was performed under Stage A. The stage
+terminates at **HALT** pending owner review and separate Stage B authorization.
 
 ### 13.2 Stage A closeout and Stage B authorization
 
@@ -529,41 +547,41 @@ Stage A closeout evidence:
 
 | Field | Actual evidence |
 |---|---|
-| Clean Stage A commit | `[EXACT SHA]` |
-| Reconciled prepared-cost records | `[PATHS/COMMIT]` |
-| Corrected/inspected VGA XDC files | `[PATHS/COMMIT]` |
-| 63-byte payload path and SHA-256 | `[PATH]` / `[SHA-256]` |
-| 64-byte wire path and SHA-256 | `[PATH]` / `[SHA-256]` |
-| Wire hex path and SHA-256 | `[PATH]` / `[SHA-256]` |
-| Decoded reference path and SHA-256 | `[PATH]` / `[SHA-256]` |
-| Raster/reference path and SHA-256 | `[PATH]` / `[SHA-256]` |
-| Diagnostic pixels | `[EXACT COORDINATES, CHANNEL ORDER, VALUES]` |
-| UART phase offsets | `[EXACT OFFSETS]` |
-| Focused test commands/results | `[EXACT COMMANDS AND COUNTS]` |
-| Actual hierarchy bindings | `[EXACT PATHS FOR receiving, payload_count, commit_pending, activate_scene, active_bank, internal frame_start]` |
-| Exact B1/T1c `commit_pending` rule | `[SET/HOLD/CLEAR SEMANTICS]` |
-| Reset polarity and symmetric synchronizer interpretation | `[EXACT RTL-DERIVED SEMANTICS]` |
-| B0 naming-only proof | `[EVIDENCE THAT A7_ARTIFACT_TAG DOES NOT CHANGE ELABORATION]` |
-| Sender command and drain operation | `[EXACT COMMAND; EXACT tcdrain/EQUIVALENT IMPLEMENTATION]` |
+| Clean Stage A commit | `a6c52fa003a1a47ee5ae953c4d2a1658e786f2cb` |
+| Reconciled prepared-cost records | `spu_strategy/contract_wukong_gpu_prepared_cost_2026-09-13.md`; `docs/archive/bench_sessions/WUKONG_GPU_CHECKPOINT_2026-09-11.md` |
+| Corrected/inspected VGA XDC files | `spu_a7_vga_fix.xdc`, `spu_a7_gpu_vga.xdc`, and legacy `spu_a7_vga.xdc`; constraints unchanged |
+| 63-byte payload path and SHA-256 | `fixtures/gpu_t1d_scene_payload_63b.bin` / `54f9e7d5386ebf12577a4fbda4b2a4f862f935c2d8705a238641ebd9d43aa3d4` |
+| 64-byte wire path and SHA-256 | `fixtures/gpu_t1d_scene_wire_64b.bin` / `aa2bad57fa5d3d2f777ef5e5405357ac0216a4aafb707d99241050c986ed69ee` |
+| Wire hex rendering and SHA-256 | `fixtures/gpu_t1d_scene_wire_64b.hex` / `80750e10012410bac2d23c96653227cf29233ba90d0c3f1c3df3999af2b4a754` |
+| Decoded reference and SHA-256 | `fixtures/gpu_t1d_scene_decoded.json` / `a7e992aa8523c4009bd015db8f3f231ee7f7eab742d17924f3dbc9d14f658874` |
+| Raster/reference evidence and SHA-256 | `fixtures/gpu_t1d_scene_reference.json` / `7c48bdeffac97bba871e5c92663168900cb617f8586976e66f09077e11b7f138` |
+| Diagnostic pixels | `(10,10)=(0,0,0)` background; `(100,300)=(15,0,0)` triangle 0; `(540,300)=(0,15,0)` triangle 1; `(200,100)=(15,0,0)` overlap/triangle 0 near; `(400,100)=(0,15,0)` overlap/triangle 1 near; `(320,100)=(15,0,0)` equal-depth tie to triangle 0; internal RGB nibbles |
+| UART phase offsets | `0 ns`, `10 ns`, `20 ns`, `30 ns` start phases; receiver `BIT_CYCLES=217` at `25 MHz/115200` |
+| Focused test commands/results | Fixture PASS; loader waveform PASS; board reset/default PASS; board transaction/frame activation PASS; hierarchy-only PASS; shell syntax PASS |
+| Actual hierarchy bindings | `scene_rx_byte/valid=t1d_uart_input.u_uart.data/valid`; `receiving,payload_count,active_bank=u_gpu.u_scene_loader.*`; `commit_pending=u_gpu.scene_commit_pending`; `activate_scene=u_gpu.activate_scene`; internal boundary=`u_gpu.frame_start` |
+| Exact B1/T1c `commit_pending` rule | Loader sets on final payload byte, ignores bytes while pending, and clears/toggles bank only when `activate_scene` is sampled at internal `frame_start`; prepared control requires both depth results and the same boundary |
+| Reset polarity and symmetric synchronizer interpretation | `rst_n` active-low; `rst_n_db` changes after 65,536 continuous mismatch `sys_clk` edges; `pix_rst_n` propagates after three `clk_pixel` edges; both assertion and deassertion are exercised |
+| B0 naming-only proof | `A7_ARTIFACT_TAG` appears only in `build_a7.sh` validation/suffix/reporting; B0 leaves canonical Yosys/XDC selection and source elaboration unchanged |
+| Sender command and drain operation | Not authorized or frozen in Stage A; Stage C only |
 
 Complete before Stage B begins:
 
 | Stage B field | Ratified value |
 |---|---|
-| Frozen source commit | `[STAGE A CLEAN SHA]` |
-| Repository regression/gate command and expected condition | `[EXACT COMMAND]` / `[EXPECTED PASS CONDITION]` |
-| Repository-gate timeout | `[EXACT TIMEOUT]` |
-| B0 command | `[EXACT COMMAND WITH A7_ARTIFACT_TAG=T1D_B0_S1 ONLY]` |
-| B0 timeout | `[EXACT TIMEOUT]` |
-| B1 command | `[EXACT COMMAND WITH GPU_T1D_UART=1 A7_ARTIFACT_TAG=T1D_B1_S1]` |
-| B1 timeout | `[EXACT TIMEOUT]` |
-| Cumulative Stage B budget | `[EXACT WALL-CLOCK BUDGET]` |
+| Frozen source commit | `a6c52fa003a1a47ee5ae953c4d2a1658e786f2cb` |
+| Repository regression/gate command and expected condition | `tools/run_detached_job.sh --output build/wukong_gpu_prepared_scene_t1d_20260920/stage_b_gate_01 --timeout 3600 --notify-desktop -- bash tools/verify_repo.sh` / exactly one terminal `COMPLETE` with zero failures |
+| Repository-gate timeout | `3600 s` |
+| B0 command | `tools/run_detached_job.sh --output build/wukong_gpu_prepared_scene_t1d_20260920/b0_s1_01 --timeout 7200 --notify-desktop -- env A7_FREQ=25 A7_SEED=1 A7_ARTIFACT_TAG=T1D_B0_S1 bash hardware/boards/artix7/build_a7.sh 100t gpuvga all` |
+| B0 timeout | `7200 s` |
+| B1 command | `tools/run_detached_job.sh --output build/wukong_gpu_prepared_scene_t1d_20260920/b1_s1_01 --timeout 7200 --notify-desktop -- env A7_FREQ=25 A7_SEED=1 GPU_T1D_UART=1 A7_ARTIFACT_TAG=T1D_B1_S1 bash hardware/boards/artix7/build_a7.sh 100t gpuvga all` |
+| B1 timeout | `7200 s` |
+| Cumulative Stage B budget | `18,000 s`; one job at a time; each launch consumes its slot |
 | Retry/parallel rule | zero retries; no parallel builds unless already proven isolated |
 
 **Stage B owner:** John Curley  
-**Stage B decision:** `[HALT / AUTHORIZE / REJECT]`  
-**Stage B date:** `[YYYY-MM-DD]`  
-**Stage B notes:** `[optional]`
+**Stage B decision:** `HALT`
+**Stage B date:** `2026-09-20`
+**Stage B notes:** `Commands are frozen as the proposal for the next owner decision; no Stage B job was launched under Stage A.`
 
 ### 13.3 Stage B closeout and Stage C authorization
 
