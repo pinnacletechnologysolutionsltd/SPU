@@ -35,12 +35,19 @@ def _uart_samples(payload: bytes, samplerate: int = 24_000_000, baud: int = 115_
     return bytes(samples)
 
 
-def _write_sr(path: Path, samples: bytes) -> None:
+def _write_sr(path: Path, samples: bytes, chunk_size: int | None = None) -> None:
     metadata = """[global]\nsigrok version=0.5.3\n[device 1]\ncapturefile=logic-1\ntotal probes=1\nsamplerate=24 MHz\nunitsize=1\nprobe1=D0\n"""
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("version", "2\n")
         archive.writestr("metadata", metadata)
-        archive.writestr("logic-1", samples)
+        if chunk_size is None:
+            archive.writestr("logic-1", samples)
+        else:
+            for index in range(0, len(samples), chunk_size):
+                chunk_number = index // chunk_size + 1
+                archive.writestr(
+                    f"logic-1-{chunk_number}", samples[index:index + chunk_size]
+                )
 
 
 def test_frozen_records_decode_and_invalid_candidate_is_not_evidence(tmp_path: Path) -> None:
@@ -73,7 +80,20 @@ def test_frozen_records_decode_and_invalid_candidate_is_not_evidence(tmp_path: P
     assert len(document["records"]) == 2
 
 
+def test_chunked_srzip_stream_decodes(tmp_path: Path) -> None:
+    capture = tmp_path / "chunked.srzip"
+    _write_sr(capture, _uart_samples(READY + TRANSACTION), chunk_size=97)
+    result = DECODER.decode_capture(capture, "D0", 115_200)
+    assert result["session"]["capture_parts"][0] == "logic-1-1"
+    assert len(result["session"]["capture_parts"]) > 1
+    assert [record["raw_hex"] for record in result["records"]] == [
+        READY.hex(" "), TRANSACTION.hex(" ")
+    ]
+
+
 if __name__ == "__main__":
     with tempfile.TemporaryDirectory(prefix="spu_t1d_decoder_test_") as directory:
-        test_frozen_records_decode_and_invalid_candidate_is_not_evidence(Path(directory))
+        test_root = Path(directory)
+        test_frozen_records_decode_and_invalid_candidate_is_not_evidence(test_root)
+        test_chunked_srzip_stream_decodes(test_root)
     print("PASS: T1d diagnostic capture decoder")

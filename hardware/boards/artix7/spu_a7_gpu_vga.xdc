@@ -44,19 +44,20 @@ set_property PULLTYPE PULLUP [get_ports rst_n]
 
 # ── VGA resistor DAC on J10 ──────────────────────────────────────────────
 #
-# Contract-frozen measured VGA signal mapping:
-#   J10-1 / D5: HSYNC
-#   J10-2 / G5: BLUE
-#   J10-3 / G7: GREEN
-#   J10-4 / G8: RED
-#   J10-7 / E5: VSYNC
-# The board-header net assignments are listed below separately.
+# Contract-frozen measured VGA signal mapping and board-header wiring:
+#   J10-1 / G8: RED   -> DE-15 pin 1 through 270 ohm
+#   J10-2 / G7: GREEN -> DE-15 pin 2 through 270 ohm
+#   J10-3 / G5: BLUE  -> DE-15 pin 3 through 270 ohm
+#   J10-4 / D5: HSYNC -> DE-15 pin 13 directly
+#   J10-10 / E5: VSYNC -> DE-15 pin 14 directly
+# J10-7 / G6 is unused by this VGA harness. The FPGA-pad-to-DE-15 mapping
+# is the measured evidence; the J10 header numbering follows the board pinout.
 #
 #   J10-1 (G8) --[ 270R ]--> VGA pin 1   RED
 #   J10-2 (G7) --[ 270R ]--> VGA pin 2   GREEN
 #   J10-3 (G5) --[ 270R ]--> VGA pin 3   BLUE
 #   J10-4 (D5) ------------> VGA pin 13  HSYNC   no resistor
-#   J10-7 (G6) ------------> VGA pin 14  VSYNC   no resistor
+#   J10-10 (E5) -----------> VGA pin 14  VSYNC   no resistor
 #   J10-5 or J10-11 (GND) -> VGA pins 5,6,7,8,10
 #
 # VGA expects 0-0.7 V into a 75 ohm termination; 3.3 V * 75/(270+75) = 0.72 V.
@@ -65,7 +66,7 @@ set_property PULLTYPE PULLUP [get_ports rst_n]
 # to anything -- nothing on the monitor side should drive current back into
 # bank 35.
 #
-# J10-8/9/10 (D6/E6/E5) are left free.
+# J10-7/8/9 (G6/D6/E6) are left free.
 set_property PACKAGE_PIN G8 [get_ports vga_r]
 set_property PACKAGE_PIN G7 [get_ports vga_g]
 set_property PACKAGE_PIN G5 [get_ports vga_b]

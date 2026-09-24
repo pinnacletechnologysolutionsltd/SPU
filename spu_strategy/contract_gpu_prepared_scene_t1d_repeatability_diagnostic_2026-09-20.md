@@ -2,8 +2,8 @@
 
 **Date:** 2026-09-20
 **Contract ID:** `GPU-T1D-REPEATABILITY-DIAGNOSTIC-2026-09-20`
-**Revision:** 0
-**Status:** `D2 AUTHORIZED — build qualification only; D3 HALT`
+**Revision:** 3
+**Status:** `D3 INFRASTRUCTURE FAIL — FX2 sustained-stream limitation; D3 remains HALT`
 **Owner:** John Curley
 
 ## 1. Objective
@@ -12,9 +12,11 @@ Diagnose why the frozen T1d prepared-scene transaction produced the expected
 scene on the first physical execution and produced a blank scene on the second
 execution after the frozen warm-reset procedure.
 
-This contract authorizes diagnosis planning only. It does not authorize a
-behavioral fix, a new normal T1d bitstream, or another physical execution of
-the existing B1 artifact.
+Revision 0 authorized diagnosis planning only. Revision 1 authorizes the
+host/analyzer D3 capture procedure in §6.5 using the already programmed and
+qualified diagnostic artifact. It authorizes no behavioral fix, new bitstream,
+FPGA programming, RTL change, UART-fixture change, or acceptance-criteria
+change.
 
 The diagnostic boundary is:
 
@@ -38,8 +40,11 @@ diagnostic source closure and build command have been frozen by an approved
 revision of this contract. A successful diagnostic build shall not amend the
 existing B1 hardware evidence.
 
-No command in this draft authorizes FPGA programming, UART transmission, or
-monitor-based acceptance testing.
+Revision 1 authorizes only the amended segmented capture and conditional
+continuation of the already approved D3 sequence. The UART-dependent portion
+may begin only after the §6.5 capture gate reports `PASS`; any segment failure
+or deviation is an immediate HALT. No FPGA programming or bitstream change is
+authorized by this revision.
 
 ## 3. Immutable prior evidence
 
@@ -367,29 +372,51 @@ updated only for accepted payload bytes. The CRC-valid flag is set only when
 the accepted count reaches 63. For the frozen valid fixture the expected
 payload CRC is `16'h7920`.
 
-## 6.5 Frozen capture procedure and reference records
+## 6.5 Amended capture procedure and reference records
 
-The raw logic capture shall begin before reset release and shall run for 2000
-ms at 24 MHz on analyzer channel D0 connected to J10-7/G6:
+Revision 1 replaces the unreliable single-request 2000 ms/48,000,000-sample
+acquisition. The original FPGA image, reset sequence, analyzer wiring, D0
+channel, samplerate, output format, UART fixture, sender settings, and
+acceptance criteria remain frozen.
+
+The raw logic capture shall begin before reset release on analyzer channel D0
+connected to J10-7/G6. The host shall run the fixed segmented procedure:
 
 ```bash
-sigrok-cli \
-  --driver fx2lafw \
-  --config samplerate=24MHz \
-  --channels D0 \
-  --time 2000 \
-  --output-format sr \
-  --output-file build/<diagnostic-evidence>/g6_uart_capture.sr
+python3 tools/capture_gpu_t1d_diag_segments.py \
+  --connection <current-fx2lafw-bus.device> \
+  --output-dir build/<diagnostic-evidence>/capture_segments
 ```
 
-The exact future decoder command is:
+The tool runs exactly twelve sequential commands with these fixed parameters:
+
+```text
+driver       = fx2lafw:conn=<current-fx2lafw-bus.device>
+samplerate   = 24 MHz
+channel      = D0
+samples      = 4,000,000 per segment
+format       = srzip
+aggregate    = 48,000,000 samples
+```
+
+Each segment is retained as a separate `segment_NN.srzip` artifact. The tool
+records the command, exit status, exact payload sample count, metadata,
+elapsed time, and SHA-256 in `result.json`. It halts immediately on a nonzero
+exit status, missing/corrupt artifact, incorrect sample count, metadata
+mismatch, analyzer instability, or any other deviation. The UART-dependent
+portion may begin only when `result.json` has status `PASS` and aggregate
+sample count `48,000,000`. The single-request 48M command shall not be used.
+
+The decoder command and acceptance rules are unchanged. Each retained segment
+shall be decoded separately with the existing decoder, preserving its raw
+artifact and report; segment boundaries must remain explicit in the evidence.
 
 ```bash
 python3 tools/decode_gpu_t1d_diag_capture.py \
-  --input build/<diagnostic-evidence>/g6_uart_capture.sr \
+  --input build/<diagnostic-evidence>/capture_segments/segment_NN.srzip \
   --channel D0 \
   --baud 115200 \
-  --output build/<diagnostic-evidence>/telemetry.json
+  --output build/<diagnostic-evidence>/capture_segments/segment_NN.json
 ```
 
 The decoder shall retain the raw capture, decoded records, record offsets,
@@ -504,6 +531,80 @@ The failed evidence directories remain preserved. These results qualify the
 corrected repository invocation for the single authorized D2 campaign; they do
 not qualify a diagnostic bitstream and do not authorize D3.
 
+### 6.9 D3 capture amendment — 2026-09-21
+
+Owner authorization amends D3 as specified in §6.5. The qualified
+host/analyzer configuration is explicit `fx2lafw:conn=<current bus.device>`,
+`24 MHz`, channel `D0`, and `srzip`; the unreliable single-request 48M
+acquisition is prohibited. The
+already qualified programmed FPGA state, wiring, reset sequence, UART fixture,
+sender settings, and D3 acceptance criteria are unchanged. The capture gate is
+the durable `result.json` produced by
+`tools/capture_gpu_t1d_diag_segments.py`. UART data shall not be sent unless
+that record reports twelve passing segments and an aggregate of exactly
+48,000,000 samples.
+
+Execution of the amendment on 2026-09-21 halted at segment 01 before any UART
+activity. The durable evidence is
+`build/d3_physical_diag_20260921/segmented_capture_01/`; no retry is implied.
+
+### 6.10 Analyzer qualification outcome — 2026-09-21
+
+Revision 2 records an analyzer infrastructure failure. It does not alter the
+diagnostic bitstream, reset sequence, UART fixture, sender settings, D0
+mapping, 24 MHz samplerate, 12-segment procedure, 48,000,000-sample gate, or
+any D3 acceptance criterion.
+
+The tested instrument is USB `0925:3881`, identified by `fx2lafw` as a Saleae
+Logic-compatible eight-channel analyzer. The current host stack is:
+
+```text
+sigrok-cli 0.7.2
+libsigrok 0.5.2-git-94cb33a7
+libusb 1.0.30.12037
+firmware /usr/share/sigrok-firmware/fx2lafw-saleae-logic.fw
+```
+
+The following results are retained:
+
+| Evidence | Result |
+|---|---|
+| Configuration-only open and samplerate query | Passed at 24 MHz |
+| Explicit `fx2lafw:conn=<current bus.device>` small acquisition | Passed for diagnostic-sized capture |
+| Generic `fx2lafw` discovery/capture path | Failed with `libusb_init() returned LIBUSB_ERROR_OTHER` |
+| `segmented_capture_05`, segment 01 | 2,738,176 / 4,000,000 samples; HALT |
+| `segmented_capture_06`, segment 01 | 1,304,064 / 4,000,000 samples; HALT |
+| Latest kernel USB evidence | No analyzer disconnect, reset, stall, or xHCI error at capture failure |
+
+The two short segments had valid `24 MHz` / `D0` metadata and exit status zero,
+but the device reported fewer samples than requested. The capture guard
+correctly rejected both results. The repository's prior bench record also
+documents that this FX2 clone does not sustain continuous `sigrok-cli`
+streaming and that short single-shot captures are the observed limitation:
+`docs/archive/handovers/SESSION_HANDOVER_2026-09-03.md`.
+
+Classification:
+
+```text
+INFRASTRUCTURE FAIL — current FX2 analyzer/host acquisition path cannot
+produce one qualified 4,000,000-sample segment, so it cannot satisfy the
+12-segment / 48,000,000-sample D3 gate.
+```
+
+This classification is not a GPU, UART, RTL, bitstream, or D3 behavioral
+result. No UART-dependent D3 continuation is authorized by this revision.
+Further D3 execution requires a separately authorized qualification using a
+known-good sustained-stream analyzer, an alternate host/backend stack, or a
+replacement instrument. Short captures, stitched captures with unqualified
+gaps, and exit status without sample-count verification shall not close D3.
+
+Contextual visual evidence is recorded separately in
+`spu_strategy/contract_gpu_t1d_visual_observation_2026-09-21.md`: the
+operator-observed visual-only path reproduced the expected dual-triangle image
+on both the initial and warm-reset transactions. That result supports visible
+end-to-end behavior only; it does not provide D3 telemetry evidence and does
+not change this revision's `INFRASTRUCTURE FAIL` classification.
+
 ## 7. Diagnostic execution ladder
 
 ### D0 — pre-execution review
@@ -567,12 +668,14 @@ This draft intentionally authorizes no detached job.
 
 ### D3 — bounded physical diagnostic
 
-Physical execution requires a later explicit authorization after D1 and D2
-pass. The later authorization shall use:
+Revision 1 authorizes physical execution under the amended §6.5 capture gate.
+The execution shall use:
 
 * the diagnostic bitstream hash exactly as built;
 * the same identified Wukong board and programming path;
 * a frozen reset, sender, drain, and telemetry-capture procedure;
+* twelve sequential 4,000,000-sample analyzer segments at 24 MHz, with each
+  segment retained and verified before the UART-dependent portion;
 * the identical 64-byte fixture and 115200 8N1 sender settings;
 * no more than two diagnostic transactions: one baseline and one
   reset/re-arm repeat;

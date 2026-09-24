@@ -4154,3 +4154,359 @@ was connected in response, when the bridge had been present the whole time.
 - **`frame_err` from `spu_uart_rx` is not surfaced** anywhere in this probe,
   so a marginal baud match would show as a wrong echoed byte rather than an
   explicit error.
+
+## 2026-09-08 — RP2350 four-node INA226 kernel preflight (performance-only)
+
+Scope: owner-authorised replay of deterministically reconstructed failed INA226
+four-node models; no application/promotion gate changed. Not an FPGA comparison
+or a complete sensor-stream benchmark.
+
+Device: Pico2 RP2350 A2, chipid `9537d50959f3be46`, identified through BOOTSEL.
+Firmware: `hardware/rp2350/spu4_benchmark/baseline.c`, Cortex-M33 Release/-O3,
+GCC 16.2.0 / Pico SDK 2.2.0, configured 150 MHz, SRAM execution at 0x20000000.
+ELF SHA256 `324d1427d07446c791421d874c440fc213416b914f786e08a30e957a4dd12bbd`.
+Full original flash backed up and verified; no flash rewritten and no external
+GPIO configured/driven by the benchmark firmware.
+
+Observed: three same-boot batches, each 120/120 exact features/scaling/winner/
+distance/label matches. SysTick cycle intervals, min/median/p99/max per batch:
+preprocessing 2412/2436/2440/2440; classifier 111/111/111/111; prepared-window
+processing through label lookup 2527/2551/2555/2555. All three batches identical.
+One-cycle back-to-back read overhead is retained. Each 120-case batch including
+setup/checking takes 2262 us by the firmware timer; USB printing happens afterward.
+
+Raw: [MCU preflight JSON](bench_captures/2026-09-08_spu4_rp2350_kernel_preflight.json),
+SHA256 `9b8296b5d505ccbd7bb7a7f072125406b97e36d1844bb0f52cc2b327824a734a`.
+Methods/limitations: [benchmark record](SPU4_INA226_BENCHMARK_2026-09-08.md).
+The 0.740 us classifier interval uses configured 150 MHz, not an independently
+calibrated oscillator measurement. Excludes acquisition, model/window copying,
+stream scheduling, transport and session vote. No background-load, cold-start,
+worst-case latency, energy, throughput or comparative architecture claim.
+
+## 2026-09-09 — Tang bench25 completion-arm probe: physical parity halt
+
+Scope: one owner-authorised probe-consumer correction preventing a stale
+level-held `done` from completing the next accepted query. Classifier RTL,
+wrapper, model, fixtures, clocking and UART semantics were frozen.
+
+Pre-hardware evidence: both consumer simulation profiles passed 50/50 checks;
+the registered repository gate passed 227/227. Fresh Tang P&R passed 25 MHz
+with 35.02 MHz routed Fmax, +11.45 ns setup slack, no hold/min violation and
+zero timing errors. Build evidence is in
+`build/spu4_ina226_benchmark/bench25_completion_arm/`; packed image SHA-256 is
+`7a57be49d6164d838cd9ba49b9e13a1feb64f250312378a425bf237622dc448b`.
+
+Physical observation: SRAM load succeeded; fresh UART boot output contained
+hydration `SOM:H ... S=04 ...`. The first frozen fold-0 request returned one
+valid fresh-completion line with `L=006`, establishing that the stale `L=000`
+symptom did not recur on that query. However, its node/distance was node 3 /
+71,515,812 versus expected node 2 / 63,278,740. The required exact-parity gate
+therefore failed and the run stopped before a second query or any performance
+measurement.
+
+This is **not** evidence of benchmark performance or architectural advantage.
+It is a physically observed consumer-latency repair accompanied by an
+unresolved classifier-parity failure. Raw captures:
+`bench_captures/2026-09-09_spu4_completion_arm_boot.json` and
+`bench_captures/2026-09-09_spu4_completion_arm_fold0_acceptance.json`.
+
+## 2026-09-21 — T1d visual-only prepared-scene observation
+
+This is a separate operator-observed hardware result. It does not close the
+original D3 telemetry requirement and must not be used as internal UART,
+payload-CRC, loader, or activation evidence.
+
+Frozen artifact:
+
+```text
+bitstream = build/d3_physical_diag_20260921/spu_a7_100t_GPUVGA_T1D_DIAG_S1.bit
+bitstream_sha256 = 52d45da0743c326f1700b4efa7fa0187523ea6e456948f274e2cc276ccd7b914
+sender_commit = c8895e9
+sender_blob_sha256 = 7310a1a9f505a215a26082f1928963a96054a1e4552b96d0dba72a777fd110a1
+fixture_sha256 = aa2bad57fa5d3d2f777ef5e5405357ac0216a4aafb707d99241050c986ed69ee
+uart = 115200 8N1, frozen 64-byte transaction
+```
+
+The initial transaction produced the expected dual-triangle image. After the
+frozen warm-reset sequence and operator confirmation of the black/unarmed
+state, the repeat transaction produced the same expected dual-triangle image.
+Both host transactions wrote 64 bytes and completed `tcdrain`; the CH340
+preflight remained stable with no recorded host events.
+
+Evidence:
+
+* `build/d3_visual_observation_20260921/uart_recovery_amendment_01/preflight.json`
+* `build/d3_visual_observation_20260921/uart_recovery_amendment_01/transcript.json`
+* `build/d3_visual_observation_20260921/visual_repeat_02/repeat_record.json`
+* `build/d3_visual_observation_20260921/visual_repeat_02/transcript.json`
+* `spu_strategy/contract_gpu_t1d_visual_observation_2026-09-21.md`
+
+Classification: **PASS (operator-observed, visual-only)**. No camera raw-image
+files or image SHA-256 values were produced. Original D3 remains **HALTED**
+with `INFRASTRUCTURE FAIL — FX2 sustained-stream limitation`.
+
+## 2026-09-23 — T1g bounded temporal scene replacement
+
+**Scope:** Physical A→B→C scene replacement on the Wukong Artix-7 100T using
+the T1g prepared-scene candidate/active banks and the frozen Q1 host pacing.
+
+**Bitstream:**
+
+```text
+source snapshot commit = a64d87c7ae0d96b44d8178c20f2421376a975ac0
+artifact = build/spu_a7_100t_GPUVGA_T1G_B1_S1.bit
+SHA-256 = e16dc6992c60de99d9f5d9a5cc10c3aff99a245b5f5da6035887f2c92cb68fa5
+load = openFPGALoader -c dirtyJtag --freq 1000000 \
+       build/spu_a7_100t_GPUVGA_T1G_B1_S1.bit
+result = Load SRAM 100%, isc_done 1, init 1, done 1
+```
+
+After a board power cycle, the FPGA was detected as XC7A100 (`idcode
+0x3631093`) and the bitstream loaded successfully. The host then sent the
+frozen 127-byte A, B, and C fixtures in order at 115200 8N1, with a 20 ms
+post-drain delay, 3-second scene dwell, and a 31.1 ms minimum start-to-start
+bound. The recorded gaps were 3006.081843 ms and 3005.912119 ms. All writes
+completed `tcdrain`; transcript:
+`build/t1f_clean_qualification_20260922/build/t1g_h1_20260923/uart_sequence_attempt_03.json`.
+
+**Operator observation:** both scene changes were visible on the monitor; the
+operator reported that the prior yellow shimmer was absent in this run. During
+troubleshooting, the analyzer was found on the wrong PMOD; earlier captures
+from that connection are excluded. Correcting the PMOD connection restored
+the VGA display.
+
+**Classification:** **PASS (operator-observed, visual-only)** for the bounded
+A→B→C hardware demonstration. This is not a captured-pixel proof of every
+transition frame. The no-mixed-scene pixelwise result remains the simulation
+Q2 evidence recorded in the T1g contract. No general streaming or arbitrary
+back-to-back delivery claim is made.
+
+### 3.13 — T1h scalar threshold visualization (2026-09-23)
+
+**Scope:** Physical demonstration that the prepared four-primitive scene
+loader, selected scalar, and scalar-to-display diagnostic change together for
+the frozen A/B/C scenes. The diagnostic renders the selected scalar's
+`[14:11]` bits to grayscale; the one-bit-per-channel VGA board output makes
+the visible levels black and white at the scalar bit-14 threshold (16384).
+
+**Source and image:**
+
+```text
+source HEAD at build = 8ea3bc2abeaff97dac5b01ed558ee96008788340
+source tree = dirty; exact build-time status is recorded in
+  build/t1h_gpu_attributes_20260923/b1_scalar_diag_01/git_status.txt
+artifact = build/spu_a7_100t_GPUVGA_T1H_DIAG_B1_S1.bit
+SHA-256 = ec600abe73e847f0846bff5429813cc6913a343b235e215cab5298ebb5d126dd
+load = openFPGALoader -c dirtyJtag --freq 1000000 \
+       build/spu_a7_100t_GPUVGA_T1H_DIAG_B1_S1.bit
+result = Load SRAM 100%, isc_done 1, init 1, done 1
+```
+
+The host sent the frozen A/B/C/A transactions at 115200 8N1. Every
+151-byte write completed `tcdrain`; the host waited three seconds between
+scenes, exceeding the frozen 20 ms post-drain minimum. Recorded start-to-start
+gaps were 3008.766143 ms, 3008.735051 ms, and 3008.739499 ms. Transmit
+evidence:
+
+* `build/t1h_gpu_attributes_20260923/h1_abca_sequence.json`
+* `build/t1h_gpu_attributes_20260923/h1_scene_a.json`
+* `build/t1h_gpu_attributes_20260923/h1_scene_b.json`
+* `build/t1h_gpu_attributes_20260923/h1_scene_c.json`
+* `build/t1h_gpu_attributes_20260923/h1_ac_toggle.json`
+* sender: `tools/send_gpu_t1h_sequence.py`, SHA-256
+  `11b8ba229536d2ad454cf1f15615522d8f5f23174f1ceaad155183c1068e50de`
+
+**Operator observation:** the monitor showed the black/white scalar pattern
+change for B and C, then return to A. The operator reported that the A/C
+eight-pixel translation was visible. A purple shimmer appeared along the left
+vertex edge; it followed the vertex line pattern and remained confined to the
+geometry edge. The diagnostic RTL drives R/G/B from the same scalar bit, so
+purple is not an intentional scalar color. Its physical/display cause remains
+unresolved. The operator supplied one monitor photo; it shows the expected
+bright-right/dark-left threshold split and the purple vertex-edge line. This
+is a visual record, not a raw VGA frame capture:
+`build/t1h_gpu_attributes_20260923/h1_scalar_threshold_photo.jpeg`
+(SHA-256 `a0afe136711a6acd02cd91c000b9c394663f6fbebb161b5dba7a3f06a07c757d`).
+
+**Classification:** **HOLD — edge artifact audit**. The operator-observed
+pattern change supports physical scalar threshold visualization and bounded
+A/B/C/A scene replacement, but H1 is not accepted while the geometry-aligned
+purple edge remains unexplained. This does not establish captured-pixel
+equality or full scalar numeric accuracy on hardware; the independent
+integer-oracle result remains simulation evidence, not a captured hardware
+frame.
+
+**Focused simulation audit (2026-09-23):** the T1h regression checks 715
+samples in the lower-vertex neighborhood across A/A/B/C/A. All twelve edge
+accumulators per sample match independent edge equations; coverage masks,
+depth winner, selected scalar, diagnostic RGB, and final VGA RGB match their
+oracles. Pixels outside coverage produce black at the final VGA outputs in
+these samples. This rules out a coverage leak or invalid-scalar RGB leak in
+the sampled RTL simulation region; it does not identify the physical purple
+edge cause. H1 remains on hold. Run with
+`python3 software/tests/test_gpu_t1h_attribute.py`.
+
+**Depth-winner seam analysis (2026-09-23):** Scene A's four primitive edge
+sets are identical, so all four triangles overlap exactly. The integer oracle
+finds 117 pixels where multiple covered lanes share the nearest depth. At
+`(39,41)`, lane 2 wins; at `(40,41)`, lanes 2 and 3 tie at depth 58 and the
+fixed lower-ID rule selects lane 2; at `(41,41)`, lane 3 wins. At `(40,40)`
+all four depths tie and lane 0 wins. The new second-A-frame pass shows the
+same winner and scalar at every sampled pixel in both consecutive A frames.
+This supports a stable depth-winner boundary at the black/white transition,
+not temporal z-fighting in the tested RTL simulation. It is a plausible source
+of the high-contrast physical fringe, but the purple appearance is unresolved.
+
+A follow-up FX2 logic-analyzer attempt requested 1,000,000 samples at 48 MHz
+on J10 RGB and hsync but returned only 10,240 samples (about 0.213 ms, or
+6.7 scan lines). D0–D2 remained black and D3 showed hsync pulses, so the
+capture was from a blank portion of the frame and did not include the triangle
+edge. The capture is retained at
+`build/t1h_gpu_attributes_20260923/rgb_pin_capture_01/vga_rgb_hsync.sr`
+(SHA-256 `41f35997cbf7882d467643bf6df3f87d6aebaf500ba03b1f379bab3a257177bb`).
+It is inconclusive and does not change the H1 HOLD classification.
+
+### 3.14 — T1i interpolated U/V physical diagnostic (2026-09-24)
+
+**Scope:** Physical observability of the T1i winner-selected U/V values through
+the compile-time binary diagnostic. The display maps `U[14]` to red,
+`V[14]` to green, and blue to zero; expected covered classes are black, red,
+green, and yellow. This is a diagnostic pattern observation, not exact
+per-pixel U/V correctness on silicon.
+
+**Build:** Source commit at build was
+`8ea3bc2abeaff97dac5b01ed558ee96008788340`; the tree was dirty and the exact
+status is recorded in
+`build/gpu_t1i_hw_uv_diag_20260924_b1_01/git_status.txt`. Artifact:
+`build/spu_a7_100t_GPUVGA_T1I_UV_DIAG_B1_S1.bit`, SHA-256
+`ccfa2b883a5ee1e30da52afdfa7b122a4a288e64b1730ecc59df788d1ad5b92e`. The
+detached build result is `COMPLETE` (exit 0). Routed `clk_pixel` timing was
+35.23 MHz against 25 MHz; utilization was 31% LUT, 12% flip-flop, 7% CARRY4,
+2% DSP48E1, and zero block RAM. Full synthesis and routing logs are retained
+under `build/gpu_t1i_hw_uv_diag_20260924_b1_01/` and the adjacent named
+nextpnr artifact.
+
+The board was detected as XC7A100 (`idcode 0x3631093`). The diagnostic image
+was loaded using
+`openFPGALoader -c dirtyJtag --freq 1000000`; the result was `Load SRAM 100%`,
+`isc_done 1`, `init 1`, and `done 1`. The frozen T1i A/B/C/A 175-byte packets
+were sent at 115200 8N1 through `/dev/ttyUSB0`. Each write completed
+`tcdrain`; the 3-second-dwell start-to-start gaps were 3011.583114 ms,
+3011.703550 ms, and 3011.457002 ms. Sender and transcript:
+
+* `tools/send_gpu_t1i_sequence.py`, SHA-256
+  `c227b38053cea29ea6c109aa91e986d0cad4c207284a6b5d561f030fc7455d74`
+* `build/gpu_t1i_hw_uv_diag_20260924_b1_01/h1_abca.json`, SHA-256
+  `e4f24c71c1748eaa55dd6a0ee8f25435ff81dd586310df35f1cf4eb055d93e60`
+
+**Operator photo:** `build/gpu_t1i_hw_uv_diag_20260924_b1_01/IMG_1743.jpeg`,
+SHA-256 `e31a002fc5f77d2876505e31c5e61bf2f202e07d227f27815024ff93985b1f51`.
+It shows broad red/green regions and yellow edge pixels, along with a detached
+red fragment and dotted green line above the main shape. The operator reports
+that ghosting lines remain.
+
+**Classification:** **HOLD — ghosting visible.** The photo establishes that
+the broad diagnostic colors are physically visible, but the ghosting prevents
+accepting H1 as a clean physical demonstration. The image does not establish
+whether the pattern changed for B and C and returned to A, and it is not a
+captured-pixel oracle. The ghosting cause is not identified; no interpolation
+or coverage correction is justified by this evidence. T1i remains
+simulation-qualified for exact U/V interpolation. Its prior Q3 full-repository
+gate result remains FAILED on the unrelated T1D timeout and was not rerun.
+
+### 3.15 — Registered T1i U/V output divergence replay (2026-09-24)
+
+**Scope:** Experimental physical discriminator for the previously observed
+history-dependent broad color change. The image registers the winner-selected
+56-bit U/V values and validity, then maps `U[14]` to red and `V[14]` to green;
+sync and active are delayed by the same stage. This observation does not
+establish exact per-pixel U/V correctness on silicon.
+
+**Build:** The bounded detached Artix build completed successfully (exit 0,
+1390 seconds) in
+`build/gpu_t1i_uv_divergence_hw_20260924/build_01`. Artifact
+`build/spu_a7_100t_GPUVGA_T1I_UV_REG_DIAG_B1_S1.bit`, SHA-256
+`3bd663e65db659ddfa7dcc4b71082c1a490927ccf4d1994cf07d14f2aaeed376`.
+The artifact was loaded to SRAM using
+`openFPGALoader -c dirtyJtag --freq 1000000`; it reported `Load SRAM 100%`,
+`isc_done 1`, `init 1`, and `done 1`.
+
+The frozen 175-byte A -> B -> C -> A packets were sent at 115200 8N1 through
+`/dev/ttyUSB0`; each write completed `tcdrain`. Per-scene transcripts are
+`h1_scene_a_initial.json`, `h1_scene_b.json`, `h1_scene_c.json`, and
+`h1_scene_a_return.json` in the build evidence directory. Scene B photo
+`scene_b_operator_capture.jpeg` (source workspace name `IMG_1752.jpeg`),
+SHA-256 `d761b93eee76ade1847a66b4c8d729df339ea51f8cc04372e2daeef491cdcc6d`;
+Scene C photo `scene_c_operator_capture.jpeg` (source workspace name
+`IMG_1754.jpeg`), SHA-256
+`b4370196f7ab2c861f8cecde72c94fe068ac1a8578ae2d79225f73a6613144f6`.
+Initial-A and return-A assessments were operator-reported without photos in
+this record.
+
+**Observation:** Initial A was reported red-left/green-right with a small red
+artifact above. Scene B showed red and green regions with yellow overlap at
+the left triangle and the red artifact above. Scene C showed a broad
+yellow-left/green-right triangle with a red region above. On return A, the
+operator reported that the broad red-left/green-right regions appeared to
+match initial A; the small artifact remained visible.
+
+**Classification:** The broad history-dependent color change seen on the
+original combinational U/V diagnostic was not reproduced in this registered
+U/V replay. Together with the identical committed U/V tuples/re-anchor state
+and production-timing oracle results, this supports output settling/alignment
+as a contributor to that broad color instability. This is operator-observed
+evidence, not captured-pixel proof. The small detached red artifact remains
+unresolved and is tracked separately; this run did not remove or explain it.
+No interpolation, coverage, depth, or winner correction is justified. The
+contingency second build from the divergence campaign was not used.
+
+### 3.16 — T1i post-winner output register hardening (2026-09-24)
+
+**Scope:** Physical observation of the compile-time `GPU_POST_WINNER_REG=1`
+diagnostic profile after registering final RGB and aligned hsync/vsync/active.
+The profile leaves coverage, depth, winner selection, U/V interpolation,
+scene activation, and packet semantics unchanged. The display diagnostic
+maps winner-selected U/V to red/green; it is not exact per-pixel silicon
+verification.
+
+**Simulation gate:** The detached 640x480 A/B/C/A production-timing replay
+completed with exit 0 and exactly one `COMPLETE` marker at
+`build/gpu_post_winner_output_register_20260924/prod_timing_run_01`. Its
+32,000 ROI samples matched the independent U/V oracle.
+
+**Build:** Source commit `8ea3bc2abeaff97dac5b01ed558ee96008788340`; the
+dirty source snapshot is recorded in
+`build/gpu_post_winner_output_register_20260924/build_01/git_status.txt`.
+The detached Artix build completed in 1626 seconds with exit 0 in
+`build/gpu_post_winner_output_register_20260924/build_01`. Artifact
+`build/spu_a7_100t_GPUVGA_T1I_POST_WINNER_REG_DIAG_B1_S1.bit`, SHA-256
+`f782a18ad2ee78928ddae05eb341094655815180fdd019ea3826a07610925640`.
+It was loaded using `openFPGALoader -c dirtyJtag --freq 1000000`; load
+reported 100%, `isc_done 1`, `init 1`, and `done 1`.
+
+The frozen T1i A/B/C/A 175-byte packets were sent at 115200 8N1 through
+`/dev/ttyUSB0`. Each write completed `tcdrain`; individual transcripts are
+`h1_scene_a_initial.json`, `h1_scene_b.json`, `h1_scene_c.json`, and
+`h1_scene_a_return.json` in the build evidence directory.
+
+**Operator observation:** Initial A was a red-left/green-right triangle with
+a small red artifact above. B was reported as matching `IMT_1748.jpeg`. C
+was yellow-left/green-right with a red artifact above. Return A matched the
+initial A broad red-left/green-right regions. The small red artifact remained
+visible. No photos were supplied for this replay; observations are
+operator-reported, not captured-pixel measurements.
+
+For ordinary RGB sanity, the already-qualified T1g bitstream
+`build/t1f_clean_qualification_20260922/build/spu_a7_100t_GPUVGA_T1G_B1_S1.bit`
+(SHA-256
+`e16dc6992c60de99d9d5f9d5a5cc10c3aff99a245b5f5da6035887f2c92cb68fa5`)
+was loaded and its 127-byte T1f Scene A packet sent. The operator reported a
+normal triangle with no phantom vertices. The existing image was reused; no
+additional build was consumed.
+
+**Classification:** **PASS (operator-observed, visual-only)** for the bounded
+diagnostic A/B/C/A broad-region change and return-A match, plus ordinary T1g
+RGB sanity. The broad history-dependent color shift was not reproduced with
+the post-winner register. The detached red artifact remains unresolved and
+outside this pass. No exact physical pixel correctness is claimed. The
+second build slot remains unused.

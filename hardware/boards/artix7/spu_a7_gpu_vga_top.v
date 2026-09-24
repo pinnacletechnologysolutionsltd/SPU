@@ -21,7 +21,15 @@
 
 module spu_a7_gpu_vga_top #(
     parameter PREPARED_SCENE = 0,
-    parameter COST_STIMULUS  = 0
+    parameter COST_STIMULUS  = 0,
+    parameter FOUR_PRIMITIVE_SCENE = 0,
+    parameter T1H_SCALAR_SCENE = 0,
+    parameter T1H_SCALAR_DIAG = 0,
+    parameter T1I_UV_SCENE = 0,
+    parameter T1I_UV_DIAG = 0,
+    parameter T1I_UV_REG_DIAG = 0,
+    parameter T1I_DEPTH_DIAG = 0,
+    parameter GPU_POST_WINNER_REG = 0
 ) (
     input  wire        sys_clk,      // M21, 50 MHz
     input  wire        rst_n,        // H7, active low, board PULLUP
@@ -190,7 +198,7 @@ module spu_a7_gpu_vga_top #(
 `ifdef GPU_T1D_DIAG
     wire       diag_start_accepted;
     wire       diag_payload_accepted;
-    wire [5:0] diag_payload_count;
+    wire [6:0] diag_payload_count;
     wire       diag_receiving;
     wire       diag_active_bank;
     wire       diag_commit_pending;
@@ -201,7 +209,15 @@ module spu_a7_gpu_vga_top #(
 
     spu_gpu_top #(
         .DEVICE("A7"), .ENABLE_HDMI(0),
-        .PREPARED_SCENE(PREPARED_SCENE)
+        .PREPARED_SCENE(PREPARED_SCENE),
+        .FOUR_PRIMITIVE_SCENE(FOUR_PRIMITIVE_SCENE),
+        .T1H_SCALAR_SCENE(T1H_SCALAR_SCENE),
+        .T1H_SCALAR_DIAG(T1H_SCALAR_DIAG),
+        .T1I_UV_SCENE(T1I_UV_SCENE),
+        .T1I_UV_DIAG(T1I_UV_DIAG),
+        .T1I_UV_REG_DIAG(T1I_UV_REG_DIAG),
+        .T1I_DEPTH_DIAG(T1I_DEPTH_DIAG),
+        .GPU_POST_WINNER_REG(GPU_POST_WINNER_REG)
     ) u_gpu (
         .clk_pixel(clk_pixel),
         .clk_tmds (clk_pixel),   // unused with ENABLE_HDMI=0

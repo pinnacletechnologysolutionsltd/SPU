@@ -90,8 +90,20 @@ def _read_sigrok_session(path: Path, channel: str) -> tuple[list[int], int, dict
             raise ValueError(f"{path} is not a sigrok session: metadata is missing")
         metadata = _parse_metadata(archive.read("metadata"))
         capture_name = _metadata_value(metadata, "capturefile") or "logic-1"
-        if capture_name not in names:
-            raise ValueError(f"sigrok capture stream {capture_name!r} is missing")
+        if capture_name in names:
+            capture_parts = [capture_name]
+        else:
+            prefix = f"{capture_name}-"
+            numbered_parts = []
+            for name in names:
+                if not name.startswith(prefix):
+                    continue
+                suffix = name[len(prefix):]
+                if suffix.isdigit():
+                    numbered_parts.append((int(suffix), name))
+            capture_parts = [name for _, name in sorted(numbered_parts)]
+            if not capture_parts:
+                raise ValueError(f"sigrok capture stream {capture_name!r} is missing")
 
         samplerate_value = _metadata_value(metadata, "samplerate")
         if samplerate_value is None:
@@ -118,7 +130,7 @@ def _read_sigrok_session(path: Path, channel: str) -> tuple[list[int], int, dict
         if probe_number is None:
             raise ValueError(f"channel {channel!r} is not present in sigrok metadata")
 
-        packed = archive.read(capture_name)
+        packed = b"".join(archive.read(name) for name in capture_parts)
         if len(packed) % unitsize:
             raise ValueError("sigrok logic stream is not aligned to unitsize")
         samples = [
@@ -128,6 +140,7 @@ def _read_sigrok_session(path: Path, channel: str) -> tuple[list[int], int, dict
         session = {
             "archive_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "capturefile": capture_name,
+            "capture_parts": capture_parts,
             "channel": channel,
             "probe_number": probe_number,
             "samplerate_hz": samplerate,

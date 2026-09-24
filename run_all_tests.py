@@ -692,6 +692,10 @@ def main():
         ("gpu_depth_compare_pass", "test_gpu_depth_compare_rtl_parity.py"),
         ("gpu_depth_compare_integration_pass", "test_gpu_depth_compare_integration.py"),
         ("gpu_top_integration_pass", "test_gpu_top_integration.py"),
+        ("gpu_t1h_attribute_pass", "test_gpu_t1h_attribute.py"),
+        ("gpu_t1i_uv_pass", "test_gpu_t1i_uv.py"),
+        ("gpu_t1i_uv_uart_loader_pass", "test_gpu_t1i_uv_uart_loader.py"),
+        ("gpu_t1i_depth_output_pass", "test_gpu_t1i_depth_output.py"),
     ]
     gpu_depth_v2_results = {}
     for var_name, fname in gpu_depth_v2_tests:
@@ -707,7 +711,7 @@ def main():
                 [sys.executable, test_path],
                 capture_output=True, text=True, timeout=120
             )
-            if result.stdout.strip().endswith("PASS"):
+            if result.returncode == 0:
                 this_test_passed = 1
             else:
                 print(f"\n  {fname} FAILED:\n{result.stdout[-500:]}")

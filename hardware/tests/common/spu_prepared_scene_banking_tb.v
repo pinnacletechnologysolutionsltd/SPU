@@ -105,7 +105,7 @@ module spu_prepared_scene_banking_tb;
         bypass_cov_expected=dut.ca_a0_0;
         bypass_depth_expected=dut.A_z0;
         #1;
-        check(dut.u_rast.u0.u_e0.a_r===bypass_cov_expected,
+            check(dut.direct_dual_raster.u_rast.u0.u_e0.a_r===bypass_cov_expected,
               "activation-edge coverage bypass sampled stale scene");
         check(dut.u_attr0.a_r===bypass_depth_expected,
               "activation-edge depth bypass sampled stale result");

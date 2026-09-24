@@ -3,7 +3,7 @@
 **Date:** 2026-09-14  
 **Contract ID:** `contract_gpu_prepared_scene_hardware_t1d_2026-09-14.md`  
 **Revision:** 4 — incorporates third pre-execution review of 2026-09-15  
-**Status:** **ACTIVE — Stage A COMPLETE; Stage B/C HALT. Stage B or C requires a separate owner authorization and does not inherit Stage A authorization.**
+**Status:** **ACTIVE — Stage A COMPLETE; Stage B COMPLETE; Stage C HALT. Stage C requires a separate owner authorization and does not inherit Stage B authorization.**
 **Target:** Wukong Artix-7 `xc7a100tfgg676-1` GPU/VGA configuration; 50 MHz `sys_clk`, 25 MHz `clk_pixel`  
 **Configuration under test:** a new, uniquely named T1d hardware mode guaranteeing `PREPARED_SCENE=1`, `COST_STIMULUS=0`, and physical CH340 UART RX
 
@@ -91,15 +91,24 @@ Stage A deliverables are:
 
 Any Stage A scope expansion or failed focused test ends Stage A at HALT. Stage A evidence must be reviewed before Stage B authorization.
 
-### 2.2 Stage B — frozen regression and matched builds
+### 2.2 Stage B — build qualification
 
-Stage B may be authorized only after Stage A closes with a reviewed clean SHA and completed Stage B fields in Section 13. It authorizes exactly one repository regression/gate and the matched B0/B1 synthesis/P&R jobs in Section 8.1, including packing and bitstream generation only where those frozen jobs normally produce them. It authorizes no programming or other physical operation.
+Stage B is build qualification only. It may be authorized only after Stage A
+closes with a reviewed clean SHA and completed Stage B fields in Section 13. It
+authorizes exactly one repository regression/gate and the matched B0/B1
+synthesis/P&R jobs in Section 8.1, including timing/utilization reports,
+bitstream generation, and bitstream provenance only where those frozen jobs
+normally produce them. It authorizes no programming or other physical
+operation.
 
 Stage B must produce the regression result, matched resource/timing reports, unique artifacts, and eligible bitstream hashes. Completion, failure, timeout, or tool error returns the tranche to HALT for review before Stage C.
 
-### 2.3 Stage C — physical ladder and controlled UART attempts
+### 2.3 Stage C — hardware execution
 
-Stage C may be authorized only after Stage B passes its contracted gates and Section 13 freezes the exact eligible hashes, programming/recovery commands, sender command, serial-drain behavior, reset procedure, observation procedure, and equipment identities.
+Stage C is hardware execution only. It may be authorized only after Stage B
+passes its contracted gates and Section 13 freezes the exact eligible hashes,
+programming/recovery commands, sender command, serial-drain behavior, reset
+procedure, observation procedure, and equipment identities.
 
 Stage C authorizes only the Section 9 sequence:
 
@@ -162,7 +171,7 @@ Stage A must complete this table from the board schematic, constraints, T1a cont
 
 | Parameter | Ratified value | Evidence source |
 |---|---:|---|
-| FPGA board and device | Wukong / `xc7a100tfgg676-1` | `[STAGE A FREEZE schematic/XDC source]` |
+| FPGA board and device | Wukong / `xc7a100tfgg676-1` | `hardware/boards/artix7/spu_a7_gpu_vga_t1d.xdc` + board evidence |
 | Physical UART path | Onboard CH340 | `docs/hardware_evidence.md` Section 3.11 |
 | FPGA input pin for UART RX | F3 | constraints + hardware evidence Section 3.11 |
 | FPGA I/O standard | LVCMOS33 with pull-up | constraints + hardware evidence Section 3.11 |
@@ -172,6 +181,7 @@ Stage A must complete this table from the board schematic, constraints, T1a cont
 | Byte/T1a clock domain | Same `clk_pixel` domain; no byte/pulse CDC | board top + elaborated hierarchy `[STAGE A FREEZE]` |
 | Physical oscillator / `sys_clk` | 50 MHz | board constraint |
 | GPU/video `clk_pixel` | 25 MHz | generated-clock design |
+| VGA harness mapping | J10-1/G8 -> RED/DE-15-1; J10-2/G7 -> GREEN/DE-15-2; J10-3/G5 -> BLUE/DE-15-3; J10-4/D5 -> HSYNC/DE-15-13; J10-10/E5 -> VSYNC/DE-15-14; J10-7/G6 unused | measured FPGA-pad-to-DE-15 evidence + frozen XDC harness comments |
 | Baud rate | 115200 | hardware evidence Section 3.11 |
 | Serial framing | 8 data bits, no parity, 1 stop bit; idle high; LSB first | existing `spu_uart_rx` + evidence |
 | Accepted baud/phase tolerance | **Not claimed.** Simulation sweeps only the frozen test points in Section 7.2 and does not establish a general tolerance envelope. | receiver design/test |
@@ -189,6 +199,29 @@ Stage A must complete this table from the board schematic, constraints, T1a cont
 | Activation event | The internal `spu_gpu_top` `frame_start` at `hardware/rtl/gpu/spu_gpu_top.v:170`; not the separate board-top timing pulse used by the canonical setup | T1c/GPU RTL |
 
 T1d uses the onboard CH340. It introduces no external TX jumper, external UART adapter, or adapter power connection. Any future RP2350/Pico sender is a separate integration contract.
+
+### 4.1 Exact `sys_clk` to `clk_pixel` timing model
+
+The board wrapper has one external clock and one derived synchronous clock:
+
+- `sys_clk` is the M21 oscillator input at 50 MHz, with a 20 ns period.
+- `clk_div` initializes low and toggles on every rising `sys_clk` edge.
+- `clk_pixel` is the output of `BUFG` driven by `clk_div`; its rising edges
+  occur on every second `sys_clk` edge, so its cycle period is 40 ns / 25 MHz.
+- The BUFG contributes implementation delay but does not change the exact
+  divide-by-two edge relationship. No independent phase or duty-cycle claim
+  is made beyond the routed clock report.
+- All T1d UART, video timing, loader, prepared-state, and GPU logic is clocked
+  by `clk_pixel`. The UART input pad is synchronized inside `spu_uart_rx`;
+  there is no byte or pulse CDC between `sys_clk` and `clk_pixel`.
+- The reset debounce is clocked by `sys_clk`; its debounced state crosses into
+  the pixel domain through the three-stage `pix_rst_sync` chain.
+
+The executable model is `software/tests/test_gpu_t1d_clock_model.py`. It checks
+the divider edge sequence, 50-to-25 MHz ratio, 217-cycle UART divisor,
+receiver clock-domain binding, reset synchronizer anchor, and the frozen VGA
+pad mapping. This model is a structural/arithmetic contract check; it is not
+a substitute for routed timing evidence.
 
 ## 5. Frozen scene and oracle
 
@@ -331,15 +364,19 @@ Required builds:
 
 ### 8.1 Frozen detached jobs and campaign budget
 
-The exact commands must be filled after inspection of the repository's detached-job wrapper and new hardware-mode selector. This section is a ratification gate; descriptive equivalents are not acceptable.
+The commands below are the proposed Stage B commands. They are executable only
+after the Stage B pre-execution review in Section 13.2a is resolved and the
+owner changes the Stage B decision from `HALT` to `AUTHORIZE`. The detached
+runner records the source commit and dirty-tree state; a dirty root worktree is
+not an acceptable substitute for the frozen source checkout.
 
 | Job | Exact command | Attempts | Per-job timeout | Required artifact prefix |
 |---|---|---:|---:|---|
-| Repository gate | `[STAGE A FREEZE EXACT COMMAND]` | 1 | `[STAGE A FREEZE TIMEOUT]` | `_T1D_GATE_S1` |
-| B0 canonical build | `[STAGE A FREEZE EXACT COMMAND WITH A7_ARTIFACT_TAG=T1D_B0_S1 AND NO FUNCTIONAL T1D SELECTOR]` | 1 | `[STAGE A FREEZE TIMEOUT]` | `_T1D_B0_S1` |
-| B1 candidate build | `[STAGE A FREEZE EXACT COMMAND WITH GPU_T1D_UART=1 A7_ARTIFACT_TAG=T1D_B1_S1]` | 1 | `[STAGE A FREEZE TIMEOUT]` | `_T1D_B1_S1` |
+| Repository gate | `tools/run_detached_job.sh --output build/wukong_gpu_prepared_scene_t1d_20260920/stage_b_gate_01 --timeout 3600 --notify-desktop -- bash tools/verify_repo.sh` | 1 | `3600 s` | `_T1D_GATE_S1` |
+| B0 canonical build | `tools/run_detached_job.sh --output build/wukong_gpu_prepared_scene_t1d_20260920/b0_s1_01 --timeout 7200 --notify-desktop -- env A7_FREQ=25 A7_SEED=1 A7_ARTIFACT_TAG=T1D_B0_S1 bash hardware/boards/artix7/build_a7.sh 100t gpuvga all` | 1 | `7200 s` | `_T1D_B0_S1` |
+| B1 candidate build | `tools/run_detached_job.sh --output build/wukong_gpu_prepared_scene_t1d_20260920/b1_s1_01 --timeout 7200 --notify-desktop -- env A7_FREQ=25 A7_SEED=1 GPU_T1D_UART=1 A7_ARTIFACT_TAG=T1D_B1_S1 bash hardware/boards/artix7/build_a7.sh 100t gpuvga all` | 1 | `7200 s` | `_T1D_B1_S1` |
 
-**Cumulative Stage B wall-clock budget:** `[STAGE A FREEZE]`  
+**Cumulative Stage B wall-clock budget:** `18,000 s`
 **Retry budget:** zero unless a new owner authorization names the exact failed job and correction.  
 **Parallel builds:** prohibited unless the existing flow proves output directories and caches are isolated.
 
@@ -568,7 +605,7 @@ Complete before Stage B begins:
 
 | Stage B field | Ratified value |
 |---|---|
-| Frozen source commit | `a6c52fa003a1a47ee5ae953c4d2a1658e786f2cb` |
+| Frozen source commit | `8095690628d34c3188ba700b0d9a50a7a3147e23` |
 | Repository regression/gate command and expected condition | `tools/run_detached_job.sh --output build/wukong_gpu_prepared_scene_t1d_20260920/stage_b_gate_01 --timeout 3600 --notify-desktop -- bash tools/verify_repo.sh` / exactly one terminal `COMPLETE` with zero failures |
 | Repository-gate timeout | `3600 s` |
 | B0 command | `tools/run_detached_job.sh --output build/wukong_gpu_prepared_scene_t1d_20260920/b0_s1_01 --timeout 7200 --notify-desktop -- env A7_FREQ=25 A7_SEED=1 A7_ARTIFACT_TAG=T1D_B0_S1 bash hardware/boards/artix7/build_a7.sh 100t gpuvga all` |
@@ -579,9 +616,112 @@ Complete before Stage B begins:
 | Retry/parallel rule | zero retries; no parallel builds unless already proven isolated |
 
 **Stage B owner:** John Curley  
-**Stage B decision:** `HALT`
+**Stage B decision:** `COMPLETE`
 **Stage B date:** `2026-09-20`
-**Stage B notes:** `Commands are frozen as the proposal for the next owner decision; no Stage B job was launched under Stage A.`
+**Stage B notes:** `Repository gate, chipdb generation, matched B0/B1 synthesis/P&R, timing review, utilization capture, and bitstream provenance completed from clean commit d88ee61f. Stage C remains separately unauthorized.`
+
+### 13.2a Stage B pre-execution review — 2026-09-20
+
+The review was performed against HEAD `e27c391d0cb6d5bc68e1002b830213beb0ede2fc`.
+No repository gate, synthesis/P&R, packing, programming, or hardware
+operation was launched.
+
+| Review question | Finding | Gate disposition |
+|---|---|---|
+| Repository gate from the frozen source | The requested source commit exists, but the current root worktree is dirty. The dirty set includes `hardware/boards/artix7/synth_a7_gpu_vga.ys`, which directly affects the proposed B0 canonical build, plus other user changes. `run_detached_job.sh` records the dirty state but does not create a clean checkout. | **HALT** until B0/B1 and the repository gate run from an isolated clean checkout/worktree at `e27c391...`. Do not discard the existing changes. |
+| Board/device/top-level selection | The proposed builds select `100t` / `xc7a100tfgg676-1`, `GPUVGA`, and `spu_a7_gpu_vga_top`. B1 selects the T1d Yosys manifest and T1d XDC through `GPU_T1D_UART=1`; B0 remains the canonical GPUVGA path. | Pass, subject to the clean-source gate. |
+| Clock/reset/UART assumptions | `M21` is the 50 MHz `sys_clk`; the fabric divider produces the 25 MHz pixel clock; `H7` is active-low reset with debounce and three pixel-domain synchronizer stages; B1 receives CH340 TXD on `F3` at 115200 8N1 with `BIT_CYCLES=217`. The UART pad is synchronized by the receiver. | Pass for execution. No general baud-tolerance claim is permitted. |
+| VGA observation definition | Stage B has no physical observation. Stage C must later freeze the monitor/analyser, harness, capture method, and diagnostic-pixel interpretation. The current contract has not yet frozen those equipment-specific fields. | Not a Stage B gate; **Stage C remains unauthorized**. |
+| PASS / FAIL / INCONCLUSIVE | PASS requires a successful repository gate, both matched builds, eligible artifacts, and independently recorded routed timing for the ratified clocks. FAIL requires a completed specified mismatch. TIMEOUT, unavailable terminal marker, missing artifact, source mismatch, or unresolvable tool failure is INCONCLUSIVE and consumes the attempt. | Pass as a classification rule. |
+| Evidence freeze | Each job must retain `command.txt`, `git_commit`, `git_status.txt`, `tool_versions.txt`, logs, reports, result marker, artifact hashes, device/seed/frequency, utilization, timing/warnings, and the exact build outputs. | Pass as a recording rule. |
+| Timing/warning interpretation | `build_a7.sh` passes one global `--freq 25`; the T1d XDC declares `sys_clk` but does not declare a generated `clk_pixel` constraint. A B1 success exit or a 25 MHz global label cannot by itself prove both 50 MHz `sys_clk` and 25 MHz `clk_pixel`. Warnings must be preserved; no waiver or timing exception is authorized. | **HALT** if the frozen flow cannot provide separately interpretable evidence for both required domains. |
+| Physical connector mapping | Resolved to the measured FPGA-pad-to-DE-15 mapping: `E5` drives VSYNC and the harness uses J10-10/E5; J10-7/G6 is unused. The relevant XDC comments, T1d XDC, contract table, and `docs/SPIpinout.txt` now agree. | Pass. |
+| Clean B0 hierarchy | The isolated clean `e27c391` checkout was tested without synthesis/P&R. T1d hierarchy passes, but canonical B0 fails because `synth_a7_gpu_vga.ys` does not read `spu_scene_loader.v`, `spu_scene_unpack.v`, or `spu_prepared_scene_control.v`, which `spu_gpu_top` structurally instantiates. | **HALT** until a minimal post-`e27c391` correction is committed and re-isolated. |
+
+Required minimal corrections before Stage B authorization:
+
+1. Provide an isolated clean checkout/worktree at `e27c391...` without
+   deleting or reverting the user's current dirty changes.
+2. ~~Resolve the J10 hole-number/E5 contradiction consistently in the contract
+   and the relevant XDC comments; do not change the active FPGA pin assignment
+   without new board evidence.~~ **Resolved:** freeze J10-10/E5 for VSYNC and
+   J10-7/G6 unused, without changing the active FPGA pin assignment.
+3. Confirm that the selected flow can report or otherwise deterministically
+   interpret both required clock domains. If it cannot, revise the timing gate
+   before authorizing an expensive build.
+4. Add only the missing prepared-scene source reads to the canonical B0
+   synthesis manifest, create a new reviewed commit based on `e27c391...`, and
+   recreate the clean Stage B worktree from that commit. The T1d hierarchy
+   manifest already passes.
+
+Until those corrections are reviewed, Stage B remains `HALT`. The physical
+ladder (reset, prepared transaction, frame activation, and VGA observation)
+belongs to a later Stage C authorization and is not implied by this review.
+
+### 13.2b Stage B review rerun — 2026-09-20
+
+The three requested correction checks were rerun without launching Stage B:
+
+| Correction check | Result |
+|---|---|
+| Clean execution environment | PASS: detached clean worktree at `build/stage_b_clean_e27c391`; `git status --porcelain` empty; HEAD exactly `e27c391d0cb6d5bc68e1002b830213beb0ede2fc` |
+| VGA connector/pin freeze | PASS: active T1d XDC remains `vga_vsync -> E5`; J10-10/E5 is the frozen VSYNC harness connection; J10-7/G6 is unused; related XDC comments and `docs/SPIpinout.txt` agree |
+| Exact clock model | PASS: `python3 software/tests/test_gpu_t1d_clock_model.py`; 20 ns `sys_clk`, divide-by-two 40 ns `clk_pixel`, 217-pixel-clock UART divisor, and source anchors all checked |
+| Canonical B0 hierarchy from clean source | FAIL: `spu_a7_gpu_vga.ys` in `e27c391` omits the three prepared-scene modules structurally instantiated by `spu_gpu_top`; Yosys reports `spu_prepared_scene_control` unresolved |
+| T1d candidate hierarchy from clean source | PASS: the T1d manifest reads the required modules and the exact hierarchy-only command exits 0 |
+
+**Rerun decision:** `HALT`. The clean-environment, mapping, and clock-model
+corrections are now documented and tested, but Stage B cannot be authorized
+until the minimal canonical B0 manifest correction is committed after
+`e27c391` and a new clean worktree is created from that correction commit.
+No repository gate or synthesis/P&R job was launched.
+
+### 13.2c Stage B review from corrected baseline — 2026-09-20
+
+The manifest correction was committed as
+`37cf684bcd8a146d9db4472e68ecca96021c8d5c` from `e27c391...`. Its only diff
+is the three prepared-scene `read_verilog` lines in
+`hardware/boards/artix7/synth_a7_gpu_vga.ys`.
+
+| Review check | Result |
+|---|---|
+| Corrected clean worktree | PASS: `build/stage_b_clean_37cf684`; empty porcelain status; HEAD exactly `37cf684...` |
+| Canonical B0 hierarchy | PASS: hierarchy-only Yosys check exits 0 |
+| T1d candidate hierarchy | PASS: hierarchy-only Yosys check exits 0 |
+| Shared prepared-scene source closure | PASS: both manifests contain `spu_scene_loader.v`, `spu_scene_unpack.v`, `spu_prepared_scene_control.v`, and the same `spu_a7_gpu_vga_top.v` top source |
+| Detached-job execution provenance | **HALT:** `tools/run_detached_job.sh` and `docs/DETACHED_JOB_RUNNER.md` are not tracked in `37cf684`; they exist only as untracked files in the dirty root workspace. Launching from the dirty root would record the wrong repository state, while launching from the clean checkout cannot invoke the required runner. |
+
+**Corrected-baseline decision:** `HALT`. The build source now elaborates
+cleanly and the manifest/source-closure recurrence is closed. Stage B still
+requires a separately authorized infrastructure decision: either add the
+detached-runner infrastructure in a separate provenance commit, or ratify an
+immutable external runner path and evidence procedure. The manifest correction
+commit must not be amended with unrelated infrastructure or documentation.
+Stage C remains prohibited.
+
+### 13.2d Stage B review from runner baseline — 2026-09-20
+
+The runner infrastructure was committed as
+`8095690628d34c3188ba700b0d9a50a7a3147e23` from `37cf684...`. Its scope is
+limited to `tools/run_detached_job.sh`,
+`tools/run_detached_job_worker.sh`, `docs/DETACHED_JOB_RUNNER.md`, and the
+runner self-check.
+
+| Review check | Result |
+|---|---|
+| Clean runner worktree | PASS: `build/stage_b_clean_8095690`; empty porcelain status; HEAD exactly `8095690...` |
+| Runner availability | PASS: launcher, worker, documentation, and self-check are present from the clean checkout |
+| Runner self-check | PASS: shell syntax, success, failure, timeout, durable markers, result JSON, and notification failure handling |
+| Canonical B0 hierarchy | PASS: hierarchy-only Yosys check exits 0 |
+| T1d candidate hierarchy | PASS: hierarchy-only Yosys check exits 0 |
+| Shared prepared-scene source closure | PASS: canonical and T1d manifests contain the same prepared-scene module closure and top source |
+| Clock-model self-check provenance | **HALT:** `software/tests/test_gpu_t1d_clock_model.py` is not present in `8095690`; the earlier PASS was executed from the dirty workspace only. The runner baseline therefore cannot reproduce that review check. |
+
+**Runner-baseline decision:** `HALT`. The approved detached execution
+mechanism is now reproducible, but the timing-model test and its associated
+review documentation require their own narrowly scoped provenance commit (or
+an explicit owner decision that the timing model is an external review
+artifact). No repository gate, synthesis/P&R, or hardware job was launched.
 
 ### 13.3 Stage B closeout and Stage C authorization
 
@@ -589,42 +729,97 @@ Stage B closeout evidence:
 
 | Field | Actual evidence |
 |---|---|
-| Repository regression/gate result | `[RESULT AND LOG HASH]` |
-| B0 result and report hashes | `[RESULT/HASHES]` |
-| B1 result and report hashes | `[RESULT/HASHES]` |
-| B0/B1 resource comparison | `[TABLE/REPORT]` |
-| Setup/Fmax evidence for `sys_clk` and `clk_pixel` | `[EXACT REPORT VALUES]` |
-| B0 eligible bitstream SHA-256 | `[SHA-256]` |
-| B1 eligible bitstream SHA-256 | `[SHA-256]` |
+| Build source anchor | `d88ee61f3f930a93b903839c6dcae73174578adc`; clean detached worktree; empty recorded dirty status |
+| Repository regression/gate result | `stage_b_gate_03`: `COMPLETE`, exit 0, `233 PASS / 0 FAIL`; stdout SHA-256 `473d34f973b3f6f0f3435187738244c287e440be945c6989fc393b5b92d30128`; result JSON SHA-256 `972df417ede7ad6579fd2449d20678b84f3b5f904f6fd6d1ce88e5ea35fb997e` |
+| Chip database prerequisite | `chipdb_100t_01`: `COMPLETE`, exit 0; `build/chipdb/xc7a100tfgg676.bin`, 159,062,368 bytes; SHA-256 `9d79e339c19fc3b42a5c409c47e58175ee199c2852d9096ea31c226e34398543` |
+| B0 result | `b0_s1_02`: `COMPLETE`, exit 0; result JSON SHA-256 `02d7337c42a7e3393327963bbd96bb5f2dfe6ff1b974fa3b9410b7f19d056cce` |
+| B1 result | `b1_s1_01`: `COMPLETE`, exit 0; result JSON SHA-256 `65b2a1de8022022dd17dc594c7ed3ed640d9dbeacb57837017bf7f01fd93163c` |
+| B0/B1 resource comparison | Post-route console metrics: B0/B1 LUT `7,891 / 13,048`; FF `2,419 / 3,833`; CARRY4 `387 / 403`; DSP48E1 `2 / 2`; BRAM18/36 `0 / 0`; BUFGCTRL `2 / 2`; SELMUX `550 / 984`. The B1 increase is recorded as the T1d UART/prepared-scene integration delta, not a performance claim. |
+| Routed setup/Fmax evidence | B0: `$iopadmap$sys_clk` `352.24 MHz`, `clk_pixel` `47.27 MHz`; B1: `$iopadmap$sys_clk` `334.90 MHz`, `clk_pixel` `42.02 MHz`. All exceed the contracted `50 MHz sys_clk` and `25 MHz clk_pixel` thresholds where the pinned flow reports the two domains. The flow provides no independent hold or unconstrained-path count; neither is claimed. |
+| B0 report hashes | Bitstream `5de505769d619ddf01fb8a8d6853fee650425a3e0be57214ca97b4db00c95fee`; JSON `5f25b9d81e8a13899f3ab678499a56b0d49723041971a916633f13d829b022ec`; routed JSON `4463daa5bd19e22a6d47c18daa6a71abb1934981022597d0db608d8cdb1d3a8b`; FASM `afae385994f0d44743e0bcef8ba9c435acb7af7c7a4ed432a681c4d6554250ab`; nextpnr log `7d589b4dd995453faa12786d1a4c49da17bf72a254bf61e7f33a400d568b2c6e`; metrics JSON `6e14435461029fc2c6ea187aa3041839baf9e6d25da8c27c0945251ae212239c` |
+| B1 report hashes | Bitstream `9d135a4d60e791fa88c4010ea6875c29127603d0d413c1d323fb03a0b0476cc1`; JSON `db41fdb9e856b079583178860cf93bea55beb085064f4b0d57d3bd9fa2218a74`; routed JSON `e9ca4264b98a901e9062bb64464d3c104c5d2ade49c53fd4e99ccf6a259c7a6d`; FASM `bd670c6b113e12b659a5101f872770d12a6e941b75ad787e1478f588e56f0aa7`; nextpnr log `d4cb7f09356124880a3e1cbf17b67002f9d1ea8e98ab5ce9f71d65258fcb3561`; metrics JSON `4d9006080daf171e223acbf02d0768844be7903d076e16d7646461a0c7b61a1f` |
+
+The B0 and B1 jobs both completed synthesis, place-and-route, and bitstream
+packaging with the frozen device, seed, frequency, manifests, and chipdb. The
+results are build-qualification evidence only. They do not establish that the
+bitstreams have been loaded, that VGA is functioning on a board, or that the
+UART transaction has been observed physically.
 
 Complete before Stage C begins:
 
 | Stage C field | Ratified value |
 |---|---|
-| VGAFIX bitstream hash/program command | `[SHA-256]` / `[EXACT COMMAND]` |
-| B0 bitstream hash/program command | `[SHA-256]` / `[EXACT COMMAND]` |
-| B1 bitstream hash/program command | `[SHA-256]` / `[EXACT COMMAND]` |
-| Known-good recovery image hash/command | `[SHA-256]` / `[EXACT COMMAND]` |
-| Board/power/CH340/monitor/harness identities | `[EXACT INVENTORY]` |
-| Host-send command and drain operation | `[EXACT COMMAND AND DRAIN EVIDENCE]` |
+| VGAFIX bitstream hash/program command | `a80b6d0cde560f71c85dcd4a8896019ae21f9149a5eed6cf26e35b154b69e379` / `openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_VGAFIX.bit` (historical known-good evidence; re-detect required) |
+| B0 bitstream hash/program command | `5de505769d619ddf01fb8a8d6853fee650425a3e0be57214ca97b4db00c95fee` / `openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_GPUVGA_T1D_B0_S1.bit` |
+| B1 bitstream hash/program command | `9d135a4d60e791fa88c4010ea6875c29127603d0d413c1d323fb03a0b0476cc1` / `openFPGALoader -c dirtyJtag --freq 1000000 build/spu_a7_100t_GPUVGA_T1D_B1_S1.bit` |
+| Known-good recovery image hash/command | VGAFIX hash/command above; use only after applying the programming safety rule |
+| Board/power/CH340/monitor/harness identities | Board model is QMTech Wukong Artix-7 XC7A100T-FGG676 with 50 MHz oscillator; live board serial, DirtyJTAG identity, CH340 `/dev/ttyUSB*`, power source, monitor, and harness revision remain **HALT fields** |
+| Host-send command and drain operation | **HALT:** no committed T1d sender currently freezes port selection, fixture hash checks, raw 115200 8N1 setup, one-shot 64-byte write, and `tcdrain` evidence |
 | Warm-reset procedure | Section 9.2, ratified unchanged |
-| Cold-boot/reload procedure and startup interval | `[EXACT PROCEDURE/COMMAND/INTERVAL]` |
+| Cold-boot/reload procedure and startup interval | **HALT:** board-specific power/reload procedure and startup interval not yet observed and frozen |
 | Observation rule | serial drain; wait 100 ms; record image present/absent; no latency claim |
 | Attempt count | exactly five: four warm-reset attempts and one cold-boot attempt |
 
-**Stage C owner:** John Curley  
-**Stage C decision:** `[HALT / AUTHORIZE / REJECT]`  
-**Stage C date:** `[YYYY-MM-DD]`  
-**Stage C notes:** `[optional]`
+**Stage C owner:** John Curley
+**Stage C decision:** `HALT`
+**Stage C date:** `2026-09-20`
+**Stage C notes:** `Stage B is closed. Programming, reset smoke testing, UART transmission, frame activation, and rendered-image observation require a new explicit Stage C authorization and completion of the remaining equipment, sender, recovery, and observation fields above.`
+
+### 13.3a Stage C pre-execution review — 2026-09-20
+
+Stage C remains **HALT**. This review freezes the already-qualified B0/B1
+artifacts and the historical VGAFIX recovery image without authorizing any
+programming or physical operation.
+
+| Review item | Result |
+|---|---|
+| Build artifacts | PASS: B0 and B1 hashes above are tied to clean Stage B source commit `d88ee61f`; no rebuild or artifact substitution is authorized |
+| Programming mechanism | **Provisional only:** the historical Wukong command uses `openFPGALoader -c dirtyJtag --freq 1000000`; a live `--detect -v` result and programmer identity must be recorded before authorization |
+| Board and power identity | **HALT:** no live board/power inventory was captured in this review |
+| CH340 receive port | **HALT:** no `/dev/ttyUSB*` or `/dev/serial/by-id/*` device was present in the review environment; do not infer `/dev/ttyUSB0` from historical evidence |
+| Exact sender | **HALT:** add or identify one committed sender command that opens the CH340 at 115200 8N1, verifies the frozen 64-byte fixture hash, writes it exactly once, calls `tcdrain`, and emits a durable raw transcript |
+| Monitor/harness observation | **HALT:** identify the monitor, VGA cable/harness revision, and capture method; the frozen J10/DE-15 mapping does not identify the physical equipment |
+| Reset/cold-boot timing | Warm-reset minimums are frozen in Section 9.2; the cold-boot reload command and startup interval remain unmeasured and must be frozen before execution |
+| Attempt accounting | PASS as a rule: exactly five attempts, four warm-reset and one cold-boot; any procedure or artifact change returns the tranche to HALT |
+
+**Decision:** `HALT`. Stage C is not authorized. No board has been programmed,
+no UART transaction has been sent, and no physical VGA result exists.
+
+### 13.3b Stage C execution result — 2026-09-20
+
+The owner subsequently authorized the bounded physical execution after the
+live JTAG/CH340 preflight. The first recovery and build-image ladder steps
+were completed as specified. The second controlled UART attempt produced a
+completed, drained transaction but the expected image was absent, so the
+contracted FAIL condition was reached and the remaining attempts were not
+run.
+
+| Attempt | Raw evidence | Observation | Classification |
+|---|---|---|---|
+| VGAFIX recovery | Loader completed with `isc_done 1`, `init 1`, `done 1`; historical hash `a80b6d0c...`; visual colour bars and moving marker confirmed | Stable recovery image | PASS |
+| B0 canonical ladder | Loader completed with `isc_done 1`, `init 1`, `done 1`; B0 bitstream hash `5de505769d...`; visual red/green two-triangle scene confirmed | Stable canonical scene | PASS |
+| B1 default state | Loader completed with `isc_done 1`, `init 1`, `done 1`; B1 bitstream hash `9d135a4d...` | Stable black/unarmed default confirmed | PASS |
+| Attempt 1 | `stage_c_attempt_01/transmit.json`, SHA-256 `2630422598d51b2b2636dd4835588a3e18762ae1fd47877005ff354786d9496c` | 64 bytes written, `tcdrain` completed, expected prepared scene confirmed | PASS |
+| Attempt 2 | `stage_c_attempt_02/transmit.json`, SHA-256 `aef644d1071bfd7c32a8f4ed07da6151faa8db698dc97220d8f3287c8305487d`; raw observation SHA-256 `7d185a2038e4f0001559728e245908e87546f677657e82d475e63923553e3693` | 64 bytes written, `tcdrain` completed, operator reported scene blank and expected prepared scene absent | FAIL |
+
+The two earlier sender-open failures wrote zero bytes and are infrastructure
+precondition events, not controlled UART attempts. A duplicate identical
+VGAFIX load occurred during the loader-session return anomaly; no UART data was
+sent during that event, and it is retained as a procedure anomaly.
+
+**Stage C execution decision:** `HALT` after the completed Attempt 2 FAIL.
+Attempts 3-5 are prohibited under this run. No RTL, bitstream, fixture,
+reset, UART, or observation change is authorized by this result.
 
 ### 13.4 Final closeout
 
 | Field | Actual evidence |
 |---|---|
-| VGAFIX ladder result | `[PASS / FAIL / INCONCLUSIVE]` |
-| B0 ladder result | `[PASS / FAIL / INCONCLUSIVE]` |
-| B1 default-state result | `[PASS / FAIL / INCONCLUSIVE]` |
-| Five-attempt UART log | `[PATH/HASH]` |
-| Photograph/capture evidence | `[PATHS/HASHES]` |
-| Final T1d classification | `[PASS / FAIL / INCONCLUSIVE]` |
-| Closeout commit | `[EXACT SHA]` |
+| VGAFIX ladder result | PASS; loader done flags and visual colour bars/marker confirmed |
+| B0 ladder result | PASS; loader done flags and visual canonical red/green scene confirmed |
+| B1 default-state result | PASS; loader done flags and visual black/unarmed state confirmed |
+| Controlled UART attempts | Attempt 1 PASS; Attempt 2 FAIL; attempts 3-5 not run after terminal FAIL |
+| Raw UART evidence | `stage_c_attempt_01/transmit.json`; `stage_c_attempt_02/transmit.json`; `stage_c_attempt_02/observation.txt` |
+| Photograph/capture evidence | None; visual observations were operator-confirmed, with no image capture |
+| Final T1d classification | **FAIL** — completed Attempt 2 did not reproduce the expected prepared scene |
+| Closeout commit | `[EXACT SHA — documentation closeout pending]` |

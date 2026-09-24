@@ -51,6 +51,46 @@ case "$GPU_T1D_UART" in
     0|1) ;;
     *) echo "Invalid GPU_T1D_UART: $GPU_T1D_UART (use 0|1)"; exit 1;;
 esac
+FOUR_PRIMITIVE_SCENE="${FOUR_PRIMITIVE_SCENE:-0}"
+case "$FOUR_PRIMITIVE_SCENE" in
+    0|1) ;;
+    *) echo "Invalid FOUR_PRIMITIVE_SCENE: $FOUR_PRIMITIVE_SCENE (use 0|1)"; exit 1;;
+esac
+T1H_SCALAR_SCENE="${T1H_SCALAR_SCENE:-0}"
+case "$T1H_SCALAR_SCENE" in
+    0|1) ;;
+    *) echo "Invalid T1H_SCALAR_SCENE: $T1H_SCALAR_SCENE (use 0|1)"; exit 1;;
+esac
+T1H_SCALAR_DIAG="${T1H_SCALAR_DIAG:-0}"
+case "$T1H_SCALAR_DIAG" in
+    0|1) ;;
+    *) echo "Invalid T1H_SCALAR_DIAG: $T1H_SCALAR_DIAG (use 0|1)"; exit 1;;
+esac
+T1I_UV_SCENE="${T1I_UV_SCENE:-0}"
+case "$T1I_UV_SCENE" in
+    0|1) ;;
+    *) echo "Invalid T1I_UV_SCENE: $T1I_UV_SCENE (use 0|1)"; exit 1;;
+esac
+T1I_UV_DIAG="${T1I_UV_DIAG:-0}"
+case "$T1I_UV_DIAG" in
+    0|1) ;;
+    *) echo "Invalid T1I_UV_DIAG: $T1I_UV_DIAG (use 0|1)"; exit 1;;
+esac
+T1I_UV_REG_DIAG="${T1I_UV_REG_DIAG:-0}"
+case "$T1I_UV_REG_DIAG" in
+    0|1) ;;
+    *) echo "Invalid T1I_UV_REG_DIAG: $T1I_UV_REG_DIAG (use 0|1)"; exit 1;;
+esac
+T1I_DEPTH_DIAG="${T1I_DEPTH_DIAG:-0}"
+case "$T1I_DEPTH_DIAG" in
+    0|1|2|3) ;;
+    *) echo "Invalid T1I_DEPTH_DIAG: $T1I_DEPTH_DIAG (use 0|1|2|3)"; exit 1;;
+esac
+GPU_POST_WINNER_REG="${GPU_POST_WINNER_REG:-0}"
+case "$GPU_POST_WINNER_REG" in
+    0|1) ;;
+    *) echo "Invalid GPU_POST_WINNER_REG: $GPU_POST_WINNER_REG (use 0|1)"; exit 1;;
+esac
 GPU_T1D_DIAG="${GPU_T1D_DIAG:-0}"
 case "$GPU_T1D_DIAG" in
     0|1) ;;
@@ -222,9 +262,143 @@ fi
 if [ -n "$A7_ARTIFACT_TAG" ]; then
     case "$A7_ARTIFACT_TAG" in
         T1D_B0_S1|T1D_B1_S1|T1D_DIAG_S1) ;;
+        T1E_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ]; then
+                echo "T1E_B1_S1 requires GPU_T1D_UART=1"
+                exit 1
+            fi
+            ;;
+        T1F_B1_S1|T1G_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ]; then
+                echo "$A7_ARTIFACT_TAG requires GPU_T1D_UART=1 and FOUR_PRIMITIVE_SCENE=1"
+                exit 1
+            fi
+            ;;
+        T1H_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || [ "$T1H_SCALAR_SCENE" != "1" ]; then
+                echo "T1H_B1_S1 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, and T1H_SCALAR_SCENE=1"
+                exit 1
+            fi
+            ;;
+        T1H_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1H_SCALAR_SCENE" != "1" ] || [ "$T1H_SCALAR_DIAG" != "1" ]; then
+                echo "T1H_DIAG_B1_S1 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, T1H_SCALAR_SCENE=1, and T1H_SCALAR_DIAG=1"
+                exit 1
+            fi
+            ;;
+        T1I_SIM_S0)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "0" ]; then
+                echo "T1I_SIM_S0 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, and T1I_UV_SCENE=1"
+                exit 1
+            fi
+            ;;
+        T1I_UV_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "1" ] || \
+               [ "$T1I_UV_REG_DIAG" != "0" ] || \
+               [ "$T1I_DEPTH_DIAG" != "0" ]; then
+                echo "T1I_UV_DIAG_B1_S1 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, T1I_UV_SCENE=1, and T1I_UV_DIAG=1"
+                exit 1
+            fi
+            ;;
+        T1I_UV_REG_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "1" ] || \
+               [ "$T1I_UV_REG_DIAG" != "1" ] || [ "$T1I_DEPTH_DIAG" != "0" ]; then
+                echo "T1I_UV_REG_DIAG_B1_S1 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, T1I_UV_SCENE=1, T1I_UV_DIAG=1, and T1I_UV_REG_DIAG=1"
+                exit 1
+            fi
+            ;;
+        T1I_POST_WINNER_REG_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "1" ] || \
+               [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+               [ "$T1I_DEPTH_DIAG" != "0" ]; then
+                echo "T1I_POST_WINNER_REG_DIAG_B1_S1 requires the prepared T1i U/V diagnostic and GPU_POST_WINNER_REG=1"
+                exit 1
+            fi
+            ;;
+        T1I_DEPTH_COVERAGE_B1_S1|T1I_DEPTH_WINNER_B1_S1|T1I_DEPTH_WINNER_REG_B1_S1)
+            case "$A7_ARTIFACT_TAG:$T1I_DEPTH_DIAG" in
+                T1I_DEPTH_COVERAGE_B1_S1:1|T1I_DEPTH_WINNER_B1_S1:2|T1I_DEPTH_WINNER_REG_B1_S1:3) ;;
+                *) echo "$A7_ARTIFACT_TAG does not match T1I_DEPTH_DIAG=$T1I_DEPTH_DIAG"; exit 1;;
+            esac
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "0" ] || \
+               [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ]; then
+                echo "$A7_ARTIFACT_TAG requires the isolated prepared T1i scene profile"
+                exit 1
+            fi
+            ;;
         *) echo "Invalid A7_ARTIFACT_TAG: $A7_ARTIFACT_TAG"; exit 1;;
     esac
     GPU_VARIANT="_${A7_ARTIFACT_TAG}"
+fi
+if [ "$T1H_SCALAR_SCENE" = "1" ]; then
+    if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+       [ "$SPIN" != "GPUVGA" ] || \
+       { [ "$T1H_SCALAR_DIAG" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1H_B1_S1" ]; } || \
+       { [ "$T1H_SCALAR_DIAG" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1H_DIAG_B1_S1" ]; }; then
+        echo "T1H_SCALAR_SCENE=1 requires GPUVGA, GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, and a matching T1H artifact tag/diagnostic selector"
+        exit 1
+    fi
+fi
+if [ "$T1H_SCALAR_DIAG" = "1" ] && [ "$T1H_SCALAR_SCENE" != "1" ]; then
+    echo "T1H_SCALAR_DIAG=1 requires T1H_SCALAR_SCENE=1"
+    exit 1
+fi
+if [ "$T1I_UV_SCENE" = "1" ]; then
+    if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+       [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$SPIN" != "GPUVGA" ] || \
+       { [ "$T1I_DEPTH_DIAG" = "0" ] && [ "$T1I_UV_DIAG" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1I_SIM_S0" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "0" ] && [ "$T1I_UV_DIAG" = "1" ] && [ "$T1I_UV_REG_DIAG" = "0" ] && [ "$GPU_POST_WINNER_REG" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1I_UV_DIAG_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "0" ] && [ "$T1I_UV_DIAG" = "1" ] && [ "$T1I_UV_REG_DIAG" = "1" ] && [ "$GPU_POST_WINNER_REG" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1I_UV_REG_DIAG_B1_S1" ]; } || \
+       { [ "$GPU_POST_WINNER_REG" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1I_POST_WINNER_REG_DIAG_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_COVERAGE_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "2" ] && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "3" ] && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_REG_B1_S1" ]; }; then
+        echo "T1I_UV_SCENE=1 requires GPUVGA, GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, T1H_SCALAR_SCENE=0, and a matching T1I artifact tag/diagnostic selector"
+        exit 1
+    fi
+fi
+if [ "$T1I_UV_DIAG" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || [ "$T1H_SCALAR_DIAG" != "0" ]; }; then
+    echo "T1I_UV_DIAG=1 requires T1I_UV_SCENE=1 and T1H_SCALAR_DIAG=0"
+    exit 1
+fi
+if [ "$T1I_UV_REG_DIAG" = "1" ] && { [ "$T1I_UV_DIAG" != "1" ] || [ "$T1I_DEPTH_DIAG" != "0" ]; }; then
+    echo "T1I_UV_REG_DIAG=1 requires T1I_UV_DIAG=1 and T1I_DEPTH_DIAG=0"
+    exit 1
+fi
+if [ "$GPU_POST_WINNER_REG" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+       [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$SPIN" != "GPUVGA" ]; }; then
+    echo "GPU_POST_WINNER_REG=1 requires the prepared T1i GPUVGA profile, with T1I_UV_REG_DIAG and depth diagnostics disabled"
+    exit 1
+fi
+if [ "$T1I_DEPTH_DIAG" != "0" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+    [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$SPIN" != "GPUVGA" ]; }; then
+    echo "T1I_DEPTH_DIAG requires T1I_UV_SCENE=1, other diagnostics disabled, and GPUVGA"
+    exit 1
+fi
+if [ "$FOUR_PRIMITIVE_SCENE" = "1" ]; then
+    if [ "$GPU_T1D_UART" != "1" ]; then
+        echo "FOUR_PRIMITIVE_SCENE=1 requires GPU_T1D_UART=1"
+        exit 1
+    fi
+    if [ "$A7_ARTIFACT_TAG" != "T1F_B1_S1" ] && [ "$A7_ARTIFACT_TAG" != "T1G_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1H_B1_S1" ] && [ "$A7_ARTIFACT_TAG" != "T1H_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_SIM_S0" ] && [ "$A7_ARTIFACT_TAG" != "T1I_UV_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_UV_REG_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_POST_WINNER_REG_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_COVERAGE_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_REG_B1_S1" ]; then
+        echo "FOUR_PRIMITIVE_SCENE=1 requires a matching T1F/T1G/T1H/T1I artifact tag"
+        exit 1
+    fi
 fi
 if [ "$GPU_T1D_UART" = "1" ]; then
     if [ "$GPU_PREPARED_EXPLICIT" = "1" ] || [ "$GPU_PREPARED_SCENE" != "0" ]; then
@@ -238,11 +412,28 @@ if [ "$GPU_T1D_UART" = "1" ]; then
         fi
         GPU_VARIANT="_T1D_DIAG_S1"
     else
-        if [ -n "$A7_ARTIFACT_TAG" ] && [ "$A7_ARTIFACT_TAG" != "T1D_B1_S1" ]; then
-            echo "GPU_T1D_UART requires A7_ARTIFACT_TAG=T1D_B1_S1"
+        if [ -n "$A7_ARTIFACT_TAG" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1D_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1E_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1F_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1G_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1H_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1H_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_SIM_S0" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_UV_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_UV_REG_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_POST_WINNER_REG_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_COVERAGE_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_REG_B1_S1" ]; then
+            echo "GPU_T1D_UART requires a matching T1D/T1E/T1F/T1G/T1H/T1I artifact tag"
             exit 1
         fi
-        GPU_VARIANT="_T1D_B1_S1"
+        if [ -n "$A7_ARTIFACT_TAG" ]; then
+            GPU_VARIANT="_${A7_ARTIFACT_TAG}"
+        else
+            GPU_VARIANT="_T1D_B1_S1"
+        fi
     fi
     GPU_COST_STIMULUS=0
 fi
@@ -421,6 +612,14 @@ echo "  Freq:   ${A7_FREQ} MHz"
 echo "  Seed:   ${A7_SEED}"
 echo "  GPU prepared: ${GPU_PREPARED_SCENE} (cost stimulus=${GPU_COST_STIMULUS})"
 echo "  GPU T1d UART: ${GPU_T1D_UART}"
+echo "  GPU four-primitive scene: ${FOUR_PRIMITIVE_SCENE}"
+echo "  GPU T1h scalar scene: ${T1H_SCALAR_SCENE}"
+  echo "  GPU T1h scalar diagnostic: ${T1H_SCALAR_DIAG}"
+echo "  GPU T1i UV scene: ${T1I_UV_SCENE}"
+echo "  GPU T1i UV diagnostic: ${T1I_UV_DIAG}"
+echo "  GPU T1i registered UV diagnostic: ${T1I_UV_REG_DIAG}"
+echo "  GPU post-winner output register: ${GPU_POST_WINNER_REG}"
+echo "  GPU T1i depth diagnostic: ${T1I_DEPTH_DIAG}"
 echo "  GPU T1d diag: ${GPU_T1D_DIAG}"
 echo "  Artifact tag: ${A7_ARTIFACT_TAG:-none}"
 echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
@@ -459,6 +658,14 @@ synth() {
             chparam -set DEVICE \"A7\" spu_gpu_top; \
             chparam -set PREPARED_SCENE 1 \
                     -set COST_STIMULUS 0 \
+                    -set FOUR_PRIMITIVE_SCENE $FOUR_PRIMITIVE_SCENE \
+                    -set T1H_SCALAR_SCENE $T1H_SCALAR_SCENE \
+                    -set T1H_SCALAR_DIAG $T1H_SCALAR_DIAG \
+                    -set T1I_UV_SCENE $T1I_UV_SCENE \
+                    -set T1I_UV_DIAG $T1I_UV_DIAG \
+                    -set T1I_UV_REG_DIAG $T1I_UV_REG_DIAG \
+                    -set T1I_DEPTH_DIAG $T1I_DEPTH_DIAG \
+                    -set GPU_POST_WINNER_REG $GPU_POST_WINNER_REG \
                     $TOP; \
             hierarchy -top $TOP; \
             synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
