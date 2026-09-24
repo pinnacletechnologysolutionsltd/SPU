@@ -33,12 +33,12 @@ jobs:
       - name: Build papers
         run: |
           mkdir -p build/papers
-          # central + lucas + su3 compile from docs/; rplu must compile from repo root
+          # central + lucas + su3 compile from docs/papers/; rplu must compile from repo root
           for p in spu13_central_paper LUCAS_MAC_PAPER SU3_COPROCESSOR_PAPER; do
-            (cd docs && latexmk -pdf -interaction=nonstopmode "$p.tex")
-            mv "docs/$p.pdf" build/papers/
+            (cd docs/papers && latexmk -pdf -interaction=nonstopmode "$p.tex")
+            mv "docs/papers/$p.pdf" build/papers/
           done
-          latexmk -pdf -interaction=nonstopmode -output-directory=build/papers docs/rplu_paper.tex
+          latexmk -pdf -interaction=nonstopmode -output-directory=build/papers docs/papers/rplu_paper.tex
       - name: Upload PDFs
         uses: actions/upload-artifact@v4
         with:
