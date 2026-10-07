@@ -1,5 +1,7 @@
 # SPU-13 Synergetic Processing Unit
 
+Start without hardware: [VM, exact robotics, and offline GPU quickstart](docs/NEWCOMER_SOFTWARE_QUICKSTART.md). Git and Python 3.10+ are sufficient; no package installation is needed.
+
 **A deterministic exact-arithmetic FPGA platform: no floating point, no
 division and no transcendentals anywhere in the RTL. Arithmetic is exact over
 `Q(√3)`, `A₃₁` and `Z[φ]/L_p`, and correctness is decided by bit-exact
