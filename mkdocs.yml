@@ -40,6 +40,8 @@ extra_javascript:
 nav:
   - Home: index.md
   - Getting Started:
+      - Explanation & current claims: START_HERE.md
+      - About & contact: ABOUT.md
       - What is SPU-13?: WHAT_IS_SPU13.md
       - Your first hour: FIRST_HOUR.md
       - Quadray for programmers: QUADRAY_FOR_PROGRAMMERS.md

@@ -1,75 +1,29 @@
-# SPU-13 Synergetic Processing Unit
+# SPU documentation
 
-An experimental FPGA coprocessor for **exact, deterministic geometric
-computation** — all arithmetic in rational fields (Q(√3), A₃₁ over the
-Mersenne prime M31, Z[φ]/L_p), zero floating-point, zero division, bounded
-deterministic latency, bit-exact replay across Python, C++, and RTL.
+SPU explores exact arithmetic and geometric computation in software and on
+FPGAs. Start with the [short introduction and current claim table](START_HERE.md).
+The selected evidence package and detailed logs are linked beneath it.
 
-Pick your door:
+## Current results
 
-## What is SPU-13?
+Status at 14 October 2026. These are separate experiments and configurations.
 
-**Not an engineer?** Start with the [two-minute explanation](WHAT_IS_SPU13.md):
-what exactness buys, what has been demonstrated, and what SPU-13 is not.
+| Work | Established result | Remaining boundary |
+| --- | --- | --- |
+| AOR-S1 | Software qualification complete | Finite coverage; no hardware, silicon, speedup or energy claim |
+| Padé | Build complete; 34.80 MHz tool-reported estimate | Timing qualification pending model coverage/provenance review |
+| Surd CPU candidate | Placement PASS | Routing/timing blocked by incomplete timing coverage |
 
-## 🧭 New here?
+## Explore
 
-- **[Your first hour](FIRST_HOUR.md)** — anonymous clone, full regression,
-  hardware-free VM, a small Forge program, and an optional Tang SOM proof
-- **[Quadray for programmers](QUADRAY_FOR_PROGRAMMERS.md)** — four-axis data,
-  normalization conventions, one exact rotation, and finite-width caveats
-- **[Hardware-free demo tour](DEMO_TOUR.md)** — one reproducible command and
-  one honest claim boundary for robotics, LUCAS, Iris, and Voronoi evidence
-- **[Glossary & conversions](glossary.md)** — every term in plain English,
-  angle↔spread and distance↔quadrance tables, and the reading list
-  (Wildberger, Fuller, Urner) the ideas come from
-- **[Spin catalog](SPIN_CATALOG.md)** — every named bitstream: what it does,
-  what board it fits, and its silicon status
+- [Software guide](software_guide.md) — start with two short commands.
+- [About and contact](ABOUT.md) — the project, company and ways to get in touch.
+- [Your first hour](FIRST_HOUR.md) — programs and simulation.
+- [Quadray for programmers](QUADRAY_FOR_PROGRAMMERS.md) — coordinates and rotations.
+- [Build and bring-up guide](build_and_bringup_guide.md) — FPGA setup and procedures.
+- [Hardware evidence ledger](hardware_evidence.md) — records of physical demonstrations.
+- [Identity and claim boundaries](SPU13_IDENTITY_AND_BOUNDARIES.md) — scope of the project.
 
-## 🔬 For researchers
-
-- **[Current status](CURRENT_STATUS.md)** — board roles, silicon proof level, priorities
-- **[Hardware evidence ledger](hardware_evidence.md)** — every claim tied to a command and a result
-- **[Hydraulic pump SOM truth gate](HYDRAULIC_PUMP_SOM_CASE_STUDY.md)** —
-  predeclared real-data folds, exact features, baselines, and the recorded
-  negative result
-- **[INA226 coarse-monitor contract](INA226_COARSE_MONITOR_CONTRACT.md)** —
-  frozen physical-capture protocol, safety boundary, folds, and claim gates
-- **[INA226 capture runbook](INA226_CAPTURE_RUNBOOK.md)** — breadboard wiring,
-  safe session order, validation, scoring, and exact decision explanation
-- **Papers (preprints in preparation):** central architecture, RPLU v2 jet algebra,
-  Lucas phinary MAC, SU(3) coprocessor — LaTeX sources in `docs/`, built PDFs
-  in CI artifacts
-- **[Identity and claim boundaries](SPU13_IDENTITY_AND_BOUNDARIES.md)** — what this
-  architecture is and deliberately is not
-- **[Mathematical foundations](knowledge/MATHEMATICAL_FOUNDATIONS.md)** and the
-  **[ISA reference](knowledge/isa_reference.md)**
-- **[Photonic REGEN placement design rule](PHOTONIC_REGEN_PLACEMENT_DESIGN_RULE.md)** —
-  simulation-derived law (`m0`, `sigma_det` → recovery probability) plus a
-  validated compile-time placement compiler (greedy + DP, beats fixed-period
-  REGEN); not a silicon claim
-
-## 🔧 For builders
-
-- **[Build and bring-up guide](build_and_bringup_guide.md)** — commands, wiring, board procedures
-- **[SOM-SIDECAR evaluator quickstart](SOM_SIDECAR_QUICKSTART.md)** — Tang/RP2350 wiring, firmware, bitstream, and the 150-sample proof
-- **[LUCAS evaluator quickstart](LUCAS_QUICKSTART.md)** — Wukong/RP2350 wiring and the exact-integer versus float64 replay
-- **[Toolchain setup](toolchain_setup.md)** — OSS CAD Suite + OpenXC7; no vendor IDE
-- **[Southbridge SPI protocol](SOUTHBRIDGE_SPI_PROTOCOL.md)** — the RP2350↔FPGA control plane
-- **[Board scaling strategy](fpga_board_scaling_strategy.md)** — Tang 25K → Artix-7 → ECP5 → Kintex ladder
-- Bench adapter board and INA226 metrics harness: `hardware/pcb/bench_adapter/`,
-  `tools/bench_metrics/` in the repository
-
-## 🤝 For contributors
-
-- `AGENTS.md` (repo root) — living source of truth for test/silicon status
-- `CONTRIBUTING.md` — DCO sign-off required
-- Run everything: `python3 run_all_tests.py` — 100% pass is the merge gate
-- Licensing: see the repository `LICENSING.md` map; hardware
-  CERN-OHL-W-2.0 · software MIT · docs/knowledge CC0 1.0
-
----
-
-*The architecture prohibits floating-point, division, and branches in hot
-paths. Timing deviations are design flaws, not FIFO fodder. Every testbench
-prints PASS or FAIL.*
+For this publication's corrected status and selected logs, use the
+[introduction's evidence section](START_HERE.md#inspect-the-evidence).
+Historical documents retain their original dates and evidence boundaries.
