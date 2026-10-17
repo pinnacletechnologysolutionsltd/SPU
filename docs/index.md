@@ -16,6 +16,8 @@ Status at 14 October 2026. These are separate experiments and configurations.
 
 ## Explore
 
+- [Guided newcomer tour](NEWCOMER_TOUR.md) — interactive Quadray and golden
+  geometry lessons, with clear browser, software, and hardware boundaries.
 - [Software guide](software_guide.md) — start with two short commands.
 - [About and contact](ABOUT.md) — the project, company and ways to get in touch.
 - [Your first hour](FIRST_HOUR.md) — programs and simulation.
