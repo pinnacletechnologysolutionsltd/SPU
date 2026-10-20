@@ -1,5 +1,10 @@
 # SPU-13 Photonic Reliability & Compilation Contract
 
+> **Not included in this distribution:** the `photonics/` sweep scripts, the `results/sweeps/` artifacts and the
+> `spu_strategy/contract_photonics_*` contracts that this document cites are not part of this release. The paths below
+> are historical references and will not resolve here. The photonic work is an offshoot simulation with no hardware
+> verification.
+
 **Status: simulation-only.** Every claim in this document is already
 established elsewhere in this chain (`PHOTONIC_REGEN_PLACEMENT_DESIGN_RULE.md`,
 `PHOTONIC_REGEN_CORRELATION_SYNTHESIS.md`, and

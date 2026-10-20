@@ -1,5 +1,10 @@
 # Photonic REGEN Placement — Design Rule
 
+> **Not included in this distribution:** the `photonics/` sweep scripts, the `results/sweeps/` artifacts and the
+> `spu_strategy/contract_photonics_*` contracts that this document cites are not part of this release. The paths below
+> are historical references and will not resolve here. The photonic work is an offshoot simulation with no hardware
+> verification.
+
 **Status: simulation-only.** Every number in this document comes from
 `PhotonicQuadrayBackend`, a behavioral Model-C simulation of the photonic
 REGEN datapath (`software/tests/test_regen_equivalence.py`), not RTL or

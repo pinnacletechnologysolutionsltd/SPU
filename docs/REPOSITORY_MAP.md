@@ -23,9 +23,7 @@ state rather than being maintained by hand.
 | `docs/isa/` | ISA profile ownership and implementation matrix | ISA-A is current SPU-13; ISA-B is separate; ISA-C is partial |
 | `spu_strategy/` | Owner-ratified contracts and planning records | Source records; retain and do not treat drafts as authorization |
 | `knowledge/` | Mathematical, architecture, and language reference | Keep authoritative references; mark superseded profiles explicitly |
-| `photonics/` | Research and exploratory photonic models | Research surface; non-authorizing unless a contract says otherwise |
 | `fixtures/` | Immutable test vectors and decoded references | Keep if consumed by tests or cited as evidence; regenerate only through declared generators |
-| `results/` | Frozen research outputs and measurements | Keep cited/evidence-bearing results; do not confuse them with build products |
 | `build/` | Synthesis, P&R, simulation, and detached-job outputs | Generated and ignored; never commit routine build output |
 
 ## Active user path
