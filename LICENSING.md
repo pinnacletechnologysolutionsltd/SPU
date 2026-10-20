@@ -24,8 +24,18 @@ relicense existing contributions. In particular:
 - The `examples/`, `fixtures/` and `spu_strategy/` rows state the license under
   which the owner offers that original material from this release onward. They
   make no claim about earlier grants or about any other person's contributions.
-- `photonics/` and `results/` have no license mapping yet; no license is
-  granted for them by this map.
+- `software/tests/data/iris.csv` is the UCI Iris dataset (Fisher, 1936; DOI
+  10.24432/C56C76), licensed CC BY 4.0 by its source, not MIT. It is
+  byte-identical to UCI's `iris.data`; see `software/tests/data/IRIS_PROVENANCE.md`.
+  `software/models/iris_som_v1.json` is a map trained on that dataset and must
+  keep the same attribution.
+- The Paderborn University Bearing Data Center corpus is licensed CC BY-NC 4.0
+  (Lessmeier et al., DOI 10.36001/phme.2016.v3i1.1577). This repository does not
+  contain the corpus. Files derived from it (`software/datasets/paderborn_*`,
+  `docs/PADERBORN_*`) are not offered under the MIT or CC0 grants above for the
+  corpus-derived content; any recordings, features or trained maps built from the
+  corpus remain non-commercial under CC BY-NC 4.0.
+- `photonics/` and `results/` are not part of this distribution.
 
 Before moving a file between licensed directory scopes, preserve its original
 license notice or obtain the required contributor permission.
