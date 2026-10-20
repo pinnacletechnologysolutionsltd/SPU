@@ -1,9 +1,9 @@
 # Photonic REGEN Placement — Design Rule
 
-> **Not included in this distribution:** the `photonics/` sweep scripts, the `results/sweeps/` artifacts and the
-> `spu_strategy/contract_photonics_*` contracts that this document cites are not part of this release. The paths below
-> are historical references and will not resolve here. The photonic work is an offshoot simulation with no hardware
-> verification.
+> **Not included in the current source tree:** the `photonics/` sweep scripts, the `results/sweeps/` artifacts and the
+> `spu_strategy/contract_photonics_*` contracts that this document cites are not in the current source tree. The `photonics/`
+> and `results/` files remain in earlier public Git history; see `LICENSING.md`. The paths below are historical references
+> and will not resolve in the current tree. The photonic work is an offshoot simulation with no hardware verification.
 
 **Status: simulation-only.** Every number in this document comes from
 `PhotonicQuadrayBackend`, a behavioral Model-C simulation of the photonic

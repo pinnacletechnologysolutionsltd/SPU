@@ -35,7 +35,9 @@ relicense existing contributions. In particular:
   `docs/PADERBORN_*`) are not offered under the MIT or CC0 grants above for the
   corpus-derived content; any recordings, features or trained maps built from the
   corpus remain non-commercial under CC BY-NC 4.0.
-- `photonics/` and `results/` are not part of this distribution.
+- The `photonics/` and `results/` directories have been removed from the current source tree. Their contents
+  remain available in earlier public Git history. This licensing map does not assign a directory-level license to
+  those historical files. Any existing file-specific or third-party licenses and notices remain applicable.
 
 Before moving a file between licensed directory scopes, preserve its original
 license notice or obtain the required contributor permission.
