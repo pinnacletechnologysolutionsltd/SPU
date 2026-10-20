@@ -64,6 +64,29 @@ oracle or a bound, or add a ledger entry for hardware you own. See
 [CONTRIBUTING.md](CONTRIBUTING.md#ways-to-help). Questions and results are welcome on the
 [issue tracker](https://github.com/pinnacletechnologysolutionsltd/SPU/issues).
 
+## How this project is developed
+
+The SPU repository is directed and maintained by its owner. Much of the code, tests and documentation were drafted with AI coding assistants
+(for example Claude and DeepSeek models) working from specifications and tasks written by the maintainer. Assistant output is run against the
+repository's tests and oracles and reviewed by the maintainer before it is committed, and the maintainer is responsible for what is published.
+The depth of review has varied across the project's history; the test suite, the evidence ledger and the capability matrix, not the use of any
+particular tool, are the basis for what this repository claims.
+
+Commits made with an assistant may carry a `Co-Authored-By` trailer. That trailer records the tooling used. It is not a statement about who owns
+copyright and it is not a certification of origin; this project does not retroactively add `Signed-off-by` lines to earlier commits.
+
+### Historical Git Identity and AI-Assisted Development
+
+Some historical commits use the Git identity `john@spu13.local`.
+
+This was a local Git identity used during AI-assisted development sessions. It does not represent an independently verified human contributor, nor should it be interpreted as evidence of independent review or approval.
+
+As project maintainer, I accept responsibility for the changes I select and publish, including AI-assisted contributions. AI assistance does not transfer responsibility for the project's published code, documentation, research claims, or licensing obligations.
+
+Historical commits have been preserved without rewriting Git history, maintaining the continuity of commit identities, validated release artifacts, and existing references.
+
+This disclosure does not imply that another person authored or signed off on these changes.
+
 ## Where to go next
 
 - [Short introduction](docs/START_HERE.md): the ideas, a worked example, current results and their limits.
