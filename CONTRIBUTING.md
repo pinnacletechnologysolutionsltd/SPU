@@ -75,6 +75,29 @@ Signed-off-by: Jane Doe <jane.doe@example.com>
 
 ## Licensing
 
-By contributing to SPU-13, you agree that your contributions will be licensed under the **Apache License, Version 2.0** (as specified in the [LICENSE](LICENSE) file).
+For contributions submitted after adoption of this policy, contribute original
+material under the applicable license described in [LICENSING.md](LICENSING.md).
+The defaults are:
 
-The Apache License 2.0 contains an explicit patent grant and a patent-retaliation clause, ensuring that any patent claims covering your contribution are licensed to the community, and protecting the project from patent litigation.
+| Scope | Default license |
+|---|---|
+| `software/` | MIT, from [software/LICENSE](software/LICENSE) |
+| `hardware/` | CERN-OHL-W-2.0, from [hardware/LICENSE](hardware/LICENSE) |
+| `docs/` and `knowledge/` | CC0 1.0 Universal, from [docs/LICENSE](docs/LICENSE) |
+| Root-level files and `tools/` without a more-specific notice | Apache-2.0, from [LICENSE](LICENSE) |
+
+A more-specific file or directory notice takes precedence. Preserve existing
+license, copyright and attribution notices when modifying or moving material;
+a directory default does not replace an existing grant. Third-party material
+retains its own terms and must be identified with its source and applicable
+notices. Submit only material you have the right to contribute under those
+terms, as certified by the Developer Certificate of Origin above.
+
+For `research/` and other scopes not explicitly covered by the licensing map,
+ask maintainers to resolve the applicable terms before contribution acceptance.
+This amendment makes no new licensing decision for those scopes.
+
+This policy is prospective. It does not relicense existing material, withdraw
+existing grants, or establish that historic contributors agreed to different
+terms. Any unresolved ownership or licensing conflict requires a separate
+rights review before the affected material is accepted or redistributed.
