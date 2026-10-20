@@ -1,10 +1,11 @@
 # GPU Evaluation Quickstart: T1d
 
-This guide runs the current offline GPU evaluation path: compile a small scene
-to the T1d packet format, compare an ideal mathematical reference with the
-finite-width T1d software model, and inspect an individual pixel. It needs
-Python 3.10+, Git on `PATH`, and the Python standard library. Run every command
-from the repository root. No GPU board or package installation is needed.
+This guide runs the current offline GPU evaluation path on the host CPU: compile a small scene
+to the T1d packet format, compare an ideal mathematical reference with a finite-width software
+model of the T1d datapath, and inspect an individual pixel. Neither path executes compute shaders.
+The generated PPM can be displayed with an ordinary image viewer; display does not move scene
+simulation into a GPU backend. The guide needs Python 3.10+, Git on `PATH`, and the Python
+standard library. Run every command from the repository root. No GPU board or package installation is needed.
 
 The evaluator currently runs from this source checkout as
 `software.spu_gpu_eval.cli`; it is not exposed by the installed `spu` console
@@ -132,3 +133,19 @@ are finite-width software-model results. None of these commands loads a
 packet onto hardware, observes physical output, or models cycle-level or
 display timing. A hardware capture is a separate evidence result; use the
 [hardware evidence ledger](hardware_evidence.md) for physical claims.
+
+## Finite-depth ties in the edited scene
+
+The edited example also illustrates finite-depth ties. At `(321,35)`, `(322,71)` and `(323,109)`,
+both triangles cover the pixel. The ideal reference selects green triangle 1 because its rational
+depth is smaller. The finite-width model gives the two triangles equal integer depths and selects
+red triangle 0, as required by the profile's tie rule. Inspect these cases directly:
+
+```bash
+python3 -m software.spu_gpu_eval.cli inspect examples/gpu/t1d_two_triangle_vertex_b.json --x 321 --y 35
+python3 -m software.spu_gpu_eval.cli inspect examples/gpu/t1d_two_triangle_vertex_b.json --x 322 --y 71
+python3 -m software.spu_gpu_eval.cli inspect examples/gpu/t1d_two_triangle_vertex_b.json --x 323 --y 109
+```
+
+For this edited scene, the software preview comparison records three RGB differences out of 307,200
+pixels. These examples explain a finite-width model limitation; they are not physical-display observations.

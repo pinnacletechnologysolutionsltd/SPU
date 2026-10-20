@@ -16,6 +16,9 @@ Status at 14 October 2026. These are separate experiments and configurations.
 
 ## Explore
 
+- [Software quickstart](NEWCOMER_SOFTWARE_QUICKSTART.md) — a reproducible software-only first run: VM, exact robotics and offline GPU preview.
+- [Capability matrix and known limitations](CAPABILITY_MATRIX.md) — which evidence layer backs each capability.
+- [GPU evaluation quickstart](gpu_scene_preview.md) — render, compare and inspect a scene on the host CPU.
 - [Guided newcomer tour](NEWCOMER_TOUR.md) — interactive Quadray and golden
   geometry lessons, with clear browser, software, and hardware boundaries.
 - [Software guide](software_guide.md) — start with two short commands.

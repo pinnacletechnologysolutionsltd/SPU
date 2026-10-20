@@ -4,6 +4,10 @@ SPU is an experimental computing project exploring exact arithmetic and geometri
 operations in software and on reprogrammable chips called FPGAs. The question is
 what these representations make possible, and what they cost to implement.
 
+The [capability matrix](CAPABILITY_MATRIX.md) shows, for each capability, whether the evidence is
+mathematical, host software, RTL simulation, FPGA synthesis or physical hardware, and lists the known
+limitations. For a software-only first run with no board, use the [software quickstart](NEWCOMER_SOFTWARE_QUICKSTART.md).
+
 ## A small example
 
 Some geometric calculations involve √3. Storing a rounded decimal for it can

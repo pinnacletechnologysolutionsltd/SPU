@@ -42,11 +42,14 @@ nav:
   - Getting Started:
       - Guided newcomer tour: NEWCOMER_TOUR.md
       - Explanation & current claims: START_HERE.md
+      - Software quickstart: NEWCOMER_SOFTWARE_QUICKSTART.md
+      - Capability matrix & limitations: CAPABILITY_MATRIX.md
       - About & contact: ABOUT.md
       - What is SPU-13?: WHAT_IS_SPU13.md
       - Your first hour: FIRST_HOUR.md
       - Quadray for programmers: QUADRAY_FOR_PROGRAMMERS.md
       - Hardware-free demo tour: DEMO_TOUR.md
+      - GPU evaluation quickstart: gpu_scene_preview.md
   - Status & Evidence:
       - Current status: CURRENT_STATUS.md
       - Hardware evidence ledger: hardware_evidence.md

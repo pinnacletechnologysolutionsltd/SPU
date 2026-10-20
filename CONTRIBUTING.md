@@ -4,6 +4,22 @@ Thank you for your interest in contributing to SPU-13! This project is dedicated
 
 To protect the community and ensure the SPU-13 architecture remains free for anyone to use, we require all contributions to adhere to the licensing and contribution guidelines outlined below.
 
+## Ways to help
+
+The most useful contributions right now are independent checks, not new features:
+
+- **Run the software quickstart** ([docs/NEWCOMER_SOFTWARE_QUICKSTART.md](docs/NEWCOMER_SOFTWARE_QUICKSTART.md)) on your machine and report the exact command,
+  exit code and output of anything that fails. Missing files or modules are publication gaps; wrong results are functional failures.
+- **Try to break a result.** An independent oracle, a counterexample or a flaw in a bound or proof is more valuable than agreement.
+- **Review the arithmetic.** Bounds, error precedence and refusal semantics are written down in the contracts and specifications under `docs/`
+  and `knowledge/`; look for overflow, ordering or tie-break mistakes.
+- **Reproduce on hardware you own.** Hardware claims live only in [docs/hardware_evidence.md](docs/hardware_evidence.md), with a fixed entry format.
+  A new entry needs the artifact hash, the command and what was *not* checked.
+- **Improve documentation and exercises** that run without a board, and report broken links.
+
+See the [capability matrix](docs/CAPABILITY_MATRIX.md) for what is and is not established, and its known limitations before proposing work on them.
+Open an issue before large changes. Do not add silicon-verified claims without a ledger entry.
+
 ## Developer Certificate of Origin (DCO)
 
 All commits submitted to this repository must be signed off to certify that you wrote the code or have the right to submit it under the project's open-source license.

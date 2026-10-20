@@ -16,7 +16,8 @@ build/newcomer_venv/bin/python -m software.spu_gpu_eval.cli device-preview examp
 build/newcomer_venv/bin/python -m software.spu_gpu_eval.cli inspect examples/gpu/t1d_two_triangle.json --x 320 --y 0
 ```
 
-The VM summary is `spu_vm_test.py: 89 passed, 0 failed`, followed by `PASS`.
+The VM summary is `spu_vm_test.py: N passed, 0 failed`, followed by `PASS`. N is 89 when this guide was
+written and changes as tests are added, so check for `0 failed` and `PASS`.
 The Fibonacci program reports `PC=12`, `steps=12`, `snap_failures=0`, and
 `[PASS]`. The robotics demo prints
 `PASS: fused six-joint chain matches reference and closes exactly` after
