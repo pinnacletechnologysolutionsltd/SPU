@@ -1,0 +1,76 @@
+Mapped definitively — and it's not UART. Every resistor's function, from the nets:
+
+┌───────┬───────────────────────────────────┬────────────────────┬─────────────────┐
+│  Ref  │              Between              │      Function      │ Suggested value │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R1–R4 │ GP16–19 ↔ SPI_*_HDR               │ SPI series (done)  │ 100 Ω ✓         │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R5    │ GP2 ↔ FLASH_SCK_HDR               │ flash bus series   │ 33 Ω            │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R6    │ GP3 ↔ FLASH_MOSI_HDR              │ flash bus series   │ 33 Ω            │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R7    │ FLASH_MISO_PRE_R ↔ FLASH_MISO_HDR │ flash bus series   │ 33 Ω            │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R8    │ FLASH_CS_PRE_R ↔ FLASH_CS_HDR     │ flash bus series   │ 33 Ω            │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R9    │ SPI_CS_HDR ↔ V3V3                 │ CS pull-up         │ 10 kΩ           │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R10   │ FLASH_CS_HDR ↔ V3V3               │ CS pull-up         │ 10 kΩ           │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R11   │ V5_IN ↔ PWR_LED_A                 │ power LED limit    │ 1 kΩ  (green)   │
+├───────┼───────────────────────────────────┼────────────────────┼─────────────────┤
+│ R12   │ GP14 ↔ ACT_LED_A                  │ activity LED limit │ 330 Ω (RED)     │
+└───────┴───────────────────────────────────┴────────────────────┴─────────────────┘
+
+*** CORRECTED 2026-08-10 — R5–R8 are 33 Ω, NOT 100 Ω. ***
+
+My original note said 100 Ω here, reasoning that the flash resistors were "the
+same fix as R1–R4" and that uniformity was worth having. That was wrong, and
+bench_adapter_spec.md §2.1 (lines 85-88) already had the right answer:
+
+  "J3's flash-PMOD resistors stay at 33 Ω: that link never crosses an
+   independent power domain (flash chip has no board of its own to be
+   'unpowered'), so it isn't exposed to this failure mode."
+
+The 100 Ω value on J2 exists to cap fault current into an FPGA pin whose board
+can be powered down while the Pico keeps driving — the damage that actually
+happened on the Wukong J11. J3's flash is powered *by this adapter*, so there is
+no unpowered-independent-domain scenario and nothing for the higher value to
+protect against. "Keeps the board uniform" is not an engineering reason and it
+would have silently overridden a documented, reasoned decision.
+
+The _PRE_R net names confirm past-you intended resistors there.
+
+R9/R10 are CS pull-ups, and they're well placed — on the header side of the series resistors, so the target's chip-select is held deasserted even while the Pico's GPIOs are hi-Z during reset and boot. That's the failure mode where a device gets spuriously selected during power-up. 10 k is conventional; anywhere 4.7 k–100 k works.
+
+*** LED colours RESOLVED 2026-08-10. John's stock is modern InGaN, Vf ≈ 3.0 V,
+    plus red available. ***
+
+  R11 = 1 kΩ  — GREEN, off V5_IN (5 V). (5 − 3.0) / 1 kΩ ≈ 2 mA. A modern
+                InGaN part at 2 mA is plenty bright for a power indicator and
+                less glary on the bench than 3 mA. 680 Ω if you want it
+                brighter; purely aesthetic.
+
+  R12 = 330 Ω — **RED, and this is not interchangeable.** (3.3 − 1.9) / 330 Ω
+                ≈ 4 mA.
+
+**Do not fit a green/blue/white LED at R12.** At Vf ≈ 3.0 V off a 3.3 V GPIO
+the headroom is 0.3 V before the RP2350's own output drop at 4 mA (another
+0.1–0.3 V) is counted, and part-to-part Vf spread is ±0.2 V — comparable to the
+entire budget. The result is not "dim but working", it is unpredictable: one
+part faintly visible, the next dark, and the resistor value barely influencing
+either. Red and amber are AlGaInP and stayed at Vf ≈ 1.9–2.1 V regardless of
+how modern the part is, which is why red is specified here.
+
+Rejected alternative, recorded so it is not re-proposed: wiring the LED between
+5 V and GP14 so the GPIO sinks it. It appears to work — with Vf 3.0 the pin is
+never pulled up, since 5 − 3.3 = 1.7 V is below the forward drop — but it puts a
+5 V rail one component failure away from a non-5-V-tolerant pin. Same class of
+fault as the J11 backfeed damage; not worth saving a part.
+
+Also: RP2350 GPIO drive defaults to 4 mA (settable 2/4/8/12) — don't size for
+20 mA like a 5 V part.
+
+I'm not going to write these into the schematic — you have KiCad open right now (~bench_adapter.kicad_pro.lck is present), and editing the .kicad_sch underneath a running editor either gets clobbered on save or corrupts it. Set them in the editor: click each resistor, edit the Value field, then re-export the BOM, which is stale anyway.
+
+Good first KiCad exercise, incidentally — you'll touch symbol properties, annotation, and BOM export, which is most of the schematic-side workflow.

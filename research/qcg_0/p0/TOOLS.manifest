@@ -1,0 +1,5 @@
+/usr/bin/timeout|timeout (GNU coreutils) 9.12
+/usr/bin/prlimit|prlimit from util-linux 2.42.4
+/usr/bin/python3|Python 3.14.8
+/usr/bin/sha256sum|sha256sum (GNU coreutils) 9.12
+/usr/bin/git|git version 2.56.0

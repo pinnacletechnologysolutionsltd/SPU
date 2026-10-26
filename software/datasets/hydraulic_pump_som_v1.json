@@ -1,0 +1,63 @@
+{
+  "format": "SPU_HYDRAULIC_PUMP_SOM_V1",
+  "source": {
+    "title": "Condition monitoring of hydraulic systems",
+    "creators": [
+      "Nikolai Helwig",
+      "Eliseo Pignanelli",
+      "Andreas Schuetze"
+    ],
+    "repository": "UCI Machine Learning Repository",
+    "doi": "10.24432/C5CW21",
+    "record_url": "https://archive.ics.uci.edu/dataset/447/condition+monitoring+of+hydraulic+systems",
+    "download_url": "https://archive.ics.uci.edu/static/public/447/condition%2Bmonitoring%2Bof%2Bhydraulic%2Bsystems.zip",
+    "license": "CC BY 4.0",
+    "archive": "condition_monitoring_hydraulic_systems.zip",
+    "archive_sha256": "24128aad2ee45eea7e6b63ebbd9992cdf25d0483a2cebefbfc13bc69079af1f2",
+    "files": {
+      "EPS1.txt": "2a8d13ca793bb36c0ec4afd27b0103b97b3c1b5a176677be5e7a2ae98c277ab9",
+      "profile.txt": "867987ca884b2f0fd607ad3918329eba887d095af2befa21122cea518eaa584a"
+    }
+  },
+  "task": {
+    "sensor": "EPS1 motor power",
+    "source_unit": "W",
+    "integer_unit": "deciwatt",
+    "sample_hz": 100,
+    "samples_per_cycle": 6000,
+    "stable_flag": 0,
+    "label": "internal pump leakage",
+    "class_values": [0, 1, 2],
+    "class_names": ["no_leakage", "weak_leakage", "severe_leakage"],
+    "nuisance_group": ["cooler_condition", "valve_condition", "accumulator_pressure"]
+  },
+  "window": {
+    "samples": 32,
+    "windows_per_cycle": 16,
+    "placement": "floor(i*(6000-32)/(16-1)), i=0..15"
+  },
+  "features": [
+    "mean_power_dW",
+    "peak_to_peak_power_dW",
+    "mean_abs_delta_power_dW",
+    "mean_abs_deviation_power_dW"
+  ],
+  "validation": {
+    "folds": 5,
+    "group_order": "sha256('hydraulic-pump-v1:' + cooler + ':' + valve + ':' + accumulator)",
+    "assignment": "digest-sorted nuisance groups, round-robin by index modulo 5",
+    "normalization": "training-fold min/max affine map to 0..30000, round-half-even, held-out clamp with diagnostics",
+    "decision_unit": "cycle plurality over 16 window predictions; lowest class id breaks a tie"
+  },
+  "gates": {
+    "hardware_replay_eligible": {
+      "aggregate_three_class_som_balanced_accuracy_ppm_min": 700000,
+      "worst_fold_three_class_som_balanced_accuracy_ppm_min": 500000
+    },
+    "baseline_superiority_claim": {
+      "three_class_som_must_exceed_centroid": true,
+      "collapsed_binary_som_must_exceed_scalar_threshold": true
+    },
+    "failure_policy": "Record a negative result; do not tune the frozen fold, feature, or gate contract against held-out scores."
+  }
+}

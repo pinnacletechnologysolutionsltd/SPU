@@ -1,0 +1,706 @@
+{
+  "schema": "golden-core-gc5a-exact-edge-dynamics-v1",
+  "steps": 12,
+  "initial_edge": [
+    0,
+    1
+  ],
+  "profiles": {
+    "equal": {
+      "left": "1",
+      "right": "1"
+    },
+    "signed": {
+      "left": "3+sqrt(5)",
+      "right": "1-sqrt(5)"
+    }
+  },
+  "mirror_trajectory_counts": {
+    "equal": {
+      "proper": 60,
+      "orientation_reversing": 60
+    },
+    "signed": {
+      "proper": 60,
+      "orientation_reversing": 60
+    }
+  },
+  "trajectories": {
+    "equal": [
+      {
+        "step": 0,
+        "state_sha256": "68696fe53183058cd2d75f558beff3f5cc794ef590d985856660328512be6b34",
+        "max_coefficient_bit_length": 1,
+        "total_coefficient_sum": [
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 1,
+        "state_sha256": "b97abd08d6ddf1838f0dd9b37c34fdee16a9b73e6b7c250d729ef2554c7a980a",
+        "max_coefficient_bit_length": 1,
+        "total_coefficient_sum": [
+          [
+            2,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 2,
+        "state_sha256": "95d26832e3b030f764b88fa7df7f527941f97c749d96197e45675d5ba05e107f",
+        "max_coefficient_bit_length": 1,
+        "total_coefficient_sum": [
+          [
+            4,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 3,
+        "state_sha256": "8a2ca3541cc4421ded1742c3f3df5375df45cbe7815e687e490c7cbd589e046b",
+        "max_coefficient_bit_length": 2,
+        "total_coefficient_sum": [
+          [
+            8,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 4,
+        "state_sha256": "201f90c30d817cdc32eab4de7487168e2ed85c5d246d93ab07a2caa70221a47e",
+        "max_coefficient_bit_length": 2,
+        "total_coefficient_sum": [
+          [
+            16,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 5,
+        "state_sha256": "b9d1357fb7ceb2326c65dd26183c35d716a82ca8fe16c89fb6131f4658f976d9",
+        "max_coefficient_bit_length": 3,
+        "total_coefficient_sum": [
+          [
+            32,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 6,
+        "state_sha256": "d351eede7b18c5929d12f3950734cb8c6cabe5800b53fdbbc5e473cbf73678b9",
+        "max_coefficient_bit_length": 4,
+        "total_coefficient_sum": [
+          [
+            64,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 7,
+        "state_sha256": "95dfb7d6654cace8977b5353451345d187e21fa07bcf66d440f328d6eba073ef",
+        "max_coefficient_bit_length": 4,
+        "total_coefficient_sum": [
+          [
+            128,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 8,
+        "state_sha256": "05eac5ccc77d52fdd2ce5ddb95267d6d2efd3ec994f5b3bc3fedbd04ac1ad2a9",
+        "max_coefficient_bit_length": 5,
+        "total_coefficient_sum": [
+          [
+            256,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 9,
+        "state_sha256": "1505d9a5e888e3fd3941ff3247624c7f3528d4355776e7365c3a1a30f76cd469",
+        "max_coefficient_bit_length": 6,
+        "total_coefficient_sum": [
+          [
+            512,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 10,
+        "state_sha256": "899e955bfdc9e969fe3f5d29594ff4b8b8f1e8e730f4afa3f9d4ee141f80d977",
+        "max_coefficient_bit_length": 7,
+        "total_coefficient_sum": [
+          [
+            1024,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 11,
+        "state_sha256": "11b8a503ec3fcb45f16bb8bcbb7310aa1023f53a6a5a3cdebc40ea85f44f71c9",
+        "max_coefficient_bit_length": 7,
+        "total_coefficient_sum": [
+          [
+            2048,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 12,
+        "state_sha256": "472b9440fb36fe5664164624f7d633b7014f52b26ff6624e3d644f2b1385ddfa",
+        "max_coefficient_bit_length": 8,
+        "total_coefficient_sum": [
+          [
+            4096,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      }
+    ],
+    "signed": [
+      {
+        "step": 0,
+        "state_sha256": "68696fe53183058cd2d75f558beff3f5cc794ef590d985856660328512be6b34",
+        "max_coefficient_bit_length": 1,
+        "total_coefficient_sum": [
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 1,
+        "state_sha256": "138454404564c3c1da7548275b2f388b6d66338268fb522835ef6aa727f87e36",
+        "max_coefficient_bit_length": 2,
+        "total_coefficient_sum": [
+          [
+            4,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 2,
+        "state_sha256": "94130505f6e0960cdc189118100bb96af6bf0c523759624f2256db6773339c30",
+        "max_coefficient_bit_length": 4,
+        "total_coefficient_sum": [
+          [
+            16,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 3,
+        "state_sha256": "fcb19e198a14aef535d4400ca62d6686a4ad0a4903175c7bcc813c8e09e1b7b8",
+        "max_coefficient_bit_length": 7,
+        "total_coefficient_sum": [
+          [
+            64,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 4,
+        "state_sha256": "468b539e704e781e19f68012798643a84ded7d3c3d106f26fad2ae7445c02750",
+        "max_coefficient_bit_length": 9,
+        "total_coefficient_sum": [
+          [
+            256,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            512,
+            1
+          ],
+          [
+            256,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 5,
+        "state_sha256": "a48e2a1e12b75c2cfd372b92634ca8b816028929d0ccc804734f708f5229556d",
+        "max_coefficient_bit_length": 11,
+        "total_coefficient_sum": [
+          [
+            1024,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 6,
+        "state_sha256": "304e6b6b3c45eb778044651f7c82ef41bb47feaa072920dddb51a951ca86a43d",
+        "max_coefficient_bit_length": 14,
+        "total_coefficient_sum": [
+          [
+            4096,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 7,
+        "state_sha256": "c8813d304fef9ecce0f04f1e5b2501d8992126365fd000924dbdd0e1f26ed36d",
+        "max_coefficient_bit_length": 16,
+        "total_coefficient_sum": [
+          [
+            16384,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            83584,
+            1
+          ],
+          [
+            38016,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 8,
+        "state_sha256": "5d53589b6efb6e8033cc207036f0d7acb6fa7565b118815f382b536dbd4a2e00",
+        "max_coefficient_bit_length": 18,
+        "total_coefficient_sum": [
+          [
+            65536,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 9,
+        "state_sha256": "378ce94232dbf25ac8e51e372995113b1235f1d4a6d05f1d186a6a893a657863",
+        "max_coefficient_bit_length": 21,
+        "total_coefficient_sum": [
+          [
+            262144,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 10,
+        "state_sha256": "4b93f426d2fe4fa2a96778f60e842e6371e50727d3448a38d63203c6a4e5ea05",
+        "max_coefficient_bit_length": 23,
+        "total_coefficient_sum": [
+          [
+            1048576,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            11808768,
+            1
+          ],
+          [
+            5296128,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 11,
+        "state_sha256": "74bd762c0144fb0bdf9a1ffb4af88b8795115b78b22a4b5551921ab499b0983f",
+        "max_coefficient_bit_length": 25,
+        "total_coefficient_sum": [
+          [
+            4194304,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            819200,
+            1
+          ],
+          [
+            368640,
+            1
+          ]
+        ]
+      },
+      {
+        "step": 12,
+        "state_sha256": "a941713f9fbc8c91747b5238c4f84ef8ede9e27d6d24e7b5ba015dc68f401622",
+        "max_coefficient_bit_length": 28,
+        "total_coefficient_sum": [
+          [
+            16777216,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "left_minus_right_probe": [
+          [
+            -360448,
+            1
+          ],
+          [
+            -163840,
+            1
+          ]
+        ]
+      }
+    ]
+  },
+  "negative_control": {
+    "reflection_vertex_image": [
+      0,
+      1,
+      7,
+      8,
+      11,
+      6,
+      5,
+      2,
+      3,
+      9,
+      10,
+      4
+    ],
+    "swap_edge_image_targets": [
+      0,
+      1
+    ],
+    "rejected_at_step": 0,
+    "wrong_exchange_rejected_at_step": 1
+  }
+}

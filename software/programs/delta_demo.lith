@@ -1,0 +1,34 @@
+;; delta_demo.lith — Triple Quadrance Formula Demo
+;; Exercise the DELTA opcode on Pythagorean triples.
+;;
+;; The Triple Quadrance Formula:
+;;   (Q₃ − Q₁ − Q₂)² = 4·Q₁·Q₂·(1−s)
+;; where s = k/steps is the spread of angle ABC.
+;;
+;; For a right triangle (k=steps, s=1): rhs² = 0, Q₃ = Q₁ + Q₂.
+;; No sin/cos. No sqrt. Exact rational arithmetic.
+
+;; ── Demo 1: 3-4-5 right triangle ──
+;; Q1=3, Q2=4 → q_sum=7, at k=4 (s=1): rhs²=0 → 3-4-5 triangle
+delta Q1=3 Q2=4 steps=4 dest=QR0
+QLOG QR0
+
+;; ── Demo 2: Isosceles legs ──
+;; Q1=Q2=3, 6 steps
+delta Q1=3 Q2=3 steps=6 dest=QR1
+QLOG QR1
+
+;; ── Demo 3: Large quadrances ──
+;; Q1=25, Q2=144 → q_sum=169 (13²)
+delta Q1=25 Q2=144 steps=8 dest=QR2
+QLOG QR2
+
+;; ── Demo 4: Collapsed triangle (single step) ──
+delta Q1=5 Q2=5 steps=1 dest=QR3
+QLOG QR3
+
+;; ── Hex output for visualization ──
+hex R0, QR0
+hex R1, QR1
+hex R2, QR2
+hex R3, QR3

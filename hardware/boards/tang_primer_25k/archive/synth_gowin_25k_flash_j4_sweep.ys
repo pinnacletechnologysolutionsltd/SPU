@@ -1,0 +1,5 @@
+read_verilog hardware/boards/tang_primer_25k/spu_tang25k_flash_j4_sweep.v
+
+hierarchy -check -top spu_tang25k_flash_j4_sweep
+synth_gowin -family gw5a -top spu_tang25k_flash_j4_sweep -json build/flash_j4_sweep.json
+stat

@@ -1,0 +1,50 @@
+{
+  "manifest_id": "spu13-soft-v1-sim0-accepted-inputs-2026-10-15",
+  "accepted_on": "2026-10-15",
+  "profile": "spu13-soft-v1",
+  "specification_version": 1,
+  "artifacts": [
+    {
+      "path": "docs/isa/SPU13_SOFT_V1_SIM0_REVIEW_2026-10-15.md",
+      "sha256": "5269e9c22f750ee3c95a3dba25240dd8929575fbb4f3d598b9a02b71707f8422",
+      "role": "owner-accepted-profile-specification"
+    },
+    {
+      "path": "docs/isa/SPU13_SOFT_V1_ISA_SOURCE_PIN_2026-10-15.json",
+      "sha256": "d5fbd01467b53b03343c5ec74e0fdebdf39829ba62db8d21452e9918411867e5",
+      "role": "immutable-isa-source-pin-manifest"
+    },
+    {
+      "path": "docs/isa/SPU13_SOFT_V1_ISA_REFERENCE_4e51d2f.patch",
+      "sha256": "5adef291f2a678da3f7993788c64a717024aacba2dc90948e3722632f1c75737",
+      "role": "exact-source-diff-for-isa-pin"
+    },
+    {
+      "path": "fixtures/spu13_soft_v1_sim0_vectors.json",
+      "sha256": "1037be65943162411dbadbd992aa18fa4481954d20d4924a508e67e4703c4fd6",
+      "role": "literal-cpu-loader-and-t1d-acceptance-vectors"
+    },
+    {
+      "path": "fixtures/gpu_t1d_scene_wire_64b.bin",
+      "sha256": "aa2bad57fa5d3d2f777ef5e5405357ac0216a4aafb707d99241050c986ed69ee",
+      "role": "64-byte-t1d-scene-input"
+    },
+    {
+      "path": "fixtures/gpu_t1d_scene_reference.json",
+      "sha256": "7c48bdeffac97bba871e5c92663168900cb617f8586976e66f09077e11b7f138",
+      "role": "t1d-diagnostic-pixel-reference"
+    },
+    {
+      "path": "hardware/rtl/arch/gpu_reciprocal_lut_q15.mem",
+      "sha256": "a64327c1bc0c8c74a4fb8c849a922a1f8b3d6a6e2e3bb58951d11f2012bb5248",
+      "role": "t1d-depth-preparation-lookup-table"
+    }
+  ],
+  "t1d_expected_frame": {
+    "format": "640x480-row-major-rgb8",
+    "bytes": 921600,
+    "sha256": "96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10",
+    "evidence_scope": "single-fixture software-model and exact-rational agreement; not RTL timing or physical evidence"
+  },
+  "policy": "SIM-1 must vendor or otherwise consume these exact bytes. A hash mismatch requires owner review and a new accepted SIM-0 artifact manifest; do not silently refresh fixtures."
+}

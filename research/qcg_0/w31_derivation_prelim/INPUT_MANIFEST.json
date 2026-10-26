@@ -1,0 +1,158 @@
+{
+  "inputs": {
+    "P0_CONTRACT_R2_LEDGER_STAGE_EXPECTATIONS.json": "093b006b4b11e289066265a9021fba92c28ec252b8df44eac06a48f8eeca75bb",
+    "P0_CONTRACT_R2_REMAINING_CELL_A_STAGE_EXPECTATIONS.json": "d231a81305f975727b82431bb04a51dff41fbc55a85708a8521c63c36edf6a0a",
+    "P0_CONTRACT_R2_SUPPLEMENTAL_REFERENCES.json": "9422d7617c65a9a3fc2fa1ab19af7ce7ea634721cfeb251096cd3821534237a0",
+    "P0_CONTRACT_R322_STAGE_ALLOWANCE_REAUTHORIZATION_REQUEST.md": "9448d32b7c5c8199f8646dadb6d7305322112fa5269887341bb12b0dc3037be6",
+    "QCG0_P0_EXECUTION_CONTRACT.md": "872def93c853e5520817785a75b472a126e864b437dca20eff8899b4ac091cb2",
+    "QCG0_P0_EXECUTION_CONTRACT_REVISION_3_2_2.diff": "d86faa4470b878c91ec78cf45591665f2ef19fda965590d8b545059837a99342",
+    "QCG0_PREREGISTRATION.md": "eade4b5f0957c3679c94b67d8f4b1f6b6d005d65316a5337e6c8dfb9370b98dd",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34",
+    "R322_CHATGPT_CONSISTENCY_REVIEW.md": "6c3ea533198d419c71135bafade86c413cf8fe89d6e4ee5ec32ac1d9ecb70be2",
+    "R322_CHATGPT_STAGE_ALLOWANCE_DECISION.md": "30cacc8c57b7936b49913bd692a57788ed5187ce30a2bb3a2e5409d608c811fc",
+    "REVISION2_FIXTURE_VALUES.json": "a66af3d68da5a7dba439818778af9e8fe70244e3dc2d8250ea891354124a0b46"
+  },
+  "schema": "qcg0-w31-independent-inputs-v1",
+  "tools": {
+    "/usr/bin/bwrap": "bubblewrap 0.13.1",
+    "/usr/bin/prlimit": "prlimit from util-linux 2.42.4",
+    "/usr/bin/python3": "Python 3.14.8",
+    "/usr/bin/timeout": "timeout (GNU coreutils) 9.12"
+  },
+  "workload": {
+    "cell_b_parameters": [
+      [
+        5,
+        7
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        7,
+        10
+      ],
+      [
+        2,
+        9
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        5,
+        7
+      ]
+    ],
+    "curves": {
+      "PH3": {
+        "U": [
+          [
+            1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      "PH5": {
+        "U": [
+          [
+            -1,
+            1
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            -1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            -1,
+            1
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      }
+    },
+    "phi": [
+      [
+        0,
+        1
+      ],
+      [
+        4,
+        49
+      ],
+      [
+        18,
+        49
+      ],
+      [
+        27,
+        49
+      ]
+    ]
+  }
+}

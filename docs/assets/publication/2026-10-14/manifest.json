@@ -1,0 +1,636 @@
+{
+  "format": "SPU_SELECTED_PUBLICATION_EVIDENCE_V1",
+  "date": "2026-10-14",
+  "scope": "Editorial review and selected evidence inspection; no complete FPGA rebuild or clean release claim",
+  "claims": {
+    "aor_s1": "ISOLATED_SOFTWARE_QUALIFICATION_COMPLETE",
+    "pade": "BUILD_COMPLETE_TOOL_ESTIMATE_34_80_MHZ_TIMING_QUALIFICATION_PENDING",
+    "surd_cpu": "CANDIDATE_PLACEMENT_PASS_ROUTING_TIMING_BLOCKED_INCOMPLETE_COVERAGE"
+  },
+  "sources": [
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/authorization_01/owner_authorization.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/authorization_01/owner_authorization.json",
+      "bytes": 1042,
+      "sha256": "6c191a9788ad79532b8c58ba2c93ac9bfd2840c965a9fab9240c173bee63134b"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/campaign_ledger.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/campaign_ledger.json",
+      "bytes": 4275,
+      "sha256": "2688d8f582aee42a3abf437ea8db879c8154b9d67ec97d16121f172d4cecc4f2"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/closeout_reconciliation_01/REVIEW.md",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/closeout_reconciliation_01/REVIEW.md",
+      "bytes": 1380,
+      "sha256": "246277a134f3d7076fd0dbd5c23ed4857c7c0b0ebf0af4bbd51e7eeefbfaf8f3"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/closeout_reconciliation_01/acceptance.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/closeout_reconciliation_01/acceptance.json",
+      "bytes": 5054,
+      "sha256": "457d4021a88c67b6213a7fca485c645b34ccabd304ddd45563ee1c443b7b8760"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/command.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/command.txt",
+      "bytes": 75,
+      "sha256": "cafaee875b515ee75cd1070180a0e55e61f0d34e03d5873878ac8d9b7a47bb84"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/deadline.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/deadline.json",
+      "bytes": 464,
+      "sha256": "e88f6268d3e1cf6c756e99f1988a2f69a3a5d49a8e6f2277591ef9327f8da568"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/git_status.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/git_status.txt",
+      "bytes": 28098,
+      "sha256": "0ca0c5485b1829561e3683fa5e34a053a0d22a47ab75c918dd027b9ffabc42d6"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/notification.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/notification.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/result.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/result.json",
+      "bytes": 285,
+      "sha256": "3c74d93da3ca30a220e8b1556004c634295929b9d5319b309b4913e5a2b9fe91"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/stderr.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/stderr.log",
+      "bytes": 188122,
+      "sha256": "de70d88f37d079cb95fb087c0b73ccc899346a59f94f9f5d8ae415972616daf8"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/stdout.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/stdout.log",
+      "bytes": 1943898,
+      "sha256": "17fe59472bfb5d266c4f4c7ef234b6d7fed4dcded9a950579a448bc7331d43f5"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/tool_versions.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/tool_versions.txt",
+      "bytes": 294,
+      "sha256": "d8e73157ae9c7da6d8377336b8e5a6b7f127853bc983595abd3fddd33e83353a"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/pade_01/working_directory.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/pade_01/working_directory.txt",
+      "bytes": 33,
+      "sha256": "8f44dc796a8453e2de567312b7d547d0d50df8a29b9fcc2585272670622c9281"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/preflight_review_01/REVIEW.md",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/preflight_review_01/REVIEW.md",
+      "bytes": 2870,
+      "sha256": "2dd46e9fe9fbfe4d36a1125aecb810fafcd4a12e3358ae1a00d08b0470cc708e"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/preflight_review_01/source_hashes.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/preflight_review_01/source_hashes.json",
+      "bytes": 2083,
+      "sha256": "ecbda9fdac23de149d149fc68a553cf56e0252118c1be5b8e7071eba14055dc9"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/preparation_01/ROOT_VERIFIER_CROSS_REVIEW.md",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/preparation_01/ROOT_VERIFIER_CROSS_REVIEW.md",
+      "bytes": 1577,
+      "sha256": "97642de41fd366d7843d7457aff7c492bcc475fd340a955b5f111c199348ba84"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/preparation_01/source_freeze.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/preparation_01/source_freeze.json",
+      "bytes": 4023,
+      "sha256": "ad13a82f9c714f216eb7aacb7d0dd9afb9b85d2255b7c80ab70ce40f853843ba"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/command.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/command.txt",
+      "bytes": 40,
+      "sha256": "244a6058bd81d160596ffc6c87ef62c6b9e1e94a32d56188c374bd42195ec478"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/deadline.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/deadline.json",
+      "bytes": 464,
+      "sha256": "c045e0ca776fd0f46bcd43dc7fe9381cafd3d20eaa9ffc4924160fb43398440e"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/git_status.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/git_status.txt",
+      "bytes": 28098,
+      "sha256": "0ca0c5485b1829561e3683fa5e34a053a0d22a47ab75c918dd027b9ffabc42d6"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/notification.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/notification.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/result.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/result.json",
+      "bytes": 285,
+      "sha256": "6c7456407fa214ab310a01010af77561dbbc88931c132c74b3f1588cea07d8dd"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/stderr.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/stdout.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/stdout.log",
+      "bytes": 33974,
+      "sha256": "acf0f91bf4cf298d7c6159008b1c58d13593125b3194a955a87695b68a16c1aa"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/tool_versions.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/tool_versions.txt",
+      "bytes": 294,
+      "sha256": "d8e73157ae9c7da6d8377336b8e5a6b7f127853bc983595abd3fddd33e83353a"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/repo_01/working_directory.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/repo_01/working_directory.txt",
+      "bytes": 33,
+      "sha256": "8f44dc796a8453e2de567312b7d547d0d50df8a29b9fcc2585272670622c9281"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/command.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/command.txt",
+      "bytes": 459,
+      "sha256": "4cdc791d13a81261a31d73f87b9c7d48a3711f21d114e4a9622b8e4c18d8143e"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/deadline.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/deadline.json",
+      "bytes": 460,
+      "sha256": "6aaebd353cf2b04ee2d14375b53145e6cee41bf07063a5cfd4cab9992d852b21"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/git_status.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/git_status.txt",
+      "bytes": 28098,
+      "sha256": "0ca0c5485b1829561e3683fa5e34a053a0d22a47ab75c918dd027b9ffabc42d6"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/notification.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/notification.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/result.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/result.json",
+      "bytes": 287,
+      "sha256": "00ff061e0ad1bc1d4d3fc22495b1d44b3fb810d7ec1b301a8c919c0138e644e8"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/results/PASS.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/results/PASS.json",
+      "bytes": 96,
+      "sha256": "277b4e6bf49ab416df32d6c1751172cb58ce6217497bc5daab653cced22fab46"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/results/acceptance.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/results/acceptance.json",
+      "bytes": 1629330,
+      "sha256": "ebabfcd270886cbea8b97a0f25f3183610a70bee32f44a5d8ce51a3d7e2dfb7d"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/results/identity.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/results/identity.json",
+      "bytes": 3654,
+      "sha256": "bd5208b373472fc244c2b088ef8e9c84ec034b2b025cd8fbdf6166849d952f4f"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/results/source_after.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/results/source_after.json",
+      "bytes": 2083,
+      "sha256": "ecbda9fdac23de149d149fc68a553cf56e0252118c1be5b8e7071eba14055dc9"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/results/unit_command.json",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/results/unit_command.json",
+      "bytes": 248,
+      "sha256": "e1304c8b2c169a27f87dc8e783395ff46bd1683a781c9659d3662b3325b640b3"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/stderr.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/stdout.log",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/stdout.log",
+      "bytes": 62,
+      "sha256": "8f15e89f8dee54c8ec140f20f93640b93a16a7e42fa0deb67ac04ef6da54790a"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/tool_versions.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/tool_versions.txt",
+      "bytes": 294,
+      "sha256": "d8e73157ae9c7da6d8377336b8e5a6b7f127853bc983595abd3fddd33e83353a"
+    },
+    {
+      "original_path": "build/aor_s1/implementation_qualification_20261014/software_01/working_directory.txt",
+      "member": "evidence/build/aor_s1/implementation_qualification_20261014/software_01/working_directory.txt",
+      "bytes": 33,
+      "sha256": "8f44dc796a8453e2de567312b7d547d0d50df8a29b9fcc2585272670622c9281"
+    },
+    {
+      "original_path": "build/metrics/artix7_100t_RPLU2PADE.json",
+      "member": "evidence/build/metrics/artix7_100t_RPLU2PADE.json",
+      "bytes": 6439,
+      "sha256": "5952eba98822551dc7c7ed81bae8faf70b2fbe7810b53908e4b681841a6f3d96"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/independent_review_01/REVIEW.md",
+      "member": "evidence/build/parallel_tranches_20261014/independent_review_01/REVIEW.md",
+      "bytes": 8641,
+      "sha256": "f1bda31866b25ed2e1e445712a8794eb1c0b5b5da360dd3e6269bfc9e0c4ab83"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/independent_review_01/SHA256SUMS",
+      "member": "evidence/build/parallel_tranches_20261014/independent_review_01/SHA256SUMS",
+      "bytes": 406,
+      "sha256": "9598afe091e9ff1f8f0009ce9826af323ffb581858a2d12cab0e44f2320faf28"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/independent_review_01/input_hashes.json",
+      "member": "evidence/build/parallel_tranches_20261014/independent_review_01/input_hashes.json",
+      "bytes": 1144,
+      "sha256": "cea3738604cadc7c3bca68e6c6c7fbaaeb4c9f731cf0b72298aad6595e0e4c99"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/independent_review_01/witness.py",
+      "member": "evidence/build/parallel_tranches_20261014/independent_review_01/witness.py",
+      "bytes": 11476,
+      "sha256": "997d037e57a287ba36fc64f2770206adb8905e65ffe74054e691d476b09fc6b4"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/pixel_diagnosis_01/diagnosis.json",
+      "member": "evidence/build/parallel_tranches_20261014/pixel_diagnosis_01/diagnosis.json",
+      "bytes": 5270,
+      "sha256": "7946d6d79545e2a311bb13697588fd28749a05122277f5f1d8e538b51de76ee8"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/pixel_diagnosis_01/explanation.json",
+      "member": "evidence/build/parallel_tranches_20261014/pixel_diagnosis_01/explanation.json",
+      "bytes": 503,
+      "sha256": "d71b43ea502dae09729d2892fd3a6da1aded299aab82fbcf0f76d4052eda33dd"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/pixel_diagnosis_01/inspect_321_35.json",
+      "member": "evidence/build/parallel_tranches_20261014/pixel_diagnosis_01/inspect_321_35.json",
+      "bytes": 878,
+      "sha256": "98a990ddde9642d73dcc7d54eca5f4af4c78e782d8eb67ad1a830ed36c17b1e1"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/pixel_diagnosis_01/inspect_322_71.json",
+      "member": "evidence/build/parallel_tranches_20261014/pixel_diagnosis_01/inspect_322_71.json",
+      "bytes": 878,
+      "sha256": "dd8a12d88d662c5949d20e05a1b3f373aaf71bde7ba0d049353f26757c6eaca4"
+    },
+    {
+      "original_path": "build/parallel_tranches_20261014/pixel_diagnosis_01/inspect_323_109.json",
+      "member": "evidence/build/parallel_tranches_20261014/pixel_diagnosis_01/inspect_323_109.json",
+      "bytes": 881,
+      "sha256": "afbdf50212e90d28ef4614df8a441f3c661a2accd6c173d7b7b34be0ef90ce90"
+    },
+    {
+      "original_path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/result.json",
+      "member": "evidence/build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/result.json",
+      "bytes": 309,
+      "sha256": "c95a34a79b56af01f4f1b457a0047281ff438eeaa5a2f497efd4a05f9350c68b"
+    },
+    {
+      "original_path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_closeout_01/REVIEW.md",
+      "member": "evidence/build/spu_surd_register/backend_compatibility_20261012/integrated_context_closeout_01/REVIEW.md",
+      "bytes": 2426,
+      "sha256": "69c561b4ef1d394edb20d97e31ab9e206008baf2852b0657aa55af2f6fc7fc25"
+    },
+    {
+      "original_path": "build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/REVIEW.md",
+      "member": "evidence/build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/REVIEW.md",
+      "bytes": 4475,
+      "sha256": "fe495e8f0422e33ee9fe2a9fceaf101df95e90ecd18c6fbf31cd70e3909d3d23"
+    },
+    {
+      "original_path": "build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/input_identity.json",
+      "member": "evidence/build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/input_identity.json",
+      "bytes": 3713,
+      "sha256": "de52479d8874b7f846583378d9fb4a15d38aac7b94fcee70fcebd223248ab78c"
+    },
+    {
+      "original_path": "build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/placement_artifact_audit.json",
+      "member": "evidence/build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/placement_artifact_audit.json",
+      "bytes": 718,
+      "sha256": "5f8ae3fb7e46a49bbb5825772527b307612e856b0f1078d2bf0a8a28e9afb547"
+    },
+    {
+      "original_path": "build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/programme_status.json",
+      "member": "evidence/build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/programme_status.json",
+      "bytes": 218,
+      "sha256": "81e2d0b4a3e84a671d55d564ffff134d1928456721f7b72f98582feabab6c2ef"
+    },
+    {
+      "original_path": "build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/timing_model_audit.json",
+      "member": "evidence/build/spu_surd_register/backend_compatibility_20261012/routing_timing_preparation_01/timing_model_audit.json",
+      "bytes": 2751,
+      "sha256": "13c2d237551f33c4df996a5c820571c6f4515ba144ba6c918e9bea64df2cb1d5"
+    },
+    {
+      "original_path": "build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/command.txt",
+      "member": "evidence/build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/command.txt",
+      "bytes": 113,
+      "sha256": "7c07a8460db07793a2122c4b5b5f32f95598c6c0e61927c9e706aad2bf6ad56b"
+    },
+    {
+      "original_path": "build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/result.json",
+      "member": "evidence/build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/result.json",
+      "bytes": 299,
+      "sha256": "45675d26f6827c35d6b01f89b8942fb7d703c4a7765d20e8d31a3fa0ee108118"
+    },
+    {
+      "original_path": "build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/summary.md",
+      "member": "evidence/build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/summary.md",
+      "bytes": 1732,
+      "sha256": "8427bbaa89fe2d7a47af148f69ee35f9dd4ec4f0421938fa1997c22badec9dfe"
+    },
+    {
+      "original_path": "build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/tool_versions.txt",
+      "member": "evidence/build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/tool_versions.txt",
+      "bytes": 294,
+      "sha256": "a1cf068c8cee4f47deadd231c1fd971827ff2780e2106af5fd953c6603353738"
+    },
+    {
+      "original_path": "build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/w64_lanes_5.nextpnr.log",
+      "member": "evidence/build/spu_surd_register/mul_arch_20261007/combined_w64_lanes5_01/w64_lanes_5.nextpnr.log",
+      "bytes": 128687,
+      "sha256": "e7793598f3937fabda672c97b76e990bc357419010ae716b368ca40ef487d53b"
+    },
+    {
+      "original_path": "docs/GPU_RETAINED_ARTIFACT_PROVENANCE_2026-10-14.md",
+      "member": "evidence/docs/GPU_RETAINED_ARTIFACT_PROVENANCE_2026-10-14.md",
+      "bytes": 3650,
+      "sha256": "b16e5d5d6e992c449e497eab131af05f136fcc0e3c845d66ddc0777b13b8a7ec"
+    },
+    {
+      "original_path": "docs/PARALLEL_TRANCHES_2026-10-14.md",
+      "member": "evidence/docs/PARALLEL_TRANCHES_2026-10-14.md",
+      "bytes": 11944,
+      "sha256": "0bd78af8c6937449789ee8785f18adc01b907725000812e13de595cb443d5537"
+    },
+    {
+      "original_path": "docs/PUBLICATION_EVIDENCE_PACKAGE_2026-10-14.md",
+      "member": "evidence/docs/PUBLICATION_EVIDENCE_PACKAGE_2026-10-14.md",
+      "bytes": 5898,
+      "sha256": "01fb8e5ace4547334a65653798b01a0b6c531da5a49127637605d9bccaf7c9a6"
+    },
+    {
+      "original_path": "docs/gpu_retained_artifacts_2026-10-14.json",
+      "member": "evidence/docs/gpu_retained_artifacts_2026-10-14.json",
+      "bytes": 5826,
+      "sha256": "1d665a89cc6c8d84a5c9bf2be0a5410b56639a4fc29874901c5c67db14c68254"
+    },
+    {
+      "original_path": "docs/gpu_scene_preview.md",
+      "member": "evidence/docs/gpu_scene_preview.md",
+      "bytes": 8155,
+      "sha256": "86d769ed3009562202dc2719220a97f34cac7913c9a9c4e5ba6adcdfc5546abb"
+    },
+    {
+      "original_path": "docs/hardware_evidence.md",
+      "member": "evidence/docs/hardware_evidence.md",
+      "bytes": 386782,
+      "sha256": "5e823fc6eefcd19dbbfbf8463cb4c1acaf1f173cdbb6734c68a4097f26c6e3e1"
+    },
+    {
+      "original_path": "docs/papers/SURD_REGISTER_PAPER_DRAFT.md",
+      "member": "evidence/docs/papers/SURD_REGISTER_PAPER_DRAFT.md",
+      "bytes": 24482,
+      "sha256": "a6d5ab791471c7fc76bef5dd6a1c0ddd1aacdd4160ae41b54f09c4b1389fe700"
+    },
+    {
+      "original_path": "docs/papers/SURD_REGISTER_PAPER_OUTLINE.md",
+      "member": "evidence/docs/papers/SURD_REGISTER_PAPER_OUTLINE.md",
+      "bytes": 12897,
+      "sha256": "a7db02dff0b1ca4a1cb06c67a0914a6eaf36671dea02ad4df5ba6e4744d6ee83"
+    },
+    {
+      "original_path": "hardware/boards/artix7/build_a7.sh",
+      "member": "evidence/hardware/boards/artix7/build_a7.sh",
+      "bytes": 67658,
+      "sha256": "35f89984c6584f697970a19006c27116c12c63c4b01f689e3c848f379fcba29b"
+    },
+    {
+      "original_path": "hardware/boards/artix7/spu_a7_100t.xdc",
+      "member": "evidence/hardware/boards/artix7/spu_a7_100t.xdc",
+      "bytes": 10677,
+      "sha256": "1bfe71214e70af340af3bd50303225c32ce1a12a33904d23bdf77c53890dcc1a"
+    },
+    {
+      "original_path": "hardware/rtl/core/spu13/spu13_surd_bank.v",
+      "member": "evidence/hardware/rtl/core/spu13/spu13_surd_bank.v",
+      "bytes": 683,
+      "sha256": "8e3a2f0afdc7f14289b83feaf73151f244afc21f01e2a3d91447c833afa8657c"
+    },
+    {
+      "original_path": "hardware/rtl/math/rational_surd5_mul.v",
+      "member": "evidence/hardware/rtl/math/rational_surd5_mul.v",
+      "bytes": 1667,
+      "sha256": "e7591ba3194f5f696dd72bf5ca69e0c4887c15a053111d0906fe06a885c3cfa8"
+    },
+    {
+      "original_path": "hardware/rtl/math/rational_surd5_mul64.v",
+      "member": "evidence/hardware/rtl/math/rational_surd5_mul64.v",
+      "bytes": 1500,
+      "sha256": "64078cd6af35965eae3a9d10ef141e33828a97c0d421c7af4bf6e49d4489ba8d"
+    },
+    {
+      "original_path": "hardware/rtl/math/surd_normalize_unit.v",
+      "member": "evidence/hardware/rtl/math/surd_normalize_unit.v",
+      "bytes": 4727,
+      "sha256": "4d43e03f3745326a3f7d26fcf7a34219c8bc0ba1a4826a568eb3c74ab82291fa"
+    },
+    {
+      "original_path": "hardware/rtl/math/surd_smul_unit.v",
+      "member": "evidence/hardware/rtl/math/surd_smul_unit.v",
+      "bytes": 7342,
+      "sha256": "0cebd08aec2cd9ea6603ae655b9a15d65d9651eca958e1935137bd6deb04fdaa"
+    },
+    {
+      "original_path": "software/research/aor_s1/__init__.py",
+      "member": "evidence/software/research/aor_s1/__init__.py",
+      "bytes": 70,
+      "sha256": "9bf342d52afc99bef3e4836ab9421f36134cd04b6f952db135d4083a87b400ad"
+    },
+    {
+      "original_path": "software/research/aor_s1/arithmetic.py",
+      "member": "evidence/software/research/aor_s1/arithmetic.py",
+      "bytes": 2497,
+      "sha256": "8cbae5a81971047c51d9541cdab35f6c0518788393d61e66247228137aeb79bb"
+    },
+    {
+      "original_path": "software/research/aor_s1/budget.py",
+      "member": "evidence/software/research/aor_s1/budget.py",
+      "bytes": 2118,
+      "sha256": "a64cacfb968494d6380a696ff30ef40368f1b65a64e28aebf6c5347f772e0a1b"
+    },
+    {
+      "original_path": "software/research/aor_s1/comparator.py",
+      "member": "evidence/software/research/aor_s1/comparator.py",
+      "bytes": 2988,
+      "sha256": "168f1703d93a85be8259772abe1f9ba05abcd72d73abd9d162bad54873b8b350"
+    },
+    {
+      "original_path": "software/research/aor_s1/execute.py",
+      "member": "evidence/software/research/aor_s1/execute.py",
+      "bytes": 4309,
+      "sha256": "e307cf960a8e59365ed87a00aea15b082f76bcbac7af66bbbf3f4b6ee5c8f508"
+    },
+    {
+      "original_path": "software/research/aor_s1/normalize.py",
+      "member": "evidence/software/research/aor_s1/normalize.py",
+      "bytes": 2767,
+      "sha256": "32d13ea9f34179dfeacfb21172dca9586edb3fbd24d3fce7d196d85f13e904fd"
+    },
+    {
+      "original_path": "software/research/aor_s1/validation.py",
+      "member": "evidence/software/research/aor_s1/validation.py",
+      "bytes": 2350,
+      "sha256": "799b8ad1f7dca9fc035668cc830793830333740809c6acd0cc2627533897d146"
+    },
+    {
+      "original_path": "software/research/aor_s1_verification/__init__.py",
+      "member": "evidence/software/research/aor_s1_verification/__init__.py",
+      "bytes": 85,
+      "sha256": "9148fb5707389ba7e903855f492e17e80058b9056b5de1f8385dfe9f9c278426"
+    },
+    {
+      "original_path": "software/research/aor_s1_verification/codec.py",
+      "member": "evidence/software/research/aor_s1_verification/codec.py",
+      "bytes": 1689,
+      "sha256": "910d3c7420ff3d1cdcd318ea945ab69142e8650abb7cf118e35b3bc707e7d778"
+    },
+    {
+      "original_path": "software/research/aor_s1_verification/mutations.py",
+      "member": "evidence/software/research/aor_s1_verification/mutations.py",
+      "bytes": 3331,
+      "sha256": "2778fa938622e316f60e882f6c524a4a7def55561559bfc4d32e70c406952413"
+    },
+    {
+      "original_path": "software/research/aor_s1_verification/obligations.py",
+      "member": "evidence/software/research/aor_s1_verification/obligations.py",
+      "bytes": 5408,
+      "sha256": "7e5f776266483b79aeb31fb236fd709e290d295ececd40630fc05e941b68c688"
+    },
+    {
+      "original_path": "software/research/aor_s1_verification/oracle.py",
+      "member": "evidence/software/research/aor_s1_verification/oracle.py",
+      "bytes": 4311,
+      "sha256": "e2db685f44aa64bcafa6a6bc5411cddaa0f7d8dd563f58db0b13f9f04d708ccc"
+    },
+    {
+      "original_path": "software/research/aor_s1_verification/qualification.py",
+      "member": "evidence/software/research/aor_s1_verification/qualification.py",
+      "bytes": 5325,
+      "sha256": "f167b65c2fe245e8f6482d782181b24f94935d7701ab1498aa83e098bee99a43"
+    },
+    {
+      "original_path": "software/research/aor_s1_verification/schedule.py",
+      "member": "evidence/software/research/aor_s1_verification/schedule.py",
+      "bytes": 3603,
+      "sha256": "7de0bb385f18f63cac765eb3af53cd814a9ae8fea80a8b22930a54ba8f0c32ab"
+    },
+    {
+      "original_path": "software/research/aor_s1_verification/schedule_arithmetic.py",
+      "member": "evidence/software/research/aor_s1_verification/schedule_arithmetic.py",
+      "bytes": 4098,
+      "sha256": "8c0af73c440a6bcbb744455e58d923f3e2c1832de23392b241d1ea66ebed126f"
+    },
+    {
+      "original_path": "software/tests/test_aor_s1.py",
+      "member": "evidence/software/tests/test_aor_s1.py",
+      "bytes": 6078,
+      "sha256": "f0404a41328a239f32a2efc246e11ca4f6e4590dfb3a69c80259d096708452b5"
+    },
+    {
+      "original_path": "spu_strategy/AOR_S1_INDEPENDENT_REVIEW_DISPOSITION_2026-10-14.md",
+      "member": "evidence/spu_strategy/AOR_S1_INDEPENDENT_REVIEW_DISPOSITION_2026-10-14.md",
+      "bytes": 4105,
+      "sha256": "8e7984cbd9476dd45e43f823fddcc07a089058447b9c6a64d8bb73b56b1f4341"
+    },
+    {
+      "original_path": "spu_strategy/aor_s1_comparator_alias_controls_2026-10-14.json",
+      "member": "evidence/spu_strategy/aor_s1_comparator_alias_controls_2026-10-14.json",
+      "bytes": 18316,
+      "sha256": "d9a07fecf3b5eacb078ddc4cda5b3737f789344e3c334d6d00a8e71ef21ffe1d"
+    },
+    {
+      "original_path": "spu_strategy/aor_s1_executable_mutation_plan_2026-10-14.json",
+      "member": "evidence/spu_strategy/aor_s1_executable_mutation_plan_2026-10-14.json",
+      "bytes": 16923,
+      "sha256": "9d481b51f03b977cf1ea8645f005fa0e003ecbfcccdef812ee971ea23b25dd5d"
+    },
+    {
+      "original_path": "spu_strategy/aor_s1_implementation_execution_plan_2026-10-14.json",
+      "member": "evidence/spu_strategy/aor_s1_implementation_execution_plan_2026-10-14.json",
+      "bytes": 6719,
+      "sha256": "bf27b4d43dad4809e19b32b5d4d0873340781dc071cd1c383b5b0f991ccdd294"
+    },
+    {
+      "original_path": "spu_strategy/aor_s1_kernel_fixtures_2026-10-14.json",
+      "member": "evidence/spu_strategy/aor_s1_kernel_fixtures_2026-10-14.json",
+      "bytes": 3984,
+      "sha256": "203f319f22d8992ea94618f7564fe1b34a59b7125d1aa9ecb060592f5b1f42ad"
+    },
+    {
+      "original_path": "spu_strategy/aor_s1_literal_fixtures_2026-10-14.json",
+      "member": "evidence/spu_strategy/aor_s1_literal_fixtures_2026-10-14.json",
+      "bytes": 62027,
+      "sha256": "0f1d215be194ca32481877c54e79dfe569fd94f27062f3e7ad13f3b4e768c63d"
+    },
+    {
+      "original_path": "spu_strategy/aor_s1_qualification_supplement_2026-10-14.json",
+      "member": "evidence/spu_strategy/aor_s1_qualification_supplement_2026-10-14.json",
+      "bytes": 7404,
+      "sha256": "0a31cdcbbd757c5751c918e256e23249533f1f596f1349827efa0001c4981e6a"
+    },
+    {
+      "original_path": "spu_strategy/contract_aor_s1_isolated_implementation_2026-10-14.md",
+      "member": "evidence/spu_strategy/contract_aor_s1_isolated_implementation_2026-10-14.md",
+      "bytes": 16834,
+      "sha256": "9cbb733a46a892bdcbafc9011d0dca0afd5cfaa15e89ad86603b52fc495a9c51"
+    },
+    {
+      "original_path": "spu_strategy/contract_aor_s1_schedule_reconciliation_2026-10-14.md",
+      "member": "evidence/spu_strategy/contract_aor_s1_schedule_reconciliation_2026-10-14.md",
+      "bytes": 8722,
+      "sha256": "06765c998a9e60bd698df8cf426ad1960f2d6dc7cfc270f32a85b089f36e464b"
+    },
+    {
+      "original_path": "tools/qualify_aor_s1.py",
+      "member": "evidence/tools/qualify_aor_s1.py",
+      "bytes": 5654,
+      "sha256": "28904eb63f509223c8e9af6fa1003a91e2a4c4e892d0de62a80bc420c99eaf30"
+    },
+    {
+      "original_path": "tools/verify_aor_s1_repo_gates.sh",
+      "member": "evidence/tools/verify_aor_s1_repo_gates.sh",
+      "bytes": 432,
+      "sha256": "ee127c8ef7f554b2cb92575607228ec5298057b97309df1b670041e4036e17b9"
+    }
+  ]
+}

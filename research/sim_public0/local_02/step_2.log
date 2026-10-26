@@ -1,0 +1,39 @@
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/work/spu-sim/build/public0
+[ 16%] Building CXX object CMakeFiles/spu_sim_core.dir/src/image_snapshot.cpp.o
+[ 16%] Building CXX object CMakeFiles/spu_sim_core.dir/src/machine.cpp.o
+[ 25%] Building CXX object CMakeFiles/spu_sim_core.dir/src/assembler.cpp.o
+[ 33%] Building CXX object CMakeFiles/spu_sim_core.dir/src/hash.cpp.o
+[ 41%] Building CXX object CMakeFiles/spu_sim_core.dir/src/t1d.cpp.o
+[ 50%] Building CXX object CMakeFiles/spu_sim_core.dir/src/t1d_scene.cpp.o
+[ 58%] Building CXX object CMakeFiles/spu_sim_core.dir/src/capabilities.cpp.o
+[ 66%] Building CXX object CMakeFiles/spu_sim_core.dir/src/capability_receipt.cpp.o
+[ 75%] Building CXX object CMakeFiles/spu_sim_core.dir/src/capability_cli.cpp.o
+[ 83%] Linking CXX static library libspu_sim_core.a
+[ 83%] Built target spu_sim_core
+[ 91%] Building CXX object CMakeFiles/spu-sim.dir/src/main.cpp.o
+[100%] Linking CXX executable spu-sim
+[100%] Built target spu-sim
+96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10
+build/public0/t1d.rgb8: OK
++ set -eu
+++ git rev-parse HEAD
++ test c1e0676eee5d2398b8d90eec43bd55b2d2f6b924 = c1e0676eee5d2398b8d90eec43bd55b2d2f6b924
+++ git status --porcelain
++ test -z ''
++ cmake -S . -B build/public0 -DCMAKE_BUILD_TYPE=Release
++ cmake --build build/public0 --parallel 2 --target spu-sim
++ build/public0/spu-sim gpu render fixtures/gpu_t1d_scene_wire_64b.bin --output build/public0/t1d.rgb8
+++ wc -c
++ test 921600 -eq 921600
++ printf '%s\n' '96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10  build/public0/t1d.rgb8'
++ sha256sum -c -
+++ git status --porcelain
++ test -z ''

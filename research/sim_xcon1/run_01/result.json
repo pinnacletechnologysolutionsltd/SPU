@@ -1,0 +1,63 @@
+{
+ "all_pass": true,
+ "cpp_command": [
+  "/home/john/Projects/hardware/SPU/build/sim_release0/xcon1/run_01/build/spu-sim",
+  "gpu",
+  "render",
+  "/home/john/Projects/hardware/spu-sim/fixtures/gpu_t1d_scene_wire_64b.bin",
+  "--output",
+  "/home/john/Projects/hardware/SPU/build/sim_release0/xcon1/run_01/cpp.rgb8"
+ ],
+ "cpp_cwd": "/home/john/Projects/hardware/SPU/build/sim_release0/xcon1/run_01/src",
+ "elapsed_s": 18.0,
+ "python_command": "spu_gpu_eval.device_model.render_rgb8(prepare_scene(packet_bytes))",
+ "started": "2026-10-23T17:21:15",
+ "steps": {
+  "cpp_build_from_c1e0676": {
+   "exe_sha256": "32d937aec29248da8c49bbf4a1bb2a8679ff6aa4e14bf2b1565c35584865e754",
+   "ok": true
+  },
+  "cpp_python_byte_identical": {
+   "cpp_rc": 0,
+   "cpp_sha": "96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10",
+   "ok": true,
+   "py_sha": "96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10"
+  },
+  "frame_hash_matches_frozen": {
+   "expected": "96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10",
+   "ok": true
+  },
+  "frozen_pixels_vs_frames": {
+   "mismatches": [],
+   "ok": true,
+   "points": 29
+  },
+  "inputs_unchanged_after_run": {
+   "mismatched": [],
+   "ok": true,
+   "spu_sim_dirty": 0
+  },
+  "packet_identity": {
+   "ok": true,
+   "sha": "aa2bad57fa5d3d2f777ef5e5405357ac0216a4aafb707d99241050c986ed69ee"
+  },
+  "reference_json_identity": {
+   "ok": true
+  },
+  "research_inputs_unchanged_since_freeze": {
+   "mismatched": [],
+   "ok": true
+  },
+  "rtl_selected_pixels": {
+   "detail": "",
+   "ok": true,
+   "pixel_lines": 29,
+   "points": 29
+  },
+  "spu_sim_baseline": {
+   "dirty_lines": 0,
+   "head": "c1e0676eee5d2398b8d90eec43bd55b2d2f6b924",
+   "ok": true
+  }
+ }
+}

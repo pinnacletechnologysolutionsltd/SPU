@@ -1,0 +1,7 @@
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/tang_primer_25k/spu13_tang25k_rplu2_consume_probe.v \
+    hardware/rtl/top/spu_laminar_boot.v
+
+hierarchy -check -top spu13_tang25k_rplu2_consume_probe
+synth_gowin -family gw5a -top spu13_tang25k_rplu2_consume_probe -json build/spu13_rplu2_consume_probe.json
+stat

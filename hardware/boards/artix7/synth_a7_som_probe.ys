@@ -1,0 +1,13 @@
+# synth_a7_som_probe.ys — SOM/BMU standalone probe for Wukong Artix-7.
+# Same three-module fixture as the Tang 25K probe (silicon-proven there);
+# only the board top differs. JSON output is consumed by build_a7.sh.
+
+read_verilog -lib +/xilinx/cells_sim.v
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/artix7/spu_a7_som_probe_top.v \
+    hardware/rtl/core/spu13/spu_som_weight_bram.v \
+    hardware/rtl/core/spu13/spu_som_bmu.v \
+    hardware/rtl/core/spu13/spu_cluster_reduce.v
+
+hierarchy -check -top spu_a7_som_probe_top

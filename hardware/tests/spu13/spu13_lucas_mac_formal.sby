@@ -1,0 +1,24 @@
+# spu13_lucas_mac_formal.sby — SymbiYosys BMC proof for Lucas MAC PSCALE
+#
+# Proves PSCALE correctness: single-cycle φ-multiplication,
+# result_a = op_b, result_b = (op_a + op_b) % L_P, norm invariant.
+#
+# Run from repo root:
+#   sby -f hardware/tests/spu13/spu13_lucas_mac_formal.sby
+
+[options]
+mode bmc
+depth 3
+expect pass
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal spu13_lucas_mac.v
+read -formal spu13_lucas_mac_formal.v
+prep -top spu13_lucas_mac_formal
+
+[files]
+../../rtl/core/spu13/spu13_lucas_mac.v
+spu13_lucas_mac_formal.v

@@ -1,0 +1,466 @@
+{
+  "B_Bezier_extra_preparation": {
+    "largest_raw_bits": 8,
+    "largest_reduced_bits": 7,
+    "stage_name": "UNSPECIFIED_IN_DRAFT; no failing prep stage exists in this fixture, so this does not obstruct the Q-stage proof",
+    "status": "OK_NO_REFUSAL"
+  },
+  "W31_CellA_trace": {
+    "B-Bezier": [
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 0,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 1,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          8
+        ],
+        "q": 2,
+        "status": "OK"
+      },
+      {
+        "code": "ARITH_LIMIT",
+        "failing_integer": 3026100100,
+        "first_refusal": "B-Bezier.Q.q03.a8.1.e1",
+        "limit_bits": 31,
+        "parameter": [
+          8,
+          9
+        ],
+        "q": 3,
+        "status": "REFUSED"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          2
+        ],
+        "q": 4,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          5
+        ],
+        "q": 5,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          6,
+          7
+        ],
+        "q": 6,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          0,
+          1
+        ],
+        "q": 7,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          1
+        ],
+        "q": 8,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          3
+        ],
+        "q": 9,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          7,
+          10
+        ],
+        "q": 10,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          9
+        ],
+        "q": 11,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          6
+        ],
+        "q": 12,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          4
+        ],
+        "q": 13,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 14,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 15,
+        "status": "OK"
+      }
+    ],
+    "B-TS": [
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 0,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 1,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          8
+        ],
+        "q": 2,
+        "status": "OK"
+      },
+      {
+        "code": "ARITH_LIMIT",
+        "failing_integer": 3026100100,
+        "first_refusal": "B-TS.Q.q03.a8.1.e1",
+        "limit_bits": 31,
+        "parameter": [
+          8,
+          9
+        ],
+        "q": 3,
+        "status": "REFUSED"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          2
+        ],
+        "q": 4,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          5
+        ],
+        "q": 5,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          6,
+          7
+        ],
+        "q": 6,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          0,
+          1
+        ],
+        "q": 7,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          1
+        ],
+        "q": 8,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          3
+        ],
+        "q": 9,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          7,
+          10
+        ],
+        "q": 10,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          9
+        ],
+        "q": 11,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          6
+        ],
+        "q": 12,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          4
+        ],
+        "q": 13,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 14,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 15,
+        "status": "OK"
+      }
+    ],
+    "C2": [
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 0,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 1,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          8
+        ],
+        "q": 2,
+        "status": "OK"
+      },
+      {
+        "code": "ARITH_LIMIT",
+        "failing_integer": 3026100100,
+        "first_refusal": "C2.Q.q03.c7.1.e1",
+        "limit_bits": 31,
+        "parameter": [
+          8,
+          9
+        ],
+        "q": 3,
+        "status": "REFUSED"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          2
+        ],
+        "q": 4,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          5
+        ],
+        "q": 5,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          6,
+          7
+        ],
+        "q": 6,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          0,
+          1
+        ],
+        "q": 7,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          1
+        ],
+        "q": 8,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          3
+        ],
+        "q": 9,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          7,
+          10
+        ],
+        "q": 10,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          9
+        ],
+        "q": 11,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          6
+        ],
+        "q": 12,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          4
+        ],
+        "q": 13,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 14,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 15,
+        "status": "OK"
+      }
+    ]
+  },
+  "not_certified": "Sequential S1 and CellB nested composition stages remain underdetermined; no repaired event grammar invented.",
+  "pins": {
+    "P0_CONTRACT_R2_LEDGER_STAGE_EXPECTATIONS.json": "093b006b4b11e289066265a9021fba92c28ec252b8df44eac06a48f8eeca75bb",
+    "QCG0_P0_EXECUTION_CONTRACT.md": "4c95617479b858919c86ad5be3cedad37fb9e547f88b9c6d9a8764e8b083e54f",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34"
+  },
+  "schema": "QCG0-p0-contract-r2-remaining-CellA-width-stage-expectations-v1",
+  "scope": "All remaining named CellA arithmetic routes, in addition to invocation02 B-Horner/B-PH/C1. Only width/refusal semantics, not outputs, counted-cost ledgers, memory, benchmarks, other tasks or full P0.",
+  "status": "PARTIAL_CERTIFICATE"
+}

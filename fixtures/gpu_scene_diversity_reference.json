@@ -1,0 +1,51 @@
+{
+  "format": "gpu_scene_diversity_reference_v1",
+  "task_fields": ["coverage", "covered_by", "winner", "rgb"],
+  "depth_only_differences_are_task_irrelevant": true,
+  "scenes": {
+    "disjoint_a": [
+      {"x": 16, "y": 16, "ideal": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depths": [{"triangle": 0, "numerator": 100, "denominator": 1}]}, "device": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depth_values": [99]}},
+      {"x": 128, "y": 128, "ideal": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depths": [{"triangle": 1, "numerator": 200, "denominator": 1}]}, "device": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depth_values": [199]}},
+      {"x": 200, "y": 200, "ideal": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depths": []}, "device": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depth_values": []}}
+    ],
+    "disjoint_b": [
+      {"x": 19, "y": 19, "ideal": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depths": [{"triangle": 0, "numerator": 100, "denominator": 1}]}, "device": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depth_values": [99]}},
+      {"x": 128, "y": 128, "ideal": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depths": [{"triangle": 1, "numerator": 200, "denominator": 1}]}, "device": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depth_values": [199]}},
+      {"x": 200, "y": 200, "ideal": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depths": []}, "device": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depth_values": []}}
+    ],
+    "overlap_t0_near": [
+      {"x": 48, "y": 44, "ideal": {"coverage": "overlap", "covered_by": [0, 1], "winner": 0, "rgb": [15, 0, 0], "depths": [{"triangle": 0, "numerator": 100, "denominator": 1}, {"triangle": 1, "numerator": 200, "denominator": 1}]}, "device": {"coverage": "overlap", "covered_by": [0, 1], "winner": 0, "rgb": [15, 0, 0], "depth_values": [99, 199]}},
+      {"x": 36, "y": 36, "ideal": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depths": [{"triangle": 0, "numerator": 100, "denominator": 1}]}, "device": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depth_values": [99]}},
+      {"x": 72, "y": 48, "ideal": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depths": [{"triangle": 1, "numerator": 200, "denominator": 1}]}, "device": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depth_values": [199]}},
+      {"x": 200, "y": 200, "ideal": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depths": []}, "device": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depth_values": []}}
+    ],
+    "overlap_t1_near": [
+      {"x": 48, "y": 44, "ideal": {"coverage": "overlap", "covered_by": [0, 1], "winner": 1, "rgb": [0, 15, 0], "depths": [{"triangle": 0, "numerator": 200, "denominator": 1}, {"triangle": 1, "numerator": 100, "denominator": 1}]}, "device": {"coverage": "overlap", "covered_by": [0, 1], "winner": 1, "rgb": [0, 15, 0], "depth_values": [199, 99]}},
+      {"x": 36, "y": 36, "ideal": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depths": [{"triangle": 0, "numerator": 200, "denominator": 1}]}, "device": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depth_values": [199]}},
+      {"x": 72, "y": 48, "ideal": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depths": [{"triangle": 1, "numerator": 100, "denominator": 1}]}, "device": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depth_values": [99]}},
+      {"x": 200, "y": 200, "ideal": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depths": []}, "device": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depth_values": []}}
+    ],
+    "overlap_tie": [
+      {"x": 48, "y": 44, "ideal": {"coverage": "overlap", "covered_by": [0, 1], "winner": 0, "rgb": [15, 0, 0], "depths": [{"triangle": 0, "numerator": 150, "denominator": 1}, {"triangle": 1, "numerator": 150, "denominator": 1}]}, "device": {"coverage": "overlap", "covered_by": [0, 1], "winner": 0, "rgb": [15, 0, 0], "depth_values": [149, 149]}},
+      {"x": 36, "y": 36, "ideal": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depths": [{"triangle": 0, "numerator": 150, "denominator": 1}]}, "device": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [15, 0, 0], "depth_values": [149]}},
+      {"x": 72, "y": 48, "ideal": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depths": [{"triangle": 1, "numerator": 150, "denominator": 1}]}, "device": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [0, 15, 0], "depth_values": [149]}},
+      {"x": 200, "y": 200, "ideal": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depths": []}, "device": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depth_values": []}}
+    ],
+    "overlap_shared_rgb": [
+      {"x": 48, "y": 44, "ideal": {"coverage": "overlap", "covered_by": [0, 1], "winner": 0, "rgb": [8, 4, 2], "depths": [{"triangle": 0, "numerator": 100, "denominator": 1}, {"triangle": 1, "numerator": 200, "denominator": 1}]}, "device": {"coverage": "overlap", "covered_by": [0, 1], "winner": 0, "rgb": [8, 4, 2], "depth_values": [99, 199]}},
+      {"x": 36, "y": 36, "ideal": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [8, 4, 2], "depths": [{"triangle": 0, "numerator": 100, "denominator": 1}]}, "device": {"coverage": "triangle0", "covered_by": [0], "winner": 0, "rgb": [8, 4, 2], "depth_values": [99]}},
+      {"x": 72, "y": 48, "ideal": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [8, 4, 2], "depths": [{"triangle": 1, "numerator": 200, "denominator": 1}]}, "device": {"coverage": "triangle1", "covered_by": [1], "winner": 1, "rgb": [8, 4, 2], "depth_values": [199]}},
+      {"x": 200, "y": 200, "ideal": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depths": []}, "device": {"coverage": "background", "covered_by": [], "winner": null, "rgb": [0, 0, 0], "depth_values": []}}
+    ]
+  },
+  "collision_pairs": [
+    {
+      "a": "disjoint_a",
+      "b": "disjoint_b",
+      "kind": "within-tile-translation",
+      "expected_task_differing_pixels": 78,
+      "rationale": "Triangle 0 in scene B is translated by (+3,+3) pixels from scene A and remains wholly inside the same 16x16 tile. The integer translation preserves its shape and coverage count; all three vertex depths remain 100 and its RGB444 value remains [15,0,0]. Triangle 1 is identical in both scenes and disjoint. Thus each tile retains the same primitive counts, winner counts, RGB histogram, and per-primitive depth extrema, while the ideal per-pixel maps differ at 78 coordinates."
+    }
+  ],
+  "optional_same_rgb_pair": null
+}

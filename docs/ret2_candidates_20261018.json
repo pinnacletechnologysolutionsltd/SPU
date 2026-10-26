@@ -1,0 +1,524 @@
+{
+  "allocation_limitations": [
+    "Btrfs extent sharing and snapshots prevent interpreting st_blocks as reclaimed bytes",
+    "no per-candidate exclusive extent measurement or stopped-source boundary"
+  ],
+  "allowed_outcomes": [
+    "PROTECT",
+    "ARCHIVE_THEN_REVIEW",
+    "ELIGIBLE_FOR_APPROVAL"
+  ],
+  "approved_deletions": [],
+  "approved_reclamation_bytes": 0,
+  "cleanup_authorized": false,
+  "entries": [
+    {
+      "archival_requirements": "Preserve the complete reviewed source dependency closure and dirty overlays; one sampled RTL file is not a source release.",
+      "archive_locations": [],
+      "blockers": [
+        "source/dependency closure and active-writer review incomplete",
+        "no independently recoverable archive copies verified",
+        "no owner-approved deletion manifest"
+      ],
+      "class": "A",
+      "dependency_closure_verified": false,
+      "id": "RET2-01",
+      "measurements_at_review": {
+        "allocated_bytes": 122880,
+        "apparent_bytes": 122229,
+        "ctime_ns": 1791668717269036121,
+        "device": 49,
+        "inode": 5979463,
+        "mtime_ns": 1791659478935038233,
+        "nlink": 1
+      },
+      "outcome": "PROTECT",
+      "owner_deletion_approval": null,
+      "path": "build/spu_surd_register/main_cpu_integration_20261007/exact_digital/decoder_campaign_20261011/preparation_03/source_snapshot/hardware/rtl/core/spu13/spu13_core.v",
+      "reason": "Frozen Lorentz dispatch input; passing focused replay does not release this source.",
+      "reclaimable_bytes": null,
+      "referenced_dependencies": [
+        {
+          "path": "docs/research/surd_lorentz_20261011/evidence/source_hashes.json",
+          "sha256": "492ca1ddd940f5ef997e2b6fa66e8d7ce950d07c5311b2998493da82df86e8a6"
+        },
+        {
+          "path": "docs/research/surd_lorentz_20261011/evidence/compiled_sources.json",
+          "sha256": "cdc08bd1d2238b108b04b8dd8c9450a0cfdf8a51a738637262e644588d7d10b9"
+        }
+      ],
+      "restoration_qualified_for_this_artifact": false,
+      "sha256": "5e046d184e5fe4e27cd789411b0a465831113891386efea398688fdf43422337",
+      "text_reference_count": 4,
+      "text_reference_samples": [
+        {
+          "from": "docs/research/surd_lorentz_20261011/evidence/run.py",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/main_cpu_integration_20261007/exact_digital/decoder_campaign_20261011/preparation_03/source_snapshot"
+        },
+        {
+          "from": "build/spu_surd_register/lorentz_model_experiment_20261011/attempt_01/run.py",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/main_cpu_integration_20261007/exact_digital/decoder_campaign_20261011/preparation_03/source_snapshot"
+        },
+        {
+          "from": "build/spu_surd_register/main_cpu_integration_20261007/exact_digital/decoder_campaign_20261011/routing_diagnostics_preparation_01/manifest.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/main_cpu_integration_20261007/exact_digital/decoder_campaign_20261011/preparation_03"
+        },
+        {
+          "from": "build/spu_surd_register/product_placement_repair_20261011/attempt_01_review.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/main_cpu_integration_20261007/exact_digital/decoder_campaign_20261011/preparation_03/source_snapshot/hardware/rtl/core/spu13/spu13_core.v"
+        }
+      ],
+      "text_reference_samples_truncated": false,
+      "unchanged_since_ret1_scan": true
+    },
+    {
+      "archival_requirements": "Preserve route, native capture, independent audits/negative controls, constraints, source state and pinned tool/chipdb; re-run audits after restore.",
+      "archive_locations": [],
+      "blockers": [
+        "source/dependency closure and active-writer review incomplete",
+        "no independently recoverable archive copies verified",
+        "no owner-approved deletion manifest"
+      ],
+      "class": "A",
+      "dependency_closure_verified": false,
+      "id": "RET2-02",
+      "measurements_at_review": {
+        "allocated_bytes": 144130048,
+        "apparent_bytes": 144129731,
+        "ctime_ns": 1792012397064933363,
+        "device": 49,
+        "inode": 6292197,
+        "mtime_ns": 1792012397064933363,
+        "nlink": 1
+      },
+      "outcome": "PROTECT",
+      "owner_deletion_approval": null,
+      "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json",
+      "reason": "Packet 06 route-integrity PASS with timing HOLD; not a known-good timed bitstream.",
+      "reclaimable_bytes": null,
+      "referenced_dependencies": [
+        {
+          "path": "docs/hardware_evidence.md",
+          "sha256": "7341df25d3d586bc1d98f056c59905097185a3f63341a50f02c69015b74b2718"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_all_net_audit_20261015.json",
+          "sha256": "9454a1e321ce9c155525a4fc954cde725719ff5d8001d0d50b9a0c39a1f79d48"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_master_qualification_20261015_rev05.json",
+          "sha256": "5d03738abf6bf387dfa0e503d03c56855c497164d71a3f1b41b842ebea44e404"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/command.txt",
+          "sha256": "09cc147968a39d067f6dee9933e73f85e86cc07d2f9017c6d06fc70bf68323a7"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/cpu.placed.json",
+          "sha256": "2c227ddad44337a11bc7f1dfb2fae7045a5f5d47d4c124f26c688a91febd573e"
+        }
+      ],
+      "restoration_qualified_for_this_artifact": false,
+      "sha256": "c12df2808f72bce5a3eb22b4a83ebb69514a1d6fe26d5ec8d2184aa1ad22504f",
+      "text_reference_count": 14,
+      "text_reference_samples": [
+        {
+          "from": "docs/hardware_evidence.md",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/post_route_audit_01/command.txt",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_all_net_audit_20261015.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_all_net_audit_attempt01_20261015.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_master_qualification_20261015.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_master_qualification_20261015_rev02.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_master_qualification_20261015_rev03.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_master_qualification_20261015_rev04.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json"
+        }
+      ],
+      "text_reference_samples_truncated": true,
+      "unchanged_since_ret1_scan": true
+    },
+    {
+      "archival_requirements": "Preserve capture with route and parser/helper identities; establish which fields the all-net audit consumes before selecting diagnostic samples.",
+      "archive_locations": [],
+      "blockers": [
+        "source/dependency closure and active-writer review incomplete",
+        "no independently recoverable archive copies verified",
+        "no owner-approved deletion manifest"
+      ],
+      "class": "A/C",
+      "dependency_closure_verified": false,
+      "id": "RET2-03",
+      "measurements_at_review": {
+        "allocated_bytes": 387325952,
+        "apparent_bytes": 387324934,
+        "ctime_ns": 1792012395018860952,
+        "device": 49,
+        "inode": 6292196,
+        "mtime_ns": 1792012395018860952,
+        "nlink": 1
+      },
+      "outcome": "PROTECT",
+      "owner_deletion_approval": null,
+      "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json",
+      "reason": "Native capture retained beside the independently audited Packet 06 route.",
+      "reclaimable_bytes": null,
+      "referenced_dependencies": [
+        {
+          "path": "docs/hardware_evidence.md",
+          "sha256": "7341df25d3d586bc1d98f056c59905097185a3f63341a50f02c69015b74b2718"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json",
+          "sha256": "c12df2808f72bce5a3eb22b4a83ebb69514a1d6fe26d5ec8d2184aa1ad22504f"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/command.txt",
+          "sha256": "09cc147968a39d067f6dee9933e73f85e86cc07d2f9017c6d06fc70bf68323a7"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/compact_sink_capture_preparation_01/helpers/post_route_capture.py",
+          "sha256": "ab0828dc937c2c2941f4d07653759a1338da77abad10638d8fd5535c52269384"
+        }
+      ],
+      "restoration_qualified_for_this_artifact": false,
+      "sha256": "8b2d70b955e4e38ce31e32e9fe1816e0be87b60743bebc608c766f0e8d730d3d",
+      "text_reference_count": 17,
+      "text_reference_samples": [
+        {
+          "from": "docs/hardware_evidence.md",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/post_route_audit_01/command.txt",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/a6_assignment_mapping_investigation.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/a6_lut_pair_semantics_audit.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/audit_a6_lut_pair_semantics.py",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_all_net_audit_20261015.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_all_net_audit_attempt01_20261015.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json"
+        },
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_master_qualification_20261015.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json"
+        }
+      ],
+      "text_reference_samples_truncated": true,
+      "unchanged_since_ret1_scan": true
+    },
+    {
+      "archival_requirements": "Keep raw log until endpoint consumers are reviewed; summaries alone cannot replace its 220067 reported routing-arc records.",
+      "archive_locations": [],
+      "blockers": [
+        "source/dependency closure and active-writer review incomplete",
+        "no independently recoverable archive copies verified",
+        "no owner-approved deletion manifest"
+      ],
+      "class": "C",
+      "dependency_closure_verified": false,
+      "id": "RET2-04",
+      "measurements_at_review": {
+        "allocated_bytes": 555266048,
+        "apparent_bytes": 555264799,
+        "ctime_ns": 1791971802233158503,
+        "device": 49,
+        "inode": 6234373,
+        "mtime_ns": 1791971802233158503,
+        "nlink": 1
+      },
+      "outcome": "PROTECT",
+      "owner_deletion_approval": null,
+      "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_02/stderr.log",
+      "reason": "Timed-out route; diagnosis says mapped sink extraction depends on router debug records.",
+      "reclaimable_bytes": null,
+      "referenced_dependencies": [
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_02/timeout_diagnosis.json",
+          "sha256": "c8f612bb64ad4f5f9009a2f0924bf811bceccc0f10ed5e1ffb7ce5f940223576"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_02/result.json",
+          "sha256": "3cb6b0abd52dbc19b3bbb467082c731d4f0433a6b8c91cb2e96304d6f55f6e8a"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_02/command.txt",
+          "sha256": "6f578556c937bf6a366cca38a48d6e480ae8907102c7ad2107b794372b57397f"
+        }
+      ],
+      "restoration_qualified_for_this_artifact": false,
+      "sha256": "219d47ddbe51f87a5a5f15652eaf39ac7bcf65e3c976b397d02fab68cf0c7321",
+      "text_reference_count": 0,
+      "text_reference_samples": [],
+      "text_reference_samples_truncated": false,
+      "unchanged_since_ret1_scan": true
+    },
+    {
+      "archival_requirements": "Keep at least one verified raw log plus all diagnostic/capture summaries and source/tool identities; resolve consumers of both filenames.",
+      "archive_locations": [],
+      "blockers": [
+        "source/dependency closure and active-writer review incomplete",
+        "no independently recoverable archive copies verified",
+        "no owner-approved deletion manifest"
+      ],
+      "class": "C",
+      "dependency_closure_verified": false,
+      "id": "RET2-05",
+      "measurements_at_review": {
+        "allocated_bytes": 204910592,
+        "apparent_bytes": 204910029,
+        "ctime_ns": 1791926186243179126,
+        "device": 49,
+        "inode": 6197633,
+        "mtime_ns": 1791926186243179126,
+        "nlink": 1
+      },
+      "outcome": "PROTECT",
+      "owner_deletion_approval": null,
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/tool.log",
+      "reason": "Review for byte redundancy with stderr.log; placement diagnostics support later routed input.",
+      "reclaimable_bytes": null,
+      "referenced_dependencies": [
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/diagnostic_result.json",
+          "sha256": "0e247039d23b7322410814f68d3f7a4a3cc2ee5d071e51cc2350bfb675262279"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/result.json",
+          "sha256": "c95a34a79b56af01f4f1b457a0047281ff438eeaa5a2f497efd4a05f9350c68b"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/cpu.placed.json",
+          "sha256": "2c227ddad44337a11bc7f1dfb2fae7045a5f5d47d4c124f26c688a91febd573e"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/command.txt",
+          "sha256": "09cc147968a39d067f6dee9933e73f85e86cc07d2f9017c6d06fc70bf68323a7"
+        }
+      ],
+      "restoration_qualified_for_this_artifact": false,
+      "sha256": "3e5d464734fd56dc21da1919d3e1597ac4b1cce592df2a2712d305a1c1d34a3d",
+      "text_reference_count": 1,
+      "text_reference_samples": [
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/campaign_budget.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01"
+        }
+      ],
+      "text_reference_samples_truncated": false,
+      "unchanged_since_ret1_scan": true
+    },
+    {
+      "archival_requirements": "Review pathname-dependent references and independently restore retained diagnostics before proposing a specific redundant-file deletion.",
+      "archive_locations": [],
+      "blockers": [
+        "source/dependency closure and active-writer review incomplete",
+        "no independently recoverable archive copies verified",
+        "no owner-approved deletion manifest"
+      ],
+      "class": "C",
+      "dependency_closure_verified": false,
+      "id": "RET2-06",
+      "measurements_at_review": {
+        "allocated_bytes": 204910592,
+        "apparent_bytes": 204910029,
+        "ctime_ns": 1791926186243179126,
+        "device": 49,
+        "inode": 6197629,
+        "mtime_ns": 1791926186243179126,
+        "nlink": 1
+      },
+      "outcome": "PROTECT",
+      "owner_deletion_approval": null,
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/stderr.log",
+      "reason": "Potential alternate pathname for the same raw log bytes; not approved for removal.",
+      "reclaimable_bytes": null,
+      "referenced_dependencies": [
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/tool.log",
+          "sha256": "3e5d464734fd56dc21da1919d3e1597ac4b1cce592df2a2712d305a1c1d34a3d"
+        },
+        {
+          "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/diagnostic_result.json",
+          "sha256": "0e247039d23b7322410814f68d3f7a4a3cc2ee5d071e51cc2350bfb675262279"
+        },
+        {
+          "path": "docs/assets/publication/2026-10-14/manifest.json",
+          "sha256": "29a67007d1c38c224c639d74fbefd99d62f15703137beb1da14393383cca1aa8"
+        }
+      ],
+      "restoration_qualified_for_this_artifact": false,
+      "sha256": "3e5d464734fd56dc21da1919d3e1597ac4b1cce592df2a2712d305a1c1d34a3d",
+      "text_reference_count": 1,
+      "text_reference_samples": [
+        {
+          "from": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/campaign_budget.json",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01"
+        }
+      ],
+      "text_reference_samples_truncated": false,
+      "unchanged_since_ret1_scan": true
+    },
+    {
+      "archival_requirements": "Separate toolchain review: record upstream distribution identity, license, required binaries/chipdb and patched-build provenance; filename equality is insufficient.",
+      "archive_locations": [],
+      "blockers": [
+        "source/dependency closure and active-writer review incomplete",
+        "no independently recoverable archive copies verified",
+        "no owner-approved deletion manifest"
+      ],
+      "class": "TOOLCHAIN_SEPARATE_REVIEW",
+      "dependency_closure_verified": false,
+      "id": "RET2-07",
+      "measurements_at_review": {
+        "allocated_bytes": 747827200,
+        "apparent_bytes": 747823634,
+        "ctime_ns": 1792008264100914278,
+        "device": 49,
+        "inode": 6262553,
+        "mtime_ns": 1792008264100914278,
+        "nlink": 1
+      },
+      "outcome": "PROTECT",
+      "owner_deletion_approval": null,
+      "path": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/oss-cad-suite-linux-x64-20261013.tgz",
+      "reason": "Toolchain distribution archive; not an ordinary campaign intermediate.",
+      "reclaimable_bytes": null,
+      "referenced_dependencies": [
+        {
+          "path": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/command.txt",
+          "sha256": "e3e939ed11d67d51da8d826f855ddc5be94e67b99cf6038a6b7227a2f83f8c4c"
+        },
+        {
+          "path": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/tool_versions.txt",
+          "sha256": "d8e73157ae9c7da6d8377336b8e5a6b7f127853bc983595abd3fddd33e83353a"
+        },
+        {
+          "path": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/result.json",
+          "sha256": "4bd676091af2ca5875c08f34d13e924ec34710ab6da17a298b3e2586af60afc0"
+        }
+      ],
+      "restoration_qualified_for_this_artifact": false,
+      "sha256": "8f6dbbc0050e7f6ad13fc0f220ef683ae4705f7ee16f5c7c9940c3b55cba2ddd",
+      "text_reference_count": 2,
+      "text_reference_samples": [
+        {
+          "from": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/command.txt",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/oss-cad-suite-linux-x64-20261013.tgz"
+        },
+        {
+          "from": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/stdout.log",
+          "kind": "explicit_text_reference; semantic review required",
+          "resolution": "exists",
+          "to": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/oss-cad-suite-linux-x64-20261013.tgz"
+        }
+      ],
+      "text_reference_samples_truncated": false,
+      "unchanged_since_ret1_scan": true
+    }
+  ],
+  "format": "spu_ret2_candidates_v1",
+  "graph_complete": false,
+  "log_pair_byte_identical": true,
+  "provenance": {
+    "build/repository_cleanup/ret1_20261018_01/scan_job/result.json": "1c04cc3fd7fe59f9ddb5e3d04d41546c4be309e246e52b4136dd9dda6fe01345",
+    "build/repository_cleanup/ret1_20261018_01/surd_review/btrfs_allocation.json": "8e64cbd0d3898d7835273249e50b9848e0cfe8665457ef8e6f22ed2ce6098b7d",
+    "build/repository_cleanup/ret1_20261018_01/surd_review/dependency_graph.json": "901f43e3a155878d53f7bf92a2fe6dae9fd4ad32fafdd6b97f3c3e90c507d2e3",
+    "build/repository_cleanup/ret1_20261018_01/surd_review/file_metadata.json": "db8040558999eebc01121b449a68003938d97e7d25f004bbaf0cdd6901ec2656",
+    "build/repository_cleanup/ret1_20261018_01/surd_review/retention_manifest.json": "19466d1440767cf1995262bd2c82b58611c5c914cf64e7d8921f3325b4c94d0d",
+    "build/repository_cleanup/ret2_candidates_20261018_01/prepare_candidates.py": "cd8e8b1fe07c0398c18f95aa4519d09dd11f15e6ec00644ed3c3d689894b87f8"
+  },
+  "scan_terminal_result": {
+    "duration_seconds": 79,
+    "end_time_utc": "2026-10-17T19:47:14Z",
+    "exit_code": 0,
+    "format": "SPU_DETACHED_JOB_RESULT_V1",
+    "outcome": "COMPLETE",
+    "start_time_utc": "2026-10-17T19:45:55Z",
+    "systemd_unit": "spu-scan_job-20261017T194554Z-1081228",
+    "timeout_seconds": 900
+  },
+  "scope": "seven exact-path review samples; not a complete cleanup manifest",
+  "skipped_graph_inputs": 602,
+  "verified_reclamation_estimate_bytes": null
+}

@@ -1,0 +1,18 @@
+{
+  "scope": "Selected research evidence; compiled VVP binary remains in original build directory",
+  "original_evidence": "build/spu_surd_register/lorentz_model_experiment_20261011/attempt_01",
+  "files": {
+    "run.py": "2c4476fad8a5607a3ea9da73eb45b288fc6653d026d0efda3c7f4537fa5a1da7",
+    "program.txt": "d08815364b36ce10f7646005a0e122cbdb8870f89eb704fc693e436c1d6503b4",
+    "oracle.json": "99635be1e80887c53df69c562f68460533b69cfc099afaa10a8ff0bea1f2f582",
+    "results.json": "bde5bc06a11efe2a5fd9e26105fd0e964d4fc2c6763592f883eb358d34a35154",
+    "source_hashes.json": "492ca1ddd940f5ef997e2b6fa66e8d7ce950d07c5311b2998493da82df86e8a6",
+    "compiled_sources.json": "cdc08bd1d2238b108b04b8dd8c9450a0cfdf8a51a738637262e644588d7d10b9",
+    "runtime.log": "0050aaf0d98a9f098c878e7f50321f5c6842971e96a59f63869aad9e4ed08714",
+    "poisoned_program.txt": "5fa5d8899a503c5915cafd1803f1f4a5dcae3cc22b94cfcf78f79fd9f8f922f0",
+    "negative_control.log": "3039abe32ae484e645acfde5f748652ca1db2d075351fb2be14f8a43f63c168a",
+    "compile_command.json": "a2268017e64624000575e3b616a46e7a57734bd4ad0539fc28ddd1b9bec9b049",
+    "run_command.json": "c8ef0344bc58b5401c4e7c022e23b9754ff9905f6aaa74ea7ec5d99347af0b3a",
+    "REVIEW.md": "42f4a6a7140a4c75244651c5ff3688f2385412578769ebca18bfa4afee37b59a"
+  }
+}

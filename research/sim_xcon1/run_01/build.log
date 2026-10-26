@@ -1,0 +1,32 @@
+-- The CXX compiler identification is GNU 16.2.1
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/john/Projects/hardware/SPU/build/sim_release0/xcon1/run_01/build
+[ 11%] Building CXX object CMakeFiles/spu_sim_core.dir/src/image_snapshot.cpp.o
+[ 11%] Building CXX object CMakeFiles/spu_sim_core.dir/src/hash.cpp.o
+[ 16%] Building CXX object CMakeFiles/spu_sim_core.dir/src/assembler.cpp.o
+[ 22%] Building CXX object CMakeFiles/spu_sim_core.dir/src/machine.cpp.o
+[ 27%] Building CXX object CMakeFiles/spu_sim_core.dir/src/t1d.cpp.o
+[ 33%] Building CXX object CMakeFiles/spu_sim_core.dir/src/t1d_scene.cpp.o
+[ 38%] Building CXX object CMakeFiles/spu_sim_core.dir/src/capabilities.cpp.o
+[ 44%] Building CXX object CMakeFiles/spu_sim_core.dir/src/capability_receipt.cpp.o
+[ 50%] Building CXX object CMakeFiles/spu_sim_core.dir/src/capability_cli.cpp.o
+[ 55%] Linking CXX static library libspu_sim_core.a
+[ 55%] Built target spu_sim_core
+[ 61%] Building CXX object CMakeFiles/spu_sim_t1d_scene_tests.dir/tests/test_t1d_scene.cpp.o
+[ 72%] Building CXX object CMakeFiles/spu-sim.dir/src/main.cpp.o
+[ 72%] Building CXX object CMakeFiles/spu_sim_tests.dir/tests/test_sim.cpp.o
+[ 77%] Linking CXX executable spu-sim
+[ 77%] Built target spu-sim
+[ 83%] Linking CXX executable spu_sim_tests
+[ 83%] Built target spu_sim_tests
+[ 88%] Linking CXX executable spu_sim_t1d_scene_tests
+[ 88%] Built target spu_sim_t1d_scene_tests
+[ 94%] Building CXX object CMakeFiles/spu_sim_capability_tests.dir/tests/test_capabilities.cpp.o
+[100%] Linking CXX executable spu_sim_capability_tests
+[100%] Built target spu_sim_capability_tests

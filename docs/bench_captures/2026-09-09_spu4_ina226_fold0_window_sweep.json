@@ -1,0 +1,32 @@
+{
+  "format": "SPU4_INA226_BENCH25_FOLD0_WINDOW_SWEEP_V1",
+  "date": "2026-09-09",
+  "scope": "Complete frozen fold-0 parity sweep; not a performance measurement",
+  "artifacts": {
+    "freeze_sha256": "6dcbb8e73597e0172531eca15baf3c2d666827e056c1eede45e59ab019188de6",
+    "probe_fs_sha256": "6b7022f236813695931464e2be946724a0d1775c1633f30c5540d861f3f8e8f6",
+    "fold0_model_sha256": "7cd242bf445a9cf0b9688f398bb00c3a369ed74cf9133bbfdc863d929e0b0e52"
+  },
+  "transport": {
+    "uart": "/dev/serial/by-id/usb-SIPEED_USB_Debugger_2025030317-if01-port0",
+    "baud": 115200,
+    "topology": "Tang onboard BL616 UART; no Pico-to-Tang GPIO"
+  },
+  "result": {
+    "fold": 0,
+    "cases": 24,
+    "exact_node_distance_parity": 24,
+    "invalid_responses": 0,
+    "status_values": [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+    "observed_nodes": [2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0],
+    "observed_distances": [63278740, 65491951, 43179556, 30325251, 640013, 29737082, 3114933, 11262422, 11100909, 11100909, 6837884, 227985406, 11104649, 11104649, 74149110, 78713688, 66200386, 56508174, 66615615, 55433926, 35403125, 7517113, 5594333, 20388434],
+    "reported_classifier_cycles": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  },
+  "integration_observation": {
+    "first_query_after_hydration_reported_cycles": 7,
+    "later_queries_reported_cycles": 0,
+    "cause_from_targeted_rtl_inspection": "The wrapper holds done high until the next accepted start. The interactive dispatcher samples done in S_RUN on the same edge the wrapper accepts that next start, so it observes stale done and begins emission with latency zero. Slow UART emission allows the new result registers to update before their characters are serialized in these exercised cases.",
+    "consequence": "The L field is not a valid repeated classifier-latency measurement and the consumer has a response-dispatch race. Exact parity survived for these 24 cases, but performance evidence must not use L=000 as zero-cycle execution."
+  },
+  "qualification": "Host timing observations were deliberately excluded from accepted benchmark metrics. Folds 1-4 were not run because they require separately programming each flash-only model."
+}

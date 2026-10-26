@@ -1,0 +1,315 @@
+% ── RPLU v2 Publication Data — Auto-generated ──
+
+% Table 1: A31 Conjugate Reduction Tower — Unit Inversion Vectors
+\begin{table*}[t]
+\centering
+\caption{$A_{31}$ conjugate reduction tower unit-inversion vectors generated
+by the publication oracle. The corresponding inverter bench is included in
+the full RTL gate. Input $Z = (z_0, z_1, z_2, z_3) \in A_{31}$ over $p = 2^{31}-1$
+(M31). Non-units, including nonzero zero-divisors, trap via FLAGS.V.
+Unit latency is 83 cycles on the measured parallel backend; Stage-B
+singular termination is 7 cycles.}
+\label{tab:fp4-inverter}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llll}
+\toprule
+Test Case & Input $Z$ & Oracle $Z^{-1}$ & Match \\
+\midrule
+  Identity & (1,0,0,0) & (1,0,0,0) & $\checkmark$ \\
+  Scalar inv(2) & (2,0,0,0) & (40000000,00000000,00000000,00000000) & $\checkmark$ \\
+  Pure $\sqrt{3}$ inv & (0,1,0,0) & (00000000,55555555,00000000,00000000) & $\checkmark$ \\
+  Pure $\sqrt{5}$ inv & (0,0,1,0) & (00000000,00000000,33333333,00000000) & $\checkmark$ \\
+  Zero-norm & (0,0,0,0) & SINGULARITY & FLAGS.V \\
+  Nonzero zero-divisor & (2CEE24B2,00000000,00000000,00000001) & SINGULARITY & FLAGS.V \\
+  Random self-consistency & (00003039,00010932,00002B67,000056CE) & (7122397B,1212AF65,4D457009,1D8AB3FE) & N/A \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+% Table 2: A31 Multiplication — M31 Mersenne Reduction
+\begin{table*}[t]
+\centering
+\caption{$A_{31}$ split-biquadratic multiplication over M31. Sixteen logical
+$32\times32$ products feed a 2-stage pipeline with Mersenne reduction via
+72-bit chunk splitting. Physical DSP usage is target- and synthesis-dependent.}
+\label{tab:m31-mult}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllll}
+\toprule
+Test Case & $A$ & $B$ & $A \cdot B \bmod p$ & Match \\
+\midrule
+  Identity & (1,0,0,0) & (1,0,0,0) & (1,0,0,0) & $\checkmark$ \\
+  Scalar 5$\times$3 & (5,0,0,0) & (3,0,0,0) & (15,0,0,0) & $\checkmark$ \\
+  $\sqrt{3}$ $\times$ $\sqrt{3}$ = 3 & (0,1,0,0) & (0,1,0,0) & (3,0,0,0) & $\checkmark$ \\
+  $\sqrt{5}$ $\times$ $\sqrt{5}$ = 5 & (0,0,1,0) & (0,0,1,0) & (5,0,0,0) & $\checkmark$ \\
+  $\sqrt{15}$ $\times$ $\sqrt{15}$ = 15 & (0,0,0,1) & (0,0,0,1) & (15,0,0,0) & $\checkmark$ \\
+  $\sqrt{3}$ $\times$ $\sqrt{5}$ = $\sqrt{15}$ & (0,1,0,0) & (0,0,1,0) & (0,0,0,1) & $\checkmark$ \\
+  M31 edge: (P-1)$\times$2 & ($p-1$,0,0,0) & (2,0,0,0) & ($p-2$,0,0,0) & $\checkmark$ \\
+  Mixed: (10,2,0,4)$\times$(5,0,1,2) & (10,2,0,4) & (5,0,1,2) & (170,30,22,42) & $\checkmark$ \\
+  Zero multiply & (0,0,0,0) & (0000007B,000001C8,00000315,00018AF8) & (0,0,0,0) & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+% Table 3: M31 Scalar Inverter — BEEA Test Vectors
+\begin{table}[ht]
+\centering
+\caption{M31 scalar modular inversion via binary extended Euclidean algorithm:
+zero divisions, using shifts and conditional $p$ addition.}
+\label{tab:m31-inv}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llll}
+\toprule
+Test Case & $x$ & $x^{-1} \bmod p$ & Match \\
+\midrule
+  inv(1) & 1 & 00000001 & $\checkmark$ \\
+  inv(2) & 2 & 40000000 & $\checkmark$ \\
+  inv(P-1) & 2147483646 & 7FFFFFFE & $\checkmark$ \\
+  inv(3) & 3 & 55555555 & $\checkmark$ \\
+  inv(1234567) & 1234567 & 37B9E691 & $\checkmark$ \\
+  inv(65537) & 65537 & 0000FFFF & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Table 4: Singular Absorber — Zero-Norm Exception Path
+\begin{table*}[t]
+\centering
+\caption{Publication-oracle checks for FLAGS.V behavior on zero-norm
+singularities and clean re-arm after exception. The singular-absorber RTL
+bench is included in the full release gate.}
+\label{tab:singular-absorber}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllll}
+\toprule
+Scenario & Input $Z$ & Result & FLAGS.V & Match \\
+\midrule
+  Valid inv(5) & (5,0,0,0) & (33333333,00000000,00000000,00000000) & 0 & $\checkmark$ \\
+  Zero $\to$ singularity & (0,0,0,0) & TRAP & 1 & $\checkmark$ \\
+  Unity (false positive guard) & (1,0,0,0) & (1,0,0,0) & 0 & $\checkmark$ \\
+  Re-arm zero & (0,0,0,0) & TRAP & 1 & $\checkmark$ \\
+  Post-exception inv(3) & (3,0,0,0) & (55555555,00000000,00000000,00000000) & 0 & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+% Table 5: BTU Collision Resolver — Multi-Hot Wave Dispatch
+\begin{table*}[t]
+\centering
+\caption{BTU collision resolver (64$\to$6 priority encoder + backlog queue)
+serializing multi-hot wave interference into deterministic dispatch.
+Fixed O(n) latency where n = number of simultaneous activations.}
+\label{tab:btu-collision}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llll}
+\toprule
+Scenario & Activation bits & Cycles & Dispatch sequence \\
+\midrule
+  Single node (bit 3) & 3 & 1 & k=3 \\
+  Two nodes (bits 7,15) & 7, 15 & 2 & k=7 (stall) $\to$ k=15 \\
+  Three nodes (bits 0,33,63) & 0, 33, 63 & 3 & k=0 (stall) $\to$ k=33 (stall) $\to$ k=63 \\
+  Zero activation &  & 0 & idle, no stall \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+% Table 6: SOM BMU Classification — Rational Quadrance Results
+\begin{table*}[t]
+\centering
+\caption{BMU classification using weighted rational quadrance metric
+(no square roots, no floating-point). 7-node parallel array with
+combinational winner-take-all tree. 3-stage per-node pipeline:
+subtract$\to$square$\to$accumulate.}
+\label{tab:som-bmu}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llllll}
+\toprule
+Benchmark & Best node & Cluster & Confidence gap & Ambiguous & Match \\
+\midrule
+  Integer BMU & 1 & 1 & 4+0$\sqrt{3}$ & no & $\checkmark$/$\checkmark$/$\checkmark$ \\
+  Surd BMU & 6 & 3 & 10+4$\sqrt{3}$ & no & $\checkmark$/$\checkmark$/$\checkmark$ \\
+  Stable tie-breaking & 1 & 7 & 0+0$\sqrt{3}$ & yes & $\checkmark$/$\checkmark$/$\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+% Table 7: measured RPLU implementation artifacts
+\begin{table*}[t]
+\centering
+\caption{Measured RPLU implementation artifacts. Metrics are reported in
+each backend's native cell vocabulary; the Tang row is an arithmetic/config
+probe and is not a full Pad\'{e} implementation.}
+\label{tab:resource}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llll}
+\toprule
+Artifact & Logic / registers & DSP / BRAM & Evidence \\
+\midrule
+Artix-7 \texttt{RPLU2PADE} & 20,277 LUTX; 6,678 FFX & 72 / 0 & routed + silicon \\
+Tang \texttt{rplu2\_arith} & 9,211 LUT4; 7,926 DFF & 0 / 0 & routed + silicon \\
+\midrule
+\multicolumn{4}{l}{\footnotesize Artix denominator: 126,800 LUTX/FFX cells and 240 DSP48E1; timing max 36.54\,MHz, tested at 2\,MHz.} \\
+\multicolumn{4}{l}{\footnotesize Tang also reports 822 ALUs; timing max 54.42/48.40\,MHz on its two reported clocks, tested at 12\,MHz.} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+% Table 7: Dual-Number Arithmetic — A31[epsilon]/(epsilon^2)
+\begin{table*}[t]
+\centering
+\caption{Dual-number arithmetic over $\mathbb{A}_{\text{SPU}} =
+A_{31}[\epsilon]/(\epsilon^2)$. Here $\epsilon$ is a nilpotent formal symbol
+in a finite quotient ring, not an analytic infinitesimal. 9 test vectors
+generated by the publication oracle; the corresponding dual-ALU RTL bench is
+included in the full release gate.}
+\label{tab:nsa-dual}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llllllll}
+\toprule
+Test & $\circ$ & Re($A$) & $\epsilon$($A$) & Re($B$) & $\epsilon$($B$) & Re($R$) & $\epsilon$($R$) \\
+\midrule
+  Add identity & + & (1,0,0,0) & (0,0,0,0) & (0,0,0,0) & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) \\
+  Add scalar (5+e7)+(3+e2) & + & (5,0,0,0) & (7,0,0,0) & (3,0,0,0) & (2,0,0,0) & (8,0,0,0) & (9,0,0,0) \\
+  Add surd & + & (1,2,0,0) & (3,4,0,0) & (5,6,0,0) & (7,8,0,0) & (6,8,0,0) & (10,12,0,0) \\
+  Mul identity & $\times$ & (1,0,0,0) & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) \\
+  Mul scalar (3+e0)(5+e0) & $\times$ & (3,0,0,0) & (0,0,0,0) & (5,0,0,0) & (0,0,0,0) & (15,0,0,0) & (0,0,0,0) \\
+  Mul with deriv (2+e3)(4+e5) & $\times$ & (2,0,0,0) & (3,0,0,0) & (4,0,0,0) & (5,0,0,0) & (8,0,0,0) & (22,0,0,0) \\
+  Mul e$^2$=0: (0+e)(0+e)=0 & $\times$ & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) & (1,0,0,0) & (0,0,0,0) & (0,0,0,0) \\
+  Mul surd & $\times$ & (1,2,0,0) & (3,4,0,0) & (5,6,0,0) & (7,8,0,0) & (41,16,0,0) & (142,60,0,0) \\
+  Mul M31 edge (P-2)(2) & $\times$ & ($p-2$,0,0,0) & (0,0,0,0) & (2,0,0,0) & (0,0,0,0) & ($p-4$,0,0,0) & (0,0,0,0) \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+% Table 9: RPLU v2 Pipeline Stage Latencies
+\begin{table}[ht]
+\centering
+\caption{Contracted stage latencies for the instantiated paths.}
+\label{tab:latency}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lll}
+\toprule
+Pipeline Stage & Module & Latency \\
+\midrule
+$\Phi_1$ & SOM BMU (7-node WTA) & 5 cycles \\
+$\Phi_2$ & BTU spatial router (4-lane BRAM) & 3 cycles \\
+$\Phi_3$ & [4/4] Pad\'{e} Horner evaluator & 12 cycles \\
+$\Phi_3$ & $A_{31}$ conjugate reduction tower & 83 unit / 7 singular \\
+$\Phi_4$ & Output latch & 1 cycle \\
+\midrule
+BTU collision queue & 64$\rightarrow$6 priority encoder & O(n) bubble stall \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% RPLU v0.2 corrigendum deltas, regenerated from measured
+% historical v1 constants by tools/rplu_paper_data.py.
+\begin{table}[ht]
+\centering
+\caption{RPLU v0.1 latency-model claims and v0.2 corrections. Derived
+batch rows use a 3-cycle shared multiply.}
+\label{tab:corrigendum-delta}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrr}
+\toprule
+Quantity & v0.1 & v0.2 \\
+\midrule
+Parallel unit tower & 76 cycles & 83 cycles \\
+Stage-B singular tower & not stated & 7 cycles \\
+Complete unit jet inverse & 88 cycles & 105 cycles \\
+$k=2$ baseline / batch & 206 / 139 & 220 / 146 \\
+$k=2$ speedup & 1.48$\times$ & 1.51$\times$ \\
+$k=13$ baseline / batch & 1,339 / 535 & 1,430 / 542 \\
+$k=13$ speedup / savings & 2.50$\times$ / 60.0\% & 2.64$\times$ / 62.1\% \\
+Asymptotic speedup & 2.86$\times$ & 3.06$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% Montgomery batch-inversion cycle model, regenerated from
+% measured historical v1 constants by tools/rplu_paper_data.py.
+\begin{table}[ht]
+\centering
+\caption{Montgomery batch inversion cycle model: tower = 83
+cycles for a unit on the measured parallel backend, shared multiply =
+3 cycles. $k$ is the number of denominators inverted in one
+batch. MAC $\Delta$ is the increase in shared-multiplier operations vs. the
+per-element baseline.}
+\label{tab:batch-inv}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrr}
+\toprule
+$k$ & Baseline cycles & Batch cycles & Speedup & MAC $\Delta$ \\
+\midrule
+2 (crossover) & 220 & 146 & 1.51$\times$ & $+16.7\%$ \\
+4 (quad step) & 440 & 218 & 2.02$\times$ & $+25.0\%$ \\
+13 (manifold sweep) & 1,430 & 542 & 2.64$\times$ & $+30.8\%$ \\
+26 (2-step sweep) & 2,860 & 1,010 & 2.83$\times$ & $+32.1\%$ \\
+104 (trajectory) & 11,440 & 3,818 & 3.00$\times$ & $+33.0\%$ \\
+Asymptote & --- & --- & 3.06$\times$ & $+33.3\%$ \\
+\bottomrule
+\multicolumn{5}{l}{\parbox{0.97\columnwidth}{\footnotesize
+Sensitivity at $k=13$: speedup is 3.38$\times$/2.64$\times$/2.23$\times$ for multiply
+costs of 2/3/4 cycles.}} \\
+\end{tabular}
+\end{table}
+
+
+
+% Table 10: Reproducible verification commands
+\begin{table}[ht]
+\centering
+\caption{Named release checks. Counts are command outputs rather than a
+hand-maintained sum of selected assertions. The publication-data oracle has
+39 generated checks; the project-wide gate also compiles and runs
+the named RTL benches.}
+\label{tab:verification}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lll}
+\toprule
+Command & Result & Scope \\
+\midrule
+\texttt{rplu\_paper\_data.py --verify} & 39/39 & table vectors \\
+\texttt{spu13\_arch\_sim\_test.py} & 35/35 & adapter model \\
+\texttt{test\_pade\_batch\_inversion.py} & 25/25 & tower/batch oracle \\
+\texttt{test\_rational\_som.py} & 24/24 & SOM oracle \\
+\texttt{run\_all\_tests.py} & 175/175 & full gate; 132 RTL \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% ── End auto-generated data ──

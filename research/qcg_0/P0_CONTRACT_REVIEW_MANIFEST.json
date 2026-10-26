@@ -1,0 +1,70 @@
+{
+  "schema": "QCG0-p0-draft-contract-independent-review-manifest-v1",
+  "date": "2026-10-23",
+  "reviewer": "/root/qcg0_fixture_reviewer",
+  "disposition": "REVISE",
+  "cwd": "/home/john/Projects/hardware/SPU",
+  "author_scratch_seen": false,
+  "new_outputs_created_exclusively": true,
+  "input_files_modified": false,
+  "input_sha256_relative_to_research_qcg_0": {
+    "P0_CONTRACT_REVIEW_AUTHORIZATION.md": "95ccad35939af6f01a00619aabe8f3f3d7da30a972985cd1db7a761f1058d946",
+    "QCG0_P0_EXECUTION_CONTRACT.md": "21fb45af84d609c3c127010a10b0c2824aaac4772ab8d95a4abd9f5d8d2b8bfc",
+    "QCG0_PREREGISTRATION.md": "eade4b5f0957c3679c94b67d8f4b1f6b6d005d65316a5337e6c8dfb9370b98dd",
+    "QCG0_PREREGISTRATION_REVISION_3_1.diff": "244e73004c51b3339465ac65eb0f97da5d5ae01d4d48b281f416de922f8a4bff",
+    "REVISION3_REVIEW_CERTIFICATE.md": "91974a20999a9fe2312d8240b1111b58242d84f5902cf57eb8726559f5408a40",
+    "REVISION3_REVIEW_MANIFEST.json": "218ceaf07d1c68c0b37c4b3cbc3cc62ddf93c8b66eea22d3c59d1976e7b2c20c",
+    "QUINTIC_FIXTURE_CERTIFICATE.md": "1391b1d9804c0d5b636070b1bee3d1cdb9c445f2bea4df4444c78243cc4cc673",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34",
+    "QUINTIC_FIXTURE_REVIEW_MANIFEST.json": "15e310df23279ae8d725d3b01bd7bef3bc95da3b260eac98517cdc31606e3704",
+    "REVIEW_CALCULATION_AUTHORIZATION.md": "4b9602998d2cb2fab14af5440c892cce06ca4189d98bb7f40616362849d3e324",
+    "QCG0_FIXTURE_REVIEW_PACKET.md": "1f6c5b94ab610f4950a4f2244803aeb17def3adf7a21ea50d5664c2759b98c82",
+    "REVISION2_REVIEW_CERTIFICATE.md": "f90db359a3045e0283a6bfb9163ac6bc231ce9d31d1a9f89b7baa9096bdb9844",
+    "REVISION2_FIXTURE_VALUES.json": "a66af3d68da5a7dba439818778af9e8fe70244e3dc2d8250ea891354124a0b46",
+    "REVISION2_REVIEW_MANIFEST.json": "b7e979aca3b78e07386b042c73080bf49a18967a2487708f8e5008d8a5c29a26",
+    "REVISION2_REVIEW_CALCULATION_AUTHORIZATION.md": "68f1fa7d8c16997add1ce032d7f410f131484b3efa550881237912f7681f8852",
+    "REVISION2_DEGREE_ADDENDUM.md": "58ea27367b16b2daadd42454a73c089379449ee02dd0f26283a81d51911325fa"
+  },
+  "checklist10_verdicts": {
+    "1_ledger": "REVISE",
+    "2_refusals": "REVISE",
+    "3_outputs": "REVISE",
+    "4_algorithms": "REVISE",
+    "5_jet_orders": "PASS",
+    "6_ledger_expectations": "REVISE",
+    "7_mutants": "REVISE",
+    "8_launch_budget_pins": "REVISE",
+    "9_preservation_math": "PASS",
+    "10_claim_boundary": "REVISE"
+  },
+  "review_allowance": {
+    "max_calculation_invocations": 2,
+    "used_calculation_invocations": 0,
+    "max_seconds_each": 30,
+    "max_cumulative_external_ceiling_seconds": 60,
+    "consumed_cumulative_external_ceiling_seconds": 0,
+    "max_address_space_bytes_each": 1073741824,
+    "max_reduced_bits": 4096,
+    "max_raw_bits": 16384,
+    "max_new_output_bytes": 10485760,
+    "calculation_transcripts": [],
+    "explanation": "No executable calculation was needed. Local loop/count/bit-length consequences were derived analytically. W31 stage semantics are underdetermined, so no repaired algorithm was invented or run."
+  },
+  "read_only_evidence_methods": [
+    "Read authorization first, then entire execution contract including section11, preregistration and revision3.1 diff.",
+    "sha256sum three new source pins, authorization and prior review/reference files listed in inputs.",
+    "jq projections of existing JSON keys demonstrate available and missing literal reference coverage; no fixture regeneration.",
+    "nl text inspection supplies section/line evidence; no candidate implementation, tape run, benchmark or tool job launched."
+  ],
+  "derived_inventory": {
+    "ledger_rows": 14,
+    "mutant_rows_reviewed": 20,
+    "W31_stages": "UNAVAILABLE_UNDER_DRAFT",
+    "owner_D1_through_D5": "PENDING_NOT_ACCEPTED"
+  },
+  "artifact_sha256_relative_to_research_qcg_0": {
+    "P0_CONTRACT_REVIEW_CERTIFICATE.md": "86f95968b76ff8fa00fd4a763759b876cb95348014e7fa292f5368c412329523",
+    "P0_CONTRACT_REVIEW_EXPECTATIONS.json": "4ad13a33cc04d6277c61ca6897af4dd2933e1017e384e20b0814826919ecb8ca"
+  },
+  "scope_note": "Manifest excludes its own hash. No source, frozen value, old review, other campaign, RTL, simulator or hardware modification. Freeze, implementation and P0 remain HOLD. Root coordinator runs documentation gates separately."
+}

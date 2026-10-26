@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spu-toolkit"
+version = "0.2.0"
+description = "SPU-13 exact deterministic arithmetic and geometric processing unit toolchain"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "software/LICENSE" }
+dependencies = [
+    "pyserial>=3.5",
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.scripts]
+spu = "spu_forge:main"
+spu-forge = "spu_forge:main"
+spu-sim = "spu_vm:main"
+spu-as = "tools.spu13_asm:main"
+spu-lith = "spu_compiler:main"
+spu-host = "spu_host.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "software"}
+packages = ["spu_host", "lib", "tools"]
+py-modules = ["spu_forge", "spu_vm", "spu_compiler"]

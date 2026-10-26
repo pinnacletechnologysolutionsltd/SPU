@@ -1,0 +1,13 @@
+module,file,replaceable,reason,recommendation,approx_dsp,approx_bram_bits
+rplu_skel,hardware/common/rtl/gpu/rplu_skel.v,Yes,ROM-based lookup; small logic and table,Per-SPU-4 (local) or per-cluster ROM,0,65536
+rplu_exp,hardware/common/rtl/gpu/rplu_exp.v,No,Uses pade_eval + large vnorm tables; multi-cycle math,Centralize on SPU-13 or dedicated RPLU coprocessor,8,67584
+pade_eval_4_4,hardware/common/rtl/gpu/pade_eval_4_4.v,No,Multi-cycle [4/4] Padé with many multiplies + division,Central compute (SPU-13 / RPLU accelerator),8,2048
+davis_gate_dsp,hardware/common/rtl/core/davis_gate_dsp.v,No,Quadrance/Davis computation uses many multiplies (~10 DSPs),Centralize or place in DSP-rich fabric (~10 DSPs),10,0
+davis_to_rplu,hardware/common/rtl/gpu/davis_to_rplu.v,Yes,Light wrapper normalizing quadrance to RPLU input,Keep near consumer / piranha domain,0,0
+rplu_artery_decoder,hardware/common/rtl/core/rplu_artery_decoder.v,Yes,Artery header+data decoder for runtime chords,Keep top-level (piranha) decoder,0,0
+rplu_cfg_cdc,hardware/common/rtl/core/rplu_cfg_cdc.v,Yes,Toggle-handshake CDC for sparse writes,Keep for sparse writes; use FIFO for bulk,0,0
+spu_spi_slave,hardware/common/rtl/proto/spu_spi_slave.v,Yes,SPI loader that emits chords; board-level,Keep board SPI loader,0,0
+spu_fluid_solver,hardware/common/rtl/bio/spu_fluid_solver.v,Maybe,Neighbor/tensegrity solver; moderate memory and logic,Consider centralizing or simplify per-SPU implementation,0,16384
+spu_viscosity_monitor,hardware/common/rtl/bio/spu_viscosity_monitor.v,Yes,Lightweight monitor/filter; low logic,Keep local,0,0
+spu_geometry_fluidizer,hardware/common/rtl/bio/spu_geometry_fluidizer.v,Yes,Simple quantizer/transform; low logic,Keep local or move to software,0,0
+spu_bio_gateway,hardware/common/rtl/bio/spu_bio_gateway.v,Yes,I/O gating and simple transforms; small,Consider host-side or keep local if low-latency needed,0,0

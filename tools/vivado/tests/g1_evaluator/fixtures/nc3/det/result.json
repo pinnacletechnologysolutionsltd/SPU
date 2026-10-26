@@ -1,0 +1,10 @@
+{
+  "format": "SPU_DETACHED_JOB_RESULT_V1",
+  "outcome": "FAILED",
+  "exit_code": 1,
+  "timeout_seconds": 900,
+  "duration_seconds": 182,
+  "start_time_utc": "2026-10-22T08:39:48Z",
+  "end_time_utc": "2026-10-22T08:42:50Z",
+  "systemd_unit": "spu-detached_step7v_nc3_01-20261022T083948Z-14723"
+}

@@ -1,0 +1,63 @@
+{
+  "schema": "QCG0-p0-contract-review-expectations-v1",
+  "disposition": "REVISE",
+  "method": "Independent analytic derivation from written procedures; no calculation invocation, candidate engine or tape execution.",
+  "ledger_table_rows": 14,
+  "mutant_table_rows": 20,
+  "row_order": ["LU-H", "LU-H0", "LU-DC", "LU-TS", "LU-FD", "LU-S", "LU-VAL", "LU-D", "LU-W", "LU-G", "LU-P", "EQ-1", "EQ-2", "EQ-3"],
+  "valid_symbolic_counts": {
+    "HORNER_degree_d": {"M": "d", "A": "d", "G_calls": "2*d"},
+    "DECAS_degree_d": {"M": "d*(d+1)/2", "A": "d*(d+1)", "G_calls": "3*d*(d+1)/2"},
+    "TSHIFT_degree_d": {"M": "d*(d+1)/2", "A": "d*(d+1)/2", "G_calls": "d*(d+1)"},
+    "FDSTEP_degree_d": {"A": "d", "G_calls": "d"},
+    "FDINIT_degree_d_as_written": {"M": "d*(d+1)", "A": "3*d*(d+1)/2+d", "G_calls": "5*d*(d+1)/2+d", "qualification": "d+1 Horner evaluations, d independently generated nonzero grid points, full triangular difference table; does not define omitted global preparation order or stage identities"},
+    "literal_double": {"S": 1, "M": 0, "G_calls": 0},
+    "multiply_by_data_half": {"M": 1, "S": 0, "G_calls": 1},
+    "integration_index_divisor_two": {"D": 1, "S": 0, "G_calls": 1}
+  },
+  "helper_degree2_counts": {
+    "HORNER": {"M": 2, "A": 2, "G_calls": 4},
+    "DECAS": {"M": 3, "A": 6, "G_calls": 9},
+    "TSHIFT": {"M": 3, "A": 3, "G_calls": 6},
+    "FDSTEP": {"A": 2, "G_calls": 2},
+    "FDINIT_as_written": {"M": 6, "A": 11, "G_calls": 17}
+  },
+  "query_hand_counts_conditional_on_written_routes": {
+    "CellA_B_Horner": {"M": 28, "A": 27, "S": 0, "K": 1, "G_calls": 55},
+    "CellA_B_PH_or_C1": {"M": 26, "A": 23, "S": 2, "K": 1, "G_calls": 49},
+    "CellB_B_COMP": {"M": 21, "A": 18, "S": 0, "K": 1, "G_calls": 39},
+    "CellB_C1": {"M": 33, "A": 31, "S": 1, "K": 1, "G_calls": 64}
+  },
+  "LU_W_analytic_values": {
+    "a": [1073741824, 3],
+    "b": [5, 1024],
+    "bn_a": 31,
+    "bd_a": 2,
+    "bn_b": 3,
+    "bd_b": 11,
+    "multiplication_W_bits": 115,
+    "raw_product": [5368709120, 3072],
+    "raw_product_numerator_bits": 33,
+    "raw_product_denominator_bits": 12,
+    "canonical_product": [5242880, 3],
+    "canonical_product_numerator_bits": 23,
+    "peak_reduced_if_inputs_already_counted_bits": 31,
+    "division_correct_cross_product_proxy": 347,
+    "division_draft_proxy": 115,
+    "division_proxy_status": "Draft formula treats D as M; correct raw products use numerator(a)*denominator(b) and denominator(a)*numerator(b). No repaired ledger implementation was executed."
+  },
+  "aggregation": {
+    "additive_event_counters": "total=P+Q for M,A,S,D,K,G_calls,G_bits,W_bits",
+    "width_peaks": "total=max(P,Q), with an explicit convention for input/import state",
+    "retained_storage": "T_total is not the sum of phase storage snapshots; observation instant or maximum retained-state rule must be frozen",
+    "LU_P_status": "REVISE: equality in every category is false"
+  },
+  "W31_refusal_stages": {
+    "status": "UNAVAILABLE_UNDER_DRAFT",
+    "reason": "Preparation order and elementary raw arithmetic are not fully frozen, repeated helper call instances lack unique stage identities, and shift/comparison/import width checks are not defined. Do not invent or implement repaired semantics.",
+    "values": null,
+    "calculation_invocations_used": 0
+  },
+  "owner_decisions": {"D1": "PENDING", "D2": "PENDING", "D3": "PENDING", "D4": "PENDING", "D5": "PENDING"},
+  "scope": "These counts are local mathematical consequences, not a complete preparation ledger, full-tape expectation, W31 stage certificate, performance measurement or P0 GO."
+}

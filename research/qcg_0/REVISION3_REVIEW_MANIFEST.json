@@ -1,0 +1,60 @@
+{
+  "schema": "QCG0-revision3-independent-consistency-manifest-v1",
+  "date": "2026-10-23",
+  "reviewer": "/root/qcg0_fixture_reviewer",
+  "disposition": "PASS",
+  "scope": "Eight requested text/reference consistency checks only; not fixture freeze, implementation acceptance, measured advantage, or P0 authorization.",
+  "cwd": "/home/john/Projects/hardware/SPU",
+  "author_scratch_seen": false,
+  "calculation_invocations": 0,
+  "new_scripts_or_fixture_values": false,
+  "inputs_modified": false,
+  "new_outputs_created_exclusively": true,
+  "input_sha256_relative_to_research_qcg_0": {
+    "QCG0_PREREGISTRATION.md": "5a26fc127fc1685e058d247a7549db489f4f09512b1aea30ac87647d5f28ec38",
+    "QCG0_PREREGISTRATION_REVISION_3.diff": "72808d622f74fad4682426cdb858b1595c7a81b531af02b64457830adc716384",
+    "QCG0_REVISION3_REREVIEW_REQUEST.md": "af28343debe30ee916255b27ecc0eaaef3285f961517d1b9efc6c206dc60856f",
+    "QUINTIC_FIXTURE_CERTIFICATE.md": "1391b1d9804c0d5b636070b1bee3d1cdb9c445f2bea4df4444c78243cc4cc673",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34",
+    "QUINTIC_FIXTURE_REVIEW_MANIFEST.json": "15e310df23279ae8d725d3b01bd7bef3bc95da3b260eac98517cdc31606e3704",
+    "REVIEW_CALCULATION_AUTHORIZATION.md": "4b9602998d2cb2fab14af5440c892cce06ca4189d98bb7f40616362849d3e324",
+    "QCG0_FIXTURE_REVIEW_PACKET.md": "1f6c5b94ab610f4950a4f2244803aeb17def3adf7a21ea50d5664c2759b98c82",
+    "REVISION2_REVIEW_CERTIFICATE.md": "f90db359a3045e0283a6bfb9163ac6bc231ce9d31d1a9f89b7baa9096bdb9844",
+    "REVISION2_FIXTURE_VALUES.json": "a66af3d68da5a7dba439818778af9e8fe70244e3dc2d8250ea891354124a0b46",
+    "REVISION2_REVIEW_MANIFEST.json": "b7e979aca3b78e07386b042c73080bf49a18967a2487708f8e5008d8a5c29a26",
+    "REVISION2_REVIEW_CALCULATION_AUTHORIZATION.md": "68f1fa7d8c16997add1ce032d7f410f131484b3efa550881237912f7681f8852",
+    "REVISION2_DEGREE_ADDENDUM.md": "58ea27367b16b2daadd42454a73c089379449ee02dd0f26283a81d51911325fa"
+  },
+  "historical_identities_read_from_unchanged_review_manifest": {
+    "preregistration_revision1": "b33205e92370a41de5d1b7806f8435057065ea5272ea21866f5700be99025fa8",
+    "preregistration_revision2": "fbaf2b5a85615bf6a3ade33c759f2d496596aeff234dcf2ce684f0f25bec4f42",
+    "reconstructed_in_this_review": false
+  },
+  "checks": {
+    "1_shared_metric": "PASS",
+    "2_geometric_gates_references": "PASS",
+    "3_no_universal_retracing": "PASS",
+    "4_completeness_status": "PASS",
+    "5_arithmetic_categories_shift_policy": "PASS",
+    "6_direction_oriented_length_placement_provenance": "PASS",
+    "7_PH3h_degree": "PASS",
+    "8_identity_preservation": "PASS"
+  },
+  "read_only_evidence_methods": [
+    "cat request, entire current preregistration and revision3 diff; scoped sed reads where combined output truncated",
+    "sha256sum current preregistration, revision3 diff, request and every on-disk section0.2 review artifact",
+    "jq projections of existing R2 S6_joins, CH1.joins and closures, with no fixture generation",
+    "jq projection of historical input identity records in unchanged R2 manifest",
+    "rg searches for PH3h, degree claims, completeness status, shift category and no-category-higher language"
+  ],
+  "pre_freeze_limits": [
+    "No-category-higher guard includes separately counted shifts; shift-only signal eligibility must not be invented.",
+    "Freeze exact ledger, arm algorithms, preparation/cache charges, width handling, normalization, matched output contracts and refusal stages before execution.",
+    "Old hand counts are not measured per-query totals or full Pareto evidence.",
+    "No reference regeneration, mathematical calculation execution, new engines, tests, benchmarks, other campaigns or hardware work."
+  ],
+  "artifact_sha256_relative_to_research_qcg_0": {
+    "REVISION3_REVIEW_CERTIFICATE.md": "91974a20999a9fe2312d8240b1111b58242d84f5902cf57eb8726559f5408a40"
+  },
+  "note": "Manifest excludes its own hash. Root coordinator performs documentation gates separately. Editorial leftovers are listed in certificate without changing author inputs. Freeze and implementation/P0 remain HOLD."
+}

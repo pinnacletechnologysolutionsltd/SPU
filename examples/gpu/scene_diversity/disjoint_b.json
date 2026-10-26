@@ -1,0 +1,10 @@
+{
+  "format": "spu_gpu_scene_v1",
+  "profile": "t1d-two-triangle-v1",
+  "width": 640,
+  "height": 480,
+  "triangles": [
+    {"vertices": [[19, 19, 100], [27, 19, 100], [19, 27, 100]], "rgb": [15, 0, 0]},
+    {"vertices": [[128, 128, 200], [144, 128, 200], [128, 144, 200]], "rgb": [0, 15, 0]}
+  ]
+}

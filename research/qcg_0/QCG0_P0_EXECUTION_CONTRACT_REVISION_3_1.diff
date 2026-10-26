@@ -1,0 +1,114 @@
+--- /tmp/claude-1000/-home-john-Projects-hardware-SPU/90e2eb5e-0dd3-4947-90b6-b9c069ccb101/scratchpad/QCG0_P0_CONTRACT.v3.md	2026-10-23 08:45:59.720105500 +1300
++++ QCG0_P0_EXECUTION_CONTRACT.md	2026-10-23 08:46:17.691643722 +1300
+@@ -1,10 +1,13 @@
+-# QCG-0 P0 execution contract (draft, revision 3, for independent review)
++# QCG-0 P0 execution contract (draft, revision 3.1, owner dispositions recorded, for independent review)
+ 
+ Date: 2026-10-23. Status: **DRAFT. Preparation only. Freeze, implementation and execution remain HOLD.**
+ Author: Claude. Revision 3 responds to the second independent review (`P0_CONTRACT_R2_REVIEW_CERTIFICATE.md`, REVISE).
+ Revision 2 had SHA-256 `4c95617479b858919c86ad5be3cedad37fb9e547f88b9c6d9a8764e8b083e54f`; revision 1 `21fb45af84d609c3c127010a10b0c2824aaac4772ab8d95a4abd9f5d8d2b8bfc`.
+ No fixture was regenerated, no model was run, no benchmark was performed; no unrelated campaign or hardware was touched.
+-Nothing here is an owner decision: every policy marked **proposed** stays proposed until D-1…D-6 (§11) are answered.
++**Revision 3.1 (2026-10-23) records the owner's dispositions of D-1…D-6 (§11): all ACCEPT, with the scopes stated there. It changes no
++algorithm, count, reference or checklist item; only the status wording. Revision 3 had SHA-256
++`d6f27aae3328814b67b8c10da2e916b2f3943dbffa9416f97aa4e629243e7989`.** Acceptance is not authorization: freeze, implementation and
++execution remain HOLD.
+ 
+ ## 0. Pins and precedence
+ 
+@@ -31,14 +34,14 @@
+ ## 1. Findings carried from preparing and reviewing the contract
+ 
+ 1. The 28/27 count is B-Horner (all polynomials cached in power basis); the 26/23 count is the factored route of B-PH and C1.
+-2. Under the frozen algorithms C1 performs B-PH's operations in Cell A and PHFD's in the sequential control (**proposed
+-   design consequence, pending D-1**). P0 can then report equivalence there but not a candidate-specific arithmetic advantage;
++2. Under the frozen algorithms C1 performs B-PH's operations in Cell A and PHFD's in the sequential control (**accepted
++   as a conformance control, owner D-1**). P0 can then report equivalence there but not a candidate-specific arithmetic advantage;
+    Cell B is where C1 differs.
+-3. FD is `NOT_APPLICABLE` in Cell A (**proposed P0 scope, pending D-2**; this is a chosen policy, not a claim that no
++3. FD is `NOT_APPLICABLE` in Cell A (**accepted P0 scope, owner D-2**; this is a chosen policy, not a claim that no
+    random-access finite-difference method exists).
+ 4. *Conditional prediction (not a result):* if the preparation program of §5 is adopted, B-PH's total-view shift count over a
+    16-query tape exceeds B-Horner's (author's analytic P-phase cross-check in §7: B-Horner 8 shifts in P and 0 per query, B-PH
+-   5 in P and 2 per query), so B-PH could not be a strict Pareto win against B-Horner. This depends on §2's proposed policy.
++   5 in P and 2 per query), so B-PH could not be a strict Pareto win against B-Horner. This depends on §2's accepted accounting convention (owner D-3).
+ 5. Revision 2's defects were accepted (division width, aggregation, status grammar, reference mapping): the reviewer certified the
+    numerical model, the preparation counts and, for all six Cell A arithmetic arms, the first W31 refusal (§8 X-15). Revision 3
+    closes the remaining blockers: sequential request subsets and nested-primitive event identities (§5), the administrative
+@@ -46,7 +49,7 @@
+    a checksum-only pins file with a separate tool manifest and an enforced output cap (§9), and the adoption of the P-1
+    references (§4).
+ 
+-## 2. Operation ledger (proposed accounting; pending D-3/D-4/D-5)
++## 2. Operation ledger (accounting convention; accepted by the owner as D-3/D-4/D-5, scopes in §11)
+ 
+ All arithmetic is in one instrumented exact rational class `Q`: canonical form (reduced numerator `n`, positive denominator
+ `d`, zero as 0/1) after **every** operation. Every arm, phase and conformance test uses the same class and rules. No data-dependent
+@@ -94,16 +97,15 @@
+ W_peak_raw, T_ret_peak. **Trigger set Tr** (a ≥ 20% reduction in one, with G\* satisfied, raises the exploratory signal): M, A,
+ D, K, T_ret_peak, W_peak_red. **S is guarded and not a trigger.** A lower T_ret_peak bought with higher M or A is a TRADE-OFF.
+ 
+-**Comparator (proposed deterministic ranking; not a claim that a componentwise best exists).** Eligible comparators are
++**Comparator (accepted deterministic ranking, owner D-4; not a claim that a componentwise best exists).** Eligible comparators are
+ conventional arms with status OK on every matched request (never `REFUSED`, `NOT_APPLICABLE` or `PREPARATION_REFUSED`). The
+ comparator is the eligible arm lexicographically smallest on (M, A, D, K, T_ret_peak, W_peak_red) in the total view; ties are
+ broken by arm id in ascending ASCII order. The per-category virtual best over eligible arms is the secondary view.
+ Categories are never summed.
+ 
+ **Sharing metric (registered in pre-registration §11).** `J_c/Σ_c` needs executable standalone routes and per-group
+-preparation dependencies that this contract does not define. **Proposed: DEFER to a follow-on contract (D-6).** P0 then
+-reports the per-arm total-view ledgers only and makes no sharing claim. If D-6 is refused, a dependency table per arm must be
+-reviewed before implementation.
++preparation dependencies that this contract does not define. **DEFERRED to a follow-on contract (owner D-6, accepted).** P0 then
++reports the per-arm total-view ledgers only and makes no sharing claim. A later sharing experiment needs its own reviewed dependency table per arm and a separate authorization.
+ 
+ ## 3. Arithmetic, width, refusal and attempt accounting
+ 
+@@ -286,7 +288,7 @@
+ | LU-W | a = 2³⁰/3, b = 5/2¹⁰: bit-lengths a (31, 2), b (3, 11) | M: W_bits = 31·3 + 2·11 = **115**, raw product 5368709120/3072 (33/12 bits), reduced 5242880/3 (23/2 bits), W_peak_red ≥ 31 (inputs counted); D a÷b: W_bits = 31·11 + 2·3 = **347** |
+ | LU-G | an M, A or D whose result is an integer | G_calls + 1 (no shortcut) |
+ | LU-P | split of an arm's ledger into P and Q | additive categories: P + Q = total; peaks: total = max(P, Q); T_ret_peak: maximum over observation points |
+-| EQ-1 | Cell A: ledger(C1) = ledger(B-PH) in every category and phase | exact equality (**proposed**, pending D-1; depends on the preparation and storage rules of §2/§5) |
++| EQ-1 | Cell A: ledger(C1) = ledger(B-PH) in every category and phase | exact equality (**accepted as conformance control**, owner D-1; depends on the preparation and storage rules of §2/§5) |
+ | EQ-2 | sequential: ledger(C1) = ledger(PHFD) | same |
+ | EQ-3 | each arm's outputs vs the references of §4 | zero mismatches |
+ 
+@@ -411,17 +413,35 @@
+    checked before the marker is chosen; exactly one marker; the post-run pin check is always attempted.
+ 7. Items 1–10 of the previous checklist still hold (W proxy, aggregation, comparator, statuses, reference mapping, hand counts,
+    14 conformance rows).
+-8. No certified value or mathematical statement is reopened; proposals remain proposals until D-1…D-6.
++8. No certified value or mathematical statement is reopened; the policies of D-1…D-6 are accepted only with the scopes recorded in §11.
+ 
+ ## 11. Readiness and open items
+ 
+ **Author's verdict: REVISE-RESPONDED, READY for independent re-review of Revision 3. NOT READY for implementation.**
+ Prerequisites that remain: (a) reviewer PASS on §10; (b) a new reviewer allowance to derive the sequential-S1/S2/S3 and Cell B W31
+ event tables from the now-named programs (the Cell A table is already certified); (c) a complete `PINS.sha256` and `TOOLS.manifest`;
+-(d) owner answers to D-1…D-6; (e) an owner authorization and the frozen execution budget. P-1 is discharged by the supplemental
++(d) [done: owner D-1…D-6 recorded below]; (e) an owner authorization and the frozen execution budget. P-1 is discharged by the supplemental
+ references (adopted in §4).
+ 
+-**Owner decisions pending, with the reviewer's recommendations (not approvals):**
++**Owner dispositions (recorded 2026-10-23; ratified with the independent reviewer's stated qualifications). These adopt the scopes below and
++broaden none of them; acceptance is not authorization.**
++
++| ID | Verdict | Accepted scope |
++|---|---|---|
++| D-1 | ACCEPT | C1/B-PH (Cell A) and C1/PHFD (sequential) equivalence is a **conformance control**, not a C1-specific performance advantage. |
++| D-2 | ACCEPT | Forward differencing is not applicable to random-access Cell A (`NOT_APPLICABLE`, excluded from comparators); it is retained as a **mandatory sequential comparator**. |
++| D-3 | ACCEPT | The arithmetic ledger (literal-constant S, semantic K versus administrative checks, M2 informational) is an **abstract operation-accounting convention**, not a proxy for CPU timing, instruction count or hardware performance. |
++| D-4 | ACCEPT | Deterministic **lexicographic** comparator selection with eligibility and **ASCII arm-id tie-break**; complete secondary comparisons (per-category virtual best, full ledgers) retained. The comparator is the lexicographically selected one, not claimed the best conventional method. |
++| D-5 | ACCEPT | `T_ret_peak` measures **retained-state storage only**; scratch lifetime (`L_peak`) and other memory measures are reported separately; no peak-total-memory claim. |
++| D-6 | ACCEPT | The joint-versus-standalone sharing metric J_c/Σ_c is **deferred**; P0 makes no sharing-efficiency claim. |
++
++The R2 review certificate is used for its reference results (preparation counts, the Cell A W31 events, the P-1 references); its REVISE
++verdict is not an assessment of Revision 3 or 3.1. The next reviewer pass verifies the amended contract against the four objections it
++raised: sequential S1 operation selection, nested composite event identities, deadline attestation, and pin/version manifests with
++output-cap enforcement. No certified numerical reference is regenerated. The sequential and Cell B W31 stage tables need a new,
++separately authorized allowance (request drafted in `P0_CONTRACT_R3_STAGE_ALLOWANCE_REQUEST.md`; the R2 allowance is exhausted).
++
++**Reviewer recommendations at the time (superseded by the dispositions above):**
+ 
+ | ID | Decision | Reviewer recommendation |
+ |---|---|---|

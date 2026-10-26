@@ -1,0 +1,1392 @@
+import os
+import sys
+import subprocess
+from pathlib import Path
+
+SKIP_DISCOVERY_DIRS = {
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".venv",
+    "__pycache__",
+    "build",
+    # Archived RTL and its historical regressions document superseded
+    # implementations; they are not part of the active verification gate.
+    "archive",
+}
+
+
+def is_under_skipped_dir(path, root_dir):
+    """Return true for generated/cache/vendor trees that are not repo tests."""
+
+    try:
+        parts = path.relative_to(root_dir).parts
+    except ValueError:
+        parts = path.parts
+    return any(part in SKIP_DISCOVERY_DIRS for part in parts)
+
+
+def run_cpp_tests(root_dir):
+    """Discover, compile and run *_test.cpp files. Returns (passed, failed, errors)."""
+    cpp_tests = [
+        p for p in root_dir.rglob("*_test.cpp")
+        if not is_under_skipped_dir(p, root_dir)
+    ]
+    if not cpp_tests:
+        return 0, 0, 0
+
+    passed = failed = errors = 0
+    cpp_inc = [
+        "software/common/include",
+    ]
+    build_dir = root_dir / "build" / "cpp_tests"
+    build_dir.mkdir(parents=True, exist_ok=True)
+
+    for tf in cpp_tests:
+        print(f"\n--- Running C++ Test: {tf.name} ---")
+        binary = build_dir / tf.stem
+        inc_flags = [f"-I{root_dir / d}" for d in cpp_inc]
+        compile_cmd = ["g++", "-std=c++17"] + inc_flags + [str(tf), "-o", str(binary)]
+
+        cr = subprocess.run(compile_cmd, capture_output=True, text=True)
+        if cr.returncode != 0:
+            print(f"[{tf.name}] COMPILE ERROR:\n{cr.stderr.strip()}")
+            errors += 1
+            continue
+
+        try:
+            rr = subprocess.run([str(binary)], capture_output=True, timeout=10)
+            out = rr.stdout.decode('utf-8', errors='replace') + rr.stderr.decode('utf-8', errors='replace')
+            has_fail_line = any(line.lstrip().startswith("FAIL") for line in out.splitlines())
+            if has_fail_line or rr.returncode != 0:
+                print(f"[{tf.name}] FAILED\n{out.strip()}")
+                failed += 1
+            else:
+                print(f"[{tf.name}] PASSED")
+                passed += 1
+        except subprocess.TimeoutExpired:
+            print(f"[{tf.name}] TIMEOUT")
+            failed += 1
+        finally:
+            if binary.exists():
+                binary.unlink()
+
+    return passed, failed, errors
+
+
+def main():
+    root_dir = Path(__file__).resolve().parent
+    os.chdir(root_dir)
+    # Many TBs $dumpfile into build/; vvp aborts silently (no PASS/FAIL,
+    # nonzero exit) if the directory is missing, which failed 15 TBs on
+    # the FIRST run in any fresh clone — later stages create build/, so
+    # a second run would pass and mask it.
+    (root_dir / "build").mkdir(exist_ok=True)
+
+    # Find all testbenches
+    patterns = ['*_tb.v', '*tb*.v', 'testbench*.v']
+    test_files = set()
+    for p in patterns:
+        for f in root_dir.rglob(p):
+            if is_under_skipped_dir(f, root_dir):
+                continue
+            # Skip heavy legacy/reference tests during triage
+            if '/reference/' in str(f):
+                continue
+            test_files.add(f)
+
+    test_files = list(test_files)
+    # Optional: limit to a single test file prefix for quicker triage
+    tb_filter = os.getenv('TB_FILTER')
+    if tb_filter:
+        test_files = [f for f in test_files if tb_filter in f.name]
+    # CPU profile scoping (CPU-PROFILE-2). SPU_PROFILE=full (default) runs
+    # everything. SPU_PROFILE=base omits tests that exercise REGEN/Stage B
+    # (full-profile-only) and REPORTS each omission; it never hides one.
+    spu_profile = os.getenv('SPU_PROFILE', 'full')
+    if spu_profile not in ('full', 'base'):
+        print(f"Invalid SPU_PROFILE={spu_profile!r} (use full|base)")
+        return 2
+    REGEN_ONLY_TBS = ("spu13_regen_tb.v", "spu13_core_regen_tb.v")
+    REGEN_ONLY_PY = ("test_regen_emulator.py", "test_regen_asm.py",
+                     "test_regen_equivalence.py")
+    profile_skipped = []
+    if spu_profile == 'base':
+        profile_skipped += [f.name for f in test_files if f.name in REGEN_ONLY_TBS]
+        test_files = [f for f in test_files if f.name not in REGEN_ONLY_TBS]
+        profile_skipped += list(REGEN_ONLY_PY)
+    print(f"Found {len(test_files)} Verilog test files to execute (profile={spu_profile}).")
+
+    # Parameterised benches that must also run with the non-default value of a
+    # parameter. Added 2026-08-01 with the FP4 structured-inverter default
+    # switch: each of these declares its own `parameter USE_STRUCTURED_INVERTER
+    # = 0` and passes it down, so before this the regression exercised v1 only —
+    # flipping the RTL default changed nothing any test could see, and v2 (now
+    # the production path) had no functional coverage anywhere in the tree.
+    PARAM_VARIANTS = {
+        # Per-lane RNS check inside the structured multiplier (2026-08-09).
+        # The variant is what proves the delayed rns_error still detects an
+        # injected fault -- the default run cannot see that at all.
+        "spu13_m31_multiplier_structured_tb.v": ([
+            ("PIPELINED_RNS_CHECK", "1"),
+        ], "rnscut"),
+        # Registered multiplier-result handoff in the Pade evaluator
+        # (2026-08-09). Same reasoning: without this the option ships with no
+        # functional coverage anywhere in the tree.
+        "rplu_thimble_pade_tb.v": ([
+            ("PADE_PIPELINED", "1"),
+        ], "pipelined"),
+        # ENABLE_REGEN=0 base CPU profile (CPU-PROFILE-2): REGEN (0x09) must
+        # fault without state change; QLDI/QSUB/ROTC commits stay identical.
+        "spu13_core_regen_off_tb.v": ([
+            ("REGEN_EN", "0"),
+        ], "regen_off"),
+        "rplu_pipeline_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "1"),
+        ], "v2"),
+        "spu13_batch_inverter_collision_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "1"),
+        ], "v2"),
+        "spu13_batch_inverter_poison_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "0"),
+        ], "reference"),
+        "spu13_rplu2_pade_sidecar_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "1"),
+            ("PADE_PIPELINED", "1"),
+        ], "v2"),
+        # Keep the regression count at 184 by covering both non-default
+        # parameters in the existing SPI-sidecar variant run.
+        "spu13_spi_rplu2_pade_tb.v": ([
+            ("USE_STRUCTURED_INVERTER", "1"),
+            ("PADE_DEBUG_TRACE", "1"),
+            ("PADE_PIPELINED", "1"),
+        ], "v2_trace"),
+    }
+    TEST_DEFINES = {
+        # These benches exercise the guarded Wukong T1d UART top-level path.
+        "spu_t1d_board_reset_tb.v": ["GPU_T1D_UART"],
+        "spu_t1d_board_transaction_tb.v": ["GPU_T1D_UART"],
+        # The diagnostic bench exercises the independent telemetry path as
+        # well as the guarded UART path.
+        "spu_t1d_repeatability_diag_tb.v": ["GPU_T1D_DIAG", "GPU_T1D_UART"],
+    }
+    TEST_TIMEOUTS = {
+        # The board transaction sends 63 UART payload bytes, then waits for
+        # the next 640x480 frame boundary. Its measured vvp runtime is 20.6s,
+        # beyond the 15s generic safeguard; keep a bounded test-specific cap.
+        "spu_t1d_board_transaction_tb.v": 60,
+        # D1 performs two UART transactions, two warm resets, and drains two
+        # telemetry records. Isolated default-phase vvp runs took 50.722 s
+        # and 55.506 s; keep load headroom after one full-suite run hit 60 s.
+        "spu_t1d_repeatability_diag_tb.v": 90,
+    }
+    test_variants = [(f, "", None) for f in test_files]
+    for f in test_files:
+        spec = PARAM_VARIANTS.get(f.name)
+        if spec:
+            overrides, label = spec
+            test_variants.append((f, label, overrides))
+    extra = len(test_variants) - len(test_files)
+    if extra:
+        print(f"Adding {extra} parameter-variant runs (non-default parameter values).")
+
+
+    # Directories for auto-discovery (-y) and includes (-I)
+    inc_dirs = [
+        "hardware/rtl",
+        "hardware/rtl/arch",
+        "hardware/rtl/common",
+        "hardware/rtl/common/prim",
+        "hardware/rtl/common/sync",
+        "hardware/rtl/core",
+        "hardware/rtl/core/shared",
+        "hardware/rtl/core/spu13",
+        "hardware/rtl/core/spu4",
+        "hardware/rtl/gpu",
+        "hardware/rtl/hal",
+        "hardware/rtl/math",
+        "hardware/rtl/accel",
+        "hardware/rtl/top",
+        "hardware/rtl/triage",
+        "hardware/rtl/peripherals",
+        "hardware/rtl/peripherals/artery",
+        "hardware/rtl/peripherals/audio",
+        "hardware/rtl/peripherals/bio",
+        "hardware/rtl/peripherals/graphics",
+        "hardware/rtl/peripherals/io",
+        "hardware/rtl/peripherals/memory",
+        "hardware/rtl/peripherals/storage",
+        "hardware/rtl/peripherals/video",
+        "hardware/boards/tang_primer_25k",
+        "hardware/boards/artix7",         # A7 probe tops (resolved on demand via -y)
+        "hardware/vendor/gowin",          # Gowin DSP / BSRAM primitives
+        "hardware/vendor/ice40",          # iCE40 simulation stubs
+        "hardware/archive/legacy_rtl",
+        "hardware/archive/legacy_rtl/common/rtl",
+    ]
+
+    iverilog_args = ["iverilog", "-g2012"]
+    for d in inc_dirs:
+        iverilog_args.extend(["-y", d, "-I", d])
+    # Top-level include for spu_arch_defines.vh and sqr_params.vh
+    iverilog_args.extend(["-I", "hardware/rtl/arch"])
+
+    passed = 0
+    failed = 0
+    timeouts = 0
+    compile_errors = 0
+
+    for tb, variant, param_override in test_variants:
+        disp = f"{tb.name} [{variant}]" if variant else tb.name
+        print(f"\n--- Running Test: {disp} ---")
+        suffix = f"_{variant}" if variant else ""
+        out_vvp = root_dir / f"tmp_{tb.stem}{suffix}.vvp"
+
+        # Compile
+        # Gather all source files from include directories so iverilog sees every module
+        # Gather source files from a curated set of directories to avoid duplicates
+        scan_dirs = [
+            "hardware/rtl",
+            "hardware/rtl/arch",
+            "hardware/rtl/common",
+            "hardware/rtl/common/prim",
+            "hardware/rtl/common/sync",
+            "hardware/rtl/core",
+            "hardware/rtl/core/shared",
+            "hardware/rtl/core/spu13",
+            "hardware/rtl/core/spu4",
+            "hardware/rtl/gpu",
+            "hardware/rtl/hal",
+            "hardware/rtl/math",
+            "hardware/rtl/accel",
+            "hardware/rtl/top",
+            "hardware/rtl/triage",
+            "hardware/rtl/peripherals",
+            "hardware/rtl/peripherals/artery",
+            "hardware/rtl/peripherals/audio",
+            "hardware/rtl/peripherals/bio",
+            "hardware/rtl/peripherals/graphics",
+            "hardware/rtl/peripherals/io",
+            "hardware/rtl/peripherals/memory",
+            "hardware/rtl/peripherals/storage",
+            "hardware/rtl/peripherals/video",
+            # Behavioral primitive models must be seen before board sources:
+            # board tops intentionally declare BUFG as a synthesis blackbox.
+            "hardware/tests/common",
+            "hardware/boards/tang_primer_25k",
+            "hardware/boards/tang25k",
+        ]
+        src_files = []
+        module_map = {}
+        for d in scan_dirs:
+            absd = root_dir / d
+            if absd.exists():
+                # Sorted so first-seen-module-wins dedup below is
+                # deterministic across checkouts: raw rglob order follows
+                # filesystem readdir order, which made duplicate-module
+                # resolution (e.g. spu13_m31_multiplier vs its synth-only
+                # _seq_fallback drop-in) differ between a working tree and
+                # a fresh clone of the same commit.
+                for f in sorted(absd.rglob('*.v')):
+                    # This compatibility file intentionally duplicates names
+                    # of real optional implementations (notably spu_i2s_out).
+                    # It is for synthesis tops that explicitly need shims; in
+                    # the source-built regression it would win by directory
+                    # order and silently replace the real DUT with a tie-off.
+                    if f.name == 'spu_optional_stubs.v':
+                        continue
+                    # Synth-script-only drop-in alternates redefine an
+                    # existing module name on purpose ("include INSTEAD
+                    # of ..."); they must never reach a simulation compile.
+                    if f.name.endswith('_fallback.v'):
+                        continue
+                    # Skip testbench tops in the helper scan; only support
+                    # RTL helpers such as sim_sd_card.v should be included.
+                    if 'hardware/tests' in d:
+                        name = f.name
+                        if name.endswith("_tb.v") or name.startswith("tb_") or "tb" in f.stem or name.startswith("testbench"):
+                            continue
+                    # Skip GPU/graphics RTL (may contain unsupported SV constructs for iverilog)
+                    fp = str(f)
+                    # For GPU/graphics sources, only include a tested subset to avoid SV-only files breaking iverilog
+                    if '/hardware/rtl/gpu/' in fp or '/hardware/rtl/peripherals/graphics/' in fp:
+                        allowed_gpu = ['pade_eval_4_4.v', 'rplu_exp.v', 'rational_sine_provider.v', 'rational_sine_rom.v', 'rational_sine_rom_q32.v', 'spu_edge_stepper.v', 'spu_raster_unit.v', 'spu_bresenham_raster.v']
+                        if os.path.basename(fp) not in allowed_gpu:
+                            continue
+                    src_files.append(str(f))
+        # De-duplicate source files while avoiding multiple definitions of the same module
+        src_unique = []
+        seen_files = set()
+        for s in src_files:
+            if s in seen_files:
+                continue
+            # read module names in this file
+            try:
+                with open(s,'r') as fh:
+                    text = fh.read()
+            except Exception:
+                text = ''
+            import re
+            modules_in_file = re.findall(r'^\s*module\s+([a-zA-Z_][a-zA-Z0-9_]*)', text, re.M)
+            conflict = False
+            for m in modules_in_file:
+                if m in module_map:
+                    conflict = True
+                    break
+            if not conflict:
+                src_unique.append(s)
+                seen_files.add(s)
+                for m in modules_in_file:
+                    module_map[m] = s
+            else:
+                # skip this file to avoid duplicate module definitions
+                pass
+        # Remove the testbench file from src list if it was discovered in scan_dirs
+        tb_str = str(tb)
+        src_unique = [s for s in src_unique if s != tb_str]
+        # Also remove any source files that the testbench `include`s inline to avoid duplicate module declarations.
+        try:
+            with open(tb_str,'r') as _tf:
+                tb_text = _tf.read()
+            included_files = re.findall(r'^\s*`include\s+"([^"]+)"', tb_text, re.M)
+            if included_files:
+                src_unique = [s for s in src_unique if os.path.basename(s) not in included_files]
+        except Exception:
+            pass
+
+        # If TB_FILTER is set, restrict the source set to minimal directories to avoid pulling board tops and unrelated cores
+        tb_filter = os.getenv('TB_FILTER')
+        if tb_filter:
+            allowed_dirs = [str(root_dir / p) for p in ("hardware/rtl", "hardware/rtl/core/shared", "hardware/rtl/core/spu13", "hardware/tests/common", "hardware/rtl/arch")]
+            excluded_dirs = [str(root_dir / p) for p in ("hardware/rtl/gpu", "hardware/rtl/peripherals/graphics")]
+            src_unique = [
+                s for s in src_unique
+                if any(s.startswith(d) for d in allowed_dirs)
+                and not any(s.startswith(d) for d in excluded_dirs)
+            ]
+            if tb_filter == "spu_gpu_t1r_palette_pair_tb":
+                src_unique = [str(root_dir / p) for p in (
+                    "hardware/rtl/gpu/spu_gpu_top.v",
+                    "hardware/rtl/gpu/spu_video_timing.v",
+                    "hardware/rtl/gpu/spu_scene_loader.v",
+                    "hardware/rtl/gpu/spu_scene_unpack.v",
+                    "hardware/rtl/gpu/spu_scene_profile_unpack.v",
+                    "hardware/rtl/gpu/spu_prepared_scene_control.v",
+                    "hardware/rtl/gpu/spu_prepared_scene_control4.v",
+                    "hardware/rtl/gpu/spu_dual_raster.v",
+                    "hardware/rtl/gpu/spu_quad_raster.v",
+                    "hardware/rtl/gpu/spu_raster_unit.v",
+                    "hardware/rtl/gpu/spu_edge_stepper.v",
+                    "hardware/rtl/gpu/spu_depth_dispatch.v",
+                    "hardware/rtl/gpu/spu_depth_dispatch4.v",
+                    "hardware/rtl/gpu/spu_prepared_scalar_attribute4.v",
+                    "hardware/rtl/gpu/spu_material_op_select4.v",
+                    "hardware/rtl/gpu/spu_material_predicate_select4.v",
+                    "hardware/rtl/gpu/spu_pixel_output_register.v",
+                    "hardware/rtl/gpu/spu_depth_math.v",
+                    "hardware/rtl/gpu/spu_reciprocal_core.v",
+                    "hardware/rtl/gpu/spu_shared_mult35.v",
+                    "hardware/rtl/gpu/spu_attr_stepper.v",
+                    "hardware/rtl/gpu/spu_depth_compare.v",
+                    "hardware/rtl/gpu/spu_depth_compare4.v",
+                    "hardware/rtl/hal/hal_vga.v",
+                    "hardware/rtl/hal/hal_hdmi.v",
+                    "hardware/rtl/hal/hal_hdmi_tmds.v",
+                    "hardware/rtl/hal/hal_hdmi_serdes_a7.v",
+                    "hardware/rtl/gpu/spu_material_palette_select4.v",
+                )]
+
+        top_mod = None
+        try:
+            import re as _re
+            with open(tb_str, 'r') as _tf:
+                tb_text = _tf.read()
+            modules = _re.findall(
+                r'^\s*module\s+([A-Za-z_][A-Za-z0-9_]*)', tb_text, _re.M
+            )
+            if modules:
+                # A few benches declare helper modules before the actual
+                # testbench top (the Karatsuba phase-1 bench is one example),
+                # while others declare simulator primitives after the top.
+                # Prefer the conventional filename-matching top; retain the
+                # first-module fallback for older benches without that name.
+                stem = Path(tb_str).stem
+                top_mod = stem if stem in modules else modules[0]
+        except Exception:
+            top_mod = None
+
+        param_args = []
+        if param_override and top_mod:
+            param_args = [
+                f"-P{top_mod}.{pname}={pval}"
+                for pname, pval in param_override
+            ]
+        test_defines = [f"-D{name}" for name in TEST_DEFINES.get(tb.name, [])]
+        cmd = iverilog_args + test_defines + (["-s", top_mod] if top_mod else []) + param_args + ["-o", str(out_vvp)] + src_unique + [str(tb)]
+        compile_result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if compile_result.returncode != 0:
+            # If GPU sources are in the source set, attempt a Verilator simulation fallback
+            gpu_present = any('/hardware/rtl/gpu/' in s for s in src_unique)
+            if gpu_present:
+                print(f"[{disp}] iverilog failed; attempting Verilator simulation fallback...")
+                # Determine TB top module name
+                try:
+                    if not top_mod:
+                        raise Exception('Top module not found')
+                except Exception as e:
+                    print(f"[{disp}] Verilator fallback: cannot determine top module: {e}")
+                    print(f"[{disp}] COMPILE ERROR:")
+                    print(compile_result.stderr.strip())
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                build_dir = root_dir / "build" / "verilator" / tb.stem
+                build_dir.mkdir(parents=True, exist_ok=True)
+                sim_cpp = build_dir / "sim_main.cpp"
+                sim_cpp.write_text(f'''#include "verilated.h"\n#include "V{top_mod}.h"\n#include <iostream>\nint main(int argc, char **argv) {{\n    VerilatedContext* contextp = new VerilatedContext;\n    contextp->commandArgs(argc, argv);\n    V{top_mod}* top = new V{top_mod}(contextp);\n    while (!contextp->gotFinish()) {{\n        top->eval();\n        contextp->timeInc(1);\n    }}\n    delete top;\n    delete contextp;\n    return 0;\n}}\n''')
+
+                # When using TB_FILTER, restrict Verilator include paths to a minimal set to avoid pulling in board tops
+                tb_filter = os.getenv('TB_FILTER')
+                if tb_filter:
+                    verilator_inc_dirs = ["hardware/rtl", "hardware/rtl/gpu", "hardware/rtl/core/shared", "hardware/rtl/core/spu13", "hardware/rtl/arch"]
+                else:
+                    verilator_inc_dirs = inc_dirs
+
+                verilator_cmd = [
+                    "verilator", "--cc",
+                    "--Mdir", str(build_dir),
+                    "--top-module", top_mod,
+                    "--timing",
+                    "-Wno-fatal",
+                ]
+                for d in verilator_inc_dirs:
+                    verilator_cmd.append("-I" + d)
+                verilator_cmd.extend(test_defines)
+                verilator_cmd.extend(src_unique + [tb_str])
+                verilator_cmd.extend(["--exe", str(sim_cpp)])
+
+                vcr = subprocess.run(verilator_cmd, capture_output=True, text=True)
+                if vcr.returncode != 0:
+                    print(f"[{disp}] Verilator PREPROCESS ERROR:\n{vcr.stderr}\n{vcr.stdout}")
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                make_cmd = ["make", "-C", str(build_dir), "-f", f"V{top_mod}.mk", f"V{top_mod}", "-j"]
+                mcr = subprocess.run(make_cmd, capture_output=True, text=True)
+                if mcr.returncode != 0:
+                    print(f"[{disp}] Verilator make error:\n{mcr.stderr}\n{mcr.stdout}")
+                    compile_errors += 1
+                    if out_vvp.exists():
+                        out_vvp.unlink()
+                    continue
+
+                exe = build_dir / f"V{top_mod}"
+                try:
+                    rr = subprocess.run(
+                        [str(exe)], capture_output=True,
+                        timeout=TEST_TIMEOUTS.get(tb.name, 5),
+                    )
+                    output = rr.stdout.decode('utf-8', errors='replace') + rr.stderr.decode('utf-8', errors='replace')
+                    if "FAIL" in output or "FAIL:" in output:
+                        print(f"[{disp}] FAILED")
+                        print(output.strip())
+                        failed += 1
+                    elif "PASS" in output or "PASS:" in output:
+                        print(f"[{disp}] PASSED")
+                        passed += 1
+                    else:
+                        # A bench that prints no verdict has told us nothing.
+                        # Exiting 0 is not evidence it checked anything, so this
+                        # counts as a failure rather than a silent pass.
+                        print(f"[{disp}] NO VERDICT (printed neither PASS nor FAIL)")
+                        failed += 1
+                except subprocess.TimeoutExpired:
+                    print(f"[{disp}] TIMEOUT (Verilator run)")
+                    timeouts += 1
+                    failed += 1
+
+                if out_vvp.exists():
+                    out_vvp.unlink()
+                continue
+            else:
+                print(f"[{disp}] COMPILE ERROR:")
+                print(compile_result.stderr.strip())
+                compile_errors += 1
+                if out_vvp.exists():
+                    out_vvp.unlink()
+                continue
+
+        # Execute (with timeout safeguard). 15s, not 5: the safeguard is for
+        # hung TBs (no $finish), but spu13_core_rotc_opcode_tb.v legitimately
+        # takes ~5.0s wallclock — at timeout=5 it was a coin-flip against
+        # machine load, the source of every phantom "2 FAIL" this week
+        # (measured 2026-07-10: three trials, 5.03-5.04s, $finish reached).
+        run_cmd = ["vvp", str(out_vvp)]
+        try:
+            run_result = subprocess.run(
+                run_cmd, capture_output=True,
+                timeout=TEST_TIMEOUTS.get(tb.name, 15),
+            )
+            try:
+                output = run_result.stdout.decode('utf-8', errors='replace')
+            except UnicodeDecodeError:
+                output = run_result.stdout.decode('latin-1', errors='replace')
+            if "FAIL" in output or "FAIL:" in output:
+                print(f"[{disp}] FAILED")
+                print(output.strip())
+                failed += 1
+            elif "PASS" in output or "PASS:" in output:
+                print(f"[{disp}] PASSED")
+                passed += 1
+            else:
+                # See above: no verdict is a failure, not a pass.
+                print(f"[{disp}] NO VERDICT (printed neither PASS nor FAIL)")
+                failed += 1
+        except subprocess.TimeoutExpired:
+            print(f"[{disp}] TIMEOUT (Testbench hung, likely no $finish)")
+            timeouts += 1
+            # Fails in simulation logic
+            failed += 1
+
+        if out_vvp.exists():
+            out_vvp.unlink()
+
+    print("\n================== SUMMARY ==================")
+    print(f"Verilog Tests: {len(test_variants)}")
+    print(f"Passed:      {passed}")
+    print(f"Failed:      {failed}")
+    print(f"Timeouts:    {timeouts}")
+    print(f"Compile Err: {compile_errors}")
+
+    # C++ tests
+    cpp_p, cpp_f, cpp_e = run_cpp_tests(root_dir)
+    print(f"\nC++ Tests:   {cpp_p + cpp_f + cpp_e}")
+    print(f"Passed:      {cpp_p}")
+    print(f"Failed:      {cpp_f}")
+    print(f"Compile Err: {cpp_e}")
+
+    # Python VM test
+    py_pass = py_fail = 0
+    vm_test = os.path.join(root_dir, "software", "spu_vm_test.py")
+    if os.path.exists(vm_test):
+        result = subprocess.run(
+            [sys.executable, vm_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            py_pass = 1
+        else:
+            py_fail = 1
+            print(f"\n  spu_vm_test.py FAILED:\n{result.stdout[-500:]}")
+
+    # Cross-validation: spu_vm.py vs C++ reference
+    cv_pass = cv_fail = 0
+    audio_pass = audio_fail = 0
+    cv_script = os.path.join(root_dir, "software", "cross_validate.py")
+    if os.path.exists(cv_script):
+        result_cv = subprocess.run(
+            [sys.executable, cv_script],
+            capture_output=True, text=True, timeout=60,
+            cwd=root_dir
+        )
+        if result_cv.returncode == 0:
+            cv_pass = 1
+        else:
+            cv_fail = 1
+            print(f"\n  cross_validate.py FAILED:\n{result_cv.stdout[-800:]}")
+
+    # Lucas MAC oracle
+    # lucas_fail is tracked explicitly: summing only the _pass side lets a
+    # failing or deleted oracle drop the headline while Total FAIL stays 0.
+    lucas_pass = 0
+    lucas_fail = 0
+    lucas_test = os.path.join(root_dir, "software", "tests", "test_lucas_mac_oracle.py")
+    if os.path.exists(lucas_test):
+        result_lucas = subprocess.run(
+            [sys.executable, lucas_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "PASS" in result_lucas.stdout:
+            lucas_pass = 1
+        else:
+            lucas_fail = 1
+            print(f"\n  test_lucas_mac_oracle.py FAILED:\n{result_lucas.stdout[-500:]}")
+    else:
+        lucas_fail = 1
+        print("\n  test_lucas_mac_oracle.py MISSING — counted as a failure.")
+
+    # ICOS-0 exact icosian/E8 software oracle (fast fixture; exhaustive gate is test_icosian_e8_full.py).
+    icos_pass = icos_fail = 0
+    icos_test = os.path.join(root_dir, "software", "tests", "test_icosian_e8.py")
+    if os.path.exists(icos_test):
+        result_icos = subprocess.run(
+            [sys.executable, icos_test], capture_output=True, text=True, timeout=120
+        )
+        if result_icos.returncode == 0 and "PASS" in result_icos.stdout:
+            icos_pass = 1
+        else:
+            icos_fail = 1
+            print(f"\n  test_icosian_e8.py FAILED:\n{result_icos.stdout[-500:]}")
+    else:
+        icos_fail = 1
+        print("\n  test_icosian_e8.py MISSING — counted as a failure.")
+
+    # Lucas MAC state-machine harness
+    lucas_harness_pass = 0
+    lucas_harness_test = os.path.join(root_dir, "software", "tests", "test_lucas_mac_harness.py")
+    if os.path.exists(lucas_harness_test):
+        result_lh = subprocess.run(
+            [sys.executable, lucas_harness_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "0 failed" in result_lh.stdout:
+            lucas_harness_pass = 1
+        else:
+            print(f"\n  test_lucas_mac_harness.py FAILED:\n{result_lh.stdout[-500:]}")
+
+    # Fifth-cyclotomic Fibonacci oracle: characteristic-zero integral gauge,
+    # complete Pentagon/Hexagon coherence, coefficient-growth corpus, and an
+    # independently evaluated M31 modular image. No RTL is implied by this
+    # host-only feasibility gate.
+    cyclotomic_test = os.path.join(
+        root_dir, "software", "tests", "test_cyclotomic_fibonacci.py"
+    )
+    if os.path.exists(cyclotomic_test):
+        result_cyclotomic = subprocess.run(
+            [sys.executable, cyclotomic_test],
+            capture_output=True, text=True, timeout=30
+        )
+        cyclotomic_ok = (
+            result_cyclotomic.returncode == 0
+            and "CYCLOTOMIC FIBONACCI ORACLE: ALL CHECKS PASS"
+            in result_cyclotomic.stdout
+        )
+        if cyclotomic_ok:
+            cyclotomic_pass, cyclotomic_fail = 1, 0
+        else:
+            cyclotomic_pass, cyclotomic_fail = 0, 1
+            print(
+                "\n  test_cyclotomic_fibonacci.py FAILED:\n"
+                f"{result_cyclotomic.stdout[-800:]}"
+                f"{result_cyclotomic.stderr[-800:]}"
+            )
+    else:
+        cyclotomic_pass = cyclotomic_fail = 0
+
+    # Icosahedral catalog derivation oracle
+    icosa_pass = 0
+    icosa_test = os.path.join(root_dir, "software", "tests", "test_icosahedral_catalog.py")
+    if os.path.exists(icosa_test):
+        result_ic = subprocess.run(
+            [sys.executable, icosa_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if "ICOSAHEDRAL CATALOG DERIVATION: ALL PASS" in result_ic.stdout:
+            icosa_pass = 1
+        else:
+            print(f"\n  test_icosahedral_catalog.py FAILED:\n{result_ic.stdout[-500:]}")
+
+    # SU(3) oracle
+    # BQ-0 exact Q(sqrt3,sqrt5) software oracle (characteristic zero; not A31).
+    bq_pass = bq_fail = 0
+    bq_test = os.path.join(root_dir, "software", "tests", "test_biquad_q.py")
+    if os.path.exists(bq_test):
+        result_bq = subprocess.run(
+            [sys.executable, bq_test], capture_output=True, text=True, timeout=60
+        )
+        if result_bq.returncode == 0 and "PASS" in result_bq.stdout:
+            bq_pass = 1
+        else:
+            bq_fail = 1
+            print(f"\n  test_biquad_q.py FAILED:\n{result_bq.stdout[-500:]}")
+    else:
+        bq_fail = 1
+        print("\n  test_biquad_q.py MISSING — counted as a failure.")
+
+    su3_pass = 0
+    su3_test = os.path.join(root_dir, "software", "tests", "test_su3_oracle.py")
+    if os.path.exists(su3_test):
+        result_su3 = subprocess.run(
+            [sys.executable, su3_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "PASS" in result_su3.stdout:
+            su3_pass = 1
+        else:
+            print(f"\n  test_su3_oracle.py FAILED:\n{result_su3.stdout[-500:]}")
+
+    # Composition policy oracle + trace (docs/SERVICE_COMPOSITION_POLICY.md §5)
+    composition_pass = 0
+    composition_test = os.path.join(
+        root_dir, "software", "tests", "test_composition_trace.py")
+    if os.path.exists(composition_test):
+        result_comp = subprocess.run(
+            [sys.executable, composition_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "PASS" in result_comp.stdout:
+            composition_pass = 1
+        else:
+            print(f"\n  test_composition_trace.py FAILED:\n{result_comp.stdout[-500:]}")
+
+    # GPU raster oracle <-> RTL parity (hardware/rtl/gpu/, exhaustive
+    # full-screen check added 2026-08-24 after an audit found the one
+    # prior testbench never actually exercised the outside-the-triangle
+    # case despite claiming to)
+    gpu_raster_pass = 0
+    gpu_raster_test = os.path.join(
+        root_dir, "software", "tests", "test_gpu_raster_oracle_rtl_parity.py")
+    if os.path.exists(gpu_raster_test):
+        result_gpu_raster = subprocess.run(
+            [sys.executable, gpu_raster_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if "ALL GPU RASTER PARITY CHECKS PASSED" in result_gpu_raster.stdout:
+            gpu_raster_pass = 1
+        else:
+            print(f"\n  test_gpu_raster_oracle_rtl_parity.py FAILED:\n{result_gpu_raster.stdout[-500:]}")
+
+    # GPU raster oracle <-> Vulkan compute parity (software/gpu_vulkan/,
+    # the third leg alongside oracle<->RTL above; skips cleanly rather
+    # than failing on a machine with no Vulkan-capable GPU/driver)
+    gpu_vulkan_pass = 0
+    gpu_vulkan_test = os.path.join(
+        root_dir, "software", "tests", "test_gpu_raster_oracle_vulkan_parity.py")
+    if os.path.exists(gpu_vulkan_test):
+        result_gpu_vulkan = subprocess.run(
+            [sys.executable, gpu_vulkan_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if "ALL GPU RASTER VULKAN PARITY CHECKS PASSED" in result_gpu_vulkan.stdout:
+            gpu_vulkan_pass = 1
+        else:
+            print(f"\n  test_gpu_raster_oracle_vulkan_parity.py FAILED:\n{result_gpu_vulkan.stdout[-500:]}")
+
+    # GPU depth-v2 RTL parity (hardware/rtl/gpu/, added 2026-08-25 during
+    # the Halt-and-Flag implementation pass -- spu_reciprocal_core.v,
+    # spu_attr_stepper.v, spu_depth_math.v, spu_depth_dispatch.v; each
+    # test caught a real bug during development, see
+    # spu_strategy/contract_gpu_depth_v2_shared_multiplier_arch_2026-08-25.md)
+    gpu_depth_v2_tests = [
+        ("gpu_recip_pass", "test_gpu_reciprocal_core_rtl_parity.py"),
+        ("gpu_attr_stepper_pass", "test_gpu_attr_stepper_rtl_parity.py"),
+        ("gpu_depth_math_pass", "test_gpu_depth_math_rtl_parity.py"),
+        ("gpu_depth_dispatch_pass", "test_gpu_depth_dispatch_rtl_parity.py"),
+        ("gpu_depth_compare_pass", "test_gpu_depth_compare_rtl_parity.py"),
+        ("gpu_depth_compare_integration_pass", "test_gpu_depth_compare_integration.py"),
+        ("gpu_top_integration_pass", "test_gpu_top_integration.py"),
+        ("gpu_t1h_attribute_pass", "test_gpu_t1h_attribute.py"),
+        ("gpu_t1i_uv_pass", "test_gpu_t1i_uv.py"),
+        ("gpu_t1q_truth_table_pass", "test_gpu_t1q_truth_table.py"),
+        ("gpu_t1r_palette_pair_pass", "test_gpu_t1r_palette_pair.py"),
+        ("gpu_t1j_checker_pass", "test_gpu_t1j_checker.py"),
+        ("gpu_t1i_uv_uart_loader_pass", "test_gpu_t1i_uv_uart_loader.py"),
+        ("gpu_t1i_depth_output_pass", "test_gpu_t1i_depth_output.py"),
+    ]
+    gpu_depth_v2_results = {}
+    for var_name, fname in gpu_depth_v2_tests:
+        test_path = os.path.join(root_dir, "software", "tests", fname)
+        # NOTE: do not name this `passed` -- Python has function scope, not
+        # block scope, so that would silently reassign the outer `passed`
+        # (the main Verilog harness's running total) on every iteration of
+        # this loop. Exactly this bug shipped once already in this session
+        # (dropped the reported total from 216 to 62) before being caught.
+        this_test_passed = 0
+        if os.path.exists(test_path):
+            result = subprocess.run(
+                [sys.executable, test_path],
+                capture_output=True, text=True, timeout=120
+            )
+            if result.returncode == 0:
+                this_test_passed = 1
+            else:
+                print(f"\n  {fname} FAILED:\n{result.stdout[-500:]}")
+        else:
+            print(f"\n  {fname} MISSING — counted as a failure.")
+        gpu_depth_v2_results[var_name] = this_test_passed
+    gpu_recip_pass = gpu_depth_v2_results["gpu_recip_pass"]
+    gpu_attr_stepper_pass = gpu_depth_v2_results["gpu_attr_stepper_pass"]
+    gpu_depth_math_pass = gpu_depth_v2_results["gpu_depth_math_pass"]
+    gpu_depth_dispatch_pass = gpu_depth_v2_results["gpu_depth_dispatch_pass"]
+    gpu_depth_compare_pass = gpu_depth_v2_results["gpu_depth_compare_pass"]
+    gpu_depth_compare_integration_pass = gpu_depth_v2_results["gpu_depth_compare_integration_pass"]
+    gpu_top_integration_pass = gpu_depth_v2_results["gpu_top_integration_pass"]
+    # CPU-TEST-GATE-1A: every other entry in gpu_depth_v2_tests was executed
+    # but never reached total_pass/total_fail, so a failing (or missing, which
+    # prints "counted as a failure") test could not change the exit status.
+    # Account for each such entry exactly once; the seven above are unchanged.
+    _gpu_v2_already_counted = frozenset((
+        "gpu_recip_pass", "gpu_attr_stepper_pass", "gpu_depth_math_pass",
+        "gpu_depth_dispatch_pass", "gpu_depth_compare_pass",
+        "gpu_depth_compare_integration_pass", "gpu_top_integration_pass"))
+    _gpu_v2_gated = [n for n, _ in gpu_depth_v2_tests if n not in _gpu_v2_already_counted]
+    gpu_v2_extra_pass = sum(gpu_depth_v2_results[n] for n in _gpu_v2_gated)
+    gpu_v2_extra_fail = len(_gpu_v2_gated) - gpu_v2_extra_pass
+
+    # Padé batch inversion oracle
+    pade_batch_pass = 0
+    pade_batch_fail = 0
+    pade_batch_test = os.path.join(root_dir, "software", "tests", "test_pade_batch_inversion.py")
+    if os.path.exists(pade_batch_test):
+        result_pade = subprocess.run(
+            [sys.executable, pade_batch_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if "ALL CHECKS PASS" in result_pade.stdout:
+            pade_batch_pass = 1
+        else:
+            pade_batch_fail = 1
+            print(f"\n  test_pade_batch_inversion.py FAILED:\n{result_pade.stdout[-500:]}")
+    else:
+        pade_batch_fail = 1
+        print("\n  test_pade_batch_inversion.py MISSING — counted as a failure.")
+
+    # Hyper-Catalan series oracle
+    hc_pass = 0
+    hc_fail = 0
+    hc_test = os.path.join(root_dir, "software", "tests", "test_hyper_catalan_oracle.py")
+    if os.path.exists(hc_test):
+        result_hc = subprocess.run(
+            [sys.executable, hc_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if "ALL CHECKS PASS" in result_hc.stdout:
+            hc_pass = 1
+        else:
+            hc_fail = 1
+            print(f"\n  test_hyper_catalan_oracle.py FAILED:\n{result_hc.stdout[-500:]}")
+    else:
+        hc_fail = 1
+        print("\n  test_hyper_catalan_oracle.py MISSING — counted as a failure.")
+
+    # Digon-recursive cost model + series vs Newton validation
+    digon_pass = 0
+    digon_fail = 0
+    digon_test = os.path.join(root_dir, "software", "lib", "digon_recursive.py")
+    if os.path.exists(digon_test):
+        result_digon = subprocess.run(
+            [sys.executable, digon_test],
+            capture_output=True, text=True, timeout=120,
+            env={**os.environ, "PYTHONPATH": os.path.join(root_dir, "software")}
+        )
+        # Both depths (eps^3 and eps^5) must PASS — a bare substring check
+        # would accept eps^3 PASS while eps^5 FAILs below it.
+        if (result_digon.stdout.count("series=Newton PASS") == 2
+                and "FAIL" not in result_digon.stdout):
+            digon_pass = 1
+        else:
+            digon_fail = 1
+            print(f"\n  digon_recursive.py FAILED:\n{result_digon.stdout[-500:]}")
+    else:
+        digon_fail = 1
+        print("\n  digon_recursive.py MISSING — counted as a failure.")
+
+    # Audio sink tests
+    audio_test = os.path.join(root_dir, "software", "tests", "test_rplu2_audio.py")
+    if os.path.exists(audio_test):
+        result_audio = subprocess.run(
+            [sys.executable, audio_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_audio.returncode == 0:
+            audio_pass = 1
+        else:
+            audio_pass = 0
+            audio_fail = 1
+            print(f"\n  test_rplu2_audio.py FAILED:\n{result_audio.stdout[-500:]}")
+    else:
+        audio_pass = audio_fail = 0
+
+    # ROTC thirds-angle exactness research (dead-end audit trail + verified
+    # exponent-tagged fix) — no hardware required
+    rotc_fix_test = os.path.join(root_dir, "software", "tests", "test_rotc_thirds_native.py")
+    if os.path.exists(rotc_fix_test):
+        result_rotc_fix = subprocess.run(
+            [sys.executable, rotc_fix_test],
+            capture_output=True, text=True, timeout=60
+        )
+        if result_rotc_fix.returncode == 0:
+            rotc_fix_pass, rotc_fix_fail = 1, 0
+        else:
+            rotc_fix_pass, rotc_fix_fail = 0, 1
+            print(f"\n  test_rotc_thirds_native.py FAILED:\n{result_rotc_fix.stdout[-500:]}")
+    else:
+        rotc_fix_pass = rotc_fix_fail = 0
+
+    # Cartesian bridge sensor/legacy boundary oracle (no hardware required)
+    bridge_test = os.path.join(root_dir, "software", "tests", "test_cartesian_bridge.py")
+    if os.path.exists(bridge_test):
+        result_bridge = subprocess.run(
+            [sys.executable, bridge_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_bridge.returncode == 0:
+            bridge_pass, bridge_fail = 1, 0
+        else:
+            bridge_pass, bridge_fail = 0, 1
+            print(f"\n  test_cartesian_bridge.py FAILED:\n{result_bridge.stdout[-500:]}")
+    else:
+        bridge_pass = bridge_fail = 0
+
+    # ROTC bad-angle fault (VM side of the "don't corrupt the manifold" fix,
+    # 2026-07-09) — no hardware required
+    rotc_bad_angle_test = os.path.join(root_dir, "software", "tests", "test_rotc_bad_angle.py")
+    if os.path.exists(rotc_bad_angle_test):
+        result_rotc_bad_angle = subprocess.run(
+            [sys.executable, rotc_bad_angle_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_rotc_bad_angle.returncode == 0:
+            rotc_bad_angle_pass, rotc_bad_angle_fail = 1, 0
+        else:
+            rotc_bad_angle_pass, rotc_bad_angle_fail = 0, 1
+            print(f"\n  test_rotc_bad_angle.py FAILED:\n{result_rotc_bad_angle.stdout[-500:]}")
+    else:
+        rotc_bad_angle_pass = rotc_bad_angle_fail = 0
+
+    # ROTC VM-vs-RTL trace equivalence, all 12 angles (0-11) against both
+    # rotor datapaths — needs iverilog/vvp, same as the Verilog TBs above.
+    # This is the load-bearing cross-verification proof behind
+    # ROTC_MAX_VERIFIED_ANGLE=23; a regression here means VM and RTL have
+    # diverged, which the angle gate exists to prevent.
+    rotc_trace_test = os.path.join(root_dir, "software", "tests", "test_rotc_vm_rtl_trace.py")
+    if os.path.exists(rotc_trace_test):
+        result_rotc_trace = subprocess.run(
+            [sys.executable, rotc_trace_test],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_rotc_trace.returncode == 0:
+            rotc_trace_pass, rotc_trace_fail = 1, 0
+        else:
+            rotc_trace_pass, rotc_trace_fail = 0, 1
+            print(f"\n  test_rotc_vm_rtl_trace.py FAILED:\n{result_rotc_trace.stdout[-500:]}")
+    else:
+        rotc_trace_pass = rotc_trace_fail = 0
+
+    # REGEN suite (0x09 contract: emulator reference, assembler legality,
+    # bit-exact equivalence Digital == Stage-A RTL == Stage-B RTL == VM).
+    regen_results = {}
+    for regen_name in ("test_regen_emulator.py", "test_regen_asm.py",
+                       "test_regen_equivalence.py"):
+        regen_path = os.path.join(root_dir, "software", "tests", regen_name)
+        if not os.path.exists(regen_path):
+            continue
+        if spu_profile == 'base':
+            continue   # reported in the profile-scoping summary
+        try:
+            r = subprocess.run([sys.executable, regen_path],
+                               capture_output=True, text=True, timeout=600)
+        except subprocess.TimeoutExpired:
+            r = type("R", (), {"returncode": 1, "stdout": "", "stderr": "timeout"})()
+        regen_results[regen_name] = (r.returncode == 0)
+        if r.returncode != 0:
+            print(f"\n  {regen_name} FAILED:\n{(r.stdout or '')[-500:]}")
+
+    # CPU profile contract (CPU-PROFILE-2): VM profile selection, base-profile
+    # REGEN fault, VM-vs-RTL-trace values, deterministic capability manifest.
+    # Applies to BOTH profiles.
+    cpu_profile_pass = cpu_profile_fail = 0
+    cpu_profile_path = os.path.join(root_dir, "software", "tests", "test_cpu_profile.py")
+    if os.path.exists(cpu_profile_path):
+        try:
+            r = subprocess.run([sys.executable, cpu_profile_path],
+                               capture_output=True, text=True, timeout=120)
+            ok = (r.returncode == 0)
+        except subprocess.TimeoutExpired:
+            ok, r = False, type("R", (), {"stdout": "timeout"})()
+        cpu_profile_pass, cpu_profile_fail = (1, 0) if ok else (0, 1)
+        if not ok:
+            print(f"\n  test_cpu_profile.py FAILED:\n{(r.stdout or '')[-500:]}")
+
+    # SIM-CAP1 gram_v1 SPREAD (Python VM + C++ VM vs a shared independent oracle). Needs g++
+    # for the C++ suite; software-only. research/sim_cap1_spread/GRAM_V1_CONTRACT_FROZEN.md.
+    gram_results = {}
+    for gram_name in ("test_gram_v1_spread.py", "test_gram_v1_spread_cpp.py"):
+        gram_path = os.path.join(root_dir, "software", "tests", gram_name)
+        if not os.path.exists(gram_path):
+            print(f"\n  {gram_name} MISSING (required suite)")
+            gram_results[gram_name] = (0, 1)
+            continue
+        try:
+            result_gram = subprocess.run([sys.executable, gram_path],
+                                         capture_output=True, text=True, timeout=180)
+            gram_ok = (result_gram.returncode == 0)
+            gram_out = result_gram.stdout + result_gram.stderr
+        except subprocess.TimeoutExpired:
+            gram_ok, gram_out = False, "timeout"
+        gram_results[gram_name] = (1, 0) if gram_ok else (0, 1)
+        if not gram_ok:
+            print(f"\n  {gram_name} FAILED:\n{gram_out[-500:]}")
+    gram_pass = sum(p for p, _ in gram_results.values())
+    gram_fail = sum(f for _, f in gram_results.values())
+
+    # IROTC VM suite (trace equivalence / poison proofs / chain tests) —
+    # φ-plane icosahedral opcodes, no hardware required. The trace and
+    # chain tests import test_icosahedral_catalog.py, so the derivation's
+    # self-checks re-run inside them (a broken derivation fails here too).
+    irotc_results = {}
+    for irotc_name in ("test_irotc_vm_trace.py", "test_irotc_poison.py",
+                       "test_irotc_chains.py"):
+        irotc_path = os.path.join(root_dir, "software", "tests", irotc_name)
+        if not os.path.exists(irotc_path):
+            irotc_results[irotc_name] = (0, 0)
+            continue
+        result_irotc = subprocess.run(
+            [sys.executable, irotc_path],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_irotc.returncode == 0:
+            irotc_results[irotc_name] = (1, 0)
+        else:
+            irotc_results[irotc_name] = (0, 1)
+            print(f"\n  {irotc_name} FAILED:\n{result_irotc.stdout[-500:]}")
+    irotc_pass = sum(p for p, _ in irotc_results.values())
+    irotc_fail = sum(f for _, f in irotc_results.values())
+
+    # Tensegrity balancer exact oracle/state-machine tests.
+    tensegrity_results = {}
+    for tensegrity_name in ("test_tensegrity_balancer.py",):
+        tensegrity_path = os.path.join(root_dir, "software", "tests", tensegrity_name)
+        if not os.path.exists(tensegrity_path):
+            tensegrity_results[tensegrity_name] = (0, 0)
+            continue
+        result_tensegrity = subprocess.run(
+            [sys.executable, tensegrity_path],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_tensegrity.returncode == 0:
+            tensegrity_results[tensegrity_name] = (1, 0)
+        else:
+            tensegrity_results[tensegrity_name] = (0, 1)
+            print(f"\n  {tensegrity_name} FAILED:\n{result_tensegrity.stdout[-500:]}")
+    tensegrity_pass = sum(p for p, _ in tensegrity_results.values())
+    tensegrity_fail = sum(f for _, f in tensegrity_results.values())
+
+    # Canonical boot-sequence FSM oracle/state-machine tests.
+    boot_sequence_results = {}
+    for boot_sequence_name in ("test_boot_sequence.py",):
+        boot_sequence_path = os.path.join(root_dir, "software", "tests", boot_sequence_name)
+        if not os.path.exists(boot_sequence_path):
+            boot_sequence_results[boot_sequence_name] = (0, 0)
+            continue
+        result_boot_sequence = subprocess.run(
+            [sys.executable, boot_sequence_path],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_boot_sequence.returncode == 0:
+            boot_sequence_results[boot_sequence_name] = (1, 0)
+        else:
+            boot_sequence_results[boot_sequence_name] = (0, 1)
+            print(f"\n  {boot_sequence_name} FAILED:\n{result_boot_sequence.stdout[-500:]}")
+    boot_sequence_pass = sum(p for p, _ in boot_sequence_results.values())
+    boot_sequence_fail = sum(f for _, f in boot_sequence_results.values())
+
+    # Bench-metrics firmware helpers (no Pico, no encoder, no bench).
+    # ina226_logger_v2 is written ahead of the encoder arriving so the bench
+    # session is a confidence check rather than firmware development; that only
+    # holds if the arithmetic and edge accounting are verified here first.
+    bench_metrics_results = {}
+    for bench_metrics_name in ("test_ina226_logger_v2.py",):
+        bench_metrics_path = os.path.join(
+            root_dir, "tools", "bench_metrics", bench_metrics_name)
+        if not os.path.exists(bench_metrics_path):
+            bench_metrics_results[bench_metrics_name] = (0, 0)
+            continue
+        result_bench_metrics = subprocess.run(
+            [sys.executable, bench_metrics_path],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_bench_metrics.returncode == 0:
+            bench_metrics_results[bench_metrics_name] = (1, 0)
+        else:
+            bench_metrics_results[bench_metrics_name] = (0, 1)
+            print(f"\n  {bench_metrics_name} FAILED:\n{result_bench_metrics.stdout[-500:]}")
+    bench_metrics_pass = sum(p for p, _ in bench_metrics_results.values())
+    bench_metrics_fail = sum(f for _, f in bench_metrics_results.values())
+
+    # spu_host console parser (no hardware required)
+    host_test = os.path.join(root_dir, "software", "tests", "test_spu_host_parser.py")
+    if os.path.exists(host_test):
+        result_host = subprocess.run(
+            [sys.executable, host_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_host.returncode == 0:
+            host_pass, host_fail = 1, 0
+        else:
+            host_pass, host_fail = 0, 1
+            print(f"\n  test_spu_host_parser.py FAILED:\n{result_host.stdout[-500:]}")
+    else:
+        host_pass = host_fail = 0
+
+    # SPU-4 SOM edge probe UART line parser (no hardware required) -- shared
+    # grammar between the fixed self-test probe and the interactive probe.
+    spu4_probe_parser_test = os.path.join(
+        root_dir, "software", "tests", "test_spu4_som_probe_parser.py"
+    )
+    if os.path.exists(spu4_probe_parser_test):
+        result_spu4_probe_parser = subprocess.run(
+            [sys.executable, spu4_probe_parser_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_spu4_probe_parser.returncode == 0:
+            spu4_probe_parser_pass, spu4_probe_parser_fail = 1, 0
+        else:
+            spu4_probe_parser_pass, spu4_probe_parser_fail = 0, 1
+            print(
+                f"\n  test_spu4_som_probe_parser.py FAILED:\n"
+                f"{result_spu4_probe_parser.stdout[-500:]}"
+            )
+    else:
+        spu4_probe_parser_pass = spu4_probe_parser_fail = 0
+
+    # SPU-4 SOM edge interactive-probe client (no hardware required) --
+    # encode/decode + ProbeTransport against a fake serial port.
+    spu4_probe_client_test = os.path.join(
+        root_dir, "software", "tests", "test_spu4_som_probe_client_parser.py"
+    )
+    if os.path.exists(spu4_probe_client_test):
+        result_spu4_probe_client = subprocess.run(
+            [sys.executable, spu4_probe_client_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_spu4_probe_client.returncode == 0:
+            spu4_probe_client_pass, spu4_probe_client_fail = 1, 0
+        else:
+            spu4_probe_client_pass, spu4_probe_client_fail = 0, 1
+            print(
+                f"\n  test_spu4_som_probe_client_parser.py FAILED:\n"
+                f"{result_spu4_probe_client.stdout[-500:]}"
+            )
+    else:
+        spu4_probe_client_pass = spu4_probe_client_fail = 0
+
+    # SOM product artifact/trainer/data gates (no hardware required). These pin
+    # Iris, the generalized CSV path, and the deterministic Paderborn importer.
+    som_product_results = {}
+    for som_product_name in (
+        "test_iris_som_demo.py",
+        "test_som_csv_trainer.py",
+        "test_som_sensor_replay.py",
+        "test_matlab_v5.py",
+        "test_paderborn_bearing.py",
+        "test_paderborn_cross_validation.py",
+        "test_hydraulic_pump.py",
+        "test_ina226_capture.py",
+        "test_spu4_som_edge_trainer.py",
+        "test_spu4_som_edge_cross_validate.py",
+    ):
+        som_product_path = os.path.join(
+            root_dir, "software", "tests", som_product_name
+        )
+        if not os.path.exists(som_product_path):
+            som_product_results[som_product_name] = (0, 0)
+            continue
+        result_som_product = subprocess.run(
+            [sys.executable, som_product_path],
+            capture_output=True, text=True, timeout=60
+        )
+        if result_som_product.returncode == 0:
+            som_product_results[som_product_name] = (1, 0)
+        else:
+            som_product_results[som_product_name] = (0, 1)
+            print(
+                f"\n  {som_product_name} FAILED:\n"
+                f"{result_som_product.stdout[-500:]}"
+                f"{result_som_product.stderr[-500:]}"
+            )
+    som_product_pass = sum(p for p, _ in som_product_results.values())
+    som_product_fail = sum(f for _, f in som_product_results.values())
+
+    # Per-spin demo scripts (tools/*_demo.py, no hardware required).
+    # Explicit list rather than a glob so in-flight/unregistered demo tests
+    # don't silently join the gate before their author intends them to.
+    spin_demo_tests = ["test_robotics_demo.py", "test_lucas_demo.py",
+                       "test_tensegrity_demo.py", "test_spu4_som_edge_smoketest.py",
+                       "test_spu4_som_edge_demo.py"]
+    robotics_demo_pass = robotics_demo_fail = 0
+    for demo_name in spin_demo_tests:
+        demo_path = os.path.join(root_dir, "software", "tests", demo_name)
+        if not os.path.exists(demo_path):
+            continue
+        result_demo = subprocess.run(
+            [sys.executable, demo_path],
+            capture_output=True, text=True, timeout=60
+        )
+        if result_demo.returncode == 0:
+            robotics_demo_pass += 1
+        else:
+            robotics_demo_fail += 1
+            print(f"\n  {demo_name} FAILED:\n{result_demo.stdout[-500:]}")
+
+    print(f"\nPython Tests: {py_pass + py_fail + cv_pass + cv_fail}")
+    print(f"Passed:      {py_pass + cv_pass}")
+    print(f"Failed:      {py_fail + cv_fail}")
+
+    print(f"\nAudio Sink Tests: {audio_pass + audio_fail}")
+    print(f"Passed:           {audio_pass}")
+    print(f"Failed:           {audio_fail}")
+
+    print(f"\nHost Library Tests: {host_pass + host_fail}")
+    print(f"Passed:             {host_pass}")
+    print(f"Failed:             {host_fail}")
+
+    print(f"\nSPU-4 SOM Probe Parser Tests: {spu4_probe_parser_pass + spu4_probe_parser_fail}")
+    print(f"Passed:                       {spu4_probe_parser_pass}")
+    print(f"Failed:                       {spu4_probe_parser_fail}")
+
+    print(f"\nSPU-4 SOM Probe Client Tests: {spu4_probe_client_pass + spu4_probe_client_fail}")
+    print(f"Passed:                       {spu4_probe_client_pass}")
+    print(f"Failed:                       {spu4_probe_client_fail}")
+
+    print(f"\nSOM Product Tests: {som_product_pass + som_product_fail}")
+    print(f"Passed:           {som_product_pass}")
+    print(f"Failed:           {som_product_fail}")
+
+    print(f"\nSpin Demo Tests: {robotics_demo_pass + robotics_demo_fail}")
+    print(f"Passed:          {robotics_demo_pass}")
+    print(f"Failed:          {robotics_demo_fail}")
+
+    print(f"\nCartesian Bridge Tests: {bridge_pass + bridge_fail}")
+    print(f"Passed:                 {bridge_pass}")
+    print(f"Failed:                 {bridge_fail}")
+
+    print(f"\nROTC Thirds Fix Tests: {rotc_fix_pass + rotc_fix_fail}")
+    print(f"Passed:                {rotc_fix_pass}")
+    print(f"Failed:                {rotc_fix_fail}")
+
+    print(f"\nROTC Bad-Angle Fault Tests: {rotc_bad_angle_pass + rotc_bad_angle_fail}")
+    print(f"Passed:                     {rotc_bad_angle_pass}")
+    print(f"Failed:                     {rotc_bad_angle_fail}")
+
+    print(f"\nROTC Trace Equivalence Tests: {rotc_trace_pass + rotc_trace_fail}")
+    print(f"Passed:                       {rotc_trace_pass}")
+    print(f"Failed:                       {rotc_trace_fail}")
+
+    regen_pass = sum(1 for v in regen_results.values() if v)
+    regen_fail = sum(1 for v in regen_results.values() if not v)
+    print(f"\nREGEN Suite Tests (emulator/asm/equivalence): {regen_pass + regen_fail}")
+    print(f"Passed:                       {regen_pass}")
+    print(f"Failed:                       {regen_fail}")
+
+    print(f"\nCPU Profile Contract Tests: {cpu_profile_pass + cpu_profile_fail}")
+    print(f"Passed:                     {cpu_profile_pass}")
+    print(f"Failed:                     {cpu_profile_fail}")
+    print(f"\nGram v1 SPREAD Tests: {gram_pass + gram_fail}")
+    print(f"Passed:               {gram_pass}")
+    print(f"Failed:               {gram_fail}")
+    print(f"\nProfile scoping: SPU_PROFILE={spu_profile}")
+    if profile_skipped:
+        print(f"  SKIPPED ({len(profile_skipped)}, REGEN full-profile-only, inapplicable to base):")
+        for _name in profile_skipped:
+            print(f"    - {_name}")
+    else:
+        print("  skipped: none (all tests run). Tests using default RTL parameters exercise the FULL")
+        print("  profile; the ENABLE_REGEN=0 RTL is covered by spu13_core_regen_off_tb [regen_off].")
+
+    print(f"\nIcosahedral Catalog Tests: {1}")
+    print(f"Passed:                    {icosa_pass}")
+    print(f"Failed:                    {1 - icosa_pass}")
+
+    print(f"\nCyclotomic Fibonacci Tests: {cyclotomic_pass + cyclotomic_fail}")
+    print(f"Passed:                      {cyclotomic_pass}")
+    print(f"Failed:                      {cyclotomic_fail}")
+
+    print(f"\nIROTC VM Tests: {irotc_pass + irotc_fail}")
+    print(f"Passed:         {irotc_pass}")
+    print(f"Failed:         {irotc_fail}")
+
+    print(f"\nTensegrity Balancer Tests: {tensegrity_pass + tensegrity_fail}")
+    print(f"Passed:                    {tensegrity_pass}")
+    print(f"Failed:                    {tensegrity_fail}")
+
+    print(f"\nBench Metrics Firmware Tests: {bench_metrics_pass + bench_metrics_fail}")
+    print(f"Passed:                 {bench_metrics_pass}")
+    print(f"Failed:                 {bench_metrics_fail}")
+
+    print(f"\nBoot Sequence FSM Tests: {boot_sequence_pass + boot_sequence_fail}")
+    print(f"Passed:                 {boot_sequence_pass}")
+    print(f"Failed:                 {boot_sequence_fail}")
+
+    # These seven contributed to the headline without printing a section of
+    # their own, so the total could not be reconciled from the transcript.
+    for _label, _p, _f in (
+        ("Lucas MAC Oracle",          lucas_pass,         lucas_fail),
+        ("BQ-0 Biquadratic Oracle",    bq_pass,            bq_fail),
+        ("ICOS-0 Icosian/E8 Oracle",    icos_pass,          icos_fail),
+        ("Lucas MAC Harness",         lucas_harness_pass, 1 - lucas_harness_pass),
+        ("SU(3) Oracle",              su3_pass,           1 - su3_pass),
+        ("Pade Batch Inversion",      pade_batch_pass,    pade_batch_fail),
+        ("Hyper-Catalan Oracle",      hc_pass,            hc_fail),
+        ("Digon Recursive Cost Model", digon_pass,        digon_fail),
+        ("Composition Policy Trace",  composition_pass,   1 - composition_pass),
+        ("GPU Raster Oracle/RTL Parity", gpu_raster_pass, 1 - gpu_raster_pass),
+        ("GPU Raster Oracle/Vulkan Parity", gpu_vulkan_pass, 1 - gpu_vulkan_pass),
+        ("GPU Reciprocal Core RTL Parity", gpu_recip_pass, 1 - gpu_recip_pass),
+        ("GPU Attr Stepper RTL Parity", gpu_attr_stepper_pass, 1 - gpu_attr_stepper_pass),
+        ("GPU Depth Math RTL Parity", gpu_depth_math_pass, 1 - gpu_depth_math_pass),
+        ("GPU Depth Dispatch RTL Parity", gpu_depth_dispatch_pass, 1 - gpu_depth_dispatch_pass),
+        ("GPU Depth Compare RTL Parity", gpu_depth_compare_pass, 1 - gpu_depth_compare_pass),
+        ("GPU Depth Compare Integration", gpu_depth_compare_integration_pass, 1 - gpu_depth_compare_integration_pass),
+        ("GPU Top Integration", gpu_top_integration_pass, 1 - gpu_top_integration_pass),
+        ("GPU Depth-v2 Extended (T1H/T1I/T1J/T1Q/T1R)", gpu_v2_extra_pass, gpu_v2_extra_fail),
+    ):
+        print(f"\n{_label} Tests: {_p + _f}")
+        print(f"Passed: {_p}")
+        print(f"Failed: {_f}")
+
+    total_pass = (
+        passed + cpp_p + py_pass + cv_pass + lucas_pass + bq_pass + icos_pass + lucas_harness_pass
+        + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
+        + audio_pass + host_pass + spu4_probe_parser_pass + spu4_probe_client_pass
+        + som_product_pass + robotics_demo_pass
+        + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
+        + regen_pass + cpu_profile_pass + gram_pass
+        + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
+        + bench_metrics_pass
+        + composition_pass
+        + gpu_raster_pass
+        + gpu_vulkan_pass
+        + gpu_recip_pass + gpu_attr_stepper_pass + gpu_depth_math_pass + gpu_depth_dispatch_pass
+        + gpu_depth_compare_pass + gpu_depth_compare_integration_pass + gpu_top_integration_pass
+        + gpu_v2_extra_pass
+    )
+    total_fail = (
+        failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
+        + audio_fail + host_fail + spu4_probe_parser_fail + spu4_probe_client_fail
+        + som_product_fail + robotics_demo_fail
+        + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
+        + regen_fail + cpu_profile_fail + gram_fail
+        + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
+        + bench_metrics_fail
+        + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
+        + (1 - composition_pass) + (1 - gpu_raster_pass) + (1 - gpu_vulkan_pass)
+        + (1 - gpu_recip_pass) + (1 - gpu_attr_stepper_pass)
+        + (1 - gpu_depth_math_pass) + (1 - gpu_depth_dispatch_pass)
+        + (1 - gpu_depth_compare_pass) + (1 - gpu_depth_compare_integration_pass)
+        + (1 - gpu_top_integration_pass)
+        + gpu_v2_extra_fail
+        # Previously absent: these four were summed into total_pass with no
+        # fail counterpart, so a failing or missing oracle reduced the
+        # headline while Total FAIL still printed 0.
+        + lucas_fail + bq_fail + icos_fail + pade_batch_fail + hc_fail + digon_fail
+    )
+    print(f"\nTotal PASS:  {total_pass}")
+    print(f"Total FAIL:  {total_fail}")
+    print("=============================================")
+
+    # Exit non-zero when anything failed. Until 2026-09-05 this script had NO
+    # sys.exit call at all, so it always returned 0 -- "Total FAIL: 2" and a
+    # green result were the same exit code. That silently disarmed both
+    # tools/verify_repo.sh (which runs this under `set -e`) and
+    # .github/workflows/ci.yml, which invokes it directly. Neither gate could
+    # ever fail on a test, for as long as both have existed.
+    return 1 if total_fail > 0 else 0
+
+if __name__ == "__main__":
+    sys.exit(main())

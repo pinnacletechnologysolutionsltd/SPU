@@ -1,0 +1,49 @@
+{
+  "contract_id": "GC2B-EDGE-WEIGHT-20261016",
+  "revision": "Amendment 03",
+  "domain": "Q(sqrt(3)); coefficients are exact rational pairs [p,q] for p+q*sqrt(3)",
+  "chart_order": [0, 1, 2, 3],
+  "parity_vertex_map": [0, 3, 2, 1],
+  "state": [[1, 0], [0, 0], [0, 1], [2, 0]],
+  "law_neutral": [[1, 0], [1, 0]],
+  "law_biased": [[2, 1], [1, 0]],
+  "steps": 8,
+  "fixtures": [
+    {
+      "id": "uniform",
+      "weights": [[1, 0], [1, 0], [1, 0], [1, 0]],
+      "admissible_rotations": [0, 1, 2, 3],
+      "checks": [
+        "uniform.basis_operator_exchange.all4",
+        "uniform.covariance.neutral.all4",
+        "uniform.covariance.biased.all4",
+        "uniform.admissible_h.exhaustive",
+        "uniform.internal.neutral.all_h",
+        "uniform.internal.biased.noncommuting.all_h",
+        "uniform.trajectory.neutral.all_h",
+        "uniform.trajectory.biased.all_h",
+        "uniform.trajectory.substrate_covariance.neutral",
+        "uniform.trajectory.substrate_covariance.biased",
+        "uniform.negative.double_swap",
+        "uniform.negative.weight_transport",
+        "uniform.negative.state_transport"
+      ]
+    },
+    {
+      "id": "weighted",
+      "weights": [[1, 0], [2, 0], [3, 0], [2, 1]],
+      "admissible_rotations": [],
+      "checks": [
+        "weighted.basis_operator_exchange.all4",
+        "weighted.covariance.neutral.all4",
+        "weighted.covariance.biased.all4",
+        "weighted.admissible_h.exhaustive",
+        "weighted.internal.not_applicable_no_h",
+        "weighted.trajectory.substrate_covariance.neutral",
+        "weighted.trajectory.substrate_covariance.biased",
+        "weighted.negative.double_swap",
+        "weighted.negative.weight_transport"
+      ]
+    }
+  ]
+}

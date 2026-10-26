@@ -1,0 +1,15 @@
+{
+  "format": "gpu_t1d_scene_reference_v1",
+  "channel_order": "RGB, four bits per channel before the board-top MSB output",
+  "coordinate_domain": "active 640x480 video pixels; x=0..639, y=0..479",
+  "depth_rule": "smaller interpolated depth wins; equal depth goes to triangle 0",
+  "oracle": "integer edge half-planes and exact rational affine depth",
+  "diagnostic_pixels": [
+    {"x": 10, "y": 10, "coverage": "background", "rgb": [0, 0, 0]},
+    {"x": 100, "y": 300, "coverage": "triangle0", "rgb": [15, 0, 0]},
+    {"x": 540, "y": 300, "coverage": "triangle1", "rgb": [0, 15, 0]},
+    {"x": 200, "y": 100, "coverage": "overlap", "near": "triangle0", "rgb": [15, 0, 0]},
+    {"x": 400, "y": 100, "coverage": "overlap", "near": "triangle1", "rgb": [0, 15, 0]},
+    {"x": 320, "y": 100, "coverage": "overlap", "near": "tie_triangle0", "rgb": [15, 0, 0]}
+  ]
+}

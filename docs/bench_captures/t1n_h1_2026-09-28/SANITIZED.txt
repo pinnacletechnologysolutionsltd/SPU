@@ -1,0 +1,11 @@
+Three photographs in this directory (IMG_1774, IMG_1775, IMG_1776) were published after removing embedded metadata.
+Method: lossless JPEG re-encode of the primary image (jpegtran, no transform; ICC profile kept where present), removal of the EXIF, XMP and
+embedded auxiliary images, and restoration of the single EXIF Orientation tag so the pictures display upright.
+Decoded pixels of each file are identical before and after; the SHA-256 of the decoded RGB bytes is given below.
+The file hashes quoted for these photographs in docs/hardware_evidence.md and in spu_strategy/contract_gpu_t1n_runtime_material_opcode_2026-09-27.md
+are the hashes of the unsanitised originals; they do not match the files published here.
+
+file  sha256(published file)  sha256(decoded RGB bytes)
+IMG_1774.jpeg  a5e72b8a1092b778998f1a8647e9d1cab354d6acd5fddb29dae2b932bd5d6831  8a879659ee33722378592743e595809dc5c17188e892aec95b2b45c15b5d20ef
+IMG_1775.jpeg  817fb58a70e4df1431dc08518b7bf9c11e2875c84d3c9bcca87be1c796134639  aca51702f8e07c1b212703c338455de60f1845a42229240d24dc26ca9249d572
+IMG_1776.jpeg  1b83ed5b292f73805469b43bf8165019a422f2b882f89a38da01d8978da35418  81256a1a679b4cfc3b5f881870d2af566e860fc7d2ebcd4cbdd7afe21c8ccf1e

@@ -1,0 +1,78 @@
+--- /tmp/claude-1000/-home-john-Projects-hardware-SPU/90e2eb5e-0dd3-4947-90b6-b9c069ccb101/scratchpad/QCG0_PREREG.rev3.md	2026-10-23 00:16:03.372936285 +1300
++++ QCG0_PREREGISTRATION.md	2026-10-23 00:16:03.390722407 +1300
+@@ -316,8 +316,8 @@
+ 
+ *Cell A counts, recomputed for the certified quintic (stated before any measurement; this recomputation follows the
+ certificate and precedes all cost evaluation).* The certified polynomials have degrees x:4, y:5, x′:3, y′:4, σ:4, S:5,
+-N_κ:2 (U, V, U′, V′ of degrees 2, 2, 1, 1). Dense-degree Horner, doubling by shift, measured counts decide. **B-PH:**
+-x 4, y 5, x′ 3, y′ 4, σ 4, σ² 1, S 5, N_κ 2 = **28 multiplications, 27 additions**. **Generator route:** U, V, U′, V′ by
++N_κ:2 (U, V, U′, V′ of degrees 2, 2, 1, 1). Dense-degree Horner, doubling by shift, measured counts decide. **B-Horner (every polynomial cached in power basis; this is the 28/27 route):**
++x 4, y 5, x′ 3, y′ 4, σ 4, σ² 1, S 5, N_κ 2 = **28 multiplications, 27 additions**. **Factored route (the arithmetic of B-PH, and of C1 in Cell A; the 26/23 route):** U, V, U′, V′ by
+ Horner (6 multiplications, 6 additions); U², V², UV (3); x′ and σ (2 add/sub); σ² (1); N_κ (2 multiplications, 1
+ subtraction); and the cached degree-4, 5, 5 integrals x, y, S (14 multiplications, 14 additions) = **26 multiplications,
+ 23 additions**. That is 2/28 (about 7%) of the multiplications and 4/27 (about 15%) of the additions: these two predicted *arithmetic*
+@@ -365,7 +365,7 @@
+ D_κ = 0 is flagged and not divided. Arms: B-Horner, B-Bezier (de Casteljau plus derivative control points), B-PH (with §8.1 caches), C1, C2, and
+ B-FD (the negative control, evaluated only at the dyadic subset where it applies, or re-initialized and charged where it
+ does not). Precomputation, storage, per-query arithmetic, coefficient widths, query overhead and the shared-computation
+-ratio J/Σ (§11) are reported.
++ratio J_c/Σ_c (§11) are reported.
+ 
+ **Cell B — retimed trajectory (secondary).** (Certified reference rows: `cell_B.rows`, 16 rows of seven values.) Curve: the registered cubic PH3 with the retiming φ_sq. For each tape value τ
+ every arm returns: ψ(τ) = r(φ(τ)) (2), the timed derivative ψ′(τ) = φ′(τ)·r′(φ(τ)) (2), the signed speed φ′·σ∘φ and the
+@@ -381,12 +381,13 @@
+ reported with the prediction that B-FD dominates. It is not an advantage-screen cell and its outcome does not decide
+ whether to continue.
+ 
+-### 9.2 Chain, join and closure inputs (inputs only; expected values are NOT supplied here)
++### 9.2 Chain, join and closure inputs (normative inputs; reference values are the reviewer's pinned JSON)
+ 
+ Revision 2 supplied the translations, ordering, parameter convention and derivative data the review found missing. Every
+ polynomial is over Q, interval [0,1] per segment, h = 1 unless stated. The literal expected outputs (CH1 rows, raw and
+ gated predicates for b1–b9, loop vectors, adapted Cell A rows) are in the reviewer's `REVISION2_FIXTURE_VALUES.json`
+-(§0.2); nothing in this section is an expected result, and the "intended role" column is design intent only. The reviewer's
++(§0.2); the inputs in this section are normative, the expected outputs are those of the pinned JSON, and the "intended role"
++column is design intent only. The reviewer's
+ gated truth table, copied here for reading convenience and governed by the JSON (G⁰, G¹, cusp, C¹, C², G²):
+ 
+ | b | G⁰ | G¹ | cusp | C¹ | C² | G² |
+@@ -512,7 +513,8 @@
+ (random-access multi-observable, primary) and **B** (retimed trajectory, secondary), §9.1. For each cell compare C1 and C2
+ with the best applicable conventional arm for that cell, each arm holding the §8.1 precomputation and caching rights. A
+ candidate shows a **Pareto signal** on a cell if some counted category (add, mul, div, compare, serialized state, peak
+-integer width) is at least 20% below that best conventional arm with no category higher. A lower storage figure with
++integer width) is at least 20% below that best conventional arm with no category higher. Shift, normalization and every
++other ledger category belong to the no-higher guard; a shift-only improvement does not trigger the signal (P0 contract §2). A lower storage figure with
+ more arithmetic, or the reverse, is a **TRADE-OFF**, reported as such. A 20% reduction is an exploratory signal that
+ justifies a further bounded study; it is not proof of general superiority and it cannot rest on a conventional arm that
+ was denied information the candidate had. Secondary view against the per-category virtual best over the conventional
+@@ -531,9 +533,9 @@
+ on PH3 with φ_sq, plus the φ_bad control**; the mandatory sequential negative control (S1–S3, dyadic step 1/16, 17
+ samples) on PH3 and PH5; S4 with φ_ns and φ_rev as capability checks; S5 on the three-segment chain; S6 on the designed
+ joints; the control table of §12; arms B-Horner, B-FD, B-TS, B-Bezier, B-PH, B-COMP, C1, C2. The reviewer-certified
+-quintic and its reference values are pinned (§0.2) and are not regenerated; the values for the new S5/S6 inputs of §9.2
+-and the corrected controls still have to be derived by the reviewer and hashed before any candidate code exists or any cost
+-is evaluated. P0 remains HOLD.
++quintic and the reviewer-derived S5/S6 reference values are pinned (§0.2) and are not regenerated. The cost ledger, arm
++algorithms, output contracts, width and refusal rules are frozen in `QCG0_P0_EXECUTION_CONTRACT.md`, which must be
++independently reviewed before any candidate code exists or any cost is evaluated. P0 remains HOLD.
+ 
+ Proposed budget (a proposal, not GO): one invocation, 60 s externally enforced, 1 GiB address space, no child
+ processes/network/devices/installs, ≤1,000,000 counted operations, 4096-bit reduced coefficients, 16384-bit raw
+@@ -558,7 +560,7 @@
+ 1. a **typed law interface** (E0/E1/E2) whose refusals make exactness claims checkable by a machine, including the
+    h-form retiming algebra (R1–R5) as a first-class operation with closure and reversal;
+ 2. a **shared-observable** representation in which direction (τ) and timing (σ) are separate state, giving tangent,
+-   speed, arc length, curvature and constraint predicates from one stored generator (measured by J/Σ, §11);
++   speed, arc length, curvature and constraint predicates from one stored generator (measured by J_c/Σ_c, §11);
+ 3. **E1 orbits** for turning (finite groups, Cayley/Pell structure) giving bounded-growth composed motion, if the
+    Q(√3) profile is later authorized;
+ 4. whether the Cauchy-product jet substrate adds anything over the shift and difference tables that conventional
+@@ -615,3 +617,7 @@
+ | — | Reference values | Revision 2 review artifacts pinned by full hash; the reviewer's values are referenced, not copied except the small truth table | §0.2, §9.2 |
+ 
+ Unchanged: all certified values, the Revision 1 and Revision 2 review artifacts, the review packet, and every other campaign.
++
++**Revision 3.1 (editorial, 2026-10-23, after the Revision 3 PASS):** the 28/27 route is relabelled B-Horner and the 26/23 route
++the factored route of B-PH and C1 (the earlier label put 28/27 on B-PH); stale status sentences in §9.2 and §14 updated;
++`J/Σ` shorthand indexed; the §13 guard now names shift. No certified value or mathematical statement changed.

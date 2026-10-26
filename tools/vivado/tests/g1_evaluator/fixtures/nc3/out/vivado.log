@@ -1,0 +1,485 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 22-oct-2027.
+# Vivado v2026.1 (64-bit)
+# SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+# IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+# SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+# Start of session at: Thu Oct 22 21:39:51 2026
+# Process ID         : 14817
+# Current directory  : /home/user/spu-transfer/spu-research-baseline
+# Command line       : vivado -mode batch -log build/vivado/step7v_nc3_01/vivado.log -journal build/vivado/step7v_nc3_01/vivado.jou -source tools/vivado/spu_vivado_flow.tcl -tclargs -top spu_a7_tensegrity_link_top -part xc7a100tfgg676-1 -filelist tools/vivado/filelists/tensegrity_link_top.f -xdc hardware/boards/artix7/spu_a7_tensegrity_link.xdc -outdir build/vivado/step7v_nc3_01 -expect_clock sys_clk:20.000 -strict 1
+# Log file           : /home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_nc3_01/vivado.log
+# Journal file       : /home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_nc3_01/vivado.jou
+# Running On         : john-MacBookAir
+# Platform           : Ubuntu
+# Operating System   : Ubuntu 22.04.5 LTS
+# Processor Detail   : Intel(R) Core(TM) i5-5350U CPU @ 1.80GHz
+# CPU Frequency      : 2700.858 MHz
+# CPU Physical cores : 2
+# CPU Logical cores  : 4
+# Host memory        : 8225 MB
+# Swap memory        : 8047 MB
+# Total Virtual      : 16273 MB
+# Available Virtual  : 12980 MB
+# proc spu_fail {msg} { error "SPU_FLOW: $msg" }
+# proc spu_sha {f} { return [lindex [exec sha256sum $f] 0] }
+# proc spu_opt {args_dict key {default ""}} { if {[dict exists $args_dict $key]} { return [dict get $args_dict $key] } ; return $default }
+# proc spu_parse {argv} {
+#     set d [dict create generics {} expect_clocks {}]
+#     set known {-top -part -filelist -xdc -outdir -stage -ack -generic -strict -expect_clock}
+#     for {set i 0} {$i < [llength $argv]} {incr i 2} {
+#         set k [lindex $argv $i]
+#         if {[lsearch -exact $known $k] < 0} { spu_fail "unknown argument '$k'" }
+#         if {$i + 1 >= [llength $argv]} { spu_fail "argument $k has no value" }
+#         set v [lindex $argv [expr {$i + 1}]]
+#         if {$k eq "-generic"} { dict lappend d generics $v } elseif {$k eq "-expect_clock"} { dict lappend d expect_clocks $v } else { dict set d $k $v }
+#     }
+#     foreach r {-top -part -filelist -xdc -outdir} { if {![dict exists $d $r]} { spu_fail "missing required argument $r" } }
+#     if {![dict exists $d -stage]} { dict set d -stage synth }
+#     if {![dict exists $d -strict]} { dict set d -strict 0 }
+#     if {[lsearch -exact {0 1} [dict get $d -strict]] < 0} { spu_fail "-strict must be 0 or 1" }
+#     foreach e [dict get $d expect_clocks] { if {![regexp {^[A-Za-z_][A-Za-z0-9_]*:[0-9]+(\.[0-9]+)?$} $e]} { spu_fail "-expect_clock must be NAME:PERIOD_NS, got $e" } }
+#     if {[lsearch -exact {synth place route} [dict get $d -stage]] < 0} { spu_fail "-stage must be synth, place or route" }
+#     return $d
+# }
+# proc spu_find_outdir {argv} { set i [lsearch -exact $argv -outdir] ; if {$i >= 0 && $i + 1 < [llength $argv]} { return [file normalize [lindex $argv [expr {$i + 1}]]] } ; return "" }
+# proc spu_path {root p} { if {[file pathtype $p] eq "absolute"} { return [file normalize $p] } ; return [file normalize [file join $root $p]] }
+# proc spu_inside_source {root out} {
+#     foreach bad {hardware software tools docs knowledge} { if {[string first "[file normalize [file join $root $bad]]/" "$out/"] == 0} { return $bad } }
+#     return ""
+# }
+# proc spu_check_outdir {root out} {
+#     set bad [spu_inside_source $root $out]
+#     if {$bad ne ""} { spu_fail "outdir inside tracked source ($bad)" }
+#     if {![file isdirectory $out]} { spu_fail "outdir '$out' must exist (create it before launching Vivado)" }
+#     foreach f [glob -nocomplain -directory $out *] { if {[lsearch -exact {vivado.log vivado.jou} [file tail $f]] < 0} { spu_fail "outdir not empty: [file tail $f]" } }
+# }
+# proc spu_read_filelist {root fl} {
+#     set files {} ; set incs {} ; set defs {}
+#     set fh [open $fl r] ; set n 0
+#     while {[gets $fh line] >= 0} {
+#         incr n ; set line [string trim $line]
+#         if {$line eq "" || [string index $line 0] eq "#"} continue
+#         set kw [lindex $line 0] ; set arg [lindex $line 1]
+#         switch -- $kw {
+#             incdir  { lappend incs [spu_path $root $arg] }
+#             define  { lappend defs $arg }
+#             verilog { lappend files [list verilog [spu_path $root $arg]] }
+#             sv      { lappend files [list sv [spu_path $root $arg]] }
+#             default { close $fh ; spu_fail "$fl:$n: unknown keyword '$kw'" }
+#         }
+#     }
+#     close $fh
+#     foreach f $files { if {![file isfile [lindex $f 1]]} { spu_fail "missing source [lindex $f 1]" } }
+#     foreach i $incs { if {![file isdirectory $i]} { spu_fail "missing include dir $i" } }
+#     if {[llength $files] == 0} { spu_fail "$fl lists no sources" }
+#     return [list $files $incs $defs]
+# }
+# proc spu_manifest {root out d files xdc fl} {
+#     set m [open [file join $out run_manifest.txt] w]
+#     puts $m "tool_version [version -short]"
+#     puts $m "started [clock format [clock seconds] -format {%Y-%m-%dT%H:%M:%SZ} -gmt 1]"
+#     puts $m "host [info hostname]"
+#     puts $m "git_head [exec git -C $root rev-parse HEAD]"
+#     puts $m "git_status_sha256 [lindex [exec sh -c "git -C $root status --porcelain | sha256sum"] 0]"
+#     foreach k {-top -part -stage -filelist -xdc -strict} { puts $m "arg $k [dict get $d $k]" }
+#     foreach e [dict get $d expect_clocks] { puts $m "arg -expect_clock $e" }
+#     foreach g [dict get $d generics] { puts $m "arg -generic $g" }
+#     puts $m "filelist_sha256 [spu_sha $fl]"
+#     puts $m "xdc_sha256 [spu_sha $xdc]"
+#     foreach f $files { puts $m "source_sha256 [spu_sha [lindex $f 1]] [string range [lindex $f 1] [expr {[string length $root] + 1}] end]" }
+#     close $m
+# }
+# proc spu_structure {out} {
+#     set s [open [file join $out structure.rpt] w]
+#     puts $s "BUFG_cells [llength [get_cells -hierarchical -quiet -filter {REF_NAME =~ BUFG*}]]"
+#     puts $s "DSP48E1_cells [llength [get_cells -hierarchical -quiet -filter {REF_NAME == DSP48E1}]]"
+#     puts $s "RAMB_cells [llength [get_cells -hierarchical -quiet -filter {REF_NAME =~ RAMB*}]]"
+#     puts $s "LUT_cells [llength [get_cells -hierarchical -quiet -filter {REF_NAME =~ LUT*}]]"
+#     puts $s "FF_cells [llength [get_cells -hierarchical -quiet -filter {REF_NAME =~ FD*}]]"
+#     foreach b [get_cells -hierarchical -quiet -filter {REF_NAME =~ BUFG*}] { puts $s "BUFG [get_property NAME $b]" }
+#     close $s
+# }
+# proc spu_reports {out tag} {
+#     report_utilization -file [file join $out ${tag}_utilization.rpt]
+#     report_utilization -hierarchical -file [file join $out ${tag}_utilization_hier.rpt]
+#     report_clocks -file [file join $out ${tag}_clocks.rpt]
+#     report_clock_networks -file [file join $out ${tag}_clock_networks.rpt]
+#     check_timing -verbose -file [file join $out ${tag}_check_timing.rpt]
+#     report_timing_summary -delay_type min_max -max_paths 20 -file [file join $out ${tag}_timing_summary.rpt]
+#     report_cdc -details -file [file join $out ${tag}_cdc.rpt]
+#     report_methodology -file [file join $out ${tag}_methodology.rpt]
+#     report_drc -file [file join $out ${tag}_drc.rpt]
+#     spu_structure $out
+# }
+# proc spu_scope_marker {} { return [join {SPU GATE SCOPE BEGIN} _] }
+# proc spu_scan_log {txt} {
+#     # A finding needs both: the line comes after the single scope marker, and it is a Vivado message at column 0 with a bracketed ID
+#     # ("CRITICAL WARNING: [Vivado 12-4739] ..."). Echoed source starts with '#'; the gate's own FAILED text starts with "SPU_FLOW" or blanks.
+#     set lines [split $txt \n] ; set at [lsearch -all -exact $lines [spu_scope_marker]]
+#     if {[llength $at] != 1} { return [list "log scope marker found [llength $at] times, expected 1 (log not written by this script run)"] }
+#     set bad {}
+#     foreach line [lrange $lines [expr {[lindex $at 0] + 1}] end] {
+#         if {[regexp {^CRITICAL WARNING: \[[A-Za-z][A-Za-z0-9_ ]* [0-9]+-[0-9]+\] } $line] && [regexp {No valid object|No cells matched|No ports matched|No pins matched|No nets matched|No clocks matched|not found} $line]} { lappend bad "constraint resolved to nothing: [string trim $line]" }
+#     }
+#     return $bad
+# }
+# proc spu_scan_check_timing {txt} {
+#     # One authoritative count per check: the first occurrence (the numbered summary). Vivado 2026.1 repeats each line as a section header
+#     # (Step 7 D2); a repeat must agree with the summary, otherwise the report is not trusted. Thresholds and check names are unchanged.
+#     set counts [dict create] ; set bad {}
+#     foreach {all nm cnt} [regexp -all -inline {checking ([a-z_]+) \(([0-9]+)\)} $txt] {
+#         if {![dict exists $counts $nm]} { dict set counts $nm $cnt } elseif {[dict get $counts $nm] != $cnt} { lappend bad "check_timing: $nm summary [dict get $counts $nm] disagrees with section header $cnt" }
+#     }
+#     dict for {nm cnt} $counts {
+#         if {$cnt > 0 && [lsearch -exact {no_clock unconstrained_internal_endpoints multiple_clock generated_clocks pulse_width_clock} $nm] >= 0} { lappend bad "check_timing: $nm = $cnt" }
+#     }
+#     if {![dict exists $counts no_clock]} { lappend bad "check_timing report has no 'checking no_clock' section (format changed or report missing)" }
+#     return $bad
+# }
+# proc spu_gate {out d} {
+#     # Fail-closed constraint checks. Log and report patterns: real-tool validation is the Step 7 rerun (missing port, wrong clock name, unclocked
+#     # divided domain); offline coverage is tests/gate_fixture_test.tcl (Vivado 2026.1 excerpts) and tests/dryrun_stub.tcl.
+#     # The expected-clock check uses Vivado Tcl commands only; the strict scans read OUT/vivado.log and OUT/synth_check_timing.rpt.
+#     set bad {}
+#     foreach e [dict get $d expect_clocks] {
+#         lassign [split $e :] name period
+#         set c [get_clocks -quiet $name]
+#         if {[llength $c] == 0} { lappend bad "expected clock '$name' does not exist (missing or unresolved create_clock)" ; continue }
+#         set p [get_property PERIOD $c]
+#         if {abs($p - $period) > 1e-6} { lappend bad "clock '$name' period $p ns, expected $period ns" }
+#     }
+#     if {[dict get $d -strict]} {
+#         set log [file join $out vivado.log]
+#         if {[file exists $log]} {
+#             set fh [open $log r] ; set txt [read $fh] ; close $fh
+#             lappend bad {*}[spu_scan_log $txt]
+#         } else { lappend bad "strict mode needs OUT/vivado.log (launch with -log OUT/vivado.log)" }
+#         set ct [file join $out synth_check_timing.rpt]
+#         if {[file exists $ct]} {
+#             set fh [open $ct r] ; set txt [read $fh] ; close $fh
+#             lappend bad {*}[spu_scan_check_timing $txt]
+#         } else { lappend bad "strict mode needs synth_check_timing.rpt" }
+#     }
+#     if {[llength $bad]} { spu_fail "constraint gate failed:\n  [join $bad "\n  "]" }
+# }
+# proc spu_main {argv} {
+#     set root [file normalize [file join [file dirname [file normalize [info script]]] .. ..]]
+#     set d [spu_parse $argv]
+#     set out [file normalize [dict get $d -outdir]]
+#     spu_check_outdir $root $out
+#     set part [dict get $d -part] ; set top [dict get $d -top] ; set stage [dict get $d -stage]
+#     if {[llength [get_parts -quiet $part]] != 1} { spu_fail "part '$part' not found in this Vivado installation" }
+#     if {$stage eq "place" && [spu_opt $d -ack] ne "PLACE_APPROVED"} { spu_fail "stage place requires an owner-supplied -ack PLACE_APPROVED" }
+#     if {$stage eq "route" && [spu_opt $d -ack] ne "ROUTE_APPROVED"} { spu_fail "stage route requires an owner-supplied -ack ROUTE_APPROVED" }
+#     set fl [spu_path $root [dict get $d -filelist]] ; set xdc [spu_path $root [dict get $d -xdc]]
+#     if {![file isfile $fl]} { spu_fail "file list not found: $fl" } ; if {![file isfile $xdc]} { spu_fail "xdc not found: $xdc" }
+#     lassign [spu_read_filelist $root $fl] files incs defs
+#     spu_manifest $root $out $d $files $xdc $fl
+#     foreach f $files { if {[lindex $f 0] eq "sv"} { read_verilog -sv [lindex $f 1] } else { read_verilog [lindex $f 1] } }
+#     puts [spu_scope_marker]
+#     read_xdc $xdc
+#     set cmd [list synth_design -top $top -part $part]
+#     if {[llength $incs]} { lappend cmd -include_dirs $incs }
+#     if {[llength $defs]} { lappend cmd -verilog_define $defs }
+#     foreach g [dict get $d generics] { lappend cmd -generic $g }
+#     eval $cmd
+#     spu_reports $out synth
+#     write_checkpoint -force [file join $out synth.dcp]
+#     spu_gate $out $d
+#     if {$stage in {place route}} {
+#         opt_design ; place_design
+#         spu_reports $out place
+#         write_checkpoint -force [file join $out place.dcp]
+#     }
+#     if {$stage eq "route"} {
+#         route_design
+#         report_route_status -file [file join $out route_status.rpt]
+#         spu_reports $out route
+#         write_checkpoint -force [file join $out route.dcp]
+#     }
+# }
+# if {[catch {spu_main $argv} err]} {
+#     set o [spu_find_outdir $argv]
+#     set root [file normalize [file join [file dirname [file normalize [info script]]] .. ..]]
+#     # write FAILED only into a directory this run was allowed to use: valid and empty at start, or already ours (run_manifest.txt exists); never into source
+#     if {$o ne "" && [spu_inside_source $root $o] eq "" && [file isdirectory $o] && (![catch {spu_check_outdir $root $o}] || [file exists [file join $o run_manifest.txt]])} { catch { set fh [open [file join $o FAILED] w] ; puts $fh $err ; close $fh } }
+#     puts stderr "SPU_FLOW FAILED: $err"
+#     exit 1
+# }
+SPU_GATE_SCOPE_BEGIN
+INFO: [Common 17-349] Got license for feature 'Vivado_Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tfgg676-1
+INFO: [Designutils 20-5008] Incremental synthesis strategy default
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 14860
+INFO: [Synth 8-6157] synthesizing module 'spu_a7_tensegrity_link_top' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:8]
+INFO: [Synth 8-6157] synthesizing module 'BUFG' [/home/user/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG' (0#1) [/home/user/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6157] synthesizing module 'spu_spi_slave' [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:30]
+INFO: [Synth 8-6155] done synthesizing module 'spu_spi_slave' (0#1) [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:30]
+WARNING: [Synth 8-7071] port 'rplu_cfg_wr_en' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'rplu_cfg_sel' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'rplu_cfg_material' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'rplu_cfg_addr' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'rplu_cfg_data' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'inst_valid' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'inst_word' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'pade_trace_valid' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'pade_trace_inv_input' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'pade_trace_inv_output' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'pade_trace_final_a' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'pade_trace_final_b' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7071] port 'pade_trace_final_result' of module 'spu_spi_slave' is unconnected for instance 'u_spi' [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+WARNING: [Synth 8-7023] instance 'u_spi' of module 'spu_spi_slave' has 51 connections declared, but only 38 given [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:54]
+INFO: [Synth 8-6157] synthesizing module 'spu13_tensegrity_sidecar' [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_tensegrity_sidecar.v:11]
+INFO: [Synth 8-6157] synthesizing module 'spu13_tensegrity_guard' [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_tensegrity_guard.v:8]
+INFO: [Synth 8-6157] synthesizing module 'spu13_zphi_mul_serial' [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_zphi_mul_serial.v:11]
+INFO: [Synth 8-6155] done synthesizing module 'spu13_zphi_mul_serial' (0#1) [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_zphi_mul_serial.v:11]
+INFO: [Synth 8-6157] synthesizing module 'spu13_tensegrity_intersection' [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_tensegrity_intersection.v:9]
+INFO: [Synth 8-6157] synthesizing module 'spu13_zphi_mul_serial__parameterized0' [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_zphi_mul_serial.v:11]
+INFO: [Synth 8-6155] done synthesizing module 'spu13_zphi_mul_serial__parameterized0' (0#1) [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_zphi_mul_serial.v:11]
+INFO: [Synth 8-6155] done synthesizing module 'spu13_tensegrity_intersection' (0#1) [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_tensegrity_intersection.v:9]
+INFO: [Synth 8-6155] done synthesizing module 'spu13_tensegrity_guard' (0#1) [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_tensegrity_guard.v:8]
+INFO: [Synth 8-6155] done synthesizing module 'spu13_tensegrity_sidecar' (0#1) [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/core/spu13/spu13_tensegrity_sidecar.v:11]
+INFO: [Synth 8-6155] done synthesizing module 'spu_a7_tensegrity_link_top' (0#1) [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link_top.v:8]
+WARNING: [Synth 8-6014] Unused sequential element dissonance_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:159]
+WARNING: [Synth 8-6014] Unused sequential element snaps_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:160]
+WARNING: [Synth 8-6014] Unused sequential element janus_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:161]
+WARNING: [Synth 8-6014] Unused sequential element scale_tab_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:162]
+WARNING: [Synth 8-6014] Unused sequential element scale_overflow_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:163]
+WARNING: [Synth 8-6014] Unused sequential element sentinel_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:164]
+WARNING: [Synth 8-6014] Unused sequential element p_axis_reg[0] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:166]
+WARNING: [Synth 8-6014] Unused sequential element p_axis_reg[1] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:166]
+WARNING: [Synth 8-6014] Unused sequential element p_axis_reg[2] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:166]
+WARNING: [Synth 8-6014] Unused sequential element p_axis_reg[3] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:166]
+WARNING: [Synth 8-6014] Unused sequential element q_axis_reg[0] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:167]
+WARNING: [Synth 8-6014] Unused sequential element q_axis_reg[1] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:167]
+WARNING: [Synth 8-6014] Unused sequential element q_axis_reg[2] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:167]
+WARNING: [Synth 8-6014] Unused sequential element q_axis_reg[3] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:167]
+WARNING: [Synth 8-6014] Unused sequential element byte_idx_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:308]
+WARNING: [Synth 8-6014] Unused sequential element resp_bit_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:309]
+WARNING: [Synth 8-6014] Unused sequential element shift_out_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:310]
+WARNING: [Synth 8-6014] Unused sequential element resp_len_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:311]
+WARNING: [Synth 8-6014] Unused sequential element ratio_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:333]
+WARNING: [Synth 8-6014] Unused sequential element ratio_valid_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:334]
+WARNING: [Synth 8-6014] Unused sequential element hex_valid_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:335]
+WARNING: [Synth 8-6014] Unused sequential element hex_q_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:336]
+WARNING: [Synth 8-6014] Unused sequential element hex_r_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:337]
+WARNING: [Synth 8-6014] Unused sequential element qr_valid_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:338]
+WARNING: [Synth 8-6014] Unused sequential element qr_lane_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:339]
+WARNING: [Synth 8-6014] Unused sequential element qr_A_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:340]
+WARNING: [Synth 8-6014] Unused sequential element qr_B_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:341]
+WARNING: [Synth 8-6014] Unused sequential element qr_C_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:342]
+WARNING: [Synth 8-6014] Unused sequential element qr_D_lat_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:343]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[0] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[1] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[2] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[3] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[4] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[5] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[6] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[7] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[8] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[9] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[10] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[11] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[12] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[13] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[14] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[15] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[16] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[17] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[18] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[19] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[20] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[21] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[22] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[23] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[24] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[25] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[26] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[27] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[28] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[29] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[30] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[31] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[32] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[33] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[34] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[35] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[36] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[37] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[38] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[39] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[40] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[41] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[42] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[43] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[44] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[45] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[46] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[47] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[48] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[49] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[50] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[51] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[52] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[53] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[54] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[55] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[56] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[57] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[58] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[59] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[60] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[61] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[62] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element resp_buf_reg[63] was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:345]
+WARNING: [Synth 8-6014] Unused sequential element crc_accum_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:347]
+WARNING: [Synth 8-6014] Unused sequential element crc_error_sticky_reg was removed.  [/home/user/spu-transfer/spu-research-baseline/hardware/rtl/peripherals/io/spu_spi_slave.v:353]
+WARNING: [Synth 8-7129] Port manifold_state[831] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[830] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[829] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[828] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[827] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[826] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[825] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[824] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[823] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[822] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[821] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[820] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[819] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[818] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[817] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[816] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[815] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[814] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[813] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[812] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[811] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[810] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[809] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[808] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[807] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[806] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[805] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[804] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[803] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[802] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[801] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[800] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[799] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[798] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[797] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[796] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[795] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[794] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[793] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[792] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[791] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[790] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[789] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[788] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[787] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[786] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[785] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[784] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[783] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[782] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[781] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[780] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[779] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[778] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[777] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[776] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[775] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[774] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[773] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[772] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[771] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[770] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[769] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[768] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[767] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[766] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[765] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[764] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[763] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[762] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[761] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[760] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[759] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[758] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[757] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[756] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[755] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[754] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[753] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[752] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[751] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[750] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[749] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[748] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[747] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[746] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[745] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[744] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[743] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[742] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[741] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[740] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[739] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[738] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[737] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[736] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[735] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[734] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[733] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[732] in module spu_spi_slave is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link.xdc]
+Finished Parsing XDC File [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link.xdc]
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/spu_a7_tensegrity_link_top_propImpl.xdc].
+INFO: [Project 1-111] Unisim Transformation Summary:
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'spu_spi_slave'
+INFO: [Synth 8-802] inferred FSM for state register 'phase_reg' in module 'spu13_zphi_mul_serial'
+INFO: [Synth 8-802] inferred FSM for state register 'phase_reg' in module 'spu13_zphi_mul_serial__parameterized0'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'spu13_tensegrity_intersection'
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'one-hot' in module 'spu_spi_slave'
+INFO: [Synth 8-3354] encoded FSM with state register 'phase_reg' using encoding 'one-hot' in module 'spu13_zphi_mul_serial'
+INFO: [Synth 8-3354] encoded FSM with state register 'phase_reg' using encoding 'one-hot' in module 'spu13_zphi_mul_serial__parameterized0'
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'spu13_tensegrity_intersection'
+WARNING: [Synth 8-3332] Sequential element (FSM_onehot_phase_reg[3]) is unused and will be removed from module spu13_zphi_mul_serial__parameterized0.
+WARNING: [Synth 8-3332] Sequential element (FSM_onehot_phase_reg[3]) is unused and will be removed from module spu13_zphi_mul_serial.
+INFO: [Synth 8-7052] The timing for the instance u_sidecar/table_mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Project 1-571] Translating synthesized netlist
+INFO: [Netlist 29-17] Analyzing 1695 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link.xdc]
+Finished Parsing XDC File [/home/user/spu-transfer/spu-research-baseline/hardware/boards/artix7/spu_a7_tensegrity_link.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Project 1-111] Unisim Transformation Summary:
+INFO: [Common 17-83] Releasing license: Vivado_Synthesis
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2572.261; main = 2424.490; forked = 343.897
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4064.121; main = 3059.105; forked = 1036.965
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 4 CPUs
+INFO: [Timing 38-314] The report_cdc command only analyzes and reports clock domain crossing paths where clocks have been defined on both source and destination sides. Ports with no input delay constraint are skipped. Please run check_timing to verify there are no missing clock definitions in your design, nor any unconstrained input port.
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [DRC 23-133] Running Methodology with 8 threads
+INFO: [Vivado_Tcl 2-1520] The results of Report Methodology are in file /home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_nc3_01/synth_methodology.rpt.
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/user/2026.1/data/ip'.
+INFO: [DRC 23-27] Running DRC with 8 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_nc3_01/synth_drc.rpt.
+INFO: [Timing 38-480] Writing timing data to binary archive.
+INFO: [Common 17-1381] The checkpoint '/home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_nc3_01/synth.dcp' has been generated.
+INFO: [Common 17-206] Exiting Vivado at Thu Oct 22 21:42:49 2026...

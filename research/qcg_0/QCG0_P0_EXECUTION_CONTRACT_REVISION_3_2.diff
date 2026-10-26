@@ -1,0 +1,180 @@
+--- /tmp/claude-1000/-home-john-Projects-hardware-SPU/90e2eb5e-0dd3-4947-90b6-b9c069ccb101/scratchpad/QCG0_P0_CONTRACT.v31.md	2026-10-23 08:57:09.928057254 +1300
++++ QCG0_P0_EXECUTION_CONTRACT.md	2026-10-23 08:58:03.682948555 +1300
+@@ -1,11 +1,14 @@
+-# QCG-0 P0 execution contract (draft, revision 3.1, owner dispositions recorded, for independent review)
++# QCG-0 P0 execution contract (draft, revision 3.2, owner dispositions recorded, for independent review)
+ 
+ Date: 2026-10-23. Status: **DRAFT. Preparation only. Freeze, implementation and execution remain HOLD.**
+ Author: Claude. Revision 3 responds to the second independent review (`P0_CONTRACT_R2_REVIEW_CERTIFICATE.md`, REVISE).
+ Revision 2 had SHA-256 `4c95617479b858919c86ad5be3cedad37fb9e547f88b9c6d9a8764e8b083e54f`; revision 1 `21fb45af84d609c3c127010a10b0c2824aaac4772ab8d95a4abd9f5d8d2b8bfc`.
+ No fixture was regenerated, no model was run, no benchmark was performed; no unrelated campaign or hardware was touched.
+-**Revision 3.1 (2026-10-23) records the owner's dispositions of D-1…D-6 (§11): all ACCEPT, with the scopes stated there. It changes no
+-algorithm, count, reference or checklist item; only the status wording. Revision 3 had SHA-256
++**Revision 3.2 (2026-10-23) responds to the Revision 3.1 review (`P0_CONTRACT_R3_REVIEW_CERTIFICATE.md`, REVISE; B1–B4): C2 tape-specific read
++steps and jet evolution, the FDINIT table traversal, mandatory OUTPUT_CAP attribution, and a bounded single finalization path; plus two
++stale-text removals. Revision 3.1 (SHA-256 `2829a167eabb3bcc16a5beed35249ce91f5097de0f7934647e0f7676b474ee44`) recorded the owner's
++dispositions of D-1…D-6 (§11): all ACCEPT, with the scopes stated there, and those dispositions are unchanged. No algorithm count, reference
++or checklist item other than the four named corrections changed. Revision 3 had SHA-256
+ `d6f27aae3328814b67b8c10da2e916b2f3943dbffa9416f97aa4e629243e7989`.** Acceptance is not authorization: freeze, implementation and
+ execution remain HOLD.
+ 
+@@ -116,7 +119,9 @@
+   A failure is `ARITH_LIMIT` at event `arm.P.import.<name>.<i>`.
+ * **Event id.** `arm.phase[.qNN].step.k[.sub]`: `qNN` the 0-based position in the frozen tape, `step` the named step of §5
+   (P-steps `P1…`, Q-steps as labelled), `k` the 1-based index of the Q operation within that step's primitive in the frozen
+-  loop order, `sub` the sub-check below. This identifies repeated helper calls uniquely.
++  loop order, `sub` the sub-check below. This identifies repeated helper calls uniquely **within a declared route context**
++  (profile, curve, tape or cell, arm, request or sample). An event string such as `q03.a8.1.e1` is never compared across contexts;
++  every derived or reported stage carries its outer identifiers.
+ * **Sub-check order inside an operation** (the first failing one is the refusal point; "raw" compares against the raw bound,
+   "red" against the reduced bound): M: r1 = n_a·n_b, r2 = d_a·d_b, gcd, e1 reduced n, e2 reduced d. A: r1 = n_a·d_b,
+   r2 = n_b·d_a, r3 = r1 ± r2, r4 = d_a·d_b, gcd, e1, e2. D: zero test first (n_b = 0 → `INVALID(DIV_ZERO)`, no sizes
+@@ -188,7 +193,10 @@
+ `HORNER(c,t)`: `acc ← c_d; for i = d−1..0: acc ← acc·t + c_i` (d M, d A).
+ `DECAS(b,t)`: `for r = 1..d: for j = 0..d−r: b_j ← b_j + t·(b_{j+1} − b_j)` (d(d+1)/2 M, d(d+1) A), on a scratch copy.
+ `TSHIFT(c,t)`: `for j = 0..d−1: for i = d−1 down to j: c_i ← c_i + t·c_{i+1}` (d(d+1)/2 M and A), on a scratch copy; value c_0.
+-`FDINIT(c,δ)`: for k = 0..d: `t_k = t_{k−1} + δ` (A, k ≥ 1) then `p_k = HORNER(c,t_k)`; then the triangular table (d(d+1)/2 A). `FDSTEP`: `for j = 0..d−1: Δ_j ← Δ_j + Δ_{j+1}` (d A).
++`FDINIT(c,δ)`: for k = 0..d: `t_k = t_{k−1} + δ` (A, k ≥ 1) then `p_k = HORNER(c,t_k)`; then the difference table, with the initial parameter fixed at t_0 = 0 and the grid generated in the order k = 0..d: copy v ← (p_0..p_d)
++(free); Δ_0 ← v_0 (free); `for r = 1..d: for j = 0..d−r ascending: v_j ← v_{j+1} − v_j (A); then Δ_r ← v_0` (free copy); d(d+1)/2 A in all. All of
++FDINIT's events (the d grid additions, the d+1 HORNER evaluations in their order, then the table subtractions) share the single operation counter of
++the call `FDINIT.<poly>`. `FDSTEP`: `for j = 0..d−1 ascending: Δ_j ← Δ_j + Δ_{j+1}` (d A; Δ_{j+1} is not yet updated when Δ_j is, so the old value is used).
+ `PMUL(a,b)`: `for i, for j: term = a_i·b_j (M); the first term landing on index i+j initialises it, later ones add (A)` → (|a|)(|b|) M and (|a||b| − (|a|+|b|−1)) A.
+ `PADD`/`PSUB`: result length = the longer operand; for each index present in **both** operands one A; indices present only in the longer operand copy (PSUB: negation if the subtrahend is longer), no counted operation, so the A count is the shorter length. The zero polynomial is the one-entry list `[0]` of declared degree 0; `HORNER` of a degree-0 list is 0 M, 0 A; `PDER` of a degree-0 list is `[0]` with no operation.
+ `PSCALE2(a)`: `r_i = a_i·2` (S each). `PDER(a)`: `r_{i−1} = a_i·i, i = 1..d` (M each; i is an index). `PINT(a)`: `r_{i+1} = a_i ÷ (i+1)` (D each), r_0 = 0.
+@@ -229,8 +237,9 @@
+ b6 vv = v·v; b7 uv = u·v; b8 x′ = uu − vv; b9 y′ = uv·2 (S); b10 σ = uu + vv; b11 σ² = σ·σ; b12 m₁ = u·v₁; b13 m₂ = u₁·v;
+ b14 Np = m₁ − m₂; b15 N_κ = Np·2 (S); b16 x = HORNER(X,t); b17 y = HORNER(Y,t); b18 S = HORNER(SS,t); b19 ok.
+ *C2 (steps c1–c12):* c1 jU = TSHIFT(U-jet,t); c2 jV; c3 jX; c4 jY; c5 jS (each on a fresh copy; the retained jets are never modified);
+-c6 read (no operation) x = jX₀, x′ = jX₁, y = jY₀, y′ = jY₁, S = jS₀, σ = jS₁, U = jU₀, U′ = jU₁, V = jV₀, V′ = jV₁;
+-c7 σ² = σ·σ; c8 m₁ = U·V′; c9 m₂ = U′·V; c10 Np = m₁ − m₂; c11 N_κ = Np·2 (S); c12 ok. *B-FD:* `NOT_APPLICABLE`.
++c6 read (no operation), **full** projection for Cell A and S3: x = jX₀, x′ = jX₁, y = jY₀, y′ = jY₁, S = jS₀, σ = jS₁, U = jU₀, U′ = jU₁, V = jV₀,
++V′ = jV₁; the sequential tapes use the narrower projections **c6a** (S1: x = jX₀, y = jY₀ only) and **c6b** (S2: x = jX₀, x′ = jX₁, y = jY₀, y′ = jY₁,
++σ = jS₁ only); c7 σ² = σ·σ; c8 m₁ = U·V′; c9 m₂ = U′·V; c10 Np = m₁ − m₂; c11 N_κ = Np·2 (S); c12 ok. *B-FD:* `NOT_APPLICABLE`.
+ *Cell B, B-COMP (e1–e12):* e1 f = HORNER(φ,τ); e2 g = HORNER(φ′,τ); e3 ok on g; e4 ψx = HORNER(X,f); e5 ψy = HORNER(Y,f);
+ e6 q₁ = HORNER(dx,f); e7 q₂ = HORNER(dy,f); e8 q₃ = HORNER(sg,f); e9 ψ′x = g·q₁; e10 ψ′y = g·q₂; e11 s = g·q₃; e12 S_inc = HORNER(SS,f).
+ *C1 stand-alone (h1–h13):* h1 f = HORNER(φ,τ); h2 g = HORNER(φ′,τ); h3 ok; h4 ff = f·f; h5 w₁ = 1 − ff; h6 ψ′x = g·w₁; h7 w₂ = g·f;
+@@ -247,7 +256,7 @@
+ |---|---|---|---|
+ | Horner, Bezier, TS, FD (a-steps) | a1, a2 | a1–a5, a9, a10, a11 | a1–a12 |
+ | PH, PHFD, C1 (b-steps) | b16, b17 | b1, b2, b5–b10, b16, b17, b19, b20, b21 | b1–b22 |
+-| C2 (c-steps) | c3, c4, c6 | c3–c6, c12, c13, c14 | c1–c15 |
++| C2 (c-steps) | c3, c4, c6a | c3, c4, c5, c6b, c12, c13, c14 | c1–c5, c6, c7–c15 |
+ 
+ Sequential preparation: Horner and TS run P1–P15; Bezier P1–P15 then BERN of the seven; FD P1–P15 then `FDINIT.<poly>` for
+ X, Y, dx, dy, sg, SS, Nk in that order; PH and C2 as in Cell A; PHFD P1–P11 then `FDINIT.<poly>` for U, V, U1, V1, X, Y, SS in that order.
+@@ -257,8 +266,8 @@
+ S3: all seven); sample 0 is the table's first entry (no operation); the scalar steps then run on the entries. *TS*: `TSHIFT` by
+ h = 1/16 on the **retained** lists of the needed polynomials, replacing them (the multiplier is data, so M); sample 0 reads c_0.
+ *PHFD*: FD tables for U, V, U1, V1, X, Y, SS in P; per sample the needed tables are stepped (S1: X, Y; S2: U, V, X, Y; S3: all
+-seven), then the b-step arithmetic runs on the table entries. *C2*: the retained jets are shifted by h each step (replacing
+-them). *C1 = PHFD* (declared). Sample/increment scheduling: emit sample 0 after P; for k = 1..16 step then sample; inc_k as soon
++seven), then the b-step arithmetic runs on the table entries. *C2*: only the jets the tape constructs are shifted by h each step, replacing the retained ones (S1: jX, jY; S2: jX, jY, jS;
++S3: jU, jV, jX, jY, jS); jets not selected are neither shifted nor read; sample 0 applies the tape's read projection to the unshifted retained jets. *C1 = PHFD* (declared). Sample/increment scheduling: emit sample 0 after P; for k = 1..16 step then sample; inc_k as soon
+ as sample k+1 exists. The wrong-grid defect is caught by an explicit assertion that sample k occurs at exactly k/16 and equals
+ the certified row.
+ **S5/S6 procedures** (capability): each segment's hodograph h·w² by PMUL; x, y, S by PINT; speed |h|g with a sign test K; predicates
+@@ -320,7 +329,7 @@
+ | X-15 | wrap or truncation instead of refusal in W31 | W31 run of the Cell A tape; sequential S1 on PH5 and Cell B stay pending a new reviewer allowance now that §5 names their steps | the reviewer-certified Cell A events below |
+ | X-16 | poisoned cache or partial output after a refusal | W31 refusal: state hash before = after; then a known admissible request equals a fresh run; then the repeat refuses identically | full committed-state comparison |
+ | X-17 | harmonic E2 step reported exact | operator control | class gate |
+-| X-18 | stationary point returns a tangent or curvature | φ_ns at t = 0: DIRECTION = (1,0) OK, TANGENT and CURVATURE `REFUSED(NONREGULAR)` | needs P-1 for literal rows beyond the certificate's statement |
++| X-18 | stationary point returns a tangent or curvature | φ_ns at t = 0: DIRECTION = (1,0) OK, TANGENT and CURVATURE `REFUSED(NONREGULAR)` | the adopted P-1 φ_ns rows (§4) |
+ | X-19 | C1 deviates from B-PH | Cell A | EQ-1 |
+ | X-20 | FD silently run in Cell A | Cell A | status `NOT_APPLICABLE` |
+ | X-21 | perturbed σ cache with unchanged generator | copy of PH5's sg with index 2 changed from 2 to 3; oracle-side identity x′² + y′² = σ² | certificate failure |
+@@ -349,8 +358,7 @@
+   bits and raw ≤ 16384 bits under P4096.
+ * **Layout (new, isolated; not created):** `research/qcg_0/p0/` with files ≤ 150 lines: `ledger.py`, `poly.py`, `arms_a.py`, `arms_b.py`,
+   `arms_seq.py`, `joins.py`, `refs.py`, `o1.py`, `o2.py`, `mutants.py`, `run.py`, `test_p0.py`, `launch.sh`, and `PINS.sha256`.
+-  `PINS.sha256` lists every source file of `p0/`, `launch.sh`, the reference JSON and documents above, the tool paths and
+-  versions; its own hash and the contract's are recorded by the owner out of band, so the manifest has no circularity.
++  The pins file and the tool manifest are specified below; their hashes and the contract's are recorded by the owner out of band.
+ * **Fail-closed launcher (`launch.sh`, written under the implementation GO; specified here).** Files: `PINS.sha256` is
+   **checksum-only** (`<sha256>  <path>` lines for every source file of `p0/`, `launch.sh`, `TOOLS.manifest`, the reference JSON and the
+   documents above); `TOOLS.manifest` lines are `<path>|<exact first line of --version>`. Neither file lists its own hash; the owner
+@@ -360,37 +368,49 @@
+   FAILED, not TIMEOUT. No `--kill-after` is used: the hard wall stays 60 s.
+ 
+ ```bash
+-set -euo pipefail ; set -o noclobber
+-cd /home/john/Projects/hardware/SPU
+-sha256sum -c research/qcg_0/p0/PINS.sha256 >/dev/null                    # aborts on any differing file
++set -u ; set -o pipefail ; set -o noclobber           # no set -e: the finalization path below must always run
++cd /home/john/Projects/hardware/SPU || exit 2
++sha256sum -c research/qcg_0/p0/PINS.sha256 >/dev/null || exit 2                  # nothing is launched on any differing file
+ while IFS='|' read -r tool want; do
+   [ "$("$tool" --version 2>&1 | head -1)" = "$want" ] || { echo "tool mismatch: $tool" >&2; exit 2; }
+-done < research/qcg_0/p0/TOOLS.manifest                                  # aborts on any differing version
+-mkdir -p build/qcg_0
+-LEAF=build/qcg_0/run_01 ; mkdir "$LEAF"                                  # exclusive: the script stops if it exists
+-{ date +%s.%N; git rev-parse HEAD; } > "$LEAF/provenance.txt"            # informational only, never used to classify
+-set +e
++done < research/qcg_0/p0/TOOLS.manifest                                          # nothing is launched on any differing version
++mkdir -p build/qcg_0 || exit 2
++LEAF=build/qcg_0/run_01 ; mkdir "$LEAF" || exit 2                                # exclusive: refuses an existing leaf
++{ date +%s.%N; git rev-parse HEAD; } > "$LEAF/provenance.txt" || exit 2          # informational only
+ /usr/bin/timeout 60 /usr/bin/prlimit --as=1073741824:1073741824 --fsize=4194304 -- \
+   /usr/bin/python3 -B -I research/qcg_0/p0/run.py --out "$LEAF" >"$LEAF/stdout.log" 2>"$LEAF/stderr.log"
+-RC=$? ; set -e
+-echo "$RC" > "$LEAF/exit.code"
+-OVER=0 ; [ "$(du -sb "$LEAF" | cut -f1)" -le 10485760 ] || { OVER=1 ; : > "$LEAF/OUTPUT_CAP" ; }
+-if   [ "$OVER" -eq 1 ]; then MARK=FAILED
++RC=$?
++# ---- single finalization path: every step is attempted; nothing is inferred if any evidence write fails ----
++PRC=0 ; PINS_AFTER=$(sha256sum -c research/qcg_0/p0/PINS.sha256 2>&1 | head -c 1024) || true
++sha256sum -c research/qcg_0/p0/PINS.sha256 >/dev/null 2>&1 || PRC=1               # post-run pin check, always attempted
++USED=$(du -sb "$LEAF" 2>/dev/null | cut -f1) ; USED=${USED:-99999999}
++CAUSE=""
++if [ $((USED + 4096)) -gt 10485760 ] || [ "$RC" -eq 90 ] || [ "$RC" -eq 153 ] || [ -e "$LEAF/CAP_BREACH" ]; then CAUSE=OUTPUT_CAP ; fi
++if   [ -n "$CAUSE" ]; then MARK=FAILED
+ elif [ "$RC" -eq 0 ] && [ -f "$LEAF/RUNNER_DONE" ]; then MARK=COMPLETE
+ elif [ "$RC" -eq 124 ]; then MARK=TIMEOUT
+ else MARK=FAILED; fi
+-: > "$LEAF/$MARK"
++W=0
++echo "$RC" > "$LEAF/exit.code" || W=1
++{ echo "pins_after_rc=$PRC"; printf '%s\n' "$PINS_AFTER" | head -c 1024; } > "$LEAF/pins_after.txt" || W=1   # bounded: <= 1 KiB + header
++if [ -n "$CAUSE" ]; then : > "$LEAF/$CAUSE" || W=1 ; fi
++: > "$LEAF/$MARK" || W=1
+ N=0 ; for m in COMPLETE FAILED TIMEOUT ; do if [ -e "$LEAF/$m" ]; then N=$((N+1)); fi ; done
+-sha256sum -c research/qcg_0/p0/PINS.sha256 > "$LEAF/pins_after.txt" 2>&1 || echo PIN_DRIFT >> "$LEAF/pins_after.txt"
+-[ "$N" -eq 1 ] || { echo "marker count $N" >&2; exit 3; }
++if [ "$W" -ne 0 ] || [ "$N" -ne 1 ]; then echo "FINALIZE_FAILED write=$W markers=$N" >&2 ; exit 3 ; fi
++case "$MARK" in COMPLETE) exit 0;; TIMEOUT) exit 11;; *) exit 10;; esac
+ ```
+ 
+-  The marker is written once, after the exit status is known; an inability to write evidence is a failure of the launcher and is
+-  reported, never assumed complete. The post-run pin check is always attempted and recorded; drift is flagged and does not change
+-  the marker. **Output cap enforcement:** `RLIMIT_FSIZE` (4 MiB per file) is set by `prlimit` and applies to the runner's writes to
++  The finalization path runs after every launch and always attempts the post-run pin check; it reserves 4 KiB for its own metadata
++  (the `+ 4096` in the cap test) and writes only bounded files (`exit.code`, `pins_after.txt` ≤ 1 KiB of detail, at most one cause file, exactly one
++  marker), so the aggregate cap covers the final evidence. An inability to persist any of them is `FINALIZE_FAILED` (launcher exit 3): completion is
++  never inferred, and the marker count must be exactly 1. Pin drift is recorded in `pins_after.txt` and does not change the marker. **Output cap enforcement:** `RLIMIT_FSIZE` (4 MiB per file) is set by `prlimit` and applies to the runner's writes to
+   stdout, stderr and artifacts (prevention, per file); the runner keeps its own running total of bytes it writes and stops at
+-  8 MiB (prevention, total); the launcher's `du` check against 10 MiB, made before the marker is chosen, is detection. Exceeding any of these yields FAILED
+-  and an `OUTPUT_CAP` file. Oracles run in the same process under the same wall, memory and output limits.
++  8 MiB (prevention, total); the launcher's `du` check against 10 MiB, made before the marker is chosen, is detection. **Runner contract for
++  caps:** the runner does all writing through one function that checks the running total and each file's size before every write; on a
++  limit breach or any write `OSError` it creates, if it can, the empty file `CAP_BREACH` and exits **90**; it installs no SIGXFSZ handler (a kernel
++  per-file-limit kill is status 153); it never writes `RUNNER_DONE` after a breach or write error, and `RUNNER_DONE` is the last file written.
++  The launcher treats status 90, status 153, `CAP_BREACH`, or a leaf within 4 KiB of 10 MiB as `OUTPUT_CAP`: the marker is FAILED, an
++  `OUTPUT_CAP` file is written, and COMPLETE is impossible. Runner exit codes are therefore 0, 90 (cap), or 1–99 otherwise, never 124. Oracles run in the same process under the same wall, memory and output limits.
+ * **Non-launching prerequisites (probed 2026-10-23; no experiment code):** `/usr/bin/timeout` 9.12, `/usr/bin/prlimit` 2.42.4,
+   `/usr/bin/python3` 3.14.8; `/usr/bin/time` absent and unused; `build/qcg_0` absent. Re-verified inside `launch.sh`, which stops on
+   any failure. If a later deterministic job were to exceed 60 s it would fall under the repository detached-runner rule.
+@@ -398,7 +418,14 @@
+   event ids, attempt ledgers, the Pareto evaluation, mutant results, terminal marker; copy from gitignored `build/` into
+   `research/qcg_0/` after review.
+ 
+-## 10. Independent review checklist (revision 3)
++## 10. Independent review checklist (revision 3.2)
++
++0. **Revision 3.2 corrections (new):** B1 C2 reads and evolution are tape-specific and reference only constructed jets (c6a, c6b, full c6; jets
++   shifted per tape); B2 FDINIT's initial parameter t_0 = 0, table traversal and single operation counter are explicit; B3 the runner cap contract
++   (exit 90, no SIGXFSZ handler, `CAP_BREACH`, `RUNNER_DONE` last) and the launcher's `OUTPUT_CAP` attribution preclude COMPLETE; B4 one
++   finalization path with bounded metadata (4 KiB reserve), the post-run pin check always attempted, no `set -e`, exactly one marker, and
++   `FINALIZE_FAILED` when evidence cannot be persisted. Also: the stale PINS-layout sentence and the X-18 wording are removed, and event ids
++   carry their route context.
+ 
+ 1. §2: administrative checks (zero-divisor guard, parity, bounds, imports, degree assertions) are not K and not counted; semantic
+    tests named in the text are K; preparation K = 0; the liveness rule for L_peak is reproducible.

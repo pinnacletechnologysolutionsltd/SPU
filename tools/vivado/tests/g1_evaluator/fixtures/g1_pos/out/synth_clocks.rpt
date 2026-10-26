@@ -1,0 +1,52 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Oct 22 23:35:23 2026
+| Host         : john-MacBookAir running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_clocks -file /home/john/spu-transfer/spu-research-baseline/build/vivado/g1_pos_01/synth_clocks.rpt
+| Design       : spu_a7_tensegrity_link_top
+| Device       : 7a100t-fgg676
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Clock Report
+
+
+Attributes
+  P: Propagated
+  G: Generated
+  A: Auto-derived
+  R: Renamed
+  V: Virtual
+  I: Inverted
+  S: Pin phase-shifted with Latency mode
+
+Clock      Period(ns)  Waveform(ns)    Attributes  Sources
+sys_clk    20.000      {0.000 10.000}  P           {sys_clk}
+guard_clk  40.000      {0.000 20.000}  P,G         {guard_clk_div_reg/Q}
+
+
+====================================================
+Generated Clocks
+====================================================
+
+Generated Clock     : guard_clk
+Master Source       : guard_clk_div_reg/C
+Master Clock        : sys_clk
+Divide By           : 2
+Generated Sources   : {guard_clk_div_reg/Q}
+
+
+
+====================================================
+User Uncertainty
+====================================================
+
+
+
+====================================================
+User Jitter
+====================================================
+
+

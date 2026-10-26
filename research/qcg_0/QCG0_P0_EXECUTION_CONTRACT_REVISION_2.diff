@@ -1,0 +1,613 @@
+--- /tmp/claude-1000/-home-john-Projects-hardware-SPU/90e2eb5e-0dd3-4947-90b6-b9c069ccb101/scratchpad/QCG0_P0_CONTRACT.v1.md	2026-10-23 00:37:24.331543997 +1300
++++ QCG0_P0_EXECUTION_CONTRACT.md	2026-10-23 00:39:34.848954196 +1300
+@@ -1,290 +1,353 @@
+-# QCG-0 P0 execution contract (draft for independent review)
++# QCG-0 P0 execution contract (draft, revision 2, for independent review)
+ 
+ Date: 2026-10-23. Status: **DRAFT. Preparation only. Freeze, implementation and execution remain HOLD.**
+-Author: Claude. Authority: owner decision "QCG-0 — P0 execution-contract preparation GO" after the Revision 3 consistency PASS.
+-No fixture was regenerated, no model was run, no benchmark was performed, and no unrelated campaign or hardware was touched.
+-The only computation while preparing this contract was reading files, `sha256sum`, and tool-version probes (§9).
+-
+-This contract fixes *how P0 will be measured*. The mathematics, the fixtures and the reference values are not reopened.
++Author: Claude. Revision 2 responds to the independent review disposition REVISE
++(`P0_CONTRACT_REVIEW_CERTIFICATE.md`). Revision 1 had SHA-256 `21fb45af84d609c3c127010a10b0c2824aaac4772ab8d95a4abd9f5d8d2b8bfc`.
++No fixture was regenerated, no model was run, no benchmark was performed; no unrelated campaign or hardware was touched.
++Nothing here is an owner decision: every policy marked **proposed** stays proposed until D-1…D-6 (§11) are answered.
+ 
+ ## 0. Pins and precedence
+ 
+-    eade4b5f0957c3679c94b67d8f4b1f6b6d005d65316a5337e6c8dfb9370b98dd  research/qcg_0/QCG0_PREREGISTRATION.md (Revision 3.1, editorial)
+-    5a26fc127fc1685e058d247a7549db489f4f09512b1aea30ac87647d5f28ec38  Revision 3 text (reviewed, PASS)
+-    91974a20999a9fe2312d8240b1111b58242d84f5902cf57eb8726559f5408a40  research/qcg_0/REVISION3_REVIEW_CERTIFICATE.md
+-    218ceaf07d1c68c0b37c4b3cbc3cc62ddf93c8b66eea22d3c59d1976e7b2c20c  research/qcg_0/REVISION3_REVIEW_MANIFEST.json
++    eade4b5f0957c3679c94b67d8f4b1f6b6d005d65316a5337e6c8dfb9370b98dd  research/qcg_0/QCG0_PREREGISTRATION.md (Revision 3.1)
++    86f95968b76ff8fa00fd4a763759b876cb95348014e7fa292f5368c412329523  research/qcg_0/P0_CONTRACT_REVIEW_CERTIFICATE.md
++    4ad13a33cc04d6277c61ca6897af4dd2933e1017e384e20b0814826919ecb8ca  research/qcg_0/P0_CONTRACT_REVIEW_EXPECTATIONS.json
++    314318c9eb441762c0df323b95f09a64c99e696a6446944a5b9ca6198ef44c93  research/qcg_0/P0_CONTRACT_REVIEW_MANIFEST.json
++    95ccad35939af6f01a00619aabe8f3f3d7da30a972985cd1db7a761f1058d946  research/qcg_0/P0_CONTRACT_REVIEW_AUTHORIZATION.md
+     8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34  research/qcg_0/QUINTIC_FIXTURE_VALUES.json
+     a66af3d68da5a7dba439818778af9e8fe70244e3dc2d8250ea891354124a0b46  research/qcg_0/REVISION2_FIXTURE_VALUES.json
+ 
+-(The remaining certificate, manifest and addendum hashes are in pre-registration §0.2 and are unchanged.) The Revision 3.1
+-text differs from the reviewed Revision 3 text only by the editorial changes in `QCG0_PREREGISTRATION_REVISION_3_1.diff`.
+-Where this contract and the pre-registration differ, §1 lists the differences explicitly and the contract governs
+-**only** for measurement procedure; mathematical statements stay with the pre-registration.
+-
+-## 1. Findings from preparing the contract (for the owner and reviewer)
+-
+-1. **Label correction.** The 28/27 hand count is the arithmetic of *B-Horner* (every polynomial cached in power basis). The
+-   26/23 count is the *factored* route that B-PH and C1 share. The pre-registration labelled 28/27 as B-PH; corrected in
+-   Revision 3.1.
+-2. **Candidate equivalence in Cell A.** Under the frozen algorithms (§5) C1 performs exactly B-PH's operations in Cell A, and
+-   in the sequential control exactly B-PHFD's. The typed layer adds no counted operation because every arm already returns the
+-   same flags. P0 can therefore report in Cell A only (i) *equivalent to established PH evaluation* or (ii) a defect in the
+-   equivalence; it **cannot** show a candidate-specific arithmetic advantage there. This is a consequence of the design, not a
+-   finding about the mathematics, and it is stated before any run. Cell B is where C1 differs from the conventional arms.
+-3. **FD in Cell A.** Forward differencing has no meaning for random-access queries; any fallback is Horner. P0 therefore
+-   records FD as `NOT_APPLICABLE` in Cell A (it is excluded from the comparator set and costs nothing there). This replaces the
+-   pre-registration §9.1 phrase "re-initialized and charged where it does not". The negative control is the sequential tape.
+-4. **Consequence of the shift guard.** Under the literal-constant policy (§2) the factored route spends 2 shifts per query (`2·UV`,
+-   `2·N_raw`) where B-Horner spends 0 per query, because B-Horner folds the factor 2 into cached coefficients once, in
+-   preparation (3 shifts for the three N_κ coefficients, plus those for y′). In the total view over a 16-query tape the factored
+-   route's shift count is therefore higher than B-Horner's, so against B-Horner it cannot be a strict Pareto win; against B-PH,
+-   C1 ties. This is the guard working as intended.
+-5. **Bézier and expanded-composite arms are expensive** by construction (de Casteljau costs d(d+1)/2 multiplications per
+-   polynomial). They are included because the pre-registration lists them; they are not expected to be the best conventional arm.
+-
+-## 2. Operation ledger (accounting table)
+-
+-All arithmetic is in one instrumented exact rational class `Q`: reduced numerator and positive denominator, canonical form
+-after **every** operation, unbounded integers inside the Profile P4096 limits of §3. Every arm, every phase and the
+-conformance tests use the same class and the same counting rules. No arm has a shortcut another lacks, and there is no
+-data-dependent short-circuit (multiplication by 0 or 1, adding 0, skipping zero coefficients all still count).
++All earlier pins (certificates, manifests, packet, Revision 3 review) are in pre-registration §0.2 and unchanged. Where this
++contract and the pre-registration differ, the contract governs **measurement procedure only**; mathematics stays with the
++pre-registration. The reviewer's four query hand counts (28/27, 26/23, 21/18, 33/31) are accepted as correct for the displayed
++routes.
++
++## 1. Findings carried from preparing and reviewing the contract
++
++1. The 28/27 count is B-Horner (all polynomials cached in power basis); the 26/23 count is the factored route of B-PH and C1.
++2. Under the frozen algorithms C1 performs B-PH's operations in Cell A and PHFD's in the sequential control (**proposed
++   design consequence, pending D-1**). P0 can then report equivalence there but not a candidate-specific arithmetic advantage;
++   Cell B is where C1 differs.
++3. FD is `NOT_APPLICABLE` in Cell A (**proposed P0 scope, pending D-2**; this is a chosen policy, not a claim that no
++   random-access finite-difference method exists).
++4. *Conditional prediction (not a result):* if the preparation program of §5 is adopted, B-PH's total-view shift count over a
++   16-query tape exceeds B-Horner's (author's analytic P-phase cross-check in §7: B-Horner 8 shifts in P and 0 per query, B-PH
++   5 in P and 2 per query), so B-PH could not be a strict Pareto win against B-Horner. This depends on §2's proposed policy.
++5. Every defect the reviewer listed (division width, aggregation, stage identity, status grammar, reference mapping, mutant
++   fixtures, launcher) is addressed below; W31 stage tables remain **unavailable until the reviewer derives them from the
++   frozen §3/§5 semantics**.
++
++## 2. Operation ledger (proposed accounting; pending D-3/D-4/D-5)
++
++All arithmetic is in one instrumented exact rational class `Q`: canonical form (reduced numerator `n`, positive denominator
++`d`, zero as 0/1) after **every** operation. Every arm, phase and conformance test uses the same class and rules. No data-dependent
++short-circuit exists: multiplying by 0 or 1, adding 0, or skipping zero coefficients all still count. `bn(x)` and `bd(x)` are
++the bit-lengths of |numerator| and of the denominator, with `bn(0) = bd(0) = 1` everywhere (W, G, T).
+ 
+-| Category | Counts | Rule |
+-|---|---|---|
+-| **M** | multiplications | rational × rational where the multiplier is not the literal constant 2 or ½ (see S). Squares count as M. |
+-| **A** | additions and subtractions | a negation is free and uncounted in every arm. |
+-| **S** | shifts | a multiplication or division whose operand is the **literal constant 2 or ½ written in this contract's algorithm text** (e.g. the `2` in `y′ = 2·U·V`, `N_κ = 2·N_raw`, `ỹ′ = 2·φ′·φ`). Cost 1 each, and parity-normalised: no gcd call. |
+-| **D** | divisions | rational ÷ rational that is not a literal-½ shift (including integer divisors such as 3, 4, 5 and divisions whose value happens to be 2). |
+-| **K** | comparisons and sign/zero tests | each test counts 1. |
+-| **G** | normalization work | every M, A and D operation performs exactly one gcd on its raw numerator and denominator. Report `G_calls` and `G_bits` (sum of the bit-length of the larger raw operand over all calls). Shifts and comparisons call no gcd. |
+-| **W** | operand widths | `W_bits` = Σ over M, A, D operations of the schoolbook proxy of the raw integer products: M and D: bn(a)bn(b) + bd(a)bd(b); A: bn(a)bd(b) + bn(b)bd(a) + bd(a)bd(b) (bn, bd = bit-lengths of the numerator magnitude and denominator, minimum 1); `W_peak_red` = largest reduced numerator or denominator bit-length ever stored; `W_peak_raw` = largest raw pre-reduction bit-length ever formed. |
+-| **P / Q phase** | every operation is tagged | **P** = preparation (before the first query: coefficient derivation, integration, squaring, Bernstein conversion, composition, difference-table initialisation, cache build); **Q** = query-time. |
+-| **T** | storage | `T_total` = serialized bits of every rational the arm retains between queries (sum of bn + bd + 1 sign bit per rational). `T_input` (the common certified generator, identical for every arm) and the split into authoritative and derived-cache bits are reported but are not part of the guard. |
+-| informational | `M2` | the count of M operations whose multiplier *value* is a power of two (including ½, 2, 4, 1/16), reported separately to show sensitivity to the literal-constant rule. It is not in the guard. |
+-
+-**Classification rule (answers "do numerical values equal to 2 or ½ qualify?").** *No.* S depends only on the literal
+-constant in the contract's algorithm text. A multiplication whose operand merely **evaluates** to 2 or ½ (the query parameter
+-t = ½, a coefficient equal to 2, the step h = 1/16, a loop index) is M or D according to its role. A constant that arises from
+-an index, a binomial, a degree or data is M or D whatever its value; for example the integration step `÷(i+1)` is always D and
+-the derivative step `i·a_i` always M. This avoids data-dependent counting and gaming. The rule is applied identically to
+-every arm.
+-
+-**Views.** (i) *Total view* = P + all Q operations over the frozen tape; (ii) *Query view* = Q only, per query. Both are
+-reported for every category. A claimed win uses the total view; the query view is shown beside it. Phase attribution and
+-totals must reconcile exactly (a ledger invariant gate).
+-
+-**Pareto guard set G\*** (all must be ≤ the comparator in the total view): M, A, S, D, K, G_calls, G_bits, W_bits,
+-W_peak_red, W_peak_raw, T_total. **Trigger set Tr** (a ≥20% reduction in any one of these, with G\* satisfied, raises the
+-exploratory signal): M, A, D, K, T_total, W_peak_red. **S is in the guard and not in the trigger set** (owner decision, P0);
+-a shift-only improvement never triggers the signal, and any rise in S blocks a strict Pareto claim. A lower T_total bought with
+-higher M or A is a TRADE-OFF.
+-
+-**Comparator selection (frozen before any run).** For a candidate on a cell, the comparator is the single applicable
+-conventional arm that is lexicographically smallest in the total view on (M, A, D, K, T_total, W_peak_red). The per-category
+-virtual best is the secondary view. Categories are never summed.
+-
+-## 3. Arithmetic, width and refusal rules
+-
+-* **Profile P4096** (the P0 run): reduced numerators/denominators ≤ 4096 bits, raw pre-reduction temporaries ≤ 16384 bits. A
+-  violation raises `ARITH_LIMIT` with a stage id. **Profile W31** (control, §8): reduced ≤ 2³¹−1, raw ≤ 2⁶³−1.
+-* **Normalization stage:** immediately after each M, A, D (the gcd of §2); the raw size is measured before it, the reduced size
+-  after.
+-* **Stage ids:** `arm.phase.procedure.opindex`, where `opindex` is the 1-based position of the operation in the procedure's
+-  frozen operation order of §5. The *first* operation (in that order, per query) whose raw or reduced size exceeds the profile
+-  bound is the refusal stage.
+-* **Atomicity.** A refused query returns no values and changes no state, cache or ledger-visible result; a repeat gives the
+-  same answer as a fresh run. A refusal in phase P marks that arm `PREPARATION_REFUSED`; its queries are not run and its
+-  ledger up to the refusal is retained. A refusal never wraps, truncates or returns a partial output. A refusal is not an
+-  inequality or an invalid geometry.
+-* **Statuses** (disjoint): `OK`, `UNDEFINED` (a required reduction undefined; not applicable in P0), `REFUSED(code)` with
+-  `ARITH_LIMIT`, `NONMONOTONE`, `NONREGULAR`, `NOT_APPLICABLE`, and `INVALID(code)` for exact division by zero or malformed input.
+-* **Division discipline.** The only divisions in P0 are the unit-tangent components (`x′/σ`, `y′/σ`) in S2/S3, and the integer
+-  divisions of preparation. Division by zero cannot occur on certified fixtures and is `INVALID(DIV_ZERO)` if constructed.
+-
+-## 4. Output contracts (identical for every arm)
+-
+-* **Cell A (per query t):** the nine values `(x, y, x′, y′, σ², σ, S(t)−S(0), N_κ, D_κ)` plus the flag `ok = (σ ≠ 0)` (1 K).
+-  `N_κ = 2·N_raw`, `D_κ = σ²` (the same stored value as the σ² output, no extra operation). `S(0)=0`, so the arc-length
+-  output is `S(t)` with no subtraction. **No arm forms a curvature quotient.** The reviewer's `cell_A` and
+-  `CellA_adapted_true_curvature_pair` are the references (index 7 doubled).
+-* **Cell B (per τ):** `(ψx, ψy, ψ′x, ψ′y, s_signed, s_nonneg, S_inc)` plus `ok = (φ′(τ) ≥ 0)` (1 K). `s_nonneg = s_signed` when
+-  `ok`, else `REFUSED(NONMONOTONE)` for the whole query. `S_inc = S(φ(τ)) − S(φ(0)) = S(φ(τ))`. Every arm computes `φ′(τ)` for
+-  the flag unless it already holds that value for the products.
+-* **Sequential (S1–S3), dyadic t = k/16, k = 0..16:** S1 `(x,y)`; S2 adds `(x′,y′,σ)` and `T = (x′/σ, y′/σ)` (2 D per sample in
+-  every arm); S3 adds `(N_κ, D_κ)` per sample and the arc increment `S((k+1)/16) − S(k/16)` for k = 0..15 (null at k = 16; 1 A
+-  per k ≤ 15 once the S samples exist).
+-* **S4–S6** are capability and correctness tasks (retimed traversal with φ_ns and φ_rev, the chain CH1, joins b1–b9, loops L0/L1,
+-  and the gated predicates of §5 of the pre-registration): outputs compared with the reviewer's references; their costs are
+-  recorded but are not screen cells.
+-
+-## 5. Frozen algorithms
+-
+-Helpers (their operation order defines stage ids and ledger conformance, §7). `c` is an ascending coefficient list of
+-declared degree d (the highest nonzero index); **no zero-coefficient skipping**.
+-
+-* **HORNER(c,t):** `acc ← c_d; for i = d−1..0: acc ← acc·t + c_i` → d M, d A.
+-* **DECAS(b,t)** (Bernstein coefficients b_0..b_d): for level r = 1..d, for j = 0..d−r: `b_j ← b_j + t·(b_{j+1} − b_j)` → d(d+1)/2 M,
+-  d(d+1) A.
+-* **TSHIFT(c,t)** (value at c_0, derivatives in the coefficients): `for j = 0..d−1: for i = d−1 down to j: c_i ← c_i + t·c_{i+1}` →
+-  d(d+1)/2 M, d(d+1)/2 A.
+-* **FDINIT(c,δ):** values p(kδ), k = 0..d, by HORNER at `t_k = t_{k−1} + δ` (d A for the points), then the forward-difference
+-  table (d(d+1)/2 A). **FDSTEP(Δ):** for j = 0..d−1: `Δ_j ← Δ_j + Δ_{j+1}` → d A.
+-* **Preparation primitives:** polynomial product (schoolbook, all products counted), derivative (`i·a_i`), integration (`a_i ÷ (i+1)`),
+-  composition by Horner on polynomials, power→Bernstein (`b_j = Σ_{i≤j} C(j,i)/C(d,i)·a_i`, every term counted).
++**Raw products and the W proxy (one rule, no fallback).** Each operation forms the following integer values; "raw size" is the
++bit-length of the largest of them. `W_bits` adds, per M/A/D/K operation, the schoolbook proxy of its integer products:
+ 
+-**Common source.** The input is the certified generator `(U, V, h = 1, r_0 = (0,0))` and, for Cell B, the polynomial φ.
+-Every arm derives its own form in phase P with these primitives, from the same source.
++| Op | Integer products formed (raw values) | W_bits proxy |
++|---|---|---|
++| M a·b | n_a·n_b, d_a·d_b | bn(a)bn(b) + bd(a)bd(b) |
++| A a±b | n_a·d_b, n_b·d_a, their sum or difference, d_a·d_b | bn(a)bd(b) + bn(b)bd(a) + bd(a)bd(b) |
++| D a÷b (b≠0) | n_a·d_b, d_a·n_b (sign moved to the numerator) | bn(a)bd(b) + bd(a)bn(b) |
++| K compare a?b (two rationals) | n_a·d_b, n_b·d_a | bn(a)bd(b) + bn(b)bd(a) |
++| K sign or zero test against 0 | none | 0 |
++| S ×2 or ÷2 (literal) | none (parity normalization: if the relevant half is even halve it, otherwise double the other part) | 0 |
+ 
+-**Cell A (per query t).** `ok` and `σ²` as in §4 for every arm.
++**Categories.**
+ 
+-| Arm | Retained state (built in P) | Query procedure (frozen order) |
++| Category | Counts | Rule |
+ |---|---|---|
+-| **B-Horner** | power coefficients of x, y, x′, y′, σ, S, N_κ (N_κ with its factor 2 folded in during P) | x, y, x′, y′, σ, S, N_κ by HORNER; σ² = σ·σ; ok. Hand count 28 M, 27 A, 1 K. |
+-| **B-Bezier** | Bernstein coefficients of the same seven polynomials | DECAS each; σ² = σ·σ; ok. |
+-| **B-TS** | power coefficients of the same seven | TSHIFT each to t (copy of c), read c_0; σ² = σ·σ; ok. |
+-| **B-PH** | coefficient lists of U, V, U′, V′ and power coefficients of x, y, S | u, v, u₁, v₁ by HORNER; uu = u·u; vv = v·v; uv = u·v; x′ = uu − vv; y′ = uv·2 (**S**); σ = uu + vv; σ² = σ·σ; Np = u·v₁ − u₁·v; N_κ = Np·2 (**S**); x, y, S by HORNER; ok. Hand count 26 M, 23 A, 2 S, 1 K. |
+-| **C1** | the same as B-PH | identical to B-PH, with the typed-law status checks being the same `ok` flag (no extra operation). **Declared equivalent**; the harness asserts ledger equality. |
+-| **C2 (jets)** | jets (order = degree) of U, V (order 2), x (4), y (5), S (5) | TSHIFT each jet to t; x = c_0 of the x-jet, x′ = its c_1; y, y′ likewise; S = c_0, σ = c_1 of the S-jet; U, U′, V, V′ from the U, V jets; σ² = σ·σ; Np = U·V′ − U′·V; N_κ = Np·2 (**S**); ok. (Derivatives are read, not recomputed; this is the only shared-computation route the jet arm has.) |
+-| **B-FD** | — | `NOT_APPLICABLE` (§1 item 3). |
+-
+-**Cell B (per τ).** φ = (4t+18t²+27t³)/49 with φ′ = ((2+9t)/7)² cached as a quadratic.
++| **M** | multiplications | any multiplication that is not the literal ×2 or ×½ of the algorithm text (squares included) |
++| **A** | additions and subtractions | a negation is free and uncounted in every arm |
++| **S** | shifts | exactly the **literal constants 2 and ½ written in this contract's algorithm text**, cost 1, no gcd |
++| **D** | divisions | any division other than literal ÷2; integer divisors (3, 4, 5, …) and values that happen to equal 2 are D |
++| **K** | comparisons | K counts each ordered comparison or sign/zero test, whether or not it forms products |
++| **G** | normalization | every M, A and D invokes exactly one gcd on the raw numerator and raw denominator (no integer shortcut). `G_calls` counts invocations; `G_bits` sums, per call, the larger raw bit-length of the two arguments. Shifts and K invoke none. |
++| **W** | widths | `W_bits` (additive, above); `W_peak_raw` = largest raw size over all events; `W_peak_red` = largest reduced numerator or denominator stored or formed, **including imported inputs**. |
++| **T** | storage | `T_ret_peak` = maximum, over the observation points "end of P" and "after each completed Q request", of the retained-state bits: Σ over distinct retained rational objects of (bn + bd + 1 sign bit). Scratch (per-query temporaries, TSHIFT copies, copies of coefficient lists) is **excluded**; an object counts once only where §5 declares an alias (for example D_κ is the σ² object), otherwise every stored rational counts separately. |
++| **L** | live scalars | `L_peak` = largest number of simultaneously live rationals (retained + scratch). Reported, not guarded. |
++| **M2** | informational | M operations whose multiplier *value* is a power of two (2, ½, 4, 1/16, …). Reported only. |
++
++**Classification rule (do values equal to 2 or ½ qualify?)** No. S depends only on the literal constant in the algorithm text.
++A multiplier that merely **evaluates** to 2 or ½ (the parameter t = ½, a coefficient equal to 2, the step 1/16) is M or D.
++A constant that comes from an index, a binomial or the degree is M or D whatever its value (`÷(i+1)` is D, `i·a_i` is M).
++Applied identically to every arm.
++
++**Phases and aggregation.** Every operation carries a phase tag, **P** (preparation, before the first query) or **Q**. The
++*total view* of an additive category is P + Q; of a peak category (`W_peak_*`, `T_ret_peak`, `L_peak`) it is the maximum over
++P and Q (with imports counted in P); `T_ret_peak` already ranges over all observation points. The *query view* is Q only, per
++request. Both are reported. Phase attribution reconciles by type (LU-P in §7).
++
++**Guard set G\*** (all must be ≤ the comparator in the total view): M, A, S, D, K, G_calls, G_bits, W_bits, W_peak_red,
++W_peak_raw, T_ret_peak. **Trigger set Tr** (a ≥ 20% reduction in one, with G\* satisfied, raises the exploratory signal): M, A,
++D, K, T_ret_peak, W_peak_red. **S is guarded and not a trigger.** A lower T_ret_peak bought with higher M or A is a TRADE-OFF.
++
++**Comparator (proposed deterministic ranking; not a claim that a componentwise best exists).** Eligible comparators are
++conventional arms with status OK on every matched request (never `REFUSED`, `NOT_APPLICABLE` or `PREPARATION_REFUSED`). The
++comparator is the eligible arm lexicographically smallest on (M, A, D, K, T_ret_peak, W_peak_red) in the total view; ties are
++broken by arm id in ascending ASCII order. The per-category virtual best over eligible arms is the secondary view.
++Categories are never summed.
++
++**Sharing metric (registered in pre-registration §11).** `J_c/Σ_c` needs executable standalone routes and per-group
++preparation dependencies that this contract does not define. **Proposed: DEFER to a follow-on contract (D-6).** P0 then
++reports the per-arm total-view ledgers only and makes no sharing claim. If D-6 is refused, a dependency table per arm must be
++reviewed before implementation.
++
++## 3. Arithmetic, width, refusal and attempt accounting
++
++* **Profiles.** All bounds are on bit-length of the magnitude. P4096: reduced ≤ 4096 bits, raw ≤ 16384 bits. W31 (control):
++  reduced ≤ 31 bits and raw ≤ 63 bits, which is exactly the pre-registration's "reduced ≤ 2³¹−1, raw ≤ 2⁶³−1" in magnitude.
++* **Imports.** Before preparation each source or constant rational is checked against the reduced bound in the arm's import
++  order (source U then V ascending coefficients, then φ for Cell B, then the constant weights of §5 in order of first use).
++  A failure is `ARITH_LIMIT` at event `arm.P.import.<name>.<i>`.
++* **Event id.** `arm.phase[.qNN].step.k[.sub]`: `qNN` the 0-based position in the frozen tape, `step` the named step of §5
++  (P-steps `P1…`, Q-steps as labelled), `k` the 1-based index of the Q operation within that step's primitive in the frozen
++  loop order, `sub` the sub-check below. This identifies repeated helper calls uniquely.
++* **Sub-check order inside an operation** (the first failing one is the refusal point; "raw" compares against the raw bound,
++  "red" against the reduced bound): M: r1 = n_a·n_b, r2 = d_a·d_b, gcd, e1 reduced n, e2 reduced d. A: r1 = n_a·d_b,
++  r2 = n_b·d_a, r3 = r1 ± r2, r4 = d_a·d_b, gcd, e1, e2. D: zero test first (n_b = 0 → `INVALID(DIV_ZERO)`, no sizes
++  examined), r1 = n_a·d_b, r2 = d_a·n_b, gcd, e1, e2. S: e1, e2 of the result. K (two rationals): r1 = n_a·d_b, r2 = n_b·d_a.
++  Cancellation does not rescue an oversized product.
++* **Request granularity.** A *request* is the atomic unit: Cell A one request per query; Cell B one per τ; sequential one per
++  sample; S4 stationary controls three separate requests `DIRECTION`, `TANGENT`, `CURVATURE`; φ_bad three: `ORIENTED_LENGTH`
++  (returns B(t), exact single polynomial), `ACCUMULATED_LENGTH` (single-polynomial class, refuses `OUT_OF_DOMAIN`),
++  `PIECEWISE_LENGTH` (piecewise class, exact: B on [0,½], 8/3 − B on [½,1]); S5/S6 one per chain sample or per predicate.
++* **Status grammar (exhaustive).** `status ∈ {OK, REFUSED, INVALID, NOT_APPLICABLE}`. REFUSED carries one code from
++  {`ARITH_LIMIT`(event id), `NONMONOTONE`, `NONREGULAR`, `OUT_OF_DOMAIN`, `NOT_PRIMITIVE_RETIMING`, `APPROX_NOT_EXACT`}; INVALID
++  one from {`DIV_ZERO`, `MALFORMED`}. A refusal in phase P marks the arm `PREPARATION_REFUSED(<REFUSED code and event id>)`: no
++  request is issued to it. Every (arm, request) yields exactly one status. `NOT_APPLICABLE` is a status, never a refusal code.
++  APPROX/E2 use (`REFUSED`, `APPROX_NOT_EXACT`) when an exactness-claiming request is made of an E2 object.
++* **Atomicity and evidence.** *Committed state* (retained lists, caches, results) is changed only by an OK request or a
++  completed preparation. A refused request returns no values and leaves committed state bit-identical (checked by a state
++  hash before and after, then by a known admissible request whose output and ledger equal those of a fresh run, then by a
++  repeat of the refused request giving the same refusal). *Diagnostic evidence* is append-only and never rolled back: the
++  attempt ledger records the status, the event id and the operations the attempt consumed. Comparative ledgers (§2) count
++  only OK requests and completed preparations; attempts are reported separately. Global resource counters (operations,
++  wall time, output bytes) never reset on a refusal, a warm-up or a timed repeat.
++* **Divisions in P0.** The only Q-phase divisions in P0 are `x′/σ` and `y′/σ` in S2/S3. Cell A and Cell B Q-phase D = 0
++  for every arm. Preparation legitimately uses D (integration).
++
++## 4. Output contracts and the reference mapping
++
++* **Cell A (per query t):** `(x, y, x′, y′, σ², σ, S(t)−S(0), N_κ, D_κ)` plus `ok = (σ ≠ 0)` (one sign test, K). `N_κ = 2·N_raw`,
++  `D_κ` aliases the σ² object. S(0)=0, so the arc output is S(t) with no subtraction. No arm forms a curvature quotient.
++  **Reference mapping:** the primary reference is `REVISION2_FIXTURE_VALUES.json` → `CellA_adapted_true_curvature_pair`
++  (index 7 already holds the true numerator 2·N_raw; **do not double it**); the original
++  `QUINTIC_FIXTURE_VALUES.json` → `cell_A[*].values` stores raw N at index 7, which is doubled **exactly once** for the
++  cross-check. The two must agree.
++* **Cell B (per τ):** `(ψx, ψy, ψ′x, ψ′y, s_signed, s_nonneg, S_inc)` plus `ok = (φ′(τ) ≥ 0)` (one sign test, K). `s_nonneg =
++  s_signed` when `ok`, else `REFUSED(NONMONOTONE)` for the whole query. `S_inc = S(φ(τ))` since φ(0) = 0 and S(0) = 0.
++  Every arm evaluates φ′(τ) for the flag (an arm that already holds the value reuses it). Reference: `cell_B.rows`.
++* **Sequential, t = k/16, k = 0..16:** sample 0 is produced from preparation (no step); samples 1..16 follow. S1 `(x,y)`; S2 adds
++  `(x′, y′, σ)` and `T = (x′/σ, y′/σ)` (2 D per sample in every arm); S3 adds `(N_κ, D_κ)` per sample and, once sample k+1
++  exists, the increment `S((k+1)/16) − S(k/16)` for k = 0..15 (1 A each; null at k = 16). **Reference mapping:** the file's
++  sequential rows give x, y, x′, y′, σ, T, the true curvature quotient and the next increment, not literal (N_κ, D_κ). The
++  harness derives the expected pair by exact **oracle-side** arithmetic (uncounted, not a charged output): `D_κ = σ_ref²`,
++  `N_κ = κ_ref·D_κ`, and checks the arm's pair equals it. This derivation is subject to reviewer acceptance (§10).
++* **S4–S6 capability tasks** (retimed traversal, chain CH1, joins b1–b9, loops L0/L1, gated predicates): outputs compared with
++  the pinned references; costs recorded, not screened. **Open prerequisite (§11 P-1):** the pinned JSON has no literal
++  φ_ns/φ_rev tangent/speed/curvature sample tapes and no negative-h retiming reference. Until the reviewer supplies them
++  (without regenerating existing fixtures), X-2, X-3 (h-part) and X-18 cannot be run as correctness gates; the alternative is an
++  owner-approved descope to P1.
++
++## 5. Frozen preparation program and algorithms
++
++**Declared degrees.** Every polynomial has a declared degree (its certified highest nonzero index). A primitive operates on the
++*full lengths of its inputs*; its result is then truncated to the declared degree (free), with an uncounted oracle-side
++assertion that the dropped coefficients are zero. PH5 declared degrees: U 2, V 2, UU 4, VV 4, UV 4, dx 3, dy 4, sg 4, X 4,
++Y 5, SS 5, U1 1, V1 1, NP1 3, NP2 3, Np 2, Nk 2. (PH3 and the others: the highest nonzero index of the pinned values.)
++
++**Primitives (loop order is the stage order; indices ascending unless stated).**
++`HORNER(c,t)`: `acc ← c_d; for i = d−1..0: acc ← acc·t + c_i` (d M, d A).
++`DECAS(b,t)`: `for r = 1..d: for j = 0..d−r: b_j ← b_j + t·(b_{j+1} − b_j)` (d(d+1)/2 M, d(d+1) A), on a scratch copy.
++`TSHIFT(c,t)`: `for j = 0..d−1: for i = d−1 down to j: c_i ← c_i + t·c_{i+1}` (d(d+1)/2 M and A), on a scratch copy; value c_0.
++`FDINIT(c,δ)`: for k = 0..d: `t_k = t_{k−1} + δ` (A, k ≥ 1) then `p_k = HORNER(c,t_k)`; then the triangular table (d(d+1)/2 A). `FDSTEP`: `for j = 0..d−1: Δ_j ← Δ_j + Δ_{j+1}` (d A).
++`PMUL(a,b)`: `for i, for j: term = a_i·b_j (M); the first term landing on index i+j initialises it, later ones add (A)` → (|a|)(|b|) M and (|a||b| − (|a|+|b|−1)) A.
++`PADD`/`PSUB`: elementwise A over the longer length (the shorter operand's missing entries copy, no operation).
++`PSCALE2(a)`: `r_i = a_i·2` (S each). `PDER(a)`: `r_{i−1} = a_i·i, i = 1..d` (M each; i is an index). `PINT(a)`: `r_{i+1} = a_i ÷ (i+1)` (D each), r_0 = 0.
++`PCOMP(a,b)`: `acc ← a_d; for i = d−1..0: acc ← PMUL(acc,b); then acc_0 ← acc_0 + a_i (A)`.
++`BERN(a)`: `b_j = Σ_{i≤j} w_{j,i}·a_i` with the imported constants `w_{j,i} = C(j,i)/C(d,i)`: the first term initialises, later terms add (M for every term, so (d+1)(d+2)/2 M and d(d+1)/2 A).
++
++**Preparation steps (P-steps).** Common derivation DERIVE from the source `(U, V)`, h = 1, r_0 = (0,0): P1 UU = PMUL(U,U); P2 VV = PMUL(V,V);
++P3 UV = PMUL(U,V); P4 dx = PSUB(UU,VV); P5 dy = PSCALE2(UV); P6 sg = PADD(UU,VV); P7 X = PINT(dx); P8 Y = PINT(dy);
++P9 SS = PINT(sg); P10 U1 = PDER(U); P11 V1 = PDER(V); P12 NP1 = PMUL(U,V1); P13 NP2 = PMUL(U1,V); P14 Np = PSUB(NP1,NP2);
++P15 Nk = PSCALE2(Np). Retained state per arm:
+ 
+-| Arm | Retained state (P) | Query procedure |
++| Arm | P-steps executed | Retained (T) |
+ |---|---|---|
+-| **B-COMP** | power coefficients of x, y, x′, y′, σ, S (original), φ, φ′ | f = HORNER(φ,τ); g = HORNER(φ′,τ); ok on g; ψ = HORNER(x,f), HORNER(y,f); then ψ′x = g·HORNER(x′,f), ψ′y = g·HORNER(y′,f); s = g·HORNER(σ,f); S_inc = HORNER(S,f). Hand count 21 M, 18 A, 1 K. |
+-| **C1 (stand-alone retimed generator)** | retimed generator (Ũ, Ṽ, h̃) = (1, φ, φ′) and power coefficients of the *composite* x̃ (deg 9), ỹ (6), S̃ (9) (no access to the original curve) | f = HORNER(φ,τ); g = HORNER(φ′,τ); ok on g; ff = f·f; x̃′ = g·(1 − ff); ỹ′ = (g·f)·2 (**S**); s = g·(1 + ff); x̃, ỹ, S̃ by HORNER. Hand count 33 M, 31 A, 1 S, 1 K. |
+-| **E-COMP** | composite power polynomials x̃, ỹ, x̃′ = φ′·(x′∘φ), ỹ′, s̃ = φ′·(σ∘φ), S̃, and φ′ | HORNER each of the six; g = HORNER(φ′,τ) for ok. |
+-| **E-BEZ** | Bernstein form of the six composites | DECAS each; g for ok. |
+-| **E-TS** | the six composites | TSHIFT each; g for ok. |
+-
+-(Hand counts are consequences of the rules above, stated before any run as predictions to be reproduced exactly by the
+-instrumented class; they are conformance targets, not performance claims.) C2 is not run in Cell B.
+-
+-**Sequential tape (negative control; PH3 and PH5).** Arms: **Horner** (cached, per sample), **FD** (FDINIT in P with δ = 1/16,
+-FDSTEP per sample, one table per polynomial), **TS** (TSHIFT by h = 1/16 per step; the multiplier 1/16 is data, so M), **Bezier**,
+-**PH** (as B-PH with Horner), **PHFD** (U, V, U′, V′, x, y, S stepped by FD; x′, y′, σ, N_κ from the squares as in B-PH), **C1 ≡ PHFD**,
+-**C2** (jets shifted by h each step). Outputs per §4.
++| B-Horner, B-TS | P1–P15 | X, Y, dx, dy, sg, SS, Nk |
++| B-Bezier | P1–P15, then BERN of each of those seven | their Bernstein lists |
++| B-PH, C1 (Cell A) | P1–P11 | U, V, U1, V1, X, Y, SS (dx, dy, sg, UU, VV, UV are scratch) |
++| C2 | P1–P9 | jets (coefficient lists, order = degree) of U, V, X, Y, SS |
++| B-COMP (Cell B) | P1–P9 on PH3, then Pφ = PDER(φ) | X, Y, dx, dy, sg, SS (original), φ, φ′ |
++| E-COMP | as B-COMP, then PCOMP of X, Y, dx, dy, sg, SS with φ and PMUL by φ′ for the three derivative composites | the six composites and φ′ |
++| E-BEZ / E-TS | as E-COMP; E-BEZ then BERN of the six | composites (or Bernstein) and φ′ |
++| C1 (Cell B) | P1–P9 on PH3, Pφ, then PCOMP of X, Y, SS with φ | φ, φ′, composites x̃ (9), ỹ (6), S̃ (9) |
++
++**Q-steps (named; event ids use these).**
++*B-Horner (steps a1–a9):* a1 x = HORNER(X,t); a2 y; a3 x′ = HORNER(dx,t); a4 y′ = HORNER(dy,t); a5 σ = HORNER(sg,t); a6 S = HORNER(SS,t);
++a7 N_κ = HORNER(Nk,t); a8 σ² = σ·σ; a9 ok. *B-Bezier:* same steps with DECAS. *B-TS:* same with TSHIFT.
++*B-PH = C1 (steps b1–b19):* b1 u = HORNER(U,t); b2 v = HORNER(V,t); b3 u₁ = HORNER(U1,t); b4 v₁ = HORNER(V1,t); b5 uu = u·u;
++b6 vv = v·v; b7 uv = u·v; b8 x′ = uu − vv; b9 y′ = uv·2 (S); b10 σ = uu + vv; b11 σ² = σ·σ; b12 m₁ = u·v₁; b13 m₂ = u₁·v;
++b14 Np = m₁ − m₂; b15 N_κ = Np·2 (S); b16 x = HORNER(X,t); b17 y = HORNER(Y,t); b18 S = HORNER(SS,t); b19 ok.
++*C2 (steps c1–c12):* c1 jU = TSHIFT(U-jet,t); c2 jV; c3 jX; c4 jY; c5 jS (each on a fresh copy; the retained jets are never modified);
++c6 read (no operation) x = jX₀, x′ = jX₁, y = jY₀, y′ = jY₁, S = jS₀, σ = jS₁, U = jU₀, U′ = jU₁, V = jV₀, V′ = jV₁;
++c7 σ² = σ·σ; c8 m₁ = U·V′; c9 m₂ = U′·V; c10 Np = m₁ − m₂; c11 N_κ = Np·2 (S); c12 ok. *B-FD:* `NOT_APPLICABLE`.
++*Cell B, B-COMP (e1–e14):* e1 f = HORNER(φ,τ); e2 g = HORNER(φ′,τ); e3 ok on g; e4 ψx = HORNER(X,f); e5 ψy = HORNER(Y,f);
++e6 q₁ = HORNER(dx,f); e7 q₂ = HORNER(dy,f); e8 q₃ = HORNER(sg,f); e9 ψ′x = g·q₁; e10 ψ′y = g·q₂; e11 s = g·q₃; e12 S_inc = HORNER(SS,f).
++*C1 stand-alone (h1–h13):* h1 f = HORNER(φ,τ); h2 g = HORNER(φ′,τ); h3 ok; h4 ff = f·f; h5 w₁ = 1 − ff; h6 ψ′x = g·w₁; h7 w₂ = g·f;
++h8 ψ′y = w₂·2 (S); h9 w₃ = 1 + ff; h10 s = g·w₃; h11 ψx = HORNER(x̃,τ); h12 ψy = HORNER(ỹ,τ); h13 S_inc = HORNER(S̃,τ).
++*E-COMP/E-BEZ/E-TS:* the six composites by HORNER/DECAS/TSHIFT at τ; g = HORNER(φ′,τ) for the flag (ok on g).
++**Sequential tape arms** (PH3 and PH5): *Horner* (as a1–a9 per sample), *FD* (FDINIT in P with δ = 1/16 for each of the seven
++polynomials; FDSTEP each per step; σ² = σ·σ; T by 2 D), *TS* (TSHIFT by h = 1/16 per step; the multiplier is data, so M),
++*Bezier*, *PH* (b-steps with Horner), *PHFD* (U, V, U1, V1, X, Y, SS stepped by FD; the b5–b15 arithmetic on the stepped
++values), *C1 = PHFD*, *C2* (jets shifted by h each step). Scheduling: emit sample 0 after P; then repeat step→sample for k = 1..16;
++increments computed as soon as the next S sample exists.
++**S5/S6 procedures** (capability): each segment's hodograph h·w² by PMUL; x, y, S by PINT; speed |h|g with a sign test K; predicates
++per pre-registration §5 with exact K tests; no ledger gate.
+ 
+ ## 6. Jet orders
+ 
+-A jet holds exactly the polynomial it represents. Order = degree: PH3 position 3, PH3h position 4 and S 4, PH5 position 5 (x 4,
+-y 5), S 5, composite PH3∘φ_sq position 9 (x̃ 9, ỹ 6, S̃ 9). The order is stored with the object and checked at construction: the
+-highest retained coefficient must be the declared degree and all higher coefficients are identically zero by the degree
+-certificate. A jet whose order is below the degree is labelled **E2 / APPROX** and may not appear in any exactness-claiming
+-task; the order-2-on-a-cubic control (§8) must be refused with that label if used as exact. The harmonic E2 control is the
+-operator of the pre-registration, not a trajectory.
++Order = degree for every jet: PH3 position 3, PH3h position and S 4, PH5 x 4, y 5, S 5, U and V 2, composite x̃ 9, ỹ 6, S̃ 9. Order is
++stored with the object; a construction check requires the highest retained coefficient to be the declared degree. A jet of lower
++order is E2 and any exactness-claiming request returns `REFUSED(APPROX_NOT_EXACT)`. The harmonic E2 control is the operator
++(−127/37748736)·I, not a trajectory.
+ 
+-## 7. Ledger conformance and equivalence gates (rule-derived expected counts)
++## 7. Ledger conformance and equivalence gates
+ 
+-Unit tests run before any task; expected counts follow from §2 and §5 and are independently re-derived by the reviewer.
++There are **14** rows. Expected counts are consequences of §2/§5 and are re-derived by the reviewer.
+ 
+ | Test | Case | Expected |
+ |---|---|---|
+-| LU-H | HORNER degree d, any t | M = d, A = d, G_calls = 2d |
+-| LU-H0 | HORNER on N_κ-like list `[0, −4, −2]` (zero constant term), d = 2 | M = 2, A = 2 (no zero skipping) |
+-| LU-DC | DECAS degree d | M = d(d+1)/2, A = d(d+1), G_calls = 3·d(d+1)/2 |
+-| LU-TS | TSHIFT degree d | M = d(d+1)/2, A = d(d+1)/2, G_calls = d(d+1) |
+-| LU-FD | FDSTEP degree d | A = d, G_calls = d |
+-| LU-S | `y′ = uv·2` | S = 1, M unchanged, G_calls unchanged |
+-| LU-VAL | multiply by the value t = ½ as data | M = 1, S = 0 (value does not make it a shift) |
+-| LU-D | integration `÷(i+1)` at i+1 = 2 | D = 1, S = 0 |
+-| LU-W | multiply 2³⁰/3 by 5/2¹⁰ | `W_bits` = bn·bn + bd·bd with the stated bit-lengths; `W_peak_raw` records the unreduced product |
+-| LU-G | any M/A/D with integer result | G_calls increments by 1 (no integer shortcut) |
+-| LU-P | split of an arm's total into P and Q | P + Q = total in every category |
+-| EQ-1 | Cell A: ledger(C1) = ledger(B-PH) in every category and phase | exact equality |
+-| EQ-2 | sequential: ledger(C1) = ledger(PHFD) | exact equality |
+-| EQ-3 | every arm's output values vs the reviewer's reference (`cell_A` with index 7 doubled; `cell_B.rows`; `sequential`) | zero mismatches |
++| LU-H | HORNER degree d | M = d, A = d, G_calls = 2d |
++| LU-H0 | HORNER on `[0, −4, −2]` (zero constant), d = 2 | M = 2, A = 2, G_calls = 4 |
++| LU-DC | DECAS degree d | M = d(d+1)/2, A = d(d+1), G_calls = 3d(d+1)/2 |
++| LU-TS | TSHIFT degree d | M = A = d(d+1)/2, G_calls = d(d+1) |
++| LU-FD | FDSTEP degree d; and FDINIT degree d | step: A = d, G = d; init: M = d(d+1), A = 3d(d+1)/2 + d, G = 5d(d+1)/2 + d |
++| LU-S | `uv·2` | S = 1, M = 0, G_calls = 0 |
++| LU-VAL | multiply by the value ½ as data | M = 1, S = 0, G_calls = 1 |
++| LU-D | integration `÷(i+1)` at i + 1 = 2 | D = 1, S = 0, G_calls = 1 |
++| LU-W | a = 2³⁰/3, b = 5/2¹⁰: bit-lengths a (31, 2), b (3, 11) | M: W_bits = 31·3 + 2·11 = **115**, raw product 5368709120/3072 (33/12 bits), reduced 5242880/3 (23/2 bits), W_peak_red ≥ 31 (inputs counted); D a÷b: W_bits = 31·11 + 2·3 = **347** |
++| LU-G | an M, A or D whose result is an integer | G_calls + 1 (no shortcut) |
++| LU-P | split of an arm's ledger into P and Q | additive categories: P + Q = total; peaks: total = max(P, Q); T_ret_peak: maximum over observation points |
++| EQ-1 | Cell A: ledger(C1) = ledger(B-PH) in every category and phase | exact equality (**proposed**, pending D-1; depends on the preparation and storage rules of §2/§5) |
++| EQ-2 | sequential: ledger(C1) = ledger(PHFD) | same |
++| EQ-3 | each arm's outputs vs the references of §4 | zero mismatches |
++
++**Preparation-count cross-check (author's analytic values for the reviewer to verify; not authority).** PH5, the P-phase of
++B-Horner (P1–P15): M = 27 (P1–P3) + 4 (P10, P11) + 12 (P12, P13) = **43**; A = 12 (P1–P3) + 5 (P4) + 5 (P6) + 2 + 2 (P12,
++P13) + 4 (P14) = **30**; S = 5 (P5) + 3 (P15) = **8**; D = 4 + 5 + 5 = **14** (P7–P9); K = 0; G_calls = **87**. B-PH (P1–P11): M = 31, A = 22,
++S = 5, D = 14. C2 (P1–P9): M = 27, A = 22, S = 5, D = 14. These give X-10 a nonzero, independently fixed target.
+ 
+-## 8. Semantic, negative-control and mutant fixtures (required before P0)
++## 8. Semantic, negative-control and mutant fixtures
+ 
+-Reference values are the reviewer's pinned JSON; ledger-expectation tables (§7) are re-derived by the reviewer; the fixtures
+-below must each actually exercise the changed path. A surviving mutant is a test-design failure.
++Each row names a fixture that exercises the changed path. A surviving mutant is a test-design failure.
+ 
+ | ID | Mutant / control | Fixture | Killed by |
+ |---|---|---|---|
+-| X-1 | `2·N_raw` factor dropped, or doubled twice | Cell A tape (index 7) | EQ-3 |
+-| X-2 | σ taken as `h·g` where `|h|g` is required; T without `sign(h)` | b-series with negated generator and the h-form reversal (PH3, φ_rev) | EQ-3 on the reviewer's tangent/speed rows |
+-| X-3 | retiming chain-rule slip (omit φ′, omit h∘φ) | Cell B rows | EQ-3 |
+-| X-4 | oriented length reported as accumulated length (φ_bad) | φ_bad control | the R6 expected pair (0 and 8/3) |
+-| X-5 | single polynomial reported for the accumulated length across the sign change | φ_bad | `REFUSED(OUT_OF_DOMAIN)` expected |
+-| X-6 | raw equality reported as a geometric join (b9, b7) | b7, b9 | reviewer's gated table |
+-| X-7 | shift misclassified as M (or value-based classification at t = ½) | LU-S, LU-VAL, query t = ½ in the Cell A tape | ledger conformance |
+-| X-8 | zero-skipping in Horner | LU-H0 | ledger conformance |
+-| X-9 | normalization skipped on integer results | LU-G | ledger conformance |
+-| X-10 | preparation not charged, or charged only to one arm | LU-P and the total-view invariant | ledger conformance |
+-| X-11 | quotient charged to one side only for curvature | output contract check: no D in Cell A for any arm | gate on Cell A D = 0 |
+-| X-12 | FD init uncharged | sequential FD ledger vs LU-FD plus init rule | ledger conformance |
+-| X-13 | Taylor shift or de Casteljau miscounted | LU-TS, LU-DC | ledger conformance |
+-| X-14 | order-2 jet of a cubic labelled exact | cubic PH3 position jet at order 2 | class gate (`APPROX`) |
+-| X-15 | wrap or truncation instead of refusal under W31 | Profile W31 run of the Cell A tape and sequential S1 on PH5 | atomic `ARITH_LIMIT` with the reviewer's expected stage ids |
+-| X-16 | partial outputs, or a poisoned cache after a refusal | W31 refusal followed by an immediate repeat query | repeat equals a fresh run |
+-| X-17 | harmonic E2 step reported as exact | operator control (−127/37748736)·I | class gate |
+-| X-18 | stationary point returns a tangent or curvature | φ_ns at t = 0 | `REFUSED(NONREGULAR)` for T and κ, direction d defined |
+-| X-19 | C1 deviates from B-PH (typed layer adds or drops a counted operation) | Cell A | EQ-1 |
+-| X-20 | FD silently run in Cell A | Cell A | `NOT_APPLICABLE` status |
+-
+-Expected W31 refusal stages (X-15) are **derived by the reviewer** from §3's stage rule and §5's operation order; the
+-contract does not state them.
+-
+-## 9. Run plan, budget and proposed command
+-
+-* **Contents of the single invocation**, in this order: (0) verify every pin of §0 and the pins file, refuse to start otherwise;
+-  (1) ledger conformance §7; (2) EQ-3 correctness of every arm against the references under Profile P4096; (3) Cell A, Cell B
+-  and the sequential control with both ledger views; (4) the Pareto evaluation by the frozen rule of §2 (comparator
+-  selection, guard, trigger, TRADE-OFF classification); (5) S4–S6 capability tasks and the controls; (6) the mutant suite
+-  (§8) including the W31 control; (7) write all artifacts, hash, read back independently and compare.
+-* **Budget:** one invocation, 60 s external wall clock, 1 GiB address space, no child processes, network, devices or
+-  installations, zero retries, ≤ 1,000,000 counted operations across all arms (oracles uncounted), ≤ 10 MiB output, reduced
+-  coefficients ≤ 4096 bits and raw ≤ 16384 bits. One untimed warm-up and three timed passes only if they fit in the same
+-  invocation; latency is reported descriptively and is not part of any gate. Inability to finish is a resource outcome, not
+-  permission to split.
+-* **Layout (new, isolated; not created):** `research/qcg_0/p0/` with files of at most 150 lines each: `ledger.py` (the `Q` class and
+-  counters), `poly.py` (primitives of §5), `arms_a.py`, `arms_b.py`, `arms_seq.py`, `joins.py`, `refs.py` (loads the pinned
+-  JSON and verifies hashes), `o1.py`, `o2.py`, `mutants.py`, `run.py`, `test_p0.py`, `launch.sh`, `PINS.sha256`. Scratch and
+-  outputs under `build/qcg_0/`.
+-* **Proposed command (not run):**
++| X-1 | the factor 2 dropped or applied twice | Cell A tape, index 7 | EQ-3 (adapted file; original doubled once) |
++| X-2 | σ taken as h·g, or T without sign(h) | **needs P-1** (h-form reversal rows, h = −1); b5 is a generator sign gauge, not negative h | EQ-3 once P-1 is supplied |
++| X-3 | chain-rule slip: omit φ′ | Cell B rows | EQ-3. *The h∘φ omission is unexercised at h = 1; deferred to a nonconstant-h control (PH3h with φ_sq) that needs a reviewer reference (P-1).* |
++| X-4 | oriented length reported as accumulated | φ_bad: `ORIENTED_LENGTH` = B(t), total 0; `PIECEWISE_LENGTH` total 8/3 | expected pair (0, 8/3) |
++| X-5 | single polynomial reported for the accumulated length | φ_bad `ACCUMULATED_LENGTH` | `REFUSED(OUT_OF_DOMAIN)` |
++| X-6 | raw equality reported as a geometric join | b7, b9 | the reviewer's gated table |
++| X-7 | shift misclassified, or value-based classification | LU-S, LU-VAL, the t = ½ query | ledger conformance |
++| X-8 | zero skipping in Horner | LU-H0 | ledger conformance |
++| X-9 | gcd skipped on an integer result | LU-G: the M `3·5 = 15` (both inputs integers) | G_calls increments by 1 |
++| X-10 | preparation uncharged, or charged to one arm | the §7 P-phase targets (B-Horner PH5: 43, 30, 8, 14) | ledger conformance (not the P+Q identity alone) |
++| X-11 | a division in Q-phase Cell A or B | Cell A, Cell B | Q-phase D = 0 for every arm |
++| X-12 | FDINIT uncharged or mis-grid | LU-FD init formula | ledger conformance |
++| X-13 | TSHIFT or DECAS miscounted *or mis-valued* | LU-TS, LU-DC plus EQ-3 | both |
++| X-14 | order-2 jet of the cubic PH3 position treated as exact | PH3 position at order 2 | `REFUSED(APPROX_NOT_EXACT)` |
++| X-15 | wrap or truncation instead of refusal in W31 | W31 run of the Cell A tape and sequential S1 on PH5 | the reviewer-derived event ids (**unavailable until §3/§5 are frozen**) |
++| X-16 | poisoned cache or partial output after a refusal | W31 refusal: state hash before = after; then a known admissible request equals a fresh run; then the repeat refuses identically | full committed-state comparison |
++| X-17 | harmonic E2 step reported exact | operator control | class gate |
++| X-18 | stationary point returns a tangent or curvature | φ_ns at t = 0: DIRECTION = (1,0) OK, TANGENT and CURVATURE `REFUSED(NONREGULAR)` | needs P-1 for literal rows beyond the certificate's statement |
++| X-19 | C1 deviates from B-PH | Cell A | EQ-1 |
++| X-20 | FD silently run in Cell A | Cell A | status `NOT_APPLICABLE` |
++| X-21 | perturbed σ cache with unchanged generator | oracle-side coefficient identity on a mutated copy | certificate failure |
++| X-22 | reversal twice | symbolic check: generator negated, hodograph restored | oracle-side |
++| X-23 | non-polynomial retiming; primitive retiming with φ′ = 2t | rational φ; φ = t² | `OUT_OF_DOMAIN`; `NOT_PRIMITIVE_RETIMING` |
++| X-24 | E1a (C4) and E1b (3-4-5) expectations | `controls.E1a_C4`, `controls.E1b` (k = 0..16) | reference match |
++
++W31 stage ids (X-15) are derived by the reviewer from the event-id grammar and sub-check order of §3 applied to the preparation
++and query programs of §5; this contract does not state them.
++
++## 9. Run plan, budget and launch protocol
++
++* **Contents of the single invocation** (in order): (0) verify every pin and `PINS.sha256`; (1) conformance §7; (2) EQ-3 for every
++  arm under P4096; (3) Cell A, Cell B and the sequential control with both views; (4) the Pareto evaluation of §2 (comparator,
++  guard, trigger, TRADE-OFF); (5) S4–S6 and the controls; (6) the mutant suite including W31; (7) write all artifacts, hash, read
++  back independently and compare.
++* **Budget.** One invocation, 60 s external wall clock, 1 GiB address space, no children, network, devices or installs, zero
++  retries. **Counted-operation budget:** ≤ 1,000,000 M, A, S, D, K events summed over *every* arm and every phase, including
++  conformance tests, mutants, refused attempts, the warm-up and the three timed passes; oracles are excluded from the
++  operation budget but included in wall, memory and output limits. **Output budget:** ≤ 10 MiB including stdout, stderr, logs,
++  provenance and artifacts; a violation stops the runner and is recorded as FAILED with the cause `OUTPUT_CAP`. Reduced ≤ 4096
++  bits and raw ≤ 16384 bits under P4096.
++* **Layout (new, isolated; not created):** `research/qcg_0/p0/` with files ≤ 150 lines: `ledger.py`, `poly.py`, `arms_a.py`, `arms_b.py`,
++  `arms_seq.py`, `joins.py`, `refs.py`, `o1.py`, `o2.py`, `mutants.py`, `run.py`, `test_p0.py`, `launch.sh`, and `PINS.sha256`.
++  `PINS.sha256` lists every source file of `p0/`, `launch.sh`, the reference JSON and documents above, the tool paths and
++  versions; its own hash and the contract's are recorded by the owner out of band, so the manifest has no circularity.
++* **Fail-closed launcher (`launch.sh`, to be written under the implementation GO; specified here):**
+ 
+ ```bash
++set -euo pipefail ; set -o noclobber
+ cd /home/john/Projects/hardware/SPU
+-sha256sum -c research/qcg_0/p0/PINS.sha256            # hygiene, not an invocation
+-mkdir -p build/qcg_0 && mkdir build/qcg_0/run_01         # the leaf has no -p: refuses overwrite
+-/usr/bin/timeout --signal=KILL 60 /usr/bin/prlimit --as=1073741824:1073741824 -- \
+-  /usr/bin/python3 -B -I research/qcg_0/p0/run.py --out build/qcg_0/run_01 \
+-  >build/qcg_0/run_01/stdout.log 2>build/qcg_0/run_01/stderr.log
+-echo $? >build/qcg_0/run_01/EXIT      # 0 COMPLETE, 137 TIMEOUT (SIGKILL), other FAILED; exactly one terminal marker
+-sha256sum -c research/qcg_0/p0/PINS.sha256            # after
++sha256sum -c research/qcg_0/p0/PINS.sha256 >/dev/null          # abort if any pin differs
++for t in /usr/bin/timeout /usr/bin/prlimit /usr/bin/python3; do test -x "$t"; done
++mkdir -p build/qcg_0
++LEAF=build/qcg_0/run_01 ; mkdir "$LEAF"                          # fails (and the script stops) if it exists
++{ date +%s.%N; /usr/bin/python3 --version; git rev-parse HEAD; printf '%s\n' "$@"; } > "$LEAF/provenance.txt"
++START=$(date +%s.%N) ; set +e
++/usr/bin/timeout --kill-after=2 60 /usr/bin/prlimit --as=1073741824:1073741824 -- \
++  /usr/bin/python3 -B -I research/qcg_0/p0/run.py --out "$LEAF" >"$LEAF/stdout.log" 2>"$LEAF/stderr.log"
++RC=$? ; END=$(date +%s.%N) ; set -e
++echo "$RC" > "$LEAF/exit.code" ; echo "$START $END" > "$LEAF/times.txt"
++if   [ "$RC" -eq 0 ] && [ -f "$LEAF/RUNNER_DONE" ]; then : > "$LEAF/COMPLETE"
++elif { [ "$RC" -eq 124 ] || [ "$RC" -eq 137 ]; } && [ ! -f "$LEAF/RUNNER_DONE" ] && awk "BEGIN{exit !($END-$START >= 59.9)}"; then : > "$LEAF/TIMEOUT"
++else : > "$LEAF/FAILED"; fi
++test "$(ls "$LEAF"/COMPLETE "$LEAF"/FAILED "$LEAF"/TIMEOUT 2>/dev/null | wc -l)" -eq 1   # exactly one terminal marker
++sha256sum -c research/qcg_0/p0/PINS.sha256 > "$LEAF/pins_after.txt" 2>&1 || true            # recorded; never alters the marker
+ ```
+ 
+-* **Non-launching prerequisites (probed 2026-10-23; no experiment code):** `/usr/bin/timeout` GNU coreutils 9.12;
+-  `/usr/bin/prlimit` util-linux 2.42.4; `/usr/bin/python3` 3.14.8; `/usr/bin/time` absent and unused; `build/qcg_0` does not
+-  exist. Re-verify at freeze time; the run does not start on any mismatch.
+-* **Artifacts:** versioned UTF-8 JSON with canonical rational pairs: every arm's retained state, ledgers per phase and per
+-  category, outputs, statuses and refusal stages, the Pareto evaluation, the mutant results and the terminal marker; copy the final artifacts from
+-  gitignored `build/` into `research/qcg_0/` after review.
+-
+-## 10. Independent review checklist
+-
+-1. §2: every category defined without overlap; S limited to literal 2/½; no value-based classification; G and W unambiguous; P/Q
+-   phases reconcile; the guard contains S; the trigger set excludes S; comparator selection is lexicographic and frozen.
+-2. §3: refusal stage rule, atomicity, statuses disjoint; Profile W31 and P4096 consistent with the pre-registration budget.
+-3. §4: the Cell A pair is `(2·N_raw, σ²)` with no quotient anywhere; the certified JSON mapping (index 7 doubled) is correct; the
+-   S3 null at k = 16; the Cell B flag and `S_inc`.
+-4. §5: each algorithm is executable as written; operation orders are unambiguous; the hand counts 28/27, 26/23, 21/18 and
+-   33/31 follow from the rules; B-FD `NOT_APPLICABLE` in Cell A is acceptable; C1 ≡ B-PH and C1 ≡ PHFD declarations.
+-5. §6: every admitted jet order equals the degree; E2 labelling.
+-6. §7: expected counts are correct consequences of the rules (re-derive them independently).
+-7. §8: each mutant has a fixture that exercises its path; the W31 stage ids are derived by the reviewer, not copied.
+-8. §9: the single-invocation contents, budget and command; prerequisites; no pre-run side effects; pins complete.
+-9. Nothing in this contract changes a certified value or reopens a mathematical statement.
+-10. The contract does not claim any result; §1 item 2 (candidate equivalence in Cell A) is stated as a design consequence.
+-
+-## 11. Readiness
+-
+-**Author's verdict: READY for independent review of this contract.** Not yet READY for implementation: the implementation GO
+-needs (a) the reviewer's PASS on §10, (b) the reviewer-derived W31 stage ids and ledger expectations, (c) the frozen
+-`PINS.sha256`, and (d) the owner's decisions below.
+-
+-Owner decisions requested: **D-1** accept that C1 is declared equivalent to B-PH (Cell A) and PHFD (sequential), so P0 can
+-show equivalence but not a Cell A advantage; **D-2** `NOT_APPLICABLE` for FD in Cell A; **D-3** the literal-constant shift policy
+-with `M2` informational; **D-4** the lexicographic comparator rule; **D-5** the guard uses `T_total`, with the authoritative/cache
+-split reported only.
++  Exit 124 or 137 is classed TIMEOUT only when the runner never wrote `RUNNER_DONE` and the measured elapsed time is at least
++  59.9 s; otherwise it is FAILED (an out-of-memory kill or the program's own status is not a proven deadline). A TIMEOUT is an
++  infrastructure outcome and consumes the slot. A drift found by the final pin check is recorded and flagged, not hidden.
++* **Non-launching prerequisites (probed 2026-10-23; no experiment code):** `/usr/bin/timeout` 9.12, `/usr/bin/prlimit` 2.42.4,
++  `/usr/bin/python3` 3.14.8; `/usr/bin/time` absent and unused; `build/qcg_0` absent. Re-verified inside `launch.sh`, which stops on
++  any failure. If a later deterministic job were to exceed 60 s it would fall under the repository detached-runner rule.
++* **Artifacts:** versioned UTF-8 JSON with canonical rational pairs: arm states, phase ledgers per category, outputs, statuses,
++  event ids, attempt ledgers, the Pareto evaluation, mutant results, terminal marker; copy from gitignored `build/` into
++  `research/qcg_0/` after review.
++
++## 10. Independent review checklist (revision 2)
++
++1. §2: raw products and W proxy per op (M, A, D, K, S) correct; the D proxy is bn(a)bd(b) + bd(a)bn(b); LU-W values 115 and 347.
++2. §2: aggregation (additive vs max vs observation-point peak) is executable; LU-P by type; retained vs scratch storage rule.
++3. §2: comparator eligibility and tie-break; guard/trigger sets; sharing metric deferral (D-6).
++4. §3: event-id grammar and sub-check order give a unique first refusal for any input; bounds are bit-lengths; status grammar is
++   exhaustive; request granularity and diagnostic-versus-committed state rules are complete.
++5. §4: reference mapping is right (adapted file not doubled; original doubled once; sequential pair derivation acceptable).
++6. §5: each primitive, P-step and Q-step is executable as written with unique stage identities; declared-degree truncation
++   rule; the four hand counts and the P-phase cross-check (43, 30, 8, 14; B-PH 31, 22, 5, 14; C2 27, 22, 5, 14) are correct.
++7. §7: 14 rows with correct expectations; no row is false for nonadditive quantities.
++8. §8: every mutant's fixture detects its defect; X-2, X-3 (h part), X-15, X-18 depend on P-1 and on reviewer-derived stages.
++9. §9: launcher is fail-closed, never overwrites evidence, writes exactly one marker, and distinguishes TIMEOUT from FAILED;
++   operation and output budgets are defined.
++10. No certified value or mathematical statement is reopened; proposals remain proposals until D-1…D-6.
++
++## 11. Readiness and open items
++
++**Author's verdict: REVISE-RESPONDED, READY for independent re-review of this revision. NOT READY for implementation.**
++Prerequisites that remain: (a) reviewer PASS on §10; (b) reviewer-derived W31 event ids and the preparation/ledger expectations;
++(c) **P-1:** reviewer-supplied literal references for the negative-h reversal (h-form), the φ_ns/φ_rev S4 tapes and a nonconstant-h
++retiming control, or an owner-approved descope of X-2, X-3(h) and X-18 to P1; (d) a complete `PINS.sha256`; (e) an owner
++authorization and the frozen execution budget.
++
++Owner decisions pending: **D-1** C1 declared equivalent to B-PH (Cell A) and PHFD (sequential); **D-2** FD `NOT_APPLICABLE` in
++Cell A; **D-3** the literal-constant shift policy and the M2 informational count; **D-4** the lexicographic comparator with
++the arm-id tie-break; **D-5** the guard uses `T_ret_peak` with the authoritative/cache split reported only; **D-6** defer the
++J_c/Σ_c sharing metric to a follow-on contract.

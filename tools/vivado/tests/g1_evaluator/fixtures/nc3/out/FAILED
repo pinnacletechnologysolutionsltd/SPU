@@ -1,0 +1,3 @@
+SPU_FLOW: constraint gate failed:
+  check_timing: no_clock = 8172
+  check_timing: unconstrained_internal_endpoints = 28651

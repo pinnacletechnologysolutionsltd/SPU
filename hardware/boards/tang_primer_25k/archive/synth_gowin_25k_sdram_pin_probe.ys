@@ -1,0 +1,6 @@
+read_verilog hardware/boards/tang_primer_25k/spu_tang25k_sdram_pin_probe.v
+
+hierarchy -check -top spu_tang25k_sdram_pin_probe
+
+synth_gowin -family gw5a -top spu_tang25k_sdram_pin_probe -json build/sdram_pin_probe.json
+write_json build/sdram_pin_probe.json

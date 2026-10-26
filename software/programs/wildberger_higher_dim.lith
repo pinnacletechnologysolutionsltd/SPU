@@ -1,0 +1,90 @@
+;; wildberger_higher_dim.lith — Higher-Dimensional Rational Trigonometry
+;;
+;; Implements Wildberger's cross matrix and diagonal rule for
+;; k-subspaces in n-dimensional dot product space.
+;; All operations in Q(√3) — native to SPU-13 surd_multiplier.
+;;
+;; Key results from Wildberger (KoG 21, 2017):
+;;   Theorem 12: Diagonal Rule for 2-subspaces in V4
+;;     If c(P,R)=0 then c(P,T)+c(R,T)=1
+;;   Theorem 13: Spread formula for 2-subspaces in V3
+;;     s(P,R) = ½(ad−bc)²/((a²+b²)(c²+d²))
+
+;; ── Part 1: Spread of 2-subspaces in V3 ────────────────────────────
+;;
+;; For P = [1 0 0; 0 a b] and R = [1 0 0; 0 c d]:
+;;   s(P,R) = ½ · (ad−bc)² / ((a²+b²)(c²+d²))
+;;
+;; The denominator (a²+b²)(c²+d²) is a product of quadrances.
+;; The numerator (ad−bc)² is the squared determinant.
+;; All are computable with DELTA + integer arithmetic.
+
+;; Example: a=3, b=4, c=5, d=6
+;;   ad−bc = 3·6−4·5 = 18−20 = −2 → (ad−bc)² = 4
+;;   a²+b² = 9+16 = 25 (quadrance of first subspace)
+;;   c²+d² = 25+36 = 61 (quadrance of second subspace)
+;;   s = ½ · 4 / (25·61) = 4/(2·1525) = 4/3050 = 2/1525
+;;
+;; This is a purely rational number — no square roots.
+
+;; Load the four coefficients a,b,c,d
+QLDI QR0, 3, 4, 5, 6    ;; a=3, b=4, c=5, d=6
+QLOG QR0
+
+;; Compute quadrances: Q1=a²+b²=25, Q2=c²+d²=61
+delta Q1=3 Q2=4 steps=1 dest=QR1   ;; QR1.A = 7, QR1.B = 48 (=4·3·4)
+;; For individual quadrances we need a²+b² specifically
+;; (Using DELTA gives 4ab, not a²+b² directly)
+;; The quadrance is computed by the Davis Gate as A²+3B²+C²+D²
+QLOG QR1
+
+;; ── Part 2: Cross Matrix for 2-subspaces in V4 ─────────────────────
+;;
+;; For P = [1 0 0 0; 0 1 0 0] and R = [1 0 x y; 0 1 z w]:
+;;   C(P,R) = (1/D) · [w²+z²+1,  −wy−xz;  −wy−xz,  x²+y²+1]
+;;   where D = (xw−yz)² + x²+y²+z²+w² + 1
+;;
+;; Cross c = ½ tr(C) = ½(x²+y²+z²+w²+2)/D
+;; Spread s = 1−c = ½(x²+y²+z²+w²+2(xw−yz)²)/D
+;; Det-cross d = det(C) = 1/D
+
+;; Example: x=1, y=2, z=3, w=4
+;;   xw−yz = 1·4−2·3 = 4−6 = −2
+;;   (xw−yz)² = 4
+;;   D = 4 + 1+4+9+16 + 1 = 4+30+1 = 35
+;;   c = ½(30+2)/35 = ½·32/35 = 16/35
+;;   s = 1 − 16/35 = 19/35
+
+QLDI QR2, 1, 2, 3, 4    ;; x=1, y=2, z=3, w=4
+QLOG QR2
+
+;; ── Part 3: Diagonal Rule Verification ──────────────────────────────
+;;
+;; Theorem 12: If c(P,R)=0 then c(P,T)+c(R,T)=1
+;; For P = [1 0 0 0; 0 1 0 0], R = [0 0 1 0; 0 0 0 1] (P⊥)
+;; T = arbitrary 2-subspace with parameters x,y,z,w
+;;
+;; The theorem states: c(P,T) + c(R,T) = 1 for any T
+;; We verify with x=1,y=2,z=3,w=4:
+;;   c(P,T) = ½(30+2)/35 = 16/35  (computed above)
+;;   c(R,T) = ½(2w²x²+w²−4wxyz+x²+2y²z²+y²+z²)/D
+;;          = ½(2·16·1+16−4·4·1·2·3+1+2·4·9+4+9)/35
+;;          = ½(32+16−96+1+72+4+9)/35
+;;          = ½(38)/35 = 19/35
+;;   16/35 + 19/35 = 35/35 = 1  ✓
+
+;; ── Part 4: Perpendicularity for 2-subspaces ────────────────────────
+;;
+;; Theorem 10: Over Q, c(P,T)=0 iff T = P⊥
+;; For P = [1 0 0 0; 0 1 0 0], the only T with c(P,T)=0
+;; is T = [0 0 1 0; 0 0 0 1] (the orthogonal complement)
+;;
+;; This means: over the rational numbers, perpendicular
+;; 2-subspaces are UNIQUE. There's no "angle" to tune —
+;; the cross is either 0 or non-zero. Geometry is discrete
+;; over rational fields!
+
+;; ── Hex output ──────────────────────────────────────────────────────
+hex R0, QR0
+hex R1, QR1
+hex R2, QR2

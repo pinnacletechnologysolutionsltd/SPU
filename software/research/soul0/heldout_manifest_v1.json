@@ -1,0 +1,10 @@
+{
+  "files": {
+    "../../tests/test_soul0_heldout.py": "655464c32c9efcb6fd6deba4b1c13ecffe9c62e84b31665f7543ef581d4e18d8",
+    "counted.py": "807107914dfb415b7fdfb204cbfa1888d0dd84645f61783049904b79f49ba6f3",
+    "heldout_experiment.py": "9b7169adbb1d70b342978f3d9d9ce2996ec3b0c9fb3f19bdc6a9fdfb944709b4",
+    "heldout_fixtures_v1.json": "279a4a78d332eb1f04be47be9084fef027759772f0fc643444e8ea29b7816e16",
+    "model.py": "6e454df7a819a775ee2a9f936adf0ecad50a4d1cbdc6365d2023da73d7203d83"
+  },
+  "manifest_version": 1
+}

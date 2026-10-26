@@ -1,0 +1,29 @@
+# RPLU table pack: carbon
+# Format: <sel> <material> <addr> <data64_hex>
+# sel: 0=params, 1=pade_num, 2=pade_den
+# material: 0=carbon, 1=iron
+# addr: per-table index
+
+# Carbon material params (a_q16, re_q16, De_q16)
+0 0 0 0000000000010000
+0 0 1 0000000000010000
+0 0 2 0000000000010000
+
+# Pade numerator Q32
+1 0 0 0000000100000000
+1 0 1 FFFFFFFF80000000
+1 0 2 000000001B6DB6DB
+1 0 3 FFFFFFFFFCF3CF3D
+1 0 4 0000000000270270
+
+# Pade denominator Q32
+2 0 0 0000000100000000
+2 0 1 0000000080000000
+2 0 2 000000001B6DB6DB
+2 0 3 00000000030C30C3
+2 0 4 0000000000270270
+
+# Iron material params
+0 1 0 0000000000010000
+0 1 1 0000000000010000
+0 1 2 0000000000010000

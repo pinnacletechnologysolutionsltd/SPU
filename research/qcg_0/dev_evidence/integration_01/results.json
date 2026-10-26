@@ -1,0 +1,11385 @@
+{
+ "P4096": {
+  "cell_a": [
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 432,
+     "D": 0,
+     "G_bits": 7323,
+     "G_calls": 880,
+     "K": 16,
+     "M": 448,
+     "M2": 106,
+     "S": 0,
+     "W_bits": 28226
+    },
+    "arm": "B-Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 4
+     },
+     "Q": {
+      "L_peak": 43,
+      "T_ret_peak": 138,
+      "W_peak_raw": 32,
+      "W_peak_red": 32
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 462,
+     "D": 14,
+     "G_bits": 7459,
+     "G_calls": 967,
+     "K": 16,
+     "L_peak": 43,
+     "M": 491,
+     "M2": 123,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 28486,
+     "W_peak_raw": 32,
+     "W_peak_red": 32
+    }
+   },
+   {
+    "P": {
+     "A": 99,
+     "D": 14,
+     "G_bits": 622,
+     "G_calls": 259,
+     "K": 0,
+     "M": 146,
+     "M2": 110,
+     "S": 8,
+     "W_bits": 1371
+    },
+    "Q": {
+     "A": 2208,
+     "D": 0,
+     "G_bits": 28443,
+     "G_calls": 3328,
+     "K": 16,
+     "M": 1120,
+     "M2": 225,
+     "S": 0,
+     "W_bits": 237859
+    },
+    "arm": "B-Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 8,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 43,
+      "T_ret_peak": 192,
+      "W_peak_raw": 34,
+      "W_peak_red": 32
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 2307,
+     "D": 14,
+     "G_bits": 29065,
+     "G_calls": 3587,
+     "K": 16,
+     "L_peak": 43,
+     "M": 1266,
+     "M2": 335,
+     "S": 8,
+     "T_ret_peak": 192,
+     "W_bits": 239230,
+     "W_peak_raw": 34,
+     "W_peak_red": 32
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 1104,
+     "D": 0,
+     "G_bits": 18674,
+     "G_calls": 2224,
+     "K": 16,
+     "M": 1120,
+     "M2": 312,
+     "S": 0,
+     "W_bits": 114794
+    },
+    "arm": "B-TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 4
+     },
+     "Q": {
+      "L_peak": 43,
+      "T_ret_peak": 138,
+      "W_peak_raw": 34,
+      "W_peak_red": 32
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 1134,
+     "D": 14,
+     "G_bits": 18810,
+     "G_calls": 2311,
+     "K": 16,
+     "L_peak": 43,
+     "M": 1163,
+     "M2": 329,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 115054,
+     "W_peak_raw": 34,
+     "W_peak_red": 32
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 368,
+     "D": 0,
+     "G_bits": 6955,
+     "G_calls": 784,
+     "K": 16,
+     "M": 416,
+     "M2": 89,
+     "S": 32,
+     "W_bits": 39800
+    },
+    "arm": "B-PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 3
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 100,
+      "W_peak_raw": 32,
+      "W_peak_red": 32
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 390,
+     "D": 14,
+     "G_bits": 7061,
+     "G_calls": 851,
+     "K": 16,
+     "L_peak": 36,
+     "M": 447,
+     "M2": 101,
+     "S": 37,
+     "T_ret_peak": 100,
+     "W_bits": 39999,
+     "W_peak_raw": 32,
+     "W_peak_red": 32
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 368,
+     "D": 0,
+     "G_bits": 6955,
+     "G_calls": 784,
+     "K": 16,
+     "M": 416,
+     "M2": 89,
+     "S": 32,
+     "W_bits": 39800
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 3
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 100,
+      "W_peak_raw": 32,
+      "W_peak_red": 32
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 390,
+     "D": 14,
+     "G_bits": 7061,
+     "G_calls": 851,
+     "K": 16,
+     "L_peak": 36,
+     "M": 447,
+     "M2": 101,
+     "S": 37,
+     "T_ret_peak": 100,
+     "W_bits": 39999,
+     "W_peak_raw": 32,
+     "W_peak_red": 32
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 100,
+     "G_calls": 63,
+     "K": 0,
+     "M": 27,
+     "M2": 8,
+     "S": 5,
+     "W_bits": 189
+    },
+    "Q": {
+     "A": 752,
+     "D": 0,
+     "G_bits": 13754,
+     "G_calls": 1536,
+     "K": 16,
+     "M": 784,
+     "M2": 189,
+     "S": 16,
+     "W_bits": 92468
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 3
+     },
+     "Q": {
+      "L_peak": 56,
+      "T_ret_peak": 86,
+      "W_peak_raw": 34,
+      "W_peak_red": 32
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 774,
+     "D": 14,
+     "G_bits": 13854,
+     "G_calls": 1599,
+     "K": 16,
+     "L_peak": 56,
+     "M": 811,
+     "M2": 197,
+     "S": 21,
+     "T_ret_peak": 86,
+     "W_bits": 92657,
+     "W_peak_raw": 34,
+     "W_peak_red": 32
+    }
+   },
+   {
+    "P": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "Q": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "arm": "B-FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 0,
+      "T_ret_peak": 0,
+      "W_peak_raw": 0,
+      "W_peak_red": 0
+     },
+     "Q": {
+      "L_peak": 0,
+      "T_ret_peak": 0,
+      "W_peak_raw": 0,
+      "W_peak_red": 0
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE"
+    ],
+    "total": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "L_peak": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "T_ret_peak": 0,
+     "W_bits": 0,
+     "W_peak_raw": 0,
+     "W_peak_red": 0
+    }
+   }
+  ],
+  "cell_b": [
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 42,
+     "G_calls": 21,
+     "K": 0,
+     "M": 10,
+     "M2": 8,
+     "S": 2,
+     "W_bits": 86
+    },
+    "Q": {
+     "A": 288,
+     "D": 0,
+     "G_bits": 10154,
+     "G_calls": 624,
+     "K": 16,
+     "M": 336,
+     "M2": 74,
+     "S": 0,
+     "W_bits": 66781
+    },
+    "arm": "B-COMP",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 26,
+      "T_ret_peak": 134,
+      "W_peak_raw": 7,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 35,
+      "T_ret_peak": 134,
+      "W_peak_raw": 44,
+      "W_peak_red": 44
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 291,
+     "D": 8,
+     "G_bits": 10196,
+     "G_calls": 645,
+     "K": 16,
+     "L_peak": 35,
+     "M": 346,
+     "M2": 82,
+     "S": 2,
+     "T_ret_peak": 134,
+     "W_bits": 66867,
+     "W_peak_raw": 44,
+     "W_peak_red": 44
+    }
+   },
+   {
+    "P": {
+     "A": 74,
+     "D": 8,
+     "G_bits": 2517,
+     "G_calls": 208,
+     "K": 0,
+     "M": 126,
+     "M2": 20,
+     "S": 2,
+     "W_bits": 20858
+    },
+    "Q": {
+     "A": 496,
+     "D": 0,
+     "G_bits": 25345,
+     "G_calls": 1024,
+     "K": 16,
+     "M": 528,
+     "M2": 63,
+     "S": 16,
+     "W_bits": 307223
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 38,
+      "T_ret_peak": 678,
+      "W_peak_raw": 34,
+      "W_peak_red": 19
+     },
+     "Q": {
+      "L_peak": 41,
+      "T_ret_peak": 678,
+      "W_peak_raw": 54,
+      "W_peak_red": 44
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 570,
+     "D": 8,
+     "G_bits": 27862,
+     "G_calls": 1232,
+     "K": 16,
+     "L_peak": 41,
+     "M": 654,
+     "M2": 83,
+     "S": 18,
+     "T_ret_peak": 678,
+     "W_bits": 328081,
+     "W_peak_raw": 54,
+     "W_peak_red": 44
+    }
+   },
+   {
+    "P": {
+     "A": 127,
+     "D": 8,
+     "G_bits": 4648,
+     "G_calls": 359,
+     "K": 0,
+     "M": 224,
+     "M2": 34,
+     "S": 2,
+     "W_bits": 43555
+    },
+    "Q": {
+     "A": 752,
+     "D": 0,
+     "G_bits": 40707,
+     "G_calls": 1504,
+     "K": 16,
+     "M": 752,
+     "M2": 94,
+     "S": 0,
+     "W_bits": 560479
+    },
+    "arm": "E-COMP",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 61,
+      "T_ret_peak": 1268,
+      "W_peak_raw": 34,
+      "W_peak_red": 19
+     },
+     "Q": {
+      "L_peak": 61,
+      "T_ret_peak": 1268,
+      "W_peak_raw": 54,
+      "W_peak_red": 44
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 879,
+     "D": 8,
+     "G_bits": 45355,
+     "G_calls": 1863,
+     "K": 16,
+     "L_peak": 61,
+     "M": 976,
+     "M2": 128,
+     "S": 2,
+     "T_ret_peak": 1268,
+     "W_bits": 604034,
+     "W_peak_raw": 54,
+     "W_peak_red": 44
+    }
+   },
+   {
+    "P": {
+     "A": 325,
+     "D": 8,
+     "G_bits": 13138,
+     "G_calls": 806,
+     "K": 0,
+     "M": 473,
+     "M2": 144,
+     "S": 2,
+     "W_bits": 158190
+    },
+    "Q": {
+     "A": 6368,
+     "D": 0,
+     "G_bits": 364827,
+     "G_calls": 9568,
+     "K": 16,
+     "M": 3200,
+     "M2": 400,
+     "S": 0,
+     "W_bits": 10584476
+    },
+    "arm": "E-BEZ",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 64,
+      "T_ret_peak": 1321,
+      "W_peak_raw": 44,
+      "W_peak_red": 25
+     },
+     "Q": {
+      "L_peak": 61,
+      "T_ret_peak": 1321,
+      "W_peak_raw": 88,
+      "W_peak_red": 46
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 6693,
+     "D": 8,
+     "G_bits": 377965,
+     "G_calls": 10374,
+     "K": 16,
+     "L_peak": 64,
+     "M": 3673,
+     "M2": 544,
+     "S": 2,
+     "T_ret_peak": 1321,
+     "W_bits": 10742666,
+     "W_peak_raw": 88,
+     "W_peak_red": 46
+    }
+   },
+   {
+    "P": {
+     "A": 127,
+     "D": 8,
+     "G_bits": 4648,
+     "G_calls": 359,
+     "K": 0,
+     "M": 224,
+     "M2": 34,
+     "S": 2,
+     "W_bits": 43555
+    },
+    "Q": {
+     "A": 3200,
+     "D": 0,
+     "G_bits": 187779,
+     "G_calls": 6400,
+     "K": 16,
+     "M": 3200,
+     "M2": 400,
+     "S": 0,
+     "W_bits": 3651981
+    },
+    "arm": "E-TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 61,
+      "T_ret_peak": 1268,
+      "W_peak_raw": 34,
+      "W_peak_red": 19
+     },
+     "Q": {
+      "L_peak": 61,
+      "T_ret_peak": 1268,
+      "W_peak_raw": 83,
+      "W_peak_red": 44
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 3327,
+     "D": 8,
+     "G_bits": 192427,
+     "G_calls": 6759,
+     "K": 16,
+     "L_peak": 61,
+     "M": 3424,
+     "M2": 434,
+     "S": 2,
+     "T_ret_peak": 1268,
+     "W_bits": 3695536,
+     "W_peak_raw": 83,
+     "W_peak_red": 44
+    }
+   }
+  ],
+  "sequential": [
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 85,
+     "D": 0,
+     "G_bits": 1124,
+     "G_calls": 170,
+     "K": 0,
+     "M": 85,
+     "M2": 38,
+     "S": 0,
+     "W_bits": 3460
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 14,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 89,
+     "D": 8,
+     "G_bits": 1152,
+     "G_calls": 193,
+     "K": 0,
+     "L_peak": 22,
+     "M": 96,
+     "M2": 47,
+     "S": 3,
+     "T_ret_peak": 64,
+     "W_bits": 3516,
+     "W_peak_raw": 14,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 170,
+     "D": 34,
+     "G_bits": 2332,
+     "G_calls": 374,
+     "K": 17,
+     "M": 170,
+     "M2": 87,
+     "S": 0,
+     "W_bits": 8067
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 28,
+      "T_ret_peak": 64,
+      "W_peak_raw": 17,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 174,
+     "D": 42,
+     "G_bits": 2360,
+     "G_calls": 397,
+     "K": 17,
+     "L_peak": 28,
+     "M": 181,
+     "M2": 96,
+     "S": 3,
+     "T_ret_peak": 64,
+     "W_bits": 8123,
+     "W_peak_raw": 17,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 237,
+     "D": 34,
+     "G_bits": 3653,
+     "G_calls": 509,
+     "K": 17,
+     "M": 238,
+     "M2": 108,
+     "S": 0,
+     "W_bits": 17246
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 33,
+      "T_ret_peak": 93,
+      "W_peak_raw": 25,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 241,
+     "D": 42,
+     "G_bits": 3681,
+     "G_calls": 532,
+     "K": 17,
+     "L_peak": 33,
+     "M": 249,
+     "M2": 117,
+     "S": 3,
+     "T_ret_peak": 93,
+     "W_bits": 17302,
+     "W_peak_raw": 25,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 26,
+     "D": 8,
+     "G_bits": 116,
+     "G_calls": 87,
+     "K": 0,
+     "M": 53,
+     "M2": 49,
+     "S": 3,
+     "W_bits": 242
+    },
+    "Q": {
+     "A": 306,
+     "D": 0,
+     "G_bits": 2519,
+     "G_calls": 459,
+     "K": 0,
+     "M": 153,
+     "M2": 59,
+     "S": 0,
+     "W_bits": 10391
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 74,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 74,
+      "W_peak_raw": 17,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 332,
+     "D": 8,
+     "G_bits": 2635,
+     "G_calls": 546,
+     "K": 0,
+     "L_peak": 24,
+     "M": 206,
+     "M2": 108,
+     "S": 3,
+     "T_ret_peak": 74,
+     "W_bits": 10633,
+     "W_peak_raw": 17,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 26,
+     "D": 8,
+     "G_bits": 116,
+     "G_calls": 87,
+     "K": 0,
+     "M": 53,
+     "M2": 49,
+     "S": 3,
+     "W_bits": 242
+    },
+    "Q": {
+     "A": 544,
+     "D": 34,
+     "G_bits": 4128,
+     "G_calls": 850,
+     "K": 17,
+     "M": 272,
+     "M2": 118,
+     "S": 0,
+     "W_bits": 15972
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 74,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 28,
+      "T_ret_peak": 74,
+      "W_peak_raw": 17,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 570,
+     "D": 42,
+     "G_bits": 4244,
+     "G_calls": 937,
+     "K": 17,
+     "L_peak": 28,
+     "M": 325,
+     "M2": 167,
+     "S": 3,
+     "T_ret_peak": 74,
+     "W_bits": 16214,
+     "W_peak_raw": 17,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 26,
+     "D": 8,
+     "G_bits": 116,
+     "G_calls": 87,
+     "K": 0,
+     "M": 53,
+     "M2": 49,
+     "S": 3,
+     "W_bits": 242
+    },
+    "Q": {
+     "A": 764,
+     "D": 34,
+     "G_bits": 6791,
+     "G_calls": 1189,
+     "K": 17,
+     "M": 391,
+     "M2": 150,
+     "S": 0,
+     "W_bits": 33028
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 74,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 33,
+      "T_ret_peak": 103,
+      "W_peak_raw": 25,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 790,
+     "D": 42,
+     "G_bits": 6907,
+     "G_calls": 1276,
+     "K": 17,
+     "L_peak": 33,
+     "M": 444,
+     "M2": 199,
+     "S": 3,
+     "T_ret_peak": 103,
+     "W_bits": 33270,
+     "W_peak_raw": 25,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 3044,
+     "G_calls": 288,
+     "K": 0,
+     "M": 144,
+     "M2": 144,
+     "S": 0,
+     "W_bits": 20753
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 131,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 148,
+     "D": 8,
+     "G_bits": 3072,
+     "G_calls": 311,
+     "K": 0,
+     "L_peak": 22,
+     "M": 155,
+     "M2": 153,
+     "S": 3,
+     "T_ret_peak": 131,
+     "W_bits": 20809,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 256,
+     "D": 34,
+     "G_bits": 5198,
+     "G_calls": 546,
+     "K": 17,
+     "M": 256,
+     "M2": 256,
+     "S": 0,
+     "W_bits": 32395
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 28,
+      "T_ret_peak": 180,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 260,
+     "D": 42,
+     "G_bits": 5226,
+     "G_calls": 569,
+     "K": 17,
+     "L_peak": 28,
+     "M": 267,
+     "M2": 265,
+     "S": 3,
+     "T_ret_peak": 180,
+     "W_bits": 32451,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 368,
+     "D": 34,
+     "G_bits": 8003,
+     "G_calls": 771,
+     "K": 17,
+     "M": 369,
+     "M2": 354,
+     "S": 0,
+     "W_bits": 56439
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 33,
+      "T_ret_peak": 229,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 372,
+     "D": 42,
+     "G_bits": 8031,
+     "G_calls": 794,
+     "K": 17,
+     "L_peak": 33,
+     "M": 380,
+     "M2": 363,
+     "S": 3,
+     "T_ret_peak": 229,
+     "W_bits": 56495,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 83,
+     "D": 8,
+     "G_bits": 1039,
+     "G_calls": 146,
+     "K": 0,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "W_bits": 6305
+    },
+    "Q": {
+     "A": 80,
+     "D": 0,
+     "G_bits": 1627,
+     "G_calls": 80,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 17457
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 197,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 240,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 163,
+     "D": 8,
+     "G_bits": 2666,
+     "G_calls": 226,
+     "K": 0,
+     "L_peak": 24,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "T_ret_peak": 240,
+     "W_bits": 23762,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 83,
+     "D": 8,
+     "G_bits": 1039,
+     "G_calls": 146,
+     "K": 0,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "W_bits": 6305
+    },
+    "Q": {
+     "A": 160,
+     "D": 34,
+     "G_bits": 3087,
+     "G_calls": 194,
+     "K": 17,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 28705
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 197,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 28,
+      "T_ret_peak": 284,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 243,
+     "D": 42,
+     "G_bits": 4126,
+     "G_calls": 340,
+     "K": 17,
+     "L_peak": 28,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "T_ret_peak": 284,
+     "W_bits": 35010,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 83,
+     "D": 8,
+     "G_bits": 1039,
+     "G_calls": 146,
+     "K": 0,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "W_bits": 6305
+    },
+    "Q": {
+     "A": 224,
+     "D": 34,
+     "G_bits": 4773,
+     "G_calls": 275,
+     "K": 17,
+     "M": 17,
+     "M2": 2,
+     "S": 0,
+     "W_bits": 49403
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 197,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 33,
+      "T_ret_peak": 312,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 307,
+     "D": 42,
+     "G_bits": 5812,
+     "G_calls": 421,
+     "K": 17,
+     "L_peak": 33,
+     "M": 72,
+     "M2": 42,
+     "S": 3,
+     "T_ret_peak": 312,
+     "W_bits": 55708,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 24,
+     "G_calls": 19,
+     "K": 0,
+     "M": 8,
+     "M2": 7,
+     "S": 2,
+     "W_bits": 47
+    },
+    "Q": {
+     "A": 85,
+     "D": 0,
+     "G_bits": 1124,
+     "G_calls": 170,
+     "K": 0,
+     "M": 85,
+     "M2": 38,
+     "S": 0,
+     "W_bits": 3460
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 50,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 18,
+      "T_ret_peak": 50,
+      "W_peak_raw": 14,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 88,
+     "D": 8,
+     "G_bits": 1148,
+     "G_calls": 189,
+     "K": 0,
+     "L_peak": 18,
+     "M": 93,
+     "M2": 45,
+     "S": 2,
+     "T_ret_peak": 50,
+     "W_bits": 3507,
+     "W_peak_raw": 14,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 24,
+     "G_calls": 19,
+     "K": 0,
+     "M": 8,
+     "M2": 7,
+     "S": 2,
+     "W_bits": 47
+    },
+    "Q": {
+     "A": 136,
+     "D": 34,
+     "G_bits": 2049,
+     "G_calls": 323,
+     "K": 17,
+     "M": 153,
+     "M2": 94,
+     "S": 17,
+     "W_bits": 7234
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 50,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 50,
+      "W_peak_raw": 17,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 139,
+     "D": 42,
+     "G_bits": 2073,
+     "G_calls": 342,
+     "K": 17,
+     "L_peak": 29,
+     "M": 161,
+     "M2": 101,
+     "S": 19,
+     "T_ret_peak": 50,
+     "W_bits": 7281,
+     "W_peak_raw": 17,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 24,
+     "G_calls": 19,
+     "K": 0,
+     "M": 8,
+     "M2": 7,
+     "S": 2,
+     "W_bits": 47
+    },
+    "Q": {
+     "A": 220,
+     "D": 34,
+     "G_bits": 3470,
+     "G_calls": 509,
+     "K": 17,
+     "M": 255,
+     "M2": 137,
+     "S": 34,
+     "W_bits": 16604
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 50,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 39,
+      "T_ret_peak": 79,
+      "W_peak_raw": 25,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 223,
+     "D": 42,
+     "G_bits": 3494,
+     "G_calls": 528,
+     "K": 17,
+     "L_peak": 39,
+     "M": 263,
+     "M2": 144,
+     "S": 36,
+     "T_ret_peak": 79,
+     "W_bits": 16651,
+     "W_peak_raw": 25,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 80,
+     "D": 0,
+     "G_bits": 1627,
+     "G_calls": 80,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 17457
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 18,
+      "T_ret_peak": 198,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 140,
+     "D": 8,
+     "G_bits": 2446,
+     "G_calls": 188,
+     "K": 0,
+     "L_peak": 20,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "T_ret_peak": 198,
+     "W_bits": 22796,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 130,
+     "D": 34,
+     "G_bits": 2549,
+     "G_calls": 215,
+     "K": 17,
+     "M": 51,
+     "M2": 39,
+     "S": 17,
+     "W_bits": 21538
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 205,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 190,
+     "D": 42,
+     "G_bits": 3368,
+     "G_calls": 323,
+     "K": 17,
+     "L_peak": 29,
+     "M": 91,
+     "M2": 68,
+     "S": 19,
+     "T_ret_peak": 205,
+     "W_bits": 26877,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 211,
+     "D": 34,
+     "G_bits": 4335,
+     "G_calls": 347,
+     "K": 17,
+     "M": 102,
+     "M2": 63,
+     "S": 34,
+     "W_bits": 42427
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 39,
+      "T_ret_peak": 233,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 271,
+     "D": 42,
+     "G_bits": 5154,
+     "G_calls": 455,
+     "K": 17,
+     "L_peak": 39,
+     "M": 142,
+     "M2": 92,
+     "S": 36,
+     "T_ret_peak": 233,
+     "W_bits": 47766,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 80,
+     "D": 0,
+     "G_bits": 1627,
+     "G_calls": 80,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 17457
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 18,
+      "T_ret_peak": 198,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 140,
+     "D": 8,
+     "G_bits": 2446,
+     "G_calls": 188,
+     "K": 0,
+     "L_peak": 20,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "T_ret_peak": 198,
+     "W_bits": 22796,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 130,
+     "D": 34,
+     "G_bits": 2549,
+     "G_calls": 215,
+     "K": 17,
+     "M": 51,
+     "M2": 39,
+     "S": 17,
+     "W_bits": 21538
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 205,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 190,
+     "D": 42,
+     "G_bits": 3368,
+     "G_calls": 323,
+     "K": 17,
+     "L_peak": 29,
+     "M": 91,
+     "M2": 68,
+     "S": 19,
+     "T_ret_peak": 205,
+     "W_bits": 26877,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 211,
+     "D": 34,
+     "G_bits": 4335,
+     "G_calls": 347,
+     "K": 17,
+     "M": 102,
+     "M2": 63,
+     "S": 34,
+     "W_bits": 42427
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 39,
+      "T_ret_peak": 233,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 271,
+     "D": 42,
+     "G_bits": 5154,
+     "G_calls": 455,
+     "K": 17,
+     "L_peak": 39,
+     "M": 142,
+     "M2": 92,
+     "S": 36,
+     "T_ret_peak": 233,
+     "W_bits": 47766,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 23,
+     "G_calls": 18,
+     "K": 0,
+     "M": 7,
+     "M2": 6,
+     "S": 2,
+     "W_bits": 45
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 3044,
+     "G_calls": 288,
+     "K": 0,
+     "M": 144,
+     "M2": 144,
+     "S": 0,
+     "W_bits": 20753
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 44,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 16,
+      "T_ret_peak": 111,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 147,
+     "D": 8,
+     "G_bits": 3067,
+     "G_calls": 306,
+     "K": 0,
+     "L_peak": 17,
+     "M": 151,
+     "M2": 150,
+     "S": 2,
+     "T_ret_peak": 111,
+     "W_bits": 20798,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 23,
+     "G_calls": 18,
+     "K": 0,
+     "M": 7,
+     "M2": 6,
+     "S": 2,
+     "W_bits": 45
+    },
+    "Q": {
+     "A": 240,
+     "D": 34,
+     "G_bits": 5657,
+     "G_calls": 514,
+     "K": 17,
+     "M": 240,
+     "M2": 240,
+     "S": 0,
+     "W_bits": 40465
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 44,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 160,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 243,
+     "D": 42,
+     "G_bits": 5680,
+     "G_calls": 532,
+     "K": 17,
+     "L_peak": 22,
+     "M": 247,
+     "M2": 246,
+     "S": 2,
+     "T_ret_peak": 160,
+     "W_bits": 40510,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 23,
+     "G_calls": 18,
+     "K": 0,
+     "M": 7,
+     "M2": 6,
+     "S": 2,
+     "W_bits": 45
+    },
+    "Q": {
+     "A": 289,
+     "D": 34,
+     "G_bits": 6522,
+     "G_calls": 630,
+     "K": 17,
+     "M": 307,
+     "M2": 280,
+     "S": 17,
+     "W_bits": 48019
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 44,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 34,
+      "T_ret_peak": 167,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 292,
+     "D": 42,
+     "G_bits": 6545,
+     "G_calls": 648,
+     "K": 17,
+     "L_peak": 34,
+     "M": 314,
+     "M2": 286,
+     "S": 19,
+     "T_ret_peak": 167,
+     "W_bits": 48064,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 153,
+     "D": 0,
+     "G_bits": 3199,
+     "G_calls": 306,
+     "K": 0,
+     "M": 153,
+     "M2": 59,
+     "S": 0,
+     "W_bits": 12795
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 138,
+      "W_peak_raw": 25,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 183,
+     "D": 14,
+     "G_bits": 3335,
+     "G_calls": 393,
+     "K": 0,
+     "L_peak": 42,
+     "M": 196,
+     "M2": 76,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 13055,
+     "W_peak_raw": 25,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 340,
+     "D": 34,
+     "G_bits": 6810,
+     "G_calls": 714,
+     "K": 17,
+     "M": 340,
+     "M2": 143,
+     "S": 0,
+     "W_bits": 33757
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 34,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 370,
+     "D": 48,
+     "G_bits": 6946,
+     "G_calls": 801,
+     "K": 17,
+     "L_peak": 42,
+     "M": 383,
+     "M2": 160,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 34017,
+     "W_peak_raw": 34,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 475,
+     "D": 34,
+     "G_bits": 10167,
+     "G_calls": 985,
+     "K": 17,
+     "M": 476,
+     "M2": 183,
+     "S": 0,
+     "W_bits": 63490
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 47,
+      "T_ret_peak": 187,
+      "W_peak_raw": 43,
+      "W_peak_red": 37
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 505,
+     "D": 48,
+     "G_bits": 10303,
+     "G_calls": 1072,
+     "K": 17,
+     "L_peak": 47,
+     "M": 519,
+     "M2": 200,
+     "S": 8,
+     "T_ret_peak": 187,
+     "W_bits": 63750,
+     "W_peak_raw": 43,
+     "W_peak_red": 37
+    }
+   },
+   {
+    "P": {
+     "A": 99,
+     "D": 14,
+     "G_bits": 622,
+     "G_calls": 259,
+     "K": 0,
+     "M": 146,
+     "M2": 110,
+     "S": 8,
+     "W_bits": 1371
+    },
+    "Q": {
+     "A": 850,
+     "D": 0,
+     "G_bits": 12743,
+     "G_calls": 1275,
+     "K": 0,
+     "M": 425,
+     "M2": 140,
+     "S": 0,
+     "W_bits": 126725
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 8,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 192,
+      "W_peak_raw": 37,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 949,
+     "D": 14,
+     "G_bits": 13365,
+     "G_calls": 1534,
+     "K": 0,
+     "L_peak": 42,
+     "M": 571,
+     "M2": 250,
+     "S": 8,
+     "T_ret_peak": 192,
+     "W_bits": 128096,
+     "W_peak_raw": 37,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 99,
+     "D": 14,
+     "G_bits": 622,
+     "G_calls": 259,
+     "K": 0,
+     "M": 146,
+     "M2": 110,
+     "S": 8,
+     "W_bits": 1371
+    },
+    "Q": {
+     "A": 1734,
+     "D": 34,
+     "G_bits": 23700,
+     "G_calls": 2635,
+     "K": 17,
+     "M": 867,
+     "M2": 315,
+     "S": 0,
+     "W_bits": 218108
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 8,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 37,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 1833,
+     "D": 48,
+     "G_bits": 24322,
+     "G_calls": 2894,
+     "K": 17,
+     "L_peak": 42,
+     "M": 1013,
+     "M2": 425,
+     "S": 8,
+     "T_ret_peak": 192,
+     "W_bits": 219479,
+     "W_peak_raw": 37,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 99,
+     "D": 14,
+     "G_bits": 622,
+     "G_calls": 259,
+     "K": 0,
+     "M": 146,
+     "M2": 110,
+     "S": 8,
+     "W_bits": 1371
+    },
+    "Q": {
+     "A": 2362,
+     "D": 34,
+     "G_bits": 34663,
+     "G_calls": 3586,
+     "K": 17,
+     "M": 1190,
+     "M2": 418,
+     "S": 0,
+     "W_bits": 345482
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 8,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 47,
+      "T_ret_peak": 241,
+      "W_peak_raw": 43,
+      "W_peak_red": 37
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 2461,
+     "D": 48,
+     "G_bits": 35285,
+     "G_calls": 3845,
+     "K": 17,
+     "L_peak": 47,
+     "M": 1336,
+     "M2": 528,
+     "S": 8,
+     "T_ret_peak": 241,
+     "W_bits": 346853,
+     "W_peak_raw": 43,
+     "W_peak_red": 37
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 400,
+     "D": 0,
+     "G_bits": 12335,
+     "G_calls": 800,
+     "K": 0,
+     "M": 400,
+     "M2": 400,
+     "S": 0,
+     "W_bits": 142837
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 330,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 430,
+     "D": 14,
+     "G_bits": 12471,
+     "G_calls": 887,
+     "K": 0,
+     "L_peak": 42,
+     "M": 443,
+     "M2": 417,
+     "S": 8,
+     "T_ret_peak": 330,
+     "W_bits": 143097,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 816,
+     "D": 34,
+     "G_bits": 22210,
+     "G_calls": 1666,
+     "K": 17,
+     "M": 816,
+     "M2": 816,
+     "S": 0,
+     "W_bits": 231527
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 505,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 846,
+     "D": 48,
+     "G_bits": 22346,
+     "G_calls": 1753,
+     "K": 17,
+     "L_peak": 42,
+     "M": 859,
+     "M2": 833,
+     "S": 8,
+     "T_ret_peak": 505,
+     "W_bits": 231787,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 1120,
+     "D": 34,
+     "G_bits": 31869,
+     "G_calls": 2275,
+     "K": 17,
+     "M": 1121,
+     "M2": 1105,
+     "S": 0,
+     "W_bits": 355585
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 47,
+      "T_ret_peak": 640,
+      "W_peak_raw": 48,
+      "W_peak_red": 37
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 1150,
+     "D": 48,
+     "G_bits": 32005,
+     "G_calls": 2362,
+     "K": 17,
+     "L_peak": 47,
+     "M": 1164,
+     "M2": 1122,
+     "S": 8,
+     "T_ret_peak": 640,
+     "W_bits": 355845,
+     "W_peak_raw": 48,
+     "W_peak_red": 37
+    }
+   },
+   {
+    "P": {
+     "A": 264,
+     "D": 14,
+     "G_bits": 4875,
+     "G_calls": 459,
+     "K": 0,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "W_bits": 54034
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 4898,
+     "G_calls": 144,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 96434
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 650,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 751,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 408,
+     "D": 14,
+     "G_bits": 9773,
+     "G_calls": 603,
+     "K": 0,
+     "L_peak": 42,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "T_ret_peak": 751,
+     "W_bits": 150468,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 264,
+     "D": 14,
+     "G_bits": 4875,
+     "G_calls": 459,
+     "K": 0,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "W_bits": 54034
+    },
+    "Q": {
+     "A": 320,
+     "D": 34,
+     "G_bits": 10164,
+     "G_calls": 354,
+     "K": 17,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 177712
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 650,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 849,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 584,
+     "D": 48,
+     "G_bits": 15039,
+     "G_calls": 813,
+     "K": 17,
+     "L_peak": 42,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "T_ret_peak": 849,
+     "W_bits": 231746,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 264,
+     "D": 14,
+     "G_bits": 4875,
+     "G_calls": 459,
+     "K": 0,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "W_bits": 54034
+    },
+    "Q": {
+     "A": 448,
+     "D": 34,
+     "G_bits": 14504,
+     "G_calls": 499,
+     "K": 17,
+     "M": 17,
+     "M2": 1,
+     "S": 0,
+     "W_bits": 265048
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 650,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 47,
+      "T_ret_peak": 918,
+      "W_peak_raw": 48,
+      "W_peak_red": 37
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 712,
+     "D": 48,
+     "G_bits": 19379,
+     "G_calls": 958,
+     "K": 17,
+     "L_peak": 47,
+     "M": 198,
+     "M2": 110,
+     "S": 8,
+     "T_ret_peak": 918,
+     "W_bits": 319082,
+     "W_peak_raw": 48,
+     "W_peak_red": 37
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 153,
+     "D": 0,
+     "G_bits": 3199,
+     "G_calls": 306,
+     "K": 0,
+     "M": 153,
+     "M2": 59,
+     "S": 0,
+     "W_bits": 12795
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 100,
+      "W_peak_raw": 25,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 175,
+     "D": 14,
+     "G_bits": 3305,
+     "G_calls": 373,
+     "K": 0,
+     "L_peak": 30,
+     "M": 184,
+     "M2": 71,
+     "S": 5,
+     "T_ret_peak": 100,
+     "W_bits": 12994,
+     "W_peak_raw": 25,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 255,
+     "D": 34,
+     "G_bits": 6214,
+     "G_calls": 561,
+     "K": 17,
+     "M": 272,
+     "M2": 91,
+     "S": 17,
+     "W_bits": 50003
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 40,
+      "T_ret_peak": 100,
+      "W_peak_raw": 36,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 277,
+     "D": 48,
+     "G_bits": 6320,
+     "G_calls": 628,
+     "K": 17,
+     "L_peak": 40,
+     "M": 303,
+     "M2": 103,
+     "S": 22,
+     "T_ret_peak": 100,
+     "W_bits": 50202,
+     "W_peak_raw": 36,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 407,
+     "D": 34,
+     "G_bits": 10029,
+     "G_calls": 883,
+     "K": 17,
+     "M": 442,
+     "M2": 147,
+     "S": 34,
+     "W_bits": 85321
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 50,
+      "T_ret_peak": 149,
+      "W_peak_raw": 43,
+      "W_peak_red": 37
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 429,
+     "D": 48,
+     "G_bits": 10135,
+     "G_calls": 950,
+     "K": 17,
+     "L_peak": 50,
+     "M": 473,
+     "M2": 159,
+     "S": 39,
+     "T_ret_peak": 149,
+     "W_bits": 85520,
+     "W_peak_raw": 43,
+     "W_peak_red": 37
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 4898,
+     "G_calls": 144,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 96434
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 561,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 330,
+     "D": 14,
+     "G_bits": 8458,
+     "G_calls": 471,
+     "K": 0,
+     "L_peak": 33,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "T_ret_peak": 561,
+     "W_bits": 137266,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 242,
+     "D": 34,
+     "G_bits": 8183,
+     "G_calls": 327,
+     "K": 17,
+     "M": 51,
+     "M2": 0,
+     "S": 17,
+     "W_bits": 140455
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 40,
+      "T_ret_peak": 595,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 428,
+     "D": 48,
+     "G_bits": 11743,
+     "G_calls": 654,
+     "K": 17,
+     "L_peak": 40,
+     "M": 178,
+     "M2": 73,
+     "S": 22,
+     "T_ret_peak": 595,
+     "W_bits": 181287,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 387,
+     "D": 34,
+     "G_bits": 12932,
+     "G_calls": 523,
+     "K": 17,
+     "M": 102,
+     "M2": 5,
+     "S": 34,
+     "W_bits": 231511
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 50,
+      "T_ret_peak": 661,
+      "W_peak_raw": 48,
+      "W_peak_red": 37
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 573,
+     "D": 48,
+     "G_bits": 16492,
+     "G_calls": 850,
+     "K": 17,
+     "L_peak": 50,
+     "M": 229,
+     "M2": 78,
+     "S": 39,
+     "T_ret_peak": 661,
+     "W_bits": 272343,
+     "W_peak_raw": 48,
+     "W_peak_red": 37
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 4898,
+     "G_calls": 144,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 96434
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 561,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 330,
+     "D": 14,
+     "G_bits": 8458,
+     "G_calls": 471,
+     "K": 0,
+     "L_peak": 33,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "T_ret_peak": 561,
+     "W_bits": 137266,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 242,
+     "D": 34,
+     "G_bits": 8183,
+     "G_calls": 327,
+     "K": 17,
+     "M": 51,
+     "M2": 0,
+     "S": 17,
+     "W_bits": 140455
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 40,
+      "T_ret_peak": 595,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 428,
+     "D": 48,
+     "G_bits": 11743,
+     "G_calls": 654,
+     "K": 17,
+     "L_peak": 40,
+     "M": 178,
+     "M2": 73,
+     "S": 22,
+     "T_ret_peak": 595,
+     "W_bits": 181287,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 387,
+     "D": 34,
+     "G_bits": 12932,
+     "G_calls": 523,
+     "K": 17,
+     "M": 102,
+     "M2": 5,
+     "S": 34,
+     "W_bits": 231511
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 50,
+      "T_ret_peak": 661,
+      "W_peak_raw": 48,
+      "W_peak_red": 37
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 573,
+     "D": 48,
+     "G_bits": 16492,
+     "G_calls": 850,
+     "K": 17,
+     "L_peak": 50,
+     "M": 229,
+     "M2": 78,
+     "S": 39,
+     "T_ret_peak": 661,
+     "W_bits": 272343,
+     "W_peak_raw": 48,
+     "W_peak_red": 37
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 100,
+     "G_calls": 63,
+     "K": 0,
+     "M": 27,
+     "M2": 8,
+     "S": 5,
+     "W_bits": 189
+    },
+    "Q": {
+     "A": 400,
+     "D": 0,
+     "G_bits": 12335,
+     "G_calls": 800,
+     "K": 0,
+     "M": 400,
+     "M2": 400,
+     "S": 0,
+     "W_bits": 142837
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 25,
+      "T_ret_peak": 278,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 422,
+     "D": 14,
+     "G_bits": 12435,
+     "G_calls": 863,
+     "K": 0,
+     "L_peak": 30,
+     "M": 427,
+     "M2": 408,
+     "S": 5,
+     "T_ret_peak": 278,
+     "W_bits": 143026,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 100,
+     "G_calls": 63,
+     "K": 0,
+     "M": 27,
+     "M2": 8,
+     "S": 5,
+     "W_bits": 189
+    },
+    "Q": {
+     "A": 640,
+     "D": 34,
+     "G_bits": 21032,
+     "G_calls": 1314,
+     "K": 17,
+     "M": 640,
+     "M2": 640,
+     "S": 0,
+     "W_bits": 253224
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 31,
+      "T_ret_peak": 396,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 662,
+     "D": 48,
+     "G_bits": 21132,
+     "G_calls": 1377,
+     "K": 17,
+     "L_peak": 31,
+     "M": 667,
+     "M2": 648,
+     "S": 5,
+     "T_ret_peak": 396,
+     "W_bits": 253413,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 100,
+     "G_calls": 63,
+     "K": 0,
+     "M": 27,
+     "M2": 8,
+     "S": 5,
+     "W_bits": 189
+    },
+    "Q": {
+     "A": 769,
+     "D": 34,
+     "G_bits": 24271,
+     "G_calls": 1590,
+     "K": 17,
+     "M": 787,
+     "M2": 741,
+     "S": 17,
+     "W_bits": 288980
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 43,
+      "T_ret_peak": 441,
+      "W_peak_raw": 48,
+      "W_peak_red": 37
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 791,
+     "D": 48,
+     "G_bits": 24371,
+     "G_calls": 1653,
+     "K": 17,
+     "L_peak": 43,
+     "M": 814,
+     "M2": 749,
+     "S": 22,
+     "T_ret_peak": 441,
+     "W_bits": 289169,
+     "W_peak_raw": 48,
+     "W_peak_red": 37
+    }
+   }
+  ]
+ },
+ "W31": {
+  "cell_a": [
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 405,
+     "D": 0,
+     "G_bits": 6691,
+     "G_calls": 825,
+     "K": 15,
+     "M": 420,
+     "M2": 103,
+     "S": 0,
+     "W_bits": 25260
+    },
+    "arm": "B-Horner",
+    "attempt": {
+     "A": 27,
+     "D": 0,
+     "G_bits": 632,
+     "G_calls": 55,
+     "K": 0,
+     "M": 28,
+     "M2": 3,
+     "S": 0,
+     "W_bits": 2966
+    },
+    "first_refusal": "B-Horner.Q.q03.a8.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 4
+     },
+     "Q": {
+      "L_peak": 43,
+      "T_ret_peak": 138,
+      "W_peak_raw": 30,
+      "W_peak_red": 30
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 435,
+     "D": 14,
+     "G_bits": 6827,
+     "G_calls": 912,
+     "K": 15,
+     "L_peak": 43,
+     "M": 463,
+     "M2": 120,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 25520,
+     "W_peak_raw": 30,
+     "W_peak_red": 30
+    }
+   },
+   {
+    "P": {
+     "A": 99,
+     "D": 14,
+     "G_bits": 622,
+     "G_calls": 259,
+     "K": 0,
+     "M": 146,
+     "M2": 110,
+     "S": 8,
+     "W_bits": 1371
+    },
+    "Q": {
+     "A": 2070,
+     "D": 0,
+     "G_bits": 26068,
+     "G_calls": 3120,
+     "K": 15,
+     "M": 1050,
+     "M2": 220,
+     "S": 0,
+     "W_bits": 212658
+    },
+    "arm": "B-Bezier",
+    "attempt": {
+     "A": 138,
+     "D": 0,
+     "G_bits": 2375,
+     "G_calls": 208,
+     "K": 0,
+     "M": 70,
+     "M2": 5,
+     "S": 0,
+     "W_bits": 25201
+    },
+    "first_refusal": "B-Bezier.Q.q03.a8.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 8,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 43,
+      "T_ret_peak": 192,
+      "W_peak_raw": 32,
+      "W_peak_red": 30
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 2169,
+     "D": 14,
+     "G_bits": 26690,
+     "G_calls": 3379,
+     "K": 15,
+     "L_peak": 43,
+     "M": 1196,
+     "M2": 330,
+     "S": 8,
+     "T_ret_peak": 192,
+     "W_bits": 214029,
+     "W_peak_raw": 32,
+     "W_peak_red": 30
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 1035,
+     "D": 0,
+     "G_bits": 17084,
+     "G_calls": 2085,
+     "K": 15,
+     "M": 1050,
+     "M2": 300,
+     "S": 0,
+     "W_bits": 102635
+    },
+    "arm": "B-TS",
+    "attempt": {
+     "A": 69,
+     "D": 0,
+     "G_bits": 1590,
+     "G_calls": 139,
+     "K": 0,
+     "M": 70,
+     "M2": 12,
+     "S": 0,
+     "W_bits": 12159
+    },
+    "first_refusal": "B-TS.Q.q03.a8.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 4
+     },
+     "Q": {
+      "L_peak": 43,
+      "T_ret_peak": 138,
+      "W_peak_raw": 34,
+      "W_peak_red": 30
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 1065,
+     "D": 14,
+     "G_bits": 17220,
+     "G_calls": 2172,
+     "K": 15,
+     "L_peak": 43,
+     "M": 1093,
+     "M2": 317,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 102895,
+     "W_peak_raw": 34,
+     "W_peak_red": 30
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 345,
+     "D": 0,
+     "G_bits": 6365,
+     "G_calls": 735,
+     "K": 15,
+     "M": 390,
+     "M2": 86,
+     "S": 30,
+     "W_bits": 35798
+    },
+    "arm": "B-PH",
+    "attempt": {
+     "A": 8,
+     "D": 0,
+     "G_bits": 199,
+     "G_calls": 18,
+     "K": 0,
+     "M": 10,
+     "M2": 2,
+     "S": 1,
+     "W_bits": 2019
+    },
+    "first_refusal": "B-PH.Q.q03.b11.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 3
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 100,
+      "W_peak_raw": 30,
+      "W_peak_red": 30
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 367,
+     "D": 14,
+     "G_bits": 6471,
+     "G_calls": 802,
+     "K": 15,
+     "L_peak": 36,
+     "M": 421,
+     "M2": 98,
+     "S": 35,
+     "T_ret_peak": 100,
+     "W_bits": 35997,
+     "W_peak_raw": 30,
+     "W_peak_red": 30
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 345,
+     "D": 0,
+     "G_bits": 6365,
+     "G_calls": 735,
+     "K": 15,
+     "M": 390,
+     "M2": 86,
+     "S": 30,
+     "W_bits": 35798
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 8,
+     "D": 0,
+     "G_bits": 199,
+     "G_calls": 18,
+     "K": 0,
+     "M": 10,
+     "M2": 2,
+     "S": 1,
+     "W_bits": 2019
+    },
+    "first_refusal": "C1.Q.q03.b11.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 3
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 100,
+      "W_peak_raw": 30,
+      "W_peak_red": 30
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 367,
+     "D": 14,
+     "G_bits": 6471,
+     "G_calls": 802,
+     "K": 15,
+     "L_peak": 36,
+     "M": 421,
+     "M2": 98,
+     "S": 35,
+     "T_ret_peak": 100,
+     "W_bits": 35997,
+     "W_peak_raw": 30,
+     "W_peak_red": 30
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 100,
+     "G_calls": 63,
+     "K": 0,
+     "M": 27,
+     "M2": 8,
+     "S": 5,
+     "W_bits": 189
+    },
+    "Q": {
+     "A": 705,
+     "D": 0,
+     "G_bits": 12616,
+     "G_calls": 1440,
+     "K": 15,
+     "M": 735,
+     "M2": 182,
+     "S": 15,
+     "W_bits": 82832
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 46,
+     "D": 0,
+     "G_bits": 1093,
+     "G_calls": 93,
+     "K": 0,
+     "M": 47,
+     "M2": 7,
+     "S": 0,
+     "W_bits": 9191
+    },
+    "first_refusal": "C2.Q.q03.c7.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 3
+     },
+     "Q": {
+      "L_peak": 56,
+      "T_ret_peak": 86,
+      "W_peak_raw": 34,
+      "W_peak_red": 30
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "total": {
+     "A": 727,
+     "D": 14,
+     "G_bits": 12716,
+     "G_calls": 1503,
+     "K": 15,
+     "L_peak": 56,
+     "M": 762,
+     "M2": 190,
+     "S": 20,
+     "T_ret_peak": 86,
+     "W_bits": 83021,
+     "W_peak_raw": 34,
+     "W_peak_red": 30
+    }
+   },
+   {
+    "P": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "Q": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "arm": "B-FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 0,
+      "T_ret_peak": 0,
+      "W_peak_raw": 0,
+      "W_peak_red": 0
+     },
+     "Q": {
+      "L_peak": 0,
+      "T_ret_peak": 0,
+      "W_peak_raw": 0,
+      "W_peak_red": 0
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE",
+     "NOT_APPLICABLE"
+    ],
+    "total": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "L_peak": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "T_ret_peak": 0,
+     "W_bits": 0,
+     "W_peak_raw": 0,
+     "W_peak_red": 0
+    }
+   }
+  ],
+  "cell_b": [
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 42,
+     "G_calls": 21,
+     "K": 0,
+     "M": 10,
+     "M2": 8,
+     "S": 2,
+     "W_bits": 86
+    },
+    "Q": {
+     "A": 108,
+     "D": 0,
+     "G_bits": 2469,
+     "G_calls": 234,
+     "K": 6,
+     "M": 126,
+     "M2": 44,
+     "S": 0,
+     "W_bits": 12442
+    },
+    "arm": "B-COMP",
+    "attempt": {
+     "A": 70,
+     "D": 0,
+     "G_bits": 2391,
+     "G_calls": 150,
+     "K": 10,
+     "M": 80,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 18049
+    },
+    "first_refusal": "B-COMP.Q.q00.e4.5.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 26,
+      "T_ret_peak": 134,
+      "W_peak_raw": 7,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 35,
+      "T_ret_peak": 134,
+      "W_peak_raw": 30,
+      "W_peak_red": 30
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)"
+    ],
+    "total": {
+     "A": 111,
+     "D": 8,
+     "G_bits": 2511,
+     "G_calls": 255,
+     "K": 6,
+     "L_peak": 35,
+     "M": 136,
+     "M2": 52,
+     "S": 2,
+     "T_ret_peak": 134,
+     "W_bits": 12528,
+     "W_peak_raw": 30,
+     "W_peak_red": 30
+    }
+   },
+   {
+    "P": {
+     "A": 74,
+     "D": 8,
+     "G_bits": 2517,
+     "G_calls": 208,
+     "K": 0,
+     "M": 126,
+     "M2": 20,
+     "S": 2,
+     "W_bits": 20858
+    },
+    "Q": {
+     "A": 155,
+     "D": 0,
+     "G_bits": 5802,
+     "G_calls": 320,
+     "K": 5,
+     "M": 165,
+     "M2": 63,
+     "S": 5,
+     "W_bits": 59841
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 122,
+     "D": 0,
+     "G_bits": 5908,
+     "G_calls": 268,
+     "K": 11,
+     "M": 146,
+     "M2": 0,
+     "S": 7,
+     "W_bits": 67797
+    },
+    "first_refusal": "C1.Q.q00.h6.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 38,
+      "T_ret_peak": 678,
+      "W_peak_raw": 34,
+      "W_peak_red": 19
+     },
+     "Q": {
+      "L_peak": 41,
+      "T_ret_peak": 678,
+      "W_peak_raw": 42,
+      "W_peak_red": 28
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)"
+    ],
+    "total": {
+     "A": 229,
+     "D": 8,
+     "G_bits": 8319,
+     "G_calls": 528,
+     "K": 5,
+     "L_peak": 41,
+     "M": 291,
+     "M2": 83,
+     "S": 7,
+     "T_ret_peak": 678,
+     "W_bits": 80699,
+     "W_peak_raw": 42,
+     "W_peak_red": 28
+    }
+   },
+   {
+    "P": {
+     "A": 127,
+     "D": 8,
+     "G_bits": 4648,
+     "G_calls": 359,
+     "K": 0,
+     "M": 224,
+     "M2": 34,
+     "S": 2,
+     "W_bits": 43555
+    },
+    "Q": {
+     "A": 235,
+     "D": 0,
+     "G_bits": 9748,
+     "G_calls": 470,
+     "K": 5,
+     "M": 235,
+     "M2": 94,
+     "S": 0,
+     "W_bits": 114268
+    },
+    "arm": "E-COMP",
+    "attempt": {
+     "A": 91,
+     "D": 0,
+     "G_bits": 5215,
+     "G_calls": 191,
+     "K": 11,
+     "M": 100,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 77147
+    },
+    "first_refusal": "E-COMP.Q.q00.k3.11.e2",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 61,
+      "T_ret_peak": 1268,
+      "W_peak_raw": 34,
+      "W_peak_red": 19
+     },
+     "Q": {
+      "L_peak": 61,
+      "T_ret_peak": 1268,
+      "W_peak_raw": 42,
+      "W_peak_red": 28
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)"
+    ],
+    "total": {
+     "A": 362,
+     "D": 8,
+     "G_bits": 14396,
+     "G_calls": 829,
+     "K": 5,
+     "L_peak": 61,
+     "M": 459,
+     "M2": 128,
+     "S": 2,
+     "T_ret_peak": 1268,
+     "W_bits": 157823,
+     "W_peak_raw": 42,
+     "W_peak_red": 28
+    }
+   },
+   {
+    "P": {
+     "A": 325,
+     "D": 8,
+     "G_bits": 13138,
+     "G_calls": 806,
+     "K": 0,
+     "M": 473,
+     "M2": 144,
+     "S": 2,
+     "W_bits": 158190
+    },
+    "Q": {
+     "A": 1592,
+     "D": 0,
+     "G_bits": 69224,
+     "G_calls": 2392,
+     "K": 4,
+     "M": 800,
+     "M2": 400,
+     "S": 0,
+     "W_bits": 1509425
+    },
+    "arm": "E-BEZ",
+    "attempt": {
+     "A": 458,
+     "D": 0,
+     "G_bits": 22634,
+     "G_calls": 704,
+     "K": 12,
+     "M": 246,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 533904
+    },
+    "first_refusal": "E-BEZ.Q.q00.k3.53.e2",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 64,
+      "T_ret_peak": 1321,
+      "W_peak_raw": 44,
+      "W_peak_red": 25
+     },
+     "Q": {
+      "L_peak": 61,
+      "T_ret_peak": 1321,
+      "W_peak_raw": 60,
+      "W_peak_red": 30
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)"
+    ],
+    "total": {
+     "A": 1917,
+     "D": 8,
+     "G_bits": 82362,
+     "G_calls": 3198,
+     "K": 4,
+     "L_peak": 64,
+     "M": 1273,
+     "M2": 544,
+     "S": 2,
+     "T_ret_peak": 1321,
+     "W_bits": 1667615,
+     "W_peak_raw": 60,
+     "W_peak_red": 30
+    }
+   },
+   {
+    "P": {
+     "A": 127,
+     "D": 8,
+     "G_bits": 4648,
+     "G_calls": 359,
+     "K": 0,
+     "M": 224,
+     "M2": 34,
+     "S": 2,
+     "W_bits": 43555
+    },
+    "Q": {
+     "A": 1000,
+     "D": 0,
+     "G_bits": 46139,
+     "G_calls": 2000,
+     "K": 5,
+     "M": 1000,
+     "M2": 400,
+     "S": 0,
+     "W_bits": 648278
+    },
+    "arm": "E-TS",
+    "attempt": {
+     "A": 91,
+     "D": 0,
+     "G_bits": 5215,
+     "G_calls": 191,
+     "K": 11,
+     "M": 100,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 77147
+    },
+    "first_refusal": "E-TS.Q.q00.k3.11.e2",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 61,
+      "T_ret_peak": 1268,
+      "W_peak_raw": 34,
+      "W_peak_red": 19
+     },
+     "Q": {
+      "L_peak": 61,
+      "T_ret_peak": 1268,
+      "W_peak_raw": 51,
+      "W_peak_red": 28
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "OK",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)",
+     "REFUSED(ARITH_LIMIT)"
+    ],
+    "total": {
+     "A": 1127,
+     "D": 8,
+     "G_bits": 50787,
+     "G_calls": 2359,
+     "K": 5,
+     "L_peak": 61,
+     "M": 1224,
+     "M2": 434,
+     "S": 2,
+     "T_ret_peak": 1268,
+     "W_bits": 691833,
+     "W_peak_raw": 51,
+     "W_peak_red": 28
+    }
+   }
+  ],
+  "sequential": [
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 85,
+     "D": 0,
+     "G_bits": 1124,
+     "G_calls": 170,
+     "K": 0,
+     "M": 85,
+     "M2": 38,
+     "S": 0,
+     "W_bits": 3460
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 14,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 89,
+     "D": 8,
+     "G_bits": 1152,
+     "G_calls": 193,
+     "K": 0,
+     "L_peak": 22,
+     "M": 96,
+     "M2": 47,
+     "S": 3,
+     "T_ret_peak": 64,
+     "W_bits": 3516,
+     "W_peak_raw": 14,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 170,
+     "D": 34,
+     "G_bits": 2332,
+     "G_calls": 374,
+     "K": 17,
+     "M": 170,
+     "M2": 87,
+     "S": 0,
+     "W_bits": 8067
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 28,
+      "T_ret_peak": 64,
+      "W_peak_raw": 17,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 174,
+     "D": 42,
+     "G_bits": 2360,
+     "G_calls": 397,
+     "K": 17,
+     "L_peak": 28,
+     "M": 181,
+     "M2": 96,
+     "S": 3,
+     "T_ret_peak": 64,
+     "W_bits": 8123,
+     "W_peak_raw": 17,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 237,
+     "D": 34,
+     "G_bits": 3653,
+     "G_calls": 509,
+     "K": 17,
+     "M": 238,
+     "M2": 108,
+     "S": 0,
+     "W_bits": 17246
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 33,
+      "T_ret_peak": 93,
+      "W_peak_raw": 25,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 241,
+     "D": 42,
+     "G_bits": 3681,
+     "G_calls": 532,
+     "K": 17,
+     "L_peak": 33,
+     "M": 249,
+     "M2": 117,
+     "S": 3,
+     "T_ret_peak": 93,
+     "W_bits": 17302,
+     "W_peak_raw": 25,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 26,
+     "D": 8,
+     "G_bits": 116,
+     "G_calls": 87,
+     "K": 0,
+     "M": 53,
+     "M2": 49,
+     "S": 3,
+     "W_bits": 242
+    },
+    "Q": {
+     "A": 306,
+     "D": 0,
+     "G_bits": 2519,
+     "G_calls": 459,
+     "K": 0,
+     "M": 153,
+     "M2": 59,
+     "S": 0,
+     "W_bits": 10391
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 74,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 74,
+      "W_peak_raw": 17,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 332,
+     "D": 8,
+     "G_bits": 2635,
+     "G_calls": 546,
+     "K": 0,
+     "L_peak": 24,
+     "M": 206,
+     "M2": 108,
+     "S": 3,
+     "T_ret_peak": 74,
+     "W_bits": 10633,
+     "W_peak_raw": 17,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 26,
+     "D": 8,
+     "G_bits": 116,
+     "G_calls": 87,
+     "K": 0,
+     "M": 53,
+     "M2": 49,
+     "S": 3,
+     "W_bits": 242
+    },
+    "Q": {
+     "A": 544,
+     "D": 34,
+     "G_bits": 4128,
+     "G_calls": 850,
+     "K": 17,
+     "M": 272,
+     "M2": 118,
+     "S": 0,
+     "W_bits": 15972
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 74,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 28,
+      "T_ret_peak": 74,
+      "W_peak_raw": 17,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 570,
+     "D": 42,
+     "G_bits": 4244,
+     "G_calls": 937,
+     "K": 17,
+     "L_peak": 28,
+     "M": 325,
+     "M2": 167,
+     "S": 3,
+     "T_ret_peak": 74,
+     "W_bits": 16214,
+     "W_peak_raw": 17,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 26,
+     "D": 8,
+     "G_bits": 116,
+     "G_calls": 87,
+     "K": 0,
+     "M": 53,
+     "M2": 49,
+     "S": 3,
+     "W_bits": 242
+    },
+    "Q": {
+     "A": 764,
+     "D": 34,
+     "G_bits": 6791,
+     "G_calls": 1189,
+     "K": 17,
+     "M": 391,
+     "M2": 150,
+     "S": 0,
+     "W_bits": 33028
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 74,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 33,
+      "T_ret_peak": 103,
+      "W_peak_raw": 25,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 790,
+     "D": 42,
+     "G_bits": 6907,
+     "G_calls": 1276,
+     "K": 17,
+     "L_peak": 33,
+     "M": 444,
+     "M2": 199,
+     "S": 3,
+     "T_ret_peak": 103,
+     "W_bits": 33270,
+     "W_peak_raw": 25,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 3044,
+     "G_calls": 288,
+     "K": 0,
+     "M": 144,
+     "M2": 144,
+     "S": 0,
+     "W_bits": 20753
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 131,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 148,
+     "D": 8,
+     "G_bits": 3072,
+     "G_calls": 311,
+     "K": 0,
+     "L_peak": 22,
+     "M": 155,
+     "M2": 153,
+     "S": 3,
+     "T_ret_peak": 131,
+     "W_bits": 20809,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 256,
+     "D": 34,
+     "G_bits": 5198,
+     "G_calls": 546,
+     "K": 17,
+     "M": 256,
+     "M2": 256,
+     "S": 0,
+     "W_bits": 32395
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 28,
+      "T_ret_peak": 180,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 260,
+     "D": 42,
+     "G_bits": 5226,
+     "G_calls": 569,
+     "K": 17,
+     "L_peak": 28,
+     "M": 267,
+     "M2": 265,
+     "S": 3,
+     "T_ret_peak": 180,
+     "W_bits": 32451,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 4,
+     "D": 8,
+     "G_bits": 28,
+     "G_calls": 23,
+     "K": 0,
+     "M": 11,
+     "M2": 9,
+     "S": 3,
+     "W_bits": 56
+    },
+    "Q": {
+     "A": 368,
+     "D": 34,
+     "G_bits": 8003,
+     "G_calls": 771,
+     "K": 17,
+     "M": 369,
+     "M2": 354,
+     "S": 0,
+     "W_bits": 56439
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 22,
+      "T_ret_peak": 64,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 33,
+      "T_ret_peak": 229,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 372,
+     "D": 42,
+     "G_bits": 8031,
+     "G_calls": 794,
+     "K": 17,
+     "L_peak": 33,
+     "M": 380,
+     "M2": 363,
+     "S": 3,
+     "T_ret_peak": 229,
+     "W_bits": 56495,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 83,
+     "D": 8,
+     "G_bits": 1039,
+     "G_calls": 146,
+     "K": 0,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "W_bits": 6305
+    },
+    "Q": {
+     "A": 80,
+     "D": 0,
+     "G_bits": 1627,
+     "G_calls": 80,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 17457
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 197,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 240,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 163,
+     "D": 8,
+     "G_bits": 2666,
+     "G_calls": 226,
+     "K": 0,
+     "L_peak": 24,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "T_ret_peak": 240,
+     "W_bits": 23762,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 83,
+     "D": 8,
+     "G_bits": 1039,
+     "G_calls": 146,
+     "K": 0,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "W_bits": 6305
+    },
+    "Q": {
+     "A": 160,
+     "D": 34,
+     "G_bits": 3087,
+     "G_calls": 194,
+     "K": 17,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 28705
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 197,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 28,
+      "T_ret_peak": 284,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 243,
+     "D": 42,
+     "G_bits": 4126,
+     "G_calls": 340,
+     "K": 17,
+     "L_peak": 28,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "T_ret_peak": 284,
+     "W_bits": 35010,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 83,
+     "D": 8,
+     "G_bits": 1039,
+     "G_calls": 146,
+     "K": 0,
+     "M": 55,
+     "M2": 40,
+     "S": 3,
+     "W_bits": 6305
+    },
+    "Q": {
+     "A": 224,
+     "D": 34,
+     "G_bits": 4773,
+     "G_calls": 275,
+     "K": 17,
+     "M": 17,
+     "M2": 2,
+     "S": 0,
+     "W_bits": 49403
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 24,
+      "T_ret_peak": 197,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 33,
+      "T_ret_peak": 312,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 307,
+     "D": 42,
+     "G_bits": 5812,
+     "G_calls": 421,
+     "K": 17,
+     "L_peak": 33,
+     "M": 72,
+     "M2": 42,
+     "S": 3,
+     "T_ret_peak": 312,
+     "W_bits": 55708,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 24,
+     "G_calls": 19,
+     "K": 0,
+     "M": 8,
+     "M2": 7,
+     "S": 2,
+     "W_bits": 47
+    },
+    "Q": {
+     "A": 85,
+     "D": 0,
+     "G_bits": 1124,
+     "G_calls": 170,
+     "K": 0,
+     "M": 85,
+     "M2": 38,
+     "S": 0,
+     "W_bits": 3460
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 50,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 18,
+      "T_ret_peak": 50,
+      "W_peak_raw": 14,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 88,
+     "D": 8,
+     "G_bits": 1148,
+     "G_calls": 189,
+     "K": 0,
+     "L_peak": 18,
+     "M": 93,
+     "M2": 45,
+     "S": 2,
+     "T_ret_peak": 50,
+     "W_bits": 3507,
+     "W_peak_raw": 14,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 24,
+     "G_calls": 19,
+     "K": 0,
+     "M": 8,
+     "M2": 7,
+     "S": 2,
+     "W_bits": 47
+    },
+    "Q": {
+     "A": 136,
+     "D": 34,
+     "G_bits": 2049,
+     "G_calls": 323,
+     "K": 17,
+     "M": 153,
+     "M2": 94,
+     "S": 17,
+     "W_bits": 7234
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 50,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 50,
+      "W_peak_raw": 17,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 139,
+     "D": 42,
+     "G_bits": 2073,
+     "G_calls": 342,
+     "K": 17,
+     "L_peak": 29,
+     "M": 161,
+     "M2": 101,
+     "S": 19,
+     "T_ret_peak": 50,
+     "W_bits": 7281,
+     "W_peak_raw": 17,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 24,
+     "G_calls": 19,
+     "K": 0,
+     "M": 8,
+     "M2": 7,
+     "S": 2,
+     "W_bits": 47
+    },
+    "Q": {
+     "A": 220,
+     "D": 34,
+     "G_bits": 3470,
+     "G_calls": 509,
+     "K": 17,
+     "M": 255,
+     "M2": 137,
+     "S": 34,
+     "W_bits": 16604
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 50,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 39,
+      "T_ret_peak": 79,
+      "W_peak_raw": 25,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 223,
+     "D": 42,
+     "G_bits": 3494,
+     "G_calls": 528,
+     "K": 17,
+     "L_peak": 39,
+     "M": 263,
+     "M2": 144,
+     "S": 36,
+     "T_ret_peak": 79,
+     "W_bits": 16651,
+     "W_peak_raw": 25,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 80,
+     "D": 0,
+     "G_bits": 1627,
+     "G_calls": 80,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 17457
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 18,
+      "T_ret_peak": 198,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 140,
+     "D": 8,
+     "G_bits": 2446,
+     "G_calls": 188,
+     "K": 0,
+     "L_peak": 20,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "T_ret_peak": 198,
+     "W_bits": 22796,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 130,
+     "D": 34,
+     "G_bits": 2549,
+     "G_calls": 215,
+     "K": 17,
+     "M": 51,
+     "M2": 39,
+     "S": 17,
+     "W_bits": 21538
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 205,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 190,
+     "D": 42,
+     "G_bits": 3368,
+     "G_calls": 323,
+     "K": 17,
+     "L_peak": 29,
+     "M": 91,
+     "M2": 68,
+     "S": 19,
+     "T_ret_peak": 205,
+     "W_bits": 26877,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 211,
+     "D": 34,
+     "G_bits": 4335,
+     "G_calls": 347,
+     "K": 17,
+     "M": 102,
+     "M2": 63,
+     "S": 34,
+     "W_bits": 42427
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 39,
+      "T_ret_peak": 233,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 271,
+     "D": 42,
+     "G_bits": 5154,
+     "G_calls": 455,
+     "K": 17,
+     "L_peak": 39,
+     "M": 142,
+     "M2": 92,
+     "S": 36,
+     "T_ret_peak": 233,
+     "W_bits": 47766,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 80,
+     "D": 0,
+     "G_bits": 1627,
+     "G_calls": 80,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 17457
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 18,
+      "T_ret_peak": 198,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 140,
+     "D": 8,
+     "G_bits": 2446,
+     "G_calls": 188,
+     "K": 0,
+     "L_peak": 20,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "T_ret_peak": 198,
+     "W_bits": 22796,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 130,
+     "D": 34,
+     "G_bits": 2549,
+     "G_calls": 215,
+     "K": 17,
+     "M": 51,
+     "M2": 39,
+     "S": 17,
+     "W_bits": 21538
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 205,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 190,
+     "D": 42,
+     "G_bits": 3368,
+     "G_calls": 323,
+     "K": 17,
+     "L_peak": 29,
+     "M": 91,
+     "M2": 68,
+     "S": 19,
+     "T_ret_peak": 205,
+     "W_bits": 26877,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 60,
+     "D": 8,
+     "G_bits": 819,
+     "G_calls": 108,
+     "K": 0,
+     "M": 40,
+     "M2": 29,
+     "S": 2,
+     "W_bits": 5339
+    },
+    "Q": {
+     "A": 211,
+     "D": 34,
+     "G_bits": 4335,
+     "G_calls": 347,
+     "K": 17,
+     "M": 102,
+     "M2": 63,
+     "S": 34,
+     "W_bits": 42427
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 20,
+      "T_ret_peak": 155,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     },
+     "Q": {
+      "L_peak": 39,
+      "T_ret_peak": 233,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 271,
+     "D": 42,
+     "G_bits": 5154,
+     "G_calls": 455,
+     "K": 17,
+     "L_peak": 39,
+     "M": 142,
+     "M2": 92,
+     "S": 36,
+     "T_ret_peak": 233,
+     "W_bits": 47766,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 23,
+     "G_calls": 18,
+     "K": 0,
+     "M": 7,
+     "M2": 6,
+     "S": 2,
+     "W_bits": 45
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 3044,
+     "G_calls": 288,
+     "K": 0,
+     "M": 144,
+     "M2": 144,
+     "S": 0,
+     "W_bits": 20753
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 44,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 16,
+      "T_ret_peak": 111,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 147,
+     "D": 8,
+     "G_bits": 3067,
+     "G_calls": 306,
+     "K": 0,
+     "L_peak": 17,
+     "M": 151,
+     "M2": 150,
+     "S": 2,
+     "T_ret_peak": 111,
+     "W_bits": 20798,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 23,
+     "G_calls": 18,
+     "K": 0,
+     "M": 7,
+     "M2": 6,
+     "S": 2,
+     "W_bits": 45
+    },
+    "Q": {
+     "A": 240,
+     "D": 34,
+     "G_bits": 5657,
+     "G_calls": 514,
+     "K": 17,
+     "M": 240,
+     "M2": 240,
+     "S": 0,
+     "W_bits": 40465
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 44,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 22,
+      "T_ret_peak": 160,
+      "W_peak_raw": 28,
+      "W_peak_red": 14
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 243,
+     "D": 42,
+     "G_bits": 5680,
+     "G_calls": 532,
+     "K": 17,
+     "L_peak": 22,
+     "M": 247,
+     "M2": 246,
+     "S": 2,
+     "T_ret_peak": 160,
+     "W_bits": 40510,
+     "W_peak_raw": 28,
+     "W_peak_red": 14
+    }
+   },
+   {
+    "P": {
+     "A": 3,
+     "D": 8,
+     "G_bits": 23,
+     "G_calls": 18,
+     "K": 0,
+     "M": 7,
+     "M2": 6,
+     "S": 2,
+     "W_bits": 45
+    },
+    "Q": {
+     "A": 289,
+     "D": 34,
+     "G_bits": 6522,
+     "G_calls": 630,
+     "K": 17,
+     "M": 307,
+     "M2": 280,
+     "S": 17,
+     "W_bits": 48019
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH3",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 17,
+      "T_ret_peak": 44,
+      "W_peak_raw": 2,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 34,
+      "T_ret_peak": 167,
+      "W_peak_raw": 28,
+      "W_peak_red": 18
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 292,
+     "D": 42,
+     "G_bits": 6545,
+     "G_calls": 648,
+     "K": 17,
+     "L_peak": 34,
+     "M": 314,
+     "M2": 286,
+     "S": 19,
+     "T_ret_peak": 167,
+     "W_bits": 48064,
+     "W_peak_raw": 28,
+     "W_peak_red": 18
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 153,
+     "D": 0,
+     "G_bits": 3199,
+     "G_calls": 306,
+     "K": 0,
+     "M": 153,
+     "M2": 59,
+     "S": 0,
+     "W_bits": 12795
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 138,
+      "W_peak_raw": 25,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 183,
+     "D": 14,
+     "G_bits": 3335,
+     "G_calls": 393,
+     "K": 0,
+     "L_peak": 42,
+     "M": 196,
+     "M2": 76,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 13055,
+     "W_peak_raw": 25,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 340,
+     "D": 34,
+     "G_bits": 6810,
+     "G_calls": 714,
+     "K": 17,
+     "M": 340,
+     "M2": 143,
+     "S": 0,
+     "W_bits": 33757
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 34,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 370,
+     "D": 48,
+     "G_bits": 6946,
+     "G_calls": 801,
+     "K": 17,
+     "L_peak": 42,
+     "M": 383,
+     "M2": 160,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 34017,
+     "W_peak_raw": 34,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 27,
+     "D": 2,
+     "G_bits": 89,
+     "G_calls": 57,
+     "K": 1,
+     "M": 28,
+     "M2": 13,
+     "S": 0,
+     "W_bits": 208
+    },
+    "arm": "Horner",
+    "attempt": {
+     "A": 27,
+     "D": 0,
+     "G_bits": 669,
+     "G_calls": 55,
+     "K": 0,
+     "M": 28,
+     "M2": 27,
+     "S": 0,
+     "W_bits": 2792
+    },
+    "curve": "PH5",
+    "first_refusal": "Horner.Q.q01.a8.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 46,
+      "T_ret_peak": 141,
+      "W_peak_raw": 4,
+      "W_peak_red": 5
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 57,
+     "D": 16,
+     "G_bits": 225,
+     "G_calls": 144,
+     "K": 1,
+     "L_peak": 46,
+     "M": 71,
+     "M2": 30,
+     "S": 8,
+     "T_ret_peak": 141,
+     "W_bits": 468,
+     "W_peak_raw": 4,
+     "W_peak_red": 5
+    }
+   },
+   {
+    "P": {
+     "A": 99,
+     "D": 14,
+     "G_bits": 622,
+     "G_calls": 259,
+     "K": 0,
+     "M": 146,
+     "M2": 110,
+     "S": 8,
+     "W_bits": 1371
+    },
+    "Q": {
+     "A": 850,
+     "D": 0,
+     "G_bits": 12743,
+     "G_calls": 1275,
+     "K": 0,
+     "M": 425,
+     "M2": 140,
+     "S": 0,
+     "W_bits": 126725
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 8,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 192,
+      "W_peak_raw": 37,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 949,
+     "D": 14,
+     "G_bits": 13365,
+     "G_calls": 1534,
+     "K": 0,
+     "L_peak": 42,
+     "M": 571,
+     "M2": 250,
+     "S": 8,
+     "T_ret_peak": 192,
+     "W_bits": 128096,
+     "W_peak_raw": 37,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 99,
+     "D": 14,
+     "G_bits": 622,
+     "G_calls": 259,
+     "K": 0,
+     "M": 146,
+     "M2": 110,
+     "S": 8,
+     "W_bits": 1371
+    },
+    "Q": {
+     "A": 1734,
+     "D": 34,
+     "G_bits": 23700,
+     "G_calls": 2635,
+     "K": 17,
+     "M": 867,
+     "M2": 315,
+     "S": 0,
+     "W_bits": 218108
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 8,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 37,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 1833,
+     "D": 48,
+     "G_bits": 24322,
+     "G_calls": 2894,
+     "K": 17,
+     "L_peak": 42,
+     "M": 1013,
+     "M2": 425,
+     "S": 8,
+     "T_ret_peak": 192,
+     "W_bits": 219479,
+     "W_peak_raw": 37,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 99,
+     "D": 14,
+     "G_bits": 622,
+     "G_calls": 259,
+     "K": 0,
+     "M": 146,
+     "M2": 110,
+     "S": 8,
+     "W_bits": 1371
+    },
+    "Q": {
+     "A": 138,
+     "D": 2,
+     "G_bits": 515,
+     "G_calls": 210,
+     "K": 1,
+     "M": 70,
+     "M2": 12,
+     "S": 0,
+     "W_bits": 1527
+    },
+    "arm": "Bezier",
+    "attempt": {
+     "A": 138,
+     "D": 0,
+     "G_bits": 2477,
+     "G_calls": 208,
+     "K": 0,
+     "M": 70,
+     "M2": 69,
+     "S": 0,
+     "W_bits": 25060
+    },
+    "curve": "PH5",
+    "first_refusal": "Bezier.Q.q01.a8.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 192,
+      "W_peak_raw": 8,
+      "W_peak_red": 7
+     },
+     "Q": {
+      "L_peak": 46,
+      "T_ret_peak": 195,
+      "W_peak_raw": 11,
+      "W_peak_red": 6
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 237,
+     "D": 16,
+     "G_bits": 1137,
+     "G_calls": 469,
+     "K": 1,
+     "L_peak": 46,
+     "M": 216,
+     "M2": 122,
+     "S": 8,
+     "T_ret_peak": 195,
+     "W_bits": 2898,
+     "W_peak_raw": 11,
+     "W_peak_red": 7
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 400,
+     "D": 0,
+     "G_bits": 12335,
+     "G_calls": 800,
+     "K": 0,
+     "M": 400,
+     "M2": 400,
+     "S": 0,
+     "W_bits": 142837
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 330,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 430,
+     "D": 14,
+     "G_bits": 12471,
+     "G_calls": 887,
+     "K": 0,
+     "L_peak": 42,
+     "M": 443,
+     "M2": 417,
+     "S": 8,
+     "T_ret_peak": 330,
+     "W_bits": 143097,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 816,
+     "D": 34,
+     "G_bits": 22210,
+     "G_calls": 1666,
+     "K": 17,
+     "M": 816,
+     "M2": 816,
+     "S": 0,
+     "W_bits": 231527
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 505,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 846,
+     "D": 48,
+     "G_bits": 22346,
+     "G_calls": 1753,
+     "K": 17,
+     "L_peak": 42,
+     "M": 859,
+     "M2": 833,
+     "S": 8,
+     "T_ret_peak": 505,
+     "W_bits": 231787,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 30,
+     "D": 14,
+     "G_bits": 136,
+     "G_calls": 87,
+     "K": 0,
+     "M": 43,
+     "M2": 17,
+     "S": 8,
+     "W_bits": 260
+    },
+    "Q": {
+     "A": 0,
+     "D": 2,
+     "G_bits": 7,
+     "G_calls": 3,
+     "K": 1,
+     "M": 1,
+     "M2": 1,
+     "S": 0,
+     "W_bits": 12
+    },
+    "arm": "TS",
+    "attempt": {
+     "A": 69,
+     "D": 0,
+     "G_bits": 1698,
+     "G_calls": 139,
+     "K": 0,
+     "M": 70,
+     "M2": 69,
+     "S": 0,
+     "W_bits": 12384
+    },
+    "curve": "PH5",
+    "first_refusal": "TS.Q.q01.a8.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 46,
+      "T_ret_peak": 138,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 30,
+     "D": 16,
+     "G_bits": 143,
+     "G_calls": 90,
+     "K": 1,
+     "L_peak": 46,
+     "M": 44,
+     "M2": 18,
+     "S": 8,
+     "T_ret_peak": 138,
+     "W_bits": 272,
+     "W_peak_raw": 3,
+     "W_peak_red": 5
+    }
+   },
+   {
+    "P": {
+     "A": 264,
+     "D": 14,
+     "G_bits": 4875,
+     "G_calls": 459,
+     "K": 0,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "W_bits": 54034
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 4898,
+     "G_calls": 144,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 96434
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 650,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 36,
+      "T_ret_peak": 751,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 408,
+     "D": 14,
+     "G_bits": 9773,
+     "G_calls": 603,
+     "K": 0,
+     "L_peak": 42,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "T_ret_peak": 751,
+     "W_bits": 150468,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 264,
+     "D": 14,
+     "G_bits": 4875,
+     "G_calls": 459,
+     "K": 0,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "W_bits": 54034
+    },
+    "Q": {
+     "A": 320,
+     "D": 34,
+     "G_bits": 10164,
+     "G_calls": 354,
+     "K": 17,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 177712
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 650,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 849,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 584,
+     "D": 48,
+     "G_bits": 15039,
+     "G_calls": 813,
+     "K": 17,
+     "L_peak": 42,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "T_ret_peak": 849,
+     "W_bits": 231746,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 264,
+     "D": 14,
+     "G_bits": 4875,
+     "G_calls": 459,
+     "K": 0,
+     "M": 181,
+     "M2": 109,
+     "S": 8,
+     "W_bits": 54034
+    },
+    "Q": {
+     "A": 0,
+     "D": 2,
+     "G_bits": 7,
+     "G_calls": 3,
+     "K": 1,
+     "M": 1,
+     "M2": 1,
+     "S": 0,
+     "W_bits": 12
+    },
+    "arm": "FD",
+    "attempt": {
+     "A": 27,
+     "D": 0,
+     "G_bits": 747,
+     "G_calls": 28,
+     "K": 0,
+     "M": 1,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 10529
+    },
+    "curve": "PH5",
+    "first_refusal": "FD.Q.q01.a8.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 42,
+      "T_ret_peak": 650,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 46,
+      "T_ret_peak": 650,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 264,
+     "D": 16,
+     "G_bits": 4882,
+     "G_calls": 462,
+     "K": 1,
+     "L_peak": 46,
+     "M": 182,
+     "M2": 110,
+     "S": 8,
+     "T_ret_peak": 650,
+     "W_bits": 54046,
+     "W_peak_raw": 46,
+     "W_peak_red": 23
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 153,
+     "D": 0,
+     "G_bits": 3199,
+     "G_calls": 306,
+     "K": 0,
+     "M": 153,
+     "M2": 59,
+     "S": 0,
+     "W_bits": 12795
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 100,
+      "W_peak_raw": 25,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 175,
+     "D": 14,
+     "G_bits": 3305,
+     "G_calls": 373,
+     "K": 0,
+     "L_peak": 30,
+     "M": 184,
+     "M2": 71,
+     "S": 5,
+     "T_ret_peak": 100,
+     "W_bits": 12994,
+     "W_peak_raw": 25,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 255,
+     "D": 34,
+     "G_bits": 6214,
+     "G_calls": 561,
+     "K": 17,
+     "M": 272,
+     "M2": 91,
+     "S": 17,
+     "W_bits": 50003
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 40,
+      "T_ret_peak": 100,
+      "W_peak_raw": 36,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 277,
+     "D": 48,
+     "G_bits": 6320,
+     "G_calls": 628,
+     "K": 17,
+     "L_peak": 40,
+     "M": 303,
+     "M2": 103,
+     "S": 22,
+     "T_ret_peak": 100,
+     "W_bits": 50202,
+     "W_peak_raw": 36,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 106,
+     "G_calls": 67,
+     "K": 0,
+     "M": 31,
+     "M2": 12,
+     "S": 5,
+     "W_bits": 199
+    },
+    "Q": {
+     "A": 23,
+     "D": 2,
+     "G_bits": 71,
+     "G_calls": 51,
+     "K": 1,
+     "M": 26,
+     "M2": 8,
+     "S": 2,
+     "W_bits": 164
+    },
+    "arm": "PH",
+    "attempt": {
+     "A": 8,
+     "D": 0,
+     "G_bits": 225,
+     "G_calls": 18,
+     "K": 0,
+     "M": 10,
+     "M2": 6,
+     "S": 1,
+     "W_bits": 2935
+    },
+    "curve": "PH5",
+    "first_refusal": "PH.Q.q01.b11.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 100,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 49,
+      "T_ret_peak": 103,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 45,
+     "D": 16,
+     "G_bits": 177,
+     "G_calls": 118,
+     "K": 1,
+     "L_peak": 49,
+     "M": 57,
+     "M2": 20,
+     "S": 7,
+     "T_ret_peak": 103,
+     "W_bits": 363,
+     "W_peak_raw": 3,
+     "W_peak_red": 5
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 4898,
+     "G_calls": 144,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 96434
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 561,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 330,
+     "D": 14,
+     "G_bits": 8458,
+     "G_calls": 471,
+     "K": 0,
+     "L_peak": 33,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "T_ret_peak": 561,
+     "W_bits": 137266,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 242,
+     "D": 34,
+     "G_bits": 8183,
+     "G_calls": 327,
+     "K": 17,
+     "M": 51,
+     "M2": 0,
+     "S": 17,
+     "W_bits": 140455
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 40,
+      "T_ret_peak": 595,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 428,
+     "D": 48,
+     "G_bits": 11743,
+     "G_calls": 654,
+     "K": 17,
+     "L_peak": 40,
+     "M": 178,
+     "M2": 73,
+     "S": 22,
+     "T_ret_peak": 595,
+     "W_bits": 181287,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 3,
+     "D": 2,
+     "G_bits": 16,
+     "G_calls": 11,
+     "K": 1,
+     "M": 6,
+     "M2": 1,
+     "S": 2,
+     "W_bits": 31
+    },
+    "arm": "PHFD",
+    "attempt": {
+     "A": 8,
+     "D": 0,
+     "G_bits": 209,
+     "G_calls": 12,
+     "K": 0,
+     "M": 4,
+     "M2": 0,
+     "S": 1,
+     "W_bits": 3062
+    },
+    "curve": "PH5",
+    "first_refusal": "PHFD.Q.q01.b11.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 49,
+      "T_ret_peak": 460,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 189,
+     "D": 16,
+     "G_bits": 3576,
+     "G_calls": 338,
+     "K": 1,
+     "L_peak": 49,
+     "M": 133,
+     "M2": 74,
+     "S": 7,
+     "T_ret_peak": 460,
+     "W_bits": 40863,
+     "W_peak_raw": 46,
+     "W_peak_red": 23
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 144,
+     "D": 0,
+     "G_bits": 4898,
+     "G_calls": 144,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 96434
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 29,
+      "T_ret_peak": 561,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 330,
+     "D": 14,
+     "G_bits": 8458,
+     "G_calls": 471,
+     "K": 0,
+     "L_peak": 33,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "T_ret_peak": 561,
+     "W_bits": 137266,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 242,
+     "D": 34,
+     "G_bits": 8183,
+     "G_calls": 327,
+     "K": 17,
+     "M": 51,
+     "M2": 0,
+     "S": 17,
+     "W_bits": 140455
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 40,
+      "T_ret_peak": 595,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 428,
+     "D": 48,
+     "G_bits": 11743,
+     "G_calls": 654,
+     "K": 17,
+     "L_peak": 40,
+     "M": 178,
+     "M2": 73,
+     "S": 22,
+     "T_ret_peak": 595,
+     "W_bits": 181287,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 186,
+     "D": 14,
+     "G_bits": 3560,
+     "G_calls": 327,
+     "K": 0,
+     "M": 127,
+     "M2": 73,
+     "S": 5,
+     "W_bits": 40832
+    },
+    "Q": {
+     "A": 3,
+     "D": 2,
+     "G_bits": 16,
+     "G_calls": 11,
+     "K": 1,
+     "M": 6,
+     "M2": 1,
+     "S": 2,
+     "W_bits": 31
+    },
+    "arm": "C1",
+    "attempt": {
+     "A": 8,
+     "D": 0,
+     "G_bits": 209,
+     "G_calls": 12,
+     "K": 0,
+     "M": 4,
+     "M2": 0,
+     "S": 1,
+     "W_bits": 3062
+    },
+    "curve": "PH5",
+    "first_refusal": "C1.Q.q01.b11.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 33,
+      "T_ret_peak": 460,
+      "W_peak_raw": 46,
+      "W_peak_red": 23
+     },
+     "Q": {
+      "L_peak": 49,
+      "T_ret_peak": 460,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 189,
+     "D": 16,
+     "G_bits": 3576,
+     "G_calls": 338,
+     "K": 1,
+     "L_peak": 49,
+     "M": 133,
+     "M2": 74,
+     "S": 7,
+     "T_ret_peak": 460,
+     "W_bits": 40863,
+     "W_peak_raw": 46,
+     "W_peak_red": 23
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 100,
+     "G_calls": 63,
+     "K": 0,
+     "M": 27,
+     "M2": 8,
+     "S": 5,
+     "W_bits": 189
+    },
+    "Q": {
+     "A": 400,
+     "D": 0,
+     "G_bits": 12335,
+     "G_calls": 800,
+     "K": 0,
+     "M": 400,
+     "M2": 400,
+     "S": 0,
+     "W_bits": 142837
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 25,
+      "T_ret_peak": 278,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S1",
+    "total": {
+     "A": 422,
+     "D": 14,
+     "G_bits": 12435,
+     "G_calls": 863,
+     "K": 0,
+     "L_peak": 30,
+     "M": 427,
+     "M2": 408,
+     "S": 5,
+     "T_ret_peak": 278,
+     "W_bits": 143026,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 100,
+     "G_calls": 63,
+     "K": 0,
+     "M": 27,
+     "M2": 8,
+     "S": 5,
+     "W_bits": 189
+    },
+    "Q": {
+     "A": 640,
+     "D": 34,
+     "G_bits": 21032,
+     "G_calls": 1314,
+     "K": 17,
+     "M": 640,
+     "M2": 640,
+     "S": 0,
+     "W_bits": 253224
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 0,
+     "D": 0,
+     "G_bits": 0,
+     "G_calls": 0,
+     "K": 0,
+     "M": 0,
+     "M2": 0,
+     "S": 0,
+     "W_bits": 0
+    },
+    "curve": "PH5",
+    "first_refusal": null,
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 31,
+      "T_ret_peak": 396,
+      "W_peak_raw": 48,
+      "W_peak_red": 25
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK",
+     "OK"
+    ],
+    "tape": "S2",
+    "total": {
+     "A": 662,
+     "D": 48,
+     "G_bits": 21132,
+     "G_calls": 1377,
+     "K": 17,
+     "L_peak": 31,
+     "M": 667,
+     "M2": 648,
+     "S": 5,
+     "T_ret_peak": 396,
+     "W_bits": 253413,
+     "W_peak_raw": 48,
+     "W_peak_red": 25
+    }
+   },
+   {
+    "P": {
+     "A": 22,
+     "D": 14,
+     "G_bits": 100,
+     "G_calls": 63,
+     "K": 0,
+     "M": 27,
+     "M2": 8,
+     "S": 5,
+     "W_bits": 189
+    },
+    "Q": {
+     "A": 1,
+     "D": 2,
+     "G_bits": 10,
+     "G_calls": 6,
+     "K": 1,
+     "M": 3,
+     "M2": 1,
+     "S": 1,
+     "W_bits": 19
+    },
+    "arm": "C2",
+    "attempt": {
+     "A": 46,
+     "D": 0,
+     "G_bits": 1254,
+     "G_calls": 93,
+     "K": 0,
+     "M": 47,
+     "M2": 46,
+     "S": 0,
+     "W_bits": 9898
+    },
+    "curve": "PH5",
+    "first_refusal": "C2.Q.q01.c7.1.e1",
+    "mismatches": 0,
+    "peaks": {
+     "P": {
+      "L_peak": 30,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     },
+     "Q": {
+      "L_peak": 42,
+      "T_ret_peak": 86,
+      "W_peak_raw": 3,
+      "W_peak_red": 5
+     }
+    },
+    "prep": null,
+    "statuses": [
+     "OK",
+     "REFUSED(ARITH_LIMIT)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)",
+     "NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)"
+    ],
+    "tape": "S3",
+    "total": {
+     "A": 23,
+     "D": 16,
+     "G_bits": 110,
+     "G_calls": 69,
+     "K": 1,
+     "L_peak": 42,
+     "M": 30,
+     "M2": 9,
+     "S": 6,
+     "T_ret_peak": 86,
+     "W_bits": 208,
+     "W_peak_raw": 3,
+     "W_peak_red": 5
+    }
+   }
+  ]
+ },
+ "counted_operations": 243609,
+ "equivalence": {
+  "EQ-1": true,
+  "EQ-2_PH3_S1": true,
+  "EQ-2_PH3_S2": true,
+  "EQ-2_PH3_S3": true,
+  "EQ-2_PH5_S1": true,
+  "EQ-2_PH5_S2": true,
+  "EQ-2_PH5_S3": true
+ },
+ "pareto": {
+  "cell_a": {
+   "candidates": {
+    "C1": {
+     "candidate": "C1",
+     "comparator": "B-PH",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": true,
+      "G_calls": true,
+      "K": true,
+      "M": true,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": false,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": false,
+      "W_peak_red": false
+     },
+     "verdict": "NO_SIGNAL"
+    },
+    "C2": {
+     "candidate": "C2",
+     "comparator": "B-PH",
+     "guard": {
+      "A": false,
+      "D": true,
+      "G_bits": false,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": false,
+      "W_peak_raw": false,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": false,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    }
+   },
+   "comparator": "B-PH",
+   "virtual_best": {
+    "A": 390,
+    "D": 14,
+    "G_bits": 7061,
+    "G_calls": 851,
+    "K": 16,
+    "M": 447,
+    "S": 8,
+    "T_ret_peak": 100,
+    "W_bits": 28486,
+    "W_peak_raw": 32,
+    "W_peak_red": 32
+   }
+  },
+  "cell_b": {
+   "candidates": {
+    "C1": {
+     "candidate": "C1",
+     "comparator": "B-COMP",
+     "guard": {
+      "A": false,
+      "D": true,
+      "G_bits": false,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": false,
+      "T_ret_peak": false,
+      "W_bits": false,
+      "W_peak_raw": false,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": false,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": false,
+      "W_peak_red": false
+     },
+     "verdict": "NO_SIGNAL"
+    }
+   },
+   "comparator": "B-COMP",
+   "virtual_best": {
+    "A": 291,
+    "D": 8,
+    "G_bits": 10196,
+    "G_calls": 645,
+    "K": 16,
+    "M": 346,
+    "S": 2,
+    "T_ret_peak": 134,
+    "W_bits": 66867,
+    "W_peak_raw": 44,
+    "W_peak_red": 44
+   }
+  },
+  "seq_PH3_S1": {
+   "candidates": {
+    "C1": {
+     "candidate": "C1",
+     "comparator": "PHFD",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": true,
+      "G_calls": true,
+      "K": true,
+      "M": true,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": false,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": false,
+      "W_peak_red": false
+     },
+     "verdict": "NO_SIGNAL"
+    },
+    "C2": {
+     "candidate": "C2",
+     "comparator": "PHFD",
+     "guard": {
+      "A": false,
+      "D": true,
+      "G_bits": false,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    }
+   },
+   "comparator": "PHFD",
+   "virtual_best": {
+    "A": 88,
+    "D": 8,
+    "G_bits": 1148,
+    "G_calls": 188,
+    "K": 0,
+    "M": 40,
+    "S": 2,
+    "T_ret_peak": 50,
+    "W_bits": 3507,
+    "W_peak_raw": 14,
+    "W_peak_red": 14
+   }
+  },
+  "seq_PH3_S2": {
+   "candidates": {
+    "C1": {
+     "candidate": "C1",
+     "comparator": "FD",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": true,
+      "G_calls": true,
+      "K": true,
+      "M": false,
+      "S": false,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": true,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    },
+    "C2": {
+     "candidate": "C2",
+     "comparator": "FD",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": false,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": false,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    }
+   },
+   "comparator": "FD",
+   "virtual_best": {
+    "A": 139,
+    "D": 42,
+    "G_bits": 2073,
+    "G_calls": 323,
+    "K": 17,
+    "M": 55,
+    "S": 3,
+    "T_ret_peak": 50,
+    "W_bits": 7281,
+    "W_peak_raw": 17,
+    "W_peak_red": 14
+   }
+  },
+  "seq_PH3_S3": {
+   "candidates": {
+    "C1": {
+     "candidate": "C1",
+     "comparator": "FD",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": true,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": false,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    },
+    "C2": {
+     "candidate": "C2",
+     "comparator": "FD",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": false,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": false,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    }
+   },
+   "comparator": "FD",
+   "virtual_best": {
+    "A": 223,
+    "D": 42,
+    "G_bits": 3494,
+    "G_calls": 421,
+    "K": 17,
+    "M": 72,
+    "S": 3,
+    "T_ret_peak": 79,
+    "W_bits": 16651,
+    "W_peak_raw": 25,
+    "W_peak_red": 18
+   }
+  },
+  "seq_PH5_S1": {
+   "candidates": {
+    "C1": {
+     "candidate": "C1",
+     "comparator": "PHFD",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": true,
+      "G_calls": true,
+      "K": true,
+      "M": true,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": false,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": false,
+      "W_peak_red": false
+     },
+     "verdict": "NO_SIGNAL"
+    },
+    "C2": {
+     "candidate": "C2",
+     "comparator": "PHFD",
+     "guard": {
+      "A": false,
+      "D": true,
+      "G_bits": false,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": false,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    }
+   },
+   "comparator": "PHFD",
+   "virtual_best": {
+    "A": 175,
+    "D": 14,
+    "G_bits": 3305,
+    "G_calls": 373,
+    "K": 0,
+    "M": 127,
+    "S": 5,
+    "T_ret_peak": 100,
+    "W_bits": 12994,
+    "W_peak_raw": 25,
+    "W_peak_red": 25
+   }
+  },
+  "seq_PH5_S2": {
+   "candidates": {
+    "C1": {
+     "candidate": "C1",
+     "comparator": "PHFD",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": true,
+      "G_calls": true,
+      "K": true,
+      "M": true,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": false,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": false,
+      "W_peak_red": false
+     },
+     "verdict": "NO_SIGNAL"
+    },
+    "C2": {
+     "candidate": "C2",
+     "comparator": "PHFD",
+     "guard": {
+      "A": false,
+      "D": true,
+      "G_bits": false,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": true,
+      "T_ret_peak": true,
+      "W_bits": false,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    }
+   },
+   "comparator": "PHFD",
+   "virtual_best": {
+    "A": 277,
+    "D": 48,
+    "G_bits": 6320,
+    "G_calls": 628,
+    "K": 17,
+    "M": 178,
+    "S": 8,
+    "T_ret_peak": 100,
+    "W_bits": 34017,
+    "W_peak_raw": 34,
+    "W_peak_red": 25
+   }
+  },
+  "seq_PH5_S3": {
+   "candidates": {
+    "C1": {
+     "candidate": "C1",
+     "comparator": "FD",
+     "guard": {
+      "A": true,
+      "D": true,
+      "G_bits": true,
+      "G_calls": true,
+      "K": true,
+      "M": false,
+      "S": false,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    },
+    "C2": {
+     "candidate": "C2",
+     "comparator": "FD",
+     "guard": {
+      "A": false,
+      "D": true,
+      "G_bits": false,
+      "G_calls": false,
+      "K": true,
+      "M": false,
+      "S": false,
+      "T_ret_peak": true,
+      "W_bits": true,
+      "W_peak_raw": true,
+      "W_peak_red": true
+     },
+     "signal": false,
+     "tradeoff": true,
+     "trigger": {
+      "A": false,
+      "D": false,
+      "K": false,
+      "M": false,
+      "T_ret_peak": true,
+      "W_peak_red": false
+     },
+     "verdict": "TRADE-OFF"
+    }
+   },
+   "comparator": "FD",
+   "virtual_best": {
+    "A": 429,
+    "D": 48,
+    "G_bits": 10135,
+    "G_calls": 850,
+    "K": 17,
+    "M": 198,
+    "S": 8,
+    "T_ret_peak": 149,
+    "W_bits": 63750,
+    "W_peak_raw": 43,
+    "W_peak_red": 37
+   }
+  }
+ },
+ "pending_acceptance_hooks": {
+  "W31_CellB_stage_table": "PENDING_INDEPENDENT_DERIVATION; the W31 Cell B observations above are uncertified outputs, not expectations",
+  "W31_sequential_stage_table": "PENDING_INDEPENDENT_DERIVATION; the W31 sequential observations above are uncertified outputs, not expectations"
+ },
+ "stage0_pins": {
+  "PINS.sha256": "OK",
+  "mismatched": [],
+  "references": "OK"
+ },
+ "stage1_conformance": {
+  "event_ids_and_refusal": "PASS",
+  "lu_dc_ts": "PASS",
+  "lu_fd": "PASS",
+  "lu_fd_values": "PASS",
+  "lu_h": "PASS",
+  "lu_p_aggregation": "PASS",
+  "lu_s_val_d_g": "PASS",
+  "lu_w": "PASS"
+ },
+ "stage1_prep_targets_mismatch": [],
+ "stage1_q_division_free_violations": [],
+ "stage2_eq3_mismatches": 0,
+ "stage3_w31_cell_a_certified_mismatches": [],
+ "stage5_capability": {
+  "controls_e1_mismatches": [],
+  "loops": {
+   "checks": 2,
+   "mismatches": []
+  },
+  "phi_bad": {
+   "ACCUMULATED_LENGTH": "REFUSED(OUT_OF_DOMAIN)",
+   "checks": 17,
+   "mismatches": [],
+   "oriented_total": [
+    0,
+    1
+   ]
+  },
+  "retiming": {
+   "non_polynomial": {
+    "code": "OUT_OF_DOMAIN",
+    "event": null,
+    "outputs": null,
+    "status": "REFUSED"
+   },
+   "primitive_ns": "REFUSED(NOT_PRIMITIVE_RETIMING)"
+  },
+  "s4": {
+   "checks": 897,
+   "mismatches": []
+  },
+  "s5": {
+   "checks": 9,
+   "mismatches": []
+  },
+  "s6": {
+   "checks": 11,
+   "mismatches": []
+  }
+ },
+ "stage6_mutants": {
+  "X-1": {
+   "detector": "EQ-3 Cell A, N_kappa index 7",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-10": {
+   "detector": "P-phase targets",
+   "killed": true,
+   "level": "fixture-only"
+  },
+  "X-11": {
+   "detector": "Q-phase D = 0 for every arm",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-12": {
+   "detector": "sequential EQ-3 on the certified rows (cost-identical wrong grid)",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-13": {
+   "detector": "LU-TS, LU-DC and EQ-3",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-14": {
+   "detector": "PH3 position at order 2",
+   "killed": true,
+   "level": "check-only"
+  },
+  "X-15": {
+   "detector": "certified W31 Cell A first refusals (sequential and Cell B tables pending)",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-16": {
+   "detector": "state hash, fresh-run equality and identical repeat after a W31 refusal",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-17": {
+   "detector": "harmonic operator control",
+   "killed": true,
+   "level": "check-only"
+  },
+  "X-18": {
+   "detector": "phi_ns at t = 0",
+   "killed": true,
+   "level": "check-only"
+  },
+  "X-19": {
+   "detector": "EQ-1",
+   "killed": true,
+   "level": "fixture-only"
+  },
+  "X-2": {
+   "detector": "P-1 reversal rows (h = -1) vs primitive reversal rows",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-20": {
+   "detector": "Cell A: FD status",
+   "killed": true,
+   "level": "check-only"
+  },
+  "X-21": {
+   "detector": "oracle-side identity x'^2 + y'^2 = sigma^2",
+   "killed": true,
+   "level": "state-perturbed"
+  },
+  "X-22": {
+   "detector": "symbolic: reversal twice restores the hodograph",
+   "killed": true,
+   "level": "fixture-only"
+  },
+  "X-23": {
+   "detector": "non-polynomial and non-primitive retiming",
+   "killed": true,
+   "level": "check-only"
+  },
+  "X-24": {
+   "detector": "E1a (C4) and E1b (3-4-5) controls",
+   "killed": true,
+   "level": "check-only"
+  },
+  "X-3": {
+   "detector": "Cell B rows (phi'); P-1 nonconstant-h rows",
+   "killed": true,
+   "level": "fixture-only"
+  },
+  "X-4": {
+   "detector": "phi_bad: oriented total 0, piecewise total 8/3",
+   "killed": true,
+   "level": "fixture-only"
+  },
+  "X-5": {
+   "detector": "mixed-sign h: single polynomial length refused",
+   "killed": true,
+   "level": "check-only"
+  },
+  "X-6": {
+   "detector": "b7, b9: raw equality differs from the gated join",
+   "killed": true,
+   "level": "fixture-only"
+  },
+  "X-7": {
+   "detector": "LU-S, LU-VAL",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-8": {
+   "detector": "LU-H0",
+   "killed": true,
+   "level": "patched"
+  },
+  "X-9": {
+   "detector": "LU-G: 3*5 = 15",
+   "killed": true,
+   "level": "patched"
+  }
+ },
+ "version": "qcg0-p0-artifact-v1"
+}

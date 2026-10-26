@@ -1,0 +1,37 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Oct 22 23:35:38 2026
+| Host         : john-MacBookAir running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_drc -file /home/user/spu-transfer/spu-research-baseline/build/vivado/g1_pos_01/synth_drc.rpt
+| Design       : spu_a7_tensegrity_link_top
+| Device       : xc7a100tfgg676-1
+| Speed File   : -1
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Report DRC
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: spu_a7_tensegrity_link_top
+          Floorplan: design_1
+      Design limits: <entire design considered>
+           Ruledeck: default
+             Max checks: <unlimited>
+             Checks found: 171
++-----------+----------+-----------------------------------------------------+--------+
+| Rule      | Severity | Description                                         | Checks |
++-----------+----------+-----------------------------------------------------+--------+
+| CFGBVS-1  | Warning  | Missing CFGBVS and CONFIG_VOLTAGE Design Properties | 1      |
+| DPIP-1    | Warning  | Input pipelining                                    | 73     |
+| DPOP-1    | Warning  | PREG Output pipelining                              | 48     |
+| DPOP-2    | Warning  | MREG Output pipelining                              | 48     |
+| REQP-1840 | Warning  | RAMB18 async control check                          | 1      |
++-----------+----------+-----------------------------------------------------+--------+
+

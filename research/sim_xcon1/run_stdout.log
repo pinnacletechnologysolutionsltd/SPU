@@ -1,0 +1,12 @@
+spu_sim_baseline PASS {'head': 'c1e0676eee5d2398b8d90eec43bd55b2d2f6b924', 'dirty_lines': 0}
+research_inputs_unchanged_since_freeze PASS {'mismatched': []}
+packet_identity PASS {'sha': 'aa2bad57fa5d3d2f777ef5e5405357ac0216a4aafb707d99241050c986ed69ee'}
+reference_json_identity PASS {}
+cpp_build_from_c1e0676 PASS {'exe_sha256': '32d937aec29248da8c49bbf4a1bb2a8679ff6aa4e14bf2b1565c35584865e754'}
+cpp_python_byte_identical PASS {'cpp_sha': '96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10', 'py_sha': '96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10', 'cpp_rc': 0}
+frame_hash_matches_frozen PASS {'expected': '96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10'}
+frozen_pixels_vs_frames PASS {'points': 29, 'mismatches': []}
+PASS: packet selected pixels matched T1d depth, raster, attribute, and compare RTL
+rtl_selected_pixels PASS {'points': 29, 'pixel_lines': 29, 'detail': ''}
+inputs_unchanged_after_run PASS {'mismatched': [], 'spu_sim_dirty': 0}
+ALL_PASS 18.0 s

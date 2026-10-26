@@ -1,0 +1,558 @@
+{
+ "expected_frame_sha256": "96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10",
+ "fixture_files": {
+  "fixtures/gpu_t1d_scene_reference.json": "7c48bdeffac97bba871e5c92663168900cb617f8586976e66f09077e11b7f138",
+  "fixtures/gpu_t1d_scene_wire_64b.bin": "aa2bad57fa5d3d2f777ef5e5405357ac0216a4aafb707d99241050c986ed69ee"
+ },
+ "frame_format": "640x480 RGB8, 3 bytes/pixel, 921600 bytes, 4-bit channel n -> byte n*17",
+ "packet_sha256": "aa2bad57fa5d3d2f777ef5e5405357ac0216a4aafb707d99241050c986ed69ee",
+ "points": [
+  {
+   "category": "region:((), None)",
+   "expected_coverage": "background",
+   "expected_covered_by": [],
+   "expected_depths": {},
+   "expected_rgb": [
+    0,
+    0,
+    0
+   ],
+   "expected_winner": null,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "category": "reference_json:background",
+   "expected_coverage": "background",
+   "expected_covered_by": [],
+   "expected_depths": {},
+   "expected_rgb": [
+    0,
+    0,
+    0
+   ],
+   "expected_winner": null,
+   "x": 10,
+   "y": 10
+  },
+  {
+   "category": "adjacent_outside_edge",
+   "expected_coverage": "background",
+   "expected_covered_by": [],
+   "expected_depths": {},
+   "expected_rgb": [
+    0,
+    0,
+    0
+   ],
+   "expected_winner": null,
+   "x": 39,
+   "y": 0
+  },
+  {
+   "category": "on_edge_covered:((0, 1), 0)",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 399,
+    "1": 3599
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 40,
+   "y": 0
+  },
+  {
+   "category": "region:((0,), 0)",
+   "expected_coverage": "triangle0",
+   "expected_covered_by": [
+    0
+   ],
+   "expected_depths": {
+    "0": 405
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 41,
+   "y": 1
+  },
+  {
+   "category": "adjacent_outside_edge",
+   "expected_coverage": "background",
+   "expected_covered_by": [],
+   "expected_depths": {},
+   "expected_rgb": [
+    0,
+    0,
+    0
+   ],
+   "expected_winner": null,
+   "x": 43,
+   "y": 23
+  },
+  {
+   "category": "on_edge_covered:((0,), 0)",
+   "expected_coverage": "triangle0",
+   "expected_covered_by": [
+    0
+   ],
+   "expected_depths": {
+    "0": 414
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 44,
+   "y": 23
+  },
+  {
+   "category": "reference_json:triangle0",
+   "expected_coverage": "triangle0",
+   "expected_covered_by": [
+    0
+   ],
+   "expected_depths": {
+    "0": 640
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 100,
+   "y": 300
+  },
+  {
+   "category": "adjacent_outside_edge",
+   "expected_coverage": "background",
+   "expected_covered_by": [],
+   "expected_depths": {},
+   "expected_rgb": [
+    0,
+    0,
+    0
+   ],
+   "expected_winner": null,
+   "x": 119,
+   "y": 460
+  },
+  {
+   "category": "on_edge_covered:((0,), 0)",
+   "expected_coverage": "triangle0",
+   "expected_covered_by": [
+    0
+   ],
+   "expected_depths": {
+    "0": 699
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 120,
+   "y": 460
+  },
+  {
+   "category": "reference_json:overlap",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 1280,
+    "1": 2651
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 200,
+   "y": 100
+  },
+  {
+   "category": "adjacent_outside_edge",
+   "expected_coverage": "triangle0",
+   "expected_covered_by": [
+    0
+   ],
+   "expected_depths": {
+    "0": 1816
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 303,
+   "y": 253
+  },
+  {
+   "category": "on_edge_covered:((0, 1), 0)",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 1822,
+    "1": 2004
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 304,
+   "y": 253
+  },
+  {
+   "category": "depth_near_tie_diff11_winner0",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 1994,
+    "1": 2005
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 319,
+   "y": 0
+  },
+  {
+   "category": "tie_equal_depth_tri0_wins",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 1999,
+    "1": 1999
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 320,
+   "y": 0
+  },
+  {
+   "category": "reference_json:overlap",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 1965,
+    "1": 1965
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 320,
+   "y": 100
+  },
+  {
+   "category": "region:((0, 1), 0)",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 1908,
+    "1": 1908
+   },
+   "expected_rgb": [
+    15,
+    0,
+    0
+   ],
+   "expected_winner": 0,
+   "x": 320,
+   "y": 268
+  },
+  {
+   "category": "on_edge_covered:((0, 1), 1)",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 2005,
+    "1": 1994
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 321,
+   "y": 0
+  },
+  {
+   "category": "region:((0, 1), 1)",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 1914,
+    "1": 1903
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 321,
+   "y": 267
+  },
+  {
+   "category": "on_edge_covered:((0, 1), 1)",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 2004,
+    "1": 1822
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 336,
+   "y": 253
+  },
+  {
+   "category": "adjacent_outside_edge",
+   "expected_coverage": "triangle1",
+   "expected_covered_by": [
+    1
+   ],
+   "expected_depths": {
+    "1": 1816
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 337,
+   "y": 253
+  },
+  {
+   "category": "reference_json:overlap",
+   "expected_coverage": "overlap",
+   "expected_covered_by": [
+    0,
+    1
+   ],
+   "expected_depths": {
+    "0": 2422,
+    "1": 1508
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 400,
+   "y": 100
+  },
+  {
+   "category": "adjacent_outside_edge",
+   "expected_coverage": "background",
+   "expected_covered_by": [],
+   "expected_depths": {},
+   "expected_rgb": [
+    0,
+    0,
+    0
+   ],
+   "expected_winner": null,
+   "x": 519,
+   "y": 460
+  },
+  {
+   "category": "on_edge_covered:((1,), 1)",
+   "expected_coverage": "triangle1",
+   "expected_covered_by": [
+    1
+   ],
+   "expected_depths": {
+    "1": 699
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 520,
+   "y": 460
+  },
+  {
+   "category": "reference_json:triangle1",
+   "expected_coverage": "triangle1",
+   "expected_covered_by": [
+    1
+   ],
+   "expected_depths": {
+    "1": 640
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 540,
+   "y": 300
+  },
+  {
+   "category": "on_edge_covered:((1,), 1)",
+   "expected_coverage": "triangle1",
+   "expected_covered_by": [
+    1
+   ],
+   "expected_depths": {
+    "1": 414
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 596,
+   "y": 23
+  },
+  {
+   "category": "adjacent_outside_edge",
+   "expected_coverage": "background",
+   "expected_covered_by": [],
+   "expected_depths": {},
+   "expected_rgb": [
+    0,
+    0,
+    0
+   ],
+   "expected_winner": null,
+   "x": 597,
+   "y": 23
+  },
+  {
+   "category": "region:((1,), 1)",
+   "expected_coverage": "triangle1",
+   "expected_covered_by": [
+    1
+   ],
+   "expected_depths": {
+    "1": 405
+   },
+   "expected_rgb": [
+    0,
+    15,
+    0
+   ],
+   "expected_winner": 1,
+   "x": 599,
+   "y": 1
+  },
+  {
+   "category": "region:((), None)",
+   "expected_coverage": "background",
+   "expected_covered_by": [],
+   "expected_depths": {},
+   "expected_rgb": [
+    0,
+    0,
+    0
+   ],
+   "expected_winner": null,
+   "x": 639,
+   "y": 479
+  }
+ ],
+ "python_modules": {
+  "build/sim_release0/xcon1/freeze.py": "a7c42a9ed31b8cf0fd3c0772eefcb878700c4fbe5ceff2cec98e9e005cdd4ab5",
+  "software/spu_gpu_eval/__init__.py": "593ec0700022a5a7f7bb556bb11a17b3e317b65d20782c52f5d988a37aa8e7a8",
+  "software/spu_gpu_eval/device_arithmetic.py": "7ba8856eafab7687219735f0ca8f37490736e0b3b70a0b146df06a5e809336de",
+  "software/spu_gpu_eval/device_loader.py": "73b14a9a64c5ae2a348c8ca84f99828fa759d8ead86ea59282038fec872fb975",
+  "software/spu_gpu_eval/device_model.py": "cc507652fabc257a7baf36ceac905de5fc4a97e7d61871d4d3e57b25f9d059d6",
+  "software/spu_gpu_eval/device_packet.py": "cd58f46c68625b473a224d5454e1fdae34600d86cf9426af227d52b077f4d2d1",
+  "software/spu_gpu_eval/device_preview.py": "9c7a0b1700a5809b6cee7d569e69d264e3534ecfc3f583676609974136290c57",
+  "software/spu_gpu_eval/packet.py": "a897aa5252c74810cb31d67c19e73c9eb239f86d817ea250a7d7f6ec4aa25885",
+  "software/spu_gpu_eval/reference.py": "78eaa547f08e1410d34f442ae43c5e8e0c0e5b5ba6855b0b67715fccd74702e9",
+  "software/spu_gpu_eval/scene.py": "a80beae64f0b59bdeb16b68c0fbd5e012710c29cdc96d535ceb2d478a8f3102f",
+  "software/tests/test_gpu_device_model_s2.py": "8195e912b05177e914492af32202169b0af2a973ec192d4e74c15c6a6f79d6f7"
+ },
+ "reference_json_sha256": "7c48bdeffac97bba871e5c92663168900cb617f8586976e66f09077e11b7f138",
+ "research_head": "363b8166079cc88e2cb8b075deee0bbcd82fa1ab",
+ "rtl_checks": "the existing helper asserts the 12-bit pixel colour at each point; coverage/winner/depth are recorded here and are implied only through the winning colour",
+ "rtl_modules": {
+  "hardware/rtl/gpu/spu_attr_stepper.v": "7e6daa88abd61ba5587b3e98ad9d127d88b6fefbd259d1f784b2ddf0eb218b74",
+  "hardware/rtl/gpu/spu_depth_compare.v": "4e21fe4700544dc747856eb55cf326472e8424ce20578141f32669ab165ba95a",
+  "hardware/rtl/gpu/spu_depth_math.v": "e86d84244e1c2352ef86b6188d63be820a4a81c34ad23864f696cf1e9f3492bd",
+  "hardware/rtl/gpu/spu_edge_stepper.v": "cd6d2d7bd6b73fde5d848e806b8a6a4be911c5760ecf63bea84497902560ee9d",
+  "hardware/rtl/gpu/spu_reciprocal_core.v": "9f49e386f4bf04b200097c4bb3c82f1af42ef3decebafae081dd49d1a4749306",
+  "hardware/rtl/gpu/spu_shared_mult35.v": "6f95ae24f276af6437ce9d91152e6babec314a1de2e8a669697530cbae764bf5"
+ },
+ "schema": "sim-xcon-1-manifest-v1",
+ "spu_sim_commit": "c1e0676eee5d2398b8d90eec43bd55b2d2f6b924",
+ "spu_sim_rom_sha256": "a64327c1bc0c8c74a4fb8c849a922a1f8b3d6a6e2e3bb58951d11f2012bb5248",
+ "spu_sim_status_lines": 0,
+ "spu_sim_tree": "e689a80b65be87f527bf43b4332b93922409f136",
+ "tools": {
+  "cmake": "cmake version 4.4.4",
+  "iverilog": "Icarus Verilog version 14.0 (devel) (s20251012-123-g49126efa7)",
+  "python": "3.14.8",
+  "vvp": "Icarus Verilog runtime version 14.0 (devel) (s20251012-123-g49126efa7)"
+ }
+}

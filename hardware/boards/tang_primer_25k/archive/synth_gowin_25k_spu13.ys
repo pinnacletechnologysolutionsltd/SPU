@@ -1,0 +1,47 @@
+# Modern Synthesis Script for SPU-13 Core on Tang Primer 25K.
+# Default target is the known-good UART/boot bring-up image.
+
+read_verilog -I hardware/rtl/arch \
+    hardware/boards/tang_primer_25k/spu13_tang25k_top.v \
+    hardware/rtl/core/spu13/spu13_core.v \
+    hardware/rtl/core/spu13/spu13_lattice.v \
+    hardware/rtl/core/spu13/laminar_node.v \
+    hardware/rtl/top/spu_laminar_boot.v \
+    hardware/rtl/core/shared/spu_rotor_vault.v \
+    hardware/rtl/core/shared/spu_cross_rotor.v \
+    hardware/rtl/core/shared/davis_gate_dsp.v \
+    hardware/rtl/gpu/davis_to_rplu.v \
+    hardware/rtl/gpu/rplu_exp.v \
+    hardware/rtl/gpu/pade_eval_4_4.v \
+    hardware/rtl/gpu/rplu_poly_step.v \
+    hardware/rtl/math/rational_surd5_add.v \
+    hardware/rtl/math/rational_surd5_mul.v \
+    hardware/rtl/math/rational_surd5_mul64.v \
+    hardware/rtl/math/rational_surd5_norm.v \
+    hardware/rtl/math/rational_surd5_scale_manager.v \
+    hardware/rtl/math/spu_quadrance_calc.v \
+    hardware/rtl/common/prim/spu_gowin_prim.v \
+    hardware/rtl/common/prim/gowin_mult18.v \
+    hardware/rtl/peripherals/storage/spu_mem_bridge_sdram.v
+
+chparam -set ENABLE_SDRAM 0 \
+        -set ENABLE_CORE_RPLU 0 \
+        -set ENABLE_CORE_LATTICE 0 \
+        -set ENABLE_CORE_MATH 0 \
+        spu13_tang25k_top
+
+hierarchy -check -top spu13_tang25k_top
+
+# The default synth_gowin tail runs autoname after LUT/cell mapping. On this
+# SPU-13 bring-up netlist that phase can consume enough memory to get killed,
+# while nextpnr does not need pretty generated names. Run the Gowin flow through
+# LUT mapping, then perform the required cell mapping and JSON write directly.
+synth_gowin -family gw5a -top spu13_tang25k_top -json build/spu13.json -run begin:map_cells
+techmap -map +/gowin/cells_map.v
+opt_lut_ins -tech gowin
+hilomap -singleton -hicell VCC V -locell GND G
+clean
+hierarchy -check
+check -noinit
+blackbox =A:whitebox
+write_json build/spu13.json

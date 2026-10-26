@@ -1,0 +1,45 @@
+{
+  "name": "sovereign-tools",
+  "displayName": "Sovereign Assembly (SPU-13)",
+  "description": "Syntax highlighting and snippets for Sovereign Assembly (.sas) and Laminar Lang (.lam)",
+  "version": "0.1.0",
+  "publisher": "spu13",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sovereign-asm",
+        "aliases": ["Sovereign Assembly", "SAS"],
+        "extensions": [".sas"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "laminar-lang",
+        "aliases": ["Laminar Lang", "LAM"],
+        "extensions": [".lam"]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sovereign-asm",
+        "scopeName": "source.sovereign-asm",
+        "path": "./syntaxes/sovereign.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "sovereign-asm",
+        "path": "./snippets/sovereign.json"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package"
+  }
+}

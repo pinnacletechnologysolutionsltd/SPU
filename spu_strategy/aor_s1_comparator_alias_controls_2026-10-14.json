@@ -1,0 +1,833 @@
+{
+  "format": "AOR_S1_COMPARATOR_ALIAS_CONTROL_DRAFT_V1",
+  "status": "PROPOSED_NOT_QUALIFIED",
+  "independent_reviewer": "PENDING",
+  "comparator_fixtures": [
+    {
+      "id": "positive_real",
+      "mantissa": [
+        1,
+        0
+      ],
+      "embedding_sign": 1,
+      "conjugate_embedding_sign": 1,
+      "lower_expression": [
+        1,
+        1
+      ],
+      "lower_sign": 1,
+      "upper_expression": [
+        -1,
+        -1
+      ],
+      "upper_sign": -1,
+      "balanced": true,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "negative_real",
+      "mantissa": [
+        -1,
+        0
+      ],
+      "embedding_sign": -1,
+      "conjugate_embedding_sign": -1,
+      "lower_expression": [
+        1,
+        1
+      ],
+      "lower_sign": 1,
+      "upper_expression": [
+        -1,
+        -1
+      ],
+      "upper_sign": -1,
+      "balanced": true,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "positive_surd",
+      "mantissa": [
+        0,
+        1
+      ],
+      "embedding_sign": 1,
+      "conjugate_embedding_sign": -1,
+      "lower_expression": [
+        3,
+        1
+      ],
+      "lower_sign": 1,
+      "upper_expression": [
+        -3,
+        -1
+      ],
+      "upper_sign": -1,
+      "balanced": true,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "negative_surd",
+      "mantissa": [
+        0,
+        -1
+      ],
+      "embedding_sign": -1,
+      "conjugate_embedding_sign": 1,
+      "lower_expression": [
+        3,
+        1
+      ],
+      "lower_sign": 1,
+      "upper_expression": [
+        -3,
+        -1
+      ],
+      "upper_sign": -1,
+      "balanced": true,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "lower_endpoint",
+      "mantissa": [
+        -1,
+        1
+      ],
+      "embedding_sign": 1,
+      "conjugate_embedding_sign": -1,
+      "lower_expression": [
+        0,
+        0
+      ],
+      "lower_sign": 0,
+      "upper_expression": [
+        -6,
+        -2
+      ],
+      "upper_sign": -1,
+      "balanced": true,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "upper_endpoint",
+      "mantissa": [
+        1,
+        1
+      ],
+      "embedding_sign": 1,
+      "conjugate_embedding_sign": -1,
+      "lower_expression": [
+        6,
+        2
+      ],
+      "lower_sign": 1,
+      "upper_expression": [
+        0,
+        0
+      ],
+      "upper_sign": 0,
+      "balanced": false,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "negative_lower_endpoint",
+      "mantissa": [
+        1,
+        -1
+      ],
+      "embedding_sign": -1,
+      "conjugate_embedding_sign": 1,
+      "lower_expression": [
+        0,
+        0
+      ],
+      "lower_sign": 0,
+      "upper_expression": [
+        -6,
+        -2
+      ],
+      "upper_sign": -1,
+      "balanced": true,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "negative_upper_endpoint",
+      "mantissa": [
+        -1,
+        -1
+      ],
+      "embedding_sign": -1,
+      "conjugate_embedding_sign": 1,
+      "lower_expression": [
+        6,
+        2
+      ],
+      "lower_sign": 1,
+      "upper_expression": [
+        0,
+        0
+      ],
+      "upper_sign": 0,
+      "balanced": false,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "below_interval",
+      "mantissa": [
+        5,
+        -2
+      ],
+      "embedding_sign": 1,
+      "conjugate_embedding_sign": 1,
+      "lower_expression": [
+        -1,
+        -1
+      ],
+      "lower_sign": -1,
+      "upper_expression": [
+        -11,
+        -11
+      ],
+      "upper_sign": -1,
+      "balanced": false,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "above_interval",
+      "mantissa": [
+        5,
+        2
+      ],
+      "embedding_sign": 1,
+      "conjugate_embedding_sign": 1,
+      "lower_expression": [
+        11,
+        11
+      ],
+      "lower_sign": 1,
+      "upper_expression": [
+        1,
+        1
+      ],
+      "upper_sign": 1,
+      "balanced": false,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    },
+    {
+      "id": "signed_minimum",
+      "mantissa": [
+        0,
+        -9223372036854775808
+      ],
+      "embedding_sign": -1,
+      "conjugate_embedding_sign": 1,
+      "lower_expression": [
+        27670116110564327424,
+        9223372036854775808
+      ],
+      "lower_sign": 1,
+      "upper_expression": [
+        -27670116110564327424,
+        -9223372036854775808
+      ],
+      "upper_sign": -1,
+      "balanced": true,
+      "derivation": "substitute exact signed embedding magnitudes into U|x|-|x_conjugate| and |x|-U|x_conjugate|; coefficients shown in basis [1,sqrt(3)]"
+    }
+  ],
+  "alias_fixtures": [
+    {
+      "id": "step_before_commit_alias_0",
+      "fixture_id": "step_before_commit",
+      "destination": "R0",
+      "pre_state": {
+        "R0": [
+          1,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          1,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ]
+      },
+      "expected_status": "WORK_LIMIT",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "step_exponent_overflow_alias_0",
+      "fixture_id": "step_exponent_overflow",
+      "destination": "R0",
+      "pre_state": {
+        "R0": [
+          1,
+          0,
+          2147483647
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          1,
+          0,
+          2147483647
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ]
+      },
+      "expected_status": "EXPONENT_OVERFLOW",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "conjugate_signed_minimum_alias_0",
+      "fixture_id": "conjugate_signed_minimum",
+      "destination": "R0",
+      "pre_state": {
+        "R0": [
+          0,
+          -9223372036854775808,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          0,
+          -9223372036854775808,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ]
+      },
+      "expected_status": "MANTISSA_OVERFLOW",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "multiply_final_mantissa_alias_0",
+      "fixture_id": "multiply_final_mantissa",
+      "destination": "R0",
+      "pre_state": {
+        "R0": [
+          9223372036854775807,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          9223372036854775807,
+          0,
+          0
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          9223372036854775807,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          9223372036854775807,
+          0,
+          0
+        ]
+      },
+      "expected_status": "MANTISSA_OVERFLOW",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "multiply_final_mantissa_alias_1",
+      "fixture_id": "multiply_final_mantissa",
+      "destination": "R1",
+      "pre_state": {
+        "R0": [
+          9223372036854775807,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          9223372036854775807,
+          0,
+          0
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          9223372036854775807,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          9223372036854775807,
+          0,
+          0
+        ]
+      },
+      "expected_status": "MANTISSA_OVERFLOW",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "multiply_exponent_before_coefficients_alias_0",
+      "fixture_id": "multiply_exponent_before_coefficients",
+      "destination": "R0",
+      "pre_state": {
+        "R0": [
+          9223372036854775807,
+          0,
+          2147483647
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          9223372036854775807,
+          0,
+          1
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          9223372036854775807,
+          0,
+          2147483647
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          9223372036854775807,
+          0,
+          1
+        ]
+      },
+      "expected_status": "EXPONENT_OVERFLOW",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "multiply_exponent_before_coefficients_alias_1",
+      "fixture_id": "multiply_exponent_before_coefficients",
+      "destination": "R1",
+      "pre_state": {
+        "R0": [
+          9223372036854775807,
+          0,
+          2147483647
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          9223372036854775807,
+          0,
+          1
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          9223372036854775807,
+          0,
+          2147483647
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          9223372036854775807,
+          0,
+          1
+        ]
+      },
+      "expected_status": "EXPONENT_OVERFLOW",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "multiply_units_alias_0",
+      "fixture_id": "multiply_units",
+      "destination": "R0",
+      "pre_state": {
+        "R0": [
+          1,
+          0,
+          1000
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          1,
+          0,
+          -1000
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          1,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          1,
+          0,
+          -1000
+        ]
+      },
+      "expected_status": "OK",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "multiply_units_alias_1",
+      "fixture_id": "multiply_units",
+      "destination": "R1",
+      "pre_state": {
+        "R0": [
+          1,
+          0,
+          1000
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          1,
+          0,
+          -1000
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          1,
+          0,
+          1000
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          1,
+          0,
+          0
+        ]
+      },
+      "expected_status": "OK",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "multiply_lower_negative_norm_alias_0",
+      "fixture_id": "multiply_lower_negative_norm",
+      "destination": "R0",
+      "pre_state": {
+        "R0": [
+          -1,
+          1,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          4,
+          -1,
+          0
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          1,
+          3,
+          -1
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          4,
+          -1,
+          0
+        ]
+      },
+      "expected_status": "OK",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "multiply_lower_negative_norm_alias_1",
+      "fixture_id": "multiply_lower_negative_norm",
+      "destination": "R1",
+      "pre_state": {
+        "R0": [
+          -1,
+          1,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          4,
+          -1,
+          0
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          -1,
+          1,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          1,
+          3,
+          -1
+        ]
+      },
+      "expected_status": "OK",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "same_k_two_adjustments_alias_0",
+      "fixture_id": "same_k_two_adjustments",
+      "destination": "R0",
+      "pre_state": {
+        "R0": [
+          4,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          3,
+          4,
+          0
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          1,
+          0,
+          2
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          3,
+          4,
+          0
+        ]
+      },
+      "expected_status": "OK",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    },
+    {
+      "id": "same_k_two_adjustments_alias_1",
+      "fixture_id": "same_k_two_adjustments",
+      "destination": "R1",
+      "pre_state": {
+        "R0": [
+          4,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          3,
+          4,
+          0
+        ]
+      },
+      "expected_post_state": {
+        "R0": [
+          4,
+          0,
+          0
+        ],
+        "R2": [
+          7,
+          -2,
+          11
+        ],
+        "R1": [
+          1,
+          0,
+          2
+        ]
+      },
+      "expected_status": "OK",
+      "ownership": "immutable descriptor values; complete register update only on success"
+    }
+  ],
+  "negative_control_plan": [
+    {
+      "id": "WRONG_UPPER_ENDPOINT",
+      "scope": "comparator",
+      "fixture_id": "upper_endpoint",
+      "mutation": "change balanced to true",
+      "required_rejection": "REJECT_UPPER_ENDPOINT",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "WRONG_LOWER_ENDPOINT",
+      "scope": "comparator",
+      "fixture_id": "lower_endpoint",
+      "mutation": "change balanced to false",
+      "required_rejection": "REJECT_LOWER_ENDPOINT",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "LOST_VALUE_SIGN",
+      "scope": "comparator",
+      "fixture_id": "negative_real",
+      "mutation": "change embedding_sign to +1",
+      "required_rejection": "REJECT_EMBEDDING_SIGN",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "DROPPED_3BD",
+      "scope": "operation",
+      "fixture_id": "multiply_upper_negative_norm",
+      "mutation": "omit 3bd from raw first product coefficient",
+      "required_rejection": "REJECT_PRODUCT_VALUE",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "WRONG_EXPONENT_SIGN",
+      "scope": "operation",
+      "fixture_id": "multiply_lower_negative_norm",
+      "mutation": "change result exponent from -1 to +1",
+      "required_rejection": "REJECT_EXPONENT",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "WRONG_EQUALITY",
+      "scope": "operation",
+      "fixture_id": "equality_despite_norm_overflow",
+      "mutation": "change returned true to false",
+      "required_rejection": "REJECT_EQUALITY",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "WRONG_CHARGE",
+      "scope": "operation",
+      "fixture_id": "multiply_units",
+      "mutation": "change charged units from 46 to 45",
+      "required_rejection": "REJECT_WORK_COUNT",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "EARLY_COMMIT",
+      "scope": "alias",
+      "fixture_id": "step_before_commit_alias_0",
+      "mutation": "change R0 despite WORK_LIMIT",
+      "required_rejection": "REJECT_ATOMIC_REFUSAL",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "EXTRA_LOCAL_ADJUSTMENT",
+      "scope": "operation",
+      "fixture_id": "multiply_upper_negative_norm",
+      "mutation": "report two adjustments for certified local path",
+      "required_rejection": "REJECT_LOCAL_ADJUSTMENT_BOUND",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "WRONG_NORM_STATUS",
+      "scope": "operation",
+      "fixture_id": "norm_output_overflow",
+      "mutation": "return a narrowed norm with OK",
+      "required_rejection": "REJECT_NORM_PUBLICATION",
+      "checker_execution": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "UNCHARGED_TERMINAL_SCAN",
+      "scope": "kernel",
+      "fixture_id": "kernel_upper_64",
+      "mutation": "omit final two successful comparisons",
+      "required_rejection": "REJECT_TERMINAL_SCAN_CHARGE",
+      "checker_execution": "NOT_IMPLEMENTED"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# }
+read_verilog: Time (s): cpu = 00:00:25 ; elapsed = 00:00:08 . Memory (MB): peak = 1701.352 ; gain = 262.055 ; free physical = 1404 ; free virtual = 12012
+SPU_GATE_SCOPE_BEGIN
+Command: synth_design -top spu_a7_tensegrity_link_top -part xc7a100tfgg676-1
+Parsing XDC File [/home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_prep/nc1_missing_port.xdc]
+WARNING: [Vivado 12-584] No ports matched 'spi_miso_nc'. [/home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_prep/nc1_missing_port.xdc:22]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_prep/nc1_missing_port.xdc:22]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+Parsing XDC File [/home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_prep/nc1_missing_port.xdc]
+WARNING: [Vivado 12-584] No ports matched 'spi_miso_nc'. [/home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_prep/nc1_missing_port.xdc:22]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_prep/nc1_missing_port.xdc:22]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.

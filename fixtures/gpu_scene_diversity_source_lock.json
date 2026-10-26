@@ -1,0 +1,15 @@
+{
+  "format": "gpu_scene_diversity_source_lock_v1",
+  "source_sha256": {
+    "software/spu_gpu_eval/scene.py": "a80beae64f0b59bdeb16b68c0fbd5e012710c29cdc96d535ceb2d478a8f3102f",
+    "software/spu_gpu_eval/packet.py": "a897aa5252c74810cb31d67c19e73c9eb239f86d817ea250a7d7f6ec4aa25885",
+    "software/spu_gpu_eval/reference.py": "78eaa547f08e1410d34f442ae43c5e8e0c0e5b5ba6855b0b67715fccd74702e9",
+    "software/spu_gpu_eval/device_model.py": "cc507652fabc257a7baf36ceac905de5fc4a97e7d61871d4d3e57b25f9d059d6",
+    "software/spu_gpu_eval/observer.py": "a87421a1014ebd2d933a59dd19c9d052c144a50150e099ab0cec5a0727c345fb",
+    "software/spu_gpu_eval/scene_diversity.py": "6b679b243e2d61b5560894d5ba2d06e6ff2539a0c245b6512fc5e60d7733c28d",
+    "software/spu_gpu_eval/scene_diversity_artifacts.py": "915628b6ea5f99b60cd72b53cea11c54a88813820357ab888803e5b554121099",
+    "software/spu_gpu_eval/scene_diversity_publish.py": "717fddeef36853bdb39bc968cec4180822614ec29adb67bf9d2aab4ddd083067",
+    "software/spu_gpu_eval/cli.py": "091b9880d537fafba85bf7d2398b3c242d285c14bee932124dde744c5a47b407",
+    "software/tests/test_gpu_scene_diversity.py": "a7f54719e26f1e1307a1b32c6b7e26036698621d42bda951ce5c452e9f4572a7"
+  }
+}

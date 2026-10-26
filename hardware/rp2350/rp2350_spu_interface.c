@@ -1,0 +1,461 @@
+// rp2350_spu_interface.c (v2.0 - Laminar Controller)
+// Target:  Raspberry Pi Pico 2 (RP2350, 150 MHz)
+// Role:    Laminar Controller — bridges Tang Primer 25K FPGA to RP2040 visualiser.
+//
+// Architecture (dual-core):
+//   Core 1 — SPU poller:  SPI0 → FPGA at ~1 kHz; assembles 104-byte manifold frame.
+//                         Also receives incoming Chord bytes from RP2040 (UART1 RX)
+//                         and forwards them to the FPGA via SPI CMD 0xB1.
+//   Core 0 — TX arbiter:  Reads frame from Core 1 via multicore FIFO;
+//                         Sends SOF header + 104-byte frame to RP2040 over UART1 TX.
+//
+// PIO SM0 — Piranha Pulse: 61.44 kHz heartbeat on GP6 (phase-locked to FPGA).
+// PIO SM1 — Whisper TX:    PWI 1-wire telemetry on GP7; fires on Cubic Leak events.
+//
+// Connections:
+//   SPI0  MISO GP16, CS GP17, SCK GP18, MOSI GP19   (→ Tang 25K SPI slave)
+//   UART1 TX   GP4                                   (→ RP2040 GP5, 921600 baud)
+//   UART1 RX   GP5                                   (← RP2040 GP4, Chord passthrough)
+//   PIO        GP6                                   (Piranha Pulse out to FPGA)
+//   PIO        GP7                                   (Whisper TX PWI out to FPGA)
+//
+// SPU SPI Protocol v1.1 (Mode 0, CPOL=0 CPHA=0, 2 MHz):
+//   CMD 0xA0 → read 4-axis manifold burst, response 32 bytes
+//   CMD 0xAC → read status word, response 3 bytes
+//   CMD 0xB1 → write 8-byte Chord to FPGA instruction register (execute on next tick)
+//
+// Frame format to RP2040 (106 bytes = 2 SOF + 104 data):
+//   Byte 0:   0xA5  (SOF marker high)
+//   Byte 1:   0x5A  (SOF marker low)
+//   Bytes 2-105: 13 axes × 8 bytes [{P_hi,P_lo,0,0,Q_hi,Q_lo,0,0}]
+//
+// SOF framing allows RP2040 and spu_inhale to re-sync after any byte slip.
+//
+// Frame rate: ~800 Hz (106 bytes × 10 bits / 921600 baud = 1.15 ms; sleep_us(250))
+//
+// CC0 1.0 Universal.
+
+#include "pico/stdlib.h"
+#include "hardware/spi.h"
+#include "hardware/uart.h"
+#include "hardware/pio.h"
+#include "pico/multicore.h"
+#include "spu_bio_resonance.pio.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "rplu_default_tables.h"
+#include "spu_sd.h"
+#include "spu_link.h"   // SCK ceiling constants + spu_link_report_baud
+
+// ── Pin assignments ────────────────────────────────────────────────────────
+#define SPI_MISO_PIN    0
+#define SPI_CS_PIN      1
+#define SPI_SCK_PIN     2
+#define SPI_MOSI_PIN    3
+#define VIS_UART_TX_PIN  4   // UART1 TX → RP2040
+#define VIS_UART_RX_PIN  5   // UART1 RX ← RP2040 (Chord passthrough)
+#define PIRANHA_PIN      6   // PIO SM0: Piranha Pulse
+#define WHISPER_PIN      7   // PIO SM1: Whisper TX
+
+// ── Peripherals ───────────────────────────────────────────────────────────
+#define SPI_PORT        spi0
+// 2 MHz SPI clock. Safe here: this firmware targets the Tang Primer 25K (see
+// the Role line above), whose southbridge runs at 50 MHz, giving an 8.3 MHz
+// ceiling -- ratio 25.
+//
+// spu_spi_slave samples SCK with the fabric clock, so the bound is
+// SCK <= clk_fast / 6 (measured by spu_spi_slave_ratio_tb.v). That bound is
+// per-target, and 2 MHz is NOT portable: on a DIVIDED A7 core spin
+// (A7_CLK_DIV_LOG2=6) clk_fast is 781.25 kHz and the ceiling is 130 kHz, so
+// reusing this rate against one would reproduce the 2026-07-14 bring-up
+// failure. If this firmware is ever retargeted, re-pick the rate and the
+// ceiling constant together.
+//
+// (An earlier revision of this comment asserted the 2 MHz default was already
+// over the bound. That was wrong -- it read the A7 core-spin ceiling onto a
+// Tang-targeted firmware.)
+// See docs/SOUTHBRIDGE_SPI_PROTOCOL.md, "Maximum SCK is a ratio".
+#define SPI_BAUD_HZ     2000000
+#define VIS_UART        uart1
+#define VIS_BAUD        921600
+
+// ── Frame dimensions ──────────────────────────────────────────────────────
+#define AXES            13
+#define BYTES_PER_AXIS   8
+#define FRAME_BYTES     (AXES * BYTES_PER_AXIS)   // 104 data bytes
+#define SOF_0           0xA5u
+#define SOF_1           0x5Au
+#define TX_FRAME_BYTES  (FRAME_BYTES + 2)          // 106 with SOF
+
+// ── SPI commands ──────────────────────────────────────────────────────────
+#define CMD_READ_MANIFOLD   0xA0   // → 32 bytes (4 axes)
+#define CMD_READ_STATUS     0xAC   // → 3 bytes (dissonance + flags)
+#define CMD_READ_SCALE      0xAD   // → 9 bytes (7B scale table + 2B overflow)
+#define CMD_WRITE_CHORD     0xB1   // ← 8 bytes (one Chord to execute)
+#define SPU4_AXES            4
+
+// ── Q12 identity ──────────────────────────────────────────────────────────
+#define Q12_UNITY    0x1000    // 1.0 in Q12 = 4096
+
+// ── Whisper PWI pulse width encoding ──────────────────────────────────────
+// width = (104 * P + 181 * Q) + 1024_bias  where (P,Q) = RationalSurd of C
+// For status use: width = dissonance + 1024 (simple proxy)
+#define WHISPER_BIAS    1024u
+#define WHISPER_LEAK_THRESHOLD 0x0100u   // dissonance > 256 → Cubic Leak
+
+// ── Double buffer (swapped via multicore FIFO) ────────────────────────────
+static bool sd_ok = false;
+static uint8_t frame_back[FRAME_BYTES];
+static uint8_t frame_front[TX_FRAME_BYTES];   // pre-built with SOF header
+
+// ── Forward declarations ──────────────────────────────────────────────────
+static void spi_read_manifold(uint8_t *out32);
+static void spi_read_status(uint16_t *dissonance, uint8_t *flags);
+static void spi_read_scale_table(uint8_t *out9);
+static void spi_write_chord(const uint8_t *chord8);
+static void assemble_frame(const uint8_t *abcd32, uint16_t dissonance,
+                           uint8_t flags, uint8_t *frame);
+static void pio_piranha_init(void);
+static void pio_whisper_init(void);
+static void whisper_send(uint32_t pulse_width);
+static void rplu_boot_load(void);
+static void spu_symmetry_breath(void);
+
+// ── Core 1: SPU poller + Chord receiver ──────────────────────────────────
+// Runs at ~1 kHz: poll FPGA, assemble frame, signal Core 0 via FIFO.
+// Also drains UART1 RX: accumulates 8-byte Chords from RP2040 and writes
+// them to the FPGA so the PC REPL can inject Lithic-L programs live.
+void core1_entry(void) {
+    uint8_t  abcd32[SPU4_AXES * BYTES_PER_AXIS];
+    uint16_t dissonance;
+    uint8_t  flags;
+
+    // Chord receive state (from RP2040 UART and host USB stdio)
+    uint8_t chord_buf[8];
+    int     chord_pos = 0;
+    uint8_t usb_chord_buf[8];
+    int     usb_chord_pos = 0;
+
+    while (true) {
+        // 1. Poll FPGA manifold + status
+        spi_read_manifold(abcd32);
+        spi_read_status(&dissonance, &flags);
+        // Decode RPLU comparator bits in flags:
+        // bits [7:5] = signed 3-bit ratio (-1/0/+1), bit [4] = valid (sticky, clear-on-read)
+        {
+            static int8_t last_ratio = 127;
+            bool ratio_valid = (flags >> 4) & 0x1;
+            if (ratio_valid) {
+                uint8_t ratio_raw = (flags >> 5) & 0x7;
+                int8_t ratio_signed = (ratio_raw & 0x4) ? (int8_t)(ratio_raw - 8) : (int8_t)ratio_raw;
+                if (last_ratio == 127 || last_ratio != ratio_signed) {
+                    printf("RPLU RATIO: %d\r\n", ratio_signed);
+                    last_ratio = ratio_signed;
+                }
+            } else {
+                last_ratio = 127;
+            }
+        }
+        uint8_t scale_bytes[9];
+        spi_read_scale_table(scale_bytes);
+        assemble_frame(abcd32, dissonance, flags, frame_back);
+
+        // Periodically report Laminar Health (Proprioception)
+        static uint32_t last_health_report = 0;
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+        if (now - last_health_report > 1000) {
+            printf("SPU HEALTH [LFI]: 0x%04X | TURB: %s | SD: %s\n", 
+                   dissonance, (flags & 0x04) ? "YES" : "NO", sd_ok ? "OK" : "none");
+            last_health_report = now;
+        }
+
+        // Copy first 5 bytes of scale table into spare bytes in axis 12 for telemetry
+        {
+            int off = 12 * BYTES_PER_AXIS;
+            frame_back[off + 2] = scale_bytes[0];
+            frame_back[off + 3] = scale_bytes[1];
+            frame_back[off + 4] = scale_bytes[2];
+            frame_back[off + 6] = scale_bytes[3];
+            frame_back[off + 7] = scale_bytes[4];
+        }
+
+        // 2. Signal Core 0: frame ready (value 1 = new frame)
+        multicore_fifo_push_blocking(1u);
+
+        // 3. Cubic Leak check → Whisper TX pulse
+        if (dissonance > WHISPER_LEAK_THRESHOLD) {
+            whisper_send(dissonance + WHISPER_BIAS);
+        }
+
+        // 4. Drain UART1 RX: receive Chord bytes from RP2040 → FPGA
+        while (uart_is_readable(VIS_UART)) {
+            chord_buf[chord_pos++] = uart_getc(VIS_UART);
+            if (chord_pos == 8) {
+                spi_write_chord(chord_buf);
+                chord_pos = 0;
+            }
+        }
+
+        // 5. Drain USB stdio (host): receive raw 8-byte Chords from PC → FPGA
+// #define DEBUG_VOICE  // Uncomment to enable 'Listen' (L) command for manifold triage
+        {
+            int usb_ch;
+            while ((usb_ch = getchar_timeout_us(0)) != PICO_ERROR_TIMEOUT) {
+#ifdef DEBUG_VOICE
+                if (usb_ch == 'l' || usb_ch == 'L') {
+                    static uint8_t audio_mode = 0;
+                    audio_mode = (audio_mode + 1) % 3;
+                    printf("SPU AUDIO MODE: %d (%s)\n", audio_mode, 
+                           audio_mode == 0 ? "Silent" : (audio_mode == 1 ? "Resonance" : "Triage"));
+                    // Send Chord 0xB5: [77:75]=010 (WR_DATA), [74]=0, [73:64]=addr5 (Audio Control)
+                    uint8_t audio_chord[8] = {0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, audio_mode};
+                    spi_write_chord(audio_chord);
+                } else {
+#endif
+                    usb_chord_buf[usb_chord_pos++] = (uint8_t)usb_ch;
+                    if (usb_chord_pos == 8) {
+                        spi_write_chord(usb_chord_buf);
+                        usb_chord_pos = 0;
+                    }
+#ifdef DEBUG_VOICE
+                }
+#endif
+            }
+        }
+
+        sleep_us(1000);   // ~1 kHz poll rate
+    }
+}
+
+// ── Main (Core 0: TX arbiter) ─────────────────────────────────────────────
+int main(void) {
+    stdio_init_all();
+
+    // UART1 bidirectional: TX→RP2040, RX←RP2040 (Chord passthrough)
+    uart_init(VIS_UART, VIS_BAUD);
+    gpio_set_function(VIS_UART_TX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(VIS_UART_RX_PIN, GPIO_FUNC_UART);
+
+    // SPI0 → Tang 25K FPGA (Mode 0, CS active-low)
+    uint spi_actual_hz = spi_init(SPI_PORT, SPI_BAUD_HZ);
+    spi_set_format(SPI_PORT, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+    gpio_set_function(SPI_SCK_PIN,  GPIO_FUNC_SPI);
+    gpio_set_function(SPI_MOSI_PIN, GPIO_FUNC_SPI);
+    gpio_set_function(SPI_MISO_PIN, GPIO_FUNC_SPI);
+    gpio_init(SPI_CS_PIN);
+    gpio_set_dir(SPI_CS_PIN, GPIO_OUT);
+    gpio_put(SPI_CS_PIN, 1);   // CS idle-high
+    // Tang 25K southbridge runs at 50 MHz -> 8.3 MHz ceiling, so 2 MHz is
+    // ratio 25. Reported rather than assumed: spi_init quantizes.
+    spu_link_report_baud(spi_actual_hz, SPI_BAUD_HZ, SPU_TANG_SCK_CEILING_HZ);
+    sd_ok = spu_sd_init();
+
+    // PIO SM0: Piranha Pulse (61.44 kHz heartbeat) on GP6
+    pio_piranha_init();
+    // PIO SM1: Whisper TX (PWI rational telemetry) on GP7
+    pio_whisper_init();
+
+    // Pre-fill SOF header (constant for every frame)
+    frame_front[0] = SOF_0;
+    frame_front[1] = SOF_1;
+
+    // Launch Core 1 poller
+    // Before starting the background poller, push default RPLU tables into the FPGA
+    // so runtime parameters are initialized (can be overwritten later via Artery).
+    rplu_boot_load();
+    
+    // Perform the Symmetry Breath (Mathematical Health Check)
+    spu_symmetry_breath();
+
+    multicore_launch_core1(core1_entry);
+
+    // Core 0: wait for FIFO signal → swap buffers → transmit
+    while (true) {
+        multicore_fifo_pop_blocking();   // wait for Core 1 signal
+        memcpy(frame_front + 2, frame_back, FRAME_BYTES);   // copy data after SOF
+        uart_write_blocking(VIS_UART, frame_front, TX_FRAME_BYTES);
+    }
+}
+
+// ── SPI helpers ───────────────────────────────────────────────────────────
+
+static void spi_read_manifold(uint8_t *out32) {
+    uint8_t cmd = CMD_READ_MANIFOLD;
+    gpio_put(SPI_CS_PIN, 0);
+    spi_write_blocking(SPI_PORT, &cmd, 1);
+    spi_read_blocking(SPI_PORT, 0x00, out32, SPU4_AXES * BYTES_PER_AXIS);
+    gpio_put(SPI_CS_PIN, 1);
+}
+
+static void spi_read_status(uint16_t *dissonance, uint8_t *flags) {
+    uint8_t cmd = CMD_READ_STATUS;
+    uint8_t resp[3] = {0};
+    gpio_put(SPI_CS_PIN, 0);
+    spi_write_blocking(SPI_PORT, &cmd, 1);
+    spi_read_blocking(SPI_PORT, 0x00, resp, 3);
+    gpio_put(SPI_CS_PIN, 1);
+    *dissonance = ((uint16_t)resp[0] << 8) | resp[1];
+    *flags      = resp[2];
+}
+
+// ── Flow Control Helpers ──────────────────────────────────────────────────
+static bool spu_is_fifo_full(void) {
+    uint16_t dissonance;
+    uint8_t flags;
+    spi_read_status(&dissonance, &flags);
+    return (flags >> 3) & 0x1;
+}
+
+static void wait_for_artery_ready(void) {
+    while (spu_is_fifo_full()) {
+        sleep_us(10); // Wait for Artery to drain
+    }
+}
+
+// Read the per-axis scale table and overflow flags from FPGA.
+// out9 must point to at least 9 bytes.
+static void spi_read_scale_table(uint8_t *out9) {
+    uint8_t cmd = CMD_READ_SCALE;
+    gpio_put(SPI_CS_PIN, 0);
+    spi_write_blocking(SPI_PORT, &cmd, 1);
+    spi_read_blocking(SPI_PORT, 0x00, out9, 9);
+    gpio_put(SPI_CS_PIN, 1);
+}
+
+// Send one 8-byte Chord to the FPGA for execution.
+// FPGA latches it on the next Fibonacci tick (see spu13_sequencer.v).
+static void spi_write_chord(const uint8_t *chord8) {
+    // Before writing a chord that goes into the Artery FIFO, we must
+    // ensure the FIFO is not full.
+    wait_for_artery_ready();
+
+    uint8_t cmd = CMD_WRITE_CHORD;
+    gpio_put(SPI_CS_PIN, 0);
+    spi_write_blocking(SPI_PORT, &cmd, 1);
+    spi_write_blocking(SPI_PORT, chord8, 8);
+    gpio_put(SPI_CS_PIN, 1);
+}
+
+// Send a 64-bit value as an 8-byte chord (big-endian MSB first)
+static void send_u64_as_chord(uint64_t v) {
+    uint8_t chord[8];
+    for (int i = 0; i < 8; i++) {
+        chord[i] = (v >> (56 - 8*i)) & 0xFF;
+    }
+    spi_write_chord(chord);
+}
+
+// Boot-time RPLU loader: push default params and Pade coeffs into FPGA.
+static void rplu_boot_load(void) {
+    // Params: a_q16, re_q16, De_q16 (addr 0..2)
+    for (int i = 0; i < 3; i++) {
+        uint64_t header = ((uint64_t)0xA5 << 56) | ((uint64_t)0 << 48) | ((uint64_t)0 << 47) | (((uint64_t)i & 0x3FF) << 37);
+        uint64_t data   = (uint64_t)RPLU_PARAMS_CARBON[i];
+        send_u64_as_chord(header);
+        send_u64_as_chord(data);
+        sleep_us(50);
+    }
+    for (int i = 0; i < 3; i++) {
+        uint64_t header = ((uint64_t)0xA5 << 56) | ((uint64_t)0 << 48) | ((uint64_t)1 << 47) | (((uint64_t)i & 0x3FF) << 37);
+        uint64_t data   = (uint64_t)RPLU_PARAMS_IRON[i];
+        send_u64_as_chord(header);
+        send_u64_as_chord(data);
+        sleep_us(50);
+    }
+    // Pade numerator (sel=1)
+    for (int i = 0; i < 5; i++) {
+        uint64_t header = ((uint64_t)0xA5 << 56) | ((uint64_t)1 << 48) | ((uint64_t)0 << 47) | (((uint64_t)i & 0x3FF) << 37);
+        uint64_t data   = PADE_NUM_Q32[i];
+        send_u64_as_chord(header);
+        send_u64_as_chord(data);
+        sleep_us(50);
+    }
+    // Pade denominator (sel=2)
+    for (int i = 0; i < 5; i++) {
+        uint64_t header = ((uint64_t)0xA5 << 56) | ((uint64_t)2 << 48) | ((uint64_t)0 << 47) | (((uint64_t)i & 0x3FF) << 37);
+        uint64_t data   = PADE_DEN_Q32[i];
+        send_u64_as_chord(header);
+        send_u64_as_chord(data);
+        sleep_us(50);
+    }
+}
+
+// Symmetry Breath: Intentionally inject a unit vector and wait for harmonic lock-in.
+static void spu_symmetry_breath(void) {
+    uint16_t lfi = 0;
+    uint8_t flags = 0;
+    int timeout = 0;
+
+    printf("SPU BOOT: Initiating Symmetry Breath...\n");
+
+    // Poll current health
+    spi_read_status(&lfi, &flags);
+    
+    if (lfi < 0xF000 || (flags & 0x04)) {
+        printf("SPU BOOT: Turbulence detected (LFI 0x%04X). Injecting Golden Seed...\n", lfi);
+        // Header: [77:75]=010 (WR_DATA), [74]=0 (Carbon), [73:64]=addr0
+        // Data: 0x0001_0001_0001_0001
+        uint8_t seed_chord[8] = {0x40, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01};
+        spi_write_chord(seed_chord);
+        
+        // Wait for stability
+        while (lfi < 0xF000 && timeout < 100) {
+            spi_read_status(&lfi, &flags);
+            sleep_ms(10);
+            timeout++;
+            if (timeout % 10 == 0) printf("SPU BOOT: Waiting for Janus lock... (LFI 0x%04X)\n", lfi);
+        }
+    }
+
+    if (lfi >= 0xF000) {
+        printf("SPU BOOT: Laminar Harmony reached (LFI 0x%04X). Sovereign active.\n", lfi);
+    } else {
+        printf("SPU BOOT: WARNING - Stability timeout. Proceeding in Turbulent mode.\n");
+    }
+}
+
+// ── Frame assembly ────────────────────────────────────────────────────────
+static void assemble_frame(const uint8_t *abcd32, uint16_t dissonance,
+                            uint8_t flags, uint8_t *frame) {
+    memset(frame, 0, FRAME_BYTES);
+
+    // Axes 0–3: live SPU-4 ABCD (copied from SPI burst)
+    memcpy(frame, abcd32, SPU4_AXES * BYTES_PER_AXIS);
+
+    // Axes 4–11: identity manifold {P=Q12_UNITY, Q=0}
+    for (int i = SPU4_AXES; i < AXES - 1; i++) {
+        int off = i * BYTES_PER_AXIS;
+        frame[off + 0] = (Q12_UNITY >> 8) & 0xFF;
+        frame[off + 1] =  Q12_UNITY       & 0xFF;
+    }
+
+    // Axis 12: status word {P=dissonance, Q=flags}
+    int off = 12 * BYTES_PER_AXIS;
+    frame[off + 0] = (dissonance >> 8) & 0xFF;
+    frame[off + 1] =  dissonance       & 0xFF;
+    frame[off + 5] =  flags;
+}
+
+// ── PIO: Piranha Pulse ────────────────────────────────────────────────────
+static void pio_piranha_init(void) {
+    PIO  pio    = pio0;
+    uint sm     = 0;
+    uint offset = pio_add_program(pio, &piranha_pulse_program);
+    piranha_pulse_program_init(pio, sm, offset, PIRANHA_PIN);
+}
+
+// ── PIO: Whisper TX ───────────────────────────────────────────────────────
+static void pio_whisper_init(void) {
+    PIO  pio    = pio0;
+    uint sm     = 1;
+    uint offset = pio_add_program(pio, &whisper_tx_program);
+    whisper_tx_program_init(pio, sm, offset, WHISPER_PIN);
+}
+
+// Push a PWI pulse to the Whisper TX state machine.
+// pulse_width is in PIO clock cycles (12 MHz ticks after the 12.5× divider).
+static void whisper_send(uint32_t pulse_width) {
+    pio_sm_put_blocking(pio0, 1, pulse_width);
+}

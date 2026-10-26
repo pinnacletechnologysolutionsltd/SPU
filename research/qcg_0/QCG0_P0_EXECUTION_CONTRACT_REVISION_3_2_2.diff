@@ -1,0 +1,79 @@
+--- QCG0_P0_EXECUTION_CONTRACT.md@3.2.1
++++ QCG0_P0_EXECUTION_CONTRACT.md@3.2.2
+@@ -1,10 +1,13 @@
+-# QCG-0 P0 execution contract (draft, revision 3.2.1, owner dispositions recorded, for independent review)
++# QCG-0 P0 execution contract (draft, revision 3.2.2, owner dispositions recorded, for independent review)
+ 
+ Date: 2026-10-23. Status: **DRAFT. Preparation only. Freeze, implementation and execution remain HOLD.**
+ Author: Claude. Revision 3 responds to the second independent review (`P0_CONTRACT_R2_REVIEW_CERTIFICATE.md`, REVISE).
+ Revision 2 had SHA-256 `4c95617479b858919c86ad5be3cedad37fb9e547f88b9c6d9a8764e8b083e54f`; revision 1 `21fb45af84d609c3c127010a10b0c2824aaac4772ab8d95a4abd9f5d8d2b8bfc`.
+ No fixture was regenerated, no model was run, no benchmark was performed; no unrelated campaign or hardware was touched.
+-**Revision 3.2.1 (2026-10-23) additionally closes the single defect the Revision 3.2 review left (finalization wrote the marker after a failed required
++**Revision 3.2.2 (2026-10-23) is a single narrow amendment to Revision 3.2.1 (SHA-256 `1f8aca9f088ffbaafb002ba5cffde7bdee7b33fdfcf18dcf20dec16202b8cf2f`,
++independent PASS): §3 gains the paragraph "Dependent requests after a refusal", with consequential one-sentence edits to §2 (comparator eligibility), §5 (sequential
++scheduling), §8 (X-15) and §9 (artifacts). No algorithm, reference, workload, comparator rule, cost definition, guard or threshold changed. It is not independently
++reviewed until a reviewer accepts it.** **Revision 3.2.1 (2026-10-23) additionally closes the single defect the Revision 3.2 review left (finalization wrote the marker after a failed required
+ metadata write); Revision 3.2 (`94e6631a48f4f362c310e72954af66b2853d477fbff8674cf555ff9064e44602`) responded to the Revision 3.1 review (`P0_CONTRACT_R3_REVIEW_CERTIFICATE.md`, REVISE; B1–B4): C2 tape-specific read
+ steps and jet evolution, the FDINIT table traversal, mandatory OUTPUT_CAP attribution, and a bounded single finalization path; plus two
+ stale-text removals. Revision 3.1 (SHA-256 `2829a167eabb3bcc16a5beed35249ce91f5097de0f7934647e0f7676b474ee44`) recorded the owner's
+@@ -102,7 +105,7 @@
+ D, K, T_ret_peak, W_peak_red. **S is guarded and not a trigger.** A lower T_ret_peak bought with higher M or A is a TRADE-OFF.
+ 
+ **Comparator (accepted deterministic ranking, owner D-4; not a claim that a componentwise best exists).** Eligible comparators are
+-conventional arms with status OK on every matched request (never `REFUSED`, `NOT_APPLICABLE` or `PREPARATION_REFUSED`). The
++conventional arms with status OK on every matched request (never `REFUSED`, `NOT_APPLICABLE`, `PREPARATION_REFUSED` or `NOT_ISSUED` (§3, Revision 3.2.2)). The
+ comparator is the eligible arm lexicographically smallest on (M, A, D, K, T_ret_peak, W_peak_red) in the total view; ties are
+ broken by arm id in ascending ASCII order. The per-category virtual best over eligible arms is the secondary view.
+ Categories are never summed.
+@@ -144,6 +147,23 @@
+   attempt ledger records the status, the event id and the operations the attempt consumed. Comparative ledgers (§2) count
+   only OK requests and completed preparations; attempts are reported separately. Global resource counters (operations,
+   wall time, output bytes) never reset on a refusal, a warm-up or a timed repeat.
++* **Dependent requests after a refusal (Revision 3.2.2).** *Issued* requests receive exactly one status from the grammar above. A request that is
++  **not issued** receives the *scheduling outcome* `NOT_ISSUED(STATE_DEPENDENT_AFTER_REFUSAL)`, which is **not** a status, not a refusal code and not an
++  arithmetic outcome; it is never the `NOT_APPLICABLE` status. A request is issued once or not at all; nothing is retried.
++  *State-dependent tapes.* Cell A and Cell B requests are random access: every request is issued. In the sequential tapes (positions q00…q16, §5) an
++  (arm, tape) is **state-dependent** when a request reads state that an earlier request of the same tape advances: S1 and S2 for FD, TS, PHFD, C1 and
++  C2 (stepped tables, retained Taylor-shifted lists, retained jets); S3 for every arm (it reads the previous sample's S for `inc_k`). It is
++  **state-independent** for Horner, Bezier and PH on S1 and S2 (evaluation at t_k from retained preparation state only).
++  *Rule.* In a state-dependent (arm, tape), if the request at position q is REFUSED or INVALID, every later position q+1…q16 is `NOT_ISSUED`. (A refusal
++  at any q, including q00, ends the tape; no finer rule is defined.) In a state-independent (arm, tape), every position is issued and keeps its own
++  status. No unissued position is reported as OK, no certified value stands in for it, and no state is fabricated or advanced for it.
++  *Accounting and events.* An unissued position has no event id, consumes no counted operation (not M, A, S, D or K), adds nothing to any
++  committed or attempt ledger, and is not counted against the operation budget. Positions keep their frozen numbers `qNN`; they are never renumbered.
++  Each (arm, tape) therefore reports, per position, exactly one of: an issued status, or `NOT_ISSUED`; with issued + unissued = 17. The only event
++  of a dependent tape's failure is its first refusal's event id. *Eligibility.* An arm with any unissued or non-OK position on a matched tape is not
++  eligible as a comparator on that tape (§2). *W31 stage tables.* A table row for a position is one of OK, REFUSED with its event id, INVALID, or
++  NOT_ISSUED; for a state-dependent (arm, tape) the positions after the first refusal are NOT_ISSUED by this rule and need no derivation. Cell A tables are
++  unchanged.
+ * **Divisions in P0.** The only Q-phase divisions in P0 are `x′/σ` and `y′/σ` in S2/S3. Cell A and Cell B Q-phase D = 0
+   for every arm. Preparation legitimately uses D (integration).
+ 
+@@ -269,7 +289,8 @@
+ *PHFD*: FD tables for U, V, U1, V1, X, Y, SS in P; per sample the needed tables are stepped (S1: X, Y; S2: U, V, X, Y; S3: all
+ seven), then the b-step arithmetic runs on the table entries. *C2*: only the jets the tape constructs are shifted by h each step, replacing the retained ones (S1: jX, jY; S2: jX, jY, jS;
+ S3: jU, jV, jX, jY, jS); jets not selected are neither shifted nor read; sample 0 applies the tape's read projection to the unshifted retained jets. *C1 = PHFD* (declared). Sample/increment scheduling: emit sample 0 after P; for k = 1..16 step then sample; inc_k as soon
+-as sample k+1 exists. The wrong-grid defect is caught by an explicit assertion that sample k occurs at exactly k/16 and equals
++as sample k+1 exists. If a request of a state-dependent (arm, tape) is refused, later positions are not issued (§3, Revision 3.2.2); in particular
++`inc_k` is not formed because sample k+1 never exists. The wrong-grid defect is caught by an explicit assertion that sample k occurs at exactly k/16 and equals
+ the certified row.
+ **S5/S6 procedures** (capability): each segment's hodograph h·w² by PMUL; x, y, S by PINT; speed |h|g with a sign test K; predicates
+ per pre-registration §5 with exact K tests; no ledger gate.
+@@ -343,7 +364,7 @@
+ σ² has reduced numerator 3026100100 (32 bits) exceeding 31. First events: `B-Horner.Q.q03.a8.1.e1`, `B-Bezier.Q.q03.a8.1.e1`,
+ `B-TS.Q.q03.a8.1.e1`, `B-PH.Q.q03.b11.1.e1`, `C1.Q.q03.b11.1.e1`, `C2.Q.q03.c7.1.e1`; the other 15 queries of each arm pass. These certify
+ first width-refusal locations for the named routes only (not any implementation, rollback, cost or scratch behaviour). Sequential and
+-Cell B stage tables remain to be derived under a new reviewer allowance.
++Cell B stage tables remain to be derived under a new reviewer allowance; their rows follow the §3 rule for dependent requests (Revision 3.2.2).
+ 
+ ## 9. Run plan, budget and launch protocol
+ 
+@@ -421,7 +442,7 @@
+ * **Non-launching prerequisites (probed 2026-10-23; no experiment code):** `/usr/bin/timeout` 9.12, `/usr/bin/prlimit` 2.42.4,
+   `/usr/bin/python3` 3.14.8; `/usr/bin/time` absent and unused; `build/qcg_0` absent. Re-verified inside `launch.sh`, which stops on
+   any failure. If a later deterministic job were to exceed 60 s it would fall under the repository detached-runner rule.
+-* **Artifacts:** versioned UTF-8 JSON with canonical rational pairs: arm states, phase ledgers per category, outputs, statuses,
++* **Artifacts:** versioned UTF-8 JSON with canonical rational pairs (unissued positions recorded as `NOT_ISSUED`, with no event id): arm states, phase ledgers per category, outputs, statuses,
+   event ids, attempt ledgers, the Pareto evaluation, mutant results, terminal marker; copy from gitignored `build/` into
+   `research/qcg_0/` after review.
+ 

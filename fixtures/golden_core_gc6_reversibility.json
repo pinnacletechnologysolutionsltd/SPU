@@ -1,0 +1,50 @@
+{
+  "schema": "golden-core-gc6-exact-reversibility-v1",
+  "steps": {
+    "directed_edge_dimension": 60,
+    "paired_state_dimension": 120
+  },
+  "coefficient_profiles": {
+    "equal": [
+      "1",
+      "1"
+    ],
+    "signed": [
+      "3+sqrt(5)",
+      "1-sqrt(5)"
+    ]
+  },
+  "relative_permutation_cycle_lengths": [
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+  ],
+  "operators": {
+    "equal": {
+      "rank": 60,
+      "nullity": 0,
+      "inverse_sha256": "33a4420520e9faa84bb4ae96f8827b212876a5dc8f89150261bd22d19730144e"
+    },
+    "signed": {
+      "rank": 60,
+      "nullity": 0,
+      "inverse_sha256": "a0b5636d9d0e22b44b9f1095b8f9d4f64cff69b170960a31fa67ba8e43d6070f"
+    }
+  },
+  "paired_state": {
+    "rule": "(x,y) -> (F(x)-y,x)",
+    "inverse": "(u,v) -> (v,F(v)-u)",
+    "maps_checked": 120,
+    "paired_basis_vectors_checked_per_map_and_profile": 120,
+    "janus_point_claim": false
+  }
+}

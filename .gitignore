@@ -1,0 +1,139 @@
+# Compiled Verilog simulators (VVP binaries)
+*_sim
+!software/graphics/spu_hardware_sim/
+!software/graphics/spu_hardware_sim/**
+
+# Simulation waveform dumps
+*.vcd
+
+# Compiled testbench intermediates
+*.vvp
+tmp_*.vvp
+
+# Backup files
+*.bak
+
+# Compiled C++ test binaries (source is *_test.cpp)
+software/common/tests/*_test
+# Generated test binary (produced by test runner)
+software/common/tests/spu13_arch_test
+
+# Root-level test logs
+*.log
+
+# ─── Build directory (all synthesis/PnR/pack/test outputs) ────────────────
+build/
+# Vivado local scratch state (created in the working directory of a run)
+.Xil/
+
+# ─── Root-level generated files (test logs, mem dumps, images) ──────────
+/*.log
+/*.mem
+/*.hex
+/*.bin
+/*.png
+/*.webp
+/*.vcd
+/*.pid
+
+# ─── Proprietary board files — NEVER commit ──────────────────────────────
+*.pdf
+*.sch
+*.brd
+*_Schematic.*
+*_Dock_*
+*Tang_Primer*Dock*
+
+# Legacy root-level artifacts (pre-build/ era — safe to delete these files)
+tang_primer_25k.json
+tang_primer_25k_pnr.json
+tang_primer_25k.fs
+tang_primer_20k.json
+tang_primer_20k_pnr.json
+tang_primer_20k.fs
+spu13.json
+
+# Python
+venv/
+__pycache__/
+*.egg-info/
+*.pyc
+*.pyo
+
+# Pico SDK bootstrap (copied from SDK, not source)
+pico_sdk_import.cmake
+
+# Go build artifacts (keep go.mod and go.sum — they track dependencies)
+software/spu_inhale
+
+# Editor / OS
+*.swp
+*.swo
+*~
+
+# macOS metadata
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+# ─── Excluded directories ─────────────────────────────────────────────────
+# Third-party reference material — project docs/ will cover the concepts.
+reference/
+theory/
+
+# RP2040/RP2350 CMake build directories
+hardware/rp2040/build/
+hardware/rp2350/build/
+
+# Standalone compiled binaries in repo root
+vd_det
+nextpnr-xilinx-git
+
+# Local third-party RP2040 utility checkouts. Track manifests/docs, not vendored
+# repositories.
+tools/rp2040_tooling/repos/
+
+# KiCad local/editor state. Track .kicad_pro, .kicad_sch, .kicad_pcb, and BOMs.
+*.kicad_prl
+**/.history/
+
+# ─── Python venv variants (never commit — .venv_mcu incident, July 2026) ──
+.venv/
+.venv_mcu/
+
+# ─── AI-assistant session state ───────────────────────────────────────────
+.crush/
+.agents/
+.codex/
+.antigravitycli/
+
+# ─── SymbiYosys output directories (harness .sby/.v files ARE tracked) ───
+hardware/tests/**/*_formal/
+hardware/tests/**/*_formal_*/
+
+# ─── Strategy contracts are source records and must be reviewable ─────────
+
+# ─── Local flash-dump backups (proprietary bootloader content) ───────────
+/local_flash_backups/
+
+# MkDocs staging + output
+docs/knowledge/
+site/
+
+# LaTeX build litter (paper drafts live in docs/)
+docs/*.aux
+docs/*.log
+docs/*.out
+docs/*.toc
+docs/*.fdb_latexmk
+docs/*.fls
+docs/*.bbl
+docs/*.blg
+
+# Bench captures are EVIDENCE, not build noise, and must survive a clean.
+# docs/hardware_evidence.md entries cite them by path; 3.2e.7's ten run logs
+# are what made that result auditable months later. The global *.log rule above
+# would otherwise silently drop them.
+!docs/bench_captures/
+!docs/bench_captures/**

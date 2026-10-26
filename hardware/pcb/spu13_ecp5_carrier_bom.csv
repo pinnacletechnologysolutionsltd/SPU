@@ -1,0 +1,42 @@
+Designator,Value,Footprint,Qty,Manufacturer,MPN,Distributor1,Distributor1 PN,Notes
+U1,LFE5UM-85F-8BG381C,BGA-381,1,Lattice,LFE5UM-85F-8BG381C,DigiKey,220-2053-ND,ECP5-85F central FPGA. EE must assign balls from datasheet.
+U2,RP2350,QFN-60,1,Raspberry Pi,RP2350-LQFN60,Adafruit,6272,Southbridge. All debug via USB-C. No FTDI needed.
+U3,W25Q128JVSQ,SOIC-8_208mil,1,Winbond,W25Q128JVSQ,DigiKey,W25Q128JVSQ-ND,ECP5 configuration flash in master-SPI mode.
+U4,W25Q128JVSQ,SOIC-8_208mil,1,Winbond,W25Q128JVSQ,DigiKey,W25Q128JVSQ-ND,RPLU table flash on RP2350 SPI0 (separate bus from config).
+U5,AP2112K-3.3,SOT-23-5,1,Diodes Inc,AP2112K-3.3TRG1,DigiKey,AP2112K-3.3TRG1DICT-ND,3.3V LDO for I/O and RP2350. 600mA.
+U6,TPS62082,QFN-8_3x3,1,Texas Instruments,TPS62082DSGR,DigiKey,296-42371-1-ND,1.1V buck converter for VCC_CORE. 2A.
+U7,TPS62232,QFN-8_3x3,1,Texas Instruments,TPS62232DRLR,DigiKey,296-46746-1-ND,1.8V buck converter for VCC_IO_1V8. 500mA.
+U8,LP5907-2.5,SOT-23-5,1,Texas Instruments,LP5907-2.5DRVR,DigiKey,296-47039-1-ND,2.5V low-noise LDO for VCC_PLL. 250mA.
+C1,22uF_0805,0805,2,Samsung,CL21A226KQFNNNE,DigiKey,1276-3002-1-ND,VCC_CORE bulk decoupling.
+C2,4.7uF_0603,0603,2,Samsung,CL10A475KP8NNNC,DigiKey,1276-1981-1-ND,VCC_CORE mid-frequency decoupling.
+C3,100nF_0402,0402,4,Samsung,CL05A104KA5NNNC,DigiKey,1276-1007-1-ND,VCC_CORE HF decoupling. Stagger via ESL by trace length.
+C4,10nF_0402,0402,6,Samsung,CL05B103KA5NNNC,DigiKey,1276-6432-1-ND,VCC_CORE VHF decoupling. Spread via ESL.
+C5,1nF_0402,0402,2,Samsung,CL05C102KB5NNNC,DigiKey,1276-1075-1-ND,VCC_CORE UHF decoupling.
+C6,22uF_0805,0805,1,Samsung,CL21A226KQFNNNE,DigiKey,1276-3002-1-ND,VCC_3V3 bulk.
+C7,4.7uF_0603,0603,1,Samsung,CL10A475KP8NNNC,DigiKey,1276-1981-1-ND,VCC_3V3 mid.
+C8,100nF_0402,0402,4,Samsung,CL05A104KA5NNNC,DigiKey,1276-1007-1-ND,VCC_3V3 per-bank decoupling.
+C9,10uF_0805,0805,1,Samsung,CL21A106KPFNNNE,DigiKey,1276-2953-1-ND,VCC_1V8 bulk.
+C10,10uF_0805,0805,1,Samsung,CL21A106KPFNNNE,DigiKey,1276-2953-1-ND,VCC_PLL.
+C11,4.7uF_0603,0603,1,Samsung,CL10A475KP8NNNC,DigiKey,1276-1981-1-ND,VCC_PLL output filter (after ferrite).
+C12,100nF_0402,0402,1,Samsung,CL05A104KA5NNNC,DigiKey,1276-1007-1-ND,VCC_PLL input.
+C13,18pF_COG_0402,0402,2,Samsung,CL05C180JB5NNNC,DigiKey,1276-1598-1-ND,RP2350 12MHz crystal load caps.
+C14,100nF_0402,0402,2,Samsung,CL05A104KA5NNNC,DigiKey,1276-1007-1-ND,RP2350 decoupling.
+C15,10uF_0805,0805,1,Samsung,CL21A106KPFNNNE,DigiKey,1276-2953-1-ND,RP2350 ADC_VREF filter.
+R1,10k_0402,0402,6,Yageo,RC0402JR-0710KL,DigiKey,311-10.0KLCT-ND,Pull-ups: CS# MODE1 MODE2 PROGRAM# SD_CMD SD_DAT0.
+R2,1k_0402,0402,3,Yageo,RC0402JR-071KL,DigiKey,311-1.00KLCT-ND,LED series: DONE PWR ACT.
+R3,330_0402,0402,1,Yageo,RC0402JR-07330RL,DigiKey,311-330LCT-ND,LED series: ACT.
+R4,22_0402,0402,11,Yageo,RC0402JR-0722RL,DigiKey,311-22.0LCT-ND,Series term: SPI_SCK SPI_MOSI PIO_D[0:7] STROBE DIR.
+R5,33_0402,0402,2,Yageo,RC0402JR-0733RL,DigiKey,311-33.0LCT-ND,Series term: SPI_MISO FPGA side, SPI_CS# near FPGA.
+R6,27_0402,0402,2,Yageo,RC0402JR-0727RL,DigiKey,311-27.0LCT-ND,USB D+/D- series termination.
+L1,BLM18PG221SN1D,0603,1,Murata,BLM18PG221SN1D,DigiKey,490-1043-1-ND,VCC_PLL ferrite bead isolation (220 ohm @ 100 MHz).
+LED1,LED_0603_GRN,0603,2,Lite-On,LTST-C170KGKT,DigiKey,160-1427-1-ND,DONE (green) + PWR (green).
+LED2,LED_0603_RED,0603,1,Lite-On,LTST-C170KRKT,DigiKey,160-1426-1-ND,ACT (red) heartbeat.
+SW1,Tactile_6x6mm,THT,2,TE Connectivity,FSM4JH,DigiKey,450-1650-ND,BOOT + RUN buttons.
+SW2,DIP_4pos_SMD,SM,1,CTS,219-4MST,DigiKey,CT2194MST-ND,Evaluation mode DIP switch.
+J1,USB4110-GF-A,USB-C_16pin,1,GCT,USB4110-GF-A,DigiKey,2073-USB4110-GF-ACT-ND,USB-C for all debug/programming. CC resistors for 5V/3A.
+J2,112A-TAAR-R03,microSD_Push-Pull,1,TE Connectivity,112A-TAAR-R03,DigiKey,A1120120-ND,microSD slot, SPI mode.
+J3,1x12_Pitch2.54mm,THT,2,Samtec,TSW-112-07-S-S,DigiKey,TSW-112-07-S-S-ND,PMOD expansion headers (optional).
+J4,2x6_Pitch2.54mm,THT,1,Samtec,TST-106-01-G-S,DigiKey,TST-106-01-G-S-ND,Evaluation connector / oscilloscope hookup.
+Y1,12MHz_Crystal,3225_4pin,1,ECS Inc,ECS-120-20-30B-TR,DigiKey,XC1798CT-ND,RP2350 main crystal. NOT an oscillator. Needs 2x 18pF caps.
+Y2,50MHz_Oscillator,3225_4pin,1,ECS Inc,ECS-5032MV-500,DigiKey,ECS-5032MV-500-ND,50 MHz oscillator module for ECP5 clock input. 3.3V.
+TP1,TestPoint_1mm,THT,6,Kycon,TP-104-01,DigiKey,2092-TP-104-01-ND,Test points for scope probing.

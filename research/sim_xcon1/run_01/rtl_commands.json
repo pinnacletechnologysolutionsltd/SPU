@@ -1,0 +1,31 @@
+[
+ {
+  "cmd": [
+   "iverilog",
+   "-g2012",
+   "-s",
+   "s2_changed_datapath_tb",
+   "-o",
+   "/tmp/spu_gpu_s2_datapath_fxstxbm6/datapath_tb.vvp",
+   "/tmp/spu_gpu_s2_datapath_fxstxbm6/datapath_tb.v",
+   "/home/john/Projects/hardware/SPU/hardware/rtl/gpu/spu_edge_stepper.v",
+   "/home/john/Projects/hardware/SPU/hardware/rtl/gpu/spu_depth_math.v",
+   "/home/john/Projects/hardware/SPU/hardware/rtl/gpu/spu_reciprocal_core.v",
+   "/home/john/Projects/hardware/SPU/hardware/rtl/gpu/spu_shared_mult35.v",
+   "/home/john/Projects/hardware/SPU/hardware/rtl/gpu/spu_attr_stepper.v",
+   "/home/john/Projects/hardware/SPU/hardware/rtl/gpu/spu_depth_compare.v"
+  ],
+  "rc": 0,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "cmd": [
+   "vvp",
+   "/tmp/spu_gpu_s2_datapath_fxstxbm6/datapath_tb.vvp"
+  ],
+  "rc": 0,
+  "stdout": "PIXEL 0 0 000\nPIXEL 10 10 000\nPIXEL 39 0 000\nPIXEL 40 0 f00\nPIXEL 41 1 f00\nPIXEL 43 23 000\nPIXEL 44 23 f00\nPIXEL 100 300 f00\nPIXEL 119 460 000\nPIXEL 120 460 f00\nPIXEL 200 100 f00\nPIXEL 303 253 f00\nPIXEL 304 253 f00\nPIXEL 319 0 f00\nPIXEL 320 0 f00\nPIXEL 320 100 f00\nPIXEL 320 268 f00\nPIXEL 321 0 0f0\nPIXEL 321 267 0f0\nPIXEL 336 253 0f0\nPIXEL 337 253 0f0\nPIXEL 400 100 0f0\nPIXEL 519 460 000\nPIXEL 520 460 0f0\nPIXEL 540 300 0f0\nPIXEL 596 23 0f0\nPIXEL 597 23 000\nPIXEL 599 1 0f0\nPIXEL 639 479 000\nPASS changed T1d datapath RTL\n/tmp/spu_gpu_s2_datapath_fxstxbm6/datapath_tb.v:82: $finish called at 265571000 (1ps)\n",
+  "stderr": ""
+ }
+]

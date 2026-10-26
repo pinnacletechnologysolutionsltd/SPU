@@ -1,0 +1,209 @@
+{
+  "format": "spu13_soft_v1_sim0_vectors_v1",
+  "profile": "spu13-soft-v1",
+  "specification_version": 1,
+  "word_byte_order": "big-endian",
+  "cpu_initial_state": "cold_reset",
+  "cpu_vectors": [
+    {
+      "id": "scalar_qsqrt3_multiply",
+      "words_hex": [
+        "0001000007FFFE00",
+        "0002000002000100",
+        "0301020000000000",
+        "0800000000000000"
+      ],
+      "expected": {
+        "status": "halted",
+        "error": null,
+        "pc": 4,
+        "retired": 4,
+        "stack": [],
+        "scalar_nonzero": {
+          "1": [8, 3],
+          "2": [2, 1]
+        },
+        "quadray_nonzero": {}
+      }
+    },
+    {
+      "id": "quadray_add_and_normalize",
+      "words_hex": [
+        "1D0100FF0203FC00",
+        "1D02000405FA0700",
+        "1001020000000000",
+        "1D03000503040200",
+        "1203000000000000",
+        "0800000000000000"
+      ],
+      "expected": {
+        "status": "halted",
+        "error": null,
+        "pc": 6,
+        "retired": 6,
+        "stack": [],
+        "scalar_nonzero": {},
+        "quadray_nonzero": {
+          "1": [[3, 0], [7, 0], [-3, 0], [3, 0]],
+          "2": [[4, 0], [5, 0], [-6, 0], [7, 0]],
+          "3": [[3, 0], [1, 0], [2, 0], [0, 0]]
+        }
+      }
+    },
+    {
+      "id": "call_return_and_resume",
+      "words_hex": [
+        "2000000003000000",
+        "0000000001000000",
+        "0800000000000000",
+        "0001000002000000",
+        "2100000000000000"
+      ],
+      "expected": {
+        "status": "halted",
+        "error": null,
+        "pc": 3,
+        "retired": 5,
+        "stack": [],
+        "scalar_nonzero": {
+          "0": [1, 0],
+          "1": [2, 0]
+        },
+        "quadray_nonzero": {}
+      }
+    },
+    {
+      "id": "overflow_preserves_complete_architectural_state",
+      "words_hex": [
+        "0000007FFF7FFF00",
+        "0300000000000000"
+      ],
+      "expected": {
+        "status": "fault",
+        "error": "OVERFLOW",
+        "pc": 1,
+        "retired": 1,
+        "stack": [],
+        "scalar_nonzero": {
+          "0": [32767, 32767]
+        },
+        "quadray_nonzero": {},
+        "flags": null,
+        "memory": null,
+        "device_state": null,
+        "atomicity": "all architectural state equals its pre-MUL value"
+      }
+    },
+    {
+      "id": "overflow_preserves_nontrivial_full_state",
+      "words_hex": [
+        "2000000001000000",
+        "0000007FFF7FFF00",
+        "0001007FFF7FFF00",
+        "1D02000102030400",
+        "0300010000000000"
+      ],
+      "expected": {
+        "status": "fault",
+        "error": "OVERFLOW",
+        "architectural_state_before_instruction": {
+          "pc": 4,
+          "retired": 4,
+          "stack": [1],
+          "scalar_nonzero": {
+            "0": [32767, 32767],
+            "1": [32767, 32767]
+          },
+          "quadray_nonzero": {
+            "2": [[1, 0], [2, 0], [3, 0], [4, 0]]
+          },
+          "flags": null,
+          "memory": null,
+          "device_state": null
+        },
+        "architectural_state_after_fault": {
+          "pc": 4,
+          "retired": 4,
+          "stack": [1],
+          "scalar_nonzero": {
+            "0": [32767, 32767],
+            "1": [32767, 32767]
+          },
+          "quadray_nonzero": {
+            "2": [[1, 0], [2, 0], [3, 0], [4, 0]]
+          },
+          "flags": null,
+          "memory": null,
+          "device_state": null
+        },
+        "required_invariant": "architectural_state_after_fault equals architectural_state_before_instruction"
+      }
+    }
+  ],
+  "loader_vectors": {
+    "one_word_halt_image_hex": "53505553494d0d0a00010001000000010800000000000000",
+    "reject": [
+      "truncated header",
+      "unknown version",
+      "unknown profile id",
+      "zero word count",
+      "word count greater than 65535",
+      "truncated instruction payload",
+      "trailing bytes"
+    ],
+    "load_failure_effect": "no image or machine state is partially replaced",
+    "instruction_validation": "container framing is checked at load; opcode, reserved fields, and operands are checked when fetched",
+    "runtime_instruction_vectors": [
+      {
+        "id": "reached_unsupported_opcode",
+        "words_hex": ["0400000000000000"],
+        "load_result": "accept",
+        "execution_result": "UNSUPPORTED",
+        "pc": 0,
+        "retired": 0
+      },
+      {
+        "id": "reached_nonzero_reserved_bits",
+        "words_hex": ["FF00000000000001"],
+        "load_result": "accept",
+        "execution_result": "BAD_ENCODING",
+        "pc": 0,
+        "retired": 0
+      },
+      {
+        "id": "unreached_unsupported_opcode",
+        "words_hex": ["0800000000000000", "0400000000000000"],
+        "load_result": "accept",
+        "execution_result": "halted",
+        "pc": 1,
+        "retired": 1
+      }
+    ]
+  },
+  "t1d_framebuffer": {
+    "capability": "gpu.scene.t1d.two-triangle-v1",
+    "input_fixture": "fixtures/gpu_t1d_scene_wire_64b.bin",
+    "input_sha256": "aa2bad57fa5d3d2f777ef5e5405357ac0216a4aafb707d99241050c986ed69ee",
+    "output_format": "640x480 row-major RGB8 bytes",
+    "output_byte_count": 921600,
+    "rgb8_sha256_finite_width_model": "96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10",
+    "rgb8_sha256_exact_rational_reference": "96950fa5610063be28056ab0ff9f198a94bbc38ab9aa48949684592d69de7a10",
+    "exact_rational_pixel_mismatches": 0,
+    "exact_rational_rule": "direct integer edge coverage; compare sum(edge_value*vertex_depth)/sum(edge_c) with cross multiplication; equal depth chooses triangle 0",
+    "provenance": {
+      "software/spu_gpu_eval/device_packet.py": "cd58f46c68625b473a224d5454e1fdae34600d86cf9426af227d52b077f4d2d1",
+      "software/spu_gpu_eval/device_arithmetic.py": "7ba8856eafab7687219735f0ca8f37490736e0b3b70a0b146df06a5e809336de",
+      "software/spu_gpu_eval/device_model.py": "cc507652fabc257a7baf36ceac905de5fc4a97e7d61871d4d3e57b25f9d059d6",
+      "hardware/rtl/arch/gpu_reciprocal_lut_q15.mem": "a64327c1bc0c8c74a4fb8c849a922a1f8b3d6a6e2e3bb58951d11f2012bb5248"
+    },
+    "diagnostic_pixels": [
+      {"x": 10, "y": 10, "coverage": "background", "winner": null, "rgb_nibbles": [0, 0, 0]},
+      {"x": 100, "y": 300, "coverage": "triangle0", "winner": 0, "rgb_nibbles": [15, 0, 0]},
+      {"x": 540, "y": 300, "coverage": "triangle1", "winner": 1, "rgb_nibbles": [0, 15, 0]},
+      {"x": 200, "y": 100, "coverage": "overlap", "winner": 0, "rgb_nibbles": [15, 0, 0]},
+      {"x": 400, "y": 100, "coverage": "overlap", "winner": 1, "rgb_nibbles": [0, 15, 0]},
+      {"x": 320, "y": 100, "coverage": "overlap_equal_depth", "winner": 0, "rgb_nibbles": [15, 0, 0]}
+    ],
+    "evidence_status": "single-fixture full-frame exact-rational result matches finite-width model; other scenes and hardware timing remain unverified"
+  }
+}

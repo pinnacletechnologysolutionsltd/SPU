@@ -1,0 +1,8 @@
+# synth_gowin_25k_smoke.ys 
+# Minimal Yosys synthesis script for Tang Primer 25K smoke test
+
+read_verilog hardware/boards/tang_primer_25k/spu_tang25k_uart_led_test.v
+
+hierarchy -check -top spu_tang25k_uart_led_test
+synth_gowin -family gw5a -top spu_tang25k_uart_led_test -json build/smoke.json
+stat

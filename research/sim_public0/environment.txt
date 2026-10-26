@@ -1,0 +1,18 @@
+Fri Oct 23 05:54:21 UTC 2026
+Linux 7.2.7-1-cachyos x86_64 GNU/Linux
+cmake version 4.4.4
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+c++ (GCC) 16.2.1 20260810
+Copyright (C) 2026 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+GNU Make 4.4.1
+Built for x86_64-pc-linux-gnu
+Copyright (C) 1988-2023 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+git version 2.56.0
+bubblewrap 0.13.1

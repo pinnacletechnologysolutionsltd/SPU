@@ -1,0 +1,13 @@
+{
+  "scope": "SRAM load and passive boot capture; not model parity or latency",
+  "bitstream_sha256": "7a57be49d6164d838cd9ba49b9e13a1feb64f250312378a425bf237622dc448b",
+  "pnr_sha256": "a0a196f0226b66c4209ae2905d2e30511ff59fdcdcd4d50fde9e3094f4bae3e1",
+  "baud": 115200,
+  "uart_lines_hex": [
+    "0049524f54433a5020453d30300d0a",
+    "00534f4d3a48204e3d3020513d303030303030303020533d3034204c3d30303020493d313032300d0a"
+  ],
+  "loader_exit": 0,
+  "loader_stdout": "empty\nJtag frequency : requested 6.00MHz    -> real 6.00MHz   \nParse file Parse /home/user/Projects/hardware/SPU/build/spu4_ina226_benchmark/bench25_completion_arm/probe.fs: \nDone\nDONE\nErase SRAM Load SRAM \rLoad SRAM: [=======================                           ] 44.16%\n\rLoad SRAM: [=============================================     ] 88.33%\n\rLoad SRAM: [==================================================] 100.00%\n\nDone\nDONE\n",
+  "loader_stderr": ""
+}

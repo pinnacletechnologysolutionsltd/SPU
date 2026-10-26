@@ -1,0 +1,65 @@
+--- /tmp/claude-1000/-home-john-Projects-hardware-SPU/90e2eb5e-0dd3-4947-90b6-b9c069ccb101/scratchpad/QCG0_P0_CONTRACT.v32.md	2026-10-23 09:03:26.342111270 +1300
++++ QCG0_P0_EXECUTION_CONTRACT.md	2026-10-23 09:03:26.359126700 +1300
+@@ -1,10 +1,11 @@
+-# QCG-0 P0 execution contract (draft, revision 3.2, owner dispositions recorded, for independent review)
++# QCG-0 P0 execution contract (draft, revision 3.2.1, owner dispositions recorded, for independent review)
+ 
+ Date: 2026-10-23. Status: **DRAFT. Preparation only. Freeze, implementation and execution remain HOLD.**
+ Author: Claude. Revision 3 responds to the second independent review (`P0_CONTRACT_R2_REVIEW_CERTIFICATE.md`, REVISE).
+ Revision 2 had SHA-256 `4c95617479b858919c86ad5be3cedad37fb9e547f88b9c6d9a8764e8b083e54f`; revision 1 `21fb45af84d609c3c127010a10b0c2824aaac4772ab8d95a4abd9f5d8d2b8bfc`.
+ No fixture was regenerated, no model was run, no benchmark was performed; no unrelated campaign or hardware was touched.
+-**Revision 3.2 (2026-10-23) responds to the Revision 3.1 review (`P0_CONTRACT_R3_REVIEW_CERTIFICATE.md`, REVISE; B1–B4): C2 tape-specific read
++**Revision 3.2.1 (2026-10-23) additionally closes the single defect the Revision 3.2 review left (finalization wrote the marker after a failed required
++metadata write); Revision 3.2 (`94e6631a48f4f362c310e72954af66b2853d477fbff8674cf555ff9064e44602`) responded to the Revision 3.1 review (`P0_CONTRACT_R3_REVIEW_CERTIFICATE.md`, REVISE; B1–B4): C2 tape-specific read
+ steps and jet evolution, the FDINIT table traversal, mandatory OUTPUT_CAP attribution, and a bounded single finalization path; plus two
+ stale-text removals. Revision 3.1 (SHA-256 `2829a167eabb3bcc16a5beed35249ce91f5097de0f7934647e0f7676b474ee44`) recorded the owner's
+ dispositions of D-1…D-6 (§11): all ACCEPT, with the scopes stated there, and those dispositions are unchanged. No algorithm count, reference
+@@ -386,24 +387,30 @@
+ USED=$(du -sb "$LEAF" 2>/dev/null | cut -f1) ; USED=${USED:-99999999}
+ CAUSE=""
+ if [ $((USED + 4096)) -gt 10485760 ] || [ "$RC" -eq 90 ] || [ "$RC" -eq 153 ] || [ -e "$LEAF/CAP_BREACH" ]; then CAUSE=OUTPUT_CAP ; fi
+-if   [ -n "$CAUSE" ]; then MARK=FAILED
+-elif [ "$RC" -eq 0 ] && [ -f "$LEAF/RUNNER_DONE" ]; then MARK=COMPLETE
+-elif [ "$RC" -eq 124 ]; then MARK=TIMEOUT
+-else MARK=FAILED; fi
++# 1. all REQUIRED metadata first; no marker has been chosen or written yet
+ W=0
+ echo "$RC" > "$LEAF/exit.code" || W=1
+ { echo "pins_after_rc=$PRC"; printf '%s\n' "$PINS_AFTER" | head -c 1024; } > "$LEAF/pins_after.txt" || W=1   # bounded: <= 1 KiB + header
+ if [ -n "$CAUSE" ]; then : > "$LEAF/$CAUSE" || W=1 ; fi
+-: > "$LEAF/$MARK" || W=1
++# 2. only now choose the marker; any metadata failure forces FAILED and can never leave COMPLETE or TIMEOUT
++if [ "$W" -ne 0 ]; then MARK=FAILED ; : > "$LEAF/FINALIZE_FAILED" 2>/dev/null || true
++elif [ -n "$CAUSE" ]; then MARK=FAILED
++elif [ "$RC" -eq 0 ] && [ -f "$LEAF/RUNNER_DONE" ]; then MARK=COMPLETE
++elif [ "$RC" -eq 124 ]; then MARK=TIMEOUT
++else MARK=FAILED; fi
++MW=0 ; : > "$LEAF/$MARK" || MW=1
+ N=0 ; for m in COMPLETE FAILED TIMEOUT ; do if [ -e "$LEAF/$m" ]; then N=$((N+1)); fi ; done
+-if [ "$W" -ne 0 ] || [ "$N" -ne 1 ]; then echo "FINALIZE_FAILED write=$W markers=$N" >&2 ; exit 3 ; fi
++if [ "$N" -eq 0 ]; then echo "RESULT_UNAVAILABLE: no terminal marker persisted" >&2 ; exit 4 ; fi   # nothing is inferred
++if [ "$W" -ne 0 ] || [ "$MW" -ne 0 ] || [ "$N" -ne 1 ]; then echo "FINALIZE_FAILED write=$W marker_write=$MW markers=$N" >&2 ; exit 3 ; fi
+ case "$MARK" in COMPLETE) exit 0;; TIMEOUT) exit 11;; *) exit 10;; esac
+ ```
+ 
+   The finalization path runs after every launch and always attempts the post-run pin check; it reserves 4 KiB for its own metadata
+   (the `+ 4096` in the cap test) and writes only bounded files (`exit.code`, `pins_after.txt` ≤ 1 KiB of detail, at most one cause file, exactly one
+-  marker), so the aggregate cap covers the final evidence. An inability to persist any of them is `FINALIZE_FAILED` (launcher exit 3): completion is
+-  never inferred, and the marker count must be exactly 1. Pin drift is recorded in `pins_after.txt` and does not change the marker. **Output cap enforcement:** `RLIMIT_FSIZE` (4 MiB per file) is set by `prlimit` and applies to the runner's writes to
++  marker), so the aggregate cap covers the final evidence. **All required metadata is written before any marker is chosen**; if any of those writes fails the marker is forced to FAILED (a
++  `FINALIZE_FAILED` file is attempted) and COMPLETE or TIMEOUT can never be created in that branch. If a FAILED marker cannot be persisted either, no marker
++  exists and the launcher reports `RESULT_UNAVAILABLE` (exit 4); a finalization failure with a durable FAILED marker is exit 3. Completion is never inferred
++  and, when a marker exists, the count must be exactly 1. Pin drift is recorded in `pins_after.txt` and does not change the marker. **Output cap enforcement:** `RLIMIT_FSIZE` (4 MiB per file) is set by `prlimit` and applies to the runner's writes to
+   stdout, stderr and artifacts (prevention, per file); the runner keeps its own running total of bytes it writes and stops at
+   8 MiB (prevention, total); the launcher's `du` check against 10 MiB, made before the marker is chosen, is detection. **Runner contract for
+   caps:** the runner does all writing through one function that checks the running total and each file's size before every write; on a
+@@ -424,7 +431,8 @@
+    shifted per tape); B2 FDINIT's initial parameter t_0 = 0, table traversal and single operation counter are explicit; B3 the runner cap contract
+    (exit 90, no SIGXFSZ handler, `CAP_BREACH`, `RUNNER_DONE` last) and the launcher's `OUTPUT_CAP` attribution preclude COMPLETE; B4 one
+    finalization path with bounded metadata (4 KiB reserve), the post-run pin check always attempted, no `set -e`, exactly one marker, and
+-   `FINALIZE_FAILED` when evidence cannot be persisted. Also: the stale PINS-layout sentence and the X-18 wording are removed, and event ids
++   `FINALIZE_FAILED`/`RESULT_UNAVAILABLE` when evidence cannot be persisted. **(Revision 3.2.1)** Required metadata is written before the marker is
++   chosen and a metadata failure forces FAILED, never COMPLETE. Also: the stale PINS-layout sentence and the X-18 wording are removed, and event ids
+    carry their route context.
+ 
+ 1. §2: administrative checks (zero-divisor guard, parity, bounds, imports, degree assertions) are not K and not counted; semantic

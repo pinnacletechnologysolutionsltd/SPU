@@ -1,0 +1,19 @@
+{
+  "status": "PASS_FOCUSED_LORENTZ_CPU_SIMULATION",
+  "boost_cases": 10,
+  "rtl_retired_instructions": 853,
+  "overflow_boost": 34,
+  "failed_destination_preserved": true,
+  "malformed_boost_invariant": -8,
+  "poisoned_expectation_rejected": true,
+  "arrival_model_disagreements": 9,
+  "final_gamma": 262087,
+  "wrong_final_gamma": 1024,
+  "model_error_ratio": "262087/1024",
+  "scope": "Dispatch-port RTL simulation; c=1 and unit-proper-time final cruise; acceleration duration excluded",
+  "full_repository_qualification": false,
+  "physical_trajectory_qualification": false,
+  "board_timing": "UNMEASURED",
+  "energy": "UNMEASURED",
+  "silicon_verified": false
+}

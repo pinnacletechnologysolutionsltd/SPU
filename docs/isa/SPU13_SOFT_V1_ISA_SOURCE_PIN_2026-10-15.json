@@ -1,0 +1,22 @@
+{
+  "pin_id": "spu13-soft-v1-isa-reference-2026-10-15",
+  "accepted_on": "2026-10-15",
+  "profile": "spu13-soft-v1",
+  "source_path": "knowledge/isa_reference.md",
+  "base_commit": "4e51d2f1169c5a30c5e42fbf0b8bb67b7e36219f",
+  "source_tree_status": "dirty at acceptance; content pinned by source hash and exact diff",
+  "source_sha256": "e548d4d7cda683e1c260516ae48c9f090f0aa7c30f14a8f99ceb62bac0e81c90",
+  "diff_path": "docs/isa/SPU13_SOFT_V1_ISA_REFERENCE_4e51d2f.patch",
+  "diff_sha256": "5adef291f2a678da3f7993788c64a717024aacba2dc90948e3722632f1c75737",
+  "diff_stat": {
+    "insertions": 54,
+    "deletions": 3
+  },
+  "reconstruction": [
+    "mkdir -p /tmp/spu13-soft-v1-isa-pin/knowledge",
+    "git show 4e51d2f1169c5a30c5e42fbf0b8bb67b7e36219f:knowledge/isa_reference.md > /tmp/spu13-soft-v1-isa-pin/knowledge/isa_reference.md",
+    "cd /tmp/spu13-soft-v1-isa-pin && git apply /home/john/Projects/hardware/SPU/docs/isa/SPU13_SOFT_V1_ISA_REFERENCE_4e51d2f.patch",
+    "sha256sum /tmp/spu13-soft-v1-isa-pin/knowledge/isa_reference.md"
+  ],
+  "policy": "This pin is immutable input for SIM-1. Later edits to the source repository do not alter this accepted reference. Any semantic change requires a new owner-accepted pin or profile revision."
+}

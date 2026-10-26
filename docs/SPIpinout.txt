@@ -1,0 +1,63 @@
+The current pinout is recorded in docs/TAKEOVER_CHECKPOINT_2026-09-08.md:471.
+
+  Tang J4 physical even-pin column:
+
+  - Pin 12 — CS# / G10
+  - Pin 10 — SCK / D10
+  - Pin 8 — MOSI / B10
+  - Pin 6 — MISO / C10
+  - Pin 4 — GND
+  - Pin 2 — 3V3
+
+  The Pico adapter mapping is documented in docs/SPU4_INA226_BENCHMARK_2026-09-08.md:283:
+
+  - GP5 — CS#
+  - GP2 — SCK
+  - GP3 — MOSI / flash DI
+  - GP4 — MISO / flash DO
+  - GND — GND
+  - 3V3 — 3V3
+
+  se the measured Wukong J10 mapping—not JP2.
+
+   Wukong J10    FPGA pin    Connection              DE-15 pin
+  ━━━━━━━━━━━━  ━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━
+            1    G8          270 Ω series → Red              1
+  ────────────  ──────────  ──────────────────────  ───────────
+            2    G7          270 Ω series → Green            2
+  ────────────  ──────────  ──────────────────────  ───────────
+            3    G5          270 Ω series → Blue             3
+  ────────────  ──────────  ──────────────────────  ───────────
+            4    D5          HSync, direct                  13
+  ────────────  ──────────  ──────────────────────  ───────────
+           10    E5          VSync, direct                  14
+  ────────────  ──────────  ──────────────────────  ───────────
+      5 or 11    GND         Ground/returns              below
+
+  For the female DE-15 socket, wire these nine contacts:
+
+  - Pin 1: Red
+  - Pin 2: Green
+  - Pin 3: Blue
+  - Pin 6: Red return/GND
+  - Pin 7: Green return/GND
+  - Pin 8: Blue return/GND
+  - Pin 10: Sync return/GND
+  - Pin 13: HSync
+  - Pin 14: VSync
+
+  Use separate conductors for returns 6, 7, and 8, joining them to board ground at the adapter. The older XDC
+  comment also permits grounding DE-15 pin 5, but the newer harness specification uses the nine contacts
+  above; pin 5 is not required.
+
+  Important:
+
+  - Do not connect DE-15 pin 9: it carries +5 V from the display side.
+  - Leave DDC pins 12 and 15 disconnected.
+  - Leave ID pins 4 and 11 disconnected.
+  - Do not connect J10 pins 6 or 12; those are 3.3 V.
+  - J10 pins 7, 8, and 9 are unused by VGA.
+  - The three 270 Ω resistors are required on RGB only. Sync is direct.
+  - VGA cable wire colours are not standardized—identify every conductor by continuity.
+  - DE-15 numbering is mirrored between the mating face and solder-cup rear. Follow the socket’s stamped
+    numbers and verify with continuity before powering anything.

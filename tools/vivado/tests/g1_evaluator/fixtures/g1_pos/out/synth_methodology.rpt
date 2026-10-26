@@ -1,0 +1,295 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Oct 22 23:35:36 2026
+| Host         : john-MacBookAir running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_methodology -file /home/john/spu-transfer/spu-research-baseline/build/vivado/g1_pos_01/synth_methodology.rpt
+| Design       : spu_a7_tensegrity_link_top
+| Device       : xc7a100tfgg676-1
+| Speed File   : -1
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: spu_a7_tensegrity_link_top
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 50
++-----------+----------+--------------------------------------------+--------+
+| Rule      | Severity | Description                                | Checks |
++-----------+----------+--------------------------------------------+--------+
+| LUTAR-1   | Warning  | LUT drives async reset alert               | 1      |
+| SYNTH-6   | Warning  | Timing of a RAM block might be sub-optimal | 1      |
+| SYNTH-10  | Warning  | Wide multiplier                            | 47     |
+| TIMING-18 | Warning  | Missing input or output delay              | 1      |
++-----------+----------+--------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+LUTAR-1#1 Warning
+LUT drives async reset alert  
+LUT cell u_spi/FSM_onehot_state[9]_i_3, with 2 or more inputs, drives asynchronous preset/clear pin(s) u_spi/FSM_onehot_state_reg[1]/PRE, u_spi/FSM_onehot_state_reg[3]/CLR,
+u_spi/FSM_onehot_state_reg[4]/CLR, u_spi/FSM_onehot_state_reg[5]/CLR,
+u_spi/FSM_onehot_state_reg[6]/CLR, u_spi/FSM_onehot_state_reg[7]/CLR,
+u_spi/FSM_onehot_state_reg[9]/CLR, u_spi/bit_cnt_reg[0]/CLR,
+u_spi/bit_cnt_reg[1]/CLR, u_spi/bit_cnt_reg[2]/CLR,
+u_spi/cmd_byte_reg[0]/CLR, u_spi/cmd_byte_reg[1]/CLR,
+u_spi/cmd_byte_reg[2]/CLR, u_spi/cmd_byte_reg[3]/CLR,
+u_spi/cmd_byte_reg[4]/CLR (the first 15 of 205 listed). The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+SYNTH-6#1 Warning
+Timing of a RAM block might be sub-optimal  
+The timing for the instance u_sidecar/table_mem_reg, implemented as a RAM block, might be sub-optimal as no output register was merged into the block.
+Related violations: <none>
+
+SYNTH-10#1 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/eq_sign_r_sq__0 of size 24x18, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#2 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/eq_sign_r_sq__2 of size 18x18, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#3 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/eq_sign_r_sq__3 of size 18x24, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#4 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/eq_sign_s_sq of size 22x18, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#5 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/eq_sign_s_sq__1 of size 18x18, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#6 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/eq_sign_s_sq__2 of size 18x22, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#7 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/gen_eq_zphi_reference.u_eq_zphi_mul/product_raw of size 22x18, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#8 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/gen_eq_zphi_reference.u_eq_zphi_mul/product_raw__1 of size 18x18, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#9 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/gen_eq_zphi_reference.u_eq_zphi_mul/product_raw__2 of size 18x22, it is decomposed from a wide multipler into 5 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#10 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/gen_zphi_reference.u_zphi_mul/product_raw of size 21x18, it is decomposed from a wide multipler into 8 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#11 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/gen_zphi_reference.u_zphi_mul/product_raw__0 of size 21x17, it is decomposed from a wide multipler into 8 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#12 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/gen_zphi_reference.u_zphi_mul/product_raw__1 of size 18x17, it is decomposed from a wide multipler into 8 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#13 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/gen_zphi_reference.u_zphi_mul/product_raw__2 of size 18x18, it is decomposed from a wide multipler into 8 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#14 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/gen_zphi_reference.u_zphi_mul/product_raw__3 of size 18x17, it is decomposed from a wide multipler into 8 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#15 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/gen_zphi_reference.u_zphi_mul/product_raw__4 of size 18x18, it is decomposed from a wide multipler into 8 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#16 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/gen_zphi_reference.u_zphi_mul/product_raw__5 of size 18x17, it is decomposed from a wide multipler into 8 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#17 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/gen_zphi_reference.u_zphi_mul/product_raw__6 of size 18x18, it is decomposed from a wide multipler into 8 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#18 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__0 of size 23x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#19 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__1 of size 18x23, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#20 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__10 of size 18x23, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#21 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__11 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#22 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__12 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#23 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__13 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#24 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__14 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#25 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__15 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#26 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__2 of size 23x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#27 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__4 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#28 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__5 of size 23x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#29 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__6 of size 18x23, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#30 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__7 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#31 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__8 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#32 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_r_sq__9 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#33 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq of size 21x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#34 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__0 of size 18x21, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#35 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__1 of size 21x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#36 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__10 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#37 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__11 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#38 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__12 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#39 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__13 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#40 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__14 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#41 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__3 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#42 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__4 of size 21x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#43 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__5 of size 18x21, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#44 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__6 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#45 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__7 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#46 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__8 of size 18x18, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+SYNTH-10#47 Warning
+Wide multiplier  
+Detected multiplier at u_sidecar/u_guard/u_intersection/sign_s_sq__9 of size 18x21, it is decomposed from a wide multipler into 17 DSP blocks.
+Related violations: <none>
+
+TIMING-18#1 Warning
+Missing input or output delay  
+An input delay is missing on rst_n relative to the rising and/or falling clock edge(s) of sys_clk.
+Related violations: <none>
+
+

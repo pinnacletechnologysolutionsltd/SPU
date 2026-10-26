@@ -1,0 +1,3 @@
+read_verilog hardware/boards/artix7/spu_a7_j11_loopback_top.v
+synth_xilinx -family xc7 -top spu_a7_j11_loopback_top -json build/spu_a7_100t_J11LOOPBACK.json
+stat -top spu_a7_j11_loopback_top

@@ -1,0 +1,90 @@
+`timescale 1ns/1ps
+
+module spu4_autonomy_tb;
+
+    reg clk, reset;
+    
+    // Programming Interface
+    reg         prog_en;
+    reg [3:0]   prog_addr;
+    reg [15:0]  prog_data;
+    reg         mode_autonomous;
+
+    // Slave Inputs (unused in autonomous test)
+    reg [15:0] A_in, B_in, C_in, D_in;
+    reg [15:0] F_rat, G_rat, H_rat;
+
+    // Outputs
+    wire [15:0] A_out, B_out, C_out, D_out;
+    wire        bloom_complete;
+
+    // 1. SPU-4 Autonomous Core
+    wire [7:0] dissonance_out;
+    spu4_core u_sentinel (
+        .clk(clk), .reset(reset),
+        .prog_en_aux(prog_en), .prog_addr_aux(prog_addr), .prog_data_aux(prog_data),
+        .mode_autonomous(mode_autonomous),
+        .A_in(A_in), .B_in(B_in), .C_in(C_in), .D_in(D_in),
+        .F_rat(F_rat), .G_rat(G_rat), .H_rat(H_rat),
+        .spi_miso(1'b0), .bus_ready(1'b0),
+        .A_out(A_out), .B_out(B_out), .C_out(C_out), .D_out(D_out),
+        .bloom_complete(bloom_complete),
+        .dissonance(dissonance_out)
+    );
+
+    always #41.66 clk = ~clk; // 12 MHz
+
+    integer i;
+    initial begin
+        // Waveform dump is OPT-IN (`vvp <bench>.vvp +dump`). It used to be
+        // unconditional and wrote to the CURRENT DIRECTORY, which is the
+        // repository root when run_all_tests.py drives it -- the root `.vcd`
+        // dumps AGENTS.md section 3.6 prohibits and tools/verify_repo.sh
+        // checks for. That made the gate fail on its own side effects: step 1
+        // (hygiene) passed on a clean tree, step 3 (the suite) recreated the
+        // files, and the NEXT invocation failed at step 1. Sweeping the files
+        // by hand, as on 2026-09-05, does not fix the cause.
+        if ($test$plusargs("dump")) begin
+            $dumpfile("autonomy_dream.vcd");
+            $dumpvars(0, spu4_autonomy_tb);
+        end
+        
+        clk = 0; reset = 1;
+        prog_en = 0; prog_addr = 0; prog_data = 0;
+        mode_autonomous = 0;
+        A_in = 16'h0100; B_in = 16'h0000; C_in = 16'h0000; D_in = 16'h0000;
+        F_rat = 16'h0050; G_rat = 16'h00B5; H_rat = 16'h0050;
+        
+        #200; reset = 0; #200;
+
+        $display("--- [Sentinel Autonomy] Programming Dream Buffer ---");
+        prog_en = 1;
+        // Step 0: ROTATE (0x2000)
+        prog_addr = 0; prog_data = 16'h2000; #100;
+        // Step 1: GOTO 0 (0x3000)
+        prog_addr = 1; prog_data = 16'h3000; #100;
+        prog_en = 0;
+
+        #1000;
+        $display("--- [Sentinel Autonomy] Entering Sovereign Dream Mode ---");
+        mode_autonomous = 1;
+
+        // Observe 1,000 heartbeats (abstractly)
+        // The soft-start ramp visits all 256 intensity values.  Each value
+        // dwells through the eight Fibonacci thresholds, so completion is
+        // roughly 150k clocks at this 12 MHz test clock—not 2,400 clocks.
+        #15000000;
+        
+        if (!bloom_complete) begin
+            $display("FAIL: Sentinel bloom did not complete");
+            $finish(1);
+        end else if ((^{A_out, B_out, C_out, D_out}) === 1'bx) begin
+            $display("FAIL: Sentinel outputs contain unknown bits");
+            $finish(1);
+        end else begin
+            $display("[PASS] Sentinel Autonomy Verified. Final States: A=%x, B=%x, C=%x, D=%x", A_out, B_out, C_out, D_out);
+            $finish;
+        end
+    end
+
+endmodule

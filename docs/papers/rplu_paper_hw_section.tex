@@ -1,0 +1,43 @@
+## Section III: Hardware Implementation
+
+### 3.1 Evidence boundary
+
+The RTL is portable Verilog and expresses the $A_{31}$ multiplier as sixteen
+logical 32-by-32 products followed by 72-bit accumulation and Mersenne
+reduction. It does not instantiate DSP48E1 cascade, pattern-detect, or carry
+cascade primitives. Physical DSP usage is therefore a property of a named
+synthesis image, not the source-level product count.
+
+| Artifact | Logic / registers | DSP / BRAM | Timing and status |
+|:---------|:------------------|:-----------|:------------------|
+| Wukong Artix-7 100T `RPLU2PADE` | 20,277 / 126,800 `SLICE_LUTX`; 6,678 / 126,800 `SLICE_FFX` | 72 / 240 DSP48E1; 0 BRAM | `clk_fast` max 36.54 MHz; routed and silicon-tested at 2 MHz |
+| Tang GW5A-25A `rplu2_arith_probe` | 9,211 LUT4; 7,926 DFF; 822 ALU | 0 DSP; 0 BRAM | reported clocks max 54.42/48.40 MHz; routed and silicon-tested at 12 MHz |
+
+The Tang artifact covers RPLU2 configuration plus QLDI/QSUB arithmetic. It is
+not a full Padé evaluator and must not be used as a full-pipeline utilization
+number. The authoritative run details are in `docs/hardware_evidence.md`.
+
+### 3.2 Shared multiplier organization
+
+For jet order $n=2$, the Cauchy product contains six $A_{31}$ multiplies. A
+single shared multiplier time-division-multiplexes those operations. Each
+$A_{31}$ multiply contains sixteen logical integer products, so a hypothetical
+six-way unrolled model contains 96 logical products. Neither number is a count
+of physical DSP48E1 cells. The routed Wukong image uses 72 DSP48E1 cells for
+the complete `RPLU2PADE` artifact.
+
+### 3.3 M31 reduction
+
+The implemented reduction is target-independent RTL. It splits each 72-bit
+accumulator into 31-bit chunks, adds the chunks, and conditionally subtracts
+$p=2^{31}-1$. Claims about DSP48E1 pattern-detect or zero-overhead cascade
+routing are intentionally excluded because the current RTL does not implement
+those primitives.
+
+### 3.4 Integration scope
+
+The Artix-7 100T is the constrained-integration and silicon-evidence target for
+the live Padé evaluator. The Tang 25K remains the subsystem probe platform.
+Full concurrent builds containing RPLU2 plus additional sidecars and safety
+layers are an Artix-7 200T / Kintex-class direction rather than a demonstrated
+100T or Tang resource result.

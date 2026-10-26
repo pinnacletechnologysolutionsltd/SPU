@@ -1,0 +1,5 @@
+# SPU-4 minimal suite: embedded RPLU defaults + phinary tests
+INC_DIRS: hardware/common/rtl/gpu, hardware/common/rtl/core, hardware/common/rtl/prim, hardware/common/rtl/spu4/rtl, hardware/common/rtl/include
+SCAN_DIRS: hardware/common/rtl/include, hardware/common/rtl/spu4/rtl
+hardware/common/tests/spu4_phinary_cfg_unit_tb.v
+hardware/common/tests/chiral_phinary_adder_tb.v

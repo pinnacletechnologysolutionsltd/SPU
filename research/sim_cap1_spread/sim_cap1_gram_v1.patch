@@ -1,0 +1,946 @@
+diff --git a/run_all_tests.py b/run_all_tests.py
+index dc62b75..fcd79f9 100644
+--- a/run_all_tests.py
++++ b/run_all_tests.py
+@@ -971,6 +971,28 @@ def main():
+         if not ok:
+             print(f"\n  test_cpu_profile.py FAILED:\n{(r.stdout or '')[-500:]}")
+ 
++    # SIM-CAP1 gram_v1 SPREAD (Python VM + C++ VM vs a shared independent oracle). Needs g++
++    # for the C++ suite; software-only. research/sim_cap1_spread/GRAM_V1_CONTRACT_FROZEN.md.
++    gram_results = {}
++    for gram_name in ("test_gram_v1_spread.py", "test_gram_v1_spread_cpp.py"):
++        gram_path = os.path.join(root_dir, "software", "tests", gram_name)
++        if not os.path.exists(gram_path):
++            print(f"\n  {gram_name} MISSING (required suite)")
++            gram_results[gram_name] = (0, 1)
++            continue
++        try:
++            result_gram = subprocess.run([sys.executable, gram_path],
++                                         capture_output=True, text=True, timeout=180)
++            gram_ok = (result_gram.returncode == 0)
++            gram_out = result_gram.stdout + result_gram.stderr
++        except subprocess.TimeoutExpired:
++            gram_ok, gram_out = False, "timeout"
++        gram_results[gram_name] = (1, 0) if gram_ok else (0, 1)
++        if not gram_ok:
++            print(f"\n  {gram_name} FAILED:\n{gram_out[-500:]}")
++    gram_pass = sum(p for p, _ in gram_results.values())
++    gram_fail = sum(f for _, f in gram_results.values())
++
+     # IROTC VM suite (trace equivalence / poison proofs / chain tests) —
+     # φ-plane icosahedral opcodes, no hardware required. The trace and
+     # chain tests import test_icosahedral_catalog.py, so the derivation's
+@@ -1223,6 +1245,9 @@ def main():
+     print(f"\nCPU Profile Contract Tests: {cpu_profile_pass + cpu_profile_fail}")
+     print(f"Passed:                     {cpu_profile_pass}")
+     print(f"Failed:                     {cpu_profile_fail}")
++    print(f"\nGram v1 SPREAD Tests: {gram_pass + gram_fail}")
++    print(f"Passed:               {gram_pass}")
++    print(f"Failed:               {gram_fail}")
+     print(f"\nProfile scoping: SPU_PROFILE={spu_profile}")
+     if profile_skipped:
+         print(f"  SKIPPED ({len(profile_skipped)}, REGEN full-profile-only, inapplicable to base):")
+@@ -1287,7 +1312,7 @@ def main():
+         + audio_pass + host_pass + spu4_probe_parser_pass + spu4_probe_client_pass
+         + som_product_pass + robotics_demo_pass
+         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
+-        + regen_pass + cpu_profile_pass
++        + regen_pass + cpu_profile_pass + gram_pass
+         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
+         + bench_metrics_pass
+         + composition_pass
+@@ -1302,7 +1327,7 @@ def main():
+         + audio_fail + host_fail + spu4_probe_parser_fail + spu4_probe_client_fail
+         + som_product_fail + robotics_demo_fail
+         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
+-        + regen_fail + cpu_profile_fail
++        + regen_fail + cpu_profile_fail + gram_fail
+         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
+         + bench_metrics_fail
+         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
+diff --git a/software/common/include/spu_gram_spread.h b/software/common/include/spu_gram_spread.h
+new file mode 100644
+index 0000000..859cc19
+--- /dev/null
++++ b/software/common/include/spu_gram_spread.h
+@@ -0,0 +1,106 @@
++// gram_v1 SPREAD: exact Gram-consistent spread with final-only int32 range checks.
++// research/sim_cap1_spread/GRAM_V1_CONTRACT.md. B(v,w) = 4*sum(v_i w_i) - (sum v_i)(sum w_i).
++//   N = B(v,v)B(w,w) - B(v,w)^2,  D = B(v,v)B(w,w)   (unreduced, in Q(sqrt3))
++// For int32 lanes every intermediate is < 2^148 in magnitude, so signed 256-bit two's
++// complement (add, sub, truncating mul, compare) is exact. No intermediate is ever refused.
++#pragma once
++#include <cstdint>
++
++namespace gram {
++
++struct I256 {
++    uint64_t w[4];  // little-endian two's complement
++    static I256 from_i64(int64_t v) {
++        I256 r; r.w[0] = (uint64_t)v;
++        uint64_t ext = v < 0 ? ~0ull : 0ull;
++        r.w[1] = r.w[2] = r.w[3] = ext;
++        return r;
++    }
++    bool neg() const { return (w[3] >> 63) != 0; }
++    bool zero() const { return !(w[0] | w[1] | w[2] | w[3]); }
++};
++inline I256 add(const I256& a, const I256& b) {
++    I256 r; unsigned __int128 c = 0;
++    for (int i = 0; i < 4; i++) { c += (unsigned __int128)a.w[i] + b.w[i]; r.w[i] = (uint64_t)c; c >>= 64; }
++    return r;
++}
++inline I256 negate(const I256& a) {
++    I256 n, one = I256::from_i64(1);
++    for (int i = 0; i < 4; i++) n.w[i] = ~a.w[i];
++    return add(n, one);
++}
++inline I256 sub(const I256& a, const I256& b) { return add(a, negate(b)); }
++inline I256 mul(const I256& a, const I256& b) {  // low 256 bits; exact when the true product fits
++    I256 r = {{0, 0, 0, 0}};
++    for (int i = 0; i < 4; i++) {
++        unsigned __int128 carry = 0;
++        for (int j = 0; i + j < 4; j++) {
++            carry += (unsigned __int128)a.w[i] * b.w[j] + r.w[i + j];
++            r.w[i + j] = (uint64_t)carry; carry >>= 64;
++        }
++    }
++    return r;
++}
++// True iff the value lies in [INT32_MIN, INT32_MAX]; stores it in out.
++inline bool to_i32(const I256& a, int32_t& out) {
++    uint64_t ext = a.neg() ? ~0ull : 0ull;
++    if (a.w[1] != ext || a.w[2] != ext || a.w[3] != ext) return false;
++    int64_t v = (int64_t)a.w[0];
++    if ((v < 0) != a.neg() || v < INT32_MIN || v > INT32_MAX) return false;
++    out = (int32_t)v;
++    return true;
++}
++
++struct Surd { I256 p, q; };
++inline Surd sadd(const Surd& a, const Surd& b) { return {add(a.p, b.p), add(a.q, b.q)}; }
++inline Surd ssub(const Surd& a, const Surd& b) { return {sub(a.p, b.p), sub(a.q, b.q)}; }
++inline Surd smul(const Surd& a, const Surd& b) {  // (p1+q1 s)(p2+q2 s), s^2 = 3
++    I256 three = I256::from_i64(3);
++    return {add(mul(a.p, b.p), mul(three, mul(a.q, b.q))), add(mul(a.p, b.q), mul(a.q, b.p))};
++}
++inline bool szero(const Surd& a) { return a.p.zero() && a.q.zero(); }
++
++// v[i] = {p, q} lanes of the four Quadray components.
++inline Surd bilinear(const int32_t v[4][2], const int32_t w[4][2]) {
++    Surd dot = {I256::from_i64(0), I256::from_i64(0)}, sv = dot, sw = dot;
++    for (int i = 0; i < 4; i++) {
++        Surd x = {I256::from_i64(v[i][0]), I256::from_i64(v[i][1])};
++        Surd y = {I256::from_i64(w[i][0]), I256::from_i64(w[i][1])};
++        dot = sadd(dot, smul(x, y)); sv = sadd(sv, x); sw = sadd(sw, y);
++    }
++    Surd four = {I256::from_i64(4), I256::from_i64(0)};
++    return ssub(smul(four, dot), smul(sv, sw));
++}
++
++// B values for proof output; |B coefficient| < 2^70 so each fits __int128 exactly.
++inline bool to_i128(const I256& a, __int128& out) {
++    uint64_t ext = a.neg() ? ~0ull : 0ull;
++    if (a.w[2] != ext || a.w[3] != ext || ((a.w[1] >> 63) != 0) != a.neg()) return false;
++    out = (__int128)(((unsigned __int128)a.w[1] << 64) | a.w[0]);
++    return true;
++}
++struct Gram3 { __int128 vv[2], ww[2], vw[2]; };
++inline Gram3 gram3(const int32_t v[4][2], const int32_t w[4][2]) {
++    Surd s[3] = {bilinear(v, v), bilinear(w, w), bilinear(v, w)};
++    Gram3 g = {};
++    __int128* d[3] = {g.vv, g.ww, g.vw};
++    for (int i = 0; i < 3; i++) { to_i128(s[i].p, d[i][0]); to_i128(s[i].q, d[i][1]); }
++    return g;
++}
++
++enum class Status { Ok, Degenerate, Overflow };
++struct Result { Status status; int32_t n[2], d[2]; };
++
++inline Result spread(const int32_t v[4][2], const int32_t w[4][2]) {
++    Result r = {Status::Ok, {0, 0}, {0, 0}};
++    Surd bvv = bilinear(v, v), bww = bilinear(w, w), bvw = bilinear(v, w);
++    if (szero(bvv) || szero(bww)) { r.status = Status::Degenerate; return r; }
++    Surd den = smul(bvv, bww), num = ssub(den, smul(bvw, bvw));
++    if (!to_i32(num.p, r.n[0]) || !to_i32(num.q, r.n[1]) ||
++        !to_i32(den.p, r.d[0]) || !to_i32(den.q, r.d[1])) {
++        r.status = Status::Overflow; r.n[0] = r.n[1] = r.d[0] = r.d[1] = 0;
++    }
++    return r;
++}
++
++}  // namespace gram
+diff --git a/software/common/include/spu_quadray.h b/software/common/include/spu_quadray.h
+index 16de3fa..d3531ab 100644
+--- a/software/common/include/spu_quadray.h
++++ b/software/common/include/spu_quadray.h
+@@ -28,6 +28,7 @@
+ 
+ #pragma once
+ #include "spu_surd.h"
++#include "spu_gram_spread.h"
+ 
+ // ── Exact ordering helpers ────────────────────────────────────────────────── //
+ 
+@@ -141,6 +142,15 @@ struct Quadray {
+         return { num, den };
+     }
+ 
++    // gram_v1 spread (research/sim_cap1_spread/GRAM_V1_CONTRACT.md): Gram-consistent,
++    // unreduced N/D, exact wide intermediates, final-only int32 checks. spread() above
++    // stays the historical legacy_dot operation.
++    gram::Result spread_gram(const Quadray& o) const {
++        int32_t v[4][2] = {{a.p, a.q}, {b.p, b.q}, {c.p, c.q}, {d.p, d.q}};
++        int32_t w[4][2] = {{o.a.p, o.a.q}, {o.b.p, o.b.q}, {o.c.p, o.c.q}, {o.d.p, o.d.q}};
++        return gram::spread(v, w);
++    }
++
+     // ── Discrete transforms ─────────────────────────────────────────────── //
+ 
+     // Cyclic permutation: (a,b,c,d) → (b,c,d,a).
+diff --git a/software/common/tests/spu_quadray_test.cpp b/software/common/tests/spu_quadray_test.cpp
+index 105a590..89d7d88 100644
+--- a/software/common/tests/spu_quadray_test.cpp
++++ b/software/common/tests/spu_quadray_test.cpp
+@@ -146,6 +146,20 @@ int main() {
+         CHECK_SURD("spread: A vs B symmetric denom", sAB.denom, sBA.denom);
+     }
+ 
++    // gram_v1 spread (spread_gram): self-spread is 0, A vs B is 8/9 (legacy gives 9/9),
++    // and a constant four-tuple is refused as metric-degenerate.
++    {
++        auto g = QR_A.spread_gram(QR_A);
++        CHECK("spread_gram: A vs A ok",  g.status == gram::Status::Ok);
++        CHECK("spread_gram: A vs A N/D = 0/9", g.n[0] == 0 && g.n[1] == 0 && g.d[0] == 9 && g.d[1] == 0);
++        auto h = QR_A.spread_gram(QR_B);
++        CHECK("spread_gram: A vs B N/D = 8/9", h.status == gram::Status::Ok && h.n[0] == 8 && h.d[0] == 9);
++        auto z = Quadray(SURD_UNITY, SURD_UNITY, SURD_UNITY, SURD_UNITY).spread_gram(QR_A);
++        CHECK("spread_gram: constant tuple degenerate", z.status == gram::Status::Degenerate);
++        auto big = Quadray(RationalSurd(125,0), SURD_ZERO, SURD_ZERO, SURD_ZERO);
++        CHECK("spread_gram: 125^4*9 overflows int32", big.spread_gram(big).status == gram::Status::Overflow);
++    }
++
+     // ── Cycle ────────────────────────────────────────────────────────────── //
+     // cycle() maps (a,b,c,d) → (b,c,d,a), so the non-zero slot shifts right:
+     // A=(1,0,0,0) → (0,0,0,1)=D, D=(0,0,0,1) → (0,0,1,0)=C,
+diff --git a/software/spu_vm.py b/software/spu_vm.py
+index e285163..7066446 100644
+--- a/software/spu_vm.py
++++ b/software/spu_vm.py
+@@ -642,8 +642,42 @@ _VM_E_REGEN = frozenset(
+ 
+ VM_PROFILES = ("full", "base")
+ 
++# Mathematical-semantics axis, independent of the hardware profile above
++# (research/sim_cap1_spread/GRAM_V1_CONTRACT.md).  legacy_dot keeps the historical
++# SPREAD (component dot product; spread(A,A) != 0, mathematically unqualified).
++METRIC_SEMANTICS = ("legacy_dot", "gram_v1")
+ 
+-def capability_manifest(profile: str = "full") -> dict:
++
++class DegenerateMetricError(ValueError):
++    """gram_v1 SPREAD operand has B(v,v) == 0 (all four components equal)."""
++
++
++def gram_bilinear(v: 'QuadrayVector', w: 'QuadrayVector') -> 'RationalSurd':
++    """B(v,w) = 4*sum(v_i w_i) - (sum v_i)(sum w_i) in Q(sqrt3); B(v,v) == v.quadrance()."""
++    vc, wc = v.components(), w.components()
++    dot = RationalSurd(0, 0)
++    sv = RationalSurd(0, 0)
++    sw = RationalSurd(0, 0)
++    for x, y in zip(vc, wc):
++        dot = dot + x * y
++        sv = sv + x
++        sw = sw + y
++    return RationalSurd(4 * dot.a, 4 * dot.b) - sv * sw
++
++
++def gram_spread(v: 'QuadrayVector', w: 'QuadrayVector') -> tuple:
++    """Unreduced (N, D) with N = B(v,v)B(w,w) - B(v,w)^2, D = B(v,v)B(w,w).
++
++    Unbounded Python integers: no overflow.  Raises DegenerateMetricError.
++    """
++    bvv, bww, bvw = gram_bilinear(v, v), gram_bilinear(w, w), gram_bilinear(v, w)
++    if (bvv.a == 0 and bvv.b == 0) or (bww.a == 0 and bww.b == 0):
++        raise DegenerateMetricError("gram_v1 SPREAD: operand has zero Gram quadrance")
++    den = bvv * bww
++    return den - bvw * bvw, den
++
++
++def capability_manifest(profile: str = "full", metric_semantics: str = "legacy_dot") -> dict:
+     """Machine-readable capability manifest for this VM and profile
+     (docs/SIMULATOR_INTEGRATION_POLICY.md). Deterministic: no clock, no git.
+ 
+@@ -654,6 +688,8 @@ def capability_manifest(profile: str = "full") -> dict:
+     import hashlib
+     if profile not in VM_PROFILES:
+         raise ValueError(f"unknown VM profile {profile!r}; expected one of {VM_PROFILES}")
++    if metric_semantics not in METRIC_SEMANTICS:
++        raise ValueError(f"unknown metric semantics {metric_semantics!r}; expected one of {METRIC_SEMANTICS}")
+     with open(os.path.abspath(__file__), "rb") as f:
+         digest = hashlib.sha256(f.read()).hexdigest()
+     base = profile == "base"
+@@ -669,6 +705,7 @@ def capability_manifest(profile: str = "full") -> dict:
+         "schema_version": 1,
+         "implementation": "software/spu_vm.py",
+         "profile": profile,
++        "metric_semantics": metric_semantics,
+         "source_revision": "sha256:" + digest,
+         "build_id": f"spu_vm.py:{profile}:{digest[:12]}",
+         "capabilities": {
+@@ -699,6 +736,14 @@ def capability_manifest(profile: str = "full") -> dict:
+                 physical={"status": "not_run",
+                           "reference": "existing silicon evidence is for full-profile builds only"}),
+         },
++        "metric_semantics_detail": {"spread_opcode_0x15": cap(
++                "implemented",
++                "gram_v1 (research/sim_cap1_spread/GRAM_V1_CONTRACT.md)" if metric_semantics == "gram_v1"
++                else "legacy_dot (historical; not mathematically qualified)",
++                ["test_gram_v1_spread.py"],
++                ("Gram-consistent spread; atomic DEGENERATE_METRIC refusal; unbounded integers."
++                 if metric_semantics == "gram_v1" else
++                 "Component-dot spread: spread(A,A) != 0 (8/9 for (1,0,0,0)). qualified: false."))},
+         "limits": [
+             "synthesis estimate (21,603 LUT, ENABLE_REGEN=0) is not placement, timing or hardware evidence",
+             "VM/RTL REGEN-fault agreement is observable-flag level only, not cycle accurate",
+@@ -1183,7 +1228,11 @@ class SPUCore:
+ 
+     def __init__(self, max_steps: int = 10_000, verbose: bool = True,
+                  proof: bool = False, sdf_trace: bool = False,
+-                 gasket_trace: bool = False, profile: str = "full"):
++                 gasket_trace: bool = False, profile: str = "full",
++                 metric_semantics: str = "legacy_dot"):
++        if metric_semantics not in METRIC_SEMANTICS:
++            raise ValueError(f"unknown metric semantics {metric_semantics!r}; expected one of {METRIC_SEMANTICS}")
++        self._metric_semantics: str = metric_semantics  # fixed at construction
+         if profile not in VM_PROFILES:
+             raise ValueError(f"unknown VM profile {profile!r}; expected one of {VM_PROFILES}")
+         # "full" (default) keeps the historical Stage A REGEN pass-through;
+@@ -1296,6 +1345,10 @@ class SPUCore:
+         hx, hy = qr.hex_project()
+         return f"QR{idx:02d}={qr!r:50s} Q={q!r:16s} hex=({hx:>4d},{hy:>4d})"
+ 
++    @property
++    def metric_semantics(self) -> str:
++        return self._metric_semantics
++
+     def step(self) -> bool:
+         """Execute one instruction. Returns False if halted."""
+         if self.halted or self.pc < 0 or self.pc >= len(self.program):
+@@ -1949,13 +2002,26 @@ class SPUCore:
+             # Denominator stored in R(r1+1). Exact rational fraction.
+             # Encoding: r2=QRa index, p1_b=QRb index
+             qa, qb = r2 % 13, p1_b % 13
+-            numer, denom = self.qregs[qa].spread(self.qregs[qb])
++            if self.metric_semantics == "gram_v1":
++                try:
++                    numer, denom = gram_spread(self.qregs[qa], self.qregs[qb])
++                except DegenerateMetricError:
++                    self.halted = True
++                    self.fault_kind = "DEGENERATE_METRIC"
++                    raise
++            else:
++                numer, denom = self.qregs[qa].spread(self.qregs[qb])
+             self.regs[r1] = numer
+             self.regs[(r1 + 1) % NUM_REGS] = denom
+             if self.verbose:
+                 print(f"  [{self.pc:04d}] SPREAD QR{qa}∧QR{qb} → {numer!r}/{denom!r}"
+                       f"  (→ R{r1}/R{(r1+1)%NUM_REGS})")
+-            if self.proof:
++            if self.proof and self.metric_semantics == "gram_v1":
++                v, w = self.qregs[qa], self.qregs[qb]
++                bvv, bww, bvw = gram_bilinear(v, v), gram_bilinear(w, w), gram_bilinear(v, w)
++                print(f"         B(v,v)=({bvv.a},{bvv.b}) B(w,w)=({bww.a},{bww.b}) B(v,w)=({bvw.a},{bvw.b})")
++                print(f"         spread N=({numer.a},{numer.b}) D=({denom.a},{denom.b})  (unreduced, gram_v1)")
++            elif self.proof:
+                 v = self.qregs[qa]
+                 w = self.qregs[qb]
+                 # dot product: sum of component-wise a-values (integer parts)
+@@ -2488,13 +2554,15 @@ def main():
+                         help='Show Davis Ratio table row at every Fibonacci gate boundary')
+     parser.add_argument('--profile', choices=VM_PROFILES, default='full',
+                         help="'base' = ENABLE_REGEN=0 profile (REGEN unsupported); default 'full'")
++    parser.add_argument('--metric-semantics', choices=METRIC_SEMANTICS, default='legacy_dot',
++                        help="SPREAD mathematics: 'legacy_dot' (default, historical) or 'gram_v1'")
+     parser.add_argument('--manifest', action='store_true',
+                         help='Print the capability manifest for --profile as JSON and exit')
+     args = parser.parse_args()
+ 
+     if args.manifest:
+         import json
+-        print(json.dumps(capability_manifest(args.profile), indent=2, sort_keys=True))
++        print(json.dumps(capability_manifest(args.profile, args.metric_semantics), indent=2, sort_keys=True))
+         return
+ 
+     source_file = args.bin or args.source
+@@ -2512,7 +2580,7 @@ def main():
+     gasket_trace = args.gasket_trace
+     core = SPUCore(max_steps=args.steps, verbose=verbose, proof=proof,
+                    sdf_trace=sdf_trace, gasket_trace=gasket_trace,
+-                   profile=args.profile)
++                   profile=args.profile, metric_semantics=args.metric_semantics)
+ 
+     if source_file.endswith('.bin') or args.bin:
+         with open(source_file, 'rb') as f:
+diff --git a/software/tests/gram_v1_oracle.py b/software/tests/gram_v1_oracle.py
+new file mode 100644
+index 0000000..8c538c3
+--- /dev/null
++++ b/software/tests/gram_v1_oracle.py
+@@ -0,0 +1,32 @@
++"""Independent gram_v1 SPREAD oracle: plain (p, q) integer pairs over Q(sqrt3).
++
++Shared by test_gram_v1_spread.py and test_gram_v1_spread_cpp.py; imports nothing from the VMs.
++research/sim_cap1_spread/GRAM_V1_CONTRACT_FROZEN.md section 1.
++"""
++
++
++def smul(x, y):
++    return (x[0] * y[0] + 3 * x[1] * y[1], x[0] * y[1] + x[1] * y[0])
++
++
++def sadd(x, y):
++    return (x[0] + y[0], x[1] + y[1])
++
++
++def bilinear(x, y):
++    """B(x, y) = 4*sum(x_i y_i) - (sum x_i)(sum y_i); x, y: four (p, q) pairs."""
++    dot, sx, sy = (0, 0), (0, 0), (0, 0)
++    for a, b in zip(x, y):
++        dot, sx, sy = sadd(dot, smul(a, b)), sadd(sx, a), sadd(sy, b)
++    t = smul(sx, sy)
++    return (4 * dot[0] - t[0], 4 * dot[1] - t[1])
++
++
++def oracle(v, w):
++    """((Np, Nq), (Dp, Dq)) unreduced, or None when B(v,v) or B(w,w) is zero."""
++    bvv, bww, bvw = bilinear(v, v), bilinear(w, w), bilinear(v, w)
++    if bvv == (0, 0) or bww == (0, 0):
++        return None
++    den = smul(bvv, bww)
++    sq = smul(bvw, bvw)
++    return (den[0] - sq[0], den[1] - sq[1]), den
+diff --git a/software/tests/gram_v1_spread_cpp.cpp b/software/tests/gram_v1_spread_cpp.cpp
+new file mode 100644
+index 0000000..aad59ec
+--- /dev/null
++++ b/software/tests/gram_v1_spread_cpp.cpp
+@@ -0,0 +1,54 @@
++// C++ VM SPREAD driver for test_gram_v1_spread_cpp.py.
++// stdin per case: mode(l|g) rd  v[4][2]  w[4][2]   (int32 lanes). stdout: one full-state line per case.
++#define main spu_vm_cli_main
++#include "../vm/spu_vm.cpp"
++#undef main
++
++// Exact int32 boundary of the final-result check (random cases cannot hit it).
++static bool boundary_ok() {
++    using namespace gram;
++    int32_t o;
++    I256 big = mul(I256::from_i64(1LL << 40), I256::from_i64(1LL << 40));  // 2^80 spans limbs
++    return to_i32(I256::from_i64(INT32_MAX), o) && o == INT32_MAX
++        && !to_i32(I256::from_i64((int64_t)INT32_MAX + 1), o)
++        && to_i32(I256::from_i64(INT32_MIN), o) && o == INT32_MIN
++        && !to_i32(I256::from_i64((int64_t)INT32_MIN - 1), o)
++        && !to_i32(big, o) && !to_i32(negate(big), o)
++        && to_i32(sub(big, big), o) && o == 0
++        && !to_i32(I256{{0, 1, 0, 0}}, o);  // 2^64
++}
++
++int main() {
++    if (!boundary_ok()) { std::cout << "BOUNDARY_FAIL\n"; return 1; }
++    std::string mode;
++    int rd;
++    while (std::cin >> mode >> rd) {
++        SPUCore core(64, false, false,
++                     mode == "g" ? MetricSemantics::GramV1 : MetricSemantics::LegacyDot);
++        // Seed every register distinctly so any stray write is visible in the full-state dump.
++        for (int i = 0; i < NUM_REGS; i++) core.regs[i] = RationalSurd(100 + i, -i);
++        for (int q = 2; q < 13; q++)
++            for (auto* r : {&core.qregs[q].a, &core.qregs[q].b, &core.qregs[q].c, &core.qregs[q].d})
++                *r = RationalSurd(5 * q + 1, q - 3);
++        for (int q = 0; q < 2; q++)
++            for (auto* r : {&core.qregs[q].a, &core.qregs[q].b, &core.qregs[q].c, &core.qregs[q].d})
++                std::cin >> r->a >> r->b;
++        core.regs[rd] = RationalSurd(7, 7);
++        core.regs[(rd + 1) % NUM_REGS] = RationalSurd(9, 9);
++        core.call_stack = {19, 23};
++        core.snap_failures = 2;
++        core.load({(0x15ULL << 56) | ((uint64_t)rd << 48) | (1ULL << 8)});
++        std::ostringstream sink;
++        auto* saved = std::cout.rdbuf(sink.rdbuf());
++        try { core.step(); } catch (const VmFault&) {}
++        std::cout.rdbuf(saved);
++        std::cout << (core.fault_kind.empty() ? "OK" : core.fault_kind) << " " << core.pc << " "
++                  << core.halted << " " << core.step_count << " " << core.snap_failures << " "
++                  << core.call_stack.size();
++        for (int x : core.call_stack) std::cout << " " << x;
++        for (auto& r : core.regs) std::cout << " " << r.a << " " << r.b;
++        for (auto& q : core.qregs)
++            for (auto* r : {&q.a, &q.b, &q.c, &q.d}) std::cout << " " << r->a << " " << r->b;
++        std::cout << "\n";
++    }
++}
+diff --git a/software/tests/test_gram_v1_spread.py b/software/tests/test_gram_v1_spread.py
+new file mode 100644
+index 0000000..c3500ec
+--- /dev/null
++++ b/software/tests/test_gram_v1_spread.py
+@@ -0,0 +1,190 @@
++#!/usr/bin/env python3
++"""SIM-CAP1 gram_v1 SPREAD: Python VM conformance against an independent oracle.
++
++research/sim_cap1_spread/GRAM_V1_CONTRACT_FROZEN.md. The oracle (gram_v1_oracle.py) is plain (p, q) integer-pair
++arithmetic sharing no code with the VM spread path.
++"""
++
++import itertools
++import os
++import re
++import sys
++from fractions import Fraction as F
++
++sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
++sys.path.insert(0, os.path.dirname(__file__))
++from gram_v1_oracle import smul, bilinear, oracle  # noqa: E402
++from spu_vm import (QuadrayVector, RationalSurd, SPUCore, assemble_source,
++                    capability_manifest, DegenerateMetricError)
++
++CHECKS = 0
++
++
++def check(cond, msg):
++    global CHECKS
++    CHECKS += 1
++    if not cond:
++        print(f"FAIL: {msg}")
++        sys.exit(1)
++
++
++def qv(lanes):
++    return QuadrayVector(*[RationalSurd(p, q) for p, q in lanes])
++
++
++def lanes(*ints):
++    return [(i, 0) for i in ints]
++
++
++def run_spread(v, w, semantics, rd=10):
++    core = SPUCore(max_steps=8, verbose=False, metric_semantics=semantics)
++    core.qregs[0], core.qregs[1] = qv(v), qv(w)
++    core.regs[rd] = RationalSurd(7, 7)
++    core.regs[(rd + 1) % 26] = RationalSurd(9, 9)
++    core.load(assemble_source(f"SPREAD R{rd}, QR0, QR1"))
++    return core
++
++
++def spread_result(v, w, semantics="gram_v1", rd=10):
++    core = run_spread(v, w, semantics, rd)
++    core.step()
++    r, r1 = core.regs[rd], core.regs[(rd + 1) % 26]
++    return (r.a, r.b), (r1.a, r1.b)
++
++
++PAIRS = [  # (a, b, legacy N/D, gram N/D)
++    ((1, 1, 1, 0), (1, 0, 0, 0), (8, 9), (8, 9)),
++    ((1, 0, 0, 0), (0, 1, 0, 0), (9, 9), (8, 9)),
++    ((2, 0, 0, 0), (0, 0, 1, 1), (48, 48), (32, 48)),
++    ((3, 1, 0, 0), (1, 2, 0, 5), (1319, 1344), (1200, 1344)),
++]
++
++for a, b, leg, gram in PAIRS:
++    check(spread_result(lanes(*a), lanes(*b), "legacy_dot") == ((leg[0], 0), (leg[1], 0)), f"legacy {a} {b}")
++    check(spread_result(lanes(*a), lanes(*b)) == ((gram[0], 0), (gram[1], 0)), f"gram {a} {b}")
++    check(oracle(lanes(*a), lanes(*b)) == ((gram[0], 0), (gram[1], 0)), f"oracle {a} {b}")
++
++# default profile is legacy_dot and bit-identical for the pinned historical case
++check(SPUCore(verbose=False).metric_semantics == "legacy_dot", "default semantics")
++check(spread_result(lanes(1, 0, 0, 0), lanes(1, 0, 0, 0), "legacy_dot") == ((8, 0), (9, 0)), "legacy self 8/9")
++
++# self-spread and collinear: zero numerator under gram_v1
++check(spread_result(lanes(1, 0, 0, 0), lanes(1, 0, 0, 0)) == ((0, 0), (9, 0)), "self-spread 0/9")
++check(spread_result(lanes(1, 0, 0, 0), lanes(2, 0, 0, 0)) == ((0, 0), (36, 0)), "collinear 0/36")
++check(spread_result(lanes(1, 0, 0, 0), lanes(2, 0, 0, 0), "legacy_dot") == ((32, 0), (36, 0)), "legacy collinear 32/36")
++
++# symmetry, 24 coordinate permutations, coordinate-gauge invariance, surd operands
++va = [(3, 1), (1, -2), (0, 5), (-4, 1)]
++vb = [(1, 1), (2, 0), (0, -3), (5, 2)]
++base = spread_result(va, vb)
++check(base == oracle(va, vb), "surd pair vs oracle")
++check(spread_result(vb, va) == base, "symmetry")
++for perm in itertools.permutations(range(4)):
++    check(spread_result([va[i] for i in perm], [vb[i] for i in perm]) == base, f"permutation {perm}")
++for t in [(7, 0), (-3, 2), (0, 5)]:
++    sh = lambda x: [(p + t[0], q + t[1]) for p, q in x]
++    check(spread_result(sh(va), vb) == base, f"gauge shift on first {t}")
++    check(spread_result(va, sh(vb)) == base, f"gauge shift on second {t}")
++# rational inputs: second route through the three-quadrance form (same fraction)
++for a, b, _, _ in PAIRS:
++    A, Bv = lanes(*a), lanes(*b)
++    Q1 = oracle(A, A) is None
++    bvv = sum((a[i] - a[j]) ** 2 for i in range(4) for j in range(i + 1, 4))
++    bww = sum((b[i] - b[j]) ** 2 for i in range(4) for j in range(i + 1, 4))
++    q3 = sum(((a[i] - b[i]) - (a[j] - b[j])) ** 2 for i in range(4) for j in range(i + 1, 4))
++    via_q = F(4 * bvv * bww - (q3 - bvv - bww) ** 2, 4 * bvv * bww)
++    n, d = spread_result(A, Bv)
++    check(F(n[0], d[0]) == via_q, f"three-quadrance route {a} {b}")
++
++# Pell-unit cancellation witness: intermediates exceed int32 but the result fits
++u, w = (708158977, 408855776), (708158977, -408855776)
++check(smul(u, w) == (1, 0), "u*w is the Pell norm 1")
++s = lambda c, x: (c * x[0], c * x[1])
++z = (0, 0)
++for wa, wb in [([s(3, u), z, z, z], [s(3, w), z, z, z]),
++               ([z, s(3, u), z, z], [z, s(3, w), z, z]),
++               ([s(-3, u), z, z, z], [s(3, w), z, z, z])]:
++    check(all(abs(c) < 2**31 for pq in wa + wb for c in pq), "witness lanes fit int32")
++    check(spread_result(wa, wb) == ((0, 0), (729, 0)), "Pell cancellation commits N=(0,0) D=(729,0)")
++    check(oracle(wa, wb) == ((0, 0), (729, 0)), "oracle agrees on witness")
++
++# Python is an unbounded oracle: no OVERFLOW even for huge lanes
++big = [(2**40, 2**39), (3, 0), (0, 5), (7, 7)]
++check(spread_result(big, vb) == oracle(big, vb), "unbounded Python result")
++
++# degenerate operands: DEGENERATE_METRIC, atomic. Full VM state is compared before/after:
++# only halted/fault_kind may change (registers, QRs, typestate tags, call stack, snap counter,
++# PC, step count and log all preserved), including the rd=25 -> R0 wrap.
++def vm_state(core):
++    return {k: re.sub(r"0x[0-9a-f]+", "0x", repr(x)) for k, x in vars(core).items()}
++
++
++for bad in [lanes(1, 1, 1, 1), lanes(0, 0, 0, 0), [(2, 3)] * 4]:
++    for first in (True, False):
++        for rd in (10, 25):
++            v, wv = (bad, vb) if first else (vb, bad)
++            core = run_spread(v, wv, "gram_v1", rd)
++            core.call_stack, core.snap_failures = [19, 23], 2
++            before = vm_state(core)
++            try:
++                core.step()
++                check(False, "degenerate operand must fault")
++            except DegenerateMetricError:
++                pass
++            after = vm_state(core)
++            check(core.fault_kind == "DEGENERATE_METRIC" and core.halted, "fault kind + halted")
++            check({k for k in before if before[k] != after[k]} == {"halted", "fault_kind"},
++                  f"only halted/fault_kind may change (rd={rd})")
++            check(core.pc == 0 and core.step_count == 0 and core.log == [], "pc/step/log unchanged")
++            check((core.regs[rd].a, core.regs[rd].b) == (7, 7)
++                  and (core.regs[(rd + 1) % 26].a, core.regs[(rd + 1) % 26].b) == (9, 9),
++                  "destination pair unchanged on refusal")
++# legacy keeps the historical zero-denominator behaviour (no fault)
++check(spread_result(lanes(1, 1, 1, 1), lanes(1, 0, 0, 0), "legacy_dot")[1] == (0, 0), "legacy zero-metric: no fault")
++
++# R25 -> R0 wrap of the second destination
++check(spread_result(lanes(1, 0, 0, 0), lanes(0, 1, 0, 0), rd=25) == ((8, 0), (9, 0)), "rd=25 wrap result")
++
++# --proof prints the three B values the result is computed from (same line format as the C++ VM)
++import contextlib
++import io
++for pa, pb in [(lanes(1, 0, 0, 0), lanes(0, 1, 0, 0)), (lanes(3, 1, 0, 0), lanes(1, 2, 0, 5)), (va, vb)]:
++    core = run_spread(pa, pb, "gram_v1")
++    core.proof = True
++    buf = io.StringIO()
++    with contextlib.redirect_stdout(buf):
++        core.step()
++    want = "B(v,v)=({},{}) B(w,w)=({},{}) B(v,w)=({},{})".format(
++        *bilinear(pa, pa), *bilinear(pb, pb), *bilinear(pa, pb))
++    check(want in buf.getvalue(), f"python proof B line {want!r} in {buf.getvalue()!r}")
++    (n, d) = oracle(pa, pb)
++    check(f"N=({n[0]},{n[1]}) D=({d[0]},{d[1]})" in buf.getvalue(), "python proof N/D line")
++# legacy proof is unchanged (no B line)
++core = run_spread(lanes(1, 0, 0, 0), lanes(0, 1, 0, 0), "legacy_dot")
++core.proof = True
++buf = io.StringIO()
++with contextlib.redirect_stdout(buf):
++    core.step()
++check("B(v,v)" not in buf.getvalue() and "dot" in buf.getvalue(), "legacy proof keeps its original form")
++
++# manifest + construction-time validation; legacy marked unqualified
++m = capability_manifest("full", "gram_v1")
++check(m["metric_semantics"] == "gram_v1" and m["profile"] == "full", "manifest axes independent")
++check(capability_manifest()["metric_semantics"] == "legacy_dot", "manifest default")
++check("qualified: false" in capability_manifest()["metric_semantics_detail"]["spread_opcode_0x15"]["scope"], "legacy unqualified note")
++try:
++    SPUCore(metric_semantics="nope")
++    check(False, "bad semantics must be rejected")
++except ValueError:
++    pass
++
++core = SPUCore(metric_semantics="gram_v1")
++for bad in ("legacy_dot", "nope"):
++    try:
++        core.metric_semantics = bad
++        check(False, "metric_semantics must be read-only after construction")
++    except AttributeError:
++        pass
++check(core.metric_semantics == "gram_v1", "selection unchanged after rejected writes")
++
++print(f"PASS: gram_v1 SPREAD Python conformance ({CHECKS} checks)")
+diff --git a/software/tests/test_gram_v1_spread_cpp.py b/software/tests/test_gram_v1_spread_cpp.py
+new file mode 100644
+index 0000000..826e35b
+--- /dev/null
++++ b/software/tests/test_gram_v1_spread_cpp.py
+@@ -0,0 +1,149 @@
++#!/usr/bin/env python3
++"""SIM-CAP1 gram_v1 SPREAD: C++ VM vs an independent unbounded oracle.
++
++Contract (research/sim_cap1_spread/GRAM_V1_CONTRACT.md): exact wide intermediates, int32
++range checks on the FINAL N/D only; OVERFLOW iff an oracle coefficient is outside int32;
++refusals are atomic. Legacy mode must stay bit-identical.
++"""
++
++import random
++import subprocess
++import sys
++import tempfile
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT / "software" / "tests"))
++from gram_v1_oracle import bilinear, oracle  # noqa: E402
++
++LIM = 2**31
++NUM_REGS = 26
++
++
++def parse(res):
++    f = res.split()
++    kind, pc, halted, steps, snap, ncs = f[0], int(f[1]), int(f[2]), int(f[3]), int(f[4]), int(f[5])
++    cs = tuple(int(x) for x in f[6:6 + ncs])
++    rest = [int(x) for x in f[6 + ncs:]]
++    regs = [(rest[2 * i], rest[2 * i + 1]) for i in range(NUM_REGS)]
++    q = rest[2 * NUM_REGS:]
++    qregs = [tuple(q[8 * i:8 * i + 8]) for i in range(13)]
++    return kind, pc, halted, steps, snap, cs, regs, qregs
++
++
++def seed(v, w, rd):
++    """Pre-instruction state the driver seeds (must match gram_v1_spread_cpp.cpp)."""
++    regs = [(100 + i, -i) for i in range(NUM_REGS)]
++    regs[rd], regs[(rd + 1) % NUM_REGS] = (7, 7), (9, 9)
++    qregs = [tuple(x for pq in v for x in pq), tuple(x for pq in w for x in pq)]
++    qregs += [tuple(x for _ in range(4) for x in (5 * q + 1, q - 3)) for q in range(2, 13)]
++    return regs, qregs
++
++
++def line(mode, rd, v, w):
++    return f"{mode} {rd} " + " ".join(f"{p} {q}" for p, q in v + w)
++
++
++def main():
++    u, wv = (708158977, 408855776), (708158977, -408855776)
++    z = (0, 0)
++    t3 = lambda x, c: (c * x[0], c * x[1])
++    fixed = [([(c, 0), z, z, z], [(c, 0), z, z, z]) for c in (124, 125)]
++    fixed += [([(1, c), z, z, z], [(1, c), z, z, z]) for c in (71, 72)]
++    fixed += [([t3(u, 3), z, z, z], [t3(wv, 3), z, z, z]),
++              ([z, t3(u, 3), z, z], [z, t3(wv, 3), z, z]),
++              ([t3(u, -3), z, z, z], [t3(wv, 3), z, z, z]),
++              ([(1, 0)] * 4, [(1, 0), z, z, z]), ([z] * 4, [(1, 0), z, z, z]),
++              ([(1, 0), z, z, z], [(2, 3)] * 4),
++              ([(-LIM, -LIM)] * 4, [(LIM - 1, LIM - 1), z, z, z])]
++    rng = random.Random(20261025)
++    rand = []
++    for _ in range(4000):
++        r = rng.choice([3, 30, 70, 200, 2000, 40000, LIM - 1])
++        rand.append(([(rng.randint(-r, r), rng.randint(-r, r)) for _ in range(4)],
++                     [(rng.randint(-r, r), rng.randint(-r, r)) for _ in range(4)]))
++    cases = [(v, w, 10) for v, w in fixed + rand]
++    cases += [(v, w, 25) for v, w in fixed]
++    with tempfile.TemporaryDirectory(prefix="gram_v1_") as d:
++        binary = Path(d) / "gram_cpp"
++        subprocess.run(["g++", "-std=c++17", "-Wall", "-Wextra", "-fsanitize=undefined",
++                        "-fno-sanitize-recover=undefined",
++                        str(ROOT / "software/tests/gram_v1_spread_cpp.cpp"), "-o", str(binary)],
++                       check=True)
++        stdin = "\n".join(line("g", rd, v, w) for v, w, rd in cases) + "\n"
++        proc = subprocess.run([str(binary)], input=stdin, text=True, capture_output=True)
++        assert proc.returncode == 0, proc.stdout[:200]
++        out = proc.stdout.split("\n")[:-1]
++        assert len(out) == len(cases)
++        seen = {"OK": 0, "OVERFLOW": 0, "DEGENERATE_METRIC": 0}
++        for (v, w, rd), res in zip(cases, out):
++            kind, pc, halted, steps, snap, cs, regs, qregs = parse(res)
++            want = oracle(v, w)
++            regs0, qregs0 = seed(v, w, rd)
++            # Whole-state contract: nothing but the destination pair may ever differ, and the
++            # call stack, snap counter and QRs are always preserved.
++            assert qregs == qregs0 and cs == (19, 23) and snap == 2, ("state drift", res)
++            if want is None or any(x < -LIM or x >= LIM for x in (*want[0], *want[1])):
++                assert kind == ("DEGENERATE_METRIC" if want is None else "OVERFLOW"), (v, w, res, want)
++                assert (pc, halted, steps) == (0, 1, 0), ("pc/steps/halt", res)
++                assert regs == regs0, ("registers changed on refusal", rd, res)
++            else:
++                assert kind == "OK" and (pc, halted, steps) == (1, 0, 1), (v, w, res, want)
++                expect = list(regs0)
++                expect[rd], expect[(rd + 1) % NUM_REGS] = want[0], want[1]
++                assert regs == expect, (v, w, rd, res, want)
++            seen[kind] += 1
++        assert all(seen.values()), seen
++        # --- mandatory Pell cancellation witness (separate from boundary/random coverage) ---
++        pell = [fixed[4], fixed[5], fixed[6]]
++        assert all(abs(c) < LIM for v, w in pell for pq in v + w for c in pq), "witness lanes must fit int32"
++        assert max(abs(c) for v, w in pell[:1] for c in (*bilinear(v, v), *bilinear(w, w))) >= LIM, \
++            "witness is only a cancellation test if B itself exceeds int32"
++        pin = "\n".join(line("g", 10, v, w) for v, w in pell) + "\n"
++        pres = subprocess.run([str(binary)], input=pin, text=True, capture_output=True,
++                              check=True).stdout.split("\n")[:-1]
++        for (v, w), res in zip(pell, pres):
++            kind, pc, halted, steps, snap, cs, regs, qregs = parse(res)
++            assert (kind, pc, halted, steps) == ("OK", 1, 0, 1), res
++            assert regs[10] == (0, 0) and regs[11] == (729, 0), ("Pell witness N=(0,0) D=(729,0)", res)
++        # --- boundary pairs: just fits / just overflows (D.p = 9c^4 at c=124/125, and q-lane 71/72) ---
++        for i, expect in ((0, "OK"), (1, "OVERFLOW"), (2, "OK"), (3, "OVERFLOW")):
++            assert out[i].split()[0] == expect, (i, out[i])
++        # --- legacy mode: bit-identical historical values, no fault on zero-metric ---
++        legacy = [((1, 0, 0, 0), (1, 0, 0, 0), (8, 9)), ((1, 0, 0, 0), (0, 1, 0, 0), (9, 9)),
++                  ((2, 0, 0, 0), (0, 0, 1, 1), (48, 48)), ((3, 1, 0, 0), (1, 2, 0, 5), (1319, 1344))]
++        lin = "\n".join(line("l", 10, [(x, 0) for x in a], [(x, 0) for x in b]) for a, b, _ in legacy) + "\n"
++        lin += line("l", 10, [(1, 0)] * 4, [(1, 0), z, z, z]) + "\n"
++        lo = subprocess.run([str(binary)], input=lin, text=True, capture_output=True,
++                            check=True).stdout.split("\n")[:-1]
++        for (_, _, (n, dn)), res in zip(legacy, lo):
++            kind, pc, halted, steps, snap, cs, regs, qregs = parse(res)
++            assert kind == "OK" and (regs[10][0], regs[11][0]) == (n, dn), (res, n, dn)
++        assert parse(lo[4])[0] == "OK" and parse(lo[4])[6][11][0] == 0, lo[4]
++        proof_check(d)
++    print(f"PASS: gram_v1 SPREAD C++ conformance ({len(cases)} gram cases {seen}, Pell witness, 5 legacy cases, proof)")
++
++
++def proof_check(tmp):
++    """--proof under gram_v1 must print the three B values the result is computed from."""
++    vm = Path(tmp) / "spu_vm_proof"
++    subprocess.run(["g++", "-std=c++17", "-O1", "-o", str(vm), str(ROOT / "software/vm/spu_vm.cpp")],
++                   check=True)
++    for a, b in (((1, 0, 0, 0), (0, 1, 0, 0)), ((3, 1, 0, 0), (1, 2, 0, 5))):
++        src = "".join(f"LD R{i}, {a[i]}, 0\n" for i in range(4)) + \
++              "".join(f"LD R{4 + i}, {b[i]}, 0\n" for i in range(4)) + \
++              "QLOAD QR0, R0\nQLOAD QR1, R4\nSPREAD R10, QR0, QR1\nHALT\n"
++        sas = Path(tmp) / "proof.sas"
++        sas.write_text(src)
++        v, w = [(x, 0) for x in a], [(x, 0) for x in b]
++        out = subprocess.run([str(vm), str(sas), "--quiet", "--proof", "--metric-semantics=gram_v1"],
++                             capture_output=True, text=True, check=True).stdout
++        want = "B(v,v)=({},{}) B(w,w)=({},{}) B(v,w)=({},{})".format(
++            *bilinear(v, v), *bilinear(w, w), *bilinear(v, w))
++        assert want in out, (want, out)
++        n, d = oracle(v, w)
++        assert n[1] == 0 and d[1] == 0
++        assert f"numerator={n[0]} denominator={d[0]}" in out, out
++
++
++main()
+diff --git a/software/vm/spu_vm.cpp b/software/vm/spu_vm.cpp
+index 43b7723..22b5401 100644
+--- a/software/vm/spu_vm.cpp
++++ b/software/vm/spu_vm.cpp
+@@ -35,8 +35,13 @@
+ #include <cctype>
+ #include <climits>
+ #include <numeric>
++#include <tuple>
+ #include <stdexcept>
+ #include "checked_math.h"
++#include "../common/include/spu_gram_spread.h"
++
++// SPREAD mathematics (research/sim_cap1_spread/GRAM_V1_CONTRACT.md); fixed at construction.
++enum class MetricSemantics { LegacyDot, GramV1 };
+ 
+ // ============================================================================
+ // RationalSurd — element of Q(√3): value = a + b·√3
+@@ -492,8 +497,14 @@ public:
+     int snap_failures = 0;
+     std::string fault_kind;
+ 
+-    SPUCore(int ms = 256, bool v = true, bool p = false)
+-        : max_steps(ms), verbose(v), proof(p) {
++private:
++    MetricSemantics metric_semantics_;  // fixed at construction; no setter
++public:
++    MetricSemantics metric_semantics() const { return metric_semantics_; }
++
++    SPUCore(int ms = 256, bool v = true, bool p = false,
++            MetricSemantics m = MetricSemantics::LegacyDot)
++        : max_steps(ms), verbose(v), proof(p), metric_semantics_(m) {
+         for (int i = 0; i < NUM_REGS; i++) regs[i] = RationalSurd(0,0);
+     }
+ 
+@@ -884,7 +895,25 @@ public:
+         case 0x15: { // SPREAD
+             int qa = d.r2 % 13;
+             int qb = (int)(uint16_t)d.p1_b % 13;
+-            auto [numer, denom] = qregs[qa].spread(qregs[qb]);
++            RationalSurd numer, denom;
++            if (metric_semantics() == MetricSemantics::GramV1) {
++                int32_t v[4][2], w[4][2];
++                const RationalSurd* vc[4] = {&qregs[qa].a, &qregs[qa].b, &qregs[qa].c, &qregs[qa].d};
++                const RationalSurd* wc[4] = {&qregs[qb].a, &qregs[qb].b, &qregs[qb].c, &qregs[qb].d};
++                for (int i = 0; i < 4; i++) {
++                    v[i][0] = vc[i]->a; v[i][1] = vc[i]->b;
++                    w[i][0] = wc[i]->a; w[i][1] = wc[i]->b;
++                }
++                gram::Result g = gram::spread(v, w);
++                if (g.status == gram::Status::Degenerate)
++                    throw VmFault("DEGENERATE_METRIC", "gram_v1 SPREAD operand has zero Gram quadrance");
++                if (g.status == gram::Status::Overflow)
++                    throw VmFault("OVERFLOW", "gram_v1 SPREAD result outside signed32 coefficients");
++                numer = RationalSurd(g.n[0], g.n[1]);
++                denom = RationalSurd(g.d[0], g.d[1]);
++            } else {
++                std::tie(numer, denom) = qregs[qa].spread(qregs[qb]);
++            }
+             regs[d.r1] = numer;
+             regs[(d.r1+1) % NUM_REGS] = denom;
+             if (verbose) std::cout << "  [" << pc << "] SPREAD QR" << qa
+@@ -892,6 +921,16 @@ public:
+                                    << "/" << denom.repr()
+                                    << "  (→ R" << (int)d.r1 << "/R"
+                                    << (int)((d.r1+1)%NUM_REGS) << ")\n";
++            if (proof && metric_semantics() == MetricSemantics::GramV1) {
++                int32_t v[4][2], w[4][2];
++                const RationalSurd* vc[4] = {&qregs[qa].a, &qregs[qa].b, &qregs[qa].c, &qregs[qa].d};
++                const RationalSurd* wc[4] = {&qregs[qb].a, &qregs[qb].b, &qregs[qb].c, &qregs[qb].d};
++                for (int i = 0; i < 4; i++) { v[i][0] = vc[i]->a; v[i][1] = vc[i]->b; w[i][0] = wc[i]->a; w[i][1] = wc[i]->b; }
++                gram::Gram3 g = gram::gram3(v, w);
++                std::cout << "         B(v,v)=(" << wide_string(g.vv[0]) << "," << wide_string(g.vv[1]) << ")"
++                          << " B(w,w)=(" << wide_string(g.ww[0]) << "," << wide_string(g.ww[1]) << ")"
++                          << " B(v,w)=(" << wide_string(g.vw[0]) << "," << wide_string(g.vw[1]) << ")\n";
++            }
+             if (proof) std::cout << "         exact spread numerator=" << numer.repr()
+                                  << " denominator=" << denom.repr() << "\n";
+ 
+@@ -1056,10 +1095,17 @@ int main(int argc, char** argv) {
+     int max_steps = 256;
+     bool quiet = false;
+     bool proof = false;
++    MetricSemantics metric = MetricSemantics::LegacyDot;
+ 
+     for (int i = 1; i < argc; i++) {
+         std::string arg = argv[i];
+         if (arg == "--quiet") { quiet = true; }
++        else if (arg.rfind("--metric-semantics=", 0) == 0) {
++            std::string v = arg.substr(19);
++            if (v == "legacy_dot") metric = MetricSemantics::LegacyDot;
++            else if (v == "gram_v1") metric = MetricSemantics::GramV1;
++            else { std::cerr << "Error: --metric-semantics must be legacy_dot or gram_v1.\n"; return 1; }
++        }
+         else if (arg == "--proof") { proof = true; }
+         else if (arg == "--bin" && i+1 < argc) { bin_file = argv[++i]; }
+         else if (arg == "--steps") {
+@@ -1089,12 +1135,12 @@ int main(int argc, char** argv) {
+ 
+     std::string target = bin_file.empty() ? source_file : bin_file;
+     if (target.empty()) {
+-        std::cerr << "Usage: spu_vm [--bin FILE] [--steps N] [--quiet] [--proof] <file.sas|file.bin>\n";
++        std::cerr << "Usage: spu_vm [--bin FILE] [--steps N] [--quiet] [--proof] [--metric-semantics=legacy_dot|gram_v1] <file.sas|file.bin>\n";
+         return 1;
+     }
+ 
+     bool verbose = !quiet;
+-    SPUCore core(max_steps, verbose, proof);
++    SPUCore core(max_steps, verbose, proof, metric);
+     std::vector<uint64_t> words;
+ 
+     bool is_bin = !bin_file.empty()

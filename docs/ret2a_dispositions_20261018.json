@@ -1,0 +1,199 @@
+{
+  "approved_deletions": [],
+  "archive_created": false,
+  "cleanup_authorized": false,
+  "controls": [
+    {
+      "case": "synthetic three-stream positive",
+      "result": "PASS"
+    },
+    {
+      "case": "missing stderr pathname",
+      "result": "REJECTED_AS_EXPECTED"
+    },
+    {
+      "case": "missing tool_log pathname",
+      "result": "REJECTED_AS_EXPECTED"
+    }
+  ],
+  "deduplication_authorized": false,
+  "entries": [
+    {
+      "both_pathnames_restoration_rehearsal": "NOT_RUN",
+      "dependency_closure_verified": false,
+      "finding": "Exact frozen source remains necessary; complete source/dirty-overlay closure required.",
+      "id": "RET2-01",
+      "independent_archive_copies": 0,
+      "measurements": {
+        "allocated_bytes": 122880,
+        "apparent_bytes": 122229,
+        "ctime_ns": 1791668717269036121,
+        "device": 49,
+        "inode": 5979463,
+        "mtime_ns": 1791659478935038233,
+        "nlink": 1
+      },
+      "metadata_unchanged_since_ret2": true,
+      "outcome": "PROTECT",
+      "path": "build/spu_surd_register/main_cpu_integration_20261007/exact_digital/decoder_campaign_20261011/preparation_03/source_snapshot/hardware/rtl/core/spu13/spu13_core.v",
+      "reclaimable_bytes": null,
+      "required_next_step": "Preserve the complete reviewed source dependency closure and dirty overlays; one sampled RTL file is not a source release.",
+      "sha256": "5e046d184e5fe4e27cd789411b0a465831113891386efea398688fdf43422337"
+    },
+    {
+      "both_pathnames_restoration_rehearsal": "NOT_RUN",
+      "dependency_closure_verified": false,
+      "finding": "Routed JSON is explicitly hash-pinned in the all-net audit source_evidence.",
+      "id": "RET2-02",
+      "independent_archive_copies": 0,
+      "measurements": {
+        "allocated_bytes": 144130048,
+        "apparent_bytes": 144129731,
+        "ctime_ns": 1792012397064933363,
+        "device": 49,
+        "inode": 6292197,
+        "mtime_ns": 1792012397064933363,
+        "nlink": 1
+      },
+      "metadata_unchanged_since_ret2": true,
+      "outcome": "PROTECT",
+      "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/cpu.routed.json",
+      "reclaimable_bytes": null,
+      "required_next_step": "Preserve route, native capture, independent audits/negative controls, constraints, source state and pinned tool/chipdb; re-run audits after restore.",
+      "sha256": "c12df2808f72bce5a3eb22b4a83ebb69514a1d6fe26d5ec8d2184aa1ad22504f"
+    },
+    {
+      "both_pathnames_restoration_rehearsal": "NOT_RUN",
+      "dependency_closure_verified": false,
+      "finding": "Native capture is explicitly hash-pinned in the same audit; not an unreferenced diagnostic.",
+      "id": "RET2-03",
+      "independent_archive_copies": 0,
+      "measurements": {
+        "allocated_bytes": 387325952,
+        "apparent_bytes": 387324934,
+        "ctime_ns": 1792012395018860952,
+        "device": 49,
+        "inode": 6292196,
+        "mtime_ns": 1792012395018860952,
+        "nlink": 1
+      },
+      "metadata_unchanged_since_ret2": true,
+      "outcome": "PROTECT",
+      "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_compact_03/native_route_raw.json",
+      "reclaimable_bytes": null,
+      "required_next_step": "Preserve capture with route and parser/helper identities; establish which fields the all-net audit consumes before selecting diagnostic samples.",
+      "sha256": "8b2d70b955e4e38ce31e32e9fe1816e0be87b60743bebc608c766f0e8d730d3d"
+    },
+    {
+      "both_pathnames_restoration_rehearsal": "NOT_RUN",
+      "dependency_closure_verified": false,
+      "finding": "Timeout diagnosis requires router-debug records for endpoint extraction; preserve raw log.",
+      "id": "RET2-04",
+      "independent_archive_copies": 0,
+      "measurements": {
+        "allocated_bytes": 555266048,
+        "apparent_bytes": 555264799,
+        "ctime_ns": 1791971802233158503,
+        "device": 49,
+        "inode": 6234373,
+        "mtime_ns": 1791971802233158503,
+        "nlink": 1
+      },
+      "metadata_unchanged_since_ret2": true,
+      "outcome": "PROTECT",
+      "path": "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_02/stderr.log",
+      "reclaimable_bytes": null,
+      "required_next_step": "Keep raw log until endpoint consumers are reviewed; summaries alone cannot replace its 220067 reported routing-arc records.",
+      "sha256": "219d47ddbe51f87a5a5f15652eaf39ac7bcf65e3c976b397d02fab68cf0c7321"
+    },
+    {
+      "both_pathnames_restoration_rehearsal": "NOT_RUN",
+      "dependency_closure_verified": false,
+      "finding": "tool_log path is read and hash-checked by clock_application.validate; preserve pathname.",
+      "id": "RET2-05",
+      "independent_archive_copies": 0,
+      "measurements": {
+        "allocated_bytes": 204910592,
+        "apparent_bytes": 204910029,
+        "ctime_ns": 1791926186243179126,
+        "device": 49,
+        "inode": 6197633,
+        "mtime_ns": 1791926186243179126,
+        "nlink": 1
+      },
+      "metadata_unchanged_since_ret2": true,
+      "outcome": "PROTECT",
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/tool.log",
+      "reclaimable_bytes": null,
+      "required_next_step": "Keep at least one verified raw log plus all diagnostic/capture summaries and source/tool identities; resolve consumers of both filenames.",
+      "sha256": "3e5d464734fd56dc21da1919d3e1597ac4b1cce592df2a2712d305a1c1d34a3d"
+    },
+    {
+      "both_pathnames_restoration_rehearsal": "NOT_RUN",
+      "dependency_closure_verified": false,
+      "finding": "stderr path is read and hash-checked and its clock event compared with tool_log; preserve pathname.",
+      "id": "RET2-06",
+      "independent_archive_copies": 0,
+      "measurements": {
+        "allocated_bytes": 204910592,
+        "apparent_bytes": 204910029,
+        "ctime_ns": 1791926186243179126,
+        "device": 49,
+        "inode": 6197629,
+        "mtime_ns": 1791926186243179126,
+        "nlink": 1
+      },
+      "metadata_unchanged_since_ret2": true,
+      "outcome": "PROTECT",
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/stderr.log",
+      "reclaimable_bytes": null,
+      "required_next_step": "Review pathname-dependent references and independently restore retained diagnostics before proposing a specific redundant-file deletion.",
+      "sha256": "3e5d464734fd56dc21da1919d3e1597ac4b1cce592df2a2712d305a1c1d34a3d"
+    },
+    {
+      "both_pathnames_restoration_rehearsal": "NOT_RUN",
+      "dependency_closure_verified": false,
+      "finding": "Comparison report pins archive hash and records rejection of this stock toolchain for Artix-7; retain negative qualification history separately from patched backend.",
+      "id": "RET2-07",
+      "independent_archive_copies": 0,
+      "measurements": {
+        "allocated_bytes": 747827200,
+        "apparent_bytes": 747823634,
+        "ctime_ns": 1792008264100914278,
+        "device": 49,
+        "inode": 6262553,
+        "mtime_ns": 1792008264100914278,
+        "nlink": 1
+      },
+      "metadata_unchanged_since_ret2": true,
+      "outcome": "PROTECT",
+      "path": "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/oss-cad-suite-linux-x64-20261013.tgz",
+      "reclaimable_bytes": null,
+      "required_next_step": "Separate toolchain review: record upstream distribution identity, license, required binaries/chipdb and patched-build provenance; filename equality is insufficient.",
+      "sha256": "8f6dbbc0050e7f6ad13fc0f220ef683ae4705f7ee16f5c7c9940c3b55cba2ddd"
+    }
+  ],
+  "format": "spu_ret2a_dispositions_v1",
+  "graph_defect": "Absolute checkout paths can be mis-extracted as hardware/SPU/build/...; negative reference results are unreliable.",
+  "graph_recomputed": false,
+  "reviewed_evidence_sha256": {
+    "build/spu_surd_register/backend_compatibility_20261012/candidate_route_diagnostic_02/timeout_diagnosis.json": "c8f612bb64ad4f5f9009a2f0924bf811bceccc0f10ed5e1ffb7ce5f940223576",
+    "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/capture.json": "d2810a9c62b26c7c14f8db3c8916977db1334a1f4e90ed851b4131132a9dfed0",
+    "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/invocation.json": "2bb07e028eb445b067535d769bbb1284ed694ced887e38f7f0c7184215813822",
+    "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/bindings.json": "60ee07e0ec49e5d7a97fa44df15a8ba14ec525a039cfae076cbde7bccc26cdcf",
+    "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/check_cpu.py": "e167c540e6413e6b4fcf620c37cf2afebeabdf71c18644b7074904a499856cd7",
+    "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/context_report.py": "394076bc7368c1068fcfa35511d80924abd33038926854cd4d4e415f2d8f49ee",
+    "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/worker.py": "b111fffc3ddbf486a162a664d0d142499b4a46bb9f88ace89f1f80cfc7923f3a",
+    "build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_all_net_audit_20261015.json": "9454a1e321ce9c155525a4fc954cde725719ff5d8001d0d50b9a0c39a1f79d48",
+    "build/spu_surd_register/backend_compatibility_20261012/preparation_05/clock_application.py": "cb4d580c59e17a5ee967dbcd097089b0d9b4099d718a85784f82731e950a6d84",
+    "build/spu_surd_register/oss_cad_suite_20261013_preparation_01/compatibility/run_01/comparison_report.json": "9aedfb360f6e254810697a671c0c6b04b805bb04648af4090572c7cdc1779b15"
+  },
+  "source_manifest_sha256": "d8058ae5ab94c835ae633478a38ced04dd6996eab6d3b3ff332607dab90a938d",
+  "storage_evidence": [
+    "build/repository_cleanup/ret2a_20261018_01/commands.json",
+    "build/repository_cleanup/ret2a_20261018_01/command_0.stdout",
+    "build/repository_cleanup/ret2a_20261018_01/command_1.stdout",
+    "build/repository_cleanup/ret2a_20261018_01/command_2.stdout"
+  ],
+  "verified_reclamation_estimate_bytes": null
+}

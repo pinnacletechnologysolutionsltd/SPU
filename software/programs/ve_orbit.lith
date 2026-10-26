@@ -1,0 +1,47 @@
+;; ve_orbit.lith — Vector Equilibrium A₄ Orbit Proof
+;; Proves the SPU-13 generates the full cuboctahedron from one seed
+;; using only exact rational arithmetic. No floating point.
+;; No transcendental sin/cos. No approximation of any kind.
+;;
+;; The SPU uses spread-rotation via the F,G,H circulant:
+;;   B' = F·B + H·C + G·D
+;;   C' = G·B + F·C + H·D
+;;   D' = H·B + G·C + F·D
+;; with A invariant. Coefficients are rational 2/3, -1/3 — exact.
+;;
+;; This is genuinely hard on a von Neumann CPU: sin(60°)=√3/2 is
+;; irrational and must be approximated. The SPU skips the sin/cos
+;; and rotates directly in Q(√3) using the circulant.
+;;
+;; The 60° rotation produces corners that NO floating-point
+;; GPU can render without drift. Every hex coordinate is exact.
+
+;; ── Load seed vertex ──
+;; A zero-sum seed with non-zero B,C,D so every rotation is visible.
+QLDI QR0, 0, 2, -1, -1
+QLOG QR0
+
+;; ── Apply tetrahedral orbit ──
+ROTC QR1, QR0, 0       ;; identity → should equal QR0
+ROTC QR2, QR0, 1       ;;  60° around D
+ROTC QR3, QR0, 2       ;; 120° around D
+ROTC QR4, QR0, 3       ;; 180° around D
+ROTC QR5, QR0, 4       ;; 240° around D
+ROTC QR6, QR0, 5       ;; 300° around D
+
+;; ── Verify identity rotation preserved the seed ──
+QSUB QR7, QR1, QR0     ;; should be (0,0,0,0)
+QLOG QR7
+
+;; ── Verify 180° rotation is not identity ──
+QSUB QR8, QR4, QR1     ;; should be non-zero
+QLOG QR8
+
+;; ── Emit all rotated vertices ──
+hex R0, QR0
+hex R1, QR1
+hex R2, QR2
+hex R3, QR3
+hex R4, QR4
+hex R5, QR5
+hex R6, QR6

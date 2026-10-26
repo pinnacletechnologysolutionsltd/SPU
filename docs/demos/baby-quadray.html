@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baby’s First Quadray — rotations, mirrors, and weighted covariance</title>
+<style>
+:root { color-scheme: light; font: 16px/1.45 system-ui, sans-serif; color: #172033; background: #f4f6fa; }
+body { max-width: 1120px; margin: auto; padding: 1.5rem; }
+h1, h2 { line-height: 1.15; }
+.lead, .note { color: #4a556b; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
+section { background: white; border: 1px solid #dce2eb; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 10px #1720330a; }
+label { display: inline-flex; flex-direction: column; gap: .2rem; margin: .25rem; font-size: .9rem; }
+input, select, button { font: inherit; padding: .4rem .55rem; border: 1px solid #bac5d5; border-radius: 6px; background: white; }
+input { width: 5.2rem; }
+button { cursor: pointer; }
+button:hover { background: #eef4ff; }
+.controls { display: flex; flex-wrap: wrap; align-items: end; gap: .25rem; }
+.math { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+.panel { border-top: 1px solid #e4e8ef; margin-top: .7rem; padding-top: .6rem; }
+svg { width: 100%; height: auto; max-height: 390px; background: #fbfcfe; border-radius: 8px; }
+.good { color: #146c43; font-weight: 650; }
+.tag { display: inline-block; padding: .12rem .5rem; border-radius: 1rem; background: #edf2fa; }
+.small { font-size: .88rem; }
+code { background: #eef1f6; padding: .08rem .25rem; border-radius: 3px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.lesson-intro { background: #eaf1fb; border-left: 4px solid #4777b8; border-radius: 6px; padding: .8rem 1rem; }
+.try-it { background: #f5f7fb; border-radius: 6px; padding: .65rem .8rem; }
+@media (max-width: 540px) { body { padding: .75rem; } }
+</style>
+</head>
+<body>
+<h1>Baby’s First Quadray</h1>
+<p class="lead">One four-coordinate point, a proper tetrahedral rotation, its mirror, and an exact weighted-cycle covariance check. The controls use integers and exact integer / Q(√3) arithmetic. Only SVG drawing maps exact projected pixels to screen display.</p>
+<p class="lesson-intro"><strong>Why four numbers describe a 3D point:</strong> A, B, C and D are weights on four tetrahedral direction vectors. In this lesson's basis the vectors add to zero, so adding the same amount to all four weights changes no point: <span class="math">(A,B,C,D) ∼ (A+k,B+k,C+k,D+k)</span>. That one redundancy leaves three independent coordinates. The readout shows a zero-sum representative and the resulting Cartesian point.</p>
+
+<div class="grid">
+<section>
+<h2>1. Coordinates and orientation</h2>
+<div class="controls" id="coordinateControls"></div>
+<div class="controls">
+  <label>Component permutation
+    <select id="transform">
+      <option value="identity">Identity</option>
+      <option value="rotate">Proper rotation: B → C → D → B</option>
+      <option value="reflect">Reflection: swap B and C</option>
+    </select>
+  </label>
+  <button id="gaugeButton" type="button">Add common +1</button>
+</div>
+<svg id="tetra" viewBox="0 0 640 480" role="img" aria-label="Projected labelled tetrahedron and transformed point"></svg>
+<div class="panel math" id="coordinateReport"></div>
+<p class="try-it small"><strong>Try it:</strong> increase A by 1 and predict the Cartesian change from the basis below. Then select <em>Add common +1</em>: all four controls change, but the Cartesian point and projected pixel should stay fixed.</p>
+<p class="note small">A common offset changes the four numbers but not the point. Even permutations have determinant +1 on the three-dimensional space; odd permutations have determinant −1. An unlabelled regular tetrahedron matches all 24 vertex permutations, while preserving four distinct vertex labels allows only the identity.</p>
+<p class="small math">Basis: A=(1,1,1), B=(1,−1,−1), C=(−1,1,−1), D=(−1,−1,1). Thus (x,y,z)=(A+B−C−D, A−B+C−D, A−B−C+D).</p>
+</section>
+
+<section>
+<h2>2. Weighted parity transport</h2>
+<p class="small">The four-cycle uses exact edge weights w=(1,2,3,2+√3) and state x=(1,0,√3,2). Parity is P(i)=−i mod 4. Both charts retain order 0 → 1 → 2 → 3; parity transports the state and weights once.</p>
+<label>Evolution law
+  <select id="law">
+    <option value="neutral">Parity-neutral: a = b = 1</option>
+    <option value="biased">Biased: a = 2 + √3, b = 1</option>
+  </select>
+</label>
+<svg viewBox="0 0 640 270" role="img" aria-label="Original weighted cycle and its parity transported mirror">
+  <g stroke="#61718b" stroke-width="3" fill="none">
+    <path d="M95 60 H255 V195 H95 Z"/><path d="M385 60 H545 V195 H385 Z"/>
+  </g>
+  <g fill="#fff" stroke="#325d9b" stroke-width="3">
+    <circle cx="95" cy="60" r="23"/><circle cx="255" cy="60" r="23"/><circle cx="255" cy="195" r="23"/><circle cx="95" cy="195" r="23"/>
+    <circle cx="385" cy="60" r="23"/><circle cx="545" cy="60" r="23"/><circle cx="545" cy="195" r="23"/><circle cx="385" cy="195" r="23"/>
+  </g>
+  <g font-family="system-ui" font-size="15" text-anchor="middle" fill="#172033">
+    <text x="95" y="65">0</text><text x="255" y="65">1</text><text x="255" y="200">2</text><text x="95" y="200">3</text>
+    <text x="385" y="65">0</text><text x="545" y="65">1</text><text x="545" y="200">2</text><text x="385" y="200">3</text>
+    <text x="175" y="48">e₀: 1</text><text x="272" y="130">e₁: 2</text><text x="175" y="224">e₂: 3</text><text x="78" y="130">e₃: 2+√3</text>
+    <text x="465" y="48">e₀ᴾ: 2+√3</text><text x="562" y="130">e₁ᴾ: 3</text><text x="465" y="224">e₂ᴾ: 2</text><text x="368" y="130">e₃ᴾ: 1</text>
+    <text x="175" y="258" font-weight="650">G: L advances →</text><text x="465" y="258" font-weight="650">Gᴾ: same chart; P reverses once</text>
+  </g>
+</svg>
+<div class="panel math" id="covarianceReport"></div>
+<p class="note small">This finite example demonstrates covariance of the stated operators and transported data. It does not establish physical chirality, a physical metric, or general dynamics.</p>
+</section>
+</div>
+
+<section style="margin-top:1rem">
+<h2>3. The GPU boundary</h2>
+<p>Quadray values and the tetrahedral transform remain exact. The selected rational view transform maps them to a finite <span class="math">(x<sub>pixel</sub>, y<sub>pixel</sub>, depth)</span> tuple using nearest-integer, ties-to-even quantization. The T1d simulator then consumes screen pixels and depth; it does not consume Quadray coordinates.</p>
+<p><strong>Where each result comes from:</strong> The coordinate, rotation/reflection and weighted-covariance readouts above run live in this page's JavaScript using exact integers and exact pairs for <span class="math">a+b√3</span>. The Python regression checks frozen reference values and the separate T1d triangle scene against its ideal and finite-width device models. That simulator does not run the page's JavaScript or validate browser SVG rendering; no physical GPU result is claimed.</p>
+<p class="math">Reference scene: <code>examples/gpu/golden_core_quadray_covariance.json</code> · projection/orientation expectations: <code>fixtures/golden_core_quadray_projection_reference.json</code></p>
+<pre><code>python3 -m software.spu_gpu_eval.cli preview examples/gpu/golden_core_quadray_covariance.json --out build/gpu_evaluation/quadray_covariance_preview
+python3 -m software.spu_gpu_eval.cli inspect examples/gpu/golden_core_quadray_covariance.json --x 435 --y 195</code></pre>
+<p class="note small">The supplied scene is also checked by the offline ideal reference and finite-width T1d device model. The scene and its expected pixels do not claim that the projection is the unique Quadray view or that the rasterizer is qualified in hardware.</p>
+</section>
+
+<script>
+"use strict";
+const BASIS = [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]];
+const LABELS = ["A","B","C","D"];
+const WIDTH = 640, HEIGHT = 480, SCALE = 80, DEPTH_SCALE = 1000;
+const VIEW_NUM = [[1n,8n,4n],[8n,1n,-4n],[-4n,4n,-7n]];
+const sqrt3 = [0n,1n], zero = [0n,0n], one = [1n,0n];
+const qadd = (x,y) => [x[0]+y[0], x[1]+y[1]];
+const qmul = (x,y) => [x[0]*y[0]+3n*x[1]*y[1], x[0]*y[1]+x[1]*y[0]];
+const qscale = (n,x) => [BigInt(n)*x[0], BigInt(n)*x[1]];
+const qeq = (x,y) => x[0]===y[0] && x[1]===y[1];
+function qshow(x) {
+  const [p,q] = x;
+  if (q===0n) return String(p);
+  if (p===0n) return q===1n ? "√3" : q===-1n ? "−√3" : `${q}√3`;
+  return `${p} ${q<0n?"−":"+"} ${q<0n?-q:q}√3`;
+}
+function vectorShow(v) { return "("+v.map(qshow).join(", ")+")"; }
+function parity(v) { return [v[0],v[3],v[2],v[1]]; }
+function transportedWeights(w) { const out=[null,null,null,null]; for(let i=0;i<4;i++) out[(3-i+4)%4]=w[i]; return out; }
+function left(v,w) { const out=[zero,zero,zero,zero]; for(let i=0;i<4;i++) out[(i+1)%4]=qmul(w[i],v[i]); return out; }
+function right(v,w) { return v.map((_,i)=>qmul(w[i],v[(i+1)%4])); }
+function evolution(v,w,a,b) { const l=left(v,w), r=right(v,w); return l.map((x,i)=>qadd(qmul(a,x),qmul(b,r[i]))); }
+function roundEven(n,d) {
+  const sign=n<0n?-1n:1n, a=n<0n?-n:n;
+  let q=a/d, r=a%d;
+  if(2n*r>d || (2n*r===d && q%2n!==0n)) q++;
+  return sign*q;
+}
+function xyz(q) { const [a,b,c,d]=q; return [a+b-c-d,a-b+c-d,a-b-c+d]; }
+function projectCartesian(point) {
+  const [x,y,z]=point.map(BigInt);
+  const u=VIEW_NUM[0][0]*x+VIEW_NUM[0][1]*y+VIEW_NUM[0][2]*z;
+  const v=VIEW_NUM[1][0]*x+VIEW_NUM[1][1]*y+VIEW_NUM[1][2]*z;
+  const depth=VIEW_NUM[2][0]*x+VIEW_NUM[2][1]*y+VIEW_NUM[2][2]*z;
+  return [Number(roundEven(BigInt(WIDTH-1)*9n+2n*BigInt(SCALE)*u,18n)),
+          Number(roundEven(BigInt(HEIGHT-1)*9n-2n*BigInt(SCALE)*v,18n)),
+          Number(roundEven(32768n*9n+BigInt(DEPTH_SCALE)*depth,9n))];
+}
+function project(q) { return projectCartesian(xyz(q)); }
+function permutation() {
+  return document.querySelector("#transform").value==="rotate" ? [0,2,3,1] :
+    document.querySelector("#transform").value==="reflect" ? [0,2,1,3] : [0,1,2,3];
+}
+function permutePoint(q,p) { const out=[0n,0n,0n,0n]; for(let i=0;i<4;i++) out[p[i]]=q[i]; return out; }
+function permutationSign(p) { let inversions=0; for(let i=0;i<4;i++) for(let j=i+1;j<4;j++) if(p[i]>p[j]) inversions++; return inversions%2?-1:1; }
+function gcd(a,b) { a=a<0n?-a:a; b=b<0n?-b:b; while(b){const r=a%b;a=b;b=r;} return a; }
+function fractionQuarter(q) {
+  const sum=q.reduce((a,b)=>a+b,0n);
+  return q.map(v=>{let n=4n*v-sum,d=4n,g=gcd(n,d);n/=g;d/=g;return d===1n?String(n):`${n}/${d}`;}).join(", ");
+}
+function readPoint() { return [...document.querySelectorAll("#coordinateControls input")].map(x=>BigInt(x.value||"0")); }
+function drawTetra(q,p) {
+  const svg=document.querySelector("#tetra"), orig=BASIS.map(projectCartesian), transformed=BASIS.map((_,i)=>orig[p[i]]), identity=p.every((v,i)=>v===i);
+  const edges=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+  const lines=(pts,cls)=>edges.map(([a,b])=>`<line class="${cls}" x1="${pts[a][0]}" y1="${pts[a][1]}" x2="${pts[b][0]}" y2="${pts[b][1]}"/>`).join("");
+  const originalPoint=project(q), movedPoint=project(permutePoint(q,p));
+  let marks="";
+  for(let i=0;i<4;i++) marks+=identity
+    ? `<text x="${orig[i][0]+7}" y="${orig[i][1]-7}" class="newlabel">${LABELS[i]}</text>`
+    : `<text x="${orig[i][0]+7}" y="${orig[i][1]-7}" class="oldlabel">${LABELS[i]}</text><text x="${transformed[i][0]-10}" y="${transformed[i][1]+16}" class="newlabel">${LABELS[i]}′</text>`;
+  const pointMarks=identity
+    ? `<circle class="p0" cx="${originalPoint[0]}" cy="${originalPoint[1]}" r="7"/>`
+    : `<circle class="p0" cx="${originalPoint[0]}" cy="${originalPoint[1]}" r="7"/><circle class="p1" cx="${movedPoint[0]}" cy="${movedPoint[1]}" r="6"/>`;
+  svg.innerHTML=`<style>.old{stroke:#bac4d3;stroke-width:2}.new{stroke:#2866b2;stroke-width:3;stroke-dasharray:7 5}.oldlabel{fill:#68758a;font:13px system-ui}.newlabel{fill:#16467e;font:bold 14px system-ui}.p0{fill:#f09a26;stroke:#fff;stroke-width:3}.p1{fill:#8a4bc1;stroke:#fff;stroke-width:3}.legend{font:13px system-ui;fill:#46546a}</style>${lines(orig,"old")}${identity?"":lines(transformed,"new")}${marks}${pointMarks}<text class="legend" x="16" y="24">${identity?"tetrahedron: identity view · point equals image":"gray: original · blue dashed: transformed · orange/purple: point and image"}</text>`;
+  const det=permutationSign(p), canonical=fractionQuarter(q), q2=permutePoint(q,p);
+  document.querySelector("#coordinateReport").innerHTML=
+    `q = (${q.join(", ")})<br>zero-sum representative = (${canonical})<br>`+
+    `Cartesian before = (${xyz(q).join(", ")}); after = (${xyz(q2).join(", ")})<br>`+
+    `screen (x, y, depth) before = (${originalPoint.join(", ")}); after = (${movedPoint.join(", ")})<br>`+
+    `permutation = [${p.join(", ")}] · determinant on physical 3-space = ${det>0?"+1 (proper rotation)":"−1 (reflection)"}`;
+}
+function updateCovariance() {
+  const weights=[[1n,0n],[2n,0n],[3n,0n],[2n,1n]], mirrored=transportedWeights(weights);
+  const x=[[1n,0n],[0n,0n],[0n,1n],[2n,0n]], mode=document.querySelector("#law").value;
+  const a=mode==="biased"?[2n,1n]:one, b=one;
+  const lhs=parity(evolution(x,weights,a,b));
+  const rhs=evolution(parity(x),mirrored,b,a);
+  const pass=lhs.every((v,i)=>qeq(v,rhs[i]));
+  document.querySelector("#covarianceReport").innerHTML=
+    `P(F<sub>a,b</sub><sup>G</sup>(x)) = ${vectorShow(lhs)}<br>`+
+    `F<sub>b,a</sub><sup>Gᴾ</sup>(P(x)) = ${vectorShow(rhs)}<br>`+
+    `<span class="${pass?"good":""}">${pass?"Exact coefficient-wise equality: PASS":"Mismatch"}</span><br>`+
+    `P(x) = ${vectorShow(parity(x))}<br>wᴾ = ${vectorShow(mirrored)}`;
+}
+const controls=document.querySelector("#coordinateControls");
+for(const [i,label] of LABELS.entries()) controls.insertAdjacentHTML("beforeend",`<label>${label}<input type="number" step="1" value="${[2,1,0,1][i]}" aria-label="Quadray ${label} coordinate"></label>`);
+function redraw(){drawTetra(readPoint(),permutation());updateCovariance();}
+document.querySelectorAll("#coordinateControls input, #transform, #law").forEach(x=>x.addEventListener("input",redraw));
+document.querySelector("#gaugeButton").addEventListener("click",()=>{document.querySelectorAll("#coordinateControls input").forEach(x=>x.value=String(BigInt(x.value||"0")+1n));redraw();});
+redraw();
+</script>
+</body>
+</html>

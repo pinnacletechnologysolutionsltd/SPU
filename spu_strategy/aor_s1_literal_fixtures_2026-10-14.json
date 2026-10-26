@@ -1,0 +1,3212 @@
+{
+  "format": "AOR_S1_LITERAL_FIXTURE_DRAFT_V1",
+  "status": "PROPOSED_NOT_QUALIFIED",
+  "independent_reviewer": "PENDING",
+  "scope": "hand-derived initial subset; no candidate run",
+  "fixtures": [
+    {
+      "id": "canonical_zero",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        0,
+        0,
+        0
+      ],
+      "expected_charged_units": 14,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "canonical_upper",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          5,
+          2,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        4,
+        -1,
+        1
+      ],
+      "expected_charged_units": 32,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "initial Scan",
+          "units": 2
+        },
+        {
+          "actions": "Adjustment",
+          "units": 14
+        },
+        {
+          "actions": "final Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "canonical_lower",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          5,
+          -2,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        4,
+        1,
+        -1
+      ],
+      "expected_charged_units": 31,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "initial lower Scan",
+          "units": 1
+        },
+        {
+          "actions": "Adjustment",
+          "units": 14
+        },
+        {
+          "actions": "final Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "canonical_endpoint",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          1,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        -1,
+        1,
+        1
+      ],
+      "expected_charged_units": 32,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "Adjustment",
+          "units": 14
+        },
+        {
+          "actions": "final Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "conjugate_endpoint",
+      "operation": "conjugate",
+      "arguments": [
+        [
+          -1,
+          1,
+          1
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        1,
+        -1,
+        0
+      ],
+      "expected_charged_units": 39,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "negation and width",
+          "units": 2
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "Adjustment",
+          "units": 14
+        },
+        {
+          "actions": "final Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "conjugate_zero",
+      "operation": "conjugate",
+      "arguments": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        0,
+        0,
+        0
+      ],
+      "expected_charged_units": 16,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "C zero",
+          "units": 2
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "step_zero",
+      "operation": "step",
+      "arguments": [
+        [
+          0,
+          0,
+          0
+        ],
+        2147483647
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        0,
+        0,
+        0
+      ],
+      "expected_charged_units": 18,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "increment validation",
+          "units": 2
+        },
+        {
+          "actions": "C zero",
+          "units": 2
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "step_exact_budget",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        0
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 21,
+      "expected_status": "OK",
+      "expected_result": [
+        1,
+        0,
+        0
+      ],
+      "expected_charged_units": 21,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "increment validation",
+          "units": 2
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "step_before_commit",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        0
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 20,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_charged_units": 20,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "increment validation",
+          "units": 2
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "final three width checks; commit uncharged",
+          "units": 3
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "step_exponent_overflow",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          2147483647
+        ],
+        1
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "EXPONENT_OVERFLOW",
+      "expected_result": null,
+      "expected_charged_units": 17,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "increment validation",
+          "units": 2
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "E",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "conjugate_exponent_overflow",
+      "operation": "conjugate",
+      "arguments": [
+        [
+          1,
+          0,
+          -2147483648
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "EXPONENT_OVERFLOW",
+      "expected_result": null,
+      "expected_charged_units": 15,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "E",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "conjugate_post_rebalance_exponent",
+      "operation": "conjugate",
+      "arguments": [
+        [
+          -1,
+          1,
+          -2147483647
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "EXPONENT_OVERFLOW",
+      "expected_result": null,
+      "expected_charged_units": 21,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "negation and width",
+          "units": 2
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "adjustment E",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "canonical_exponent_overflow",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          1,
+          2147483647
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "EXPONENT_OVERFLOW",
+      "expected_result": null,
+      "expected_charged_units": 14,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "adjustment E",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "canonical_budget_before_exponent_check",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          1,
+          2147483647
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 13,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_charged_units": 13,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "adjustment exponent addition; width uncharged",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "multiply_units",
+      "operation": "multiply",
+      "arguments": [
+        [
+          1,
+          0,
+          1000
+        ],
+        [
+          1,
+          0,
+          -1000
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        1,
+        0,
+        0
+      ],
+      "expected_charged_units": 46,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "two Z",
+          "units": 2
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "seven arithmetic/width pairs",
+          "units": 14
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "multiply_zero",
+      "operation": "multiply",
+      "arguments": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          2147483647
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        0,
+        0,
+        0
+      ],
+      "expected_charged_units": 27,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "C zero and C nonzero",
+          "units": 5
+        },
+        {
+          "actions": "two Z",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "multiply_exponent_before_coefficients",
+      "operation": "multiply",
+      "arguments": [
+        [
+          9223372036854775807,
+          0,
+          2147483647
+        ],
+        [
+          9223372036854775807,
+          0,
+          1
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "EXPONENT_OVERFLOW",
+      "expected_result": null,
+      "expected_charged_units": 26,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "two Z",
+          "units": 2
+        },
+        {
+          "actions": "E",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "multiply_final_mantissa",
+      "operation": "multiply",
+      "arguments": [
+        [
+          9223372036854775807,
+          0,
+          0
+        ],
+        [
+          9223372036854775807,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "MANTISSA_OVERFLOW",
+      "expected_result": null,
+      "expected_charged_units": 43,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "two Z",
+          "units": 2
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "seven arithmetic/width pairs",
+          "units": 14
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "final a check",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "conjugate_signed_minimum",
+      "operation": "conjugate",
+      "arguments": [
+        [
+          0,
+          -9223372036854775808,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "MANTISSA_OVERFLOW",
+      "expected_result": null,
+      "expected_charged_units": 21,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "negation and width",
+          "units": 2
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "final a and b checks",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "norm_output_overflow",
+      "operation": "norm",
+      "arguments": [
+        [
+          0,
+          -9223372036854775808,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "NORM_OVERFLOW",
+      "expected_result": null,
+      "expected_charged_units": 18,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "N",
+          "units": 8
+        },
+        {
+          "actions": "publication width",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "equality_despite_norm_overflow",
+      "operation": "equality",
+      "arguments": [
+        [
+          0,
+          -9223372036854775808,
+          0
+        ],
+        [
+          0,
+          -9223372036854775808,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": true,
+      "expected_charged_units": 23,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "tuple comparison",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "same_k_cancel",
+      "operation": "same_k_sum",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          -1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        0,
+        0,
+        0
+      ],
+      "expected_charged_units": 32,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "equal k",
+          "units": 1
+        },
+        {
+          "actions": "two sums and widths",
+          "units": 4
+        },
+        {
+          "actions": "Z result",
+          "units": 1
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "unequal_k",
+      "operation": "same_k_sum",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "UNSUPPORTED_OPERATION",
+      "expected_result": null,
+      "expected_charged_units": 23,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "equal k",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "inverse_zero",
+      "operation": "unit_inverse",
+      "arguments": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_DOMAIN",
+      "expected_result": null,
+      "expected_charged_units": 12,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "C zero",
+          "units": 2
+        },
+        {
+          "actions": "zero domain check",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "inverse_nonunit",
+      "operation": "unit_inverse",
+      "arguments": [
+        [
+          2,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "UNSUPPORTED_OPERATION",
+      "expected_result": null,
+      "expected_charged_units": 22,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "zero domain check",
+          "units": 1
+        },
+        {
+          "actions": "N",
+          "units": 8
+        },
+        {
+          "actions": "norm-one test",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "inverse_identity",
+      "operation": "unit_inverse",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        1,
+        0,
+        0
+      ],
+      "expected_charged_units": 32,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "C",
+          "units": 3
+        },
+        {
+          "actions": "zero domain check",
+          "units": 1
+        },
+        {
+          "actions": "N",
+          "units": 8
+        },
+        {
+          "actions": "norm-one test",
+          "units": 1
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "negation and width",
+          "units": 2
+        },
+        {
+          "actions": "Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "bool_type",
+      "operation": "step",
+      "arguments": [
+        [
+          true,
+          0,
+          0
+        ],
+        0
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 4,
+      "count_derivation": [
+        {
+          "actions": "opcode",
+          "units": 1
+        },
+        {
+          "actions": "arity",
+          "units": 1
+        },
+        {
+          "actions": "shape",
+          "units": 1
+        },
+        {
+          "actions": "a type",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "budget_before_bool_type",
+      "operation": "step",
+      "arguments": [
+        [
+          true,
+          0,
+          0
+        ],
+        0
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 3,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_charged_units": 3,
+      "count_derivation": [
+        {
+          "actions": "opcode",
+          "units": 1
+        },
+        {
+          "actions": "arity",
+          "units": 1
+        },
+        {
+          "actions": "shape; a type uncharged",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "multiply_lower_negative_norm",
+      "operation": "multiply",
+      "arguments": [
+        [
+          -1,
+          1,
+          0
+        ],
+        [
+          4,
+          -1,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        1,
+        3,
+        -1
+      ],
+      "expected_charged_units": 61,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "two Z",
+          "units": 2
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "seven arithmetic/width pairs",
+          "units": 14
+        },
+        {
+          "actions": "lower Scan",
+          "units": 1
+        },
+        {
+          "actions": "Adjustment",
+          "units": 14
+        },
+        {
+          "actions": "final Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "multiply_upper_negative_norm",
+      "operation": "multiply",
+      "arguments": [
+        [
+          4,
+          1,
+          0
+        ],
+        [
+          1,
+          2,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        -7,
+        8,
+        1
+      ],
+      "expected_charged_units": 62,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "two Z",
+          "units": 2
+        },
+        {
+          "actions": "E",
+          "units": 2
+        },
+        {
+          "actions": "seven arithmetic/width pairs",
+          "units": 14
+        },
+        {
+          "actions": "initial Scan",
+          "units": 2
+        },
+        {
+          "actions": "Adjustment",
+          "units": 14
+        },
+        {
+          "actions": "final Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "same_k_two_adjustments",
+      "operation": "same_k_sum",
+      "arguments": [
+        [
+          4,
+          0,
+          0
+        ],
+        [
+          3,
+          4,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": [
+        1,
+        0,
+        2
+      ],
+      "expected_charged_units": 66,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "equal k",
+          "units": 1
+        },
+        {
+          "actions": "two sums and widths",
+          "units": 4
+        },
+        {
+          "actions": "Z result",
+          "units": 1
+        },
+        {
+          "actions": "initial Scan",
+          "units": 2
+        },
+        {
+          "actions": "first Adjustment",
+          "units": 14
+        },
+        {
+          "actions": "middle Scan",
+          "units": 2
+        },
+        {
+          "actions": "second Adjustment",
+          "units": 14
+        },
+        {
+          "actions": "final Scan",
+          "units": 2
+        },
+        {
+          "actions": "F",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "noncanonical_zero",
+      "operation": "step",
+      "arguments": [
+        [
+          0,
+          0,
+          1
+        ],
+        2147483647
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "NONCANONICAL_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 13,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "increment validation",
+          "units": 2
+        },
+        {
+          "actions": "C zero and canonical zero test",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "unsupported_before_large_operands",
+      "operation": "same_k_sum",
+      "arguments": [
+        [
+          9223372036854775807,
+          0,
+          2147483647
+        ],
+        [
+          9223372036854775807,
+          0,
+          1
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "UNSUPPORTED_OPERATION",
+      "expected_result": null,
+      "expected_charged_units": 23,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "two C",
+          "units": 6
+        },
+        {
+          "actions": "equal k",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_a_bool",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          true,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 4,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 0; a type 1",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_b_bool",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          true,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 6,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 2; b type 1",
+          "units": 6
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_k_bool",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0,
+          true
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 8,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 4; k type 1",
+          "units": 8
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_a_float",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1.0,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 4,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 0; a type 1",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_b_float",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          1.0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 6,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 2; b type 1",
+          "units": 6
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_k_float",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0,
+          1.0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 8,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 4; k type 1",
+          "units": 8
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_a_null",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          null,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 4,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 0; a type 1",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_b_null",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          null,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 6,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 2; b type 1",
+          "units": 6
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_k_null",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0,
+          null
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 8,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 4; k type 1",
+          "units": 8
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_a_string",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          "1",
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 4,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 0; a type 1",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_b_string",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          "1",
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 6,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 2; b type 1",
+          "units": 6
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_k_string",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0,
+          "1"
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 8,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 4; k type 1",
+          "units": 8
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_a_above_max",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          9223372036854775808,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 5,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 0; a type/width 2",
+          "units": 5
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_a_below_min",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          -9223372036854775809,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 5,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 0; a type/width 2",
+          "units": 5
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_b_above_max",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          9223372036854775808,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 7,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 2; b type/width 2",
+          "units": 7
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_b_below_min",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          -9223372036854775809,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 7,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 2; b type/width 2",
+          "units": 7
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_k_above_max",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0,
+          2147483648
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 9,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 4; k type/width 2",
+          "units": 9
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_k_below_min",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0,
+          -2147483649
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 9,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape 3; previous fields 4; k type/width 2",
+          "units": 9
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_shape_short",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 3,
+      "count_derivation": [
+        {
+          "actions": "opcode 1; arity 1; descriptor shape 1",
+          "units": 3
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_shape_long",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 3,
+      "count_derivation": [
+        {
+          "actions": "opcode 1; arity 1; descriptor shape 1",
+          "units": 3
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_shape_string",
+      "operation": "canonicalize",
+      "arguments": [
+        "100"
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 3,
+      "count_derivation": [
+        {
+          "actions": "opcode 1; arity 1; descriptor shape 1",
+          "units": 3
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_shape_null",
+      "operation": "canonicalize",
+      "arguments": [
+        null
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 3,
+      "count_derivation": [
+        {
+          "actions": "opcode 1; arity 1; descriptor shape 1",
+          "units": 3
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_shape_object",
+      "operation": "canonicalize",
+      "arguments": [
+        {
+          "a": 1,
+          "b": 0,
+          "k": 0
+        }
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 3,
+      "count_derivation": [
+        {
+          "actions": "opcode 1; arity 1; descriptor shape 1",
+          "units": 3
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_operation_unknown",
+      "operation": "unknown_operation",
+      "arguments": [],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_ENCODING",
+      "expected_result": null,
+      "expected_charged_units": 1,
+      "count_derivation": [
+        {
+          "actions": "operation identity/type check 1; no operand inspection",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_operation_null",
+      "operation": null,
+      "arguments": [],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_ENCODING",
+      "expected_result": null,
+      "expected_charged_units": 1,
+      "count_derivation": [
+        {
+          "actions": "operation identity/type check 1; no operand inspection",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_operation_integer",
+      "operation": 112,
+      "arguments": [],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_ENCODING",
+      "expected_result": null,
+      "expected_charged_units": 1,
+      "count_derivation": [
+        {
+          "actions": "operation identity/type check 1; no operand inspection",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_operation_bool",
+      "operation": true,
+      "arguments": [],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_ENCODING",
+      "expected_result": null,
+      "expected_charged_units": 1,
+      "count_derivation": [
+        {
+          "actions": "operation identity/type check 1; no operand inspection",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_arity_missing",
+      "operation": "canonicalize",
+      "arguments": [],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode 1; arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_arity_extra",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode 1; arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_right_a_bool",
+      "operation": "multiply",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          true,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 11,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity 2; left fields/shape 7; right shape 1; right prior fields 0; type 1",
+          "units": 11
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_right_b_bool",
+      "operation": "multiply",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          true,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 13,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity 2; left fields/shape 7; right shape 1; right prior fields 2; type 1",
+          "units": 13
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_right_k_bool",
+      "operation": "multiply",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          true
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 15,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity 2; left fields/shape 7; right shape 1; right prior fields 4; type 1",
+          "units": 15
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_increment_bool",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        true
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 10,
+      "count_derivation": [
+        {
+          "actions": "V unary 9; increment type 1",
+          "units": 10
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_increment_float",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        1.0
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 10,
+      "count_derivation": [
+        {
+          "actions": "V unary 9; increment type 1",
+          "units": 10
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_increment_above_max",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        2147483648
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 11,
+      "count_derivation": [
+        {
+          "actions": "V unary 9; increment type 1; increment width 1",
+          "units": 11
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "invalid_increment_below_min",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        -2147483649
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 11,
+      "count_derivation": [
+        {
+          "actions": "V unary 9; increment type 1; increment width 1",
+          "units": 11
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "all_validation_before_domain",
+      "operation": "multiply",
+      "arguments": [
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          true,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 11,
+      "count_derivation": [
+        {
+          "actions": "V binary: opcode/arity 2; left descriptor 7; right shape/type 2; no canonical checks yet",
+          "units": 11
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "zero_before_invalid_other_forbidden",
+      "operation": "multiply",
+      "arguments": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          true,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 11,
+      "count_derivation": [
+        {
+          "actions": "V binary: opcode/arity 2; left descriptor 7; right shape/type 2; no zero shortcut yet",
+          "units": 11
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "noncanonical_lower",
+      "operation": "step",
+      "arguments": [
+        [
+          5,
+          -2,
+          0
+        ],
+        0
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "NONCANONICAL_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 13,
+      "count_derivation": [
+        {
+          "actions": "V 9; increment 2; C zero 1; lower comparator 1",
+          "units": 13
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "noncanonical_upper",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          1,
+          0
+        ],
+        0
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "NONCANONICAL_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 14,
+      "count_derivation": [
+        {
+          "actions": "V 9; increment 2; C zero 1; lower comparator 1; upper comparator 1",
+          "units": 14
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "budget_before_opcode",
+      "operation": "unknown_operation",
+      "arguments": [],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 0,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_charged_units": 0,
+      "count_derivation": [
+        {
+          "actions": "operation check uncharged; no actions executed",
+          "units": 0
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "budget_before_a_width",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          9223372036854775808,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_charged_units": 4,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape/type 4; width check uncharged",
+          "units": 4
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "a_width_at_budget",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          9223372036854775808,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 5,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 5,
+      "count_derivation": [
+        {
+          "actions": "opcode/arity/shape/type/width 5",
+          "units": 5
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "argument_container_null",
+      "operation": "canonicalize",
+      "arguments": null,
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode identity/type 1; argument container/arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "argument_container_object",
+      "operation": "canonicalize",
+      "arguments": {
+        "descriptor": [
+          1,
+          0,
+          0
+        ]
+      },
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode identity/type 1; argument container/arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "argument_container_scalar",
+      "operation": "canonicalize",
+      "arguments": 1,
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode identity/type 1; argument container/arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "step_missing_increment",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode identity/type 1; argument container/arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "step_extra_argument",
+      "operation": "step",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        0,
+        0
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode identity/type 1; argument container/arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "multiply_missing_right",
+      "operation": "multiply",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode identity/type 1; argument container/arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    },
+    {
+      "id": "multiply_extra_argument",
+      "operation": "multiply",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "INVALID_INPUT",
+      "expected_result": null,
+      "expected_charged_units": 2,
+      "count_derivation": [
+        {
+          "actions": "opcode identity/type 1; argument container/arity 1; no descriptor inspection",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ]
+    }
+  ],
+  "fixture_encoding": "JSON arguments arrays map to immutable argument tuples; descriptor-position arrays map to immutable descriptor tuples. Other values stay unchanged; Boolean/decimal/string fields are never coerced. This codec is proposed in contract_aor_s1_schedule_reconciliation_2026-10-14.md, not yet ratified."
+}

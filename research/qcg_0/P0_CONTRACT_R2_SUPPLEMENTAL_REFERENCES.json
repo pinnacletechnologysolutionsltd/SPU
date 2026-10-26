@@ -1,0 +1,8659 @@
+{
+  "cases": {
+    "PH3_ns_h_form": {
+      "dyadic_S4_rows": [
+        {
+          "accumulated_length_increment": [
+            0,
+            1
+          ],
+          "arc_increment_to_next": [
+            196609,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            0,
+            1
+          ],
+          "continued_direction": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "nonnegative_speed": [
+            0,
+            1
+          ],
+          "parameter": [
+            0,
+            1
+          ],
+          "position": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "regular": false,
+          "representation_signed_integral": [
+            0,
+            1
+          ],
+          "requests": {
+            "CURVATURE": "REFUSED(NONREGULAR)",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "REFUSED(NONREGULAR)"
+          },
+          "signed_curvature": null,
+          "signed_progression_rate": [
+            0,
+            1
+          ],
+          "unit_tangent": null,
+          "velocity": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            196609,
+            50331648
+          ],
+          "arc_increment_to_next": [
+            196629,
+            16777216
+          ],
+          "base_oriented_length_increment": [
+            196609,
+            50331648
+          ],
+          "continued_direction": [
+            [
+              65535,
+              65537
+            ],
+            [
+              512,
+              65537
+            ]
+          ],
+          "curvature_pair": [
+            [
+              1,
+              4
+            ],
+            [
+              4295098369,
+              34359738368
+            ]
+          ],
+          "nonnegative_speed": [
+            65537,
+            524288
+          ],
+          "parameter": [
+            1,
+            16
+          ],
+          "position": [
+            [
+              196607,
+              50331648
+            ],
+            [
+              1,
+              65536
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            196609,
+            50331648
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8589934592,
+            4295098369
+          ],
+          "signed_progression_rate": [
+            65537,
+            524288
+          ],
+          "unit_tangent": [
+            [
+              65535,
+              65537
+            ],
+            [
+              512,
+              65537
+            ]
+          ],
+          "velocity": [
+            [
+              65535,
+              524288
+            ],
+            [
+              1,
+              1024
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            12289,
+            786432
+          ],
+          "arc_increment_to_next": [
+            983705,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            12289,
+            786432
+          ],
+          "continued_direction": [
+            [
+              4095,
+              4097
+            ],
+            [
+              128,
+              4097
+            ]
+          ],
+          "curvature_pair": [
+            [
+              1,
+              2
+            ],
+            [
+              16785409,
+              67108864
+            ]
+          ],
+          "nonnegative_speed": [
+            4097,
+            16384
+          ],
+          "parameter": [
+            1,
+            8
+          ],
+          "position": [
+            [
+              12287,
+              786432
+            ],
+            [
+              1,
+              4096
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            12289,
+            786432
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            33554432,
+            16785409
+          ],
+          "signed_progression_rate": [
+            4097,
+            16384
+          ],
+          "unit_tangent": [
+            [
+              4095,
+              4097
+            ],
+            [
+              128,
+              4097
+            ]
+          ],
+          "velocity": [
+            [
+              4095,
+              16384
+            ],
+            [
+              1,
+              128
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            590067,
+            16777216
+          ],
+          "arc_increment_to_next": [
+            1379623,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            590067,
+            16777216
+          ],
+          "continued_direction": [
+            [
+              65455,
+              65617
+            ],
+            [
+              4608,
+              65617
+            ]
+          ],
+          "curvature_pair": [
+            [
+              3,
+              4
+            ],
+            [
+              12916772067,
+              34359738368
+            ]
+          ],
+          "nonnegative_speed": [
+            196851,
+            524288
+          ],
+          "parameter": [
+            3,
+            16
+          ],
+          "position": [
+            [
+              589581,
+              16777216
+            ],
+            [
+              81,
+              65536
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            590067,
+            16777216
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8589934592,
+            4305590689
+          ],
+          "signed_progression_rate": [
+            196851,
+            524288
+          ],
+          "unit_tangent": [
+            [
+              65455,
+              65617
+            ],
+            [
+              4608,
+              65617
+            ]
+          ],
+          "velocity": [
+            [
+              196365,
+              524288
+            ],
+            [
+              27,
+              1024
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            769,
+            12288
+          ],
+          "arc_increment_to_next": [
+            593667,
+            16777216
+          ],
+          "base_oriented_length_increment": [
+            769,
+            12288
+          ],
+          "continued_direction": [
+            [
+              255,
+              257
+            ],
+            [
+              32,
+              257
+            ]
+          ],
+          "curvature_pair": [
+            [
+              1,
+              1
+            ],
+            [
+              66049,
+              131072
+            ]
+          ],
+          "nonnegative_speed": [
+            257,
+            512
+          ],
+          "parameter": [
+            1,
+            4
+          ],
+          "position": [
+            [
+              767,
+              12288
+            ],
+            [
+              1,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            769,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            131072,
+            66049
+          ],
+          "signed_progression_rate": [
+            257,
+            512
+          ],
+          "unit_tangent": [
+            [
+              255,
+              257
+            ],
+            [
+              32,
+              257
+            ]
+          ],
+          "velocity": [
+            [
+              255,
+              512
+            ],
+            [
+              1,
+              16
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            4930825,
+            50331648
+          ],
+          "arc_increment_to_next": [
+            2193719,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            4930825,
+            50331648
+          ],
+          "continued_direction": [
+            [
+              64911,
+              66161
+            ],
+            [
+              12800,
+              66161
+            ]
+          ],
+          "curvature_pair": [
+            [
+              5,
+              4
+            ],
+            [
+              21886389605,
+              34359738368
+            ]
+          ],
+          "nonnegative_speed": [
+            330805,
+            524288
+          ],
+          "parameter": [
+            5,
+            16
+          ],
+          "position": [
+            [
+              4899575,
+              50331648
+            ],
+            [
+              625,
+              65536
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            4930825,
+            50331648
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8589934592,
+            4377277921
+          ],
+          "signed_progression_rate": [
+            330805,
+            524288
+          ],
+          "unit_tangent": [
+            [
+              64911,
+              66161
+            ],
+            [
+              12800,
+              66161
+            ]
+          ],
+          "velocity": [
+            [
+              324555,
+              524288
+            ],
+            [
+              125,
+              1024
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            37107,
+            262144
+          ],
+          "arc_increment_to_next": [
+            2626897,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            37107,
+            262144
+          ],
+          "continued_direction": [
+            [
+              4015,
+              4177
+            ],
+            [
+              1152,
+              4177
+            ]
+          ],
+          "curvature_pair": [
+            [
+              3,
+              2
+            ],
+            [
+              52341987,
+              67108864
+            ]
+          ],
+          "nonnegative_speed": [
+            12531,
+            16384
+          ],
+          "parameter": [
+            3,
+            8
+          ],
+          "position": [
+            [
+              36621,
+              262144
+            ],
+            [
+              81,
+              4096
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            37107,
+            262144
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            33554432,
+            17447329
+          ],
+          "signed_progression_rate": [
+            12531,
+            16384
+          ],
+          "unit_tangent": [
+            [
+              4015,
+              4177
+            ],
+            [
+              1152,
+              4177
+            ]
+          ],
+          "velocity": [
+            [
+              12045,
+              16384
+            ],
+            [
+              27,
+              128
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            9751441,
+            50331648
+          ],
+          "arc_increment_to_next": [
+            1031205,
+            16777216
+          ],
+          "base_oriented_length_increment": [
+            9751441,
+            50331648
+          ],
+          "continued_direction": [
+            [
+              63135,
+              67937
+            ],
+            [
+              25088,
+              67937
+            ]
+          ],
+          "curvature_pair": [
+            [
+              7,
+              4
+            ],
+            [
+              32308051783,
+              34359738368
+            ]
+          ],
+          "nonnegative_speed": [
+            475559,
+            524288
+          ],
+          "parameter": [
+            7,
+            16
+          ],
+          "position": [
+            [
+              9516143,
+              50331648
+            ],
+            [
+              2401,
+              65536
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            9751441,
+            50331648
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8589934592,
+            4615435969
+          ],
+          "signed_progression_rate": [
+            475559,
+            524288
+          ],
+          "unit_tangent": [
+            [
+              63135,
+              67937
+            ],
+            [
+              25088,
+              67937
+            ]
+          ],
+          "velocity": [
+            [
+              441945,
+              524288
+            ],
+            [
+              343,
+              1024
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            49,
+            192
+          ],
+          "arc_increment_to_next": [
+            3611633,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            49,
+            192
+          ],
+          "continued_direction": [
+            [
+              15,
+              17
+            ],
+            [
+              8,
+              17
+            ]
+          ],
+          "curvature_pair": [
+            [
+              2,
+              1
+            ],
+            [
+              289,
+              256
+            ]
+          ],
+          "nonnegative_speed": [
+            17,
+            16
+          ],
+          "parameter": [
+            1,
+            2
+          ],
+          "position": [
+            [
+              47,
+              192
+            ],
+            [
+              1,
+              16
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            49,
+            192
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            512,
+            289
+          ],
+          "signed_progression_rate": [
+            17,
+            16
+          ],
+          "unit_tangent": [
+            [
+              15,
+              17
+            ],
+            [
+              8,
+              17
+            ]
+          ],
+          "velocity": [
+            [
+              15,
+              16
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            5485563,
+            16777216
+          ],
+          "arc_increment_to_next": [
+            4204111,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            5485563,
+            16777216
+          ],
+          "continued_direction": [
+            [
+              58975,
+              72097
+            ],
+            [
+              41472,
+              72097
+            ]
+          ],
+          "curvature_pair": [
+            [
+              9,
+              4
+            ],
+            [
+              46781796681,
+              34359738368
+            ]
+          ],
+          "nonnegative_speed": [
+            648873,
+            524288
+          ],
+          "parameter": [
+            9,
+            16
+          ],
+          "position": [
+            [
+              5131269,
+              16777216
+            ],
+            [
+              6561,
+              65536
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            5485563,
+            16777216
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8589934592,
+            5197977409
+          ],
+          "signed_progression_rate": [
+            648873,
+            524288
+          ],
+          "unit_tangent": [
+            [
+              58975,
+              72097
+            ],
+            [
+              41472,
+              72097
+            ]
+          ],
+          "velocity": [
+            [
+              530775,
+              524288
+            ],
+            [
+              729,
+              1024
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            322825,
+            786432
+          ],
+          "arc_increment_to_next": [
+            1633443,
+            16777216
+          ],
+          "base_oriented_length_increment": [
+            322825,
+            786432
+          ],
+          "continued_direction": [
+            [
+              3471,
+              4721
+            ],
+            [
+              3200,
+              4721
+            ]
+          ],
+          "curvature_pair": [
+            [
+              5,
+              2
+            ],
+            [
+              111439205,
+              67108864
+            ]
+          ],
+          "nonnegative_speed": [
+            23605,
+            16384
+          ],
+          "parameter": [
+            5,
+            8
+          ],
+          "position": [
+            [
+              291575,
+              786432
+            ],
+            [
+              625,
+              4096
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            322825,
+            786432
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            33554432,
+            22287841
+          ],
+          "signed_progression_rate": [
+            23605,
+            16384
+          ],
+          "unit_tangent": [
+            [
+              3471,
+              4721
+            ],
+            [
+              3200,
+              4721
+            ]
+          ],
+          "velocity": [
+            [
+              17355,
+              16384
+            ],
+            [
+              125,
+              128
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            25561129,
+            50331648
+          ],
+          "arc_increment_to_next": [
+            5736407,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            25561129,
+            50331648
+          ],
+          "continued_direction": [
+            [
+              50895,
+              80177
+            ],
+            [
+              61952,
+              80177
+            ]
+          ],
+          "curvature_pair": [
+            [
+              11,
+              4
+            ],
+            [
+              70711864619,
+              34359738368
+            ]
+          ],
+          "nonnegative_speed": [
+            881947,
+            524288
+          ],
+          "parameter": [
+            11,
+            16
+          ],
+          "position": [
+            [
+              22018007,
+              50331648
+            ],
+            [
+              14641,
+              65536
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            25561129,
+            50331648
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8589934592,
+            6428351329
+          ],
+          "signed_progression_rate": [
+            881947,
+            524288
+          ],
+          "unit_tangent": [
+            [
+              50895,
+              80177
+            ],
+            [
+              61952,
+              80177
+            ]
+          ],
+          "velocity": [
+            [
+              559845,
+              524288
+            ],
+            [
+              1331,
+              1024
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            2547,
+            4096
+          ],
+          "arc_increment_to_next": [
+            6756025,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            2547,
+            4096
+          ],
+          "continued_direction": [
+            [
+              175,
+              337
+            ],
+            [
+              288,
+              337
+            ]
+          ],
+          "curvature_pair": [
+            [
+              3,
+              1
+            ],
+            [
+              340707,
+              131072
+            ]
+          ],
+          "nonnegative_speed": [
+            1011,
+            512
+          ],
+          "parameter": [
+            3,
+            4
+          ],
+          "position": [
+            [
+              2061,
+              4096
+            ],
+            [
+              81,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            2547,
+            4096
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            131072,
+            113569
+          ],
+          "signed_progression_rate": [
+            1011,
+            512
+          ],
+          "unit_tangent": [
+            [
+              175,
+              337
+            ],
+            [
+              288,
+              337
+            ]
+          ],
+          "velocity": [
+            [
+              525,
+              512
+            ],
+            [
+              27,
+              16
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            38053561,
+            50331648
+          ],
+          "arc_increment_to_next": [
+            2670381,
+            16777216
+          ],
+          "base_oriented_length_increment": [
+            38053561,
+            50331648
+          ],
+          "continued_direction": [
+            [
+              36975,
+              94097
+            ],
+            [
+              86528,
+              94097
+            ]
+          ],
+          "curvature_pair": [
+            [
+              13,
+              4
+            ],
+            [
+              115105190317,
+              34359738368
+            ]
+          ],
+          "nonnegative_speed": [
+            1223261,
+            524288
+          ],
+          "parameter": [
+            13,
+            16
+          ],
+          "position": [
+            [
+              28399943,
+              50331648
+            ],
+            [
+              28561,
+              65536
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            38053561,
+            50331648
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8589934592,
+            8854245409
+          ],
+          "signed_progression_rate": [
+            1223261,
+            524288
+          ],
+          "unit_tangent": [
+            [
+              36975,
+              94097
+            ],
+            [
+              86528,
+              94097
+            ]
+          ],
+          "velocity": [
+            [
+              480675,
+              524288
+            ],
+            [
+              2197,
+              1024
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            719761,
+            786432
+          ],
+          "arc_increment_to_next": [
+            9562721,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            719761,
+            786432
+          ],
+          "continued_direction": [
+            [
+              1695,
+              6497
+            ],
+            [
+              6272,
+              6497
+            ]
+          ],
+          "curvature_pair": [
+            [
+              7,
+              2
+            ],
+            [
+              295477063,
+              67108864
+            ]
+          ],
+          "nonnegative_speed": [
+            45479,
+            16384
+          ],
+          "parameter": [
+            7,
+            8
+          ],
+          "position": [
+            [
+              484463,
+              786432
+            ],
+            [
+              2401,
+              4096
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            719761,
+            786432
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            33554432,
+            42211009
+          ],
+          "signed_progression_rate": [
+            45479,
+            16384
+          ],
+          "unit_tangent": [
+            [
+              1695,
+              6497
+            ],
+            [
+              6272,
+              6497
+            ]
+          ],
+          "velocity": [
+            [
+              11865,
+              16384
+            ],
+            [
+              343,
+              128
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            18542475,
+            16777216
+          ],
+          "arc_increment_to_next": [
+            11481439,
+            50331648
+          ],
+          "base_oriented_length_increment": [
+            18542475,
+            16777216
+          ],
+          "continued_direction": [
+            [
+              14911,
+              116161
+            ],
+            [
+              115200,
+              116161
+            ]
+          ],
+          "curvature_pair": [
+            [
+              15,
+              4
+            ],
+            [
+              202400668815,
+              34359738368
+            ]
+          ],
+          "nonnegative_speed": [
+            1742415,
+            524288
+          ],
+          "parameter": [
+            15,
+            16
+          ],
+          "position": [
+            [
+              10948725,
+              16777216
+            ],
+            [
+              50625,
+              65536
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            18542475,
+            16777216
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8589934592,
+            13493377921
+          ],
+          "signed_progression_rate": [
+            1742415,
+            524288
+          ],
+          "unit_tangent": [
+            [
+              14911,
+              116161
+            ],
+            [
+              115200,
+              116161
+            ]
+          ],
+          "velocity": [
+            [
+              223665,
+              524288
+            ],
+            [
+              3375,
+              1024
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            4,
+            3
+          ],
+          "arc_increment_to_next": null,
+          "base_oriented_length_increment": [
+            4,
+            3
+          ],
+          "continued_direction": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              4,
+              1
+            ],
+            [
+              8,
+              1
+            ]
+          ],
+          "nonnegative_speed": [
+            4,
+            1
+          ],
+          "parameter": [
+            1,
+            1
+          ],
+          "position": [
+            [
+              2,
+              3
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            4,
+            3
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            1,
+            2
+          ],
+          "signed_progression_rate": [
+            4,
+            1
+          ],
+          "unit_tangent": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              0,
+              1
+            ],
+            [
+              4,
+              1
+            ]
+          ]
+        }
+      ],
+      "polynomials": {
+        "S_or": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "U": [
+          [
+            1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "base_oriented_increment": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "dx": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -2,
+            1
+          ]
+        ],
+        "dy": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "g": [
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "h": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "x": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -1,
+            3
+          ]
+        ],
+        "y": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      "registered_random_tape_rows": null
+    },
+    "PH3_rev_h_form": {
+      "dyadic_S4_rows": [
+        {
+          "accumulated_length_increment": [
+            0,
+            1
+          ],
+          "arc_increment_to_next": [
+            1489,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            0,
+            1
+          ],
+          "continued_direction": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              4,
+              1
+            ]
+          ],
+          "nonnegative_speed": [
+            2,
+            1
+          ],
+          "parameter": [
+            0,
+            1
+          ],
+          "position": [
+            [
+              2,
+              3
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            0,
+            1
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -1,
+            2
+          ],
+          "signed_progression_rate": [
+            -2,
+            1
+          ],
+          "unit_tangent": [
+            [
+              0,
+              1
+            ],
+            [
+              -1,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              0,
+              1
+            ],
+            [
+              -2,
+              1
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1489,
+            12288
+          ],
+          "arc_increment_to_next": [
+            1399,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -1489,
+            12288
+          ],
+          "continued_direction": [
+            [
+              31,
+              481
+            ],
+            [
+              480,
+              481
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              231361,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            481,
+            256
+          ],
+          "parameter": [
+            1,
+            16
+          ],
+          "position": [
+            [
+              2715,
+              4096
+            ],
+            [
+              225,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -1489,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            231361
+          ],
+          "signed_progression_rate": [
+            -481,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -31,
+              481
+            ],
+            [
+              -480,
+              481
+            ]
+          ],
+          "velocity": [
+            [
+              -31,
+              256
+            ],
+            [
+              -15,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            361,
+            1536
+          ],
+          "arc_increment_to_next": [
+            1315,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -361,
+            1536
+          ],
+          "continued_direction": [
+            [
+              15,
+              113
+            ],
+            [
+              112,
+              113
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              12769,
+              4096
+            ]
+          ],
+          "nonnegative_speed": [
+            113,
+            64
+          ],
+          "parameter": [
+            1,
+            8
+          ],
+          "position": [
+            [
+              1001,
+              1536
+            ],
+            [
+              49,
+              64
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -361,
+            1536
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -8192,
+            12769
+          ],
+          "signed_progression_rate": [
+            -113,
+            64
+          ],
+          "unit_tangent": [
+            [
+              -15,
+              113
+            ],
+            [
+              -112,
+              113
+            ]
+          ],
+          "velocity": [
+            [
+              -15,
+              64
+            ],
+            [
+              -7,
+              4
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1401,
+            4096
+          ],
+          "arc_increment_to_next": [
+            1237,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -1401,
+            4096
+          ],
+          "continued_direction": [
+            [
+              87,
+              425
+            ],
+            [
+              416,
+              425
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              180625,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            425,
+            256
+          ],
+          "parameter": [
+            3,
+            16
+          ],
+          "position": [
+            [
+              7787,
+              12288
+            ],
+            [
+              169,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -1401,
+            4096
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            180625
+          ],
+          "signed_progression_rate": [
+            -425,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -87,
+              425
+            ],
+            [
+              -416,
+              425
+            ]
+          ],
+          "velocity": [
+            [
+              -87,
+              256
+            ],
+            [
+              -13,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            85,
+            192
+          ],
+          "arc_increment_to_next": [
+            1165,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -85,
+            192
+          ],
+          "continued_direction": [
+            [
+              7,
+              25
+            ],
+            [
+              24,
+              25
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              625,
+              256
+            ]
+          ],
+          "nonnegative_speed": [
+            25,
+            16
+          ],
+          "parameter": [
+            1,
+            4
+          ],
+          "position": [
+            [
+              39,
+              64
+            ],
+            [
+              9,
+              16
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -85,
+            192
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -512,
+            625
+          ],
+          "signed_progression_rate": [
+            -25,
+            16
+          ],
+          "unit_tangent": [
+            [
+              -7,
+              25
+            ],
+            [
+              -24,
+              25
+            ]
+          ],
+          "velocity": [
+            [
+              -7,
+              16
+            ],
+            [
+              -3,
+              2
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            6605,
+            12288
+          ],
+          "arc_increment_to_next": [
+            1099,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -6605,
+            12288
+          ],
+          "continued_direction": [
+            [
+              135,
+              377
+            ],
+            [
+              352,
+              377
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              142129,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            377,
+            256
+          ],
+          "parameter": [
+            5,
+            16
+          ],
+          "position": [
+            [
+              7117,
+              12288
+            ],
+            [
+              121,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -6605,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            142129
+          ],
+          "signed_progression_rate": [
+            -377,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -135,
+              377
+            ],
+            [
+              -352,
+              377
+            ]
+          ],
+          "velocity": [
+            [
+              -135,
+              256
+            ],
+            [
+              -11,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            321,
+            512
+          ],
+          "arc_increment_to_next": [
+            1039,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -321,
+            512
+          ],
+          "continued_direction": [
+            [
+              39,
+              89
+            ],
+            [
+              80,
+              89
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              7921,
+              4096
+            ]
+          ],
+          "nonnegative_speed": [
+            89,
+            64
+          ],
+          "parameter": [
+            3,
+            8
+          ],
+          "position": [
+            [
+              835,
+              1536
+            ],
+            [
+              25,
+              64
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -321,
+            512
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -8192,
+            7921
+          ],
+          "signed_progression_rate": [
+            -89,
+            64
+          ],
+          "unit_tangent": [
+            [
+              -39,
+              89
+            ],
+            [
+              -80,
+              89
+            ]
+          ],
+          "velocity": [
+            [
+              -39,
+              64
+            ],
+            [
+              -5,
+              4
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            8743,
+            12288
+          ],
+          "arc_increment_to_next": [
+            985,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -8743,
+            12288
+          ],
+          "continued_direction": [
+            [
+              175,
+              337
+            ],
+            [
+              288,
+              337
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              113569,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            337,
+            256
+          ],
+          "parameter": [
+            7,
+            16
+          ],
+          "position": [
+            [
+              2061,
+              4096
+            ],
+            [
+              81,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -8743,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            113569
+          ],
+          "signed_progression_rate": [
+            -337,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -175,
+              337
+            ],
+            [
+              -288,
+              337
+            ]
+          ],
+          "velocity": [
+            [
+              -175,
+              256
+            ],
+            [
+              -9,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            19,
+            24
+          ],
+          "arc_increment_to_next": [
+            937,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -19,
+            24
+          ],
+          "continued_direction": [
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              5
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              25,
+              16
+            ]
+          ],
+          "nonnegative_speed": [
+            5,
+            4
+          ],
+          "parameter": [
+            1,
+            2
+          ],
+          "position": [
+            [
+              11,
+              24
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -19,
+            24
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -32,
+            25
+          ],
+          "signed_progression_rate": [
+            -5,
+            4
+          ],
+          "unit_tangent": [
+            [
+              -3,
+              5
+            ],
+            [
+              -4,
+              5
+            ]
+          ],
+          "velocity": [
+            [
+              -3,
+              4
+            ],
+            [
+              -1,
+              1
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            3555,
+            4096
+          ],
+          "arc_increment_to_next": [
+            895,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -3555,
+            4096
+          ],
+          "continued_direction": [
+            [
+              207,
+              305
+            ],
+            [
+              224,
+              305
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              93025,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            305,
+            256
+          ],
+          "parameter": [
+            9,
+            16
+          ],
+          "position": [
+            [
+              5033,
+              12288
+            ],
+            [
+              49,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -3555,
+            4096
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            93025
+          ],
+          "signed_progression_rate": [
+            -305,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -207,
+              305
+            ],
+            [
+              -224,
+              305
+            ]
+          ],
+          "velocity": [
+            [
+              -207,
+              256
+            ],
+            [
+              -7,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1445,
+            1536
+          ],
+          "arc_increment_to_next": [
+            859,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -1445,
+            1536
+          ],
+          "continued_direction": [
+            [
+              55,
+              73
+            ],
+            [
+              48,
+              73
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              5329,
+              4096
+            ]
+          ],
+          "nonnegative_speed": [
+            73,
+            64
+          ],
+          "parameter": [
+            5,
+            8
+          ],
+          "position": [
+            [
+              183,
+              512
+            ],
+            [
+              9,
+              64
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -1445,
+            1536
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -8192,
+            5329
+          ],
+          "signed_progression_rate": [
+            -73,
+            64
+          ],
+          "unit_tangent": [
+            [
+              -55,
+              73
+            ],
+            [
+              -48,
+              73
+            ]
+          ],
+          "velocity": [
+            [
+              -55,
+              64
+            ],
+            [
+              -3,
+              4
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            12419,
+            12288
+          ],
+          "arc_increment_to_next": [
+            829,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -12419,
+            12288
+          ],
+          "continued_direction": [
+            [
+              231,
+              281
+            ],
+            [
+              160,
+              281
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              78961,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            281,
+            256
+          ],
+          "parameter": [
+            11,
+            16
+          ],
+          "position": [
+            [
+              3715,
+              12288
+            ],
+            [
+              25,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -12419,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            78961
+          ],
+          "signed_progression_rate": [
+            -281,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -231,
+              281
+            ],
+            [
+              -160,
+              281
+            ]
+          ],
+          "velocity": [
+            [
+              -231,
+              256
+            ],
+            [
+              -5,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            69,
+            64
+          ],
+          "arc_increment_to_next": [
+            805,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -69,
+            64
+          ],
+          "continued_direction": [
+            [
+              15,
+              17
+            ],
+            [
+              8,
+              17
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              289,
+              256
+            ]
+          ],
+          "nonnegative_speed": [
+            17,
+            16
+          ],
+          "parameter": [
+            3,
+            4
+          ],
+          "position": [
+            [
+              47,
+              192
+            ],
+            [
+              1,
+              16
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -69,
+            64
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -512,
+            289
+          ],
+          "signed_progression_rate": [
+            -17,
+            16
+          ],
+          "unit_tangent": [
+            [
+              -15,
+              17
+            ],
+            [
+              -8,
+              17
+            ]
+          ],
+          "velocity": [
+            [
+              -15,
+              16
+            ],
+            [
+              -1,
+              2
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            14053,
+            12288
+          ],
+          "arc_increment_to_next": [
+            787,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -14053,
+            12288
+          ],
+          "continued_direction": [
+            [
+              247,
+              265
+            ],
+            [
+              96,
+              265
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              70225,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            265,
+            256
+          ],
+          "parameter": [
+            13,
+            16
+          ],
+          "position": [
+            [
+              759,
+              4096
+            ],
+            [
+              9,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -14053,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            70225
+          ],
+          "signed_progression_rate": [
+            -265,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -247,
+              265
+            ],
+            [
+              -96,
+              265
+            ]
+          ],
+          "velocity": [
+            [
+              -247,
+              256
+            ],
+            [
+              -3,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1855,
+            1536
+          ],
+          "arc_increment_to_next": [
+            775,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -1855,
+            1536
+          ],
+          "continued_direction": [
+            [
+              63,
+              65
+            ],
+            [
+              16,
+              65
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              4225,
+              4096
+            ]
+          ],
+          "nonnegative_speed": [
+            65,
+            64
+          ],
+          "parameter": [
+            7,
+            8
+          ],
+          "position": [
+            [
+              191,
+              1536
+            ],
+            [
+              1,
+              64
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -1855,
+            1536
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -8192,
+            4225
+          ],
+          "signed_progression_rate": [
+            -65,
+            64
+          ],
+          "unit_tangent": [
+            [
+              -63,
+              65
+            ],
+            [
+              -16,
+              65
+            ]
+          ],
+          "velocity": [
+            [
+              -63,
+              64
+            ],
+            [
+              -1,
+              4
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            5205,
+            4096
+          ],
+          "arc_increment_to_next": [
+            769,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -5205,
+            4096
+          ],
+          "continued_direction": [
+            [
+              255,
+              257
+            ],
+            [
+              32,
+              257
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              66049,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            257,
+            256
+          ],
+          "parameter": [
+            15,
+            16
+          ],
+          "position": [
+            [
+              767,
+              12288
+            ],
+            [
+              1,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -5205,
+            4096
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            66049
+          ],
+          "signed_progression_rate": [
+            -257,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -255,
+              257
+            ],
+            [
+              -32,
+              257
+            ]
+          ],
+          "velocity": [
+            [
+              -255,
+              256
+            ],
+            [
+              -1,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            4,
+            3
+          ],
+          "arc_increment_to_next": null,
+          "base_oriented_length_increment": [
+            -4,
+            3
+          ],
+          "continued_direction": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "nonnegative_speed": [
+            1,
+            1
+          ],
+          "parameter": [
+            1,
+            1
+          ],
+          "position": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            -4,
+            3
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -2,
+            1
+          ],
+          "signed_progression_rate": [
+            -1,
+            1
+          ],
+          "unit_tangent": [
+            [
+              -1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              -1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        }
+      ],
+      "polynomials": {
+        "S_or": [
+          [
+            0,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            -1,
+            3
+          ]
+        ],
+        "U": [
+          [
+            1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            1,
+            1
+          ],
+          [
+            -1,
+            1
+          ]
+        ],
+        "base_oriented_increment": [
+          [
+            0,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            -1,
+            3
+          ]
+        ],
+        "dx": [
+          [
+            0,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "dy": [
+          [
+            -2,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "g": [
+          [
+            2,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "h": [
+          [
+            -1,
+            1
+          ]
+        ],
+        "x": [
+          [
+            2,
+            3
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "y": [
+          [
+            1,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      "registered_random_tape_rows": null
+    },
+    "PH3_rev_primitive": {
+      "dyadic_S4_rows": [
+        {
+          "accumulated_length_increment": [
+            0,
+            1
+          ],
+          "arc_increment_to_next": [
+            1489,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            0,
+            1
+          ],
+          "continued_direction": [
+            [
+              0,
+              1
+            ],
+            [
+              -1,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              4,
+              1
+            ]
+          ],
+          "nonnegative_speed": [
+            2,
+            1
+          ],
+          "parameter": [
+            0,
+            1
+          ],
+          "position": [
+            [
+              2,
+              3
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            0,
+            1
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -1,
+            2
+          ],
+          "signed_progression_rate": [
+            2,
+            1
+          ],
+          "unit_tangent": [
+            [
+              0,
+              1
+            ],
+            [
+              -1,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              0,
+              1
+            ],
+            [
+              -2,
+              1
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1489,
+            12288
+          ],
+          "arc_increment_to_next": [
+            1399,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -1489,
+            12288
+          ],
+          "continued_direction": [
+            [
+              -31,
+              481
+            ],
+            [
+              -480,
+              481
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              231361,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            481,
+            256
+          ],
+          "parameter": [
+            1,
+            16
+          ],
+          "position": [
+            [
+              2715,
+              4096
+            ],
+            [
+              225,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            1489,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            231361
+          ],
+          "signed_progression_rate": [
+            481,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -31,
+              481
+            ],
+            [
+              -480,
+              481
+            ]
+          ],
+          "velocity": [
+            [
+              -31,
+              256
+            ],
+            [
+              -15,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            361,
+            1536
+          ],
+          "arc_increment_to_next": [
+            1315,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -361,
+            1536
+          ],
+          "continued_direction": [
+            [
+              -15,
+              113
+            ],
+            [
+              -112,
+              113
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              12769,
+              4096
+            ]
+          ],
+          "nonnegative_speed": [
+            113,
+            64
+          ],
+          "parameter": [
+            1,
+            8
+          ],
+          "position": [
+            [
+              1001,
+              1536
+            ],
+            [
+              49,
+              64
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            361,
+            1536
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -8192,
+            12769
+          ],
+          "signed_progression_rate": [
+            113,
+            64
+          ],
+          "unit_tangent": [
+            [
+              -15,
+              113
+            ],
+            [
+              -112,
+              113
+            ]
+          ],
+          "velocity": [
+            [
+              -15,
+              64
+            ],
+            [
+              -7,
+              4
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1401,
+            4096
+          ],
+          "arc_increment_to_next": [
+            1237,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -1401,
+            4096
+          ],
+          "continued_direction": [
+            [
+              -87,
+              425
+            ],
+            [
+              -416,
+              425
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              180625,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            425,
+            256
+          ],
+          "parameter": [
+            3,
+            16
+          ],
+          "position": [
+            [
+              7787,
+              12288
+            ],
+            [
+              169,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            1401,
+            4096
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            180625
+          ],
+          "signed_progression_rate": [
+            425,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -87,
+              425
+            ],
+            [
+              -416,
+              425
+            ]
+          ],
+          "velocity": [
+            [
+              -87,
+              256
+            ],
+            [
+              -13,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            85,
+            192
+          ],
+          "arc_increment_to_next": [
+            1165,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -85,
+            192
+          ],
+          "continued_direction": [
+            [
+              -7,
+              25
+            ],
+            [
+              -24,
+              25
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              625,
+              256
+            ]
+          ],
+          "nonnegative_speed": [
+            25,
+            16
+          ],
+          "parameter": [
+            1,
+            4
+          ],
+          "position": [
+            [
+              39,
+              64
+            ],
+            [
+              9,
+              16
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            85,
+            192
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -512,
+            625
+          ],
+          "signed_progression_rate": [
+            25,
+            16
+          ],
+          "unit_tangent": [
+            [
+              -7,
+              25
+            ],
+            [
+              -24,
+              25
+            ]
+          ],
+          "velocity": [
+            [
+              -7,
+              16
+            ],
+            [
+              -3,
+              2
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            6605,
+            12288
+          ],
+          "arc_increment_to_next": [
+            1099,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -6605,
+            12288
+          ],
+          "continued_direction": [
+            [
+              -135,
+              377
+            ],
+            [
+              -352,
+              377
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              142129,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            377,
+            256
+          ],
+          "parameter": [
+            5,
+            16
+          ],
+          "position": [
+            [
+              7117,
+              12288
+            ],
+            [
+              121,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            6605,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            142129
+          ],
+          "signed_progression_rate": [
+            377,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -135,
+              377
+            ],
+            [
+              -352,
+              377
+            ]
+          ],
+          "velocity": [
+            [
+              -135,
+              256
+            ],
+            [
+              -11,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            321,
+            512
+          ],
+          "arc_increment_to_next": [
+            1039,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -321,
+            512
+          ],
+          "continued_direction": [
+            [
+              -39,
+              89
+            ],
+            [
+              -80,
+              89
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              7921,
+              4096
+            ]
+          ],
+          "nonnegative_speed": [
+            89,
+            64
+          ],
+          "parameter": [
+            3,
+            8
+          ],
+          "position": [
+            [
+              835,
+              1536
+            ],
+            [
+              25,
+              64
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            321,
+            512
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -8192,
+            7921
+          ],
+          "signed_progression_rate": [
+            89,
+            64
+          ],
+          "unit_tangent": [
+            [
+              -39,
+              89
+            ],
+            [
+              -80,
+              89
+            ]
+          ],
+          "velocity": [
+            [
+              -39,
+              64
+            ],
+            [
+              -5,
+              4
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            8743,
+            12288
+          ],
+          "arc_increment_to_next": [
+            985,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -8743,
+            12288
+          ],
+          "continued_direction": [
+            [
+              -175,
+              337
+            ],
+            [
+              -288,
+              337
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              113569,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            337,
+            256
+          ],
+          "parameter": [
+            7,
+            16
+          ],
+          "position": [
+            [
+              2061,
+              4096
+            ],
+            [
+              81,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            8743,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            113569
+          ],
+          "signed_progression_rate": [
+            337,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -175,
+              337
+            ],
+            [
+              -288,
+              337
+            ]
+          ],
+          "velocity": [
+            [
+              -175,
+              256
+            ],
+            [
+              -9,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            19,
+            24
+          ],
+          "arc_increment_to_next": [
+            937,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -19,
+            24
+          ],
+          "continued_direction": [
+            [
+              -3,
+              5
+            ],
+            [
+              -4,
+              5
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              25,
+              16
+            ]
+          ],
+          "nonnegative_speed": [
+            5,
+            4
+          ],
+          "parameter": [
+            1,
+            2
+          ],
+          "position": [
+            [
+              11,
+              24
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            19,
+            24
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -32,
+            25
+          ],
+          "signed_progression_rate": [
+            5,
+            4
+          ],
+          "unit_tangent": [
+            [
+              -3,
+              5
+            ],
+            [
+              -4,
+              5
+            ]
+          ],
+          "velocity": [
+            [
+              -3,
+              4
+            ],
+            [
+              -1,
+              1
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            3555,
+            4096
+          ],
+          "arc_increment_to_next": [
+            895,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -3555,
+            4096
+          ],
+          "continued_direction": [
+            [
+              -207,
+              305
+            ],
+            [
+              -224,
+              305
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              93025,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            305,
+            256
+          ],
+          "parameter": [
+            9,
+            16
+          ],
+          "position": [
+            [
+              5033,
+              12288
+            ],
+            [
+              49,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            3555,
+            4096
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            93025
+          ],
+          "signed_progression_rate": [
+            305,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -207,
+              305
+            ],
+            [
+              -224,
+              305
+            ]
+          ],
+          "velocity": [
+            [
+              -207,
+              256
+            ],
+            [
+              -7,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1445,
+            1536
+          ],
+          "arc_increment_to_next": [
+            859,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -1445,
+            1536
+          ],
+          "continued_direction": [
+            [
+              -55,
+              73
+            ],
+            [
+              -48,
+              73
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              5329,
+              4096
+            ]
+          ],
+          "nonnegative_speed": [
+            73,
+            64
+          ],
+          "parameter": [
+            5,
+            8
+          ],
+          "position": [
+            [
+              183,
+              512
+            ],
+            [
+              9,
+              64
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            1445,
+            1536
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -8192,
+            5329
+          ],
+          "signed_progression_rate": [
+            73,
+            64
+          ],
+          "unit_tangent": [
+            [
+              -55,
+              73
+            ],
+            [
+              -48,
+              73
+            ]
+          ],
+          "velocity": [
+            [
+              -55,
+              64
+            ],
+            [
+              -3,
+              4
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            12419,
+            12288
+          ],
+          "arc_increment_to_next": [
+            829,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -12419,
+            12288
+          ],
+          "continued_direction": [
+            [
+              -231,
+              281
+            ],
+            [
+              -160,
+              281
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              78961,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            281,
+            256
+          ],
+          "parameter": [
+            11,
+            16
+          ],
+          "position": [
+            [
+              3715,
+              12288
+            ],
+            [
+              25,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            12419,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            78961
+          ],
+          "signed_progression_rate": [
+            281,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -231,
+              281
+            ],
+            [
+              -160,
+              281
+            ]
+          ],
+          "velocity": [
+            [
+              -231,
+              256
+            ],
+            [
+              -5,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            69,
+            64
+          ],
+          "arc_increment_to_next": [
+            805,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -69,
+            64
+          ],
+          "continued_direction": [
+            [
+              -15,
+              17
+            ],
+            [
+              -8,
+              17
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              289,
+              256
+            ]
+          ],
+          "nonnegative_speed": [
+            17,
+            16
+          ],
+          "parameter": [
+            3,
+            4
+          ],
+          "position": [
+            [
+              47,
+              192
+            ],
+            [
+              1,
+              16
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            69,
+            64
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -512,
+            289
+          ],
+          "signed_progression_rate": [
+            17,
+            16
+          ],
+          "unit_tangent": [
+            [
+              -15,
+              17
+            ],
+            [
+              -8,
+              17
+            ]
+          ],
+          "velocity": [
+            [
+              -15,
+              16
+            ],
+            [
+              -1,
+              2
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            14053,
+            12288
+          ],
+          "arc_increment_to_next": [
+            787,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -14053,
+            12288
+          ],
+          "continued_direction": [
+            [
+              -247,
+              265
+            ],
+            [
+              -96,
+              265
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              70225,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            265,
+            256
+          ],
+          "parameter": [
+            13,
+            16
+          ],
+          "position": [
+            [
+              759,
+              4096
+            ],
+            [
+              9,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            14053,
+            12288
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            70225
+          ],
+          "signed_progression_rate": [
+            265,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -247,
+              265
+            ],
+            [
+              -96,
+              265
+            ]
+          ],
+          "velocity": [
+            [
+              -247,
+              256
+            ],
+            [
+              -3,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1855,
+            1536
+          ],
+          "arc_increment_to_next": [
+            775,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -1855,
+            1536
+          ],
+          "continued_direction": [
+            [
+              -63,
+              65
+            ],
+            [
+              -16,
+              65
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              4225,
+              4096
+            ]
+          ],
+          "nonnegative_speed": [
+            65,
+            64
+          ],
+          "parameter": [
+            7,
+            8
+          ],
+          "position": [
+            [
+              191,
+              1536
+            ],
+            [
+              1,
+              64
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            1855,
+            1536
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -8192,
+            4225
+          ],
+          "signed_progression_rate": [
+            65,
+            64
+          ],
+          "unit_tangent": [
+            [
+              -63,
+              65
+            ],
+            [
+              -16,
+              65
+            ]
+          ],
+          "velocity": [
+            [
+              -63,
+              64
+            ],
+            [
+              -1,
+              4
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            5205,
+            4096
+          ],
+          "arc_increment_to_next": [
+            769,
+            12288
+          ],
+          "base_oriented_length_increment": [
+            -5205,
+            4096
+          ],
+          "continued_direction": [
+            [
+              -255,
+              257
+            ],
+            [
+              -32,
+              257
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              66049,
+              65536
+            ]
+          ],
+          "nonnegative_speed": [
+            257,
+            256
+          ],
+          "parameter": [
+            15,
+            16
+          ],
+          "position": [
+            [
+              767,
+              12288
+            ],
+            [
+              1,
+              256
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            5205,
+            4096
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -131072,
+            66049
+          ],
+          "signed_progression_rate": [
+            257,
+            256
+          ],
+          "unit_tangent": [
+            [
+              -255,
+              257
+            ],
+            [
+              -32,
+              257
+            ]
+          ],
+          "velocity": [
+            [
+              -255,
+              256
+            ],
+            [
+              -1,
+              8
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            4,
+            3
+          ],
+          "arc_increment_to_next": null,
+          "base_oriented_length_increment": [
+            -4,
+            3
+          ],
+          "continued_direction": [
+            [
+              -1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              -2,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "nonnegative_speed": [
+            1,
+            1
+          ],
+          "parameter": [
+            1,
+            1
+          ],
+          "position": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            4,
+            3
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            -2,
+            1
+          ],
+          "signed_progression_rate": [
+            1,
+            1
+          ],
+          "unit_tangent": [
+            [
+              -1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              -1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        }
+      ],
+      "polynomials": {
+        "S_or": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "U": [
+          [
+            -1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            1,
+            1
+          ]
+        ],
+        "base_oriented_increment": [
+          [
+            0,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            -1,
+            3
+          ]
+        ],
+        "dx": [
+          [
+            0,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "dy": [
+          [
+            -2,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "g": [
+          [
+            2,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "h": [
+          [
+            1,
+            1
+          ]
+        ],
+        "x": [
+          [
+            2,
+            3
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "y": [
+          [
+            1,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      "registered_random_tape_rows": null
+    },
+    "PH3h_sq_h_form": {
+      "dyadic_S4_rows": [
+        {
+          "accumulated_length_increment": [
+            0,
+            1
+          ],
+          "arc_increment_to_next": [
+            130341481053104448595,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            0,
+            1
+          ],
+          "continued_direction": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              8,
+              49
+            ],
+            [
+              4,
+              49
+            ]
+          ],
+          "nonnegative_speed": [
+            4,
+            49
+          ],
+          "parameter": [
+            0,
+            1
+          ],
+          "position": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            0,
+            1
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            2,
+            1
+          ],
+          "signed_progression_rate": [
+            4,
+            49
+          ],
+          "unit_tangent": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              4,
+              49
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            130341481053104448595,
+            19471766726598797033472
+          ],
+          "arc_increment_to_next": [
+            203922461308261764013,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            130341481053104448595,
+            19471766726598797033472
+          ],
+          "continued_direction": [
+            [
+              40280302695,
+              40283888537
+            ],
+            [
+              537485312,
+              40283888537
+            ]
+          ],
+          "curvature_pair": [
+            [
+              1681,
+              6272
+            ],
+            [
+              551155687221641725272845050427,
+              4085226922360937877983834669056
+            ]
+          ],
+          "nonnegative_speed": [
+            13681789599715913971,
+            101415451701035401216
+          ],
+          "parameter": [
+            1,
+            16
+          ],
+          "position": [
+            [
+              130337607090897869741,
+              19471766726598797033472
+            ],
+            [
+              542170345795,
+              12127166577770496
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            130341481053104448595,
+            19471766726598797033472
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            651343578182547493300994048,
+            327873698525664321994553867
+          ],
+          "signed_progression_rate": [
+            13681789599715913971,
+            101415451701035401216
+          ],
+          "unit_tangent": [
+            [
+              40280302695,
+              40283888537
+            ],
+            [
+              537485312,
+              40283888537
+            ]
+          ],
+          "velocity": [
+            [
+              13680571724839292685,
+              101415451701035401216
+            ],
+            [
+              454770304937,
+              252649303703552
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            33988924532723,
+            1979945563717632
+          ],
+          "arc_increment_to_next": [
+            296060723882160896035,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            33988924532723,
+            1979945563717632
+          ],
+          "continued_direction": [
+            [
+              12841335,
+              12848777
+            ],
+            [
+              437248,
+              12848777
+            ]
+          ],
+          "curvature_pair": [
+            [
+              625,
+              1568
+            ],
+            [
+              376098094745270128125,
+              1854453973961790193664
+            ]
+          ],
+          "nonnegative_speed": [
+            29271120103125,
+            144371030687744
+          ],
+          "parameter": [
+            1,
+            8
+          ],
+          "position": [
+            [
+              33982333458445,
+              1979945563717632
+            ],
+            [
+              20231077,
+              69055021056
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            33988924532723,
+            1979945563717632
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            1182687483393998848,
+            601756951592432205
+          ],
+          "signed_progression_rate": [
+            29271120103125,
+            144371030687744
+          ],
+          "unit_tangent": [
+            [
+              12841335,
+              12848777
+            ],
+            [
+              437248,
+              12848777
+            ]
+          ],
+          "velocity": [
+            [
+              29254166296875,
+              144371030687744
+            ],
+            [
+              138965625,
+              20141047808
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            210108222081175702881,
+            6490588908866265677824
+          ],
+          "arc_increment_to_next": [
+            58429954947749750779,
+            2781680960942685290496
+          ],
+          "base_oriented_length_increment": [
+            210108222081175702881,
+            6490588908866265677824
+          ],
+          "continued_direction": [
+            [
+              40241225167,
+              40322966065
+            ],
+            [
+              2566201344,
+              40322966065
+            ]
+          ],
+          "curvature_pair": [
+            [
+              3481,
+              6272
+            ],
+            [
+              1172148865884028412030160235825,
+              4085226922360937877983834669056
+            ]
+          ],
+          "nonnegative_speed": [
+            29069014020311464705,
+            101415451701035401216
+          ],
+          "parameter": [
+            3,
+            16
+          ],
+          "position": [
+            [
+              209965038892434535071,
+              6490588908866265677824
+            ],
+            [
+              4188526224867,
+              4042388859256832
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            210108222081175702881,
+            6490588908866265677824
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            651343578182547493300994048,
+            336727625936233384668244825
+          ],
+          "signed_progression_rate": [
+            29069014020311464705,
+            101415451701035401216
+          ],
+          "unit_tangent": [
+            [
+              40241225167,
+              40322966065
+            ],
+            [
+              2566201344,
+              40322966065
+            ]
+          ],
+          "velocity": [
+            [
+              29010086626275902719,
+              101415451701035401216
+            ],
+            [
+              4608743472201,
+              252649303703552
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            61949154786931,
+            1160607738888192
+          ],
+          "arc_increment_to_next": [
+            546175431975442063939,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            61949154786931,
+            1160607738888192
+          ],
+          "continued_direction": [
+            [
+              9807927,
+              9861065
+            ],
+            [
+              1022336,
+              9861065
+            ]
+          ],
+          "curvature_pair": [
+            [
+              289,
+              392
+            ],
+            [
+              92710260484122391475,
+              237791503451353513984
+            ]
+          ],
+          "nonnegative_speed": [
+            9401647842715,
+            24179327893504
+          ],
+          "parameter": [
+            1,
+            4
+          ],
+          "position": [
+            [
+              61836269535629,
+              1160607738888192
+            ],
+            [
+              129311323,
+              46261469184
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            61949154786931,
+            1160607738888192
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            606610978192228352,
+            320796749080008275
+          ],
+          "signed_progression_rate": [
+            9401647842715,
+            24179327893504
+          ],
+          "unit_tangent": [
+            [
+              9807927,
+              9861065
+            ],
+            [
+              1022336,
+              9861065
+            ]
+          ],
+          "velocity": [
+            [
+              9350985488997,
+              24179327893504
+            ],
+            [
+              155405993,
+              3855122432
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1585509782853217428035,
+            19471766726598797033472
+          ],
+          "arc_increment_to_next": [
+            712615011870349594045,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            1585509782853217428035,
+            19471766726598797033472
+          ],
+          "continued_direction": [
+            [
+              40035762591,
+              40528428641
+            ],
+            [
+              6300098560,
+              40528428641
+            ]
+          ],
+          "curvature_pair": [
+            [
+              121,
+              128
+            ],
+            [
+              43009079852430686842092923799,
+              83371978007366079142527238144
+            ]
+          ],
+          "nonnegative_speed": [
+            1061207682967534839,
+            2069703095939497984
+          ],
+          "parameter": [
+            5,
+            16
+          ],
+          "position": [
+            [
+              1578938013753651748285,
+              19471766726598797033472
+            ],
+            [
+              78026232001775,
+              12127166577770496
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            1585509782853217428035,
+            19471766726598797033472
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            651343578182547493300994048,
+            355446940929179230099941519
+          ],
+          "signed_progression_rate": [
+            1061207682967534839,
+            2069703095939497984
+          ],
+          "unit_tangent": [
+            [
+              40035762591,
+              40528428641
+            ],
+            [
+              6300098560,
+              40528428641
+            ]
+          ],
+          "velocity": [
+            [
+              1048307577660506889,
+              2069703095939497984
+            ],
+            [
+              410962258905,
+              5156108238848
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            32442034785,
+            274877906944
+          ],
+          "arc_increment_to_next": [
+            381424831042445203,
+            8109857028987420672
+          ],
+          "base_oriented_length_increment": [
+            32442034785,
+            274877906944
+          ],
+          "continued_direction": [
+            [
+              258895,
+              265393
+            ],
+            [
+              58368,
+              265393
+            ]
+          ],
+          "curvature_pair": [
+            [
+              1849,
+              1568
+            ],
+            [
+              74101688669348369,
+              110338190870577152
+            ]
+          ],
+          "nonnegative_speed": [
+            279214932833,
+            420906795008
+          ],
+          "parameter": [
+            3,
+            8
+          ],
+          "position": [
+            [
+              32168072607,
+              274877906944
+            ],
+            [
+              893475,
+              67108864
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            32442034785,
+            274877906944
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            70368744177664,
+            40076629891481
+          ],
+          "signed_progression_rate": [
+            279214932833,
+            420906795008
+          ],
+          "unit_tangent": [
+            [
+              258895,
+              265393
+            ],
+            [
+              58368,
+              265393
+            ]
+          ],
+          "velocity": [
+            [
+              38911215785,
+              60129542144
+            ],
+            [
+              59968617,
+              411041792
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1338578015017275283,
+            8109857028987420672
+          ],
+          "arc_increment_to_next": [
+            1166806038939231415885,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            1338578015017275283,
+            8109857028987420672
+          ],
+          "continued_direction": [
+            [
+              803047815,
+              841119353
+            ],
+            [
+              250191872,
+              841119353
+            ]
+          ],
+          "curvature_pair": [
+            [
+              9025,
+              6272
+            ],
+            [
+              210929232759143307133542875,
+              243066991275119764263927808
+            ]
+          ],
+          "nonnegative_speed": [
+            250772059882853875,
+            295671870848499712
+          ],
+          "parameter": [
+            7,
+            16
+          ],
+          "position": [
+            [
+              1317353473284468845,
+              8109857028987420672
+            ],
+            [
+              901743413299,
+              35356170780672
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            1338578015017275283,
+            8109857028987420672
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            38754303455854554251264,
+            23371660139517263948315
+          ],
+          "signed_progression_rate": [
+            250772059882853875,
+            295671870848499712
+          ],
+          "unit_tangent": [
+            [
+              803047815,
+              841119353
+            ],
+            [
+              250191872,
+              841119353
+            ]
+          ],
+          "velocity": [
+            [
+              239421378230938125,
+              295671870848499712
+            ],
+            [
+              1300788637625,
+              5156108238848
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            63748038563,
+            283351498752
+          ],
+          "arc_increment_to_next": [
+            1482134948735183810803,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            63748038563,
+            283351498752
+          ],
+          "continued_direction": [
+            [
+              147423,
+              159905
+            ],
+            [
+              61936,
+              159905
+            ]
+          ],
+          "curvature_pair": [
+            [
+              169,
+              98
+            ],
+            [
+              2035315308780975,
+              1814205196009472
+            ]
+          ],
+          "nonnegative_speed": [
+            12728278095,
+            11806312448
+          ],
+          "parameter": [
+            1,
+            2
+          ],
+          "position": [
+            [
+              61968167773,
+              283351498752
+            ],
+            [
+              4162747,
+              90354432
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            63748038563,
+            283351498752
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            18512297918464,
+            12043285850775
+          ],
+          "signed_progression_rate": [
+            12728278095,
+            11806312448
+          ],
+          "unit_tangent": [
+            [
+              147423,
+              159905
+            ],
+            [
+              61936,
+              159905
+            ]
+          ],
+          "velocity": [
+            [
+              11734723377,
+              11806312448
+            ],
+            [
+              6288321,
+              15059072
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            813947910833110257,
+            2703285676329140224
+          ],
+          "arc_increment_to_next": [
+            1886535841836328763149,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            813947910833110257,
+            2703285676329140224
+          ],
+          "continued_direction": [
+            [
+              766417063,
+              877750105
+            ],
+            [
+              427843584,
+              877750105
+            ]
+          ],
+          "curvature_pair": [
+            [
+              12769,
+              6272
+            ],
+            [
+              355469782285104062957103925,
+              243066991275119764263927808
+            ]
+          ],
+          "nonnegative_speed": [
+            404978342081889085,
+            295671870848499712
+          ],
+          "parameter": [
+            9,
+            16
+          ],
+          "position": [
+            [
+              775994969241355023,
+              2703285676329140224
+            ],
+            [
+              936477882783,
+              11785390260224
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            813947910833110257,
+            2703285676329140224
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            38754303455854554251264,
+            27838498103618455866325
+          ],
+          "signed_progression_rate": [
+            404978342081889085,
+            295671870848499712
+          ],
+          "unit_tangent": [
+            [
+              766417063,
+              877750105
+            ],
+            [
+              427843584,
+              877750105
+            ]
+          ],
+          "velocity": [
+            [
+              353611249658592451,
+              295671870848499712
+            ],
+            [
+              3442373168697,
+              5156108238848
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            1891944004777153795,
+            4753849298486034432
+          ],
+          "arc_increment_to_next": [
+            345322606225725358885,
+            2781680960942685290496
+          ],
+          "base_oriented_length_increment": [
+            1891944004777153795,
+            4753849298486034432
+          ],
+          "continued_direction": [
+            [
+              561262719,
+              697552769
+            ],
+            [
+              414202880,
+              697552769
+            ]
+          ],
+          "curvature_pair": [
+            [
+              3721,
+              1568
+            ],
+            [
+              60369624771327841400819383,
+              31167807940375807784910848
+            ]
+          ],
+          "nonnegative_speed": [
+            86544885855550007,
+            49519263525896192
+          ],
+          "parameter": [
+            5,
+            8
+          ],
+          "position": [
+            [
+              1751178075732962045,
+              4753849298486034432
+            ],
+            [
+              3126970762175,
+              23685872222208
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            1891944004777153795,
+            4753849298486034432
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            19877428533402938638336,
+            16224032456685794517823
+          ],
+          "signed_progression_rate": [
+            86544885855550007,
+            49519263525896192
+          ],
+          "unit_tangent": [
+            [
+              561262719,
+              697552769
+            ],
+            [
+              414202880,
+              697552769
+            ]
+          ],
+          "velocity": [
+            [
+              69635474346214857,
+              49519263525896192
+            ],
+            [
+              1024192096265,
+              986911342592
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            10166660887147299456515,
+            19471766726598797033472
+          ],
+          "arc_increment_to_next": [
+            3130408088554331716093,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            10166660887147299456515,
+            19471766726598797033472
+          ],
+          "continued_direction": [
+            [
+              33550057215,
+              47014134017
+            ],
+            [
+              32935124992,
+              47014134017
+            ]
+          ],
+          "curvature_pair": [
+            [
+              17161,
+              6272
+            ],
+            [
+              10725231986368611331404183251337,
+              4085226922360937877983834669056
+            ]
+          ],
+          "nonnegative_speed": [
+            228127821784198733961,
+            101415451701035401216
+          ],
+          "parameter": [
+            11,
+            16
+          ],
+          "position": [
+            [
+              9007856736200552364541,
+              19471766726598797033472
+            ],
+            [
+              2579077571615105,
+              12127166577770496
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            10166660887147299456515,
+            19471766726598797033472
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            651343578182547493300994048,
+            624977098442317541600383617
+          ],
+          "signed_progression_rate": [
+            228127821784198733961,
+            101415451701035401216
+          ],
+          "unit_tangent": [
+            [
+              33550057215,
+              47014134017
+            ],
+            [
+              32935124992,
+              47014134017
+            ]
+          ],
+          "velocity": [
+            [
+              162795755642880991095,
+              101415451701035401216
+            ],
+            [
+              398128350993417,
+              252649303703552
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            264189024283521,
+            386869246296064
+          ],
+          "arc_increment_to_next": [
+            4110281014135876788835,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            264189024283521,
+            386869246296064
+          ],
+          "continued_direction": [
+            [
+              7372735,
+              12296257
+            ],
+            [
+              9840768,
+              12296257
+            ]
+          ],
+          "curvature_pair": [
+            [
+              25,
+              8
+            ],
+            [
+              17784657246707013625,
+              4852887825537826816
+            ]
+          ],
+          "nonnegative_speed": [
+            1446347229625,
+            493455671296
+          ],
+          "parameter": [
+            3,
+            4
+          ],
+          "position": [
+            [
+              219767664678015,
+              386869246296064
+            ],
+            [
+              5147542251,
+              15420489728
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            264189024283521,
+            386869246296064
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            606610978192228352,
+            711386289868280545
+          ],
+          "signed_progression_rate": [
+            1446347229625,
+            493455671296
+          ],
+          "unit_tangent": [
+            [
+              7372735,
+              12296257
+            ],
+            [
+              9840768,
+              12296257
+            ]
+          ],
+          "velocity": [
+            [
+              867217954375,
+              493455671296
+            ],
+            [
+              184553625,
+              78675968
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            7250041645080178243,
+            8109857028987420672
+          ],
+          "arc_increment_to_next": [
+            326224081153783579,
+            1158551004141060096
+          ],
+          "base_oriented_length_increment": [
+            7250041645080178243,
+            8109857028987420672
+          ],
+          "continued_direction": [
+            [
+              521789343,
+              1122377825
+            ],
+            [
+              993714176,
+              1122377825
+            ]
+          ],
+          "curvature_pair": [
+            [
+              22201,
+              6272
+            ],
+            [
+              1286524215052135224330355625,
+              243066991275119764263927808
+            ]
+          ],
+          "nonnegative_speed": [
+            1146248782180042825,
+            295671870848499712
+          ],
+          "parameter": [
+            13,
+            16
+          ],
+          "position": [
+            [
+              5515355281002140093,
+              8109857028987420672
+            ],
+            [
+              18118853619217,
+              35356170780672
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            7250041645080178243,
+            8109857028987420672
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            38754303455854554251264,
+            57948930906361660480625
+          ],
+          "signed_progression_rate": [
+            1146248782180042825,
+            295671870848499712
+          ],
+          "unit_tangent": [
+            [
+              521789343,
+              1122377825
+            ],
+            [
+              993714176,
+              1122377825
+            ]
+          ],
+          "velocity": [
+            [
+              532886863626581943,
+              295671870848499712
+            ],
+            [
+              17697556655129,
+              5156108238848
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            2327541555946451,
+            1979945563717632
+          ],
+          "arc_increment_to_next": [
+            7434931526235890000659,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            2327541555946451,
+            1979945563717632
+          ],
+          "continued_direction": [
+            [
+              6152487,
+              19537625
+            ],
+            [
+              18543616,
+              19537625
+            ]
+          ],
+          "curvature_pair": [
+            [
+              6241,
+              1568
+            ],
+            [
+              14701216326607215796875,
+              1854453973961790193664
+            ]
+          ],
+          "nonnegative_speed": [
+            752456674063875,
+            144371030687744
+          ],
+          "parameter": [
+            7,
+            8
+          ],
+          "position": [
+            [
+              1562380958669869,
+              1979945563717632
+            ],
+            [
+              53292926947,
+              69055021056
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            2327541555946451,
+            1979945563717632
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            1182687483393998848,
+            2355586657043296875
+          ],
+          "signed_progression_rate": [
+            752456674063875,
+            144371030687744
+          ],
+          "unit_tangent": [
+            [
+              6152487,
+              19537625
+            ],
+            [
+              18543616,
+              19537625
+            ]
+          ],
+          "velocity": [
+            [
+              236952030005757,
+              144371030687744
+            ],
+            [
+              99633676857,
+              20141047808
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            10108376549341679524785,
+            6490588908866265677824
+          ],
+          "arc_increment_to_next": [
+            10241051032389121912045,
+            19471766726598797033472
+          ],
+          "base_oriented_length_increment": [
+            10108376549341679524785,
+            6490588908866265677824
+          ],
+          "continued_direction": [
+            [
+              10943544391,
+              69620646841
+            ],
+            [
+              68755169280,
+              69620646841
+            ]
+          ],
+          "curvature_pair": [
+            [
+              27889,
+              6272
+            ],
+            [
+              50285080288101297145408850402101,
+              4085226922360937877983834669056
+            ]
+          ],
+          "nonnegative_speed": [
+            722272523594080192861,
+            101415451701035401216
+          ],
+          "parameter": [
+            15,
+            16
+          ],
+          "position": [
+            [
+              5697305965504679699535,
+              6490588908866265677824
+            ],
+            [
+              4619266874722575,
+              4042388859256832
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            10108376549341679524785,
+            6490588908866265677824
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            651343578182547493300994048,
+            1803043504180906348216459909
+          ],
+          "signed_progression_rate": [
+            722272523594080192861,
+            101415451701035401216
+          ],
+          "unit_tangent": [
+            [
+              10943544391,
+              69620646841
+            ],
+            [
+              68755169280,
+              69620646841
+            ]
+          ],
+          "velocity": [
+            [
+              113532720292058101411,
+              101415451701035401216
+            ],
+            [
+              1776979313138985,
+              252649303703552
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            25,
+            12
+          ],
+          "arc_increment_to_next": null,
+          "base_oriented_length_increment": [
+            25,
+            12
+          ],
+          "continued_direction": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              242,
+              49
+            ],
+            [
+              968,
+              49
+            ]
+          ],
+          "nonnegative_speed": [
+            484,
+            49
+          ],
+          "parameter": [
+            1,
+            1
+          ],
+          "position": [
+            [
+              11,
+              12
+            ],
+            [
+              5,
+              3
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            25,
+            12
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            1,
+            4
+          ],
+          "signed_progression_rate": [
+            484,
+            49
+          ],
+          "unit_tangent": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              0,
+              1
+            ],
+            [
+              484,
+              49
+            ]
+          ]
+        }
+      ],
+      "polynomials": {
+        "S_or": [
+          [
+            0,
+            1
+          ],
+          [
+            4,
+            49
+          ],
+          [
+            890,
+            2401
+          ],
+          [
+            205129,
+            352947
+          ],
+          [
+            662446,
+            5764801
+          ],
+          [
+            1252710,
+            5764801
+          ],
+          [
+            2340873,
+            11529602
+          ],
+          [
+            618192,
+            5764801
+          ],
+          [
+            791694,
+            5764801
+          ],
+          [
+            636417,
+            5764801
+          ],
+          [
+            433026,
+            5764801
+          ],
+          [
+            354294,
+            5764801
+          ],
+          [
+            531441,
+            23059204
+          ]
+        ],
+        "U": [
+          [
+            1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            0,
+            1
+          ],
+          [
+            4,
+            49
+          ],
+          [
+            18,
+            49
+          ],
+          [
+            27,
+            49
+          ]
+        ],
+        "base_oriented_increment": [
+          [
+            0,
+            1
+          ],
+          [
+            4,
+            49
+          ],
+          [
+            890,
+            2401
+          ],
+          [
+            205129,
+            352947
+          ],
+          [
+            662446,
+            5764801
+          ],
+          [
+            1252710,
+            5764801
+          ],
+          [
+            2340873,
+            11529602
+          ],
+          [
+            618192,
+            5764801
+          ],
+          [
+            791694,
+            5764801
+          ],
+          [
+            636417,
+            5764801
+          ],
+          [
+            433026,
+            5764801
+          ],
+          [
+            354294,
+            5764801
+          ],
+          [
+            531441,
+            23059204
+          ]
+        ],
+        "dx": [
+          [
+            4,
+            49
+          ],
+          [
+            1780,
+            2401
+          ],
+          [
+            205001,
+            117649
+          ],
+          [
+            2536376,
+            5764801
+          ],
+          [
+            5405310,
+            5764801
+          ],
+          [
+            3479355,
+            5764801
+          ],
+          [
+            -618192,
+            823543
+          ],
+          [
+            -6333552,
+            5764801
+          ],
+          [
+            -5727753,
+            5764801
+          ],
+          [
+            -4330260,
+            5764801
+          ],
+          [
+            -3897234,
+            5764801
+          ],
+          [
+            -1594323,
+            5764801
+          ]
+        ],
+        "dy": [
+          [
+            0,
+            1
+          ],
+          [
+            32,
+            2401
+          ],
+          [
+            21296,
+            117649
+          ],
+          [
+            108144,
+            117649
+          ],
+          [
+            255420,
+            117649
+          ],
+          [
+            284310,
+            117649
+          ],
+          [
+            23328,
+            16807
+          ],
+          [
+            209952,
+            117649
+          ],
+          [
+            118098,
+            117649
+          ]
+        ],
+        "g": [
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            16,
+            2401
+          ],
+          [
+            144,
+            2401
+          ],
+          [
+            540,
+            2401
+          ],
+          [
+            972,
+            2401
+          ],
+          [
+            729,
+            2401
+          ]
+        ],
+        "h": [
+          [
+            4,
+            49
+          ],
+          [
+            1780,
+            2401
+          ],
+          [
+            4185,
+            2401
+          ],
+          [
+            1080,
+            2401
+          ],
+          [
+            2430,
+            2401
+          ],
+          [
+            2187,
+            2401
+          ]
+        ],
+        "x": [
+          [
+            0,
+            1
+          ],
+          [
+            4,
+            49
+          ],
+          [
+            890,
+            2401
+          ],
+          [
+            205001,
+            352947
+          ],
+          [
+            634094,
+            5764801
+          ],
+          [
+            1081062,
+            5764801
+          ],
+          [
+            1159785,
+            11529602
+          ],
+          [
+            -618192,
+            5764801
+          ],
+          [
+            -791694,
+            5764801
+          ],
+          [
+            -636417,
+            5764801
+          ],
+          [
+            -433026,
+            5764801
+          ],
+          [
+            -354294,
+            5764801
+          ],
+          [
+            -531441,
+            23059204
+          ]
+        ],
+        "y": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            16,
+            2401
+          ],
+          [
+            21296,
+            352947
+          ],
+          [
+            27036,
+            117649
+          ],
+          [
+            51084,
+            117649
+          ],
+          [
+            47385,
+            117649
+          ],
+          [
+            23328,
+            117649
+          ],
+          [
+            26244,
+            117649
+          ],
+          [
+            13122,
+            117649
+          ]
+        ]
+      },
+      "registered_random_tape_rows": [
+        {
+          "accumulated_length_increment": [
+            560964041629209305,
+            957507195571344012
+          ],
+          "base_oriented_length_increment": [
+            560964041629209305,
+            957507195571344012
+          ],
+          "continued_direction": [
+            [
+              113075112,
+              169400137
+            ],
+            [
+              126136535,
+              169400137
+            ]
+          ],
+          "curvature_pair": [
+            [
+              6962,
+              2401
+            ],
+            [
+              9714315764380313380085472,
+              3219905755813179726837607
+            ]
+          ],
+          "nonnegative_speed": [
+            28672691582239728,
+            11398895185373143
+          ],
+          "parameter": [
+            5,
+            7
+          ],
+          "position": [
+            [
+              485091843083398555,
+              957507195571344012
+            ],
+            [
+              3685402710775,
+              14242684529829
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            560964041629209305,
+            957507195571344012
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            1341068619663964900807,
+            1395334065553047023856
+          ],
+          "signed_progression_rate": [
+            28672691582239728,
+            11398895185373143
+          ],
+          "unit_tangent": [
+            [
+              113075112,
+              169400137
+            ],
+            [
+              126136535,
+              169400137
+            ]
+          ],
+          "velocity": [
+            [
+              19139109739936128,
+              11398895185373143
+            ],
+            [
+              1270297380720,
+              678223072849
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            177268047427,
+            12254606432964
+          ],
+          "base_oriented_length_increment": [
+            177268047427,
+            12254606432964
+          ],
+          "continued_direction": [
+            [
+              874984,
+              875345
+            ],
+            [
+              25137,
+              875345
+            ]
+          ],
+          "curvature_pair": [
+            [
+              18,
+              49
+            ],
+            [
+              4113116568926200,
+              22067482534159923
+            ]
+          ],
+          "nonnegative_speed": [
+            2349425980,
+            12607619787
+          ],
+          "parameter": [
+            1,
+            9
+          ],
+          "position": [
+            [
+              177243588233,
+              12254606432964
+            ],
+            [
+              1446527,
+              6947055801
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            177268047427,
+            12254606432964
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            4053211077702843,
+            2056558284463100
+          ],
+          "signed_progression_rate": [
+            2349425980,
+            12607619787
+          ],
+          "unit_tangent": [
+            [
+              874984,
+              875345
+            ],
+            [
+              25137,
+              875345
+            ]
+          ],
+          "velocity": [
+            [
+              2348457056,
+              12607619787
+            ],
+            [
+              50996,
+              9529569
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            32442034785,
+            274877906944
+          ],
+          "base_oriented_length_increment": [
+            32442034785,
+            274877906944
+          ],
+          "continued_direction": [
+            [
+              258895,
+              265393
+            ],
+            [
+              58368,
+              265393
+            ]
+          ],
+          "curvature_pair": [
+            [
+              1849,
+              1568
+            ],
+            [
+              74101688669348369,
+              110338190870577152
+            ]
+          ],
+          "nonnegative_speed": [
+            279214932833,
+            420906795008
+          ],
+          "parameter": [
+            3,
+            8
+          ],
+          "position": [
+            [
+              32168072607,
+              274877906944
+            ],
+            [
+              893475,
+              67108864
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            32442034785,
+            274877906944
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            70368744177664,
+            40076629891481
+          ],
+          "signed_progression_rate": [
+            279214932833,
+            420906795008
+          ],
+          "unit_tangent": [
+            [
+              258895,
+              265393
+            ],
+            [
+              58368,
+              265393
+            ]
+          ],
+          "velocity": [
+            [
+              38911215785,
+              60129542144
+            ],
+            [
+              59968617,
+              411041792
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            3830973598624,
+            3063651608241
+          ],
+          "base_oriented_length_increment": [
+            3830973598624,
+            3063651608241
+          ],
+          "continued_direction": [
+            [
+              766265,
+              2734393
+            ],
+            [
+              2624832,
+              2734393
+            ]
+          ],
+          "curvature_pair": [
+            [
+              200,
+              49
+            ],
+            [
+              1730903525660943500,
+              198607342807439307
+            ]
+          ],
+          "nonnegative_speed": [
+            633011979500,
+            113468578083
+          ],
+          "parameter": [
+            8,
+            9
+          ],
+          "position": [
+            [
+              2485781728160,
+              3063651608241
+            ],
+            [
+              5858132992,
+              6947055801
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            3830973598624,
+            3063651608241
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            8106422155405686,
+            17309035256609435
+          ],
+          "signed_progression_rate": [
+            633011979500,
+            113468578083
+          ],
+          "unit_tangent": [
+            [
+              766265,
+              2734393
+            ],
+            [
+              2624832,
+              2734393
+            ]
+          ],
+          "velocity": [
+            [
+              177390347500,
+              113468578083
+            ],
+            [
+              459296000,
+              85766121
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            63748038563,
+            283351498752
+          ],
+          "base_oriented_length_increment": [
+            63748038563,
+            283351498752
+          ],
+          "continued_direction": [
+            [
+              147423,
+              159905
+            ],
+            [
+              61936,
+              159905
+            ]
+          ],
+          "curvature_pair": [
+            [
+              169,
+              98
+            ],
+            [
+              2035315308780975,
+              1814205196009472
+            ]
+          ],
+          "nonnegative_speed": [
+            12728278095,
+            11806312448
+          ],
+          "parameter": [
+            1,
+            2
+          ],
+          "position": [
+            [
+              61968167773,
+              283351498752
+            ],
+            [
+              4162747,
+              90354432
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            63748038563,
+            283351498752
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            18512297918464,
+            12043285850775
+          ],
+          "signed_progression_rate": [
+            12728278095,
+            11806312448
+          ],
+          "unit_tangent": [
+            [
+              147423,
+              159905
+            ],
+            [
+              61936,
+              159905
+            ]
+          ],
+          "velocity": [
+            [
+              11734723377,
+              11806312448
+            ],
+            [
+              6288321,
+              15059072
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            571955914854232,
+            4222266357421875
+          ],
+          "base_oriented_length_increment": [
+            571955914854232,
+            4222266357421875
+          ],
+          "continued_direction": [
+            [
+              36913449,
+              38117801
+            ],
+            [
+              9506000,
+              38117801
+            ]
+          ],
+          "curvature_pair": [
+            [
+              32,
+              25
+            ],
+            [
+              160430777007595560016,
+              215511511993408203125
+            ]
+          ],
+          "nonnegative_speed": [
+            4208815115216,
+            5744580078125
+          ],
+          "parameter": [
+            2,
+            5
+          ],
+          "position": [
+            [
+              565687705895768,
+              4222266357421875
+            ],
+            [
+              11999561152,
+              689349609375
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            571955914854232,
+            4222266357421875
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            17240920959472656250,
+            10026923562974722501
+          ],
+          "signed_progression_rate": [
+            4208815115216,
+            5744580078125
+          ],
+          "unit_tangent": [
+            [
+              36913449,
+              38117801
+            ],
+            [
+              9506000,
+              38117801
+            ]
+          ],
+          "velocity": [
+            [
+              4075835384784,
+              5744580078125
+            ],
+            [
+              171365632,
+              937890625
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            86686174292105544,
+            79792266297612001
+          ],
+          "base_oriented_length_increment": [
+            86686174292105544,
+            79792266297612001
+          ],
+          "continued_direction": [
+            [
+              149211313,
+              415739185
+            ],
+            [
+              388040016,
+              415739185
+            ]
+          ],
+          "curvature_pair": [
+            [
+              9248,
+              2401
+            ],
+            [
+              22658342022507216243516400,
+              3219905755813179726837607
+            ]
+          ],
+          "nonnegative_speed": [
+            54501338435315440,
+            11398895185373143
+          ],
+          "parameter": [
+            6,
+            7
+          ],
+          "position": [
+            [
+              60569289353778504,
+              79792266297612001
+            ],
+            [
+              3265366223808,
+              4747561509943
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            86686174292105544,
+            79792266297612001
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            2682137239327929801614,
+            4900160471995505242975
+          ],
+          "signed_progression_rate": [
+            54501338435315440,
+            11398895185373143
+          ],
+          "unit_tangent": [
+            [
+              149211313,
+              415739185
+            ],
+            [
+              388040016,
+              415739185
+            ]
+          ],
+          "velocity": [
+            [
+              19560860658806512,
+              11398895185373143
+            ],
+            [
+              3026721914112,
+              678223072849
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            0,
+            1
+          ],
+          "base_oriented_length_increment": [
+            0,
+            1
+          ],
+          "continued_direction": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              8,
+              49
+            ],
+            [
+              4,
+              49
+            ]
+          ],
+          "nonnegative_speed": [
+            4,
+            49
+          ],
+          "parameter": [
+            0,
+            1
+          ],
+          "position": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            0,
+            1
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            2,
+            1
+          ],
+          "signed_progression_rate": [
+            4,
+            49
+          ],
+          "unit_tangent": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              4,
+              49
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            25,
+            12
+          ],
+          "base_oriented_length_increment": [
+            25,
+            12
+          ],
+          "continued_direction": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "curvature_pair": [
+            [
+              242,
+              49
+            ],
+            [
+              968,
+              49
+            ]
+          ],
+          "nonnegative_speed": [
+            484,
+            49
+          ],
+          "parameter": [
+            1,
+            1
+          ],
+          "position": [
+            [
+              11,
+              12
+            ],
+            [
+              5,
+              3
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            25,
+            12
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            1,
+            4
+          ],
+          "signed_progression_rate": [
+            484,
+            49
+          ],
+          "unit_tangent": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "velocity": [
+            [
+              0,
+              1
+            ],
+            [
+              484,
+              49
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            172942211,
+            1867795524
+          ],
+          "base_oriented_length_increment": [
+            172942211,
+            1867795524
+          ],
+          "continued_direction": [
+            [
+              10720,
+              10889
+            ],
+            [
+              1911,
+              10889
+            ]
+          ],
+          "curvature_pair": [
+            [
+              50,
+              49
+            ],
+            [
+              1897125136000,
+              3363432789843
+            ]
+          ],
+          "nonnegative_speed": [
+            87112000,
+            155649627
+          ],
+          "parameter": [
+            1,
+            3
+          ],
+          "position": [
+            [
+              172023865,
+              1867795524
+            ],
+            [
+              78923,
+              9529569
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            172942211,
+            1867795524
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            68641485507,
+            37942502720
+          ],
+          "signed_progression_rate": [
+            87112000,
+            155649627
+          ],
+          "unit_tangent": [
+            [
+              10720,
+              10889
+            ],
+            [
+              1911,
+              10889
+            ]
+          ],
+          "velocity": [
+            [
+              85760000,
+              155649627
+            ],
+            [
+              104000,
+              1058841
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            15874884297818563,
+            28812000000000000
+          ],
+          "base_oriented_length_increment": [
+            15874884297818563,
+            28812000000000000
+          ],
+          "continued_direction": [
+            [
+              40101711,
+              57898289
+            ],
+            [
+              41762000,
+              57898289
+            ]
+          ],
+          "curvature_pair": [
+            [
+              6889,
+              2450
+            ],
+            [
+              230541288075565790323127,
+              82354300000000000000000
+            ]
+          ],
+          "nonnegative_speed": [
+            3981832486890343,
+            1680700000000000
+          ],
+          "parameter": [
+            7,
+            10
+          ],
+          "position": [
+            [
+              13913365634181437,
+              28812000000000000
+            ],
+            [
+              119975630587,
+              514500000000
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            15874884297818563,
+            28812000000000000
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            33614000000000000000,
+            33465131089500042143
+          ],
+          "signed_progression_rate": [
+            3981832486890343,
+            1680700000000000
+          ],
+          "unit_tangent": [
+            [
+              40101711,
+              57898289
+            ],
+            [
+              41762000,
+              57898289
+            ]
+          ],
+          "velocity": [
+            [
+              2757910439109657,
+              1680700000000000
+            ],
+            [
+              205149521921,
+              120050000000
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            55186504,
+            1275989841
+          ],
+          "base_oriented_length_increment": [
+            55186504,
+            1275989841
+          ],
+          "continued_direction": [
+            [
+              35657,
+              35785
+            ],
+            [
+              3024,
+              35785
+            ]
+          ],
+          "curvature_pair": [
+            [
+              32,
+              49
+            ],
+            [
+              4036344741200,
+              11816941917501
+            ]
+          ],
+          "nonnegative_speed": [
+            112794320,
+            330812181
+          ],
+          "parameter": [
+            2,
+            9
+          ],
+          "position": [
+            [
+              55119944,
+              1275989841
+            ],
+            [
+              37312,
+              20253807
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            55186504,
+            1275989841
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            482324159898,
+            252271546325
+          ],
+          "signed_progression_rate": [
+            112794320,
+            330812181
+          ],
+          "unit_tangent": [
+            [
+              35657,
+              35785
+            ],
+            [
+              3024,
+              35785
+            ]
+          ],
+          "velocity": [
+            [
+              112390864,
+              330812181
+            ],
+            [
+              50432,
+              1750329
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            7488075608945,
+            7650490466304
+          ],
+          "base_oriented_length_increment": [
+            7488075608945,
+            7650490466304
+          ],
+          "continued_direction": [
+            [
+              812951,
+              1953001
+            ],
+            [
+              1775760,
+              1953001
+            ]
+          ],
+          "curvature_pair": [
+            [
+              361,
+              98
+            ],
+            [
+              2658853488857143091,
+              440851862630301696
+            ]
+          ],
+          "nonnegative_speed": [
+            1361419420091,
+            318770436096
+          ],
+          "parameter": [
+            5,
+            6
+          ],
+          "position": [
+            [
+              5488581815695,
+              7650490466304
+            ],
+            [
+              1435892975,
+              2439569664
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            7488075608945,
+            7650490466304
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            4498488394186752,
+            7365245121487931
+          ],
+          "signed_progression_rate": [
+            1361419420091,
+            318770436096
+          ],
+          "unit_tangent": [
+            [
+              812951,
+              1953001
+            ],
+            [
+              1775760,
+              1953001
+            ]
+          ],
+          "velocity": [
+            [
+              566700825541,
+              318770436096
+            ],
+            [
+              526303705,
+              135531648
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            264189024283521,
+            386869246296064
+          ],
+          "base_oriented_length_increment": [
+            264189024283521,
+            386869246296064
+          ],
+          "continued_direction": [
+            [
+              7372735,
+              12296257
+            ],
+            [
+              9840768,
+              12296257
+            ]
+          ],
+          "curvature_pair": [
+            [
+              25,
+              8
+            ],
+            [
+              17784657246707013625,
+              4852887825537826816
+            ]
+          ],
+          "nonnegative_speed": [
+            1446347229625,
+            493455671296
+          ],
+          "parameter": [
+            3,
+            4
+          ],
+          "position": [
+            [
+              219767664678015,
+              386869246296064
+            ],
+            [
+              5147542251,
+              15420489728
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            264189024283521,
+            386869246296064
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            606610978192228352,
+            711386289868280545
+          ],
+          "signed_progression_rate": [
+            1446347229625,
+            493455671296
+          ],
+          "unit_tangent": [
+            [
+              7372735,
+              12296257
+            ],
+            [
+              9840768,
+              12296257
+            ]
+          ],
+          "velocity": [
+            [
+              867217954375,
+              493455671296
+            ],
+            [
+              184553625,
+              78675968
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            177268047427,
+            12254606432964
+          ],
+          "base_oriented_length_increment": [
+            177268047427,
+            12254606432964
+          ],
+          "continued_direction": [
+            [
+              874984,
+              875345
+            ],
+            [
+              25137,
+              875345
+            ]
+          ],
+          "curvature_pair": [
+            [
+              18,
+              49
+            ],
+            [
+              4113116568926200,
+              22067482534159923
+            ]
+          ],
+          "nonnegative_speed": [
+            2349425980,
+            12607619787
+          ],
+          "parameter": [
+            1,
+            9
+          ],
+          "position": [
+            [
+              177243588233,
+              12254606432964
+            ],
+            [
+              1446527,
+              6947055801
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            177268047427,
+            12254606432964
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            4053211077702843,
+            2056558284463100
+          ],
+          "signed_progression_rate": [
+            2349425980,
+            12607619787
+          ],
+          "unit_tangent": [
+            [
+              874984,
+              875345
+            ],
+            [
+              25137,
+              875345
+            ]
+          ],
+          "velocity": [
+            [
+              2348457056,
+              12607619787
+            ],
+            [
+              50996,
+              9529569
+            ]
+          ]
+        },
+        {
+          "accumulated_length_increment": [
+            560964041629209305,
+            957507195571344012
+          ],
+          "base_oriented_length_increment": [
+            560964041629209305,
+            957507195571344012
+          ],
+          "continued_direction": [
+            [
+              113075112,
+              169400137
+            ],
+            [
+              126136535,
+              169400137
+            ]
+          ],
+          "curvature_pair": [
+            [
+              6962,
+              2401
+            ],
+            [
+              9714315764380313380085472,
+              3219905755813179726837607
+            ]
+          ],
+          "nonnegative_speed": [
+            28672691582239728,
+            11398895185373143
+          ],
+          "parameter": [
+            5,
+            7
+          ],
+          "position": [
+            [
+              485091843083398555,
+              957507195571344012
+            ],
+            [
+              3685402710775,
+              14242684529829
+            ]
+          ],
+          "regular": true,
+          "representation_signed_integral": [
+            560964041629209305,
+            957507195571344012
+          ],
+          "requests": {
+            "CURVATURE": "OK",
+            "DIRECTION": "OK",
+            "POSITION": "OK",
+            "SPEED": "OK",
+            "TANGENT": "OK"
+          },
+          "signed_curvature": [
+            1341068619663964900807,
+            1395334065553047023856
+          ],
+          "signed_progression_rate": [
+            28672691582239728,
+            11398895185373143
+          ],
+          "unit_tangent": [
+            [
+              113075112,
+              169400137
+            ],
+            [
+              126136535,
+              169400137
+            ]
+          ],
+          "velocity": [
+            [
+              19139109739936128,
+              11398895185373143
+            ],
+            [
+              1270297380720,
+              678223072849
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "nonconstant_h_control": "PH3h composed with phi_sq; htilde=(1+phi_sq)*phi_sqprime. Omitting h composed with phi changes derivatives/speed at nonzero phi.",
+  "pins": {
+    "QCG0_P0_EXECUTION_CONTRACT.md": "4c95617479b858919c86ad5be3cedad37fb9e547f88b9c6d9a8764e8b083e54f",
+    "QCG0_P0_EXECUTION_CONTRACT_REVISION_2.diff": "2aace2485b7f3d82d4226e68936edb6fe0b8206dfc72b44afa51a6344b4bba67",
+    "QCG0_PREREGISTRATION.md": "eade4b5f0957c3679c94b67d8f4b1f6b6d005d65316a5337e6c8dfb9370b98dd",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34",
+    "REVISION2_FIXTURE_VALUES.json": "a66af3d68da5a7dba439818778af9e8fe70244e3dc2d8250ea891354124a0b46"
+  },
+  "primitive_retiming_ns_request": "REFUSED(NOT_PRIMITIVE_RETIMING)",
+  "schema": "QCG0-p0-contract-r2-supplemental-references-v1",
+  "stationary_convention": "At ns t=0 actual T and kappa refuse; d=(1,0) remains OK; no cancellation extends an actual undefined quotient.",
+  "supplemental_not_replacement": true,
+  "tapes": {
+    "dyadic": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        16
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        3,
+        16
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        5,
+        16
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        7,
+        16
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        9,
+        16
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        11,
+        16
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        13,
+        16
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        15,
+        16
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "registered_random": [
+      [
+        5,
+        7
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        7,
+        10
+      ],
+      [
+        2,
+        9
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        5,
+        7
+      ]
+    ]
+  }
+}

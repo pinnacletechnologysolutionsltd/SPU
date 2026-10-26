@@ -1,0 +1,218 @@
+// tang_primer_25k.cst — Physical Constraints for Tang Primer 25K
+// Device:  GW5A-LV25MG121NES  (GW5A-25A, 121-ball BGA in the OSS flow)
+// Crystal: 50 MHz at E2
+//
+// Pin sources (cross-referenced against three official Sipeed CSTs):
+//   nestang-25k/src/nestang.cst          (GW5A-LV25MG121NES)
+//   ZiyangYE/LicheeTang25k_SDRAM         (reference only; different package code)
+//   sipeed/TangPrimer-25K-example pmod_led.cst
+//
+// sdram_cke is NOT exposed here — it is hardwired to VCC on the board.
+// (Absent from every official Sipeed CST; spu_mem_bridge_sdram drives it 1'b1.)
+//
+// PMOD J4 bottom row is used for the first-stage SPI flash bring-up probe.
+//
+// CC0 1.0 Universal.
+
+// ─── System clock (50 MHz crystal) ──────────────────────────────────────
+IO_LOC  "sys_clk"        E2;
+IO_PORT "sys_clk"        IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+
+IO_LOC  "clk"            E2;
+IO_PORT "clk"            IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+
+// ─── User LEDs (active-low, 3 on-board) ──────────────────────────────────
+IO_LOC  "led[0]"         L6;
+IO_LOC  "led[1]"         E8;
+IO_LOC  "led[2]"         D7;
+IO_PORT "led[0]"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led[1]"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "led[2]"         IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── 40-pin SDRAM module (Tang_sdram_xsds v1.3, dual W9825G6KH-6) ───────
+// sdram_cke is hardwired on the module/header — no FPGA pin assignment needed.
+// The v1.3 X2 module exposes one CS input on K9; the second chip is selected
+// through the module's inverter, so the RTL treats sdram_cs_n as rank select.
+IO_LOC  "sdram_clk"      E3;
+IO_PORT "sdram_clk"      IO_TYPE=LVCMOS33 DRIVE=16;
+
+IO_LOC  "sdram_cs_n"     K9;
+IO_PORT "sdram_cs_n"     IO_TYPE=LVCMOS33 DRIVE=8;
+
+IO_LOC  "sdram_ras_n"    L10;
+IO_PORT "sdram_ras_n"    IO_TYPE=LVCMOS33 DRIVE=8;
+
+IO_LOC  "sdram_cas_n"    K10;
+IO_PORT "sdram_cas_n"    IO_TYPE=LVCMOS33 DRIVE=8;
+
+IO_LOC  "sdram_we_n"     J7;
+IO_PORT "sdram_we_n"     IO_TYPE=LVCMOS33 DRIVE=8;
+
+IO_LOC  "sdram_ba[0]"    L9;
+IO_LOC  "sdram_ba[1]"    K8;
+IO_PORT "sdram_ba[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_ba[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
+
+IO_LOC  "sdram_a0"  F6;
+IO_LOC  "sdram_a1"  F7;
+IO_LOC  "sdram_a2"  J10;
+IO_LOC  "sdram_a3"  J11;
+IO_LOC  "sdram_a4"  K7;
+IO_LOC  "sdram_a5"  H2;
+IO_LOC  "sdram_a6"  H1;
+IO_LOC  "sdram_a7"  H4;
+IO_LOC  "sdram_a8"  G4;
+IO_LOC  "sdram_a9"  J2;
+IO_LOC  "sdram_a10" J8;
+IO_LOC  "sdram_a11" J1;
+IO_LOC  "sdram_a12" D1;
+IO_PORT "sdram_a0"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a1"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a2"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a3"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a4"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a5"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a6"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a7"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a8"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a9"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a10" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a11" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_a12" IO_TYPE=LVCMOS33 DRIVE=8;
+
+
+IO_LOC  "sdram_dq[0]"   K2;
+IO_LOC  "sdram_dq[1]"   K1;
+IO_LOC  "sdram_dq[2]"   L1;
+IO_LOC  "sdram_dq[3]"   L2;
+IO_LOC  "sdram_dq[4]"   K4;
+IO_LOC  "sdram_dq[5]"   J4;
+IO_LOC  "sdram_dq[6]"   G1;
+IO_LOC  "sdram_dq[7]"   G2;
+IO_LOC  "sdram_dq[8]"   L3;
+IO_LOC  "sdram_dq[9]"   L4;
+IO_LOC  "sdram_dq[10]"  B2;
+IO_LOC  "sdram_dq[11]"  C2;
+IO_LOC  "sdram_dq[12]"  F2;
+IO_LOC  "sdram_dq[13]"  F1;
+IO_LOC  "sdram_dq[14]"  E1;
+IO_LOC  "sdram_dq[15]"  A1;
+IO_PORT "sdram_dq[0]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[1]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[2]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[3]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[4]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[5]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[6]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[7]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[8]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[9]"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[10]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[11]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[12]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[13]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[14]"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dq[15]"  IO_TYPE=LVCMOS33 DRIVE=8;
+
+IO_LOC  "sdram_dm[0]"    L8;
+IO_LOC  "sdram_dm[1]"    L7;
+IO_PORT "sdram_dm[0]"    IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sdram_dm[1]"    IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── Dual UART Bridge (Host & Telemetry) ──────────────────────────────────
+// NOTE 2026-08-18: per the Sipeed Tang_Primer_25K_Dock_60033 schematic
+// (page 1, "Peripherals -> Debugger"), B3 is actually IOB56A_FPGA_UART_RX,
+// wired on the dock PCB to net 616_UART_TX -- the onboard BL616
+// USB-JTAG-UART bridge chip's own TX pin, and the exact RX partner to C3
+// (uart_tx below). "Input from RP2350 (USB-A)" describes a separate,
+// legacy external bodge-wire scheme onto this SAME pin
+// (docs/rp_mcu_bringup_plan.md, hardware/rp2350/rp2350_uart_injector.c) --
+// confirmed NOT currently wired on this board (2026-08-18). Two live UART
+// TX drivers (onboard BL616 + external RP2350) on B3 at once would
+// contend -- see knowledge memory tang25k-b3-pin-contention-risk before
+// reconnecting that bodge wire on any board that also uses "uart_rx" below.
+IO_LOC  "periph_rx"          B3;    // Input from RP2350 (USB-A) -- legacy, currently unwired
+IO_LOC  "uart_tx_telemetry"  B11;   // Output to BL616 (USB-C)
+IO_LOC  "uart_rx_telemetry"  A11;   // Input from BL616 (USB-C)
+IO_PORT "periph_rx"          IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "uart_tx_telemetry"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "uart_rx_telemetry"  IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+IO_LOC  "uart_tx"            C3;    // Host-bound TX
+IO_PORT "uart_tx"            IO_TYPE=LVCMOS33 DRIVE=8;
+
+// Host-bound RX, the schematic-confirmed partner to uart_tx/C3 above (both
+// through the onboard BL616 bridge). Used by
+// spu13_tang25k_spu4_som_edge_interactive_probe.v; same physical pin as
+// "periph_rx" above by design -- see the NOTE at the top of this section.
+IO_LOC  "uart_rx"            B3;
+IO_PORT "uart_rx"            IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// ─── PMOD J4 SPI Flash ───────────────────────────────────────────────────
+// Verified by J4 sweep mapping M00: G10=CS#, D10=SCK, B10=MOSI/D1, C10=MISO/DO.
+IO_LOC  "flash_cs"           G10;
+IO_LOC  "flash_sck"          D10;
+IO_LOC  "flash_mosi"         B10;
+IO_LOC  "flash_miso"         C10;
+IO_PORT "flash_cs"           IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "flash_sck"          IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "flash_mosi"         IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "flash_miso"         IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// ─── Whisper 1-wire telemetry (PWI) ───────────────────────────────────────
+// Free GPIO on expansion header — verify physical wire routing.
+IO_LOC  "whisper_tx"     L5;
+IO_PORT "whisper_tx"     IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── GPU debug tap (J5 pin 7, K11_IOT11A) ─────────────────────────────────
+// 2026-09-02: L5 (above) confirmed dead in hardware -- toolchain placement
+// was normal, wiring/instrument verified good, a guaranteed-toggling test
+// bitstream still read flat. K11 is the next free pin on the same J5
+// header, adjacent to L5.
+IO_LOC  "gpu_debug_tap"  K11;
+IO_PORT "gpu_debug_tap"  IO_TYPE=LVCMOS33 DRIVE=8;
+
+// ─── I2S Audio Interface (Free GPIO) ──────────────────────────────────────
+// i2s_lrclk, i2s_bclk, i2s_dout disabled to avoid PnR pin errors.
+// IO_LOC  "i2s_lrclk"      A6;
+// IO_LOC  "i2s_bclk"       A7;
+// IO_LOC  "i2s_dout"       A8;
+// IO_PORT "i2s_lrclk"      IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "i2s_bclk"       IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "i2s_dout"       IO_TYPE=LVCMOS33 DRIVE=8;
+
+
+// Pmod3: SD card (moved from Pmod1) — SD Pmod (SPI-mode) exposed on header pins
+//   sd_cs  -> E11
+//   sd_sck -> E10
+//   sd_mosi-> F11
+//   sd_miso-> F10
+IO_LOC  "sd_cs"   E11;
+IO_LOC  "sd_sck"  E10;
+IO_LOC  "sd_mosi" F11;
+IO_LOC  "sd_miso" F10;
+IO_PORT "sd_cs"   IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sd_sck"  IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sd_mosi" IO_TYPE=LVCMOS33 DRIVE=8;
+IO_PORT "sd_miso" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// PMOD JA: general purpose 8-bit header (pmod_ja_out[7:0]) — mapped to A2..A9
+// NOTE: PMOD JA pins omitted from constraints to avoid referencing package pins
+// not present in the active OSS target package during PnR.
+// The original mappings are preserved below as comments for reference:
+// IO_LOC  "pmod_ja_out[0]" A2;
+// IO_LOC  "pmod_ja_out[1]" A3;
+// IO_LOC  "pmod_ja_out[2]" A4;
+// IO_LOC  "pmod_ja_out[3]" A5;
+// IO_LOC  "pmod_ja_out[4]" A6;
+// IO_LOC  "pmod_ja_out[5]" A7;
+// IO_LOC  "pmod_ja_out[6]" A8;
+// IO_LOC  "pmod_ja_out[7]" A9;
+// IO_PORT "pmod_ja_out[0]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[1]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[2]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[3]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[4]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[5]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[6]" IO_TYPE=LVCMOS33 DRIVE=8;
+// IO_PORT "pmod_ja_out[7]" IO_TYPE=LVCMOS33 DRIVE=8;

@@ -1,0 +1,221 @@
+{
+  "format": "spu_ret3_member_proposal_v1",
+  "status": "DRAFT_NOT_AUTHORIZED",
+  "scope": "focused clock constraint-application evidence replay; no placement/routing replay",
+  "closure_confirmed_by_owner": false,
+  "stopped_source_boundary_confirmed": false,
+  "primary_archive_destination": null,
+  "secondary_archive_destination": null,
+  "members": [
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/tool.log",
+      "sha256": "3e5d464734fd56dc21da1919d3e1597ac4b1cce592df2a2712d305a1c1d34a3d",
+      "bytes": 204910029,
+      "hash_basis": "historical capture; rehash required at freeze",
+      "role": "replay_input"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/stderr.log",
+      "sha256": "3e5d464734fd56dc21da1919d3e1597ac4b1cce592df2a2712d305a1c1d34a3d",
+      "bytes": 204910029,
+      "hash_basis": "historical capture; rehash required at freeze",
+      "role": "replay_input"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "hash_basis": "historical capture; rehash required at freeze",
+      "role": "replay_input"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/capture.json",
+      "sha256": "d2810a9c62b26c7c14f8db3c8916977db1334a1f4e90ed851b4131132a9dfed0",
+      "bytes": 901,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "replay_input"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/invocation.json",
+      "sha256": "2bb07e028eb445b067535d769bbb1284ed694ced887e38f7f0c7184215813822",
+      "bytes": 4681,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/command.txt",
+      "sha256": "63038a427234b4447f1d6bbb5c22c420a5e83e103e0b1a45b266555e2a712c90",
+      "bytes": 272,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/git_commit",
+      "sha256": "9e56c0c3e2ea5367623645c146a3703747758c25dba51e998f98037471cf2d09",
+      "bytes": 41,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/git_status.txt",
+      "sha256": "0ca0c5485b1829561e3683fa5e34a053a0d22a47ab75c918dd027b9ffabc42d6",
+      "bytes": 28098,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/tool_versions.txt",
+      "sha256": "d8e73157ae9c7da6d8377336b8e5a6b7f127853bc983595abd3fddd33e83353a",
+      "bytes": 294,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/result.json",
+      "sha256": "c95a34a79b56af01f4f1b457a0047281ff438eeaa5a2f497efd4a05f9350c68b",
+      "bytes": 309,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/COMPLETE",
+      "sha256": "a1100bb4cb044f26cca2481d81bd2331449c7cdf41de78eb7f6c9a7542fdee45",
+      "bytes": 21,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/deadline.json",
+      "sha256": "0f36f0e07e44309a2b38ee50ffccccd9fed959d82a1c361fd0fb80a7dd2e7319",
+      "bytes": 464,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_candidate_01/diagnostic_result.json",
+      "sha256": "0e247039d23b7322410814f68d3f7a4a3cc2ee5d071e51cc2350bfb675262279",
+      "bytes": 1622,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_closeout_01/audit.json",
+      "sha256": "0c31a7a7c66f4a173dd7b6dfb0be7ded3d53a522a0be62b048b8d96c4a773631",
+      "bytes": 2936,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_closeout_01/candidate_capture_manifest.json",
+      "sha256": "50c99fbb58d90a7177f8ea0daf1aff4df85303eb9f2bd15f6b73569f8d4a1af1",
+      "bytes": 8717,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_closeout_01/manifest.json",
+      "sha256": "2b52f7d0d67889c348e16505b9148651be339447c078b21cd8793390a7ea3d90",
+      "bytes": 632,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_closeout_01/REVIEW.md",
+      "sha256": "69c561b4ef1d394edb20d97e31ab9e206008baf2852b0657aa55af2f6fc7fc25",
+      "bytes": 2426,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/bindings.json",
+      "sha256": "60ee07e0ec49e5d7a97fa44df15a8ba14ec525a039cfae076cbde7bccc26cdcf",
+      "bytes": 11471,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/input_manifest.json",
+      "sha256": "2c0118540f09941961c4457792c88527a467e4a6ea866c01e71a57c9ccaa0e9b",
+      "bytes": 5083967,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/worker.py",
+      "sha256": "b111fffc3ddbf486a162a664d0d142499b4a46bb9f88ace89f1f80cfc7923f3a",
+      "bytes": 3646,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/integrated_context_preparation_04/check_cpu.py",
+      "sha256": "e167c540e6413e6b4fcf620c37cf2afebeabdf71c18644b7074904a499856cd7",
+      "bytes": 3661,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/preparation_05/clock_application.py",
+      "sha256": "cb4d580c59e17a5ee967dbcd097089b0d9b4099d718a85784f82731e950a6d84",
+      "bytes": 3191,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "replay_input"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/preparation_05/test_clock_application.py",
+      "sha256": "67de4bf79af6386857e9174172a7241437d61dc4bb1aec0a86f7da695bc3e6e5",
+      "bytes": 4480,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "historical_provenance_only"
+    },
+    {
+      "path": "build/spu_surd_register/backend_compatibility_20261012/cpu_placement_preparation_04/constraints.xdc",
+      "sha256": "690f7fea7006f6d560baa3bad36ae5ca937f08da3b752bf00e3f48d31930479f",
+      "bytes": 634,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "replay_input"
+    },
+    {
+      "path": "tools/retention_tree.py",
+      "sha256": "d19edf476d31b0013f0a44ca88851b1e4f1e4b04a719f80d8e6e09ec8131026f",
+      "bytes": 2480,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "verification_tool"
+    },
+    {
+      "path": "tools/retention_git.py",
+      "sha256": "4454a38615974418c018d13348c5649d9217b108ad8844d77876658c759fd567",
+      "bytes": 3432,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "verification_tool"
+    },
+    {
+      "path": "tools/verify_restore.py",
+      "sha256": "aaa67c896fef602a770cef6f6ae79ccad5af1e36334bbcd2be21d75688fe4f9b",
+      "bytes": 2548,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "verification_tool"
+    },
+    {
+      "path": "tools/retention_archive.py",
+      "sha256": "245d0177ba3cabc02f1556b0ed9c86fd3ebf816d9bb580f107803ad8437b9906",
+      "bytes": 4719,
+      "hash_basis": "read-only proposal observation; rehash required at freeze",
+      "role": "verification_tool"
+    }
+  ],
+  "generated_members_required": [
+    "RET3_REPLAY.py",
+    "relocation.json",
+    "REPRODUCE.md"
+  ],
+  "separate_envelope_records": [
+    "manifest.json",
+    "payload.tar digest",
+    "qualification receipt and its digest",
+    "two independent-copy restoration receipts"
+  ],
+  "archival_writes_authorized": false,
+  "cleanup_authorized": false,
+  "classification_changes": []
+}

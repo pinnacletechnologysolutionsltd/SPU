@@ -1,0 +1,2506 @@
+{
+  "CH1": {
+    "joins": {
+      "u1": {
+        "generator_cross": [
+          0,
+          1
+        ],
+        "generator_dot": [
+          2,
+          1
+        ],
+        "join": {
+          "C1": true,
+          "C2": true,
+          "G0": true,
+          "G1": true,
+          "G2": true,
+          "cusp": false
+        },
+        "left_acceleration": [
+          [
+            -2,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "left_kappa": [
+          1,
+          2
+        ],
+        "left_velocity": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "position_gap": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "raw": {
+          "acceleration_equal": true,
+          "curvature_equal": true,
+          "tangent_equal": true,
+          "tangent_opposite": false,
+          "velocity_equal": true
+        },
+        "right_acceleration": [
+          [
+            -2,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "right_kappa": [
+          1,
+          2
+        ],
+        "right_velocity": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      },
+      "u2": {
+        "generator_cross": [
+          0,
+          1
+        ],
+        "generator_dot": [
+          5,
+          1
+        ],
+        "join": {
+          "C1": true,
+          "C2": false,
+          "G0": true,
+          "G1": true,
+          "G2": false,
+          "cusp": false
+        },
+        "left_acceleration": [
+          [
+            -4,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "left_kappa": [
+          2,
+          25
+        ],
+        "left_velocity": [
+          [
+            -3,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "position_gap": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "raw": {
+          "acceleration_equal": false,
+          "curvature_equal": false,
+          "tangent_equal": true,
+          "tangent_opposite": false,
+          "velocity_equal": true
+        },
+        "right_acceleration": [
+          [
+            -3,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "right_kappa": [
+          0,
+          1
+        ],
+        "right_velocity": [
+          [
+            -3,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ]
+      }
+    },
+    "rows": [
+      {
+        "accumulated_arc_length": [
+          0,
+          1
+        ],
+        "position": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "segment": 0,
+        "speed": [
+          1,
+          1
+        ],
+        "t": [
+          0,
+          1
+        ],
+        "u": [
+          0,
+          1
+        ],
+        "unit_tangent": [
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "accumulated_arc_length": [
+          28,
+          81
+        ],
+        "position": [
+          [
+            26,
+            81
+          ],
+          [
+            1,
+            9
+          ]
+        ],
+        "segment": 0,
+        "speed": [
+          10,
+          9
+        ],
+        "t": [
+          1,
+          3
+        ],
+        "u": [
+          1,
+          3
+        ],
+        "unit_tangent": [
+          [
+            4,
+            5
+          ],
+          [
+            3,
+            5
+          ]
+        ]
+      },
+      {
+        "accumulated_arc_length": [
+          62,
+          81
+        ],
+        "position": [
+          [
+            46,
+            81
+          ],
+          [
+            4,
+            9
+          ]
+        ],
+        "segment": 0,
+        "speed": [
+          13,
+          9
+        ],
+        "t": [
+          2,
+          3
+        ],
+        "u": [
+          2,
+          3
+        ],
+        "unit_tangent": [
+          [
+            5,
+            13
+          ],
+          [
+            12,
+            13
+          ]
+        ]
+      },
+      {
+        "accumulated_arc_length": [
+          4,
+          3
+        ],
+        "position": [
+          [
+            2,
+            3
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "segment": 1,
+        "speed": [
+          2,
+          1
+        ],
+        "t": [
+          0,
+          1
+        ],
+        "u": [
+          1,
+          1
+        ],
+        "unit_tangent": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      {
+        "accumulated_arc_length": [
+          172,
+          81
+        ],
+        "position": [
+          [
+            44,
+            81
+          ],
+          [
+            16,
+            9
+          ]
+        ],
+        "segment": 1,
+        "speed": [
+          25,
+          9
+        ],
+        "t": [
+          1,
+          3
+        ],
+        "u": [
+          4,
+          3
+        ],
+        "unit_tangent": [
+          [
+            -7,
+            25
+          ],
+          [
+            24,
+            25
+          ]
+        ]
+      },
+      {
+        "accumulated_arc_length": [
+          21,
+          8
+        ],
+        "position": [
+          [
+            3,
+            8
+          ],
+          [
+            9,
+            4
+          ]
+        ],
+        "segment": 1,
+        "speed": [
+          13,
+          4
+        ],
+        "t": [
+          1,
+          2
+        ],
+        "u": [
+          3,
+          2
+        ],
+        "unit_tangent": [
+          [
+            -5,
+            13
+          ],
+          [
+            12,
+            13
+          ]
+        ]
+      },
+      {
+        "accumulated_arc_length": [
+          14,
+          3
+        ],
+        "position": [
+          [
+            -2,
+            3
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "segment": 2,
+        "speed": [
+          5,
+          1
+        ],
+        "t": [
+          0,
+          1
+        ],
+        "u": [
+          2,
+          1
+        ],
+        "unit_tangent": [
+          [
+            -3,
+            5
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      },
+      {
+        "accumulated_arc_length": [
+          119,
+          18
+        ],
+        "position": [
+          [
+            -11,
+            6
+          ],
+          [
+            50,
+            9
+          ]
+        ],
+        "segment": 2,
+        "speed": [
+          20,
+          3
+        ],
+        "t": [
+          1,
+          3
+        ],
+        "u": [
+          7,
+          3
+        ],
+        "unit_tangent": [
+          [
+            -3,
+            5
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      },
+      {
+        "accumulated_arc_length": [
+          73,
+          6
+        ],
+        "position": [
+          [
+            -31,
+            6
+          ],
+          [
+            10,
+            1
+          ]
+        ],
+        "segment": 2,
+        "speed": [
+          10,
+          1
+        ],
+        "t": [
+          1,
+          1
+        ],
+        "u": [
+          3,
+          1
+        ],
+        "unit_tangent": [
+          [
+            -3,
+            5
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      }
+    ],
+    "segment_start_lengths": [
+      [
+        0,
+        1
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        14,
+        3
+      ]
+    ],
+    "segment_start_positions": [
+      [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      [
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      [
+        [
+          -2,
+          3
+        ],
+        [
+          4,
+          1
+        ]
+      ]
+    ],
+    "segments": [
+      {
+        "S": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "U": [
+          [
+            1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "ddx": [
+          [
+            0,
+            1
+          ],
+          [
+            -2,
+            1
+          ]
+        ],
+        "ddy": [
+          [
+            2,
+            1
+          ]
+        ],
+        "dx": [
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -1,
+            1
+          ]
+        ],
+        "dy": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "h": [
+          [
+            1,
+            1
+          ]
+        ],
+        "signed_speed": [
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "x": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -1,
+            3
+          ]
+        ],
+        "y": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      {
+        "S": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "U": [
+          [
+            1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "ddx": [
+          [
+            -2,
+            1
+          ],
+          [
+            -2,
+            1
+          ]
+        ],
+        "ddy": [
+          [
+            2,
+            1
+          ]
+        ],
+        "dx": [
+          [
+            0,
+            1
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            -1,
+            1
+          ]
+        ],
+        "dy": [
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "h": [
+          [
+            1,
+            1
+          ]
+        ],
+        "signed_speed": [
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "x": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            -1,
+            3
+          ]
+        ],
+        "y": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      {
+        "S": [
+          [
+            0,
+            1
+          ],
+          [
+            5,
+            1
+          ],
+          [
+            5,
+            2
+          ]
+        ],
+        "U": [
+          [
+            1,
+            1
+          ]
+        ],
+        "V": [
+          [
+            2,
+            1
+          ]
+        ],
+        "ddx": [
+          [
+            -3,
+            1
+          ]
+        ],
+        "ddy": [
+          [
+            4,
+            1
+          ]
+        ],
+        "dx": [
+          [
+            -3,
+            1
+          ],
+          [
+            -3,
+            1
+          ]
+        ],
+        "dy": [
+          [
+            4,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "h": [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "signed_speed": [
+          [
+            5,
+            1
+          ],
+          [
+            5,
+            1
+          ]
+        ],
+        "x": [
+          [
+            0,
+            1
+          ],
+          [
+            -3,
+            1
+          ],
+          [
+            -3,
+            2
+          ]
+        ],
+        "y": [
+          [
+            0,
+            1
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      }
+    ]
+  },
+  "CellA_adapted_true_curvature_pair": [
+    {
+      "D_nonzero": true,
+      "t": [
+        5,
+        7
+      ],
+      "values": [
+        [
+          5375,
+          7203
+        ],
+        [
+          131980,
+          50421
+        ],
+        [
+          1200,
+          343
+        ],
+        [
+          12862,
+          2401
+        ],
+        [
+          235991044,
+          5764801
+        ],
+        [
+          15362,
+          2401
+        ],
+        [
+          139480,
+          50421
+        ],
+        [
+          -380,
+          49
+        ],
+        [
+          235991044,
+          5764801
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        1,
+        9
+      ],
+      "values": [
+        [
+          13,
+          6561
+        ],
+        [
+          73168,
+          295245
+        ],
+        [
+          40,
+          729
+        ],
+        [
+          16198,
+          6561
+        ],
+        [
+          262504804,
+          43046721
+        ],
+        [
+          16202,
+          6561
+        ],
+        [
+          73172,
+          295245
+        ],
+        [
+          -76,
+          81
+        ],
+        [
+          262504804,
+          43046721
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        3,
+        8
+      ],
+      "values": [
+        [
+          369,
+          4096
+        ],
+        [
+          87117,
+          81920
+        ],
+        [
+          99,
+          128
+        ],
+        [
+          7663,
+          2048
+        ],
+        [
+          61230625,
+          4194304
+        ],
+        [
+          7825,
+          2048
+        ],
+        [
+          87603,
+          81920
+        ],
+        [
+          -57,
+          16
+        ],
+        [
+          61230625,
+          4194304
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        8,
+        9
+      ],
+      "values": [
+        [
+          10240,
+          6561
+        ],
+        [
+          1064144,
+          295245
+        ],
+        [
+          4352,
+          729
+        ],
+        [
+          38626,
+          6561
+        ],
+        [
+          3026100100,
+          43046721
+        ],
+        [
+          55010,
+          6561
+        ],
+        [
+          1195216,
+          295245
+        ],
+        [
+          -832,
+          81
+        ],
+        [
+          3026100100,
+          43046721
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        1,
+        2
+      ],
+      "values": [
+        [
+          11,
+          48
+        ],
+        [
+          377,
+          240
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          35,
+          8
+        ],
+        [
+          1369,
+          64
+        ],
+        [
+          37,
+          8
+        ],
+        [
+          383,
+          240
+        ],
+        [
+          -5,
+          1
+        ],
+        [
+          1369,
+          64
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        2,
+        5
+      ],
+      "values": [
+        [
+          208,
+          1875
+        ],
+        [
+          54308,
+          46875
+        ],
+        [
+          112,
+          125
+        ],
+        [
+          2418,
+          625
+        ],
+        [
+          6160324,
+          390625
+        ],
+        [
+          2482,
+          625
+        ],
+        [
+          54692,
+          46875
+        ],
+        [
+          -96,
+          25
+        ],
+        [
+          6160324,
+          390625
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        6,
+        7
+      ],
+      "values": [
+        [
+          3312,
+          2401
+        ],
+        [
+          287268,
+          84035
+        ],
+        [
+          1872,
+          343
+        ],
+        [
+          13970,
+          2401
+        ],
+        [
+          366875716,
+          5764801
+        ],
+        [
+          19154,
+          2401
+        ],
+        [
+          318372,
+          84035
+        ],
+        [
+          -480,
+          49
+        ],
+        [
+          366875716,
+          5764801
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        0,
+        1
+      ],
+      "values": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        1,
+        1
+      ],
+      "values": [
+        [
+          7,
+          3
+        ],
+        [
+          64,
+          15
+        ],
+        [
+          8,
+          1
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          100,
+          1
+        ],
+        [
+          10,
+          1
+        ],
+        [
+          76,
+          15
+        ],
+        [
+          -12,
+          1
+        ],
+        [
+          100,
+          1
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        1,
+        3
+      ],
+      "values": [
+        [
+          5,
+          81
+        ],
+        [
+          1108,
+          1215
+        ],
+        [
+          16,
+          27
+        ],
+        [
+          286,
+          81
+        ],
+        [
+          84100,
+          6561
+        ],
+        [
+          290,
+          81
+        ],
+        [
+          1112,
+          1215
+        ],
+        [
+          -28,
+          9
+        ],
+        [
+          84100,
+          6561
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        7,
+        10
+      ],
+      "values": [
+        [
+          20923,
+          30000
+        ],
+        [
+          1906079,
+          750000
+        ],
+        [
+          833,
+          250
+        ],
+        [
+          26499,
+          5000
+        ],
+        [
+          979752601,
+          25000000
+        ],
+        [
+          31301,
+          5000
+        ],
+        [
+          2006921,
+          750000
+        ],
+        [
+          -189,
+          25
+        ],
+        [
+          979752601,
+          25000000
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        2,
+        9
+      ],
+      "values": [
+        [
+          112,
+          6561
+        ],
+        [
+          162476,
+          295245
+        ],
+        [
+          176,
+          729
+        ],
+        [
+          19570,
+          6561
+        ],
+        [
+          385493956,
+          43046721
+        ],
+        [
+          19634,
+          6561
+        ],
+        [
+          162604,
+          295245
+        ],
+        [
+          -160,
+          81
+        ],
+        [
+          385493956,
+          43046721
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        5,
+        6
+      ],
+      "values": [
+        [
+          1625,
+          1296
+        ],
+        [
+          12755,
+          3888
+        ],
+        [
+          275,
+          54
+        ],
+        [
+          3731,
+          648
+        ],
+        [
+          24810361,
+          419904
+        ],
+        [
+          4981,
+          648
+        ],
+        [
+          14005,
+          3888
+        ],
+        [
+          -85,
+          9
+        ],
+        [
+          24810361,
+          419904
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        3,
+        4
+      ],
+      "values": [
+        [
+          225,
+          256
+        ],
+        [
+          7197,
+          2560
+        ],
+        [
+          63,
+          16
+        ],
+        [
+          703,
+          128
+        ],
+        [
+          748225,
+          16384
+        ],
+        [
+          865,
+          128
+        ],
+        [
+          7683,
+          2560
+        ],
+        [
+          -33,
+          4
+        ],
+        [
+          748225,
+          16384
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        1,
+        9
+      ],
+      "values": [
+        [
+          13,
+          6561
+        ],
+        [
+          73168,
+          295245
+        ],
+        [
+          40,
+          729
+        ],
+        [
+          16198,
+          6561
+        ],
+        [
+          262504804,
+          43046721
+        ],
+        [
+          16202,
+          6561
+        ],
+        [
+          73172,
+          295245
+        ],
+        [
+          -76,
+          81
+        ],
+        [
+          262504804,
+          43046721
+        ]
+      ]
+    },
+    {
+      "D_nonzero": true,
+      "t": [
+        5,
+        7
+      ],
+      "values": [
+        [
+          5375,
+          7203
+        ],
+        [
+          131980,
+          50421
+        ],
+        [
+          1200,
+          343
+        ],
+        [
+          12862,
+          2401
+        ],
+        [
+          235991044,
+          5764801
+        ],
+        [
+          15362,
+          2401
+        ],
+        [
+          139480,
+          50421
+        ],
+        [
+          -380,
+          49
+        ],
+        [
+          235991044,
+          5764801
+        ]
+      ]
+    }
+  ],
+  "S6_joins": {
+    "b1": {
+      "generator_cross": [
+        0,
+        1
+      ],
+      "generator_dot": [
+        2,
+        1
+      ],
+      "join": {
+        "C1": true,
+        "C2": false,
+        "G0": true,
+        "G1": true,
+        "G2": false,
+        "cusp": false
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": false,
+        "curvature_equal": false,
+        "tangent_equal": true,
+        "tangent_opposite": false,
+        "velocity_equal": true
+      },
+      "right_acceleration": [
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "right_kappa": [
+        -1,
+        2
+      ],
+      "right_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    "b2": {
+      "generator_cross": [
+        0,
+        1
+      ],
+      "generator_dot": [
+        2,
+        1
+      ],
+      "join": {
+        "C1": true,
+        "C2": true,
+        "G0": true,
+        "G1": true,
+        "G2": true,
+        "cusp": false
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": true,
+        "curvature_equal": true,
+        "tangent_equal": true,
+        "tangent_opposite": false,
+        "velocity_equal": true
+      },
+      "right_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "right_kappa": [
+        1,
+        2
+      ],
+      "right_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    "b3": {
+      "generator_cross": [
+        0,
+        1
+      ],
+      "generator_dot": [
+        2,
+        1
+      ],
+      "join": {
+        "C1": true,
+        "C2": false,
+        "G0": true,
+        "G1": true,
+        "G2": true,
+        "cusp": false
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": false,
+        "curvature_equal": true,
+        "tangent_equal": true,
+        "tangent_opposite": false,
+        "velocity_equal": true
+      },
+      "right_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          6,
+          1
+        ]
+      ],
+      "right_kappa": [
+        1,
+        2
+      ],
+      "right_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    "b4": {
+      "generator_cross": [
+        0,
+        1
+      ],
+      "generator_dot": [
+        4,
+        1
+      ],
+      "join": {
+        "C1": false,
+        "C2": false,
+        "G0": true,
+        "G1": true,
+        "G2": false,
+        "cusp": false
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": false,
+        "curvature_equal": false,
+        "tangent_equal": true,
+        "tangent_opposite": false,
+        "velocity_equal": false
+      },
+      "right_acceleration": [
+        [
+          -4,
+          1
+        ],
+        [
+          4,
+          1
+        ]
+      ],
+      "right_kappa": [
+        1,
+        16
+      ],
+      "right_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          8,
+          1
+        ]
+      ]
+    },
+    "b5": {
+      "generator_cross": [
+        0,
+        1
+      ],
+      "generator_dot": [
+        -2,
+        1
+      ],
+      "join": {
+        "C1": true,
+        "C2": true,
+        "G0": true,
+        "G1": true,
+        "G2": true,
+        "cusp": false
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": true,
+        "curvature_equal": true,
+        "tangent_equal": true,
+        "tangent_opposite": false,
+        "velocity_equal": true
+      },
+      "right_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "right_kappa": [
+        1,
+        2
+      ],
+      "right_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    "b6": {
+      "generator_cross": [
+        -1,
+        1
+      ],
+      "generator_dot": [
+        1,
+        1
+      ],
+      "join": {
+        "C1": false,
+        "C2": false,
+        "G0": true,
+        "G1": false,
+        "G2": false,
+        "cusp": false
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": false,
+        "curvature_equal": false,
+        "tangent_equal": false,
+        "tangent_opposite": false,
+        "velocity_equal": false
+      },
+      "right_acceleration": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "right_kappa": [
+        2,
+        1
+      ],
+      "right_velocity": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    "b7": {
+      "generator_cross": [
+        -2,
+        1
+      ],
+      "generator_dot": [
+        0,
+        1
+      ],
+      "join": {
+        "C1": false,
+        "C2": false,
+        "G0": true,
+        "G1": false,
+        "G2": false,
+        "cusp": true
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": false,
+        "curvature_equal": true,
+        "tangent_equal": false,
+        "tangent_opposite": true,
+        "velocity_equal": false
+      },
+      "right_acceleration": [
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "right_kappa": [
+        1,
+        2
+      ],
+      "right_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          -2,
+          1
+        ]
+      ]
+    },
+    "b8": {
+      "generator_cross": [
+        1,
+        1
+      ],
+      "generator_dot": [
+        2000001,
+        1
+      ],
+      "join": {
+        "C1": false,
+        "C2": false,
+        "G0": true,
+        "G1": false,
+        "G2": false,
+        "cusp": false
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": false,
+        "curvature_equal": false,
+        "tangent_equal": false,
+        "tangent_opposite": false,
+        "velocity_equal": false
+      },
+      "right_acceleration": [
+        [
+          -2000002,
+          1
+        ],
+        [
+          2000000,
+          1
+        ]
+      ],
+      "right_kappa": [
+        2000000,
+        4000008000008000004000001
+      ],
+      "right_velocity": [
+        [
+          -2000001,
+          1
+        ],
+        [
+          2000002000000,
+          1
+        ]
+      ]
+    },
+    "b9": {
+      "generator_cross": [
+        0,
+        1
+      ],
+      "generator_dot": [
+        2,
+        1
+      ],
+      "join": {
+        "C1": false,
+        "C2": false,
+        "G0": false,
+        "G1": false,
+        "G2": false,
+        "cusp": false
+      },
+      "left_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "left_kappa": [
+        1,
+        2
+      ],
+      "left_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "position_gap": [
+        [
+          1,
+          4
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "raw": {
+        "acceleration_equal": true,
+        "curvature_equal": true,
+        "tangent_equal": true,
+        "tangent_opposite": false,
+        "velocity_equal": true
+      },
+      "right_acceleration": [
+        [
+          -2,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "right_kappa": [
+        1,
+        2
+      ],
+      "right_velocity": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    }
+  },
+  "closures": {
+    "L0": {
+      "closed": true,
+      "closure_residual": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "first_displacement": [
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "second_displacement": [
+        [
+          -2,
+          3
+        ],
+        [
+          -1,
+          1
+        ]
+      ],
+      "second_h": [
+        1,
+        1
+      ],
+      "total_length": [
+        8,
+        3
+      ]
+    },
+    "L1": {
+      "closed": false,
+      "closure_residual": [
+        [
+          -1,
+          1500000
+        ],
+        [
+          -1,
+          1000000
+        ]
+      ],
+      "first_displacement": [
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "second_displacement": [
+        [
+          -1000001,
+          1500000
+        ],
+        [
+          -1000001,
+          1000000
+        ]
+      ],
+      "second_h": [
+        1000001,
+        1000000
+      ],
+      "total_length": [
+        666667,
+        250000
+      ]
+    }
+  },
+  "disposition": "REVISE",
+  "join_convention": "Raw endpoint comparisons separate from geometric joins. G1 requires G0; C2 requires G0,C1 and acceleration equality; G2 requires G0,G1 and curvature equality. No gap is a geometric join.",
+  "pins": {
+    "QCG0_FIXTURE_REVIEW_PACKET.md": "1f6c5b94ab610f4950a4f2244803aeb17def3adf7a21ea50d5664c2759b98c82",
+    "QCG0_PREREGISTRATION.md": "fbaf2b5a85615bf6a3ade33c759f2d496596aeff234dcf2ce684f0f25bec4f42",
+    "QCG0_PREREGISTRATION_REVISION_2.diff": "43c6f44cc697edb2aff9776f435e6b293c882d1870971b0f6cef86ea3a2b5e75",
+    "QCG0_REVISION2_REREVIEW_REQUEST.md": "b935018ca8c0b3acc177745a82949ce0693bce9a3f3649a004ff27c76929f728",
+    "QUINTIC_FIXTURE_CERTIFICATE.md": "1391b1d9804c0d5b636070b1bee3d1cdb9c445f2bea4df4444c78243cc4cc673",
+    "QUINTIC_FIXTURE_REVIEW_MANIFEST.json": "15e310df23279ae8d725d3b01bd7bef3bc95da3b260eac98517cdc31606e3704",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34",
+    "REVIEW_CALCULATION_AUTHORIZATION.md": "4b9602998d2cb2fab14af5440c892cce06ca4189d98bb7f40616362849d3e324"
+  },
+  "schema": "QCG0-revision2-independent-values-v1",
+  "superseded_revision1_sha256_reconstructed_in_memory": "b33205e92370a41de5d1b7806f8435057065ea5272ea21866f5700be99025fa8"
+}

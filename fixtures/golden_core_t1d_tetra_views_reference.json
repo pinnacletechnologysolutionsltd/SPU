@@ -1,0 +1,202 @@
+{
+  "format": "golden_core_t1d_tetra_views_v1",
+  "scope": "Exact labelled Quadray tetrahedron transformed, rationally projected, ties-to-even quantized, then evaluated as two T1d face triangles. T1d profile limit means only faces ABC and ADC are rasterized; this is not a closed tetrahedron render.",
+  "vertex_labels": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "face_labels": [
+    "ABC",
+    "ADC"
+  ],
+  "views": [
+    {
+      "id": "identity",
+      "permutation": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "permutation_sign": 1,
+      "projected_vertices": [
+        [
+          435,
+          195,
+          31990
+        ],
+        [
+          222,
+          142,
+          32657
+        ],
+        [
+          346,
+          266,
+          34435
+        ],
+        [
+          275,
+          355,
+          31990
+        ]
+      ],
+      "signed_twice_areas": [
+        -19840,
+        2880
+      ],
+      "scene_sha256": "27dda4d08c307640672f1ed5b655061a9d57889fb8afebfdc1c87e67a2e5d372",
+      "packet_sha256": "e2ef44e4087e7c8a2d1a67c3ef24abde1e2542d9b8f5a74c11753762dad43942",
+      "pixels": [
+        {
+          "x": 320,
+          "y": 240,
+          "coverage": "triangle0",
+          "winner": 0,
+          "rgb": [
+            15,
+            2,
+            1
+          ]
+        },
+        {
+          "x": 434,
+          "y": 196,
+          "coverage": "triangle1",
+          "winner": 1,
+          "rgb": [
+            1,
+            8,
+            15
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rotate_bcd",
+      "permutation": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "permutation_sign": 1,
+      "projected_vertices": [
+        [
+          435,
+          195,
+          31990
+        ],
+        [
+          346,
+          266,
+          34435
+        ],
+        [
+          275,
+          355,
+          31990
+        ],
+        [
+          222,
+          142,
+          32657
+        ]
+      ],
+      "signed_twice_areas": [
+        -2880,
+        -42560
+      ],
+      "scene_sha256": "d779dc731b941d734a417e2e5c0be43eb461b11625d4d7356257550dadb0ceda",
+      "packet_sha256": "8d829ce865a2053578e5369b437ec9b603023cbf624e6a6d573f112af7ee7b37",
+      "pixels": [
+        {
+          "x": 320,
+          "y": 240,
+          "coverage": "triangle1",
+          "winner": 1,
+          "rgb": [
+            1,
+            8,
+            15
+          ]
+        },
+        {
+          "x": 346,
+          "y": 266,
+          "coverage": "overlap",
+          "winner": 1,
+          "rgb": [
+            1,
+            8,
+            15
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reflect_bc",
+      "permutation": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "permutation_sign": -1,
+      "projected_vertices": [
+        [
+          435,
+          195,
+          31990
+        ],
+        [
+          346,
+          266,
+          34435
+        ],
+        [
+          222,
+          142,
+          32657
+        ],
+        [
+          275,
+          355,
+          31990
+        ]
+      ],
+      "signed_twice_areas": [
+        19840,
+        42560
+      ],
+      "scene_sha256": "dade87cc881f9ee6b4ec336b2aa32ff0894583317e03a3ed24305e092940c056",
+      "packet_sha256": "c0c439c1955a43f86793fa439aa2d1617a4a671a8237850c5acde802f63b772d",
+      "pixels": [
+        {
+          "x": 320,
+          "y": 240,
+          "coverage": "overlap",
+          "winner": 1,
+          "rgb": [
+            1,
+            8,
+            15
+          ]
+        },
+        {
+          "x": 435,
+          "y": 195,
+          "coverage": "overlap",
+          "winner": 0,
+          "rgb": [
+            15,
+            2,
+            1
+          ]
+        }
+      ]
+    }
+  ]
+}

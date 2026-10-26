@@ -1,0 +1,9 @@
+Verbatim line excerpts of real Vivado v2026.1 (SW Build 6511674) output, Phase 2 Step 7 NC3 run (build/vivado/step7_nc3_01, commit 39f319e, -strict 1).
+No line is edited; only whole lines are selected (sed -n 'A,Bp', ranges in order).
+nc3_vivado_log.excerpt   <- vivado.log sha256 3984926b6ec2f3a351ea3d66bef364a343e88d58a74e6971cb63b1f7d8c8de5b lines: 117,147 183,190 195,195 342,344 1321,1326
+nc3_check_timing.excerpt <- synth_check_timing.rpt sha256 3ceb959f4fd051e03a0d525e18895f3a4cae084cc517b8d9f62da783a4e2f185 lines: 16,29 31,31 8209,8209 8214,8214 8219,8219 36878,36878 36890,36890 36901,36901 36906,36906 36911,36911 36916,36916 36921,36921 36926,36926
+Contents: echoed spu_gate source (D1 trigger), echoed top-level catch block, real INFO/WARNING messages, the gate's printed FAILED text (D1 re-scan trigger);
+check_timing table of contents plus every section header (D2 duplicate).
+nc1_vivado_log.excerpt   <- Step 7V NC1 run (build/vivado/step7v_nc1_01, nc1_missing_port.xdc, -strict 1, Step 7R gate 64c94e28…) vivado.log sha256 fd0c942c3be15c51749e506cd35f19ac30a85de9c18f9c8102a3f327216bb499 lines: 211,214 482,485 1296,1299
+  Contents: end of echoed source, the real scope marker, and both occurrences of the D3 pair (WARNING [Vivado 12-584] + CRITICAL WARNING [Common 17-55]).
+  Unlike the NC3 excerpts these lines keep Vivado's absolute XDC path (/home/user/...), because the file:line suffix is part of the real message.

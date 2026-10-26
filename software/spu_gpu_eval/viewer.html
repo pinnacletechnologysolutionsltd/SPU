@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPU T1d Scene Viewer</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.45 system-ui, sans-serif; color: #17202b; background: #eef2f6; }
+    body { max-width: 1440px; margin: 0 auto; padding: 1.25rem; }
+    h1 { margin: 0 0 .3rem; font-size: 1.7rem; }
+    .intro, .note { color: #435265; }
+    .toolbar { display: flex; gap: .75rem; align-items: center; margin: 1rem 0; }
+    select { min-width: 16rem; padding: .5rem; font: inherit; }
+    .frames { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    figure { margin: 0; padding: .75rem; border: 1px solid #c5cfdb; border-radius: .55rem; background: white; }
+    figcaption { margin-bottom: .6rem; font-weight: 650; }
+    canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; image-rendering: pixelated; background: #111; cursor: crosshair; }
+    .details { margin-top: 1rem; padding: 1rem; border-radius: .55rem; background: #fff; }
+    #report { overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.45 ui-monospace, monospace; }
+    #status { min-height: 1.5em; color: #435265; }
+    .note { font-size: .92rem; }
+    @media (max-width: 760px) { .frames { grid-template-columns: 1fr; } body { padding: .75rem; } }
+  </style>
+</head>
+<body>
+  <h1>SPU T1d Scene Viewer</h1>
+  <p class="intro">Choose a frozen scene, compare the two software paths, then click either frame to inspect that pixel.</p>
+  <p class="note">Ideal reference uses exact rational decisions. Device model uses the finite-width T1d profile. Both run as software on this computer; neither image is an FPGA capture.</p>
+  <div class="toolbar">
+    <label for="scene">Frozen scene</label>
+    <select id="scene" aria-label="Frozen scene"></select>
+  </div>
+  <div id="status" role="status">Loading frozen scene catalogue…</div>
+  <main class="frames">
+    <figure>
+      <figcaption>Ideal rational reference</figcaption>
+      <canvas id="ideal" width="640" height="480" aria-label="Ideal reference frame; click to inspect a pixel"></canvas>
+    </figure>
+    <figure>
+      <figcaption>Finite-width T1d device model</figcaption>
+      <canvas id="device" width="640" height="480" aria-label="Finite-width device model frame; click to inspect a pixel"></canvas>
+    </figure>
+  </main>
+  <section class="details" aria-live="polite">
+    <h2>Pixel inspection</h2>
+    <p id="pixel">Click either frame to inspect a pixel.</p>
+    <pre id="report"></pre>
+  </section>
+  <script>
+    const sceneSelect = document.querySelector("#scene");
+    const status = document.querySelector("#status");
+    const report = document.querySelector("#report");
+    const pixelLabel = document.querySelector("#pixel");
+    const canvases = { ideal: document.querySelector("#ideal"), device: document.querySelector("#device") };
+
+    async function getJson(url) {
+      const response = await fetch(url, { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      return data;
+    }
+
+    async function drawFrame(sceneId, mode) {
+      const query = new URLSearchParams({ scene_id: sceneId, mode });
+      const response = await fetch(`/api/frame?${query}`, { cache: "no-store" });
+      if (!response.ok) throw new Error((await response.json()).error || `HTTP ${response.status}`);
+      const bytes = await response.arrayBuffer();
+      if (bytes.byteLength !== 640 * 480 * 3) throw new Error("Frame response has an invalid size.");
+      const pixels = new Uint8ClampedArray(bytes);
+      const context = canvases[mode].getContext("2d");
+      context.putImageData(new ImageData(pixels, 640, 480), 0, 0);
+    }
+
+    async function loadScene() {
+      const sceneId = sceneSelect.value;
+      if (!sceneId) return;
+      status.textContent = `Rendering ${sceneId} through the existing W1-B paths…`;
+      report.textContent = "";
+      pixelLabel.textContent = "Click either frame to inspect a pixel.";
+      try {
+        await Promise.all([drawFrame(sceneId, "ideal"), drawFrame(sceneId, "device")]);
+        status.textContent = `Loaded ${sceneId}. Click either image to compare that pixel.`;
+      } catch (error) {
+        status.textContent = `Could not load scene: ${error.message}`;
+      }
+    }
+
+    async function inspectClick(event, mode) {
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const x = Math.floor((event.clientX - bounds.left) * 640 / bounds.width);
+      const y = Math.floor((event.clientY - bounds.top) * 480 / bounds.height);
+      if (x < 0 || x >= 640 || y < 0 || y >= 480) return;
+      const query = new URLSearchParams({ scene_id: sceneSelect.value, x, y });
+      try {
+        const data = await getJson(`/api/inspect?${query}`);
+        pixelLabel.textContent = `Pixel (${x}, ${y}) selected on the ${mode} frame; both models are shown below.`;
+        report.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        status.textContent = `Inspection failed: ${error.message}`;
+      }
+    }
+
+    Object.entries(canvases).forEach(([mode, canvas]) => {
+      canvas.addEventListener("click", event => inspectClick(event, mode));
+    });
+    sceneSelect.addEventListener("change", loadScene);
+
+    getJson("/api/scenes").then(data => {
+      for (const scene of data.scenes) {
+        const option = document.createElement("option");
+        option.value = scene.id;
+        option.textContent = `${scene.id} — ${scene.group}`;
+        sceneSelect.append(option);
+      }
+      return loadScene();
+    }).catch(error => { status.textContent = `Could not load scene catalogue: ${error.message}`; });
+  </script>
+</body>
+</html>

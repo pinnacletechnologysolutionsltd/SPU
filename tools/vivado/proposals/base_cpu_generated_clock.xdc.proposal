@@ -1,0 +1,18 @@
+# PROPOSAL ONLY. Not applied, not part of the frozen Base XDC (hardware/boards/artix7/spu_a7_surd_cpu_base.xdc keeps this line commented).
+# Source of the construct: spu_a7_surd_cpu_base_top.v  ->  `reg cpu_clk_div` (toggle flop on sys_clk) -> `BUFG u_cpu_clk_buf` -> cpu_clk (25 MHz) -> workload.
+# Vivado does NOT derive a clock through a flip-flop divider; without a generated clock the whole cpu_clk domain is reported unconstrained
+# (check_timing no_clock) and nothing in it is timed. The tool-inserted BUFG on sys_clk and the explicit BUFG after the divider are the two BUFGs.
+#
+# BEFORE USE, confirm in the SYNTHESIZED netlist (names are Vivado's, not guaranteed):
+#   get_cells -hierarchical -filter {NAME =~ *cpu_clk_div_reg*}     -> exactly one flop; pins C and Q must exist
+#   get_cells -hierarchical -filter {REF_NAME =~ BUFG*}              -> exactly two (sys_clk BUFG, u_cpu_clk_buf)
+# If the flop was renamed or merged, STOP and use the real object; do not edit this line to make a warning disappear.
+create_generated_clock -name cpu_clk -source [get_pins cpu_clk_div_reg/C] -divide_by 2 [get_pins cpu_clk_div_reg/Q]
+#
+# Review items this does NOT settle (each needs an explicit, reviewed decision, not a blanket false path):
+#  1. rst_n_int (a combinational 8-input decode of rst_count in the sys_clk domain) drives the ASYNC clear of the two cpu_clk release flops:
+#     STA will check recovery/removal against cpu_clk, but cannot see decode glitches (contract section 9 item 6).
+#  2. rst_n (H7) is an asynchronous pad into the first synchronizer flop: input-delay / false-path policy is undecided.
+#  3. uart_tx (E3) is a cpu_clk-domain checksum-parity output with no output-delay constraint: policy undecided.
+#  4. AMD guidance cautions against fabric-generated clocks (skew). Inspect the implemented clock network (report_clock_networks,
+#     report_clock_interaction) instead of only clearing the warning.

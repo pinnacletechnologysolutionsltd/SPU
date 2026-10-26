@@ -1,0 +1,453 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\input{lucas_paper_tables.tex}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10}
+}
+
+\hypersetup{
+    colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue,
+    pdftitle={Zero-Drift Lucas-Prime Phinary Arithmetic for Exact Quantum Phase Coherence on FPGA},
+    pdfauthor={John Curley},
+    pdfsubject={Exact Z[phi]/(521) arithmetic on FPGA; version 0.2, source tag v0.2-lucas},
+    pdfkeywords={golden ratio, Lucas prime, phinary arithmetic, exact arithmetic,
+                 FPGA, coprocessor, Fibonacci anyons, cyclotomic, SPU-13}
+}
+
+\title{Zero-Drift Lucas-Prime Phinary Arithmetic for Exact Quantum Phase Coherence on FPGA}
+
+\author{
+\IEEEauthorblockN{John Curley}
+\IEEEauthorblockA{Independent Researcher, SPU-13 Project\\
+Email: \href{mailto:johncurley@pinnacletechglobal.com}{johncurley@pinnacletechglobal.com}}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}\footnotesize
+Version 0.2 --- 2026-07-30 --- source tag \texttt{v0.2-lucas}\\
+Concept DOI \href{https://doi.org/10.5281/zenodo.21447440}{10.5281/zenodo.21447440}
+\end{center}
+
+\begin{abstract}
+Finite binary floating point cannot represent $\sqrt{5}$ exactly, so repeated
+floating implementations of golden-ratio transforms require a rounding policy.
+We present a hardware co-processor over $\mathbb{Z}[\phi]/(521)$ that instead
+performs $\phi$-scaling, conjugation, multiplication, inversion, and rational
+phase comparison with integer residues. PSCALE implements
+$\phi(a+b\phi)=b+(a+b)\phi$ in one accepted operation without a multiplier.
+An independent software oracle verifies one million PSCALE steps and 166,666
+mixed PSCALE/PMUL/PINV identity macros (999,996 primitive operations), with
+bit-exact return at every declared closure boundary. Separate FPGA artifacts
+establish bounded silicon evidence: a zero-DSP Tang 25K fast-path probe, a
+zero-DSP PHSLK microprobe, and an SPI-visible Artix-7 sidecar covering all four
+arithmetic operations. The current Artix image routes at only 4.41 MHz and was
+bench-tested at 2 MHz; it is a functional proof, not a real-time quantum-control
+result. PHSLK is therefore presented narrowly as a candidate exact
+preprocessing predicate for reduced $\phi$-native phase templates.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\fbox{\parbox{0.97\columnwidth}{\footnotesize
+\textbf{Reader's map.} This paper describes one arithmetic sidecar of
+the SPU-13, a deterministic FPGA coprocessor family; understanding
+Quadray coordinates or the complete SPU-13 instruction set is not
+required here. Every value is a residue pair $(a, b)$ representing
+$a + b\phi$ with integer arithmetic modulo a Lucas prime, where
+$\phi$ is the golden ratio made \emph{exact} by the ring identity
+$\phi^2 = \phi + 1$ rather than approximated as a float. The
+contribution is the exact FPGA implementation of this arithmetic and
+its measured evidence.}}
+\vspace{0.5em}
+
+\section{Introduction}
+
+\subsection{The Transcendental Drift Problem}
+
+Any computation involving irrational constants --- $\pi$, $\sqrt{2}$, $\sqrt{5}$, the golden ratio $\phi$ --- must either approximate them as finite-precision floats or work in an algebraic extension where they are native. The former accumulates error; the latter preserves exactness. For applications requiring millions of sequential geometric operations (robotics forward kinematics, photonic quantum error correction, Jitterbug transformations), sub-ULP drift compounds into structural collapse.
+
+\subsection{The Phinary Solution}
+
+The golden ratio $\phi = (1+\sqrt{5})/2$ satisfies $\phi^2 = \phi + 1$. In the ring $\mathbb{Z}[\phi] = \{a + b\phi \mid a,b \in \mathbb{Z}\}$, multiplication by $\phi$ is a single shift-and-add: no multiplier, no divider, no DSP. Choosing a Lucas prime $L_p$ as modulus provides the phinary analogue of the Mersenne prime's fast bit-wrap reduction: $\phi^p \equiv \pm 1 \pmod{L_p}$ enables deterministic period closure.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item A Verilog RTL implementation of PSCALE/PCHIRAL/PMUL/PINV over $\mathbb{Z}[\phi]/(521)$, exposed as an Artix-7 sidecar.
+    \item A reproducible software-oracle closure study: 38,461 complete
+    PSCALE periods in one million steps and 166,666 mixed identity macros
+    return to the starting residue pair. This is software evidence, distinct
+    from the shorter bounded FPGA tests.
+    \item A PHSLK coherence predicate that checks rational phase equality by cross multiplication, avoiding direct denominator inversion.
+    \item Three physically mapped artifacts with explicit scope boundaries:
+    Tang fast-path and PHSLK probes, and an Artix-7 SPI sidecar whose silicon
+    vectors include PSCALE, PCHIRAL, PMUL, and PINV.
+    \item \emph{Added in version 0.2:} a companion host-only oracle showing that
+    the complete Fibonacci $F/R$ representation --- which $\mathbb{Z}[\phi]$
+    cannot carry --- is expressible in rank-4 $\mathbb{Z}[\zeta_5]$ under a
+    declared integral gauge and weighted metric, together with the condition on
+    the modulus for a field-valued modular image. This is a software
+    feasibility result for the successor ring; no degree-4 RTL, timing, or
+    resource claim follows from it. See the Discussion.
+\end{enumerate}
+
+\section{Mathematical Foundation}
+
+\subsection{The Golden Ring \texorpdfstring{$\mathbb{Z}[\phi]$}{Z[phi]}}
+
+$\phi$ is a root of $x^2 - x - 1 = 0$, giving $\phi^2 = \phi + 1$. Let
+$x=a+b\phi$ and $y=c+d\phi$. Then:
+
+\begin{align*}
+\text{Addition:}&\quad (a+b\phi) + (c+d\phi) = (a+c) + (b+d)\phi \\
+\text{PSCALE:}&\quad \phi\cdot(a+b\phi) = b + (a+b)\phi \\
+\text{PCHIRAL:}&\quad \overline{a+b\phi} = (a+b) - b\phi \\
+\text{PMUL:}&\quad xy = (ac+bd) + (ad+bc+bd)\phi \\
+\text{Norm:}&\quad N(a+b\phi) = a^2 + ab - b^2 \\
+\text{PINV:}&\quad (a+b\phi)^{-1} = \overline{a+b\phi} \cdot N(a+b\phi)^{-1}
+\end{align*}
+
+\subsection{Lucas Primes as Moduli}
+
+The Lucas sequence $L_n = \phi^n + (-1)^n\phi^{-n}$~\cite{lucas}. When $p$ is prime and $L_p$ is prime~\cite{crandall}:
+
+\LucasPrimeTable
+
+This co-processor uses $L_{13}=521$ with $\phi$ period 26. The period guarantees $\phi^{26} \equiv 1 \pmod{521}$, providing the zero-drift invariant (defined as exact bit-match return to seed after a full orbit).
+
+The period is also a real application constraint. $L_{13}$ is appropriate for a small proof target and for validating the datapath, but it is not by itself a claim that a 100- to 1000-node syndrome graph can be embedded without aliasing. Larger Lucas moduli or residue-number tiling are required when the topology being encoded needs a phase horizon longer than 26 $\phi$-steps.
+
+For PHSLK, the relevant constraint is whether reduced numerator/denominator pairs alias inside this finite residue domain; the 26-step $\phi$-period is a warning sign for long braid, fusion, or syndrome histories.
+
+\subsection{PHSLK Without Denominator Inversion}
+
+Given two rational phase encodings over $\mathbb{Z}[\phi]/(521)$,
+
+\[
+A = n_1 / d_1,\quad B = n_2 / d_2
+\]
+
+PHSLK checks coherence with the cross product
+
+\[
+n_1 d_2 = n_2 d_1
+\]
+
+instead of computing $d_1^{-1}$ or $d_2^{-1}$. This matters because $521 \equiv 1 \pmod{5}$, so $x^2 - x - 1$ splits modulo 521 and $\mathbb{Z}[\phi]/(521)$ contains zero-divisors. Denominators with norm zero do not have a defined multiplicative inverse. The RTL therefore reports a denominator zero-divisor status bit alongside the coherence predicate rather than treating it as a PINV failure.
+
+Consider a concrete Fibonacci anyon fusion amplitude involving $\phi$: the F-symbol for the Fibonacci braid group is proportional to $\phi^{-1} \approx 0.618$. Over $\mathbb{Z}[\phi]/(521)$, this becomes a rational pair $(1,\phi)^{-1}$. A template-matching PHSLK check comparing
+
+\begin{align*}
+A &= (3+5\phi) / (2+3\phi) \quad \text{(observed template)} \\
+B &= (1+0\phi) / (1+0\phi) \quad \text{(target identity)}
+\end{align*}
+
+computes $n_1 d_2 = (3+5\phi)\cdot1 = 3+5\phi$ and $n_2 d_1 = (1+0\phi)\cdot(2+3\phi) = 2+3\phi$. These are equal only if $(3+5\phi) = (2+3\phi)$, which over $\mathbb{Z}[\phi]/(521)$ fails unless $3\equiv2$ and $5\equiv3 \pmod{521}$ --- a contradiction. The non-match correctly reports $\texttt{coherent}=0$. If instead the template genuinely matches, $n_1 d_2 = n_2 d_1$ exactly and the cross product returns $\texttt{coherent}=1$ without ever needing $\phi^{-1}$.
+
+\subsection{Why Not Merge with Mersenne Rings}
+
+Primes in $\mathbb{Z}$ do not stay prime in $\mathbb{Z}[\phi]$. For example, $11 = (3+\phi)(4-\phi)$ in $\mathbb{Z}[\phi]$. Merging the Mersenne binary ring with $\mathbb{Z}[\phi]$ would introduce zero-divisors. The primary architectural driver for isolating the rings is representation stability and pipeline execution semantics: preventing data-type pollution in the deterministic M31 execution lanes. While both rings are algebraically sound in isolation, their operational semantics benefit from clean separation at the BTU boundary.
+
+\section{Hardware Architecture}
+
+\subsection{Representation Boundary and Reduction}
+
+The M31 core and Lucas sidecar use different residue domains. A value crossing
+that boundary therefore needs an explicit conversion policy; packing a pair in
+the same 64-bit register does not make the rings interchangeable. The current
+LUCAS proof does not instantiate a shared, runtime-configurable BTU conversion
+pipeline. Its MAC is compiled for $L_p=521$, and its reduction helper uses the
+compile-time reciprocal
+
+\[
+\mu = \left\lfloor \frac{2^{k}}{L_p} \right\rfloor,\quad k = 31
+\]
+
+For $L_{13}=521$, $\mu=4,121,849$. The Verilog helper estimates
+$q=(x\mu)\gg31$, forms $r=x-qL_p$, and applies bounded correction. This is
+combinational arithmetic inside the current core; PMUL's three busy cycles
+come from opcode staging, not from a separately instantiated three-stage BTU.
+The SPI sidecar also contains CE-paced PMUL/PINV sequencing, so core latency,
+whole-sidecar latency, and transport time must be reported separately. A
+runtime-configurable modulus or shared conversion unit remains future work.
+
+\subsection{RTL Layout}
+
+The Phinary MAC co-processor (\texttt{spu13\_lucas\_mac.v}) is a self-contained Verilog module operating over $\mathbb{Z}[\phi]/(521)$.
+
+\begin{lstlisting}[language=Verilog]
+module spu13_lucas_mac #(L_P=521, L_P_BITS=10) (
+    input clk, rst_n, start,
+    input [2:0] opcode,     // 0=PSCALE 1=PCHIRAL 2=PMUL 3=PINV 4=PHSLK
+    input [9:0] op_a, op_b, // operand a + b*phi
+    input [9:0] op_c, op_d, // second operand or PHSLK d1
+    input [9:0] phslk_n2_a, phslk_n2_b, phslk_d2_a, phslk_d2_b,
+    output busy, done, error,
+    output phslk_coherent, phslk_zero_divisor,
+    output [9:0] result_a, result_b
+);
+\end{lstlisting}
+
+PSCALE implements $\phi$-multiplication in a single clock cycle with zero DSP slices:
+
+\begin{lstlisting}[language=Verilog]
+// phi*(a + b*phi) = b + (a+b)*phi -- 1 cycle, 0 DSP
+wire ps_b = (op_a + op_b >= L_P) ? (op_a + op_b - L_P) : (op_a + op_b);
+\end{lstlisting}
+
+PCHIRAL implements $\phi$-conjugation with equal simplicity:
+
+\begin{lstlisting}[language=Verilog]
+// conj(a + b*phi) = (a+b) - b*phi -- 1 cycle, 0 DSP
+wire pc_a = (op_a + op_b >= L_P) ? (op_a + op_b - L_P) : (op_a + op_b);
+wire pc_b = (op_b == 0) ? 0 : (L_P - op_b);
+\end{lstlisting}
+
+\LucasTimingTable
+
+\subsection{PINV: Algebraic Inverse}
+
+The inverse uses the norm-conjugation formula:
+\begin{enumerate}
+    \item Compute norm $N = a^2 + ab - b^2 \bmod L_p$ (combinational)
+    \item Find $N^{-1}$ via extended binary GCD over the prime field
+    \item Compute conjugate $C = (a+b) - b\phi$ (combinational)
+    \item Multiply: result $= C \cdot N^{-1} \bmod L_p$
+\end{enumerate}
+
+A watchdog counter bounds the GCD loop to 64 iterations, asserting error on timeout (the worst-case path for $L_{13}=521$ completes in 23 cycles). The post-inverse multiplication is split across two pipeline stages.
+
+\section{Empirical Results}
+
+\subsection{Zero-Drift Proof}
+
+In this paper, ``zero drift'' has a narrow empirical meaning: at a declared algebraic closure boundary, the bit pattern returns to the exact seed. It does not mean arbitrary sequences are periodic, nor does it claim every possible workload has a short orbit.
+
+The Tang fast-path FPGA probe performs 2,600 consecutive operations from seed
+$(3+5\phi)$, covering 100 complete periods, and checks exact closure at every
+boundary. The independent software oracle extends the same test to one million
+steps, or 38,461 complete boundaries plus a four-step remainder.
+
+The mixed identity macro:
+
+\begin{align*}
+x &\leftarrow \texttt{PSCALE}(x) \\
+x &\leftarrow x \cdot \texttt{PINV}(\phi) \\
+x &\leftarrow x \cdot g \\
+x &\leftarrow x \cdot \texttt{PINV}(g)
+\end{align*}
+
+completed 166,666 macros (999,996 primitive operations) with exact return to
+seed after every macro in the software oracle. This mixed marathon is not a
+million-operation silicon claim. The Artix sidecar instead has bounded bench
+vectors for each of PSCALE, PCHIRAL, PMUL, and PINV.
+
+\subsection{Operation Verification}
+
+\LucasOperationTable
+
+The publication-data script also verifies coherent, mismatched, and singular
+PHSLK vectors and checks that the committed tables remain byte-identical to
+regenerated output.
+
+\subsection{Resource and Timing Evidence}
+
+\LucasResourceTable
+
+\LucasPinvProfileTable
+
+The current Artix-7 bitstream is a functional bring-up artifact. A credible sub-100ns transform claim needs the full sidecar clocked above 30 MHz. The PHSLK Tang microprobe already exceeds that frequency target; the integrated Wukong sidecar does not yet.
+
+\section{Discussion}
+
+\subsection{Quantum Control Relevance}
+
+The quantum-control relevance of this block is narrow: it is not a complete QEC decoder, and the current SPI sidecar is not a feedback-loop transport. The useful kernel is PHSLK, which checks equality of two rational phase encodings without denominator inversion:
+
+\begin{align*}
+\mathit{valid} ={}& \mathit{coherent} \\
+                  & \land\ \neg\mathit{zero\_divisor}.
+\end{align*}
+
+Recent preprints report sub-microsecond decode-feedback latencies: 550 ns closed-loop including 124 ns NN decoding for a distance-3 surface code~\cite{yang2026}; 446 ns decode-feedback for distance-3~\cite{liu2026}; and 596 ns average latency per round for a $[\![144,12,12]\!]$ bivariate-bicycle code~\cite{bascones2026}. This paper should be read as a candidate exact-arithmetic kernel study, not as a claim that the current Wukong/SPI image is competitive with integrated QEC controllers.
+
+For bosonic QEC, relevant prior art includes cat-code real-time feedback~\cite{ofek2016, putterman2024}, binomial oscillator codes~\cite{michael2016}, and GKP codes~\cite{gottesman2001}. For the photonic and linear-optical fault-tolerance setting more broadly, see~\cite{knill2001, kok2007, bartolucci2021, bourassa2021, tzitrin2021}. The $\phi$-specific case is strongest where the upstream model is genuinely Fibonacci/topological: braid or fusion templates whose amplitudes, F-symbols, or phase ratios naturally contain $\phi$~\cite{freedman2002}.
+
+\subsection{Non-Quantum Exact Geometry Baseline}
+
+The software oracle includes an illustrative interpolation between two
+$\phi$-weighted endpoints. It shows that the MAC can preserve a chosen finite
+algebraic interpolation exactly; it does not establish that the full Jitterbug
+motion, its Cartesian embedding, or a robotics trajectory has been implemented
+by this sidecar. Such an end-to-end geometry benchmark remains separate work.
+
+\subsection{Limitations}
+
+\begin{itemize}
+    \item \textbf{Modulus configurability:} The interface exposes
+    \texttt{L\_P} and \texttt{L\_P\_BITS} parameters, but only the default
+    $L_{13}=521$ instance has the verification and physical evidence reported
+    here. Any wider modulus requires new reduction-width, watchdog, timing,
+    oracle, and silicon checks.
+    \item \textbf{PINV complexity:} The exhaustive software model reports
+    3--23 busy-phase cycles for the RTL-style scalar inverse over all
+    nonzero-norm $\mathbb{Z}[\phi]/(521)$ elements. This is not an RTL latency histogram, and
+    the SPI sidecar uses its own CE-paced sequencer.
+    \item \textbf{Finite $\phi$-period:} $L_{13}$ gives a period of 26, sufficient for datapath validation but not for arbitrary long braid words without phase-domain tiling.
+    \item \textbf{Interface latency:} 64-bit SPI payload at 2 MHz takes 32 $\mu$s before framing. Real-time variants require parallel GPIO, PIO/DMA, LVDS, or direct RFSoC coupling.
+    \item \textbf{PMUL integer multiplication:} Uses four integer multiplies per product; optimal for $\le14$-bit operands. Zeckendorf-encoded positional multiplication is noted as future work.
+    \item \textbf{$\mathbb{Z}[\phi]$ does not span the full Fibonacci anyon
+    data.} $\mathbb{Q}(\phi)$ is the real quadratic subfield of
+    $\mathbb{Q}(\zeta_5)$, so it captures quantum dimensions and the diagonal
+    $\phi^{-1}$ F-symbol entries, but not the model's braid phases: the
+    Fibonacci $R$-matrix eigenvalues $e^{-4\pi i/5}$ and $e^{3\pi i/5}$ are
+    primitive fifth roots of unity and lie in $\mathbb{Z}[\zeta_5]$, a degree-4
+    extension. In the standard \emph{unitary} gauge the off-diagonal F-symbol
+    entries are $\phi^{-1/2}$, which is likewise outside
+    $\mathbb{Q}(\phi)$. Two consequences follow. First, the PHSLK results here
+    should be read as exact tests on \emph{ratios} of $\phi$-valued phase
+    encodings --- a setting in which common $\phi^{-1/2}$ gauge factors cancel,
+    and in which non-unitary gauges with entries in $\mathbb{Q}(\phi)$ are
+    available --- rather than as exact representation of unitary braid
+    amplitudes. Second, no claim is made here that a full Fibonacci braid
+    representation is expressible over $\mathbb{Z}[\phi]/L_p$; it is not. A
+    full implementation requires a degree-4 cyclotomic datapath over
+    $\mathbb{Z}[\zeta_5]$, which would carry the $R$-matrix phases natively
+    and contain the present ring as its real subfield.
+    \item \textbf{Companion cyclotomic oracle:} A subsequent host-only oracle
+    closes the algebraic-feasibility part of that future direction. In the
+    integral gauge
+    $F=\left[\begin{smallmatrix}\phi^{-1}&1\\
+    \phi^{-1}&-\phi^{-1}\end{smallmatrix}\right]$, the complete Fibonacci
+    $F/R$ representation lies in rank-4 $\mathbb{Z}[\zeta_5]$ and preserves
+    the weighted metric $G=\operatorname{diag}(1,\phi)$. The oracle verifies
+    27 admissible Pentagon sectors, 24 directed Hexagon identities, exact
+    braid-generator inverses, and 100 deterministic words through length 100.
+    Coefficient growth is reported by class, because three of the five
+    structured word families generate finite cyclic subgroups and so cannot
+    grow at any length: the maximum is 55 coefficient-magnitude bits (requiring 56 signed storage bits) on
+    structured words and 14 on the 50 pseudo-random stream words. For prime
+    $p\ne5$, $\Phi_5$ is irreducible over $\mathbb{F}_p$ exactly when
+    $p\equiv2$ or $3\pmod 5$. Thus M31 gives a degree-4 field and agrees with
+    characteristic-zero truth on all 100 words, whereas $521\equiv1\pmod5$
+    splits $\Phi_5$ and is unsuitable for a field-valued cyclotomic backend.
+    These are software-oracle results only: no degree-4 RTL, timing, resource,
+    or silicon claim is made. \textbf{The period analysis is also not carried
+    over.} Agreement between the M31 image and characteristic-zero truth on a
+    100-word corpus does not establish a phase horizon for
+    $\mathbb{Z}[\zeta_5]/L_p$ analogous to the 26-step $\phi$-period of the
+    Mathematical Foundation section; the aliasing constraint discussed there
+    for long braid, fusion, and syndrome histories remains open for the larger
+    ring.
+\end{itemize}
+
+\section{Conclusion}
+
+We implemented exact PSCALE, PCHIRAL, PMUL, PINV, and PHSLK arithmetic over
+$\mathbb{Z}[\phi]/(521)$. The two fast paths require no multiplier in the
+Tang probe, while the complete Artix proof deliberately maps full arithmetic
+to DSP48E1 slices. The evidence is complementary rather than interchangeable:
+the software oracle supplies exhaustive or long-run algebraic checks, the Tang
+artifacts establish fast-path and PHSLK silicon behavior, and the low-MHz Artix
+sidecar establishes external SPI operation for all four arithmetic opcodes.
+This closes a reproducible kernel study; timing closure, wider moduli, and an
+end-to-end application remain future work.
+
+\section*{Availability, Licensing, and Disclosure}
+
+The paper, generator, RTL, tests, build scripts, and hardware evidence ledger
+are included in the SPU repository, available at
+\url{https://github.com/pinnacletechnologysolutionsltd/SPU}. The exact source
+state described by this version of the paper is tagged
+\texttt{v0.2-lucas}. The archival
+record of this paper is maintained under the concept DOI
+\url{https://doi.org/10.5281/zenodo.21447440}, which always resolves to the
+latest deposited version. Run
+\texttt{python3 tools/lucas\_paper\_data.py --verify} to regenerate and check
+the publication tables. Run \texttt{python3}
+\nolinkurl{software/tests/test_cyclotomic_fibonacci.py} to reproduce the
+companion cyclotomic oracle, which prints
+\texttt{CYCLOTOMIC FIBONACCI ORACLE: ALL CHECKS PASS} on success. Hardware RTL
+is licensed under
+CERN-OHL-W-2.0,
+software under MIT, and the paper's data tooling under Apache-2.0; this paper
+is released under CC BY 4.0.
+
+AI-assisted tools were used for drafting, code review, and test orchestration.
+The named author selected the claims, inspected the source and generated
+artifacts, and remains responsible for the manuscript and reported evidence.
+
+\begin{thebibliography}{18}
+\bibitem{lucas} E. Lucas, ``Th\'eorie des Fonctions Num\'eriques Simplement P\'eriodiques,'' 1878.
+\bibitem{crandall} R.E. Crandall and C. Pomerance, \textit{Prime Numbers: A Computational Perspective}, 2nd ed. Springer, 2005.
+\bibitem{ofek2016} N. Ofek et al., ``Extending the lifetime of a quantum bit with error correction in superconducting circuits,'' \textit{Nature}, 2016. \texttt{arXiv:1602.04768}
+\bibitem{michael2016} M.H. Michael et al., ``New class of quantum error-correcting codes for a bosonic mode,'' \textit{Phys. Rev. X}, 2016. \texttt{arXiv:1602.00008}
+\bibitem{gottesman2001} D. Gottesman, A. Kitaev, and J. Preskill, ``Encoding a qubit in an oscillator,'' \textit{Phys. Rev. A}, 2001. \texttt{arXiv:quant-ph/0008040}
+\bibitem{putterman2024} H. Putterman et al., ``Hardware-efficient quantum error correction using concatenated bosonic qubits,'' \textit{Nature}, 2025. \texttt{arXiv:2409.13025}
+\bibitem{freedman2002} M. Freedman, M. Larsen, and Z. Wang, ``A modular functor which is universal for quantum computation,'' \textit{Commun. Math. Phys.} 227, 605--622, 2002. \texttt{arXiv:quant-ph/0001108}
+\bibitem{yang2026} X. Yang et al., ``Real-time Surface-Code Error Correction Using an FPGA-based Neural-Network Decoder,'' 2026. \texttt{arXiv:2605.04892}
+\bibitem{liu2026} J. Liu et al., ``A Scalable Open-Source QEC System with Sub-Microsecond Decoding-Feedback Latency,'' 2026. \texttt{arXiv:2603.16203}
+\bibitem{bascones2026} D. B\'{a}scones et al., ``A Scalable FPGA Architecture for Real-Time Decoding of Quantum LDPC Codes Using GARI,'' 2026. \texttt{arXiv:2605.01035}
+\bibitem{knill2001} E. Knill, R. Laflamme, and G.J. Milburn, ``A scheme for efficient quantum computation with linear optics,'' \textit{Nature} 409, 46--52, 2001.
+\bibitem{bartolucci2021} S. Bartolucci et al., ``Fusion-based quantum computation,'' 2021. \texttt{arXiv:2101.09310}
+\bibitem{kok2007} P. Kok et al., ``Linear optical quantum computing with photonic qubits,'' \textit{Rev. Mod. Phys.} 79, 135--174, 2007. \texttt{arXiv:quant-ph/0512071}
+\bibitem{bourassa2021} J.E. Bourassa et al., ``Blueprint for a Scalable Photonic Fault-Tolerant Quantum Computer,'' \textit{Quantum}, 2021. \texttt{arXiv:2010.02905}
+\bibitem{tzitrin2021} I. Tzitrin et al., ``Fault-tolerant quantum computation with static linear optics,'' 2021. \texttt{arXiv:2104.03241}
+\end{thebibliography}
+
+\clearpage
+\appendices
+\section{Python Oracle}
+
+\begin{lstlisting}[language=Python]
+def phi_mul(a, b, mod=521):
+    return (b % mod, (a + b) % mod)
+
+def phi_mul_full(a1, b1, a2, b2, mod=521):
+    return ((a1*a2 + b1*b2) % mod,
+            (a1*b2 + a2*b1 + b1*b2) % mod)
+
+def zero_drift_test(mod=521, seed=(3,5), steps=1000000):
+    period = 26  # phi^26 mod 521
+    a, b = seed
+    for step in range(1, steps + 1):
+        a, b = phi_mul(a, b, mod)
+        if step % period == 0:
+            assert (a,b) == seed
+    print(f"ZERO-DRIFT: PASS")
+
+def composite_zero_drift_macro(x, g, mod=521):
+    a, b = phi_mul(x[0], x[1], mod)
+    ia, ib = phi_inv(0, 1, mod)
+    a, b = phi_mul_full(a, b, ia, ib, mod)
+    a, b = phi_mul_full(a, b, g[0], g[1], mod)
+    ga, gb = phi_inv(g[0], g[1], mod)
+    a, b = phi_mul_full(a, b, ga, gb, mod)
+    return (a, b)  # should equal x
+\end{lstlisting}
+
+\section{Verilog PSCALE Core}
+
+\begin{lstlisting}[language=Verilog]
+// phi*(a + b*phi) = b + (a+b)*phi -- 1 cycle, 0 DSP
+wire [L_P_BITS-1:0] ps_b =
+    (op_a + op_b >= L_P) ? (op_a + op_b - L_P) : (op_a + op_b);
+always @(posedge clk)
+    if (start && opcode == OP_PSCALE) begin
+        result_a <= op_b; result_b <= ps_b; done <= 1;
+    end
+\end{lstlisting}
+
+\end{document}

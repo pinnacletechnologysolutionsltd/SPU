@@ -1,0 +1,5 @@
+read_verilog -lib +/xilinx/cells_sim.v
+read_verilog -sv hardware/rtl/gpu/spu_video_timing.v
+read_verilog -sv hardware/rtl/gpu/spu_video_pattern.v
+read_verilog -sv hardware/rtl/hal/hal_vga.v
+read_verilog -sv -D SYNTHESIS hardware/boards/artix7/spu_a7_vga_top.v

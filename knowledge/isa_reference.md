@@ -1,0 +1,286 @@
+# SPU-13 Canonical Silicon ISA Reference
+
+> **Status: current canonical encoding.**
+>
+> This defines the canonical encoding used by `software/spu_vm.py`,
+> `.sas` programs, and the default mode of
+> `software/tools/spu13_asm.py`. Tang Primer 25K and Wukong Artix-7 evidence
+> uses this encoding; individual opcode evidence levels are noted below and in
+> `docs/hardware_evidence.md`.
+> The active `spu13_core.v` dispatch and C++ VM implement explicit subsets.
+> Encoding ownership does not establish complete execution conformance. See
+> [the scoped conformance record](../docs/isa/ISA_CONFORMANCE_2026-10-10.md)
+> for supported subsets, repaired encoding defects and unresolved semantics.
+>
+> [`docs/spu13_isa_spec.md`](../docs/spu13_isa_spec.md) describes a separate,
+> experimental Wheeler–Feynman twin-register adapter profile. Its isolated
+> simulator/RTL tests do not make it the successor to this ISA, and there is no
+> current deprecation decision.
+>
+> Assemble canonical `.sas` programs without an architecture flag:
+> `python3 software/tools/spu13_asm.py program.sas`. The optional
+> `--arch wf` flag selects the experimental adapter opcode table.
+
+## Instruction Encoding
+
+```
+[63:56] [55:48] [47:40] [39:24] [23:8]
+  Op      R1       R2      P1_A    P1_B
+```
+
+- **Op** (8 bits): Opcode
+- **R1** (8 bits): Destination register (scalar R0–R25 or QR0–QR12)
+- **R2** (8 bits): Source register / second operand
+- **P1_A** (16 bits): Immediate field A (spread numerator, angle, byte values)
+- **P1_B** (16 bits): Immediate field B (steps, configuration)
+
+## Opcode Table
+
+### Experimental explicit-denominator CPU Surd extension
+
+Opt in with `ENABLE_SURD_CPU=1`. Eight independent S0–S7 entries hold signed
+64-bit a,b and unsigned positive 64-bit d. Existing R/QR encodings retain their
+meaning. The extension is implemented with retained focused CPU simulation and
+regression/Padé passes. The selective REGEN mapping candidate has directed
+mapped arithmetic PASS, overall qualification FAILED, and integrated timing
+unresolved. No CPU tuple-extension silicon evidence is claimed. It is separate from the WF adapter profile.
+
+| Op | Syntax | Canonical fields |
+|---|---|---|
+| 0x70 | SLI Sd, slice, u32 | R1=destination, R2=slice 0..5, P1_A/P1_B=32-bit payload |
+| 0x71 | SLD Sd | R1=destination; atomically commit all six staged slices |
+| 0x72 | SRD Ss, slice | R1=source, R2=slice; emit a 32-bit readback |
+| 0x73 | SMUL Sd, Sa, Sb | R1=destination, R2=Sa, P1_A[7:0]=Sb |
+| 0x74 | SADD Sd, Sa, Sb | same addressing, exact GCD-aligned addition |
+| 0x75 | SSUB Sd, Sa, Sb | same addressing, exact GCD-aligned subtraction |
+| 0x76 | SNORM Sd, Ss | R1=destination, R2=source; canonical reduction/copy |
+| 0x77 | SSTAT | emit held Surd status without clearing it |
+
+All unspecified fields and bits [7:0] must be zero. Validate complete indices
+before narrowing; reject rather than wrap. Slice order is a-low, a-high, b-low,
+b-high, d-low, d-high. SLD rejects incomplete staging and zero denominators.
+Reset marks entries uninitialized. Arithmetic snapshots sources at acceptance;
+one operation is in flight and the issuer waits for retirement. Success commits
+once; failure preserves the destination. Status codes: OK=0, INVALID=1,
+OVERFLOW=2, ENGINE_FAULT=3, BAD_ENCODING=4. SSTAT preserves the last status.
+
+Fitting raw arithmetic, including zero, commits unreduced. Overflow invokes exact
+normalization; scheduled SNORM always canonicalizes, mapping valid zero to
+(0,0,1). The retained kernel executes four SNORM operations at each joint
+boundary, including the unchanged A component. Historical S0's unconditional
+zero canonicalization differs from this raw-fit policy; its evidence is preserved.
+
+### Scalar Q(√3) Arithmetic
+
+| Opcode | Mnemonic | Operands | Description |
+|--------|----------|----------|-------------|
+| 0x00 | LD | Rd, imm | Load RationalSurd into R |
+| 0x01 | ADD | Rd, Rs | R[d] += R[s] |
+| 0x02 | SUB | Rd, Rs | R[d] -= R[s] |
+| 0x03 | MUL | Rd, Rs | R[d] ×= R[s] |
+| 0x04 | ROT | Rd, Rs, n | Pell rotor step: R[d] = R[s] × rⁿ |
+| 0x05 | LOG | Rd | Print R[d] to UART |
+| 0x30 | PHADD | Rd, Rs | Phinary-packed addition |
+| 0x31 | PHCFG | Rd, val | Phinary configuration |
+
+### Control Flow
+
+**Encoding boundary frozen 2026-10-09:** CALL 0x20, RET 0x21 and QREAD 0x22
+retain their canonical meanings. COND has no allocated canonical opcode;
+0x20 must not be interpreted as COND in this profile. October 10 software compatibility repairs pass focused checks; full
+qualification remains pending. They establish no main-core control-flow
+execution. See
+[the reconciliation record](../docs/isa/CANONICAL_CONTROL_RECONCILIATION.md).
+
+
+| Opcode | Mnemonic | Operands | Description |
+|--------|----------|----------|-------------|
+| 0x06 | JMP | addr | Unconditional jump |
+| 0x07 | SNAP | — | Davis Gate stability check |
+| 0x17 | EQUIL | — | Vector Equilibrium check |
+| 0x20 | CALL | addr | Push PC, jump to subroutine |
+| 0x21 | RET | — | Pop return stack, return |
+| 0x08 | HALT | — | Halt execution |
+| **0x09** | **REGEN** | `.block K` | Regeneration-boundary primitive: `S̃_K ↦ S_K`, projecting the accumulated block state back to the exact algebraic state after `K` legal ops. Architecturally frozen (`spu_strategy/contract_regen_isa_0x09_2026-08-20.md`, REGEN v1) — substrate-independent by governance rule ("the ISA is not modified to accommodate any substrate — photonic, FPGA, ASIC, or digital"); backend implementation (Photonic / FPGA-reference / Digital) lives below this boundary and is not ISA-visible. `K=0` is a true pass-through (`REGEN(REGEN(S))=S`, idempotent, architectural invariant); a fault (`REGEN_PREC`) commits nothing and preserves prior state. RTL: `hardware/rtl/core/spu13/spu13_regen.v`, testbench-verified only (`hardware/tests/spu13/spu13_regen_tb.v`; substrate-opacity adversarially tested, 232 boundaries × 3 phase conditions, zero leaks, Stage C) — **no silicon evidence entry exists yet.** Executable reference semantics: `software/tests/regen_emulator.py`. |
+| 0xFF | NOP | — | No operation |
+
+### Quadray IVM Operations
+
+| Opcode | Mnemonic | Operands | Description |
+|--------|----------|----------|-------------|
+| 0x10 | QADD | QRd, QRs | QR[d] += QR[s] |
+| 0x11 | QROT | Rd, Rs, n | Pell rotor: R[d] = R[s] × (2+√3)ⁿ |
+| 0x12 | QNORM | QRd | Normalize QR by subtracting min component |
+| 0x13 | QLOAD | QRd | Load QR from manifold lane |
+| 0x14 | QLOG | QRd | Print QR to UART (quadrance + components) |
+| **0x1B** | **QSUB** | QRd, QRa, QRb | QR[d] = QR[a] - QR[b] |
+| **0x1C** | **ROTC** | QRd, QRs, θ | Thomson circulant / permutation / octahedral rotation. θ = 0-35 verified (0-5 circulant A-invariant; 6-14 thirds conjugates about B/C/D; 15-23 A₄ pure permutations; 24-35 octahedral S₄, integer 3×3 on BCD with A recomputed from zero-sum). θ ≥ 36 faults (`rotc_debug_status[15]` / `RotcUnverifiedAngleError`), manifold untouched. Silicon: 0-5 on Artix-7; 6-35 testbench/trace-verified. Full catalog: `AGENTS.md` |
+| **0xD6** | **IROTC** | QRd, QRs, sel | Icosahedral A₅ rotation on the φ-plane (Z[φ] pairs overlay QR components). sel[5:0] = catalog index 0-59, sel[6] = conjugate catalog. Typestate-guarded at dispatch (BADIDX/UNTAGGED/CATMIX), destination untouched on fault. Requires `ENABLE_IROTC`. Spec: `docs/IROTC_SPEC.md` v0.2 |
+| **0xD7** | **LOAD2X** | QRd, A,B,C,D | QLDI-format immediates loaded doubled (<<1); sets φ-plane tag FRESH |
+| **0xD8** | **SCALE2** | QRd, QRs | QR[d] = 2·QR[s] componentwise; sets tag FRESH (catalog-switch re-conditioning) |
+| **0x1D** | **QLDI** | QRd, A,B,C,D | Load immediate Quadray vector |
+| **0x1E** | **DELTA** | QRd, Q1,Q2,k | Triple quadrance parameterization |
+| **0x1F** | **MIN4** | QRd | Normalize: subtract min(A,B,C,D) |
+| **0x22** | **QREAD** | QRd, QRs | QR[d] = QR[s] (copy) |
+
+### Geometry Output
+
+| Opcode | Mnemonic | Operands | Description |
+|--------|----------|----------|-------------|
+| 0x15 | SPREAD | QRd, Q1,Q2,Q3 | Spread from three quadrances |
+| 0x16 | HEX | Rd, QRs | Project QR[s] → hex (q,r) in R[d], R[d+1] |
+
+#### SPREAD operand clarification SIM-CAP1 v1 — 2026-10-25
+
+Specification discrepancy: the historical row above is preserved verbatim from
+commit `3524a9eb624d71ccd53c600d47919d29905e7ef4`:
+
+> `0x15 | SPREAD | QRd, Q1,Q2,Q3 | Spread from three quadrances`
+
+The assembler (`RQQ`) and Python/C++ VM implementations instead use
+`SPREAD Rd, QRa, QRb`: two Quadray source registers produce numerator in
+`R[d]` and denominator in `R[(d+1)%26]`. Opcode 0x15 and its encoding are
+unchanged. This clarification records software behavior; it does not establish
+RTL conformance or hardware qualification. The three-quadrance calculation
+remains available through `spread_from_quadrances` / DELTA.
+
+Metric selection is a separate construction-time software setting:
+`legacy_dot` is the default historical component-dot operation;
+`gram_v1` uses `B(a,b)=4*sum(a_i*b_i)-sum(a_i)*sum(b_i)` and returns unreduced
+`N=B(a,a)*B(b,b)-B(a,b)^2`, `D=B(a,a)*B(b,b)`. A zero operand Gram quadrance
+refuses with `DEGENERATE_METRIC` before representability checks. C++ uses exact
+256-bit intermediates and checks only the final four int32 result coefficients;
+Python remains unbounded. A refusal preserves pre-instruction state except
+halt/fault status. See the
+[frozen contract](../research/sim_cap1_spread/GRAM_V1_CONTRACT_FROZEN.md) and
+[amendment 1](../research/sim_cap1_spread/GRAM_V1_CONTRACT_AMENDMENT_1.md).
+
+### Vector Equilibrium / Janus
+
+| Opcode | Mnemonic | Operands | Description |
+|--------|----------|----------|-------------|
+| 0x18 | IDNT | QRd | Load identity vector (1,0,0,0) |
+| 0x19 | JINV | QRd | Janus inversion |
+| 0x1A | ANNE | QRd | Annealer trigger |
+
+### RPLU / Polynomial Extensions
+
+> **Current RPLU2 integration:** The Thimble-Padé sidecar evaluates [4/4]
+> rational approximants over A₃₁ (M31) using Horner evaluation and conjugate
+> reduction-tower inversion. It is integrated and exercised through the
+> canonical core/SPI control path; it does not depend on the experimental
+> OFFR/CNFM/PHSLK encoding. POLY_STEP/RATIO_CMP remain older extension-space
+> definitions rather than the interface used by the silicon-tested
+> `RPLU2PADE` spin.
+
+| Opcode | Mnemonic | Operands | Description |
+|--------|----------|----------|-------------|
+| 0x60 | POLY_STEP | Rd,Rx | Horner step via RPLU (legacy Morse potential) |
+| 0x61 | RATIO_CMP | Rd,Rs | Rational comparison (legacy) |
+
+### Classification / SOM extensions
+
+| Opcode | Mnemonic | Format | Description |
+|--------|----------|--------|-------------|
+| 0x2A | SOM | R | Classify via parallel 7-node array + WTA tree |
+| 0x2B | SOM_TRAIN | R | Update node weights via 36-bit widened multiply |
+
+## Wildberger Library (SPI Flash Primitives)
+
+These are multi-instruction subroutines — not opcodes. Stored on SPI flash,
+called via `CALL`:
+
+| Address | Primitive | Input | Output | Instructions |
+|---------|-----------|-------|--------|-------------|
+| 0x010000 | quadrance_between | QR0,QR1 | Q in R0 | QSUB + QLOG |
+| 0x010100 | spread_from_quadrances | Q1,Q2,Q3 | num,den | DELTA + QSUB |
+| 0x010200 | is_right_angle | Q1,Q2,Q3 | bool | DELTA + compare |
+| 0x010300 | is_collinear | Q1,Q2,Q3 | bool | DELTA×2 + compare |
+| 0x010400 | spread_polynomial | n,s | R | Pell loop |
+| 0x010500 | tangent_slope | QR,polynum | rational | QLDI + QSUB |
+| 0x010600 | rational_area | polynum,x | rational | Faulhaber sum |
+| 0x010700 | cross_matrix_2subspace | P,R matrices | C, c, s | DELTA + arithmetic |
+| 0x010800 | diagonal_rule_verify | P,R,T subspaces | bool | cross + compare |
+
+## Usage Examples
+
+```lisp
+;; Difference between two vectors
+QLDI QR0, -1,  0,  0,  1    ; v1
+QLDI QR1,  0, -1,  1,  0    ; v2
+QSUB QR2, QR0, QR1          ; QR2 = v1 - v2
+MIN4 QR2                     ; normalize result
+
+;; Spread via DELTA
+delta Q1=3 Q2=4 steps=4 dest=QR3
+QLOG QR3                     ; shows q_sum=7, rhs²=0
+
+;; Subroutine call
+CALL .quad_identity
+ROTC QR1, QR0, 1            ; rotate by 60°
+RET
+```
+
+## Hardware Status
+
+The following counts are historical and do not establish active-core opcode
+support. In particular, JMP/CALL/RET/HALT execution is not established in the
+active dispatch. Use the scoped conformance record above and individual entries
+in `docs/hardware_evidence.md` instead of these aggregate counts.
+
+| Category | Count | Hardware Verified |
+|----------|-------|------------------|
+| Scalar ops | 8 | 4 |
+| Control flow | 8 | 4 (JMP/CALL/RET/NOP) |
+| Quadray ops | 12 | 8 |
+| Output | 2 | 2 (HEX/QLOG) |
+| VE/Janus | 3 | 1 (IDNT) |
+| RPLU | 2 | 0 |
+| **Total** | **27** | **19** |
+
+20 of 27 opcodes have RTL implementations. The remaining 7 are software sequences
+or require RPLU/SPI flash integration. **REGEN (0x09) added 2026-08-24** — has
+RTL (`spu13_regen.v`) but is testbench-verified only, not silicon-verified, so
+it is counted in the RTL-implementation figure (20/27) but not in the
+"Hardware Verified" column above, which this doc uses for a silicon-adjacent
+bar the other pre-existing counts predate a clear definition of; not
+re-audited here beyond REGEN's own addition.
+
+## FLAGS Register
+
+The FLAGS register is a 6-bit status word read via the `SNAP` opcode (0x07)
+and updated by arithmetic/geometry operations. Bits are sticky within an
+instruction but cleared at the start of the next.
+
+| Bit | Name | Set by | Meaning |
+|-----|------|--------|---------|
+| 0 | Z | Arithmetic | Result is zero |
+| 1 | C | Arithmetic | Carry/overflow |
+| 2 | V | A₃₁ inverter | Zero-norm detected (non-unit element) |
+| **3** | **MISALIGNED** | **ROTC tagged** | **B/C/D exponents differ — ALIGN required before ROTATE** |
+| **4** | **OVERFLOW** | **ROTC tagged** | **Exponent would exceed MAX_EXPONENT — REDUCE required** |
+| **5** | **INEXACT** | **ROTC tagged** | **REDUCE failed: value not divisible by 3^exponent — true value is non-integer** |
+
+Bits 3–5 are implemented in `spu13_rotor_core_tagged.v` (deferred-reduction
+ROTC, `docs/ROTC_EXPONENT_STATE_MACHINE.md`). The legacy TDM rotor core
+(`spu13_rotor_core_tdm.v`) does not assert these flags — its `div3` silently
+truncates. The tagged core is the documented fix; see Davis Gate entry in
+`knowledge/SPU_LEXICON.md` for the correctness analysis.
+
+## Golden Vectors — Tagged ROTC Representation
+
+The existing six-step ROTC closure golden vectors (VM-vs-RTL trace equivalence,
+`software/tests/test_rotc_vm_rtl_trace.py`) were verified against the TDM core
+with `div3`. Re-verification under the tagged representation is defined as:
+
+1. The tagged core's ROTATE(angle) must produce the integer-coefficient output
+   (3× the TDM golden value) at exponent 1 for thirds angles (1, 3, 4).
+2. REDUCE on that output must recover the TDM golden value exactly at exponent 0.
+3. Angles 0 (identity), 2 (P5 forward), and 5 (P5 inverse) must produce
+   identical output to the TDM core (bypass path, no exponent change).
+
+**Status:** RTL testbench verified (9/9 tests, verified 2026-07-16 —
+`hardware/tests/spu13/spu13_rotor_core_tagged_tb.v`). Silicon re-verification
+pending — probe target: `spu13_tang25k_rotc_tagged_probe.v`, awaiting board run.
+The existing six-step silicon evidence (`docs/hardware_evidence.md`)
+was obtained with the TDM core and remains the silicon baseline.

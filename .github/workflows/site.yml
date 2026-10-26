@@ -1,0 +1,40 @@
+name: Docs Site
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "docs/**"
+      - "knowledge/**"
+      - "mkdocs.yml"
+      - ".github/workflows/site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install MkDocs
+        run: pip install mkdocs-material
+      - name: Build site
+        run: bash tools/build_docs_site.sh
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

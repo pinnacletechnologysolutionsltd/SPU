@@ -1,0 +1,93 @@
+diff --git a/knowledge/isa_reference.md b/knowledge/isa_reference.md
+index e8bd84f..80bd211 100644
+--- a/knowledge/isa_reference.md
++++ b/knowledge/isa_reference.md
+@@ -2,13 +2,17 @@
+ 
+ > **Status: current canonical encoding.**
+ >
+-> This is the ISA implemented by the active `spu13_core.v` integration,
+-> `software/spu_vm.py`, `.sas` programs, and the default mode of
++> This defines the canonical encoding used by `software/spu_vm.py`,
++> `.sas` programs, and the default mode of
+ > `software/tools/spu13_asm.py`. Tang Primer 25K and Wukong Artix-7 evidence
+ > uses this encoding; individual opcode evidence levels are noted below and in
+ > `docs/hardware_evidence.md`.
++> The active `spu13_core.v` dispatch and C++ VM implement explicit subsets.
++> Encoding ownership does not establish complete execution conformance. See
++> [the scoped conformance record](../docs/isa/ISA_CONFORMANCE_2026-10-10.md)
++> for supported subsets, repaired encoding defects and unresolved semantics.
+ >
+-> [`docs/spu13_isa_spec.md`](../spu13_isa_spec.md) describes a separate,
++> [`docs/spu13_isa_spec.md`](../docs/spu13_isa_spec.md) describes a separate,
+ > experimental Wheeler–Feynman twin-register adapter profile. Its isolated
+ > simulator/RTL tests do not make it the successor to this ISA, and there is no
+ > current deprecation decision.
+@@ -32,6 +36,40 @@
+ 
+ ## Opcode Table
+ 
++### Experimental explicit-denominator CPU Surd extension
++
++Opt in with `ENABLE_SURD_CPU=1`. Eight independent S0–S7 entries hold signed
++64-bit a,b and unsigned positive 64-bit d. Existing R/QR encodings retain their
++meaning. The extension is implemented with retained focused CPU simulation and
++regression/Padé passes. The selective REGEN mapping candidate has directed
++mapped arithmetic PASS, overall qualification FAILED, and integrated timing
++unresolved. No CPU tuple-extension silicon evidence is claimed. It is separate from the WF adapter profile.
++
++| Op | Syntax | Canonical fields |
++|---|---|---|
++| 0x70 | SLI Sd, slice, u32 | R1=destination, R2=slice 0..5, P1_A/P1_B=32-bit payload |
++| 0x71 | SLD Sd | R1=destination; atomically commit all six staged slices |
++| 0x72 | SRD Ss, slice | R1=source, R2=slice; emit a 32-bit readback |
++| 0x73 | SMUL Sd, Sa, Sb | R1=destination, R2=Sa, P1_A[7:0]=Sb |
++| 0x74 | SADD Sd, Sa, Sb | same addressing, exact GCD-aligned addition |
++| 0x75 | SSUB Sd, Sa, Sb | same addressing, exact GCD-aligned subtraction |
++| 0x76 | SNORM Sd, Ss | R1=destination, R2=source; canonical reduction/copy |
++| 0x77 | SSTAT | emit held Surd status without clearing it |
++
++All unspecified fields and bits [7:0] must be zero. Validate complete indices
++before narrowing; reject rather than wrap. Slice order is a-low, a-high, b-low,
++b-high, d-low, d-high. SLD rejects incomplete staging and zero denominators.
++Reset marks entries uninitialized. Arithmetic snapshots sources at acceptance;
++one operation is in flight and the issuer waits for retirement. Success commits
++once; failure preserves the destination. Status codes: OK=0, INVALID=1,
++OVERFLOW=2, ENGINE_FAULT=3, BAD_ENCODING=4. SSTAT preserves the last status.
++
++Fitting raw arithmetic, including zero, commits unreduced. Overflow invokes exact
++normalization; scheduled SNORM always canonicalizes, mapping valid zero to
++(0,0,1). The retained kernel executes four SNORM operations at each joint
++boundary, including the unchanged A component. Historical S0's unconditional
++zero canonicalization differs from this raw-fit policy; its evidence is preserved.
++
+ ### Scalar Q(√3) Arithmetic
+ 
+ | Opcode | Mnemonic | Operands | Description |
+@@ -47,6 +85,14 @@
+ 
+ ### Control Flow
+ 
++**Encoding boundary frozen 2026-10-09:** CALL 0x20, RET 0x21 and QREAD 0x22
++retain their canonical meanings. COND has no allocated canonical opcode;
++0x20 must not be interpreted as COND in this profile. October 10 software compatibility repairs pass focused checks; full
++qualification remains pending. They establish no main-core control-flow
++execution. See
++[the reconciliation record](../docs/isa/CANONICAL_CONTROL_RECONCILIATION.md).
++
++
+ | Opcode | Mnemonic | Operands | Description |
+ |--------|----------|----------|-------------|
+ | 0x06 | JMP | addr | Unconditional jump |
+@@ -152,6 +198,11 @@ RET
+ 
+ ## Hardware Status
+ 
++The following counts are historical and do not establish active-core opcode
++support. In particular, JMP/CALL/RET/HALT execution is not established in the
++active dispatch. Use the scoped conformance record above and individual entries
++in `docs/hardware_evidence.md` instead of these aggregate counts.
++
+ | Category | Count | Hardware Verified |
+ |----------|-------|------------------|
+ | Scalar ops | 8 | 4 |

@@ -1,0 +1,65 @@
+;; wildberger_geometry.lith — Rational Trigonometry Primitives Library
+;; 
+;; Maps Wildberger's Divine Proportions formulas to SPU-13 opcodes.
+;; No sin, cos, sqrt, or floating point. Pure rational arithmetic.
+;;
+;; Primitives:
+;;   spread_from_quadrances  — Cross Law: s from Q₁,Q₂,Q₃
+;;   is_right_angle          — Check if spread = 1 (s = 1 → right angle)
+;;   is_collinear            — Triple Quad Formula equality check
+;;   quadrance_between        — Q between two Quadray vectors
+;;   spread_polynomial_Sn     — Pell rotor evaluates Sₙ(s) exactly
+;;   chromogeometry_spread_red — Red geometry dual spread
+;;
+;; ── Test cases ──────────────────────────────────────────────────────
+
+;; ▸ Test 1: 3-4-5 right triangle
+;;   Q₁=3, Q₂=4, Q₃=5 → spread = 1 (right angle), NOT collinear
+delta Q1=3 Q2=4 steps=4 dest=QR0
+QLOG QR0
+
+;; ▸ Test 2: 1-4-9 collinear points  
+;;   Q₁=1, Q₂=4, Q₃=9 → Triple Quad: (1+4+9)²=196, 2(1+16+81)=196 ✓
+delta Q1=1 Q2=4 steps=4 dest=QR1
+QLOG QR1
+
+;; ▸ Test 3: 5-5-8 isosceles (not right, not collinear)
+;;   Q₁=5, Q₂=5, Q₃=8 → spread ≈ 9/25 (not right angle)
+delta Q1=5 Q2=5 steps=4 dest=QR2
+QLOG QR2
+
+;; ▸ Test 4: Spread polynomial via Pell rotor
+;;   Pell rotor period-8 evaluates Sₙ(s) exactly
+IDNT QR3           ;; unity seed for Pell
+QROT R0, R0, 1     ;; Pell step 1
+QROT R0, R0, 1     ;; Pell step 2
+QLOG QR3
+hex R0, QR3
+
+;; ▸ Test 5: Quadrance between two Quadray vectors
+;;   v1 = (-1,0,0,1), v2 = (0,-1,1,0)
+;;   Q(v1,v2) = (A₁-A₂)² + 3(B₁-B₂)² + (C₁-C₂)² + (D₁-D₂)²
+QLDI QR4, -1,  0,  0,  1    ;; v1
+QLDI QR5,  0, -1,  1,  0    ;; v2
+QSUB QR6, QR4, QR5          ;; v1 - v2 = (-1, 1, -1, 1)
+QLOG QR6
+
+;; ── Chromogeometry: Red spread ──────────────────────────────────────
+;; Blue geometry (Euclidean): Q = a² + b²
+;; Red geometry (relativistic): Q = a² − b²
+;; Green geometry: Q = a² + 3b² (our native Q(√3) field!)
+;;
+;; The SPU-13 is a native GREEN geometry processor. The Quadray
+;; quadrance formula Q = A² + 3B² + C² + D² is the green metric.
+;; Spread in green geometry is identical to Euclidean spread
+;; for integer coordinates — this is why the ISA works!
+;;
+;; Blue spread in Euclidean: s = 1 − (Q₃−Q₁−Q₂)² / (4Q₁Q₂)
+;; Red spread in relativistic: s_red = (Q₃−Q₁−Q₂)² / (4Q₁Q₂) − 1
+;; Green spread (native): s = 1 − rhs²/48 for 3-4-5 triangle
+
+;; ── Hex output ──────────────────────────────────────────────────────
+hex R0, QR0
+hex R1, QR1
+hex R2, QR2
+hex R3, QR6

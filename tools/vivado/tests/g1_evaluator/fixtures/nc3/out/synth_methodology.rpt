@@ -1,0 +1,36 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Oct 22 21:42:45 2026
+| Host         : john-MacBookAir running 64-bit Ubuntu 22.04.5 LTS
+| Command      : report_methodology -file /home/user/spu-transfer/spu-research-baseline/build/vivado/step7v_nc3_01/synth_methodology.rpt
+| Design       : spu_a7_tensegrity_link_top
+| Device       : xc7a100tfgg676-1
+| Speed File   : -1
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: spu_a7_tensegrity_link_top
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 1050
++-----------+------------------+--------------------------------------------+--------+
+| Rule      | Severity         | Description                                | Checks |
++-----------+------------------+--------------------------------------------+--------+
+| TIMING-17 | Critical Warning | Non-clocked sequential cell                | 1000   |
+| LUTAR-1   | Warning          | LUT drives async reset alert               | 1      |
+| SYNTH-6   | Warning          | Timing of a RAM block might be sub-optimal | 1      |
+| SYNTH-10  | Warning          | Wide multiplier                            | 47     |
+| TIMING-18 | Warning          | Missing input or output delay              | 1      |
++-----------+------------------+--------------------------------------------+--------+
+

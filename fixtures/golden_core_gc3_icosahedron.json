@@ -1,0 +1,51 @@
+{
+  "schema": "golden-core-gc3-icosahedron-v1",
+  "field": "Q(sqrt(5))",
+  "coordinate_basis": "a + b*phi, phi=(1+sqrt(5))/2",
+  "vertex_rule": "cyclic permutations of (0, s1, s2*phi), s1,s2 in {+1,-1}",
+  "vertices_phi": [
+    [[0, 0], [1, 0], [0, 1]],
+    [[1, 0], [0, 1], [0, 0]],
+    [[0, 1], [0, 0], [1, 0]],
+    [[0, 0], [1, 0], [0, -1]],
+    [[1, 0], [0, -1], [0, 0]],
+    [[0, -1], [0, 0], [1, 0]],
+    [[0, 0], [-1, 0], [0, 1]],
+    [[-1, 0], [0, 1], [0, 0]],
+    [[0, 1], [0, 0], [-1, 0]],
+    [[0, 0], [-1, 0], [0, -1]],
+    [[-1, 0], [0, -1], [0, 0]],
+    [[0, -1], [0, 0], [-1, 0]]
+  ],
+  "edge_quadrance_phi": [4, 0],
+  "edges": [
+    [0, 1], [0, 2], [0, 5], [0, 6], [0, 7], [1, 2], [1, 3], [1, 7], [1, 8], [2, 4],
+    [2, 6], [2, 8], [3, 7], [3, 8], [3, 9], [3, 11], [4, 6], [4, 8], [4, 9], [4, 10],
+    [5, 6], [5, 7], [5, 10], [5, 11], [6, 10], [7, 11], [8, 9], [9, 10], [9, 11], [10, 11]
+  ],
+  "faces": [
+    [0, 1, 2], [0, 1, 7], [0, 2, 6], [0, 5, 6], [0, 5, 7], [1, 2, 8], [1, 3, 7], [1, 3, 8], [2, 4, 6], [2, 4, 8],
+    [3, 7, 11], [3, 8, 9], [3, 9, 11], [4, 6, 10], [4, 8, 9], [4, 9, 10], [5, 6, 10], [5, 7, 11], [5, 10, 11], [9, 10, 11]
+  ],
+  "connectivity": {"vertex_count": 12, "edge_count": 30, "degree_each": 5, "face_count": 20},
+  "proper_rotation": {
+    "name": "120-degree cyclic coordinate rotation",
+    "matrix": [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+    "vertex_image_indices": [2, 0, 1, 5, 3, 4, 8, 6, 7, 11, 9, 10],
+    "determinant": 1,
+    "order": 3
+  },
+  "negative_control": {
+    "name": "move v00 by +1 on x",
+    "vertex_index": 0,
+    "delta_phi": [1, 0],
+    "expected_edge_count": 25,
+    "expected_degree_multiset": [0, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5],
+    "expected_connected": false
+  },
+  "projection": {
+    "status": "approximate display only",
+    "method": "floating-point camera rotation, perspective and SVG pixels",
+    "geometry_source": "vertices_phi above; exact readouts remain symbolic"
+  }
+}

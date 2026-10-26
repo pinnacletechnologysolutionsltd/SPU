@@ -1,0 +1,56 @@
+{
+  "schema": "QCG0-p0-contract-r32-independent-readonly-review-manifest-v1",
+  "date": "2026-10-23",
+  "reviewer": "/root/qcg0_fixture_reviewer",
+  "cwd": "/home/john/Projects/hardware/SPU",
+  "disposition": "REVISE",
+  "remaining_blocker": "B4: metadata write failure can still leave exactly one COMPLETE marker before launcher exits3.",
+  "input_sha256_relative_to_research_qcg_0": {
+    "QCG0_P0_EXECUTION_CONTRACT.md": "94e6631a48f4f362c310e72954af66b2853d477fbff8674cf555ff9064e44602",
+    "QCG0_P0_EXECUTION_CONTRACT_REVISION_3_2.diff": "68146db053460c1ac0e106e5872e3bc5d91502c40fb31b5752285e3373097e7e",
+    "P0_CONTRACT_R32_REVIEW_REQUEST.md": "adfcd3a3f9c49c158d0f31dd5f01faa7c560a57ba95cf5616be2ab18306818b9",
+    "P0_CONTRACT_R3_STAGE_ALLOWANCE_REQUEST.md": "5f9e99c8163b60e326d8c42e5c81731149e9afea0a9ac1935b27cabd8bf5f481",
+    "QCG0_P0_DECISION_RECORD.md": "67bd7fe09ad806b79c214e231b89bac314b81eddc3d2d1e0ca4aef461ea83995",
+    "P0_CONTRACT_R3_REVIEW_CERTIFICATE.md": "de2e6afab8094a6c0821571cc8fdc8de53e789ea56c2b90cc20fd239ae31b9f1",
+    "P0_CONTRACT_R3_REVIEW_MANIFEST.json": "2507bb078de7620a826bcd642c1fdbd22e8e9410b773cf7e8afc57e124672def",
+    "QCG0_PREREGISTRATION.md": "eade4b5f0957c3679c94b67d8f4b1f6b6d005d65316a5337e6c8dfb9370b98dd",
+    "P0_CONTRACT_R2_SUPPLEMENTAL_REFERENCES.json": "9422d7617c65a9a3fc2fa1ab19af7ce7ea634721cfeb251096cd3821534237a0",
+    "P0_CONTRACT_R2_LEDGER_STAGE_EXPECTATIONS.json": "093b006b4b11e289066265a9021fba92c28ec252b8df44eac06a48f8eeca75bb",
+    "P0_CONTRACT_R2_REMAINING_CELL_A_STAGE_EXPECTATIONS.json": "d231a81305f975727b82431bb04a51dff41fbc55a85708a8521c63c36edf6a0a"
+  },
+  "checklist": {
+    "B1_C2_projection_evolution": "PASS",
+    "B2_FDINIT_traversal_context": "PASS",
+    "B3_cap_attribution": "PASS_UNDER_DECLARED_RUNNER_CONTRACT",
+    "B4_finalization": "REVISE",
+    "1_administrative_K_liveness": "PASS",
+    "2_program_event_grammar": "PASS_TEXT_ONLY",
+    "3_unequal_length_zero": "PASS",
+    "4_P1_mapping": "PASS",
+    "5_mutants_existing_stages": "PASS_PRESERVED_EVIDENCE",
+    "6_launch": "REVISE_B4_ONLY",
+    "7_inherited_definitions": "PASS_EXCEPT_FINALIZATION",
+    "8_preservation_owner_decisions": "PASS"
+  },
+  "read_only_checks": {
+    "supplied_hashes_verified": true,
+    "entire_contract_diff_requests_read": true,
+    "bash_syntax_command": "awk '/^```bash/{copy=1;next} copy && /^```/{copy=0} copy' research/qcg_0/QCG0_P0_EXECUTION_CONTRACT.md | bash -n",
+    "bash_syntax_exit": 0,
+    "launcher_executed": false,
+    "mathematical_calculations": 0,
+    "stage_or_fixture_generation": false
+  },
+  "recommendation": "Write required metadata first; on metadata failure never create COMPLETE, attempt FAILED/finalization-failure evidence where possible. If no marker can be persisted the result is unavailable. No impossible filesystem-persistence guarantee requested.",
+  "allowance": {
+    "stage_grammar_ready_for_future_review_calculations": true,
+    "proposed_ceiling_recommendation": "Three30-second invocations,1GiB each,90-second cumulative external ceiling,4MiB per file,10MiB cumulative output are reasonable maximum requested ceilings only.",
+    "granted": false,
+    "consumed": false,
+    "overall_contract_PASS_required_before_owner_allowance": true
+  },
+  "artifact_sha256_relative_to_research_qcg_0": {
+    "P0_CONTRACT_R32_REVIEW_CERTIFICATE.md": "090e3b6dbe2731cf0d9414f0a5675ebef9bf43a25ab4f8d820314bf29dedf26c"
+  },
+  "note": "Manifest excludes self-hash. Prior artifacts and author documents preserved. No experiment, implementation, authorization or freeze. D1-D6 accepted scopes unchanged; future stage allowance remains ungranted even if a later contract receives PASS. Root coordinates documentation gates."
+}

@@ -1,0 +1,43 @@
+{
+  "format": "golden_core_quadray_gpu_reference_v1",
+  "scope": "Exact Quadray gauge, S4 orientation class, rational view transform, and T1d finite pixel scene.",
+  "projection": {
+    "basis_labels": ["A", "B", "C", "D"],
+    "quadray_points": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]],
+    "cartesian_points": [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]],
+    "t1d_screen_xy_depth": [[435, 195, 31990], [222, 142, 32657], [346, 266, 34435], [275, 355, 31990]],
+    "screen_scale": 80,
+    "depth_scale": 1000,
+    "screen_rounding": "nearest integer, ties to even",
+    "signed_twice_areas": [-19840, 2880]
+  },
+  "interactive_point": {
+    "quadray": [2, 1, 0, 1],
+    "cartesian": [2, 0, 2],
+    "t1d_screen_xy_depth": [408, 168, 30324],
+    "proper_rotation_bcd": {"quadray": [2, 1, 1, 0], "t1d_screen_xy_depth": [480, 80, 32768]},
+    "reflection_bc": {"quadray": [2, 0, 1, 1], "t1d_screen_xy_depth": [533, 293, 32101]}
+  },
+  "permutation_examples": {
+    "proper_rotation_bcd": {"source_to_target": [0, 2, 3, 1], "determinant": 1},
+    "reflection_bc": {"source_to_target": [0, 2, 1, 3], "determinant": -1},
+    "all_24_counts": {"proper": 12, "improper": 12},
+    "unlabelled_regular_tetrahedron_matches": 24,
+    "distinct_fixed_vertex_labels_preserving_permutations": 1
+  },
+  "gpu_samples": [
+    {"x": 170, "y": 80, "coverage": "background", "winner": null, "rgb": [0, 0, 0]},
+    {"x": 222, "y": 142, "coverage": "triangle0", "winner": 0, "rgb": [15, 2, 1]},
+    {"x": 435, "y": 195, "coverage": "overlap", "winner": 0, "rgb": [15, 2, 1]},
+    {"x": 434, "y": 196, "coverage": "triangle1", "winner": 1, "rgb": [1, 8, 15]}
+  ],
+  "weighted_covariance": {
+    "weights": [[1, 0], [2, 0], [3, 0], [2, 1]],
+    "mirrored_weights": [[2, 1], [3, 0], [2, 0], [1, 0]],
+    "initial_state": [[1, 0], [0, 0], [0, 1], [2, 0]],
+    "neutral_law": [[1, 0], [1, 0]],
+    "biased_law": [[2, 1], [1, 0]],
+    "expected_covariant_state_neutral": [[4, 2], [2, 4], [6, 0], [1, 2]],
+    "expected_covariant_state_biased": [[14, 8], [11, 7], [6, 0], [2, 3]]
+  }
+}

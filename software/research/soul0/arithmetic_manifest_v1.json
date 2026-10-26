@@ -1,0 +1,9 @@
+{
+  "files": {
+    "software/research/soul0/arithmetic.py": "b1be48865f1302b4e5e3e4d2904e55a435c7d223674c93c41868c05998c9c48c",
+    "software/research/soul0/arithmetic_fixtures_v1.json": "2f740a49674fee8f1727f045fc1162bf880e5bcd4b838a09f65723b7f0a21d87",
+    "software/research/soul0/arithmetic_study.py": "f4c604f3a328e4f13e2a9e2405c6ccfe1a65708ce94805a90bc9b0b548af036c",
+    "software/tests/test_soul0_arithmetic.py": "8ff35a75854705a393eab503f002ec2e6e30d0c6ccb6ed6b22494e4d7b17e5b6"
+  },
+  "manifest_version": 1
+}

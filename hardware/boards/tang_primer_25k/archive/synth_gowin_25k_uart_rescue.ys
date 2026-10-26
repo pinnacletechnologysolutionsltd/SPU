@@ -1,0 +1,5 @@
+read_verilog hardware/boards/tang_primer_25k/spu_tang25k_uart_rescue.v
+
+hierarchy -check -top spu_tang25k_uart_rescue
+synth_gowin -family gw5a -top spu_tang25k_uart_rescue -json build/uart_rescue.json
+stat

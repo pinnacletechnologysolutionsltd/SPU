@@ -1,0 +1,27 @@
+# Standalone Base GPU Artix-7 VGA build. Existing GPUVGA scene, no UART/prepared-scene options.
+incdir hardware/rtl/gpu
+sv hardware/rtl/gpu/spu_video_timing.v
+sv hardware/rtl/gpu/spu_edge_stepper.v
+sv hardware/rtl/gpu/spu_attr_stepper.v
+sv hardware/rtl/gpu/spu_raster_unit.v
+sv hardware/rtl/gpu/spu_dual_raster.v
+sv hardware/rtl/gpu/spu_quad_raster.v
+sv hardware/rtl/gpu/spu_depth_compare.v
+sv hardware/rtl/gpu/spu_depth_compare4.v
+sv hardware/rtl/gpu/spu_depth_math.v
+sv hardware/rtl/gpu/spu_depth_dispatch.v
+sv hardware/rtl/gpu/spu_depth_dispatch4.v
+sv hardware/rtl/gpu/spu_reciprocal_core.v
+sv hardware/rtl/gpu/spu_shared_mult35.v
+sv hardware/rtl/gpu/spu_scene_loader.v
+sv hardware/rtl/gpu/spu_scene_unpack.v
+sv hardware/rtl/gpu/spu_scene_profile_unpack.v
+sv hardware/rtl/gpu/spu_prepared_scalar_attribute4.v
+sv hardware/rtl/gpu/spu_prepared_scene_control.v
+sv hardware/rtl/gpu/spu_prepared_scene_control4.v
+sv hardware/rtl/gpu/spu_material_op_select4.v
+sv hardware/rtl/gpu/spu_material_predicate_select4.v
+sv hardware/rtl/gpu/spu_pixel_output_register.v
+sv hardware/rtl/hal/hal_vga.v
+sv hardware/rtl/gpu/spu_gpu_top.v
+sv hardware/boards/artix7/spu_a7_gpu_vga_top.v

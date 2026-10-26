@@ -1,0 +1,159 @@
+{
+  "format": "AOR_S1_IMPLEMENTATION_EXECUTION_PLAN_V1",
+  "status": "AUTHORIZED_IMPLEMENTATION_PREPARATION_FOR_STAGE_LAUNCH",
+  "candidate_implementation": "AUTHORIZED",
+  "qualification_execution": "AUTHORIZED_CONTRACTED_STAGES_ONLY",
+  "hardware_execution": "PADE_GATE_AUTHORIZED_SUBJECT_TO_CPU_RESOURCE_COORDINATION",
+  "input_hashes": {
+    "spu_strategy/aor_s1_literal_fixtures_2026-10-14.json": "0f1d215be194ca32481877c54e79dfe569fd94f27062f3e7ad13f3b4e768c63d",
+    "spu_strategy/aor_s1_qualification_supplement_2026-10-14.json": "0a31cdcbbd757c5751c918e256e23249533f1f596f1349827efa0001c4981e6a",
+    "spu_strategy/aor_s1_kernel_fixtures_2026-10-14.json": "203f319f22d8992ea94618f7564fe1b34a59b7125d1aa9ecb060592f5b1f42ad",
+    "spu_strategy/aor_s1_comparator_alias_controls_2026-10-14.json": "d9a07fecf3b5eacb078ddc4cda5b3737f789344e3c334d6d00a8e71ef21ffe1d",
+    "spu_strategy/contract_aor_s1_schedule_reconciliation_2026-10-14.md": "06765c998a9e60bd698df8cf426ad1960f2d6dc7cfc270f32a85b089f36e464b",
+    "spu_strategy/aor_s1_executable_mutation_plan_2026-10-14.json": "9d481b51f03b977cf1ea8645f005fa0e003ecbfcccdef812ee971ea23b25dd5d"
+  },
+  "operation_cases": {
+    "original": 83,
+    "supplement": 8,
+    "combined": 91
+  },
+  "maximum_total_attempts": 3,
+  "proposed_cumulative_timeout_seconds": 12600,
+  "budget_authorized": true,
+  "stages": [
+    {
+      "name": "software_01",
+      "maximum_attempts": 1,
+      "timeout_seconds": 1800,
+      "command": [
+        "python3",
+        "tools/qualify_aor_s1.py",
+        "--fixtures",
+        "spu_strategy/aor_s1_literal_fixtures_2026-10-14.json",
+        "--supplement",
+        "spu_strategy/aor_s1_qualification_supplement_2026-10-14.json",
+        "--kernels",
+        "spu_strategy/aor_s1_kernel_fixtures_2026-10-14.json",
+        "--controls",
+        "spu_strategy/aor_s1_comparator_alias_controls_2026-10-14.json",
+        "--mutations",
+        "spu_strategy/aor_s1_executable_mutation_plan_2026-10-14.json",
+        "--output",
+        "build/aor_s1/implementation_qualification_20261014/software_01/results"
+      ],
+      "evidence_directory": "build/aor_s1/implementation_qualification_20261014/software_01",
+      "authorization_required": "SEPARATE_SOFTWARE_IMPLEMENTATION_AND_EXECUTION_AUTHORIZATION",
+      "current_authorization": "AUTHORIZED",
+      "initial_launched_attempts": 0,
+      "live_attempt_accounting": "see attempt_ledger; initial counter is not remaining authorization"
+    },
+    {
+      "name": "repo_01",
+      "maximum_attempts": 1,
+      "timeout_seconds": 3600,
+      "command": [
+        "bash",
+        "tools/verify_aor_s1_repo_gates.sh"
+      ],
+      "evidence_directory": "build/aor_s1/implementation_qualification_20261014/repo_01",
+      "authorization_required": "SEPARATE_REPOSITORY_GATE_EXECUTION_AUTHORIZATION",
+      "current_authorization": "AUTHORIZED",
+      "initial_launched_attempts": 0,
+      "live_attempt_accounting": "see attempt_ledger; initial counter is not remaining authorization"
+    },
+    {
+      "name": "pade_01",
+      "maximum_attempts": 1,
+      "timeout_seconds": 7200,
+      "command": [
+        "env",
+        "A7_FREQ=25",
+        "bash",
+        "hardware/boards/artix7/build_a7.sh",
+        "100t",
+        "rplu2pade",
+        "all"
+      ],
+      "evidence_directory": "build/aor_s1/implementation_qualification_20261014/pade_01",
+      "authorization_required": "SEPARATE_FPGA_GATE_AUTHORIZATION_AND_CPU_RESOURCE_COORDINATION",
+      "current_authorization": "AUTHORIZED",
+      "initial_launched_attempts": 0,
+      "live_attempt_accounting": "see attempt_ledger; initial counter is not remaining authorization"
+    }
+  ],
+  "no_automatic_retry": true,
+  "no_timeout_extension": true,
+  "terminal_markers": [
+    "COMPLETE",
+    "FAILED",
+    "TIMEOUT"
+  ],
+  "final_qualified_pass_requires": "all explicitly authorized required stages COMPLETE, all software acceptance predicates met, and all required gate reports reviewed; exit zero alone is insufficient",
+  "contract": "spu_strategy/contract_aor_s1_isolated_implementation_2026-10-14.md",
+  "ratification_record": "spu_strategy/AOR_S1_FINAL_RATIFICATION_2026-10-14.md",
+  "readiness_requirements": [
+    "Owner review and separate implementation authority",
+    "Independent executable oracle/checker review",
+    "Freeze implemented candidate/verifier/test/tool source snapshots before stage authorization",
+    "Verify all current frozen fixture and amendment hashes",
+    "Separate stage budgets explicitly allocated",
+    "Pad\u00e9 stage additionally needs explicit FPGA authorization and CPU-resource coordination"
+  ],
+  "future_candidate_files": [
+    "software/research/aor_s1/__init__.py",
+    "software/research/aor_s1/budget.py",
+    "software/research/aor_s1/validation.py",
+    "software/research/aor_s1/comparator.py",
+    "software/research/aor_s1/normalize.py",
+    "software/research/aor_s1/arithmetic.py",
+    "software/research/aor_s1/execute.py"
+  ],
+  "future_verifier_files": [
+    "software/research/aor_s1_verification/__init__.py",
+    "software/research/aor_s1_verification/codec.py",
+    "software/research/aor_s1_verification/oracle.py",
+    "software/research/aor_s1_verification/obligations.py",
+    "software/research/aor_s1_verification/mutations.py",
+    "software/research/aor_s1_verification/qualification.py",
+    "software/tests/test_aor_s1.py",
+    "tools/qualify_aor_s1.py",
+    "tools/verify_aor_s1_repo_gates.sh",
+    "software/research/aor_s1_verification/schedule.py",
+    "software/research/aor_s1_verification/schedule_arithmetic.py"
+  ],
+  "mandatory_repo_gate_commands": [
+    [
+      "bash",
+      "tools/verify_repo.sh"
+    ],
+    [
+      "python3",
+      "software/tests/test_rotc_vm_rtl_trace.py"
+    ],
+    [
+      "python3",
+      "software/tests/test_irotc_vm_trace.py"
+    ],
+    [
+      "python3",
+      "software/tests/test_rational_robotics.py"
+    ],
+    [
+      "python3",
+      "software/tests/test_rational_som.py"
+    ],
+    [
+      "python3",
+      "software/tests/test_lucas_mac_oracle.py"
+    ],
+    [
+      "python3",
+      "software/tests/test_pade_batch_inversion.py"
+    ]
+  ],
+  "comparison_disclosure": "checked 1*a is a logical accounting convention; not mathematical necessity or measured hardware work",
+  "authorization_record": "build/aor_s1/implementation_qualification_20261014/authorization_01/owner_authorization.json",
+  "source_freeze": "build/aor_s1/implementation_qualification_20261014/preparation_01/source_freeze.json",
+  "attempt_ledger": "build/aor_s1/implementation_qualification_20261014/campaign_ledger.json",
+  "preflight_review": "build/aor_s1/implementation_qualification_20261014/preflight_review_01/REVIEW.md"
+}

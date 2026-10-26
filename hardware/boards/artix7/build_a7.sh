@@ -1,0 +1,1301 @@
+#!/usr/bin/env bash
+# build_a7.sh — SPU-13 Artix-7 Build Script (v1.1)
+#
+# Usage:
+#   bash build_a7.sh                           # FULL spin on 100T
+#   bash build_a7.sh 200t multimedia            # MULTIMEDIA spin on 200T
+#   bash build_a7.sh 35t robotics synth          # synth only, ROBOTICS spin on 35T
+#   bash build_a7.sh 100t intelligence           # INTELLIGENCE spin on 100T
+#   A7_FREQ=2 bash build_a7.sh 100t lucas all    # Wukong pinned low-speed bring-up
+#   ZPHI_KARATSUBA=1 A7_SEED=2 bash build_a7.sh 100t tensegrityprobe synth
+#
+# Spins: multimedia | intelligence | robotics | full | sensor | lucas | su3 | su3share | rplucfg | rplu2core | rplu2 | rplu2live | rplu2pade | fp4evidence | irotc | som | somprobe | somsidecar | tensegrityprobe | tensegritylink | custom
+#
+# somprobe is a standalone top (not a spu_a7_top spin): the Tang-25K-proven
+# SOM/BMU fixture on its own synthesis path + minimal XDC.  Golden UART line
+# at 115200: "SOM:P T:2 B:6 E:00".
+# tensegrityprobe is likewise standalone.  It runs all seven TGR1-derived
+# guard fixtures and reports "TGR:P V:7 E:00".
+
+set -euo pipefail
+
+# Keep the documented one-command build path working in a fresh shell.  The
+# helper only prepends the repo-local OpenXC7 install; it leaves an existing
+# PATH/toolchain selection untouched.
+if ! command -v nextpnr-xilinx >/dev/null 2>&1; then
+    OPENXC7_ROOT_CANDIDATE="${OPENXC7_ROOT:-$HOME/.local/openxc7}"
+    if [ -d "$OPENXC7_ROOT_CANDIDATE" ] && [ -f tools/env_openxc7.sh ]; then
+        OPENXC7_ROOT="$OPENXC7_ROOT_CANDIDATE" source tools/env_openxc7.sh
+    elif [ -f "$OPENXC7_ROOT_CANDIDATE/export.sh" ]; then
+        source "$OPENXC7_ROOT_CANDIDATE/export.sh"
+    fi
+    unset OPENXC7_ROOT_CANDIDATE
+fi
+
+DEVICE_CHIP="${1:-100t}"
+SPIN="${2:-full}"
+STEP="${3:-all}"
+A7_FREQ_ENV="${A7_FREQ:-}"
+if [ -n "${GPU_PREPARED_SCENE+x}" ]; then
+    GPU_PREPARED_EXPLICIT=1
+else
+    GPU_PREPARED_EXPLICIT=0
+fi
+GPU_PREPARED_SCENE="${GPU_PREPARED_SCENE:-0}"
+case "$GPU_PREPARED_SCENE" in
+    0|1) ;;
+    *) echo "Invalid GPU_PREPARED_SCENE: $GPU_PREPARED_SCENE (use 0|1)"; exit 1;;
+esac
+GPU_T1D_UART="${GPU_T1D_UART:-0}"
+case "$GPU_T1D_UART" in
+    0|1) ;;
+    *) echo "Invalid GPU_T1D_UART: $GPU_T1D_UART (use 0|1)"; exit 1;;
+esac
+FOUR_PRIMITIVE_SCENE="${FOUR_PRIMITIVE_SCENE:-0}"
+case "$FOUR_PRIMITIVE_SCENE" in
+    0|1) ;;
+    *) echo "Invalid FOUR_PRIMITIVE_SCENE: $FOUR_PRIMITIVE_SCENE (use 0|1)"; exit 1;;
+esac
+T1H_SCALAR_SCENE="${T1H_SCALAR_SCENE:-0}"
+case "$T1H_SCALAR_SCENE" in
+    0|1) ;;
+    *) echo "Invalid T1H_SCALAR_SCENE: $T1H_SCALAR_SCENE (use 0|1)"; exit 1;;
+esac
+T1H_SCALAR_DIAG="${T1H_SCALAR_DIAG:-0}"
+case "$T1H_SCALAR_DIAG" in
+    0|1) ;;
+    *) echo "Invalid T1H_SCALAR_DIAG: $T1H_SCALAR_DIAG (use 0|1)"; exit 1;;
+esac
+T1I_UV_SCENE="${T1I_UV_SCENE:-0}"
+case "$T1I_UV_SCENE" in
+    0|1) ;;
+    *) echo "Invalid T1I_UV_SCENE: $T1I_UV_SCENE (use 0|1)"; exit 1;;
+esac
+T1I_UV_DIAG="${T1I_UV_DIAG:-0}"
+case "$T1I_UV_DIAG" in
+    0|1) ;;
+    *) echo "Invalid T1I_UV_DIAG: $T1I_UV_DIAG (use 0|1)"; exit 1;;
+esac
+T1I_UV_REG_DIAG="${T1I_UV_REG_DIAG:-0}"
+case "$T1I_UV_REG_DIAG" in
+    0|1) ;;
+    *) echo "Invalid T1I_UV_REG_DIAG: $T1I_UV_REG_DIAG (use 0|1)"; exit 1;;
+esac
+T1I_DEPTH_DIAG="${T1I_DEPTH_DIAG:-0}"
+case "$T1I_DEPTH_DIAG" in
+    0|1|2|3) ;;
+    *) echo "Invalid T1I_DEPTH_DIAG: $T1I_DEPTH_DIAG (use 0|1|2|3)"; exit 1;;
+esac
+T1J_PROC_SHADE="${T1J_PROC_SHADE:-0}"
+case "$T1J_PROC_SHADE" in
+    0|1) ;;
+    *) echo "Invalid T1J_PROC_SHADE: $T1J_PROC_SHADE (use 0|1)"; exit 1;;
+esac
+T1J_CHECKER_VIS_DIAG="${T1J_CHECKER_VIS_DIAG:-0}"
+case "$T1J_CHECKER_VIS_DIAG" in
+    0|1) ;;
+    *) echo "Invalid T1J_CHECKER_VIS_DIAG: $T1J_CHECKER_VIS_DIAG (use 0|1)"; exit 1;;
+esac
+T1K_GRID_SHADE="${T1K_GRID_SHADE:-0}"
+case "$T1K_GRID_SHADE" in
+    0|1) ;;
+    *) echo "Invalid T1K_GRID_SHADE: $T1K_GRID_SHADE (use 0|1)"; exit 1;;
+esac
+T1L_MATERIAL_OP="${T1L_MATERIAL_OP:-0}"
+case "$T1L_MATERIAL_OP" in
+    0|1|2|3|4) ;;
+    *) echo "Invalid T1L_MATERIAL_OP: $T1L_MATERIAL_OP (use 0|1|2|3|4)"; exit 1;;
+esac
+T1L_PIPELINE_PARTITION="${T1L_PIPELINE_PARTITION:-0}"
+case "$T1L_PIPELINE_PARTITION" in
+    0|1) ;;
+    *) echo "Invalid T1L_PIPELINE_PARTITION: $T1L_PIPELINE_PARTITION (use 0|1)"; exit 1;;
+esac
+T1M_FRAGMENT_ALU="${T1M_FRAGMENT_ALU:-0}"
+case "$T1M_FRAGMENT_ALU" in
+    0|1) ;;
+    *) echo "Invalid T1M_FRAGMENT_ALU: $T1M_FRAGMENT_ALU (use 0|1)"; exit 1;;
+esac
+T1M_ALU_OP="${T1M_ALU_OP:-0}"
+case "$T1M_ALU_OP" in
+    0|1|2|3|4|5) ;;
+    *) echo "Invalid T1M_ALU_OP: $T1M_ALU_OP (use 0|1|2|3|4|5)"; exit 1;;
+esac
+T1N_RUNTIME_MATERIAL="${T1N_RUNTIME_MATERIAL:-0}"
+case "$T1N_RUNTIME_MATERIAL" in
+    0|1) ;;
+    *) echo "Invalid T1N_RUNTIME_MATERIAL: $T1N_RUNTIME_MATERIAL (use 0|1)"; exit 1;;
+esac
+T1O_PER_PRIMITIVE_MATERIAL="${T1O_PER_PRIMITIVE_MATERIAL:-0}"
+case "$T1O_PER_PRIMITIVE_MATERIAL" in
+    0|1) ;;
+    *) echo "Invalid T1O_PER_PRIMITIVE_MATERIAL: $T1O_PER_PRIMITIVE_MATERIAL (use 0|1)"; exit 1;;
+esac
+T1P_PER_PRIMITIVE_PREDICATES="${T1P_PER_PRIMITIVE_PREDICATES:-0}"
+case "$T1P_PER_PRIMITIVE_PREDICATES" in
+    0|1) ;;
+    *) echo "Invalid T1P_PER_PRIMITIVE_PREDICATES: $T1P_PER_PRIMITIVE_PREDICATES (use 0|1)"; exit 1;;
+esac
+T1Q_TRUTH_TABLE_MATERIAL="${T1Q_TRUTH_TABLE_MATERIAL:-0}"
+case "$T1Q_TRUTH_TABLE_MATERIAL" in
+    0|1) ;;
+    *) echo "Invalid T1Q_TRUTH_TABLE_MATERIAL: $T1Q_TRUTH_TABLE_MATERIAL (use 0|1)"; exit 1;;
+esac
+T1R_PALETTE_PAIR_MATERIAL="${T1R_PALETTE_PAIR_MATERIAL:-0}"
+case "$T1R_PALETTE_PAIR_MATERIAL" in
+    0|1) ;;
+    *) echo "Invalid T1R_PALETTE_PAIR_MATERIAL: $T1R_PALETTE_PAIR_MATERIAL (use 0|1)"; exit 1;;
+esac
+GPU_POST_WINNER_REG="${GPU_POST_WINNER_REG:-0}"
+case "$GPU_POST_WINNER_REG" in
+    0|1) ;;
+    *) echo "Invalid GPU_POST_WINNER_REG: $GPU_POST_WINNER_REG (use 0|1)"; exit 1;;
+esac
+GPU_T1D_DIAG="${GPU_T1D_DIAG:-0}"
+case "$GPU_T1D_DIAG" in
+    0|1) ;;
+    *) echo "Invalid GPU_T1D_DIAG: $GPU_T1D_DIAG (use 0|1)"; exit 1;;
+esac
+if [ "$GPU_T1D_UART" = "1" ] && [ "$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')" != "GPUVGA" ]; then
+    echo "GPU_T1D_UART applies only to GPUVGA (spin is $SPIN)"
+    exit 1
+fi
+if [ "$GPU_T1D_DIAG" = "1" ] && [ "$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')" != "GPUVGA" ]; then
+    echo "GPU_T1D_DIAG applies only to GPUVGA (spin is $SPIN)"
+    exit 1
+fi
+A7_ARTIFACT_TAG="${A7_ARTIFACT_TAG:-}"
+# TEMPORARY bring-up aid, explicit opt-in only, no spin defaults this to 1 --
+# see spu_a7_top.v's A7_UART_DIAG parameter doc.
+A7_UART_DIAG="${A7_UART_DIAG:-0}"
+# Capture-only RPLU2PADE pipeline observability. Default off and artifact-
+# tagged when enabled so it cannot overwrite a production/evidence image.
+PADE_DEBUG_TRACE="${PADE_DEBUG_TRACE:-0}"
+PADE_PIPELINED="${PADE_PIPELINED:-0}"
+case "$PADE_DEBUG_TRACE" in
+    0|1) ;;
+    *) echo "Invalid PADE_DEBUG_TRACE: $PADE_DEBUG_TRACE (use 0|1)"; exit 1;;
+esac
+case "$PADE_PIPELINED" in
+    0|1) ;;
+    *) echo "Invalid PADE_PIPELINED: $PADE_PIPELINED (use 0|1)"; exit 1;;
+esac
+# Per-lane RNS residue check inside the shared structured multiplier. Default
+# off; at 1 rns_error is one cycle later than done (audited safe for the Pade
+# sidecar only -- see spu13_rplu2_pade_sidecar.v).
+PIPELINED_RNS_CHECK="${PIPELINED_RNS_CHECK:-0}"
+case "$PIPELINED_RNS_CHECK" in
+    0|1) ;;
+    *) echo "Invalid PIPELINED_RNS_CHECK: $PIPELINED_RNS_CHECK (use 0|1)"; exit 1;;
+esac
+
+# Fp4 tower candidate selector. Default-ON again since 2026-08-05: the parallel
+# structured inverter (v2) is the production path. Set FP4_STRUCTURED=0 to build
+# the historical v1 tower.
+#
+# The case for v2, from the twenty-seed matrix in
+# docs/FP4_STRUCTURED_INVERTER.md: it costs ~7.4% MORE LUT (10,121 vs 9,421) and
+# ~3.6% median Fmax, and wins 7-10% median WALL-CLOCK because it retires a unit
+# in 74 clocks against v1's 83 -- ahead on 19 of 20 seeds. The trade is area and
+# Fmax for throughput. That evaluation always stood and none of it was withdrawn.
+#
+# WHY IT WAS REVERTED ON 2026-08-03, AND WHY THAT REASON IS NOW VOID:
+# v2 was blamed for RPLU2PADE's seven_over_three returning a wrong value on
+# silicon. That attribution was WRONG. The 2026-08-05 divided-clock campaign
+# (build/pade_campaigns/20260805_083400) showed BOTH towers fail at
+# clk_fast = 50 MHz and BOTH pass 10/10 at 25 MHz, against a positive control
+# that failed 0/10 in the same session. The fault was a setup violation on the
+# Padé datapath, not a property of either inverter -- reported Fmax was a poor
+# proxy because it describes the worst path, not the path the test exercises.
+# See docs/SESSION_HANDOVER_2026-08-04-EVENING.md.
+#
+# At the RPLU2PADE spin's operating point (A7_CLK_DIV_LOG2=1, clk_fast 25 MHz)
+# v2's Fmax cost is immaterial -- v2 builds closed at 35.53 and 40.81 MHz -- so
+# the throughput win applies with the penalty absorbed by margin.
+#
+# The known Fmax exception is seed 59, ~30% SLOWER on a 15.7 ns routing
+# critical path: a placement-lottery tail, not noise, so expect it rather than
+# diagnose it fresh. The sequential setting selects the one-product backend for
+# matched A/B runs and stays default-off (it failed its gate at 1.57x LUT).
+FP4_STRUCTURED="${FP4_STRUCTURED:-1}"
+FP4_STRUCTURED_SEQUENTIAL="${FP4_STRUCTURED_SEQUENTIAL:-0}"
+FP4_BACKEND_SEQUENTIAL="${FP4_BACKEND_SEQUENTIAL:-$FP4_STRUCTURED_SEQUENTIAL}"
+FP4_EVIDENCE="${FP4_EVIDENCE:-0}"
+A7_SYNTH_ABC9="${A7_SYNTH_ABC9:-0}"
+case "$FP4_STRUCTURED:$FP4_STRUCTURED_SEQUENTIAL" in
+    0:0|1:0|1:1) ;;
+    *) echo "Invalid FP4 selector: FP4_STRUCTURED=$FP4_STRUCTURED FP4_STRUCTURED_SEQUENTIAL=$FP4_STRUCTURED_SEQUENTIAL"; exit 1;;
+esac
+case "$FP4_BACKEND_SEQUENTIAL:$FP4_EVIDENCE" in
+    0:0|0:1|1:0|1:1) ;;
+    *) echo "Invalid FP4 evidence selector: backend=$FP4_BACKEND_SEQUENTIAL evidence=$FP4_EVIDENCE"; exit 1;;
+esac
+case "$A7_SYNTH_ABC9" in
+    0|1) ;;
+    *) echo "Invalid A7_SYNTH_ABC9: $A7_SYNTH_ABC9 (use 0|1)"; exit 1;;
+esac
+if [ "$FP4_STRUCTURED_SEQUENTIAL" = "1" ] && [ "$FP4_BACKEND_SEQUENTIAL" != "1" ]; then
+    echo "Structured sequential requests require FP4_BACKEND_SEQUENTIAL=1"
+    exit 1
+fi
+# Artifact tagging exists so evaluation runs cannot collide with production
+# builds. It must therefore tag whatever is NOT production. This value tracks
+# the FP4_STRUCTURED default above and must be changed with it -- it inverted
+# on 2026-08-01 when the default moved 0 -> 1, and back on 2026-08-03 when it
+# moved 1 -> 0. Getting it wrong does not fail the build: it silently emits
+# spu_a7_100t_<SPIN>_FI?B0_S1.bit instead of spu_a7_100t_<SPIN>.bit, which
+# breaks every documented build/load path in docs/ and AGENTS.md and bakes the
+# burned seed 1 into the production name.
+#
+# Correct rule: the production configuration gets the canonical name; explicit
+# evidence runs and the non-production tower get tagged.
+FP4_PRODUCTION_STRUCTURED=1
+INVERTER_VARIANT=""
+if [ "$FP4_EVIDENCE" = "1" ] || [ "$FP4_STRUCTURED" != "$FP4_PRODUCTION_STRUCTURED" ] \
+   || [ "$FP4_BACKEND_SEQUENTIAL" != "0" ]; then
+    INVERTER_VARIANT="_FI${FP4_STRUCTURED}B${FP4_BACKEND_SEQUENTIAL}_S${A7_SEED:-1}"
+fi
+SYNTH_XILINX_FLOW=""
+if [ "$A7_SYNTH_ABC9" = "1" ]; then
+    INVERTER_VARIANT="${INVERTER_VARIANT}_A9"
+    SYNTH_XILINX_FLOW="-abc9"
+fi
+if [ "$PADE_DEBUG_TRACE" = "1" ]; then
+    INVERTER_VARIANT="${INVERTER_VARIANT}_PT1"
+fi
+# Same rule as _PT1: a non-production datapath option must tag the artifact, or
+# an A/B pair silently overwrites itself. On 2026-08-09 an untagged
+# PADE_PIPELINED run destroyed its own baseline netlist, log and FASM.
+if [ "$PADE_PIPELINED" = "1" ]; then
+    INVERTER_VARIANT="${INVERTER_VARIANT}_PP1"
+fi
+if [ "$PIPELINED_RNS_CHECK" = "1" ]; then
+    INVERTER_VARIANT="${INVERTER_VARIANT}_RC1"
+fi
+
+# Resolve spin to uppercase
+SPIN=$(echo "$SPIN" | tr '[:lower:]' '[:upper:]')
+if [ "$GPU_PREPARED_EXPLICIT" = "1" ] && [ "$SPIN" != "GPUVGA" ]; then
+    echo "GPU_PREPARED_SCENE applies only to GPUVGA (spin is $SPIN)"
+    exit 1
+fi
+if [ "$PADE_DEBUG_TRACE" = "1" ] && [ "$SPIN" != "RPLU2PADE" ]; then
+    echo "PADE_DEBUG_TRACE=1 applies only to RPLU2PADE (spin is $SPIN)"
+    exit 1
+fi
+
+# A7_FREQ default, spin-aware.  IROTC's current routed timing closes at low
+# bring-up speed. TENSEGRITYPROBE and TENSEGRITYLINK have a 50 MHz board domain
+# but intentionally advance their generated guard clock at 25 MHz; nextpnr
+# applies --freq to that otherwise-unconstrained generated clock. An explicit
+# A7_FREQ env var still overrides these defaults.
+case "$SPIN" in
+    IROTC)            A7_FREQ_DEFAULT=2;;
+    TENSEGRITYPROBE|TENSEGRITYLINK) A7_FREQ_DEFAULT=25;;
+    # VIDEO's fabric is almost entirely the 25 MHz pixel domain; the 125 MHz
+    # serial domain is hard OSERDESE2 plus two reset-sync flops. nextpnr-xilinx
+    # 0.8.2 takes ONE global --freq and ignores XDC timing, so it cannot
+    # express two clock domains -- constraining to 125 would over-constrain
+    # every pixel-domain path. The 125 MHz serial path is therefore NOT
+    # independently timing-verified by this flow.
+    VIDEO)            A7_FREQ_DEFAULT=25;;
+    VGA)              A7_FREQ_DEFAULT=25;;
+    VGAREV)           A7_FREQ_DEFAULT=25;;
+    VGAFIX)           A7_FREQ_DEFAULT=25;;
+    GPUVGA)           A7_FREQ_DEFAULT=25;;
+    VGABCAST)         A7_FREQ_DEFAULT=25;;
+    J10IDENT)         A7_FREQ_DEFAULT=50;;
+    *)                A7_FREQ_DEFAULT=50;;
+esac
+A7_FREQ="${A7_FREQ_ENV:-$A7_FREQ_DEFAULT}"
+
+# Make nextpnr's seed explicit in logs and metrics. A7_SEED remains available
+# for deterministic placement exploration without changing the default flow.
+A7_SEED="${A7_SEED:-1}"
+
+GPU_VARIANT=""
+GPU_COST_STIMULUS=0
+if [ "$GPU_PREPARED_EXPLICIT" = "1" ]; then
+    GPU_VARIANT="_PS${GPU_PREPARED_SCENE}_S${A7_SEED}"
+    GPU_COST_STIMULUS=1
+fi
+if [ -n "$A7_ARTIFACT_TAG" ]; then
+    case "$A7_ARTIFACT_TAG" in
+        T1D_B0_S1|T1D_B1_S1|T1D_DIAG_S1) ;;
+        T1E_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ]; then
+                echo "T1E_B1_S1 requires GPU_T1D_UART=1"
+                exit 1
+            fi
+            ;;
+        T1F_B1_S1|T1G_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ]; then
+                echo "$A7_ARTIFACT_TAG requires GPU_T1D_UART=1 and FOUR_PRIMITIVE_SCENE=1"
+                exit 1
+            fi
+            ;;
+        T1H_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || [ "$T1H_SCALAR_SCENE" != "1" ]; then
+                echo "T1H_B1_S1 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, and T1H_SCALAR_SCENE=1"
+                exit 1
+            fi
+            ;;
+        T1H_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1H_SCALAR_SCENE" != "1" ] || [ "$T1H_SCALAR_DIAG" != "1" ]; then
+                echo "T1H_DIAG_B1_S1 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, T1H_SCALAR_SCENE=1, and T1H_SCALAR_DIAG=1"
+                exit 1
+            fi
+            ;;
+        T1I_SIM_S0)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "0" ]; then
+                echo "T1I_SIM_S0 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, and T1I_UV_SCENE=1"
+                exit 1
+            fi
+            ;;
+        T1I_UV_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "1" ] || \
+               [ "$T1I_UV_REG_DIAG" != "0" ] || \
+               [ "$T1I_DEPTH_DIAG" != "0" ]; then
+                echo "T1I_UV_DIAG_B1_S1 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, T1I_UV_SCENE=1, and T1I_UV_DIAG=1"
+                exit 1
+            fi
+            ;;
+        T1I_UV_REG_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "1" ] || \
+               [ "$T1I_UV_REG_DIAG" != "1" ] || [ "$T1I_DEPTH_DIAG" != "0" ]; then
+                echo "T1I_UV_REG_DIAG_B1_S1 requires GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, T1I_UV_SCENE=1, T1I_UV_DIAG=1, and T1I_UV_REG_DIAG=1"
+                exit 1
+            fi
+            ;;
+        T1I_POST_WINNER_REG_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "1" ] || \
+               [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+               [ "$T1I_DEPTH_DIAG" != "0" ]; then
+                echo "T1I_POST_WINNER_REG_DIAG_B1_S1 requires the prepared T1i U/V diagnostic and GPU_POST_WINNER_REG=1"
+                exit 1
+            fi
+            ;;
+        T1I_DEPTH_COVERAGE_B1_S1|T1I_DEPTH_WINNER_B1_S1|T1I_DEPTH_WINNER_REG_B1_S1)
+            case "$A7_ARTIFACT_TAG:$T1I_DEPTH_DIAG" in
+                T1I_DEPTH_COVERAGE_B1_S1:1|T1I_DEPTH_WINNER_B1_S1:2|T1I_DEPTH_WINNER_REG_B1_S1:3) ;;
+                *) echo "$A7_ARTIFACT_TAG does not match T1I_DEPTH_DIAG=$T1I_DEPTH_DIAG"; exit 1;;
+            esac
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1I_UV_DIAG" != "0" ] || \
+               [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ]; then
+                echo "$A7_ARTIFACT_TAG requires the isolated prepared T1i scene profile"
+                exit 1
+            fi
+            ;;
+        T1J_PROC_CHECKER_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1J_PROC_SHADE" != "1" ] || \
+               [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || \
+               [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+               [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+               [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1J_PROC_CHECKER_B1_S1 requires the registered prepared T1i checker profile"
+                exit 1
+            fi
+            ;;
+        T1J_CHECKER_VIS_DIAG_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1J_PROC_SHADE" != "1" ] || \
+               [ "$T1J_CHECKER_VIS_DIAG" != "1" ] || \
+               [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+               [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+               [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1J_CHECKER_VIS_DIAG_B1_S1 requires the registered prepared T1j visibility profile"
+                exit 1
+            fi
+            ;;
+        T1K_UV_GRID_B1_S1)
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1K_GRID_SHADE" != "1" ] || \
+               [ "$T1J_PROC_SHADE" != "0" ] || [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || \
+               [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+               [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+               [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1K_UV_GRID_B1_S1 requires the registered prepared T1i grid profile"
+                exit 1
+            fi
+            ;;
+        T1L_MATERIAL_OP_B1_S1|T1L_MATERIAL_OP_B1_S2|T1L_MATERIAL_OP_B1_S2R1)
+            case "$A7_ARTIFACT_TAG:$A7_SEED" in
+                T1L_MATERIAL_OP_B1_S1:1|T1L_MATERIAL_OP_B1_S2:2|T1L_MATERIAL_OP_B1_S2R1:2) ;;
+                *) echo "$A7_ARTIFACT_TAG must match A7_SEED=$A7_SEED (S1=1, S2/S2R1=2)"; exit 1;;
+            esac
+            if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$T1L_MATERIAL_OP" = "0" ] || \
+               [ "$T1J_PROC_SHADE" != "0" ] || [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || \
+               [ "$T1K_GRID_SHADE" != "0" ] || [ "$T1H_SCALAR_SCENE" != "0" ] || \
+               [ "$T1H_SCALAR_DIAG" != "0" ] || [ "$T1I_UV_DIAG" != "0" ] || \
+               [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$T1I_DEPTH_DIAG" != "0" ] || \
+               [ "$GPU_POST_WINNER_REG" != "1" ] || [ "$T1L_PIPELINE_PARTITION" != "0" ]; then
+                echo "$A7_ARTIFACT_TAG requires registered prepared T1i and T1L_MATERIAL_OP=1..4"
+                exit 1
+            fi
+            ;;
+        T1L_PIPELINE_PARTITION_B1_S1)
+            if [ "$A7_SEED" != "1" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+               [ "$T1L_MATERIAL_OP" != "3" ] || [ "$GPU_T1D_UART" != "1" ] || \
+               [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || [ "$T1I_UV_SCENE" != "1" ] || \
+               [ "$GPU_POST_WINNER_REG" != "1" ] || [ "$T1J_PROC_SHADE" != "0" ] || \
+               [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || [ "$T1K_GRID_SHADE" != "0" ] || \
+               [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+               [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+               [ "$T1I_DEPTH_DIAG" != "0" ]; then
+                echo "T1L_PIPELINE_PARTITION_B1_S1 requires the frozen T1l U-stripe partition profile and seed 1"
+                exit 1
+            fi
+            ;;
+        T1M_FRAGMENT_ALU_B1_S1)
+            if [ "$A7_SEED" != "1" ] || [ "$T1M_FRAGMENT_ALU" != "1" ] || \
+               [ "$T1M_ALU_OP" != "2" ] || [ "$T1L_MATERIAL_OP" != "0" ] || \
+               [ "$T1L_PIPELINE_PARTITION" != "1" ] || [ "$GPU_T1D_UART" != "1" ] || \
+               [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || [ "$T1I_UV_SCENE" != "1" ] || \
+               [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1M_FRAGMENT_ALU_B1_S1 requires the seed-1 registered T1m XOR profile"
+                exit 1
+            fi
+            ;;
+        T1N_RUNTIME_MATERIAL_B1_S1)
+            if [ "$A7_SEED" != "1" ] || [ "$T1N_RUNTIME_MATERIAL" != "1" ] || \
+               [ "$T1M_FRAGMENT_ALU" != "0" ] || [ "$T1L_MATERIAL_OP" != "0" ] || \
+               [ "$T1L_PIPELINE_PARTITION" != "1" ] || [ "$GPU_T1D_UART" != "1" ] || \
+               [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || [ "$T1I_UV_SCENE" != "1" ] || \
+               [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1N_RUNTIME_MATERIAL_B1_S1 requires the seed-1 registered T1n runtime-material profile"
+                exit 1
+            fi
+            ;;
+        T1O_PER_PRIMITIVE_MATERIAL_Q1)
+            if [ "$T1O_PER_PRIMITIVE_MATERIAL" != "1" ] || [ "$T1P_PER_PRIMITIVE_PREDICATES" != "0" ] || \
+               [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+               [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+               [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1O_PER_PRIMITIVE_MATERIAL_Q1 requires the registered T1o per-primitive runtime-material profile"
+                exit 1
+            fi
+            ;;
+        T1P_PER_PRIMITIVE_PREDICATES_Q1)
+            if [ "$T1P_PER_PRIMITIVE_PREDICATES" != "1" ] || \
+               [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || \
+               [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+               [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+               [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1P_PER_PRIMITIVE_PREDICATES_Q1 requires the registered T1p predicate profile"
+                exit 1
+            fi
+            ;;
+        T1Q_TRUTH_TABLE_MATERIAL_Q1)
+            if [ "$T1Q_TRUTH_TABLE_MATERIAL" != "1" ] || \
+               [ "$T1P_PER_PRIMITIVE_PREDICATES" != "0" ] || [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || \
+               [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+               [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+               [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1Q_TRUTH_TABLE_MATERIAL_Q1 requires the registered T1q truth-table profile"
+                exit 1
+            fi
+            ;;
+        T1R_PALETTE_PAIR_MATERIAL_Q1)
+            if [ "$T1R_PALETTE_PAIR_MATERIAL" != "1" ] || \
+               [ "$T1Q_TRUTH_TABLE_MATERIAL" != "0" ] || \
+               [ "$T1P_PER_PRIMITIVE_PREDICATES" != "0" ] || \
+               [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || \
+               [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+               [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+               [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+               [ "$T1I_UV_SCENE" != "1" ] || [ "$GPU_POST_WINNER_REG" != "1" ]; then
+                echo "T1R_PALETTE_PAIR_MATERIAL_Q1 requires the registered T1r palette-pair profile"
+                exit 1
+            fi
+            ;;
+        *) echo "Invalid A7_ARTIFACT_TAG: $A7_ARTIFACT_TAG"; exit 1;;
+    esac
+    GPU_VARIANT="_${A7_ARTIFACT_TAG}"
+fi
+if [ "$T1H_SCALAR_SCENE" = "1" ]; then
+    if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+       [ "$SPIN" != "GPUVGA" ] || \
+       { [ "$T1H_SCALAR_DIAG" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1H_B1_S1" ]; } || \
+       { [ "$T1H_SCALAR_DIAG" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1H_DIAG_B1_S1" ]; }; then
+        echo "T1H_SCALAR_SCENE=1 requires GPUVGA, GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, and a matching T1H artifact tag/diagnostic selector"
+        exit 1
+    fi
+fi
+if [ "$T1H_SCALAR_DIAG" = "1" ] && [ "$T1H_SCALAR_SCENE" != "1" ]; then
+    echo "T1H_SCALAR_DIAG=1 requires T1H_SCALAR_SCENE=1"
+    exit 1
+fi
+if [ "$T1I_UV_SCENE" = "1" ]; then
+    if [ "$T1R_PALETTE_PAIR_MATERIAL" = "1" ]; then
+        if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+           [ "$T1Q_TRUTH_TABLE_MATERIAL" != "0" ] || [ "$T1P_PER_PRIMITIVE_PREDICATES" != "0" ] || \
+           [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || [ "$T1N_RUNTIME_MATERIAL" != "0" ] || \
+           [ "$T1M_FRAGMENT_ALU" != "0" ] || [ "$T1L_MATERIAL_OP" != "0" ] || \
+           [ "$T1L_PIPELINE_PARTITION" != "1" ] || [ "$T1H_SCALAR_SCENE" != "0" ] || \
+           [ "$T1H_SCALAR_DIAG" != "0" ] || [ "$T1I_UV_DIAG" != "0" ] || \
+           [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$T1I_DEPTH_DIAG" != "0" ] || \
+           [ "$T1J_PROC_SHADE" != "0" ] || [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || \
+           [ "$T1K_GRID_SHADE" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+           [ "$SPIN" != "GPUVGA" ] || [ "$A7_ARTIFACT_TAG" != "T1R_PALETTE_PAIR_MATERIAL_Q1" ]; then
+            echo "T1R_PALETTE_PAIR_MATERIAL=1 requires the registered prepared T1r GPUVGA profile"
+            exit 1
+        fi
+    elif [ "$T1Q_TRUTH_TABLE_MATERIAL" = "1" ]; then
+        if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+           [ "$T1P_PER_PRIMITIVE_PREDICATES" != "0" ] || [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || \
+           [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+           [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+           [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+           [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+           [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$T1J_PROC_SHADE" != "0" ] || \
+           [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || [ "$T1K_GRID_SHADE" != "0" ] || \
+           [ "$GPU_POST_WINNER_REG" != "1" ] || [ "$SPIN" != "GPUVGA" ] || \
+           [ "$A7_ARTIFACT_TAG" != "T1Q_TRUTH_TABLE_MATERIAL_Q1" ]; then
+            echo "T1Q_TRUTH_TABLE_MATERIAL=1 requires the registered prepared T1q GPUVGA profile"
+            exit 1
+        fi
+    elif [ "$T1P_PER_PRIMITIVE_PREDICATES" = "1" ]; then
+        if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+           [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || \
+           [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+           [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+           [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+           [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+           [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$T1J_PROC_SHADE" != "0" ] || \
+           [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || [ "$T1K_GRID_SHADE" != "0" ] || \
+           [ "$GPU_POST_WINNER_REG" != "1" ] || [ "$SPIN" != "GPUVGA" ] || \
+           [ "$A7_ARTIFACT_TAG" != "T1P_PER_PRIMITIVE_PREDICATES_Q1" ]; then
+            echo "T1P_PER_PRIMITIVE_PREDICATES=1 requires the registered prepared T1p GPUVGA profile"
+            exit 1
+        fi
+    elif [ "$T1O_PER_PRIMITIVE_MATERIAL" = "1" ]; then
+        if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+           [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+           [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+           [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+           [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+           [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$T1J_PROC_SHADE" != "0" ] || \
+           [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || [ "$T1K_GRID_SHADE" != "0" ] || \
+           [ "$GPU_POST_WINNER_REG" != "1" ] || [ "$SPIN" != "GPUVGA" ] || \
+           [ "$A7_ARTIFACT_TAG" != "T1O_PER_PRIMITIVE_MATERIAL_Q1" ]; then
+            echo "T1O_PER_PRIMITIVE_MATERIAL=1 requires the registered prepared T1o GPUVGA profile"
+            exit 1
+        fi
+    elif [ "$T1L_MATERIAL_OP" != "0" ]; then
+        if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+           [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+           [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+           [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$T1J_PROC_SHADE" != "0" ] || \
+           [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || [ "$T1K_GRID_SHADE" != "0" ] || \
+           [ "$GPU_POST_WINNER_REG" != "1" ] || [ "$SPIN" != "GPUVGA" ] || \
+               { [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S1" ] && \
+                 [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S2" ] && \
+                 [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S2R1" ] && \
+                 [ "$A7_ARTIFACT_TAG" != "T1L_PIPELINE_PARTITION_B1_S1" ]; }; then
+            echo "T1L_MATERIAL_OP=1..4 requires the registered T1l GPUVGA profile and matching artifact tag"
+            exit 1
+        fi
+    elif [ "$T1M_FRAGMENT_ALU" = "1" ]; then
+        if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+           [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+           [ "$T1M_ALU_OP" != "2" ] || [ "$T1H_SCALAR_SCENE" != "0" ] || \
+           [ "$T1H_SCALAR_DIAG" != "0" ] || [ "$T1I_UV_DIAG" != "0" ] || \
+           [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$T1I_DEPTH_DIAG" != "0" ] || \
+           [ "$T1J_PROC_SHADE" != "0" ] || [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || \
+           [ "$T1K_GRID_SHADE" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+           [ "$SPIN" != "GPUVGA" ] || [ "$A7_ARTIFACT_TAG" != "T1M_FRAGMENT_ALU_B1_S1" ]; then
+            echo "T1M_FRAGMENT_ALU=1 requires the registered prepared T1m XOR GPUVGA profile"
+            exit 1
+        fi
+    elif [ "$T1J_PROC_SHADE" = "1" ]; then
+        if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+           [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+           [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+           [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+           [ "$SPIN" != "GPUVGA" ] || \
+           { [ "$T1J_CHECKER_VIS_DIAG" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1J_PROC_CHECKER_B1_S1" ]; } || \
+           { [ "$T1J_CHECKER_VIS_DIAG" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1J_CHECKER_VIS_DIAG_B1_S1" ]; }; then
+            echo "T1J_PROC_SHADE=1 requires the registered T1j GPUVGA profile and matching artifact tag"
+            exit 1
+        fi
+    elif [ "$T1K_GRID_SHADE" = "1" ]; then
+        if [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+           [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+           [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+           [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+           [ "$SPIN" != "GPUVGA" ] || [ "$A7_ARTIFACT_TAG" != "T1K_UV_GRID_B1_S1" ]; then
+            echo "T1K_GRID_SHADE=1 requires the registered T1k GPUVGA profile and matching artifact tag"
+            exit 1
+        fi
+    elif [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+       [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$SPIN" != "GPUVGA" ] || \
+       { [ "$T1I_DEPTH_DIAG" = "0" ] && [ "$T1I_UV_DIAG" = "0" ] && \
+         [ "$A7_ARTIFACT_TAG" != "T1I_SIM_S0" ] && \
+         [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "0" ] && [ "$T1I_UV_DIAG" = "1" ] && [ "$T1I_UV_REG_DIAG" = "0" ] && [ "$GPU_POST_WINNER_REG" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1I_UV_DIAG_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "0" ] && [ "$T1I_UV_DIAG" = "1" ] && [ "$T1I_UV_REG_DIAG" = "1" ] && [ "$GPU_POST_WINNER_REG" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1I_UV_REG_DIAG_B1_S1" ]; } || \
+       { [ "$GPU_POST_WINNER_REG" = "1" ] && \
+         [ "$A7_ARTIFACT_TAG" != "T1I_POST_WINNER_REG_DIAG_B1_S1" ] && \
+         [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_COVERAGE_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "2" ] && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_B1_S1" ]; } || \
+       { [ "$T1I_DEPTH_DIAG" = "3" ] && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_REG_B1_S1" ]; }; then
+        echo "T1I_UV_SCENE=1 requires GPUVGA, GPU_T1D_UART=1, FOUR_PRIMITIVE_SCENE=1, T1H_SCALAR_SCENE=0, and a matching T1I artifact tag/diagnostic selector"
+        exit 1
+    fi
+fi
+if [ "$T1J_PROC_SHADE" = "1" ] && [ "$T1I_UV_SCENE" != "1" ]; then
+    echo "T1J_PROC_SHADE=1 requires T1I_UV_SCENE=1"
+    exit 1
+fi
+if [ "$T1J_CHECKER_VIS_DIAG" = "1" ] && [ "$T1J_PROC_SHADE" != "1" ]; then
+    echo "T1J_CHECKER_VIS_DIAG=1 requires T1J_PROC_SHADE=1"
+    exit 1
+fi
+if [ "$T1K_GRID_SHADE" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1J_PROC_SHADE" != "0" ] || [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || \
+       [ "$GPU_POST_WINNER_REG" != "1" ]; }; then
+    echo "T1K_GRID_SHADE=1 requires T1I_UV_SCENE=1, GPU_POST_WINNER_REG=1, and T1j selectors disabled"
+    exit 1
+fi
+if [ "$T1L_MATERIAL_OP" != "0" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1J_PROC_SHADE" != "0" ] || [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || \
+       [ "$T1K_GRID_SHADE" != "0" ] || [ "$T1H_SCALAR_SCENE" != "0" ] || \
+       [ "$T1H_SCALAR_DIAG" != "0" ] || [ "$T1I_UV_DIAG" != "0" ] || \
+       [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$T1I_DEPTH_DIAG" != "0" ] || \
+       [ "$GPU_POST_WINNER_REG" != "1" ]; }; then
+    echo "T1L_MATERIAL_OP=1..4 requires T1I_UV_SCENE=1, GPU_POST_WINNER_REG=1, and all diagnostic/T1j/T1k selectors disabled"
+    exit 1
+fi
+if [ "$T1L_PIPELINE_PARTITION" = "1" ] && { \
+       { [ "$T1Q_TRUTH_TABLE_MATERIAL" = "0" ] && [ "$T1R_PALETTE_PAIR_MATERIAL" = "0" ] && [ "$T1P_PER_PRIMITIVE_PREDICATES" = "0" ] && [ "$T1O_PER_PRIMITIVE_MATERIAL" = "0" ] && [ "$T1N_RUNTIME_MATERIAL" = "0" ] && [ "$T1M_FRAGMENT_ALU" = "0" ] && [ "$T1L_MATERIAL_OP" != "3" ]; } || \
+       { [ "$T1Q_TRUTH_TABLE_MATERIAL" = "0" ] && [ "$T1R_PALETTE_PAIR_MATERIAL" = "0" ] && [ "$T1P_PER_PRIMITIVE_PREDICATES" = "0" ] && [ "$T1O_PER_PRIMITIVE_MATERIAL" = "0" ] && [ "$T1N_RUNTIME_MATERIAL" = "0" ] && [ "$T1M_FRAGMENT_ALU" = "0" ] && [ "$A7_ARTIFACT_TAG" != "T1L_PIPELINE_PARTITION_B1_S1" ]; } || \
+       { [ "$T1M_FRAGMENT_ALU" = "1" ] && [ "$T1L_MATERIAL_OP" != "0" ]; } || \
+       { [ "$T1M_FRAGMENT_ALU" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1M_FRAGMENT_ALU_B1_S1" ]; } || \
+       { [ "$T1N_RUNTIME_MATERIAL" = "1" ] && [ "$T1L_MATERIAL_OP" != "0" ]; } || \
+       { [ "$T1N_RUNTIME_MATERIAL" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_Q1" ] && [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_B1_S1" ]; } || \
+       { [ "$T1O_PER_PRIMITIVE_MATERIAL" = "1" ] && [ "$T1L_MATERIAL_OP" != "0" ]; } || \
+       { [ "$T1O_PER_PRIMITIVE_MATERIAL" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1O_PER_PRIMITIVE_MATERIAL_Q1" ]; } || \
+       { [ "$T1P_PER_PRIMITIVE_PREDICATES" = "1" ] && [ "$T1L_MATERIAL_OP" != "0" ]; } || \
+       { [ "$T1P_PER_PRIMITIVE_PREDICATES" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1P_PER_PRIMITIVE_PREDICATES_Q1" ]; } || \
+       { [ "$T1Q_TRUTH_TABLE_MATERIAL" = "1" ] && [ "$T1L_MATERIAL_OP" != "0" ]; } || \
+       { [ "$T1Q_TRUTH_TABLE_MATERIAL" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1Q_TRUTH_TABLE_MATERIAL_Q1" ]; } || \
+       { [ "$T1R_PALETTE_PAIR_MATERIAL" = "1" ] && [ "$T1L_MATERIAL_OP" != "0" ]; } || \
+       { [ "$T1R_PALETTE_PAIR_MATERIAL" = "1" ] && [ "$A7_ARTIFACT_TAG" != "T1R_PALETTE_PAIR_MATERIAL_Q1" ]; } || \
+       [ "$T1I_UV_SCENE" != "1" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+       [ "$SPIN" != "GPUVGA" ] || [ "$GPU_T1D_UART" != "1" ] || \
+       [ "$FOUR_PRIMITIVE_SCENE" != "1" ]; }; then
+    echo "T1L_PIPELINE_PARTITION=1 requires a registered four-lane material profile"
+    exit 1
+fi
+if [ "$T1N_RUNTIME_MATERIAL" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+       [ "$T1L_PIPELINE_PARTITION" != "1" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+       [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+       [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+       [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$T1J_PROC_SHADE" != "0" ] || \
+       [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || [ "$T1K_GRID_SHADE" != "0" ] || \
+       [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || \
+       [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || [ "$GPU_T1D_UART" != "1" ] || \
+       [ "$SPIN" != "GPUVGA" ] || \
+       { [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_Q1" ] && [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_B1_S1" ]; } || \
+       { [ "$A7_ARTIFACT_TAG" = "T1N_RUNTIME_MATERIAL_B1_S1" ] && [ "$A7_SEED" != "1" ]; }; }; then
+    echo "T1N_RUNTIME_MATERIAL=1 requires the registered prepared four-lane T1i profile and matching Q1/B1 artifact tag"
+    exit 1
+fi
+if [ "$T1O_PER_PRIMITIVE_MATERIAL" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+       [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+       [ "$GPU_POST_WINNER_REG" != "1" ] || [ "$T1H_SCALAR_SCENE" != "0" ] || \
+       [ "$T1H_SCALAR_DIAG" != "0" ] || [ "$T1I_UV_DIAG" != "0" ] || \
+       [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$T1I_DEPTH_DIAG" != "0" ] || \
+       [ "$T1J_PROC_SHADE" != "0" ] || [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || \
+       [ "$T1K_GRID_SHADE" != "0" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+       [ "$GPU_T1D_UART" != "1" ] || [ "$SPIN" != "GPUVGA" ] || \
+       [ "$A7_ARTIFACT_TAG" != "T1O_PER_PRIMITIVE_MATERIAL_Q1" ] || \
+       [ "$T1P_PER_PRIMITIVE_PREDICATES" != "0" ]; }; then
+    echo "T1O_PER_PRIMITIVE_MATERIAL=1 requires the registered prepared four-lane T1i Q1 profile"
+    exit 1
+fi
+if [ "$T1P_PER_PRIMITIVE_PREDICATES" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1M_FRAGMENT_ALU" != "0" ] || \
+       [ "$T1N_RUNTIME_MATERIAL" != "0" ] || [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || \
+       [ "$T1L_PIPELINE_PARTITION" != "1" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+       [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+       [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+       [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$T1J_PROC_SHADE" != "0" ] || \
+       [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || [ "$T1K_GRID_SHADE" != "0" ] || \
+       [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || [ "$GPU_T1D_UART" != "1" ] || \
+       [ "$SPIN" != "GPUVGA" ] || \
+       [ "$A7_ARTIFACT_TAG" != "T1P_PER_PRIMITIVE_PREDICATES_Q1" ]; }; then
+    echo "T1P_PER_PRIMITIVE_PREDICATES=1 requires the registered prepared four-lane T1i Q1 profile"
+    exit 1
+fi
+if [ "$T1M_FRAGMENT_ALU" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1L_MATERIAL_OP" != "0" ] || [ "$T1L_PIPELINE_PARTITION" != "1" ] || \
+       [ "$T1M_ALU_OP" != "2" ] || [ "$T1J_PROC_SHADE" != "0" ] || \
+       [ "$T1J_CHECKER_VIS_DIAG" != "0" ] || [ "$T1K_GRID_SHADE" != "0" ] || \
+       [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+       [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+       [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$T1N_RUNTIME_MATERIAL" != "0" ] || \
+       [ "$T1O_PER_PRIMITIVE_MATERIAL" != "0" ] || [ "$GPU_POST_WINNER_REG" != "1" ] || \
+       [ "$GPU_T1D_UART" != "1" ] || [ "$FOUR_PRIMITIVE_SCENE" != "1" ] || \
+       [ "$SPIN" != "GPUVGA" ] || [ "$A7_ARTIFACT_TAG" != "T1M_FRAGMENT_ALU_B1_S1" ]; }; then
+    echo "T1M_FRAGMENT_ALU=1 requires the registered prepared T1m XOR GPUVGA profile"
+    exit 1
+fi
+if [ "$T1I_UV_DIAG" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || [ "$T1H_SCALAR_DIAG" != "0" ]; }; then
+    echo "T1I_UV_DIAG=1 requires T1I_UV_SCENE=1 and T1H_SCALAR_DIAG=0"
+    exit 1
+fi
+if [ "$T1I_UV_REG_DIAG" = "1" ] && { [ "$T1I_UV_DIAG" != "1" ] || [ "$T1I_DEPTH_DIAG" != "0" ]; }; then
+    echo "T1I_UV_REG_DIAG=1 requires T1I_UV_DIAG=1 and T1I_DEPTH_DIAG=0"
+    exit 1
+fi
+if [ "$GPU_POST_WINNER_REG" = "1" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || \
+       [ "$T1I_DEPTH_DIAG" != "0" ] || [ "$SPIN" != "GPUVGA" ]; }; then
+    echo "GPU_POST_WINNER_REG=1 requires the prepared T1i GPUVGA profile, with T1I_UV_REG_DIAG and depth diagnostics disabled"
+    exit 1
+fi
+if [ "$T1I_DEPTH_DIAG" != "0" ] && { [ "$T1I_UV_SCENE" != "1" ] || \
+       [ "$T1I_UV_DIAG" != "0" ] || [ "$T1I_UV_REG_DIAG" != "0" ] || [ "$T1H_SCALAR_DIAG" != "0" ] || \
+    [ "$T1H_SCALAR_SCENE" != "0" ] || [ "$SPIN" != "GPUVGA" ]; }; then
+    echo "T1I_DEPTH_DIAG requires T1I_UV_SCENE=1, other diagnostics disabled, and GPUVGA"
+    exit 1
+fi
+if [ "$FOUR_PRIMITIVE_SCENE" = "1" ]; then
+    if [ "$GPU_T1D_UART" != "1" ]; then
+        echo "FOUR_PRIMITIVE_SCENE=1 requires GPU_T1D_UART=1"
+        exit 1
+    fi
+    if [ "$A7_ARTIFACT_TAG" != "T1F_B1_S1" ] && [ "$A7_ARTIFACT_TAG" != "T1G_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1H_B1_S1" ] && [ "$A7_ARTIFACT_TAG" != "T1H_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_SIM_S0" ] && [ "$A7_ARTIFACT_TAG" != "T1I_UV_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_UV_REG_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_POST_WINNER_REG_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_COVERAGE_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_REG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1J_PROC_CHECKER_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1J_CHECKER_VIS_DIAG_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1K_UV_GRID_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S2" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S2R1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1L_PIPELINE_PARTITION_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1M_FRAGMENT_ALU_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_Q1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_B1_S1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1O_PER_PRIMITIVE_MATERIAL_Q1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1P_PER_PRIMITIVE_PREDICATES_Q1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1Q_TRUTH_TABLE_MATERIAL_Q1" ] && \
+       [ "$A7_ARTIFACT_TAG" != "T1R_PALETTE_PAIR_MATERIAL_Q1" ]; then
+        echo "FOUR_PRIMITIVE_SCENE=1 requires a matching four-primitive artifact tag"
+        exit 1
+    fi
+fi
+if [ "$GPU_T1D_UART" = "1" ]; then
+    if [ "$GPU_PREPARED_EXPLICIT" = "1" ] || [ "$GPU_PREPARED_SCENE" != "0" ]; then
+        echo "GPU_T1D_UART cannot be combined with GPU_PREPARED_SCENE"
+        exit 1
+    fi
+    if [ "$GPU_T1D_DIAG" = "1" ]; then
+        if [ "$A7_ARTIFACT_TAG" != "T1D_DIAG_S1" ]; then
+            echo "GPU_T1D_DIAG requires A7_ARTIFACT_TAG=T1D_DIAG_S1"
+            exit 1
+        fi
+        GPU_VARIANT="_T1D_DIAG_S1"
+    else
+        if [ -n "$A7_ARTIFACT_TAG" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1D_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1E_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1F_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1G_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1H_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1H_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_SIM_S0" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_UV_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_UV_REG_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_POST_WINNER_REG_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_COVERAGE_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1I_DEPTH_WINNER_REG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1J_PROC_CHECKER_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1J_CHECKER_VIS_DIAG_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1K_UV_GRID_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S2" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1L_MATERIAL_OP_B1_S2R1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1L_PIPELINE_PARTITION_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1M_FRAGMENT_ALU_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_Q1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1N_RUNTIME_MATERIAL_B1_S1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1O_PER_PRIMITIVE_MATERIAL_Q1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1P_PER_PRIMITIVE_PREDICATES_Q1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1Q_TRUTH_TABLE_MATERIAL_Q1" ] \
+           && [ "$A7_ARTIFACT_TAG" != "T1R_PALETTE_PAIR_MATERIAL_Q1" ]; then
+            echo "GPU_T1D_UART requires a matching GPU UART artifact tag"
+            exit 1
+        fi
+        if [ -n "$A7_ARTIFACT_TAG" ]; then
+            GPU_VARIANT="_${A7_ARTIFACT_TAG}"
+        else
+            GPU_VARIANT="_T1D_B1_S1"
+        fi
+    fi
+    GPU_COST_STIMULUS=0
+fi
+if [ "$GPU_T1D_DIAG" = "1" ] && [ "$GPU_T1D_UART" != "1" ]; then
+    echo "GPU_T1D_DIAG requires GPU_T1D_UART=1"
+    exit 1
+fi
+
+# Selector for the two tensegrity A/B spins, defaulting to the Phase 5
+# production candidate (Karatsuba three-product multiplier). Reject invalid
+# values before constructing any artifact path, and reject opt-in use on
+# unrelated spins so a recorded ZPHI_KARATSUBA setting cannot be silently
+# ignored. The reference implementation remains selectable with ZPHI_KARATSUBA=0.
+# Distinguish "user asked for this" from "we defaulted it". The rejection below
+# is meant to stop a *recorded* setting being silently ignored on a spin that
+# cannot honour it -- but applying it to the default made every non-tensegrity
+# spin unbuildable, because the default is 1 and only the tensegrity spins
+# accept a non-zero value. That broke `build_a7.sh 100t lucas all` and every
+# other documented non-tensegrity build command from 2026-07-23 (c1fe58f, which
+# moved the default 0 -> 1) until 2026-07-31. It surfaced only when someone next
+# tried to rebuild a non-tensegrity spin, which is why it went unnoticed: the
+# stale bitstreams on disk kept working for load-only bench sessions.
+if [ -n "${ZPHI_KARATSUBA+x}" ]; then
+    ZPHI_KARATSUBA_EXPLICIT=1
+else
+    ZPHI_KARATSUBA_EXPLICIT=0
+fi
+ZPHI_KARATSUBA="${ZPHI_KARATSUBA:-1}"
+case "$ZPHI_KARATSUBA" in
+    0|1) ;;
+    *) echo "Invalid ZPHI_KARATSUBA: $ZPHI_KARATSUBA (use 0|1)"; exit 1;;
+esac
+
+TENSEGRITY_VARIANT=""
+case "$SPIN" in
+    TENSEGRITYPROBE|TENSEGRITYLINK)
+        TENSEGRITY_VARIANT="_ZK${ZPHI_KARATSUBA}_S${A7_SEED}";;
+    *)
+        # Only reject an EXPLICIT non-zero request. A defaulted 1 on a spin that
+        # ignores the setting is not a user error and must not block the build.
+        if [ "$ZPHI_KARATSUBA_EXPLICIT" = "1" ] && [ "$ZPHI_KARATSUBA" != "0" ]; then
+            echo "ZPHI_KARATSUBA=$ZPHI_KARATSUBA applies only to TENSEGRITYPROBE or TENSEGRITYLINK (spin is $SPIN)"
+            exit 1
+        fi
+        # Not applicable to this spin; normalise so it cannot reach an artifact
+        # name or a metrics note and imply the option was in effect.
+        ZPHI_KARATSUBA=0;;
+esac
+
+# A7_CLK_DIV_LOG2 default, spin-aware — mirrors the _CORE ternary in
+# spu_a7_top.v (keep this list in sync with that one, EXCEPT for the
+# RPLU2PADE exception documented below). Coreless sidecar
+# spins (no spu13_core instance) run the raw fabric clock; every
+# core-based spin needs clk_fast divided down to the Piranha Pulse
+# dispatch cadence or QR telemetry corrupts silently with no synthesis
+# or sim-side warning (root-caused in docs/hardware_evidence.md
+# §3.2e.4, recurred on the IROTC spin's first build — §3.2k.1). An
+# explicit A7_CLK_DIV_LOG2 env var still overrides this default.
+#
+# RPLU2PADE is the exception among the coreless spins: it defaults to /2
+# (clk_fast 25 MHz) since 2026-08-05, because its datapath does not meet 50 MHz
+# and fails FUNCTIONALLY there. Measured, campaign 20260805_083400: at 50 MHz
+# builds land 0/10 or 10/10 with no correlation to reported Fmax -- a placement
+# lottery, because Fmax describes the worst path rather than the path the test
+# exercises. At 25 MHz all four measured builds pass 10/10, against a positive
+# control that failed 0/10 in the same session. Both inverter towers behave
+# identically, so this is the datapath, not the inverter.
+#
+# The cost is real and must be quoted wherever the Pade pipeline is presented:
+# HALF THROUGHPUT for this spin. A correct slow build beats a fast unreliable
+# one; the proper fix is to pipeline the Pade datapath, after which this line
+# can go back to 0. See docs/SESSION_HANDOVER_2026-08-04-EVENING.md.
+case "$SPIN" in
+    RPLU2PADE)                             A7_CLK_DIV_LOG2_DEFAULT=1;;
+    LUCAS|SU3|RPLUCFG|RPLU2LIVE|SOMPROBE|SOMSIDECAR|TENSEGRITYPROBE|TENSEGRITYLINK) A7_CLK_DIV_LOG2_DEFAULT=0;;
+    *)                                     A7_CLK_DIV_LOG2_DEFAULT=6;;
+esac
+A7_CLK_DIV_LOG2="${A7_CLK_DIV_LOG2:-$A7_CLK_DIV_LOG2_DEFAULT}"
+
+case "$DEVICE_CHIP" in
+    35t)
+        PART="xc7a35tcsg324-1"; XDC="hardware/boards/artix7/spu_a7_35t.xdc"
+        DEVICE_PARAM="A7_35T"
+        CHIPDB="build/chipdb/xc7a35t.bin"
+        JSON="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.json"
+        BITSTREAM="build/spu_a7_35t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.bit";;
+    100t)
+        PART="xc7a100tfgg676-1"; XDC="hardware/boards/artix7/spu_a7_100t.xdc"
+        DEVICE_PARAM="A7_100T"
+        CHIPDB="build/chipdb/xc7a100tfgg676.bin"
+        JSON="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.json"
+        BITSTREAM="build/spu_a7_100t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.bit";;
+    200t)
+        PART="xc7a200tsbg484-1"; XDC="hardware/boards/artix7/spu_a7_200t.xdc"
+        DEVICE_PARAM="A7_200T"
+        CHIPDB="build/chipdb/xc7a200t.bin"
+        JSON="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.json"
+        BITSTREAM="build/spu_a7_200t_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}.bit";;
+    *) echo "Unknown device: $DEVICE_CHIP (use 35t|100t|200t)"; exit 1;;
+esac
+
+YS="hardware/boards/artix7/synth_a7.ys"
+TOP="spu_a7_top"
+
+if [ "$FP4_BACKEND_SEQUENTIAL" = "1" ]; then
+    YS="hardware/boards/artix7/synth_a7_seq.ys"
+fi
+
+if [ "$SPIN" = "SOMPROBE" ]; then
+    YS="hardware/boards/artix7/synth_a7_som_probe.ys"
+    XDC="hardware/boards/artix7/spu_a7_som_probe.xdc"
+    TOP="spu_a7_som_probe_top"
+elif [ "$SPIN" = "SOMSIDECAR" ]; then
+    YS="hardware/boards/artix7/synth_a7_som_sidecar.ys"
+    XDC="hardware/boards/artix7/spu_a7_som_sidecar.xdc"
+    TOP="spu_a7_som_sidecar_top"
+elif [ "$SPIN" = "TENSEGRITYPROBE" ]; then
+    YS="hardware/boards/artix7/synth_a7_tensegrity_probe.ys"
+    XDC="hardware/boards/artix7/spu_a7_tensegrity_probe.xdc"
+    TOP="spu_a7_tensegrity_probe_top"
+elif [ "$SPIN" = "TENSEGRITYLINK" ]; then
+    YS="hardware/boards/artix7/synth_a7_tensegrity_link.ys"
+    XDC="hardware/boards/artix7/spu_a7_tensegrity_link.xdc"
+    TOP="spu_a7_tensegrity_link_top"
+elif [ "$SPIN" = "FP4EVIDENCE" ]; then
+    YS="hardware/boards/artix7/synth_a7_fp4_inverter_evidence.ys"
+    XDC="hardware/boards/artix7/spu_a7_fp4_inverter_evidence.xdc"
+    TOP="spu_a7_fp4_inverter_evidence_top"
+elif [ "$SPIN" = "VIDEO" ]; then
+    YS="hardware/boards/artix7/synth_a7_video.ys"
+    XDC="hardware/boards/artix7/spu_a7_video.xdc"
+    TOP="spu_a7_video_top"
+elif [ "$SPIN" = "VGA" ]; then
+    YS="hardware/boards/artix7/synth_a7_vga.ys"
+    XDC="hardware/boards/artix7/spu_a7_vga.xdc"
+    TOP="spu_a7_vga_top"
+elif [ "$SPIN" = "VGAFIX" ]; then
+    YS="hardware/boards/artix7/synth_a7_vga_fix.ys"
+    XDC="hardware/boards/artix7/spu_a7_vga_fix.xdc"
+    TOP="spu_a7_vga_top"
+elif [ "$SPIN" = "GPUVGA" ]; then
+    if [ "$GPU_T1D_DIAG" = "1" ]; then
+        YS="hardware/boards/artix7/synth_a7_gpu_vga_t1d_diag.ys"
+        XDC="hardware/boards/artix7/spu_a7_gpu_vga_t1d_diag.xdc"
+    elif [ "$GPU_T1D_UART" = "1" ]; then
+        YS="hardware/boards/artix7/synth_a7_gpu_vga_t1d.ys"
+        XDC="hardware/boards/artix7/spu_a7_gpu_vga_t1d.xdc"
+    else
+        YS="hardware/boards/artix7/synth_a7_gpu_vga.ys"
+        XDC="hardware/boards/artix7/spu_a7_gpu_vga.xdc"
+    fi
+    TOP="spu_a7_gpu_vga_top"
+elif [ "$SPIN" = "VGAREV" ]; then
+    YS="hardware/boards/artix7/synth_a7_vga_rev.ys"
+    XDC="hardware/boards/artix7/spu_a7_vga_rev.xdc"
+    TOP="spu_a7_vga_top"
+elif [ "$SPIN" = "VGABCAST" ]; then
+    YS="hardware/boards/artix7/synth_a7_vga_bcast.ys"
+    XDC="hardware/boards/artix7/spu_a7_vga_bcast.xdc"
+    TOP="spu_a7_vga_bcast_top"
+elif [ "$SPIN" = "UARTLOOP" ]; then
+    YS="hardware/boards/artix7/synth_a7_uart_loopback.ys"
+    XDC="hardware/boards/artix7/spu_a7_uart_loopback.xdc"
+    TOP="spu_a7_uart_loopback_top"
+elif [ "$SPIN" = "J10IDENT" ]; then
+    YS="hardware/boards/artix7/synth_a7_j10_ident.ys"
+    XDC="hardware/boards/artix7/spu_a7_j10_ident.xdc"
+    TOP="spu_a7_j10_ident_top"
+fi
+
+echo "=== SPU-13 Artix-7 Build ==="
+echo "  Device: $DEVICE_CHIP ($PART)"
+echo "  Spin:   $SPIN"
+echo "  Step:   $STEP"
+echo "  Freq:   ${A7_FREQ} MHz"
+echo "  Seed:   ${A7_SEED}"
+echo "  GPU prepared: ${GPU_PREPARED_SCENE} (cost stimulus=${GPU_COST_STIMULUS})"
+echo "  GPU T1d UART: ${GPU_T1D_UART}"
+echo "  GPU four-primitive scene: ${FOUR_PRIMITIVE_SCENE}"
+echo "  GPU T1h scalar scene: ${T1H_SCALAR_SCENE}"
+  echo "  GPU T1h scalar diagnostic: ${T1H_SCALAR_DIAG}"
+echo "  GPU T1i UV scene: ${T1I_UV_SCENE}"
+echo "  GPU T1i UV diagnostic: ${T1I_UV_DIAG}"
+echo "  GPU T1i registered UV diagnostic: ${T1I_UV_REG_DIAG}"
+echo "  GPU post-winner output register: ${GPU_POST_WINNER_REG}"
+echo "  GPU T1i depth diagnostic: ${T1I_DEPTH_DIAG}"
+echo "  GPU T1j procedural shade: ${T1J_PROC_SHADE}"
+echo "  GPU T1j checker visibility diagnostic: ${T1J_CHECKER_VIS_DIAG}"
+echo "  GPU T1k U/V grid shade: ${T1K_GRID_SHADE}"
+echo "  GPU T1l material operator: ${T1L_MATERIAL_OP}"
+echo "  GPU T1l pipeline partition: ${T1L_PIPELINE_PARTITION}"
+echo "  GPU T1m fragment ALU: ${T1M_FRAGMENT_ALU} (op=${T1M_ALU_OP})"
+echo "  GPU T1n runtime material opcode: ${T1N_RUNTIME_MATERIAL}"
+echo "  GPU T1o per-primitive material: ${T1O_PER_PRIMITIVE_MATERIAL}"
+echo "  GPU T1p per-primitive predicates: ${T1P_PER_PRIMITIVE_PREDICATES}"
+echo "  GPU T1q truth-table material: ${T1Q_TRUTH_TABLE_MATERIAL}"
+echo "  GPU T1r palette-pair material: ${T1R_PALETTE_PAIR_MATERIAL}"
+echo "  GPU T1d diag: ${GPU_T1D_DIAG}"
+echo "  Artifact tag: ${A7_ARTIFACT_TAG:-none}"
+echo "  ClkDiv: /$((1 << A7_CLK_DIV_LOG2))"
+echo "  Fp4Inv: structured=${FP4_STRUCTURED} request-sequential=${FP4_STRUCTURED_SEQUENTIAL} backend-sequential=${FP4_BACKEND_SEQUENTIAL}"
+echo "  Trace:  PADE_DEBUG_TRACE=${PADE_DEBUG_TRACE}"
+echo "  Pipelined: PADE_PIPELINED=${PADE_PIPELINED} PIPELINED_RNS_CHECK=${PIPELINED_RNS_CHECK}"
+echo "  Synth:  abc9=${A7_SYNTH_ABC9}"
+echo "  Artifact: ${BITSTREAM}"
+if [ -n "$TENSEGRITY_VARIANT" ]; then
+    echo "  ZPHI:   Karatsuba=${ZPHI_KARATSUBA} (0=reference, 1=candidate)"
+    echo "  Tag:    ${TENSEGRITY_VARIANT#_}"
+fi
+if [ "$A7_UART_DIAG" != "0" ]; then
+    echo "  UART:   DIAGNOSTIC MODE (real hex telemetry disabled)"
+fi
+echo ""
+
+synth() {
+    echo ">>> Yosys Synthesis <<<"
+    mkdir -p build
+    if [ "$SPIN" = "TENSEGRITYPROBE" ] || [ "$SPIN" = "TENSEGRITYLINK" ]; then
+        yosys -p "script $YS; \
+            hierarchy -check -top $TOP \
+                      -chparam USE_ZPHI_KARATSUBA $ZPHI_KARATSUBA; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    elif [ "$SPIN" = "FP4EVIDENCE" ]; then
+        yosys -p "script $YS; \
+            hierarchy -check -top $TOP \
+                      -chparam USE_STRUCTURED $FP4_STRUCTURED \
+                      -chparam SEQUENTIAL $FP4_BACKEND_SEQUENTIAL; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    elif [ "$SPIN" = "GPUVGA" ] && [ "$GPU_T1D_UART" = "1" ]; then
+        yosys -p "script $YS; \
+            chparam -set DEVICE \"A7\" spu_gpu_top; \
+            chparam -set PREPARED_SCENE 1 \
+                    -set COST_STIMULUS 0 \
+                    -set FOUR_PRIMITIVE_SCENE $FOUR_PRIMITIVE_SCENE \
+                    -set T1H_SCALAR_SCENE $T1H_SCALAR_SCENE \
+                    -set T1H_SCALAR_DIAG $T1H_SCALAR_DIAG \
+                    -set T1I_UV_SCENE $T1I_UV_SCENE \
+                    -set T1I_UV_DIAG $T1I_UV_DIAG \
+                    -set T1I_UV_REG_DIAG $T1I_UV_REG_DIAG \
+                    -set T1I_DEPTH_DIAG $T1I_DEPTH_DIAG \
+                    -set T1J_PROC_SHADE $T1J_PROC_SHADE \
+                    -set T1J_CHECKER_VIS_DIAG $T1J_CHECKER_VIS_DIAG \
+                    -set T1K_GRID_SHADE $T1K_GRID_SHADE \
+                    -set T1L_MATERIAL_OP $T1L_MATERIAL_OP \
+                    -set T1L_PIPELINE_PARTITION $T1L_PIPELINE_PARTITION \
+                    -set T1M_FRAGMENT_ALU $T1M_FRAGMENT_ALU \
+                    -set T1M_ALU_OP $T1M_ALU_OP \
+                    -set T1N_RUNTIME_MATERIAL $T1N_RUNTIME_MATERIAL \
+                    -set T1O_PER_PRIMITIVE_MATERIAL $T1O_PER_PRIMITIVE_MATERIAL \
+                    -set T1P_PER_PRIMITIVE_PREDICATES $T1P_PER_PRIMITIVE_PREDICATES \
+                    -set T1Q_TRUTH_TABLE_MATERIAL $T1Q_TRUTH_TABLE_MATERIAL \
+                    -set T1R_PALETTE_PAIR_MATERIAL $T1R_PALETTE_PAIR_MATERIAL \
+                    -set GPU_POST_WINNER_REG $GPU_POST_WINNER_REG \
+                    $TOP; \
+            hierarchy -top $TOP; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    elif [ "$SPIN" = "GPUVGA" ] && [ "$GPU_PREPARED_EXPLICIT" = "1" ]; then
+        yosys -p "script $YS; \
+            hierarchy -top $TOP \
+                      -chparam PREPARED_SCENE $GPU_PREPARED_SCENE \
+                      -chparam COST_STIMULUS $GPU_COST_STIMULUS; \
+            hierarchy -check -top $TOP; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    elif [ "$TOP" != "spu_a7_top" ]; then
+        yosys -p "script $YS; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top $TOP -json \"$JSON\"; \
+            stat -top $TOP"
+    else
+        yosys -p "script $YS; \
+            chparam -set DEVICE \"$DEVICE_PARAM\" \
+                    -set SPIN \"$SPIN\" \
+                    -set A7_CLK_DIV_LOG2 $A7_CLK_DIV_LOG2 \
+                    -set A7_UART_DIAG $A7_UART_DIAG \
+                    -set USE_STRUCTURED_INVERTER $FP4_STRUCTURED \
+                    -set STRUCTURED_INVERTER_SEQUENTIAL $FP4_STRUCTURED_SEQUENTIAL \
+                    -set PADE_DEBUG_TRACE $PADE_DEBUG_TRACE \
+                    -set PADE_PIPELINED $PADE_PIPELINED \
+                    -set PIPELINED_RNS_CHECK $PIPELINED_RNS_CHECK \
+                    spu_a7_top; \
+            hierarchy -check -top spu_a7_top; \
+            synth_xilinx -family xc7 $SYNTH_XILINX_FLOW -top spu_a7_top -json \"$JSON\"; \
+            stat -top spu_a7_top"
+    fi
+}
+
+pnr() {
+    echo ">>> NextPNR Place & Route <<<"
+    [ -f "$CHIPDB" ] || {
+        echo "Missing chip database: $CHIPDB"
+        echo "Run: tools/generate_a7_chipdb.sh $DEVICE_CHIP"
+        exit 1
+    }
+    NEXTPNR_ARGS=(
+        --chipdb "$CHIPDB"
+        --xdc "$XDC"
+        --json "$JSON"
+        --write "${JSON}.pnr.json"
+        --fasm "${JSON}.pnr.fasm"
+        --log "${JSON}.nextpnr.log"
+        --freq "$A7_FREQ"
+        --seed "$A7_SEED"
+    )
+    if nextpnr-xilinx --help 2>&1 | grep -q -- "--report"; then
+        NEXTPNR_ARGS+=(
+            --report "${JSON}.timing_report.json"
+            --detailed-timing-report
+        )
+    fi
+
+    nextpnr-xilinx "${NEXTPNR_ARGS[@]}"
+
+    METRICS_NAME="artix7_${DEVICE_CHIP}_${SPIN}${TENSEGRITY_VARIANT}${INVERTER_VARIANT}${GPU_VARIANT}"
+    METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; FP4_STRUCTURED=${FP4_STRUCTURED}; FP4_BACKEND_SEQUENTIAL=${FP4_BACKEND_SEQUENTIAL}; PADE_DEBUG_TRACE=${PADE_DEBUG_TRACE}; post-route metrics from nextpnr-xilinx."
+    if [ -n "$TENSEGRITY_VARIANT" ]; then
+        METRICS_NOTE="A7_FREQ=${A7_FREQ} MHz; A7_SEED=${A7_SEED}; ZPHI_KARATSUBA=${ZPHI_KARATSUBA}; post-route metrics from nextpnr-xilinx."
+    fi
+    METRICS_REPORT_ARGS=()
+    if [ -f "${JSON}.timing_report.json" ]; then
+        METRICS_REPORT_ARGS=(--report "${JSON}.timing_report.json")
+    else
+        echo "  nextpnr build has no native JSON timing report; collecting log-backed metrics."
+    fi
+    python3 tools/collect_fpga_metrics.py \
+        --name "$METRICS_NAME" \
+        --board "QMTech Wukong Artix-7" \
+        --device "$PART" \
+        --toolchain "Yosys + nextpnr-xilinx + Project X-Ray" \
+        --top "$TOP" \
+        "${METRICS_REPORT_ARGS[@]}" \
+        --log "${JSON}.nextpnr.log" \
+        --out-json "build/metrics/${METRICS_NAME}.json" \
+        --out-md "build/metrics/${METRICS_NAME}.md" \
+        --note "$METRICS_NOTE"
+}
+
+pack() {
+    echo ">>> Bitstream Generation <<<"
+    command -v xc7frames2bit &>/dev/null || {
+        echo "  xc7frames2bit not found. Source the toolchain first:"
+        echo "    source tools/env_openxc7.sh"
+        echo "  (This adds \$OPENXC7_ROOT/bin to PATH; default ~/.local/openxc7.)"
+        exit 1
+    }
+
+    FASM="${JSON}.pnr.fasm"
+    FRAMES="${JSON}.pnr.frames"
+    OPENXC7_ROOT="${OPENXC7_ROOT:-$HOME/.local/openxc7}"
+    OPENXC7_PYTHON="${OPENXC7_PYTHON:-python3}"
+    XRAY_DB_ROOT="${XRAY_DB_ROOT:-$OPENXC7_ROOT/share/nextpnr/prjxray-db/artix7}"
+    PART_FILE="${XRAY_DB_ROOT}/${PART}/part.yaml"
+    FASM2FRAMES="${FASM2FRAMES:-}"
+
+    if [ -z "$FASM2FRAMES" ]; then
+        if command -v fasm2frames.py &>/dev/null; then
+            FASM2FRAMES="$(command -v fasm2frames.py)"
+        elif command -v fasm2frames &>/dev/null; then
+            FASM2FRAMES="$(command -v fasm2frames)"
+        elif [ -n "${PRJXRAY_ROOT:-}" ] && [ -f "$PRJXRAY_ROOT/tools/fasm2frames.py" ]; then
+            FASM2FRAMES="$PRJXRAY_ROOT/tools/fasm2frames.py"
+        elif [ -n "${PRJXRAY_ROOT:-}" ] && [ -f "$PRJXRAY_ROOT/utils/fasm2frames.py" ]; then
+            FASM2FRAMES="$PRJXRAY_ROOT/utils/fasm2frames.py"
+        elif [ -f "$HOME/toolchains/prjxray/utils/fasm2frames.py" ]; then
+            # Bench default. Discovery previously required PRJXRAY_ROOT to be
+            # exported, so `pack` failed on this machine with "Missing
+            # fasm2frames.py" despite a complete install being present.
+            FASM2FRAMES="$HOME/toolchains/prjxray/utils/fasm2frames.py"
+        fi
+    fi
+
+    # fasm2frames.py needs the `fasm` and `textx` modules, which live in a
+    # dedicated venv rather than the system interpreter. Without this, packing
+    # fails with ModuleNotFoundError even after fasm2frames.py itself is found.
+    # An explicit OPENXC7_PYTHON always wins.
+    if [ "$OPENXC7_PYTHON" = "python3" ] \
+       && [ -x "$HOME/.local/venvs/prjxray/bin/python" ] \
+       && ! python3 -c "import fasm" >/dev/null 2>&1; then
+        OPENXC7_PYTHON="$HOME/.local/venvs/prjxray/bin/python"
+    fi
+
+    # fasm2frames.py also imports the `prjxray` package from its own checkout
+    # root, which is not installed into any interpreter. Put that root on
+    # PYTHONPATH when the script we resolved lives inside one; without it
+    # packing fails with "No module named 'prjxray'" after clearing the `fasm`
+    # import.
+    if [ -n "$FASM2FRAMES" ]; then
+        _f2f_root="$(cd "$(dirname "$FASM2FRAMES")/.." && pwd)"
+        if [ -d "$_f2f_root/prjxray" ]; then
+            case ":${PYTHONPATH:-}:" in
+                *":$_f2f_root:"*) ;;
+                *) export PYTHONPATH="$_f2f_root${PYTHONPATH:+:$PYTHONPATH}" ;;
+            esac
+        fi
+        unset _f2f_root
+    fi
+
+    [ -f "$FASM" ] || { echo "Missing routed FASM: $FASM"; exit 1; }
+    [ -f "$JSON" ] || { echo "Missing synthesized JSON: $JSON"; exit 1; }
+    [ "$FASM" -nt "$JSON" ] || {
+        echo "Stale routed FASM: $FASM"
+        echo "It is not newer than its synthesized JSON: $JSON"
+        echo "Rerun the pnr step before packing."
+        exit 1
+    }
+    [ -f "$PART_FILE" ] || { echo "Missing Project X-Ray part file: $PART_FILE"; exit 1; }
+    [ -n "$FASM2FRAMES" ] || {
+        echo "Missing fasm2frames.py. Set FASM2FRAMES=/path/to/fasm2frames.py or PRJXRAY_ROOT=/path/to/prjxray."
+        exit 1
+    }
+
+    PRJXRAY_PYTHONPATH="${PRJXRAY_ROOT:-}"
+    if [ -n "$PRJXRAY_PYTHONPATH" ] && [ -n "${PYTHONPATH:-}" ]; then
+        PRJXRAY_PYTHONPATH="$PRJXRAY_PYTHONPATH:$PYTHONPATH"
+    elif [ -z "$PRJXRAY_PYTHONPATH" ]; then
+        PRJXRAY_PYTHONPATH="${PYTHONPATH:-}"
+    fi
+
+    PYTHONPATH="$PRJXRAY_PYTHONPATH" "$OPENXC7_PYTHON" "$FASM2FRAMES" \
+        --db-root "$XRAY_DB_ROOT" \
+        --part "$PART" \
+        --sparse \
+        "$FASM" \
+        "$FRAMES"
+    xc7frames2bit \
+        --part_file "$PART_FILE" \
+        --part_name "$PART" \
+        --frm_file "$FRAMES" \
+        --output_file "$BITSTREAM"
+    echo "  Frames:    $FRAMES"
+    echo "  Bitstream: $BITSTREAM"
+}
+
+flash() {
+    [ -f "$BITSTREAM" ] || { echo "No bitstream. Build first."; exit 1; }
+    openFPGALoader -b arty_a7 "$BITSTREAM"
+}
+
+case "$STEP" in
+    synth) synth;;  pnr) pnr;;  synth_pnr) synth && pnr;;  pack) pack;;  flash) flash;;
+    all) synth && pnr && pack;;
+    *) echo "Unknown step: $STEP"; exit 1;;
+esac

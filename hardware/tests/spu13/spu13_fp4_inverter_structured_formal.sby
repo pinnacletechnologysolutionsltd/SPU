@@ -1,0 +1,19 @@
+[options]
+mode bmc
+depth 90
+skip 0
+expect pass
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal spu13_fp4_inverter.v
+read -formal spu13_fp4_inverter_structured.v
+read -formal spu13_fp4_inverter_structured_formal.v
+prep -top spu13_fp4_inverter_structured_formal
+
+[files]
+hardware/rtl/core/spu13/spu13_fp4_inverter.v
+hardware/rtl/core/spu13/spu13_fp4_inverter_structured.v
+hardware/tests/spu13/spu13_fp4_inverter_structured_formal.v

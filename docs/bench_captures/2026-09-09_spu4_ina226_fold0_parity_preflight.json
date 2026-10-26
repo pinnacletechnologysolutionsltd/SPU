@@ -1,0 +1,35 @@
+{
+  "format": "SPU4_INA226_BENCH25_FOLD0_PARITY_PREFLIGHT_V1",
+  "date": "2026-09-09",
+  "scope": "SRAM load, hydration, and the first frozen fold-0 parity gate only; not a performance replay",
+  "hardware": {
+    "tang_debugger_serial": "2025030317",
+    "uart": "/dev/serial/by-id/usb-SIPEED_USB_Debugger_2025030317-if01-port0",
+    "baud": 115200,
+    "fpga_load": "SRAM success",
+    "hydration_text": "SOM:H N=0 Q=00000000 S=04 L=000 I=1020"
+  },
+  "artifacts": {
+    "probe_fs_sha256": "6b7022f236813695931464e2be946724a0d1775c1633f30c5540d861f3f8e8f6",
+    "model_readback_sha256": "7cd242bf445a9cf0b9688f398bb00c3a369ed74cf9133bbfdc863d929e0b0e52",
+    "model_identity_evidence": "docs/bench_captures/2026-09-09_spu4_j4_model_identity.json"
+  },
+  "parity_gate": {
+    "fold": 0,
+    "case": 0,
+    "query": "Q1B2500003EB80000520800004BD40000\n",
+    "expected_node": 2,
+    "expected_distance": 63278740,
+    "expected_distance_hex": "03C58E94",
+    "expected_label": 0,
+    "response_text": "SOM:D N=2 Q=03C58E94 S=06 L=007 I=1020",
+    "observed_node": 2,
+    "observed_distance": 63278740,
+    "observed_distance_hex": "03C58E94",
+    "reported_classifier_cycles": 7,
+    "host_roundtrip_ns": 17879220,
+    "parity": true
+  },
+  "result": "PASS_FIRST_FROZEN_FOLD0_PARITY_GATE",
+  "qualification": "This corrects the earlier wrong-model preflight mismatch and establishes exact parity for one frozen window through flash hydration and the real Tang consumer. One host round-trip is not a latency distribution or comparative benchmark. No wider replay or scaling case was run."
+}

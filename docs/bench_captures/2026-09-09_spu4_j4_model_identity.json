@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-09",
+  "repository_head": "0891e56061caf806731a85e0b02e6fd2f2354a17",
+  "scope": "J4 model-flash identity and authorized frozen fold-0 programming only; no classifier replay",
+  "device": {
+    "jedec_id": "EF4018",
+    "model_address": "0x120000",
+    "model_length_bytes": 64,
+    "erase_sector_bytes": 4096
+  },
+  "before": {
+    "identity": "oracle_fixture",
+    "sha256": "6e0bee113930d9edafee89d35384b76937ad1226a8af926e7d3ce186d406e3cd",
+    "bytes_hex": "0064000000000000000000000000000000000000000000280000000000000000ffe20000ffe20000003c00000000000000000000000000000000000000320032",
+    "preserved_sector_sha256": "90d66d0e3ca97828c9c80c7629dcd76cb59b7d8202808576c38c085d991ad4ae",
+    "non_ff_bytes_after_model_in_sector": 0
+  },
+  "frozen_fold0": {
+    "sha256": "7cd242bf445a9cf0b9688f398bb00c3a369ed74cf9133bbfdc863d929e0b0e52",
+    "bytes_hex": "63290000376e0000217e00002ba10000742700000b81000003aa000004da00001e980000500900003c590000596100000000000018c2000007d0000014ae0000",
+    "differing_bytes_before_programming": 32,
+    "first_difference": "0x00: 0x00 -> 0x63",
+    "last_difference": "0x3F: 0x32 -> 0x00"
+  },
+  "programming": {
+    "erase_address": "0x120000",
+    "dirty_sectors": 1,
+    "programmed_bytes": 64,
+    "programmer_verify": "PASS"
+  },
+  "independent_readback": {
+    "sha256": "7cd242bf445a9cf0b9688f398bb00c3a369ed74cf9133bbfdc863d929e0b0e52",
+    "bit_for_bit_match": true
+  },
+  "conclusion": "The prior model was the repository oracle_fixture, not the remembered tensegrity model. J4 now contains the exact frozen fold-0 benchmark model. Replay was not started."
+}

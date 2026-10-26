@@ -1,0 +1,58 @@
+{
+  "schema": "QCG0-p0-contract-r3-independent-readonly-review-manifest-v1",
+  "date": "2026-10-23",
+  "reviewer": "/root/qcg0_fixture_reviewer",
+  "disposition": "REVISE",
+  "cwd": "/home/john/Projects/hardware/SPU",
+  "scope": "Read-only current Revision3.1 contract/checklist, decision record and ungranted future stage-allowance request. No mathematics or stage execution.",
+  "author_scratch_seen": false,
+  "input_files_modified": false,
+  "new_outputs_created_exclusively": true,
+  "calculation_invocations": 0,
+  "fixture_or_stage_generation": false,
+  "implementation_or_execution_authorized": false,
+  "future_stage_allowance_granted": false,
+  "future_stage_allowance_consumed": false,
+  "input_sha256_relative_to_research_qcg_0": {
+    "QCG0_P0_EXECUTION_CONTRACT.md": "2829a167eabb3bcc16a5beed35249ce91f5097de0f7934647e0f7676b474ee44",
+    "QCG0_P0_EXECUTION_CONTRACT_REVISION_3_1.diff": "48bccfadb9f980cbc48e6d9b3eb71ce20a951ec77c6fab517c3b01e6017bc75a",
+    "QCG0_P0_DECISION_RECORD.md": "67bd7fe09ad806b79c214e231b89bac314b81eddc3d2d1e0ca4aef461ea83995",
+    "P0_CONTRACT_R3_REVIEW_REQUEST.md": "65feb1de3bdcbda24a488903dfdc53bf4cc91844dcb01dff0b5670f0b01e4f1e",
+    "P0_CONTRACT_R3_STAGE_ALLOWANCE_REQUEST.md": "4774432fd745fcc6142a92f496daa122e8f80c63c79316de5053e29ef3980723",
+    "QCG0_PREREGISTRATION.md": "eade4b5f0957c3679c94b67d8f4b1f6b6d005d65316a5337e6c8dfb9370b98dd",
+    "P0_CONTRACT_R2_REVIEW_CERTIFICATE.md": "027f6a372d83a3bb1bb147dcf162f72e5b174eeeb6efb3a44d44c0bed5f9ecb8",
+    "P0_CONTRACT_R2_REVIEW_MANIFEST.json": "2b3d38fc91b053ba393b9e7ef547e9725f5ac6d3a74411a25de2e5f78d361ebe",
+    "P0_CONTRACT_R2_SUPPLEMENTAL_REFERENCES.json": "9422d7617c65a9a3fc2fa1ab19af7ce7ea634721cfeb251096cd3821534237a0",
+    "P0_CONTRACT_R2_LEDGER_STAGE_EXPECTATIONS.json": "093b006b4b11e289066265a9021fba92c28ec252b8df44eac06a48f8eeca75bb",
+    "P0_CONTRACT_R2_REMAINING_CELL_A_STAGE_EXPECTATIONS.json": "d231a81305f975727b82431bb04a51dff41fbc55a85708a8521c63c36edf6a0a",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34",
+    "REVISION2_FIXTURE_VALUES.json": "a66af3d68da5a7dba439818778af9e8fe70244e3dc2d8250ea891354124a0b46"
+  },
+  "earlier_identity_checks": "Recomputed old review certificate/expectation/manifest/authorization, R2 authorization, pre-registration section0.2 certificates/manifests/packet/addendum and Revision3 review identities; matched unchanged prior manifests. No historical source reconstruction or numerical recomputation.",
+  "checklist_verdicts": {
+    "1_administrative_K_liveness": "PASS",
+    "2_complete_program_event_identity": "REVISE",
+    "3_unequal_lengths_zero_polynomial": "PASS",
+    "4_P1_adoption": "PASS",
+    "5_mutant_particulars_certified_CellA_events": "PASS",
+    "6_launcher_evidence": "REVISE",
+    "7_inherited_obligations": "NUMERICAL_DEFINITIONS_PASS_PROGRAM_PROTOCOL_REVISE",
+    "8_preservation_owner_dispositions": "PASS"
+  },
+  "blocking_findings": [
+    "B1: C2 S1/S2 c6 reads absent jets; freeze tape-specific reads and selected-jet evolution.",
+    "B2: FDINIT needs explicit t0 and triangular difference traversal under the whole-call counter before unique stages can be derived.",
+    "B3: per-file cap exception/signal does not necessarily create OUTPUT_CAP; any cap breach must preclude COMPLETE.",
+    "B4: bound post-marker metadata and guarantee final pin-check attempt on evidence-write failure paths."
+  ],
+  "resolved_scope": {
+    "D1_through_D6": "OWNER_ACCEPTED_WITH_RECORDED_QUALIFICATIONS_NOT_IMPLEMENTATION_GO",
+    "deadline": "Reserved124 trusted-runner model accepted; no elapsed-time inference, no return124 from runner, terminating default SIGTERM required.",
+    "pin_format": "Explicit checksum-only PINS plus separate TOOLS format accepted; stale layout wording editorial.",
+    "future_stage_budget": "Proposed ceilings reasonable for owner consideration only after amended grammar review; no grant or slot usage."
+  },
+  "artifact_sha256_relative_to_research_qcg_0": {
+    "P0_CONTRACT_R3_REVIEW_CERTIFICATE.md": "de2e6afab8094a6c0821571cc8fdc8de53e789ea56c2b90cc20fd239ae31b9f1"
+  },
+  "note": "Manifest excludes self-hash. No new script, reference, stage table, numerical test, benchmark, P0, other campaign, simulator, RTL or hardware work. Root coordinates documentation gates. Freeze, implementation and execution remain HOLD."
+}

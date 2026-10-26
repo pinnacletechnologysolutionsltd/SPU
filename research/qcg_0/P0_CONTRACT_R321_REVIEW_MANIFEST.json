@@ -1,0 +1,36 @@
+{
+  "schema": "QCG0-p0-contract-r321-narrow-readonly-review-v1",
+  "date": "2026-10-23",
+  "reviewer": "/root/qcg0_fixture_reviewer",
+  "disposition": "PASS",
+  "scope": "Only five requested finalization checks; closes prior R32 B4, preserves prior accepted B1-B3 and D1-D6.",
+  "cwd": "/home/john/Projects/hardware/SPU",
+  "input_sha256_relative_to_research_qcg_0": {
+    "QCG0_P0_EXECUTION_CONTRACT.md": "1f8aca9f088ffbaafb002ba5cffde7bdee7b33fdfcf18dcf20dec16202b8cf2f",
+    "QCG0_P0_EXECUTION_CONTRACT_REVISION_3_2_1.diff": "d331ed67bd18e3a2f83c06a40e47b80c21726630383fef88ec81851ca03f30c9",
+    "P0_CONTRACT_R321_REVIEW_REQUEST.md": "76d02321445b9332740e4a54dd18545a31203aa3d53b66fadc853013ab578af4",
+    "P0_CONTRACT_R32_REVIEW_CERTIFICATE.md": "090e3b6dbe2731cf0d9414f0a5675ebef9bf43a25ab4f8d820314bf29dedf26c",
+    "P0_CONTRACT_R32_REVIEW_MANIFEST.json": "697b7f2373adeb91b112ff406a3028041d2855cffa622f2dc32034edec558131"
+  },
+  "checks": {
+    "1_metadata_before_marker_choice": "PASS",
+    "2_metadata_failure_forces_FAILED": "PASS",
+    "3_durable_failure_vs_unavailable": "PASS",
+    "4_marker_count_exit_consistency": "PASS",
+    "5_no_unrelated_changes": "PASS"
+  },
+  "static_syntax_check": {
+    "command": "awk '/^```bash/{copy=1;next} copy && /^```/{copy=0} copy' research/qcg_0/QCG0_P0_EXECUTION_CONTRACT.md | bash -n",
+    "exit": 0,
+    "launcher_executed": false
+  },
+  "calculation_invocations": 0,
+  "stage_generation": false,
+  "author_scratch_seen": false,
+  "input_or_prior_artifacts_modified": false,
+  "new_artifacts_created_exclusively": true,
+  "artifact_sha256_relative_to_research_qcg_0": {
+    "P0_CONTRACT_R321_REVIEW_CERTIFICATE.md": "384db31162658f709a002006c42086bbaf277011d0bde4a558692cb6fd4ec2b4"
+  },
+  "note": "Manifest excludes self-hash. PASS is narrow text/syntax consistency only. Future stage allowance remains ungranted and unused; no implementation, experiment, freeze or P0 execution authorized. Root coordinates documentation gates."
+}

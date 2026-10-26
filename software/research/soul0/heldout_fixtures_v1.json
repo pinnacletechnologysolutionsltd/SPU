@@ -1,0 +1,41 @@
+{
+  "fixture_version": 1,
+  "threshold": 20,
+  "noise_cycle": [-2, -1, 0, 1, 2],
+  "training": [98, 99, 100, 101, 102, 98, 99, 100],
+  "phases": {
+    "regime_a": {
+      "nominal_center": 100,
+      "fault_index": 10,
+      "fault_offset": 140,
+      "values": [98, 99, 100, 101, 102, 98, 99, 100, 101, 102, 238, 99, 100, 101, 102, 98]
+    },
+    "regime_b": {
+      "nominal_center": 200,
+      "fault_index": 10,
+      "fault_offset": 140,
+      "values": [198, 199, 200, 201, 202, 198, 199, 200, 201, 202, 338, 199, 200, 201, 202, 198]
+    },
+    "regime_c": {
+      "nominal_center": 150,
+      "fault_index": 10,
+      "fault_offset": 140,
+      "values": [148, 149, 150, 151, 152, 148, 149, 150, 151, 152, 288, 149, 150, 151, 152, 148]
+    },
+    "regime_a_return": {
+      "nominal_center": 100,
+      "fault_index": 10,
+      "fault_offset": 140,
+      "values": [98, 99, 100, 101, 102, 98, 99, 100, 101, 102, 238, 99, 100, 101, 102, 98]
+    },
+    "regime_b_return": {
+      "nominal_center": 200,
+      "fault_index": 10,
+      "fault_offset": 140,
+      "values": [198, 199, 200, 201, 202, 198, 199, 200, 201, 202, 338, 199, 200, 201, 202, 198]
+    }
+  },
+  "prototype_centers": [100, 150, 200],
+  "prototype_center_noise_bound": 2,
+  "fault_detection_scope": "out-of-range transient detection; cross-regime lookalikes are not evaluated"
+}

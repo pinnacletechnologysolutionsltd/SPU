@@ -1,0 +1,533 @@
+# My FPGA Toolchain Had Been Dead for Weeks and I Didn't Know
+
+**2026-09-04. First video output of any kind from this project, on any board.**
+
+Eight colour bars and a scrolling marker line, 640×480 at 60 Hz, on a physical
+monitor. Getting there meant finding out that every FPGA build I'd run for
+weeks had been failing silently, that the HDMI path I'd designed can't be
+placed by my toolchain at all, and that the vendor documentation for the
+board's expansion header is wrong in both available versions.
+
+Here's what actually happened.
+
+---
+
+## The builds had been failing and leaving no trace
+
+`build/` contained no bitstreams. Not stale ones — none. I'd been assuming a
+design problem.
+
+```
+$ ldd ~/.local/openxc7/bin/nextpnr-xilinx | grep 'not found'
+```
+
+Seven missing Boost shared libraries. Two more for `bbasm`. The openXC7
+prebuilts link against **Boost 1.91**; my system had rolled forward to
+**1.92**, which is not ABI-compatible. Every place-and-route invocation had
+been dying on library load.
+
+Symlinking 1.92 as 1.91 does *not* work — `bbasm` then dies with
+`undefined symbol: _ZN5boost15program_options3argB5cxx11E`. The fix was to
+extract the actual 1.91 shared objects out of the cached Arch package
+`boost-libs-1.91.0-2` and point `LD_LIBRARY_PATH` at them. No system
+downgrade, no root.
+
+That cached package is the only reason this was recoverable in an afternoon.
+If you run a rolling distro with a prebuilt EDA toolchain, don't run
+`paccache -r` aggressively.
+
+**The lesson isn't about Boost.** It's that a broken toolchain and a broken
+design present identically — you get no bitstream either way. `ldd` on your
+binaries costs two seconds and should come before you suspect your own RTL.
+
+## HDMI: correct RTL, blocked upstream
+
+I'd written the HDMI path properly. The original `hal_hdmi.v` turned out to
+have **never been instantiated by any top on any board** — and its Xilinx
+branch serialised in fabric at 250 MHz, which will not close on a -1 part. I
+replaced it with a real OSERDESE2 implementation at 125 MHz DDR.
+
+It synthesises cleanly. Then nextpnr-xilinx hangs forever in the placer.
+
+I bisected it:
+
+| design | result |
+|---|---|
+| no MMCM, no differential IO | builds and loads |
+| video logic, single-ended | OK |
+| MMCM + video logic, single-ended | OK |
+| MMCM + OBUFDS/TMDS_33, no OSERDESE2 | **hang** |
+| full HDMI | **hang** |
+
+MMCM is fine. OSERDESE2 is fine. **Differential output is the blocker** —
+openXC7/nextpnr-xilinx issue #66, "diff out from IOSERDES blocks", open since
+July 2025 and unimplemented. Rebuilding the toolchain will not fix it.
+
+I burned real time before that bisection because I tried the simulated-anneal
+placer, which in this build reports
+`post-placement validity check failed for Bel .../A5FF (no cell)`. That's a
+placer artifact, not a design fault, and it sent me chasing control sets and
+clocking for hours. Always use heap.
+
+While I was there I wrote the first testbench the TMDS encoder has ever had —
+it had shipped untested since creation. **4518 checks pass** against a
+reference model of DVI 1.0 written independently from the spec rather than
+copied from the design under test, and the count reconciles exactly: 4 control
+words + 256×2 data + 4000 disparity + 2 negative controls. Mutation-tested 3/3
+— corrupted control word, broken DC-balance term, and flipped `xnor_mode`
+threshold are all caught. The encoder is correct. It just can't be placed yet.
+
+## VGA: measure the pins, don't read the datasheet
+
+VGA needs no differential output and no MMCM. 640×480@60 wants a 25 MHz pixel
+clock; the board oscillator is exactly 50 MHz, so divide by two. One bit per
+channel through a three-resistor DAC. 246 LUTs, 54 flip-flops.
+
+Then nothing appeared on the monitor, and I wasted a long stretch on two
+mistakes worth naming.
+
+**First: I read a green monitor LED as "sync locked."** It meant "monitor
+awake." That single misread pointed the entire search in the wrong direction.
+
+**Second: I built three bitstreams on pin mappings inferred from
+documentation before measuring anything.** The QMTech README and the LiteX
+platform file list the J10 header's pins in *opposite* orders, neither states
+which is physical, and — as it turns out — neither is wholly right.
+
+The fix took two minutes once I stopped guessing. I built a bitstream that
+drives all eight header pins at frequencies a factor of two apart, so every
+pin announces itself, then probed at the VGA plug:
+
+```
+VGA pin 13 (HSYNC) <- FPGA D5    6103.0 Hz, 0.0% error
+VGA pin 14 (VSYNC) <- FPGA E5     381.5 Hz, 0.0% error
+```
+
+J10's top row follows the LiteX order. Its bottom row does not. Both of my
+earlier constraint files had exactly one of the two sync signals right.
+
+That beacon bitstream kept earning its keep: it repeatedly caught probes that
+had silently lost contact. **Silence on a probe means nothing until you've
+seen a known-toggling signal on the same point.**
+
+## The result
+
+Measured on silicon with a logic analyser, 2-second captures:
+
+| quantity | measured | expected | error |
+|---|---|---|---|
+| HSYNC frequency | 31248.25 Hz | 31250 | **0.006%** |
+| HSYNC duty | 88.01% | 88.00% | exact |
+| implied pixel clock | 24.9986 MHz | 25.0000 | 0.006% |
+| implied frame rate | 59.520 Hz | 59.524 | 0.007% |
+
+The 88.01% duty is the VESA 640×480@60 sync pulse exactly — 96 low out of 800.
+That makes this standards-conformant timing rather than a square wave at
+roughly the right rate. The three colour channels each read ~36.4% high
+against 36.6% predicted (40% × 480/525), so vertical blanking shows up
+independently in all three.
+
+And then eight vertical bars in the correct order — white, yellow, cyan,
+green, magenta, red, blue, black — with the marker line scrolling down the
+screen. The scroll is the point: static bars can't distinguish a running
+pipeline from a frozen one.
+
+It wasn't primarily a TMDS timing problem. The main blocker was that the open-source Xilinx FPGA toolchain couldn't place the differential HDMI output circuitry.
+
+There were actually two separate issues in the original design.
+
+### 1. The original HDMI implementation was unsuitable
+
+The original `hal_hdmi.v` had never been instantiated by any board's top-level design, so it hadn't been physically demonstrated.
+
+It also attempted to serialize TMDS data using ordinary FPGA fabric operating at 250 MHz.
+
+That was an unrealistic timing target for the Artix-7 −1 implementation.
+
+You replaced this with the appropriate Xilinx hardware serializer, OSERDESE2, using 125 MHz DDR operation.
+
+This is important because OSERDESE2 is dedicated hardware inside the FPGA, designed specifically for high-speed serial output.
+
+### 2. The revised implementation couldn't be placed
+
+The new implementation synthesized successfully.
+
+But the openXC7/nextpnr-xilinx placement process became stuck when the differential output primitive `OBUFDS` was introduced.
+
+Your isolation tests established:
+
+| Hardware component                                             | Result                    |
+| -------------------------------------------------------------- | ------------------------- |
+| VGA/single-ended video logic                                   | Works                     |
+| MMCM clock generation                                          | Works                     |
+| OSERDESE2 serializer without the problematic differential path | Not identified as blocker |
+| OBUFDS / TMDS_33 differential output                           | Placement hangs           |
+
+So the problem wasn't that the FPGA lacked HDMI-capable hardware.
+
+The FPGA had the necessary primitives, but the tested open-source implementation flow couldn't legally arrange and connect that combination of primitives.
+
+That is a placement-support problem, not evidence of incorrect TMDS encoding.
+
+### 3. Was TMDS timing actually wrong?
+
+Not in the demonstrated tests.
+
+There are three distinct operations:
+
+TMDS encoder
+
+Converts pixel and control data into 10-bit TMDS symbols
+
+4,518 checks passed
+
+OSERDESE2 serializer
+
+Converts parallel symbols into high-speed serial data
+
+Not identified as the placement blocker
+
+OBUFDS differential output
+
+Drives the differential signal towards the HDMI connector
+
+Placement blocked
+
+The word is encoder, rather than decoder, because the FPGA is generating the HDMI/DVI signal.
+
+The 4,518 tests verified the encoding logic, not the complete serial output's physical timing.
+
+One additional caveat: nextpnr-xilinx has also had a documented limitation involving master/slave OSERDESE2 configurations for 10:1 serialization. That is a separate issue and doesn't change what your September bisection actually established.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://github.com\&sz=32)
+
+GitHub
+
+
+
+In short: We had a tested TMDS encoder, a revised serializer implementation, and a toolchain that could not complete differential output placement. We never reached the point of proving HDMI timing closure or displaying an HDMI image on the monitor.
+
+That makes the HDMI implementation unfinished rather than demonstrated incorrect.
+
+# My FPGA Toolchain Had Been Dead for Weeks and I Didn't Know
+
+*4 September 2026 — The first physical video output from the SPU project.*
+
+The first thing I managed to display on a monitor was eight VGA colour bars and a moving marker line.
+
+Nothing particularly remarkable. Just a 640×480 image generated by an FPGA.
+
+Except that getting those pixels onto the screen required discovering that my FPGA toolchain had been broken for weeks, that the HDMI output I'd implemented couldn't be placed by the open-source toolchain, and that the available documentation for the board's expansion header was inconsistent with the physical wiring.
+
+I also lost a programmer along the way.
+
+This is the story of those failures, how I isolated them, and what finally worked.
+
+## 1. The FPGA builds weren't building
+
+I'd spent weeks working on the RTL, trying to make progress with the graphics hardware. Builds were failing, and naturally I suspected something in the design.
+
+Eventually I inspected the build directory.
+
+There were no bitstreams.
+
+Not outdated bitstreams. None at all.
+
+The next step should have been one of the first:
+
+```bash
+ldd ~/.local/openxc7/bin/nextpnr-xilinx | grep 'not found'
+```
+
+Seven missing Boost shared libraries. Two more for `bbasm`.
+
+The openXC7 binaries were linked against Boost 1.91, but my Arch Linux system had moved to Boost 1.92. The ABI had changed, and the binaries could no longer load their dependencies.
+
+Every place-and-route invocation had been failing before it could even begin.
+
+I briefly considered the usual workaround of symlinking the newer shared libraries under the older names. That didn't work. `bbasm` failed with an undefined symbol:
+
+```text
+_ZN5boost15program_options3argB5cxx11E
+```
+
+Fortunately, the older Boost package was still in my local package cache.
+
+I extracted the required Boost 1.91 shared libraries from `boost-libs-1.91.0-2` and configured `LD_LIBRARY_PATH` to use them for the FPGA tools.
+
+No system downgrade, no root access, and no need to rebuild the entire toolchain.
+
+That solved the dependency problem.
+
+The important lesson was not really about Boost.
+
+**A broken FPGA toolchain and a broken FPGA design can produce exactly the same visible symptom: no bitstream.**
+
+Before spending hours investigating RTL, verify that the synthesis, placement, routing, and bitstream tools can actually execute.
+
+On a rolling-release Linux distribution, this is especially worth remembering. Keeping compatible tool dependencies isolated is considerably safer than assuming prebuilt binaries will survive every system update.
+
+## 2. HDMI worked in simulation, but not in placement
+
+The next obstacle was HDMI.
+
+The project already contained an HDMI module, `hal_hdmi.v`, but investigation revealed that it had never actually been instantiated by any board's top-level design.
+
+Its Xilinx implementation also serialized data in fabric at 250 MHz, which was not a realistic timing target for this configuration on the Artix-7 speed-grade −1 device.
+
+I replaced that path with an implementation using the FPGA's OSERDESE2 primitives, operating at 125 MHz DDR.
+
+The revised design synthesized successfully.
+
+Then nextpnr-xilinx stopped progressing during placement.
+
+Initially, there were several possible explanations: clocking, serializer constraints, primitive compatibility, placement legality, or a problem in the design.
+
+Rather than continuing to modify the entire renderer, I reduced the test case and introduced one feature at a time.
+
+| Test configuration | Result |
+|---|---|
+| No MMCM, no differential I/O | Builds and loads |
+| Video logic with single-ended output | Pass |
+| MMCM and video logic, single-ended | Pass |
+| MMCM with OBUFDS/TMDS_33, no OSERDESE2 | Placement hangs |
+| Complete HDMI path | Placement hangs |
+
+This isolated the failure to differential output placement.
+
+The problem was associated with an existing openXC7/nextpnr-xilinx limitation, tracked as issue #66, concerning differential outputs from IOSERDES blocks.
+
+In the tested configuration, the MMCM wasn't the blocker. Neither was the serializer by itself.
+
+The differential output path was.
+
+I also lost time experimenting with the simulated-annealing placer, which reported:
+
+```text
+post-placement validity check failed for Bel .../A5FF (no cell)
+```
+
+That led me into investigating control sets and clocking before I established that this particular failure came from the placement flow rather than a demonstrated RTL defect.
+
+The heap placer became the more useful baseline for these experiments.
+
+### At least the HDMI encoder was tested
+
+One useful result came out of the investigation.
+
+The TMDS encoder had never had a dedicated testbench. I wrote one using an independent reference model derived from the DVI 1.0 specification.
+
+The resulting verification suite passed **4,518 checks**:
+
+- 4 control-symbol checks
+- 512 data-symbol checks across both modes
+- 4,000 running-disparity checks
+- 2 negative-control checks
+
+I also performed three mutation tests, deliberately introducing errors in the control word, DC-balance calculation, and `xnor_mode` threshold.
+
+All three mutations were detected.
+
+This provides substantial functional evidence for the encoder, although it is not an exhaustive correctness proof.
+
+The HDMI output still couldn't be implemented through that placement flow, but the investigation had separated the encoder's functional behaviour from the physical implementation problem.
+
+That distinction was useful.
+
+**A successful simulation doesn't guarantee that a design can be placed and routed, and a placement failure doesn't necessarily mean the logic is wrong.**
+
+## 3. Switching to VGA
+
+Rather than let HDMI placement block the entire graphics project, I switched to VGA.
+
+The objective was simple: get a stable, observable signal onto a physical monitor.
+
+The board provided a 50 MHz oscillator. Dividing it by two gave a 25 MHz pixel clock suitable for the chosen 640×480 VGA timing.
+
+For colour, I used one digital output per channel through a three-resistor DAC arrangement.
+
+That gave eight possible colours.
+
+The initial VGA test-pattern design used just **246 LUTs and 54 flip-flops**. Those figures describe the VGA colour-bar generator, not the later triangle rasterizer or GPU.
+
+The output consisted of eight vertical colour bars and a horizontal marker line that moved down the screen.
+
+Simple enough to debug with a logic analyser.
+
+Or so I thought.
+
+## 4. The monitor was on, but there was no picture
+
+I initially made two mistakes.
+
+The first was assuming that the monitor's green power LED meant it had locked onto a valid synchronization signal.
+
+It didn't.
+
+It simply indicated that the monitor was awake.
+
+That small misunderstanding sent the debugging effort in the wrong direction.
+
+The second mistake was trusting the board's expansion-header documentation without measuring the actual signals.
+
+The QMTech README and LiteX platform file specified different pin orders for the J10 expansion header. Neither made the physical orientation sufficiently clear, and neither mapping was entirely correct for my setup.
+
+I generated three bitstreams using inferred pin mappings.
+
+None solved the problem.
+
+Eventually I stopped guessing and built a diagnostic bitstream.
+
+### The pin beacon
+
+The diagnostic design drove eight header pins at different frequencies, each separated from the next by a factor of two.
+
+That meant I could probe a pin with the logic analyser and recognize it from its frequency.
+
+Instead of trying to infer which FPGA pin reached which VGA connector pin, the hardware could identify itself.
+
+Two critical measurements were:
+
+```text
+VGA pin 13 — HSYNC — FPGA D5 — 6103.0 Hz
+VGA pin 14 — VSYNC — FPGA E5 —  381.5 Hz
+```
+
+Both matched their assigned beacon frequencies.
+
+The resulting mapping established that the J10 top row followed the LiteX order, while the bottom row did not.
+
+Both previous constraint files had exactly one synchronization signal correctly assigned.
+
+The beacon also proved useful for identifying unreliable measurements. On several occasions, a probe lost contact without an obvious warning.
+
+A missing waveform could mean an inactive signal, an incorrect pin, or simply a disconnected probe.
+
+**Before interpreting silence as a hardware failure, establish that the probe can detect a known-toggling signal at the same point.**
+
+The entire pin-mapping problem became much easier once I had a measurement method that did not depend on the documentation being correct.
+
+## 5. Finally, pixels on the monitor
+
+With the corrected pin assignments, the VGA signal appeared.
+
+I captured the physical synchronization signals using a logic analyser over two-second measurement windows.
+
+| Measurement | Observed | Expected |
+|---|---:|---:|
+| HSYNC frequency | 31,248.25 Hz | 31,250 Hz |
+| HSYNC duty cycle | 88.01% | 88.00% |
+| Implied pixel clock | 24.9986 MHz | 25.0000 MHz |
+| Implied frame rate | 59.520 Hz | 59.524 Hz |
+
+The horizontal synchronization frequency was within approximately **0.006%** of the expected value.
+
+More importantly, the sync duty cycle matched the expected 96 low cycles out of 800 pixel-clock cycles.
+
+The colour channels also showed duty cycles of approximately 36.4%, close to the predicted 36.6%, providing an additional check that active-video and blanking intervals were behaving as expected.
+
+And there they were: eight vertical colour bars, in order.
+
+White, yellow, cyan, green, magenta, red, blue, and black.
+
+The marker line moved vertically through the image.
+
+The movement was important. Static colour bars could establish that a display was showing an image, but the moving marker demonstrated continued operation of the display pipeline.
+
+This was the project's first physical video output on any board.
+
+It wasn't a GPU yet. There was no triangle rasterization, depth buffer, shading, or dynamic scene submission.
+
+But the essential display path was working.
+
+The later rasterization experiments finally had a physical output system they could build upon.
+
+## 6. The bench bit back
+
+There was one more unpleasant surprise.
+
+During the experiments, the FPGA programmer stopped functioning after the VGA harness was connected to the monitor.
+
+It had previously worked for hours.
+
+Then came a BOOTSEL reset, three USB bulk-write failures, and eventually a complete loss of USB enumeration.
+
+Even BOOTSEL stopped appearing.
+
+Because BOOTSEL is provided by mask ROM, its disappearance was especially concerning.
+
+The leading explanation was an electrical ground-loop problem involving the mains-powered monitor, VGA ground, the FPGA board, the JTAG programmer, and USB ground.
+
+A possible return path was:
+
+```text
+Monitor mains earth
+        │
+     VGA ground
+        │
+     FPGA ground
+        │
+      JTAG lead
+        │
+     Programmer
+        │
+      USB ground
+        │
+      Host earth
+```
+
+There was supporting circumstantial evidence.
+
+With the monitor disconnected, a replacement programmer repeatedly completed full 3.8 MB writes without failure. Similar operations had failed four times with the monitor attached.
+
+But **the ground-loop explanation remains a hypothesis, not a proven diagnosis**.
+
+There was no direct fault-current measurement establishing the mechanism, and the programmer's failure alone cannot identify its cause.
+
+An earlier modification had added series resistors to TCK, TMS, and TDI, but those would not prevent current flowing through the ground connections.
+
+The incident reinforced an important lesson: bench wiring, shared grounds, and external equipment deserve the same attention as RTL and pin constraints.
+
+## 7. What I took away
+
+The first display milestone was modest: a moving test pattern on a VGA monitor.
+
+But getting there exposed several distinct failure modes that initially looked like one problem.
+
+The toolchain could not load its dependencies.
+
+The HDMI implementation encountered an unsupported placement path.
+
+An alternative placer produced a misleading diagnostic.
+
+The physical expansion-header wiring didn't agree with the assumptions I'd made from the available documentation.
+
+The monitor's LED told me less than I thought.
+
+And the programmer failure introduced another problem whose exact electrical cause remains unresolved.
+
+Each of these needed a different kind of investigation.
+
+The techniques that finally helped were straightforward: inspecting tool dependencies, reducing failing designs to minimal test cases, using independent reference models, generating identifiable test signals, and measuring the physical hardware rather than trusting assumptions.
+
+### What came next
+
+On 5 September, the VGA display path was used to demonstrate a single rasterized triangle.
+
+On 6 September, the design progressed to two overlapping triangles with per-pixel depth selection. That implementation matched an independent full-frame simulation oracle across all 307,200 pixels, while the physical display result was documented with monitor photographs.
+
+Those were separate milestones, beyond the colour-bar demonstration described here.
+
+The broader SPU project is investigating deterministic algebraic arithmetic, geometric computing, and an experimental CPU/GPU architecture. The first VGA output didn't validate those larger ideas.
+
+It established something more basic, but necessary: a working physical display path and a reproducible foundation for subsequent graphics experiments.
+
+The failed builds, incorrect pin constraints, measurements, testbenches, and implementation history are preserved in the repository.
+
+I'd rather document the failures alongside the results. They're part of the engineering, and sometimes they're the most useful part for the next person trying to build something similar.
+
+---
+
+**Project repository:** [SPU — Pinnacle Technology Solutions](https://github.com/pinnacletechnologysolutionsltd/SPU)
+
+*Hardware development journal — September 2026*

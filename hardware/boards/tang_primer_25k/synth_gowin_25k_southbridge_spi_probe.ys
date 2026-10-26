@@ -1,0 +1,12 @@
+# synth_gowin_25k_southbridge_spi_probe.ys — SPI-only southbridge telemetry probe
+
+read_verilog -lib +/gowin/cells_xtra_gw5a.v
+
+read_verilog \
+    hardware/boards/tang_primer_25k/southbridge_spi_top.v \
+    hardware/rtl/peripherals/io/spu_spi_slave.v
+
+hierarchy -top spu13_tang25k_southbridge_top
+synth_gowin -family gw5a -top spu13_tang25k_southbridge_top \
+    -json build/southbridge_spi_probe.json
+write_json build/southbridge_spi_probe.json

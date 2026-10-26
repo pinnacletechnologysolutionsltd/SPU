@@ -1,0 +1,73 @@
+{
+  "schema": "QCG0-independent-review-manifest-v1",
+  "date": "2026-10-22",
+  "reviewer": "/root/qcg0_fixture_reviewer",
+  "disposition": "REVISE",
+  "author_scratch_seen": false,
+  "cwd": "/home/john/Projects/hardware/SPU",
+  "pins_verified_before_math": {
+    "research/qcg_0/QCG0_PREREGISTRATION.md": "b33205e92370a41de5d1b7806f8435057065ea5272ea21866f5700be99025fa8",
+    "docs/QSG2_PH_CURVE_SPECIFICATION.md": "e64af826a304f9d73095a486e9fc9be75eab61ce42adb64c006b4c429f76e2a9",
+    "docs/QSG2_SOFTWARE_RESULTS.md": "f7b876e77ef2b5e1b9ec914d2a4dae9c834058f46aa5fec1c4899863c13529bb",
+    "research/qcg_0/QCG0_FIXTURE_REVIEW_PACKET.md": "1f6c5b94ab610f4950a4f2244803aeb17def3adf7a21ea50d5664c2759b98c82"
+  },
+  "limits": {
+    "max_invocations": 3,
+    "used_invocations": 2,
+    "wall_seconds_per_invocation": 30,
+    "consumed_cumulative_external_ceiling_seconds": 60,
+    "cumulative_ceiling_seconds": 90,
+    "address_space_bytes_each": 1073741824,
+    "max_candidate_tuples": 4096,
+    "candidate_tuples_tested": 2,
+    "max_output_bytes": 10485760,
+    "max_coefficient_reduced_bits": 4096,
+    "max_coefficient_raw_bits": 16384,
+    "children": 0,
+    "network": false
+  },
+  "prerequisites": {
+    "timeout": "GNU coreutils 9.12; executable and --version succeeded",
+    "prlimit": "util-linux 2.42.4; executable and --version succeeded",
+    "python": "3.14.8; executable and --version succeeded",
+    "source_inspected_before_execution": true,
+    "final_files_created_exclusively": true
+  },
+  "invocations": [
+    {
+      "number": 1,
+      "argv": ["/usr/bin/timeout", "--signal=KILL", "30", "/usr/bin/prlimit", "--as=1073741824:1073741824", "--", "/usr/bin/python3", "-B", "-I", "research/qcg_0/review/derive_fixture.py"],
+      "stdout": "research/qcg_0/review/invocation_01.stdout",
+      "stderr": "research/qcg_0/review/invocation_01.stderr",
+      "exit_record": "research/qcg_0/review/invocation_01.exit",
+      "exit": 0,
+      "elapsed_seconds_reported": 0.07238180300009844,
+      "maxrss_kib_reported": 18908,
+      "result": "COMPLETE"
+    },
+    {
+      "number": 2,
+      "argv": ["/usr/bin/timeout", "--signal=KILL", "30", "/usr/bin/prlimit", "--as=1073741824:1073741824", "--", "/usr/bin/python3", "-B", "-I", "research/qcg_0/review/readback_summary.py"],
+      "stdout": "research/qcg_0/review/invocation_02.stdout",
+      "stderr": "research/qcg_0/review/invocation_02.stderr",
+      "exit_record": "research/qcg_0/review/invocation_02.exit",
+      "exit": 0,
+      "resource_accounting": "External limits identical; second readback script did not collect resource counters.",
+      "result": "COMPLETE"
+    }
+  ],
+  "artifacts_sha256": {
+    "research/qcg_0/REVIEW_CALCULATION_AUTHORIZATION.md": "4b9602998d2cb2fab14af5440c892cce06ca4189d98bb7f40616362849d3e324",
+    "research/qcg_0/QUINTIC_FIXTURE_CERTIFICATE.md": "1391b1d9804c0d5b636070b1bee3d1cdb9c445f2bea4df4444c78243cc4cc673",
+    "research/qcg_0/QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34",
+    "research/qcg_0/review/derive_fixture.py": "571182dce4629bbbeb3f5150aed33c5de300795df330d3d1dc4c557cb1afc288",
+    "research/qcg_0/review/readback_summary.py": "e8f3e4cfc3fe97cf15bac38ecf67d950ab13fa60addd99ab4777d47c32d73ef9",
+    "research/qcg_0/review/invocation_01.stdout": "ea711d5994104924a64e063ab54d5a5f0745739c47f4ca8d1157337ef95e10ad",
+    "research/qcg_0/review/invocation_01.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "research/qcg_0/review/invocation_01.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "research/qcg_0/review/invocation_02.stdout": "b015bcc86ff5df77961964a50db74b5d86447168e9f5f8536dcd6908b4d8226f",
+    "research/qcg_0/review/invocation_02.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "research/qcg_0/review/invocation_02.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "note": "Manifest deliberately excludes its own hash. Pinned sources untouched; certificate/values not frozen by this review because corrections require owner/author action. Candidate implementation and P0 remain HOLD. Root coordinator performs documentation gates separately."
+}

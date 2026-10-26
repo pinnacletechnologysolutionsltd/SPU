@@ -1,0 +1,410 @@
+--- /tmp/claude-1000/-home-john-Projects-hardware-SPU/90e2eb5e-0dd3-4947-90b6-b9c069ccb101/scratchpad/QCG0_PREREG.rev1.md	2026-10-22 23:47:38.508884417 +1300
++++ QCG0_PREREGISTRATION.md	2026-10-22 23:49:50.486884650 +1300
+@@ -1,9 +1,11 @@
+ # QCG-0 — Algebraic Curve and Motion-Law Discovery: pre-registration
+ 
+-Date: 2026-10-22. Revision 1 (owner decisions incorporated the same day).
++Date: 2026-10-22. Revision 2 (documentation-only correction after the independent fixture review; Revision 1 incorporated
++the owner's cell and baseline decisions).
+ Status: **DRAFT. Documentation and mathematical analysis only. Execution and implementation HOLD.**
+-Author: Claude. Independent mathematical reviewer and fixture reviewer: **appointment is an owner action; the review has
+-not been performed** (§0.1). The quintic fixture is therefore **not certified** and no fixture values exist in this file.
++Author: Claude. Independent fixture reviewer: fresh-context `/root/qcg0_fixture_reviewer`, disposition **REVISE /
++CERTIFIED WITH CORRECTIONS** (§0.2). The quintic PH5 is certified; this revision corrects the specification and changes
++no certified value. The Revision 1 text hashed to `b33205e9…25fa8`; that is the text the reviewer saw.
+ Isolated path `research/qcg_0/`. Nothing outside this directory was modified: not X1, X2, RPLU2, RTL, ISA, simulator,
+ QSG-2 (`research/qsg2/`) or any frozen contract. The only computation was a drafting calculator (exact `Fraction`,
+ scratch, not an oracle of record, not a pilot); its checks are named where used.
+@@ -39,6 +41,29 @@
+ | 9 | E0 / E1 / E2 distinction preserved | §6 |
+ | 10 | The generalized h-form completeness claim is literature-dependent and unverified within this experiment unless the reviewer independently establishes it | §3, §4 ledger, §16 |
+ 
++### 0.2 Independent review artifacts (pinned, unchanged by this revision)
++
++The certificate is relative to the Revision 1 pre-registration and the issued review packet, whose hashes the reviewer
++verified before calculating. Full SHA-256, as printed by `sha256sum` on 2026-10-22:
++
++    1391b1d9804c0d5b636070b1bee3d1cdb9c445f2bea4df4444c78243cc4cc673  research/qcg_0/QUINTIC_FIXTURE_CERTIFICATE.md
++    8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34  research/qcg_0/QUINTIC_FIXTURE_VALUES.json
++    15e310df23279ae8d725d3b01bd7bef3bc95da3b260eac98517cdc31606e3704  research/qcg_0/QUINTIC_FIXTURE_REVIEW_MANIFEST.json
++    4b9602998d2cb2fab14af5440c892cce06ca4189d98bb7f40616362849d3e324  research/qcg_0/REVIEW_CALCULATION_AUTHORIZATION.md
++    b33205e92370a41de5d1b7806f8435057065ea5272ea21866f5700be99025fa8  QCG0_PREREGISTRATION.md at Revision 1 (superseded text)
++    1f6c5b94ab610f4950a4f2244803aeb17def3adf7a21ea50d5664c2759b98c82  QCG0_FIXTURE_REVIEW_PACKET.md (issued; not edited)
++
++The manifest also records the hashes of the reviewer's scripts and invocation logs (`research/qcg_0/review/`). No value in
++the certificate or values file is regenerated or altered here; where this document quotes one it names the source.
++
++**Precedence.** The review packet is a pinned input and is not edited. Where the packet and this Revision 2 conflict
++(curvature numerator, the K1 sparsity remark, the float control), Revision 2 governs; §17 lists each superseded packet item.
++
++**Certified quintic (reviewer-selected by the frozen rule R-SEL).** U = −1 − t − t², V = −1 − t + t², h = 1; selection
++tuple (−1,−1,−1,−1,−1,1); Res(U,V) = 4. From the certificate: x′ = 4t²+4t³, y′ = 2+4t+2t²−2t⁴, σ = 2+4t+2t²+2t⁴,
++x = 4t³/3 + t⁴, y = 2t+2t²+2t³/3−2t⁵/5, S = 2t+2t²+2t³/3+2t⁵/5, N_raw = −4t−2t², r(1) = (7/3, 64/15), S(1) = 76/15,
++κ(0) = 0, κ(1) = −3/25.
++
+ ## 1. Prior art and what is not repeated
+ 
+ | Source | Disposition |
+@@ -75,21 +100,42 @@
+ Let w = U + iV with U,V ∈ Q[t], h ∈ Q[t] a **factor polynomial** (h = 1 is the primitive form), on an interval I.
+ 
+ * Hodograph: r′ = x′ + i y′ = h·w², so x′ = h(U²−V²), y′ = 2hUV.
+-* Speed squared: x′²+y′² = h²(U²+V²)², so σ = h(U²+V²) when h ≥ 0 on I. `[MATH]` identity (expand).
+-* Unit tangent (direction): T = w²/|w|² = ((U²−V²)/(U²+V²), 2UV/(U²+V²)), a rational point on the unit circle,
+-  **independent of h**. The half-angle parameter is τ = V/U (Cayley/Weierstrass parameter; the direction is the rotation
+-  by angle 2·arctan τ). So (τ, σ) is a polar hodograph: τ carries shape, σ carries timing.
+-* Position r(t) = r(0) + ∫ r′, polynomial of degree deg(h)+2·deg(w)+1. Arc length S(t) = ∫σ, polynomial. Both exact in Q.
+-* Signed curvature κ = (x′y″−y′x″)/σ³ = 2(UV′−U′V)/(h·(U²+V²)²), rational. (Checked at random rational points in the
+-  drafting calculator, with random h, U, V.)
+-* Regularity: σ(t) > 0 on I. A zero of σ in I is NONREGULAR; the direction law (τ) may still be defined there when
+-  U²+V² ≠ 0 (stationary point from h = 0), which is a feature of the (U,V,h) form (§4).
+-
+-**Completeness `[LIT]`, unverified within this experiment** (recorded as such per owner decision 10; it becomes
+-established only if the independent reviewer proves or reliably cites it). Over a polynomial ring every real polynomial solution of X²+Y²=Z² has the form
+-X = h(a²−b²), Y = 2hab, Z = h(a²+b²) up to swapping X,Y and signs. So the (U,V,h) form is the whole polynomial PH class
+-over R; over Q the same holds with h ∈ Q[t] but a rational-generator form with h = 1 can be strictly smaller (§4).
+-The oracle does not rely on completeness: all pilot curves are built from generators.
++Write g = U²+V² and d = w²/g = ((U²−V²)/g, 2UV/g), the **continued generator direction**, a rational point on the unit
++circle defined wherever g ≠ 0 and independent of h and of its sign. Conventions (Revision 2, after the review; each
++statement is `[MATH]` by direct expansion and was confirmed by the reviewer):
++
++* **Speed.** |r′| = |h|·g, so the actual non-negative speed is |h|g. The expression h·g is the *signed progression rate*;
++  it equals the speed only where h ≥ 0. (The packet's σ = h(U²+V²) is the signed rate.)
++* **Unit tangent.** At a regular point (h ≠ 0, g ≠ 0) T = sign(h)·w²/g = sign(h)·d. For h > 0 it equals d; for h < 0 it is
++  −d (traversal against the direction field). The earlier statement "T is independent of h" holds only for h > 0.
++* **Stationary points.** h = 0 ⇒ r′ = 0 and |r′| = 0: T = r′/|r′| is 0/0 and must be refused; d is still defined if g ≠ 0.
++  The curvature expression below is also undefined there. A sign change of h turns the traversal around (it retraces the
++  path); d is continuous through it, T is not.
++* **Curvature.** cross(r′,r″) = 2h²·g·N_raw (the h′ terms cancel because cross(w²,w²)=0). Hence, for the Euclidean signed
++  curvature relative to the oriented tangent, κ = cross(r′,r″)/|r′|³ = **2·N_raw / (|h|·g²)**, where
++  **N_raw := U V′ − U′ V** (kept for provenance). The earlier form 2N/(h·g²) agrees only for h > 0. Reversal flips the
++  sign of κ through N_raw of the composed generator (checked below).
++* **Factor-two rule (owner decision, Revision 2).** Wherever a *curvature numerator and denominator* are requested, the
++  numerator is **N_κ := 2·N_raw** and the denominator is **D_κ := |h|·g²** (for h = 1, D_κ = σ²), so κ = N_κ/D_κ. The raw
++  pair (N_raw, g²) is provenance only and is never labelled a curvature pair. The certified values file stores N_raw and
++  D_raw = σ² for h = 1; a harness compares N_κ = 2·N_raw against it, with the factor stated here, and the values file is
++  not edited. (The certificate's JSON also carries `kappa_corrected` for each Cell A row and the corrected endpoint pairs
++  (0,4) and (−12,100) for the quintic.)
++* Position r(t) = r(0) + ∫ r′, polynomial of degree deg(h)+2·deg(w)+1. The oriented arc length S_or(t) = ∫ σ_signed with
++  σ_signed = h·g is polynomial; the accumulated traversal length L(t) = ∫|h|g equals S_or only where h ≥ 0 (§4 R6).
++* Regularity: h ≠ 0 and g ≠ 0 on I (equivalently |r′| > 0). A zero of g in I cannot occur when gcd(U,V) = 1 (resultant ≠ 0).
++  A zero of h is NONREGULAR for tangent and curvature queries, though the direction d is still defined there.
++
++**Completeness over Q — independently proved by the reviewer (certificate §F-D); no external citation is relied on.**
++Statement: for polynomials X, Y, Z ∈ Q[t] with X²+Y²=Z², there are h, U, V ∈ Q[t] with X = h(U²−V²), Y = 2hUV,
++Z = h(U²+V²). Scope and assumptions: polynomial data over Q; the case Y = 0 and the zero triples are handled separately
++by constant generators; d = gcd(X,Y) divides Z; with A=X/d, B=Y/d, C=Z/d the factors C+A and C−A are coprime with product B²,
++so each is a rational unit times a square (C+A=αf², C−A=βg²), αβ is a rational square (δ²), and
++h = dα/2, U = f, V = (δ/α)g. The factor h is a polynomial but **not necessarily positive or constant**: to get non-negative
++speed on a regular interval choose the sign of Z positive there, which makes h positive. It does **not** show that every
++curve has h = 1 over Q. The author sanity-checked the final construction (h(U²−V²)=dA, 2hUV=dB, h(U²+V²)=dC) but is not the
++independent verification. The previous `[LIT]` note is superseded. The oracle still does not rely on completeness: all
++pilot curves are built from generators.
+ 
+ **Inverse arc length** is outside the exact class (QSG-2 example; I recall that no non-linear polynomial PH curve admits a
+ rational arc-length parametrization `[LIT]`). Natural-equation (arc-length) state is therefore not an E0 object.
+@@ -106,10 +152,12 @@
+ every polynomial reparametrization, with no condition on φ′. The generator in (U,V,h) form is
+ (Ũ,Ṽ,h̃) = (U∘φ, V∘φ, (h∘φ)·φ′), because ψ′ = φ′·(h∘φ)·(w∘φ)².
+ 
+-**R2 (speed and arc length).** The signed speed φ′·σ∘φ is a polynomial. The (non-negative) speed |ψ′| is that polynomial
+-exactly when φ′·h∘φ ≥ 0 on the interval; for a monotone increasing retiming (φ′ ≥ 0, h ≥ 0) it is, and then the arc
+-length of the traversal is S(φ(t)) − S(φ(0)), polynomial. If φ′ changes sign the oriented arc length is still polynomial
+-but the total length of the traversal is piecewise polynomial; that is outside the exact class.
++**R2 (speed and arc length).** With g=U²+V², the actual speed of ψ = r∘φ is |φ′·(h∘φ)|·(g∘φ), not (φ′·h∘φ)·(g∘φ) unless the
++prefactor is non-negative. The signed progression rate φ′·(h∘φ)·(g∘φ) is a polynomial and equals the speed wherever
++φ′·(h∘φ) ≥ 0 (zero included). On an interval where φ′·(h∘φ) ≥ 0 (for example monotone increasing φ with h ≥ 0) the
++accumulated traversal length is S(φ(t)) − S(φ(0)), polynomial. If the prefactor changes sign the speed is generally a
++piecewise polynomial (R6). A retimed parameter must stay inside the interval on which the original regularity
++certificate holds; outside it the certificate does not apply.
+ 
+ **R3 (primitive form).** Within the form with h = 1 over Q the retiming condition is exact: ψ′ is a square in Q[i][t] iff
+ φ′ is a square in Q[i][t] (a quotient of squares in a UFD that is a polynomial is the square of a polynomial), and a real
+@@ -118,13 +166,23 @@
+ (−V∘φ·q, U∘φ·q) (multiply w by i). A positive rational constant that is not a square (for example φ(t)=2t) needs h ≠ 1 or
+ the extension Q(√c).
+ 
+-**R4 (stationary points) `[MATH]`.** If φ′ has a zero inside the interval the retimed curve has σ = 0 there (a stationary
+-point). The h-form still carries the direction τ∘φ through the stationary point, whereas T = r′/σ is 0/0. A tangent
+-query must say which it returns. Control: φ(t) = t², φ′ = 2t, h̃ = 2t(h∘φ).
++**R4 (stationary points) `[MATH]`.** If φ′ has a zero inside the interval the retimed curve has |r′| = 0 there (a
++stationary point). The h-form still carries the continued direction d∘φ through it, whereas T = r′/|r′| is 0/0 and the
++curvature 2N_raw/(|h̃|g̃²) is undefined. A tangent query must say which it returns; the registered convention is: the
++direction query returns d, the tangent and curvature queries refuse. Control: φ(t) = t², h̃ = 2t(h∘φ); at t = 0 the
++certificate gives continued direction (1,0) while T is 0/0.
++
++**R6 (oriented versus accumulated length; certificate §F-C) `[MATH]`.** For φ_bad = 4t−4t² on PH3 (S = t+t³/3): with
++B(t) = φ_bad + φ_bad³/3 the oriented length S(φ_bad(t))−S(0) = B(t), total oriented length 0; φ_bad′ = 4−8t changes sign at
++t = 1/2 where φ_bad = 1 and the speed is zero; the accumulated traversal length is B(t) on [0,1/2] and 8/3 − B(t) on
++[1/2,1], total 8/3. The single-polynomial class refuses the accumulated length (`OUT_OF_DOMAIN`); that is a class
++statement, not a claim that the length is uncomputable: it is exact and piecewise polynomial. Oriented displacement and
++accumulated length are different quantities and no arm may conflate them.
+ 
+ **R5 (reversal) `[MATH]`.** φ(t) = 1−t, φ′ = −1 = i². The primitive generator of the reversed curve is
+ (Ũ,Ṽ) = (−V(1−t), U(1−t)); verified in the drafting calculator that its hodograph equals −r′(1−t) for the cubic fixture.
+-Reversal composed twice is the identity on the hodograph (not necessarily on the generator, which is defined up to sign).
++Reversal composed twice restores the hodograph; the generator returns as its negative (the reviewer's proof: the second
++reversal gives −W). Reversal flips the sign of κ (confirmed above through N_raw of the reversed generator).
+ 
+ **Closure ledger (kept separate, owner decision 8).**
+ 
+@@ -134,7 +192,7 @@
+ | (U,V,h)-form closure: (Ũ,Ṽ,h̃)=(U∘φ, V∘φ, (h∘φ)φ′) represents the retimed curve for every polynomial φ | `[MATH]` proved (R1) |
+ | Primitive-generator (h=1) closure over Q: φ′=±q², q∈Q[t], necessary and sufficient | `[MATH]` proved (R3) |
+ | Non-negative polynomial speed: φ′·(h∘φ) ≥ 0 on the interval (monotone, non-negative h) | `[MATH]` (R2) |
+-| Every polynomial PH curve has the (U,V,h) form over Q (completeness) | `[LIT]`, **unverified within this experiment** |
++| Every polynomial PH triple over Q has the (U,V,h) form with polynomial h (completeness) | `[MATH]` independently proved by the reviewer (certificate §F-D); h need not be positive or constant, and h = 1 is not always possible |
+ | Rational retimings leave the polynomial class | out of scope |
+ 
+ **Worked fixture (checked in the calculator).** Solving 3a²+3ab+b²=3 rationally gives (a,b) = (−2/7, −9/7), i.e.
+@@ -149,7 +207,7 @@
+ Concatenate E0 segments r_k on [0,1], each with its own (U_k,V_k,h_k). Exact predicates at the joint, with w_a the end
+ generator of one segment and w_b the start generator of the next, h > 0:
+ 
+-* **G⁰:** r_a(1) = r_b(0) (four integer/rational equalities).
++* **G⁰:** r_a(1) = r_b(0) (two rational equalities in the plane; placement is stated by the P-CHAIN rule of §9.2).
+ * **G¹ (same direction):** cross(w_a,w_b) = U_aV_b − U_bV_a = 0, because T = w²/|w|² and w_a² ∥ w_b² with a positive
+   ratio iff w_a ∥ w_b as real vectors. Note w and −w give the same hodograph.
+ * **Cusp (opposite direction):** dot(w_a,w_b) = 0 with both nonzero.
+@@ -171,7 +229,7 @@
+ | Object | (U,V,h) over Q[t] on an interval; also polynomial/Bézier control data | state (P, R) with R in a declared group G; steps are rational lengths along R | jet (j₀…j_N) of a state with a declared law A(P,V,t) |
+ | Exactness | every polynomial observable exact in Q | exact in the declared field; **E1a** finite group (C4 over Q, C12 over Q(√3)): bounded entries; **E1b** infinite rational-rotation group (e.g. the 3-4-5 rotation): exact, coefficient size grows with word length | the formal Taylor coefficients through N are exact; **the trajectory is approximate**; if the true solution is a polynomial of degree ≤ N the class is E0-by-degree (certificate required) |
+ | Guaranteed invariants | |r′| = σ; PH identity; arc-length polynomial; reversal rule | orthogonality of R; group closure (R^|G| = I); additive position growth | coefficient identities of the formal flow only; no invariant of the exact flow is guaranteed unless a structure-preserving form is proved |
+-| Refusals | NONREGULAR; OUT_OF_DOMAIN (non-polynomial retiming, inverse arc length); ARITH_LIMIT / WORK_LIMIT | OUT_OF_DOMAIN (angle not in G); ARITH_LIMIT on E1b growth | `APPROX` is a class label, not a refusal; ARITH_LIMIT for coefficient growth; no error bound claimed unless proved |
++| Refusals | NONREGULAR; OUT_OF_DOMAIN (non-polynomial retiming, inverse arc length, accumulated length when the prefactor φ′·h∘φ changes sign); ARITH_LIMIT / WORK_LIMIT | OUT_OF_DOMAIN (angle not in G); ARITH_LIMIT on E1b growth | `APPROX` is a class label, not a refusal; ARITH_LIMIT for coefficient growth; no error bound claimed unless proved |
+ | Reversibility | exact (R5) | exact (inverse word) | **not exact**: forward then backward step leaves a nonzero exact residual |
+ 
+ A jet of order N is *exact* for a polynomial curve of degree ≤ N: jets of PH curves are a basis change (Taylor basis),
+@@ -180,7 +238,7 @@
+ 
+ ## 7. Is RPLU2's jet machinery a useful substrate?
+ 
+-* Structure that transfers: the truncated Cauchy product, the unit-base jet inverse (needed for T = (…)/σ and κ = N/(hσ_g²)
++* Structure that transfers: the truncated Cauchy product, the unit-base jet inverse (needed for T = (…)/(|h|g) and κ = N_κ/D_κ
+   as local series), sparse windows (`SPARSE_JET_MAC`), and the refusal-on-non-unit discipline.
+ * What does not transfer `[MATH]`: A31 is F_{p²}×F_{p²} (review §4F). It has no order, sign, magnitude or limit, so it
+   cannot decide regularity (σ>0), monotonicity, arc-length sign or curvature sign. Ring identities (x′²+y′²=σ²,
+@@ -202,7 +260,6 @@
+ | B-COMP | Composition of evaluators for retiming: evaluate φ then r (no expansion of r∘φ), and the expanded composite polynomial (reported separately) |
+ | C1 | E0 law interface: (U,V,h) state, typed refusals, retiming algebra (R1–R5), join predicates, lazy observation |
+ | C2 | E0-by-degree jet arm: Cauchy-product jets over Q with jet inverse for T and κ; no A31 |
+-| (info) float64 | for the join-detection task only, to show where a tolerance misclassifies |
+ 
+ "Virtual best" is also reported: for each cost category the minimum over B-arms. Candidate wins against a single best arm
+ are not enough; the screening target in §13 uses the stronger virtual-best comparison as a secondary view.
+@@ -210,10 +267,12 @@
+ ### 8.1 Equal precomputation and caching rights (owner decision 5)
+ 
+ Every arm, candidate and conventional, may precompute once, at charged cost, and cache any of: the power-basis
+-coefficients of x, y, x′, y′, σ, σ², S, the curvature numerator N = 2(UV′−U′V) and denominator D = h(U²+V²)²; Bernstein
++coefficients of x, y, x′, y′, σ, σ², S, the curvature numerator N_κ = 2(UV′−U′V) and denominator D_κ = |h|(U²+V²)² (§3); Bernstein
+ control points and their derivative control points; difference tables; the generator coefficients and their derivatives.
+ No arm is forced to rediscover a PH identity per query, and no arm is given information another lacks. The conventional
+-PH arm (B-PH) therefore holds the same σ, S, N and D polynomials as the candidate. Storage is reported two ways:
++PH arm (B-PH) therefore holds the same σ, S, N_κ and D_κ polynomials as the candidate. Frozen counting policy: Horner
++cost is counted from the polynomial *degree* (no zero-coefficient skipping) for every arm; a sparse-aware variant that
++skips zero coefficients is reported separately and may not replace the frozen count. Storage is reported two ways:
+ authoritative state alone, and state plus every cache an arm actually uses. A storage reduction accompanied by more
+ arithmetic is classified TRADE-OFF, never WIN.
+ 
+@@ -224,25 +283,26 @@
+ strengths are storage (six rationals against eight for a cubic Bézier), random-access queries, retiming (S4), and the
+ join and constraint tasks (S6). The most likely overall outcome is no Pareto win on S1–S3 and ties on S6.
+ 
+-*Cell A counts (hand count with cached power-basis Horner, one multiplication per Horner step, doubling by shift;
+-measured counts decide).* For a quintic PH with deg U = deg V = 2, h = 1, one query returns r (2 coords, degree 5),
+-r′ (2, degree 4), σ (degree 4), σ² (one product), S (degree 5), N (degree 2) and D = σ² (reused). **B-PH:** 30
+-multiplications, 29 additions. **Generator route** (U, V, U′, V′ by Horner: 6 multiplications; U², V², UV: 3; σ²: 1; N: 2;
+-r and S still need their cached degree-5 integral coefficients: 15): 27 multiplications, about 25 additions. That is
+-about 10% of the multiplications and about 15% of the additions, below the 20% screen: the integrals r and S (half of all multiplications) cannot be derived
+-from U,V for free. Excluding r and S the derivative-side observables cost 15 against 12 multiplications (20%). The cell
+-is therefore expected to land on or just under the threshold. *Cell B:* direct evaluation of the original curve at φ(τ)
+-(three Horner steps for φ, then three each for r and S) is expected to dominate the retimed generator, whose composite
+-position and arc length have degree 9; the generator is expected to help only if the retimed object must stand alone
+-(no access to the original), and it does not avoid the degree growth under repeated retiming.
++*Cell A counts, recomputed for the certified quintic (stated before any measurement; this recomputation follows the
++certificate and precedes all cost evaluation).* The certified polynomials have degrees x:4, y:5, x′:3, y′:4, σ:4, S:5,
++N_κ:2 (U, V, U′, V′ of degrees 2, 2, 1, 1). Dense-degree Horner, doubling by shift, measured counts decide. **B-PH:**
++x 4, y 5, x′ 3, y′ 4, σ 4, σ² 1, S 5, N_κ 2 = **28 multiplications, 27 additions**. **Generator route:** U, V, U′, V′ by
++Horner (6 multiplications, 6 additions); U², V², UV (3); x′ and σ (2 add/sub); σ² (1); N_κ (2 multiplications, 1
++subtraction); and the cached degree-4, 5, 5 integrals x, y, S (14 multiplications, 14 additions) = **26 multiplications,
++23 additions**. That is about 7% of the multiplications and about 15% of the additions: below the 20% screen. The integrals
++x, y and S are half of all multiplications and cannot be derived from U,V for free. Excluding them, derivative-side
++observables cost 14 against 12 multiplications (about 14%). Cell A is therefore expected to land below the threshold.
++*Cell B:* direct evaluation of the original curve at φ(τ) (three Horner steps for φ, then three each for r and S) is
++expected to dominate the retimed generator, whose composite position and arc length have degree 9 (certificate: x, y, S
++composite degrees 9, 6, 9); the generator is expected to help only if the retimed object must stand alone, and it does
++not avoid the degree growth under repeated retiming.
+ 
+ ## 9. Matched tasks and fixtures
+ 
+ Inputs only are fixed here; expected outputs are derived by the independent reviewer (§10).
+ 
+ Curves (planar, Q): **PH3** (U,V)=(1,t), h=1 (cubic; QSG-2 primary: r=(t−t³/3, t²), S=t+t³/3, r(1)=(2/3,1), S(1)=4/3,
+-sigma(1/2)=5/4, T(1/2)=(3/5,4/5)); **PH5** a quintic (U,V quadratic, chosen at fixture time to be regular with σ>0 on
+-[0,1] and a non-constant κ); **PH3h** the PH3 hodograph with h = 1+t.
++sigma(1/2)=5/4, T(1/2)=(3/5,4/5)); **PH5** the certified quintic U = −1−t−t², V = −1−t+t², h = 1 (§0.2; reviewer-selected by R-SEL, not by the author); **PH3h** the PH3 hodograph with h = 1+t.
+ Retimings: φ_sq = (4t+18t²+27t³)/49 (square derivative, monotone); φ_ns = t² (h-form only, stationary at 0);
+ φ_rev = 1−t; φ_bad = 4t−4t² (φ′=4−8t changes sign at 1/2; control).
+ 
+@@ -250,10 +310,10 @@
+ |---|---|
+ | S1 | positions r(k/16), k=0..16 |
+ | S2 | S1 plus x′, y′, σ and unit tangent T at each sample (T as an exact rational pair) |
+-| S3 | S2 plus arc-length increments S((k+1)/16)−S(k/16) and κ at each sample |
++| S3 | S2 plus the arc-length increment on [k/16,(k+1)/16] for k = 0..15 and κ at each sample k = 0..16. **Endpoint convention (frozen):** at k = 16 the increment is absent (null), as in the certified values file; κ is returned as the pair (N_κ, D_κ) and, for the reference, as a quotient |
+ | S4 | S3 for the retimed traversal r(φ(k/16)) with φ_sq, φ_ns (h-form and a refusal in the primitive form), φ_rev |
+-| S5 | a 3-segment chain (PH3, PH3h, PH5 or controls) with total position, tangent and arc length at nine uniformly spaced chain parameters |
+-| S6 | continuity and constraint verification: G⁰, G¹, cusp, C¹, C², G², loop closure for designed chains |
++| S5 | the chain CH1 of §9.2 (inputs fixed there) with position, unit tangent, speed and accumulated arc length at nine chain parameters |
++| S6 | continuity and constraint verification on the join and closure inputs of §9.2: G⁰, G¹, cusp, C¹, C², G², loop closure |
+ 
+ ### 9.1 The two advantage-screen cells (owner decision 4) and the negative control (decision 6)
+ 
+@@ -263,27 +323,66 @@
+ **Cell A — random-access multi-observable (primary).** Curve: the reviewer-certified quintic PH5 (primitive form). For
+ each query t every arm returns, as exact rationals, the same nine values and flags: r(t) (2), r′(t) (2), σ² (1), σ (1,
+ valid because σ = U²+V² is a rational function value with no root), S(t)−S(0) (1), and the curvature numerator and
+-denominator (N(t), D(t)) as a pair, no quotient required and no division performed; a query where D = 0 is flagged and not
+-divided. Arms: B-Horner, B-Bezier (de Casteljau plus derivative control points), B-PH (with §8.1 caches), C1, C2, and
++denominator as the pair (N_κ(t), D_κ(t)) = (2·N_raw, σ²) per the factor-two rule of §3 (the certified values file stores
++(N_raw, D_raw), so the harness compares N_κ against 2·N_raw), no quotient required and no division performed; a query where
++D_κ = 0 is flagged and not divided. Arms: B-Horner, B-Bezier (de Casteljau plus derivative control points), B-PH (with §8.1 caches), C1, C2, and
+ B-FD (the negative control, evaluated only at the dyadic subset where it applies, or re-initialized and charged where it
+ does not). Precomputation, storage, per-query arithmetic, coefficient widths, query overhead and the shared-computation
+ ratio J/Σ (§11) are reported.
+ 
+-**Cell B — retimed trajectory (secondary).** Curve: the registered cubic PH3 with the retiming φ_sq. For each tape value τ
++**Cell B — retimed trajectory (secondary).** (Certified reference rows: `cell_B.rows`, 16 rows of seven values.) Curve: the registered cubic PH3 with the retiming φ_sq. For each tape value τ
+ every arm returns: ψ(τ) = r(φ(τ)) (2), the timed derivative ψ′(τ) = φ′(τ)·r′(φ(τ)) (2), the signed speed φ′·σ∘φ and the
+ non-negative speed (valid because φ′ ≥ 0), and S(φ(τ)) − S(φ(0)). Arms: C1 (retimed generator, §4 R1), B-COMP (original
+ curve evaluated at φ(τ), the strongest conventional arm), the expanded composite polynomial in power basis, the composite
+ in Bernstein form with de Casteljau, B-TS on the composite, and B-Horner. Charged: composition, degree growth (position
+-degree 9), initialization, storage and repeated evaluation. Control: the non-monotone retiming φ_bad (oriented arc length
+-exact, total traversal length `OUT_OF_DOMAIN`).
++degree 9), initialization, storage and repeated evaluation. Control: the non-monotone retiming φ_bad: the certified values
++give the oriented length B(t) (total 0), the accumulated traversal length B on [0,1/2] and 8/3−B on [1/2,1] (total 8/3),
++and the single-polynomial class refuses the accumulated length with `OUT_OF_DOMAIN` (R6); oriented and accumulated length
++are two different required outputs.
+ 
+ **Mandatory negative control.** Sequential dyadic sampling (S1–S3, step 1/16) on PH3 and PH5 is measured for every arm and
+ reported with the prediction that B-FD dominates. It is not an advantage-screen cell and its outcome does not decide
+ whether to continue.
+ 
+-S6 designed joints from the fixture w_a(1)=(1,1): C¹ (w_b(0)=(1,1)), G¹ speed jump (2,2), G¹ with negated generator
+-(−1,−1), corner (1,0), cusp (1,−1), a near-miss G¹ break (w_b(0)=(10⁶,10⁶+1) in Q), a near-closed loop whose closure
+-residual is 1/10⁶. The float64 control uses an absolute tolerance of 10⁻⁹ and is reported for misclassification only.
++### 9.2 Chain, join and closure inputs (inputs only; expected values are NOT supplied here)
++
++Revision 2 supplies the translations, ordering, parameter convention and derivative data the review found missing. Every
++polynomial is over Q, interval [0,1] per segment, h = 1 unless stated. The expected outputs and truth values are to be
++derived by the independent reviewer; nothing below is an expected result. Role names are design intent only.
++
++**Placement rule P-CHAIN.** Segment k+1 starts at the endpoint of segment k (no translation), unless a fixture lists an
++explicit translation vector. Segment order is the list order. **Chain parameter** u ∈ [0, m] for m segments: segment
++k = min(⌊u⌋, m−1) and local t = u − k, so a joint value u = j belongs to segment j (right-continuous) and u = m is the end of
++the last segment (k = m−1, t = 1). Accumulated arc length is the sum of the preceding segments' total lengths plus the local
++length.
++
++**Chain CH1 (S5).** seg0: (U,V,h) = (1, t, 1) (PH3), start (0,0). seg1: (1, 1+t, 1) (the same polynomial curve continued).
++seg2: (1, 2, 1+t) (constant direction, growing speed). Nine chain parameters u = 0, 1/3, 2/3, 1, 4/3, 3/2, 2, 7/3, 3.
++Observables per u: position, unit tangent (sign(h) convention of §3), speed |h|g, accumulated arc length.
++
++**Join inputs (S6).** Segment a = PH3, end generator w_a(1) = (1,1), w_a′(1) = (0,1), h_a = 1, h_a′ = 0. Next segments b
++(placement P-CHAIN, start at a's endpoint):
++
++| Id | (U,V,h) of b | Intended role (truth values to be derived by the reviewer) |
++|---|---|---|
++| b1 | (1+t, 1, 1) | same start generator, different w′ |
++| b2 | (1, 1+t, 1) | continuation of a's polynomial curve |
++| b3 | (1+t, 1+2t, 1) | same start generator and N_raw(0) as a, different w′ |
++| b4 | (2, 2+t, 1) | parallel start generator, different magnitude |
++| b5 | (−1, −1−t, 1) | start generator −w (sign gauge) |
++| b6 | (1, t, 1) | start generator (1,0) |
++| b7 | (1, −1+t, 1) | start generator (1,−1) |
++| b8 | (1000000, 1000001+t, 1) | start generator (10⁶, 10⁶+1), near-parallel |
++| b9 | b2 translated by (1/4, 0) | explicit position gap |
++
++For C² and G² the reviewer needs w_b′(0) and h_b′(0), which the polynomials above supply (and h_b′(0) = 0 for h_b = 1);
++for CH1 seg1→seg2 the derivative of h_c is 1. A predicate is a function of these data; no tolerance is involved.
++
++**Closure inputs.** L0: seg a = PH3 followed by its reversed generator (−V(1−t), U(1−t)), h = 1. L1: the same with the second
++segment's h set to 1 + 1/1000000. The closure residual is the exact vector difference of the chain endpoint and start.
++
++No floating-point control is specified in P0. A tolerance comparison could be added only after a separately registered
++predicate and normalization are fixed and an independent reviewer supplies literal expectations (§17).
+ 
+ ## 10. Oracles and independence
+ 
+@@ -317,14 +416,15 @@
+ |---|---|
+ | φ′ = 2t in the primitive form | refuse `NOT_PRIMITIVE_RETIMING` (R3); accept in the h-form; a candidate that silently accepts fails |
+ | φ_ns stationary point | T from generator defined, T = r′/σ refused as 0/0; wrong-direction convention fails |
+-| non-monotone φ (φ′ changes sign) | oriented arc length exact, total traversal length `OUT_OF_DOMAIN`; candidate that reports a polynomial length fails |
++| non-monotone φ_bad (φ′ changes sign at 1/2) | oriented length B(t) exact (total 0); accumulated length piecewise (total 8/3) refused by the single-polynomial class with `OUT_OF_DOMAIN`; a candidate that reports one polynomial for the accumulated length, or conflates it with the oriented length, fails |
++| negative h (reversal in h-form, φ′<0) | unit tangent = −d, speed = \|h\|g, κ = 2N_raw/(\|h\|g²); a candidate using h·g or w²/g without the sign fails |
+ | non-polynomial retiming (rational φ) | `OUT_OF_DOMAIN` |
+ | perturbed σ cache with unchanged generator | certificate failure (coefficient identity), not only point checks |
+-| Inconsistent joins (position gap, near-miss tangent, near-closed loop) | exact predicates classify; float tolerance misclassifies the 10⁻⁶ cases (information only) |
++| Inconsistent joins (b9 gap, b8 near-parallel, L1 near-closed loop) | exact predicates classify (the certificate reports the near-miss cross determinant as 1, so G¹ is false); no float comparison is part of P0 |
+ | Reversal of a reversal | hodograph identity restored; generator equal up to sign |
+-| E2 jet step forward then backward (harmonic law A = −P, order 4, h=1/4) | nonzero exact residual equal to the independent closed-form Taylor-polynomial composition; a candidate labelling it exact fails |
+-| E1b 3-4-5 rotation word of length k | exact, denominator 5^k grows, `ARITH_LIMIT` at the declared width; never wrapped |
+-| E1a C4 word | bounded entries; R⁴ = I |
++| E2 jet step forward then backward (harmonic law P′=V, V′=−P, order-4 Taylor step, h=1/4) | the reference is the **operator** M(−h)M(h) − I = (−127/37748736)·I (certificate §F-E; the packet fixed no initial state, so no unique trajectory residual is claimed); a candidate labelling the step exact, or reporting zero for a nonzero state, fails |
++| E1b 3-4-5 rotation (3+4i)/5, power k | exact; for k ≥ 1 both reduced entries have denominator 5^k (certificate lists k = 0..16); `ARITH_LIMIT` at the declared width depends on the registered ledger and operation order, which the certificate does not fix; never wrapped |
++| E1a C4 word | the rotation entries stay in {0,±1} and R⁴ = I; accumulated positions are sums and are not bounded by this statement |
+ | Jet order 2 on a cubic | class label E2 (not E0-by-degree); position error nonzero; claiming exactness fails |
+ | Forward-difference off-by-one order, wrong binomial, dropped h^k, wrong factorial in a Taylor step | coefficient mismatch on a named fixture |
+ | Chain-rule slip (omit φ′, omit h∘φ), wrong reversal sign, mixed intervals | oracle mismatch on S4 |
+@@ -363,9 +463,10 @@
+ **QCG-0 P0:** curves PH3 and PH3h (cubic) and the reviewer-certified quintic PH5; chain of three; **Cell A on PH5; Cell B
+ on PH3 with φ_sq, plus the φ_bad control**; the mandatory sequential negative control (S1–S3, dyadic step 1/16, 17
+ samples) on PH3 and PH5; S4 with φ_ns and φ_rev as capability checks; S5 on the three-segment chain; S6 on the designed
+-joints; the control table of §12; arms B-Horner, B-FD, B-TS, B-Bezier, B-PH, B-COMP, C1, C2. The fixture file is frozen
+-(hash recorded) before any candidate code exists or any cost is evaluated; the fixture certificate is
+-`research/qcg_0/QUINTIC_FIXTURE_CERTIFICATE.md`, to be filed by the reviewer (not yet existing).
++joints; the control table of §12; arms B-Horner, B-FD, B-TS, B-Bezier, B-PH, B-COMP, C1, C2. The reviewer-certified
++quintic and its reference values are pinned (§0.2) and are not regenerated; the values for the new S5/S6 inputs of §9.2
++and the corrected controls still have to be derived by the reviewer and hashed before any candidate code exists or any cost
++is evaluated. P0 remains HOLD.
+ 
+ Proposed budget (a proposal, not GO): one invocation, 60 s externally enforced, 1 GiB address space, no child
+ processes/network/devices/installs, ≤1,000,000 counted operations, 4096-bit reduced coefficients, 16384-bit raw
+@@ -401,9 +502,31 @@
+ ## 16. Open questions and not done
+ 
+ Open: (a) necessity of the h-form for every polynomial PH class over Q (completeness is cited, not proved here);
+-(b) the PH5 fixture is to be selected and certified by the independent reviewer under the neutral selection rule in
+-`QCG0_FIXTURE_REVIEW_PACKET.md`; **pending**; (c) resolved by the owner: Cells A and B (§9.1); (d) Q(√3) profile for
+-E1b/C12.
++(b) the reviewer certified the PH5 fixture (§0.2); **open:** reviewer-derived literal values for the §9.2 chain, join
++and closure inputs, and re-inspection of this Revision 2 for consistency with the certified values; (c) resolved: Cells A
++and B (§9.1); (d) Q(√3) profile for E1b/C12; (e) a mathematically fixed float-tolerance control, if ever wanted.
+ 
+-Not done: no pilot code, no candidate engines, no oracle of record, no experiment, no fixture values filed, no review
+-performed, no X2 or QSG-2 change. Execution HOLD until the owner designates the reviewer and authorizes P0.
++Not done: no pilot code, no candidate engines, no oracle of record, no experiment, no re-inspection of Revision 2 by the
++reviewer yet, no X2 or QSG-2 change. Execution HOLD until the corrections are accepted and the owner authorizes P0.
++
++## 17. Revision 2 change log and superseded packet items
++
++| # | Review finding / owner item | Change | Where |
++|---|---|---|---|
++| 1 | Curvature factor of two | N_raw = UV′−U′V retained for provenance; curvature numerator N_κ = 2N_raw, D_κ = \|h\|g²; Cell A pair and §8.1 use N_κ; values file unedited with the factor stated | §3, §8.1, §9.1 |
++| 2 | Negative-h semantics | speed \|h\|g; T = sign(h)·w²/g; κ = 2N_raw/(\|h\|g²); stationary points (T and κ refused, d defined); reversal | §3, R2, R4, §12 |
++| 3 | Preserve the certified quintic | U, V, h and all values pinned by full hash, quoted from the certificate, not regenerated | §0.2 |
++| 4 | Completeness | `[LIT]` replaced by the reviewer's independent proof with scope and assumptions (h polynomial, not necessarily positive or constant) | §3, closure ledger |
++| 5 | Oriented versus accumulated length | R6 added; Cell B control text and §12 corrected | R6, §9.1, §12 |
++| 6 | Missing S5/C²/G² inputs | translations (P-CHAIN), order, chain parameter, derivative data, closure inputs specified; no expected values invented | §9.2 |
++| 7 | Float-tolerance claim | removed (arm, S6 sentence and control row); a replacement requires a separate registration | §8, §9.2, §12 |
++| 8 | E0 / E1 / E2 distinct | §6 unchanged; harmonic E2 reference restated as an operator; E1a wording narrowed | §6, §12 |
++| — | Also from the certificate | S3 endpoint convention frozen; G⁰ is two rational equalities in the plane (§5); K1 sparsity remark narrowed (below); Cell A hand counts recomputed for the certified degrees | §9, §5, §8.1 |
++
++**Packet items superseded by this revision (packet not edited).** (i) F-A and F-B called (N, D) with N = UV′−U′V "the
++curvature pair": the true numerator is 2N_raw (§3). (ii) K1 "no arm gains from sparsity": K1 makes the generator
++coefficients dense only; derived polynomials are not dense (x has degree 4, y degree 5, x′ degree 3, and N_raw has a zero
++constant term). This follows from the frozen rule and is not grounds to replace the fixture; the frozen Horner policy
++counts by degree (§8.1) and a sparse-aware count is reported separately. (iii) The float64 misclassification expectation:
++withdrawn, since a 10⁻⁶ closure residual is rejected by an absolute 10⁻⁹ tolerance even in floating point and the near-miss
++determinant is 1; any numerical control needs a fixed predicate and normalization first.

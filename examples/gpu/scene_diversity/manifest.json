@@ -1,0 +1,18 @@
+{
+  "format": "spu_gpu_scene_diversity_suite_v1",
+  "profile": "t1d-two-triangle-v1",
+  "reference_fixture": "fixtures/gpu_scene_diversity_reference.json",
+  "reference_fixture_sha256": "9cdfa631cac3cbb35de95eb60551b8099af0759511ee0e53dffd74c42083e65b",
+  "scenes": [
+    {"id": "disjoint_a", "path": "examples/gpu/scene_diversity/disjoint_a.json", "sha256": "ade2b3dad4cfaccc9303dbb8a31a6c3a2dc20733e2f61b111fd389f115bdcef1", "role": "collision-pair-a"},
+    {"id": "disjoint_b", "path": "examples/gpu/scene_diversity/disjoint_b.json", "sha256": "43b9a2e76951f2cdf53a28844a38c22c41672879b07733ed4605924a530f6a13", "role": "collision-pair-b"},
+    {"id": "overlap_t0_near", "path": "examples/gpu/scene_diversity/overlap_t0_near.json", "sha256": "713c92361dd6e680707666b8d0749424007250e8376f1ecae8e52399c3796e04", "role": "overlap-depth-order-0"},
+    {"id": "overlap_t1_near", "path": "examples/gpu/scene_diversity/overlap_t1_near.json", "sha256": "969101289e5536f89142fe051a1dc0839ca05b061db8c1103e97f3218c512db1", "role": "overlap-depth-order-1"},
+    {"id": "overlap_tie", "path": "examples/gpu/scene_diversity/overlap_tie.json", "sha256": "ab14581d71c98469b3cf2f396a966f8977536e96929b94ff7aff549ba53c3cfc", "role": "equal-depth-tie"},
+    {"id": "overlap_shared_rgb", "path": "examples/gpu/scene_diversity/overlap_shared_rgb.json", "sha256": "7e08c9958d91cb097112e3dd4049dcb98fd872e5ec96a734a9dab727c09bfc19", "role": "shared-color-control"}
+  ],
+  "collision_pairs": [
+    {"a": "disjoint_a", "b": "disjoint_b", "required": true, "kind": "within-tile-translation"}
+  ],
+  "optional_same_rgb_pair": null
+}

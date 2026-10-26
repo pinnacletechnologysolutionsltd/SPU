@@ -1,0 +1,75 @@
+{
+  "utc": "2026-10-23T05:52:46.583955+00:00",
+  "elapsed_seconds": 0.039,
+  "steps": [
+    {
+      "command": [
+        "git",
+        "clone",
+        "--no-local",
+        "--no-checkout",
+        "/home/john/Projects/hardware/spu-sim",
+        "/tmp/sim-public0-b93ikb_d/spu-sim"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/tmp/sim-public0-b93ikb_d/spu-sim",
+        "checkout",
+        "--detach",
+        "c1e0676eee5d2398b8d90eec43bd55b2d2f6b924"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bwrap",
+        "--ro-bind",
+        "/",
+        "/",
+        "--tmpfs",
+        "/home",
+        "--tmpfs",
+        "/opt",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/run",
+        "--bind",
+        "/tmp/sim-public0-b93ikb_d",
+        "/work",
+        "--ro-bind",
+        "/home/john/Projects/hardware/SPU/research/sim_public0/quickstart.sh",
+        "/workflow.sh",
+        "--dev",
+        "/dev",
+        "--proc",
+        "/proc",
+        "--unshare-all",
+        "--clearenv",
+        "--setenv",
+        "PATH",
+        "/usr/bin:/bin",
+        "--setenv",
+        "HOME",
+        "/tmp",
+        "--setenv",
+        "LC_ALL",
+        "C",
+        "--chdir",
+        "/work/spu-sim",
+        "--",
+        "/bin/sh",
+        "-eux",
+        "/workflow.sh"
+      ],
+      "exit": 1
+    }
+  ],
+  "pass": false,
+  "limit": "55 seconds per subprocess; caller bounds total runtime and memory",
+  "scope": "local independent clone; shared host OS/toolchain; no public fetch"
+}

@@ -1,0 +1,93 @@
+SPU-13 ECP5 Carrier — VCC_CORE PDN Simulation
+.TITLE SPU-13 ECP5 PDN Impedance (100kHz - 10MHz)
+
+* Simulate target impedance of the 1.1V core rail
+* Includes: VRM output impedance, bulk MLCC, mid-freq MLCC, HF MLCC,
+* PCB plane capacitance, and BGA via/bond-wire inductance.
+
+* ── VRM model (TPS62082 equivalent, 2MHz buck) ──
+* Simplified: voltage source + output resistance + series inductance
+V_VRM VCC_CORE 0 DC 1.1
+R_VRM VCC_CORE VRM_INT 0.005
+L_VRM VRM_INT VRM_OUT 2.0nH
+
+* ── Bulk capacitance: 2x 22uF 0805 MLCC ──
+* Model: RLC series, typical 0805 22uF X5R
+C_BULK1 VRM_OUT BULK1 22uF
+R_BULK1 BULK1 BULK1_INT 3m
+L_BULK1 BULK1_INT 0 0.5nH
+
+C_BULK2 VRM_OUT BULK2 22uF
+R_BULK2 BULK2 BULK2_INT 3m
+L_BULK2 BULK2_INT 0 0.5nH
+
+* ── Mid capacitance: 2x 4.7uF 0603 MLCC ──
+C_MID1 VRM_OUT MID1 4.7uF
+R_MID1 MID1 MID1_INT 5m
+L_MID1 MID1_INT 0 0.4nH
+
+C_MID2 VRM_OUT MID2 4.7uF
+R_MID2 MID2 MID2_INT 5m
+L_MID2 MID2_INT 0 0.4nH
+
+* ── HF capacitance: 8x 100nF 0402 MLCC ──
+* Paralleled to spread ESL. Using 4 branches with 2 caps each.
+C_HF1 VRM_OUT HF1A 100nF
+R_HF1 HF1A HF1B 8m
+L_HF1 HF1B 0 0.3nH
+
+C_HF2 VRM_OUT HF2A 100nF
+R_HF2 HF2A HF2B 8m
+L_HF2 HF2B 0 0.3nH
+
+C_HF3 VRM_OUT HF3A 100nF
+R_HF3 HF3A HF3B 8m
+L_HF3 HF3B 0 0.3nH
+
+C_HF4 VRM_OUT HF4A 100nF
+R_HF4 HF4A HF4B 8m
+L_HF4 HF4B 0 0.3nH
+
+C_HF5 VRM_OUT HF5A 100nF
+R_HF5 HF5A HF5B 8m
+L_HF5 HF5B 0 0.3nH
+
+C_HF6 VRM_OUT HF6A 100nF
+R_HF6 HF6A HF6B 8m
+L_HF6 HF6B 0 0.3nH
+
+C_HF7 VRM_OUT HF7A 100nF
+R_HF7 HF7A HF7B 8m
+L_HF7 HF7B 0 0.3nH
+
+C_HF8 VRM_OUT HF8A 100nF
+R_HF8 HF8A HF8B 8m
+L_HF8 HF8B 0 0.3nH
+
+* ── PCB plane capacitance (4-layer, 1.6mm, In1=1.1V, In2=GND) ──
+* Area ~60x60mm, dielectric 0.2mm prepreg, er ~4.2
+* C = e0*er*A/d = 8.85e-12 * 4.2 * 0.0036 / 0.0002 = ~670pF
+C_PCB VRM_OUT PCB0 150pF
+R_PCB PCB0 PCB1 2m
+L_PCB PCB1 0 5pH
+
+* ── BGA via + package model ──
+* Summed via inductance ~30pH per ball, ~16 balls in parallel: ~2pH
+L_BGA VRM_OUT FPGA_VCC 0.05nH
+* On-die capacitance (sum of all core decap)
+C_DIE FPGA_VCC 0 50nF
+R_DIE FPGA_VCC DIE_INT 2m
+
+* ── AC Injection for Impedance Measurement ──
+* Inject 1A AC into the PDN, measure resulting voltage = impedance
+I_INJ FPGA_VCC 0 AC 1
+
+* ── Analysis ──
+.AC DEC 100 1k 100Meg
+
+* ── Output ──
+* With 1A injected, V(FPGA_VCC) magnitude = impedance in Ohms
+.PRINT AC V(FPGA_VCC) mag=I_VCC_CORE
+.PLOT AC V(FPGA_VCC) mag=I_VCC_CORE LOGLOG
+
+.END

@@ -1,0 +1,4 @@
+# Smoke suite: quick sanity checks
+SCAN_DIRS: hardware/common/rtl/include, hardware/common/rtl/spu4/rtl
+hardware/common/tests/spu4_phinary_cfg_unit_tb.v
+hardware/common/tests/chiral_phinary_adder_tb.v

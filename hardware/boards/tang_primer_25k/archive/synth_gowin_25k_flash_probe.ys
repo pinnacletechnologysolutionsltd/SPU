@@ -1,0 +1,5 @@
+read_verilog hardware/boards/tang_primer_25k/spu_tang25k_flash_probe.v
+
+hierarchy -check -top spu_tang25k_flash_probe
+synth_gowin -family gw5a -top spu_tang25k_flash_probe -json build/flash_probe.json
+stat

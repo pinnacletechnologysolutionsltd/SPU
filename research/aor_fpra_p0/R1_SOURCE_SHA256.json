@@ -1,0 +1,15 @@
+{
+  "research/aor_fpra_p0/PREPARATION.md": "8af8572184b9921f6ed6a689ce7e44ed9635810d45d4b18d684919ffa56eaadb",
+  "research/aor_fpra_p0/REFERENCE_DERIVATION_PACKET.md": "67142fc025ced1492ffb4d7297ee0172f3f71d2ebda9cb56c86b86522dfb7b81",
+  "research/aor_fpra_p0/REFERENCE_ENCODINGS.md": "3671377ac4658b9ad4ef99965c6afa104e91e46381c767893283a64eb31ac0dc",
+  "research/aor_fpra_p0/REVISION3_SPEC_REVIEW.md": "8c1bfacc61e9612ed9e0aa786b484f4ff9fb502ef31932d52338dbc333db077b",
+  "research/aor_fpra_p0/reference/accounting.py": "6fecafee6dbcc1a84df4bb323bf5f5b2b1f6bf1605cb21f95b67e75e06aee0e4",
+  "research/aor_fpra_p0/reference/controls.py": "b9c78bc91895489f900efbf099a37717045f78137374bf29c28599cb3b754362",
+  "research/aor_fpra_p0/reference/derive.py": "95df540998a18567529e1d22bc49e835838f17007aabf62ebcf84c16f9d834fc",
+  "research/aor_fpra_p0/reference/pell.py": "58f2bdd08937e6ca05593aec3bc7f237d5976101d14b5354f5348fc218bd6076",
+  "research/aor_fpra_p0/reference/semantics.py": "16aea51452eafe6939e35b65cd83a06dd37e83762ec0fc71221d2344c054a626",
+  "research/aor_fpra_p0/reference/test_reference_synthetic.py": "4b46f41b6de3c5bddcea8cfc7a3aabe3939601971c83dbf6fe5ae292670b3b94",
+  "tools/run_detached_job.sh": "52dedd350c9356482d6c4d19cb496dd543b337f69e34bf5f9de9e39e8701d065",
+  "tools/run_detached_job_worker.sh": "bf2f299a1c8a4b6feb693e3b4c2357d4785fd850fb66575e7df3becf7d2196c4",
+  "tools/run_elapsed_deadline.py": "3dc5003473ffbec9bcce1095accce0ca1867322aef1fa3af11a4ad8e4db12e0b"
+}

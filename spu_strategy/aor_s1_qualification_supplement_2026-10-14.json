@@ -1,0 +1,355 @@
+{
+  "format": "AOR_S1_QUALIFICATION_SUPPLEMENT_DRAFT_V1",
+  "status": "PROPOSED_COVERAGE_NOT_QUALIFIED",
+  "basis": "eight exact recommendations from independent_review_01/REVIEW.md; authorized for contract preparation only",
+  "original_packet_path": "spu_strategy/aor_s1_literal_fixtures_2026-10-14.json",
+  "original_packet_sha256": "0f1d215be194ca32481877c54e79dfe569fd94f27062f3e7ad13f3b4e768c63d",
+  "original_case_count": 83,
+  "fixtures": [
+    {
+      "id": "supplement_sign_zero",
+      "operation": "sign",
+      "arguments": [
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": 0,
+      "expected_charged_units": 10,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "standalone sign primitive",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "supplement_sign_negative",
+      "operation": "sign",
+      "arguments": [
+        [
+          -1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": -1,
+      "expected_charged_units": 10,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "standalone sign primitive",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "supplement_sign_positive",
+      "operation": "sign",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": 1,
+      "expected_charged_units": 10,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "standalone sign primitive",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "supplement_equality_false",
+      "operation": "equality",
+      "arguments": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          -1,
+          0,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": false,
+      "expected_charged_units": 23,
+      "count_derivation": [
+        {
+          "actions": "V binary",
+          "units": 16
+        },
+        {
+          "actions": "C left and right",
+          "units": 6
+        },
+        {
+          "actions": "tuple equality",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "supplement_norm_success",
+      "operation": "norm",
+      "arguments": [
+        [
+          5,
+          2,
+          1000
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 4096,
+      "expected_status": "OK",
+      "expected_result": 13,
+      "expected_charged_units": 18,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "N four arithmetic/width pairs",
+          "units": 8
+        },
+        {
+          "actions": "signed128 publication check",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": null
+    },
+    {
+      "id": "supplement_identity_budget_20",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          5,
+          2,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 20,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_charged_units": 20,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "upper-request Scan",
+          "units": 2
+        },
+        {
+          "actions": "adjust exponent arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "2a arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "3b arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "first coefficient arithmetic/check",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ],
+      "expected_next_uncharged_action": "adjust.1a"
+    },
+    {
+      "id": "supplement_identity_budget_21",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          5,
+          2,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 21,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_charged_units": 21,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "upper-request Scan",
+          "units": 2
+        },
+        {
+          "actions": "adjust exponent arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "2a arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "3b arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "first coefficient arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "1a arithmetic",
+          "units": 1
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ],
+      "expected_next_uncharged_action": "adjust.1a.width"
+    },
+    {
+      "id": "supplement_identity_budget_22",
+      "operation": "canonicalize",
+      "arguments": [
+        [
+          5,
+          2,
+          0
+        ]
+      ],
+      "initial_destination": [
+        7,
+        -2,
+        11
+      ],
+      "budget": 22,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_charged_units": 22,
+      "count_derivation": [
+        {
+          "actions": "V unary",
+          "units": 9
+        },
+        {
+          "actions": "Z",
+          "units": 1
+        },
+        {
+          "actions": "upper-request Scan",
+          "units": 2
+        },
+        {
+          "actions": "adjust exponent arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "2a arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "3b arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "first coefficient arithmetic/check",
+          "units": 2
+        },
+        {
+          "actions": "1a arithmetic/check",
+          "units": 2
+        }
+      ],
+      "expected_destination_on_failure": [
+        7,
+        -2,
+        11
+      ],
+      "expected_next_uncharged_action": "adjust.2b"
+    }
+  ],
+  "combined_operation_case_count": 91
+}

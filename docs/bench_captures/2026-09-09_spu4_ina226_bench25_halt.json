@@ -1,0 +1,38 @@
+{
+  "format": "SPU4_INA226_BENCH25_PREFLIGHT_HALT_V1",
+  "timestamp": "2026-09-09T07:42:39+12:00",
+  "scope": "First frozen fold-0 parity gate only; benchmark halted after mismatch",
+  "hardware": {
+    "tang_debugger_serial": "2025030317",
+    "uart": "/dev/serial/by-id/usb-SIPEED_USB_Debugger_2025030317-if01-port0",
+    "baud": 115200,
+    "fpga_load": "SRAM success",
+    "hydration_text": "SOM:H N=0 Q=00000000 S=04 L=000 I=1020",
+    "hydration_hex": "00534f4d3a48204e3d3020513d303030303030303020533d3034204c3d30303020493d313032300d0a"
+  },
+  "artifacts": {
+    "probe_fs_sha256": "6b7022f236813695931464e2be946724a0d1775c1633f30c5540d861f3f8e8f6",
+    "freeze_sha256": "6dcbb8e73597e0172531eca15baf3c2d666827e056c1eede45e59ab019188de6",
+    "classifier_sha256": "a92470070d2e4056b5e8a35777fed96db3b8daceec67765c561b655b8ca314e9",
+    "wrapper_sha256": "70b38a02985037b8c9f72e9e2410279c6efa79e668702d25c6f48b284b2ba847"
+  },
+  "parity_gate": {
+    "fold": 0,
+    "case": 0,
+    "query": "Q1B2500003EB80000520800004BD40000\n",
+    "expected_node": 2,
+    "expected_distance": 63278740,
+    "expected_distance_hex": "03C58E94",
+    "expected_label": 0,
+    "response_text": "SOM:D N=0 Q=42FF6EEB S=06 L=007 I=1020",
+    "response_hex": "534f4d3a44204e3d3020513d343246463645454220533d3036204c3d30303720493d313032300d0a",
+    "observed_node": 0,
+    "observed_distance": 1124036331,
+    "observed_distance_hex": "42FF6EEB",
+    "reported_classifier_cycles": 7,
+    "host_roundtrip_ns": 11364638,
+    "parity": false
+  },
+  "result": "HALT_PARITY_MISMATCH",
+  "qualification": "Hydration completed but does not identify the model bytes. The fitted model flash was not established as frozen fold 0. No further query, model programming, replay, scaling run, or comparison was performed. The single round-trip and cycle values are preflight observations, not accepted benchmark distributions."
+}

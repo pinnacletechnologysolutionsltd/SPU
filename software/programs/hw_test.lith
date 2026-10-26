@@ -1,0 +1,30 @@
+;; hw_test.lith — Minimal hardware bring-up test for damaged 25K
+;; Exercises: QLDI → ROTC → UART output
+;; No SDRAM dependency. No orbit closure requirement.
+;;
+;; Test 1: QLDI loads a VE vertex, verify via hex projection
+;; Test 2: ROTC applies 60° rotation, verify hex changes
+;; Test 3: ROTC applies 120° rotation, verify hex changes again
+;;
+;; Each test produces a UART hex coordinate. Compare against
+;; known-good simulation output to verify silicon matches VM.
+
+;; ── Test 1: QLDI ──
+QLDI QR0, 0, 0, -1, 1
+hex R0, QR0
+
+;; ── Test 2: ROTC 60° ──
+ROTC QR1, QR0, 1
+hex R1, QR1
+
+;; ── Test 3: ROTC 120° ──
+ROTC QR2, QR0, 2
+hex R2, QR2
+
+;; ── Test 4: ROTC 240° ──
+ROTC QR3, QR0, 4
+hex R3, QR3
+
+;; ── Test 5: QLDI full VE vertex ──
+QLDI QR4, -1, 0, 0, 1
+hex R4, QR4

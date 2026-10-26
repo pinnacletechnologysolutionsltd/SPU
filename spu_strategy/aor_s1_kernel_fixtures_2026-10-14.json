@@ -1,0 +1,102 @@
+{
+  "format": "AOR_S1_KERNEL_FIXTURE_DRAFT_V1",
+  "status": "PROPOSED_NOT_QUALIFIED",
+  "fixtures": [
+    {
+      "id": "kernel_upper_64",
+      "input_mantissa": [
+        2011930833870518011412817828051050497,
+        1161588808526051807570761628582646656
+      ],
+      "input_exponent": 0,
+      "coefficient_precondition": "signed136 kernel input; NOT a signed64 public descriptor",
+      "adjustment_allowance": 64,
+      "work_budget": 4096,
+      "expected_adjustments": 64,
+      "expected_status": "OK",
+      "expected_result": [
+        1,
+        0,
+        64
+      ],
+      "expected_scan_adjustment_units": 1026,
+      "excluded_charges": "public validation, zero-path dispatch, final storage checks and commit",
+      "input_derivation": "64 independent Pell recurrence steps (a,b)->(2a+3b,a+2b), then b sign 1"
+    },
+    {
+      "id": "kernel_lower_64",
+      "input_mantissa": [
+        2011930833870518011412817828051050497,
+        -1161588808526051807570761628582646656
+      ],
+      "input_exponent": 0,
+      "coefficient_precondition": "signed136 kernel input; NOT a signed64 public descriptor",
+      "adjustment_allowance": 64,
+      "work_budget": 4096,
+      "expected_adjustments": 64,
+      "expected_status": "OK",
+      "expected_result": [
+        1,
+        0,
+        -64
+      ],
+      "expected_scan_adjustment_units": 962,
+      "excluded_charges": "public validation, zero-path dispatch, final storage checks and commit",
+      "input_derivation": "64 independent Pell recurrence steps (a,b)->(2a+3b,a+2b), then b sign -1"
+    },
+    {
+      "id": "kernel_upper_65",
+      "input_mantissa": [
+        7508628093319191445537920541850040962,
+        4335108450922621626554341085216343809
+      ],
+      "input_exponent": 0,
+      "coefficient_precondition": "signed136 kernel input; NOT a signed64 public descriptor",
+      "adjustment_allowance": 64,
+      "work_budget": 4096,
+      "expected_adjustments": 64,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_scan_adjustment_units": 1026,
+      "excluded_charges": "public validation, zero-path dispatch, final storage checks and commit",
+      "input_derivation": "65 independent Pell recurrence steps (a,b)->(2a+3b,a+2b), then b sign 1"
+    },
+    {
+      "id": "kernel_lower_65",
+      "input_mantissa": [
+        7508628093319191445537920541850040962,
+        -4335108450922621626554341085216343809
+      ],
+      "input_exponent": 0,
+      "coefficient_precondition": "signed136 kernel input; NOT a signed64 public descriptor",
+      "adjustment_allowance": 64,
+      "work_budget": 4096,
+      "expected_adjustments": 64,
+      "expected_status": "WORK_LIMIT",
+      "expected_result": null,
+      "expected_scan_adjustment_units": 961,
+      "excluded_charges": "public validation, zero-path dispatch, final storage checks and commit",
+      "input_derivation": "65 independent Pell recurrence steps (a,b)->(2a+3b,a+2b), then b sign -1"
+    },
+    {
+      "id": "kernel_first_temporary_overflow",
+      "input_mantissa": [
+        43556142965880123323311949751266331066367,
+        43556142965880123323311949751266331066367
+      ],
+      "input_exponent": 0,
+      "coefficient_precondition": "signed136 kernel input; NOT a signed64 public descriptor",
+      "adjustment_allowance": 64,
+      "work_budget": 4096,
+      "expected_adjustments_completed": 0,
+      "expected_status": "TEMPORARY_LIMIT",
+      "expected_result": null,
+      "expected_scan_adjustment_units": 6,
+      "count_derivation": "upper-endpoint Scan 2; adjustment exponent add/check 2; first coefficient multiply by 2 and signed136 check 2",
+      "first_failing_expression": "2*a",
+      "exact_expression_result": 87112285931760246646623899502532662132734,
+      "excluded_charges": "public validation, zero-path dispatch, final storage checks and commit",
+      "input_derivation": "equal a and b gives excluded upper endpoint; 2*a exceeds signed136 maximum"
+    }
+  ]
+}

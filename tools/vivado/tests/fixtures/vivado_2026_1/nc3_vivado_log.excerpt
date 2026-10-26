@@ -1,0 +1,49 @@
+# proc spu_gate {out d} {
+#     # Fail-closed constraint checks. Written before Vivado was available, so the log and report text patterns below are UNVERIFIED against the real
+#     # tool. Phase 2 step 7 must feed them a deliberately broken XDC (missing port, wrong clock name, unclocked divided domain) and see each one fire.
+#     # The expected-clock check uses Vivado Tcl commands only; the strict scans read OUT/vivado.log and OUT/synth_check_timing.rpt.
+#     set bad {}
+#     foreach e [dict get $d expect_clocks] {
+#         lassign [split $e :] name period
+#         set c [get_clocks -quiet $name]
+#         if {[llength $c] == 0} { lappend bad "expected clock '$name' does not exist (missing or unresolved create_clock)" ; continue }
+#         set p [get_property PERIOD $c]
+#         if {abs($p - $period) > 1e-6} { lappend bad "clock '$name' period $p ns, expected $period ns" }
+#     }
+#     if {[dict get $d -strict]} {
+#         set log [file join $out vivado.log]
+#         if {[file exists $log]} {
+#             set fh [open $log r] ; set txt [read $fh] ; close $fh
+#             foreach line [split $txt \n] {
+#                 if {[regexp {CRITICAL WARNING} $line] && [regexp {No valid object|No cells matched|No ports matched|No pins matched|No nets matched|No clocks matched|not found} $line]} { lappend bad "constraint resolved to nothing: [string trim $line]" }
+#             }
+#         } else { lappend bad "strict mode needs OUT/vivado.log (launch with -log OUT/vivado.log)" }
+#         set ct [file join $out synth_check_timing.rpt]
+#         if {[file exists $ct]} {
+#             set fh [open $ct r] ; set txt [read $fh] ; close $fh
+#             foreach {all nm cnt} [regexp -all -inline {checking ([a-z_]+) \(([0-9]+)\)} $txt] {
+#                 if {$cnt > 0 && [lsearch -exact {no_clock unconstrained_internal_endpoints multiple_clock generated_clocks pulse_width_clock} $nm] >= 0} { lappend bad "check_timing: $nm = $cnt" }
+#             }
+#             if {![regexp {checking no_clock} $txt]} { lappend bad "check_timing report has no 'checking no_clock' section (format changed or report missing)" }
+#         } else { lappend bad "strict mode needs synth_check_timing.rpt" }
+#     }
+#     if {[llength $bad]} { spu_fail "constraint gate failed:\n  [join $bad "\n  "]" }
+# }
+# if {[catch {spu_main $argv} err]} {
+#     set o [spu_find_outdir $argv]
+#     set root [file normalize [file join [file dirname [file normalize [info script]]] .. ..]]
+#     # write FAILED only into a directory this run was allowed to use: valid and empty at start, or already ours (run_manifest.txt exists); never into source
+#     if {$o ne "" && [spu_inside_source $root $o] eq "" && [file isdirectory $o] && (![catch {spu_check_outdir $root $o}] || [file exists [file join $o run_manifest.txt]])} { catch { set fh [open [file join $o FAILED] w] ; puts $fh $err ; close $fh } }
+#     puts stderr "SPU_FLOW FAILED: $err"
+#     exit 1
+# }
+INFO: [Common 17-349] Got license for feature 'Vivado_Synthesis' and/or device 'xc7a100t'
+WARNING: [Synth 8-7129] Port manifold_state[831] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[830] in module spu_spi_slave is either unconnected or has no load
+WARNING: [Synth 8-7129] Port manifold_state[829] in module spu_spi_slave is either unconnected or has no load
+SPU_FLOW FAILED: SPU_FLOW: constraint gate failed:
+  constraint resolved to nothing: #                 if {[regexp {CRITICAL WARNING} $line] && [regexp {No valid object|No cells matched|No ports matched|No pins matched|No nets matched|No clocks matched|not found} $line]} { lappend bad "constraint resolved to nothing: [string trim $line]" }
+  check_timing: no_clock = 8172
+  check_timing: unconstrained_internal_endpoints = 28651
+  check_timing: no_clock = 8172
+  check_timing: unconstrained_internal_endpoints = 28651

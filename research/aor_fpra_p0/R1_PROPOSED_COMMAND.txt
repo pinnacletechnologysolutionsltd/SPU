@@ -1,0 +1,9 @@
+tools/run_detached_job.sh \
+  --output build/aor_fpra_p0/reference_derivation_01 \
+  --timeout 60 --notify-desktop -- \
+  /usr/bin/prlimit --as=1073741824:1073741824 --fsize=4194304:4194304 -- \
+  /usr/bin/python3 -I -B research/aor_fpra_p0/reference/derive.py \
+  --spec research/aor_fpra_p0/PREPARATION.md \
+  --spec-sha256 8af8572184b9921f6ed6a689ce7e44ed9635810d45d4b18d684919ffa56eaadb \
+  --source-manifest research/aor_fpra_p0/R1_SOURCE_SHA256.json \
+  --output build/aor_fpra_p0/reference_derivation_01/fixtures

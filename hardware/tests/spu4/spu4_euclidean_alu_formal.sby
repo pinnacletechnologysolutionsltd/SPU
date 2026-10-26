@@ -1,0 +1,28 @@
+# spu4_euclidean_alu_formal.sby — SymbiYosys BMC proof for SPU-4 ALU
+#
+# Proves:
+#   1. FSM never enters invalid state
+#   2. Start leaves idle immediately
+#   3. phi_fold is idempotent for in-range values
+#
+# Run from tests/spu4/:
+#   sby -f spu4_euclidean_alu_formal.sby
+
+[options]
+mode bmc
+depth 10
+expect pass
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read -formal spu4_euclidean_alu.v
+read -formal spu_multiplier_serial.v
+read -formal spu4_euclidean_alu_formal.v
+prep -top spu4_euclidean_alu_formal
+
+[files]
+../../rtl/core/spu4/spu4_euclidean_alu.v
+../../rtl/common/prim/spu_multiplier_serial.v
+spu4_euclidean_alu_formal.v

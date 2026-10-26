@@ -1,0 +1,93 @@
+{
+  "format": "SPU_INA226_COARSE_MONITOR_V1",
+  "status": "frozen_before_physical_capture_or_scoring",
+  "sensor": {
+    "logger": "ina226_logger v1",
+    "address": "0x40",
+    "sample_hz": 100,
+    "rshunt_mohm": 100,
+    "shunt_lsb_uV": "5/2",
+    "current_lsb_uA": 25,
+    "csv_columns": [
+      "host_iso",
+      "probe",
+      "phase",
+      "t_ms",
+      "bus_mV",
+      "shunt_uV",
+      "current_uA"
+    ]
+  },
+  "task": {
+    "class_names": [
+      "normal",
+      "elevated_load",
+      "current_limited_stall"
+    ],
+    "decision_unit": "complete capture session",
+    "sessions_per_class": 10,
+    "capture_blocks": 10,
+    "sessions_per_block": 3,
+    "capture_order": "block b uses class order rotated left by b modulo 3",
+    "folds": 5,
+    "fold_assignment": "capture_block modulo 5",
+    "session_vote": "plurality over four windows; lowest class id breaks a tie"
+  },
+  "window": {
+    "samples": 32,
+    "windows_per_session": 4,
+    "selection": "first 128 rows; four contiguous non-overlapping windows"
+  },
+  "features": [
+    "mean_current_mA",
+    "peak_to_peak_mA",
+    "mean_abs_delta_mA",
+    "mean_abs_deviation_mA"
+  ],
+  "validation": {
+    "timestamp_interval_ms_min": 8,
+    "timestamp_interval_ms_max": 12,
+    "required_rows_min": 128,
+    "accepted_rows": 128,
+    "shunt_equation_residual_max": 500,
+    "shunt_equation": "abs(shunt_uV*1000-current_uA*rshunt_mohm) <= residual",
+    "absolute_shunt_uV_max": 75000,
+    "bus_voltage_tolerance_ppm": 50000,
+    "normalization": "training-fold min/max affine map to 0..30000, round-half-even, held-out clamp with diagnostics",
+    "malformed_duplicate_gap_shunt_or_saturation_policy": "reject the complete session",
+    "session_leakage_policy": "all four windows from one session remain in one fold"
+  },
+  "safety": {
+    "target": "separate low-voltage actuator or fan; never an FPGA rail",
+    "supply": "current-limited bench supply with limit at or below the actuator continuous-current rating",
+    "stall_capture_max_ms": 1500,
+    "stall_cooldown_min_ms": 30000,
+    "abort_conditions": [
+      "actuator or wiring heating",
+      "supply leaves constant-voltage/current-limit behavior unexpectedly",
+      "absolute shunt voltage exceeds 75000 uV",
+      "operator cannot confirm the actuator current rating"
+    ]
+  },
+  "models": {
+    "majority": "three-class training-fold majority",
+    "threshold": "training-fitted scalar normal-versus-anomaly threshold with deterministic tie breaks",
+    "centroid": "training-fold three-class nearest centroid",
+    "som": "seven-node SPU_SOM_MAP_V1 with the published deterministic v1 schedule",
+    "ambiguity": "the v1 hardware flag means exact zero winner/runner-up gap; report all gaps and exact ties"
+  },
+  "gates": {
+    "hardware_replay_eligible": {
+      "aggregate_three_class_som_balanced_accuracy_ppm_min": 900000,
+      "worst_fold_three_class_som_balanced_accuracy_ppm_min": 800000,
+      "minimum_per_class_recall_ppm": 800000,
+      "all_capture_sessions_must_validate": true,
+      "all_software_som1_records_must_match_oracle": true
+    },
+    "baseline_superiority_claim": {
+      "three_class_som_must_exceed_centroid": true,
+      "collapsed_binary_som_must_exceed_scalar_threshold": true
+    },
+    "failure_policy": "Record a negative result; do not tune the frozen capture, feature, fold, model, or gate contract against held-out scores."
+  }
+}

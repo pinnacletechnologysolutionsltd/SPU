@@ -1,0 +1,69 @@
+{
+  "schema": "QCG0-revision2-independent-review-manifest-v1",
+  "date": "2026-10-22",
+  "reviewer": "/root/qcg0_fixture_reviewer",
+  "disposition": "REVISE",
+  "author_scratch_seen": false,
+  "cwd": "/home/john/Projects/hardware/SPU",
+  "input_sha256": {
+    "QCG0_PREREGISTRATION.md": "fbaf2b5a85615bf6a3ade33c759f2d496596aeff234dcf2ce684f0f25bec4f42",
+    "QUINTIC_FIXTURE_CERTIFICATE.md": "1391b1d9804c0d5b636070b1bee3d1cdb9c445f2bea4df4444c78243cc4cc673",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34",
+    "QUINTIC_FIXTURE_REVIEW_MANIFEST.json": "15e310df23279ae8d725d3b01bd7bef3bc95da3b260eac98517cdc31606e3704",
+    "REVIEW_CALCULATION_AUTHORIZATION.md": "4b9602998d2cb2fab14af5440c892cce06ca4189d98bb7f40616362849d3e324",
+    "QCG0_FIXTURE_REVIEW_PACKET.md": "1f6c5b94ab610f4950a4f2244803aeb17def3adf7a21ea50d5664c2759b98c82",
+    "QCG0_PREREGISTRATION_REVISION_2.diff": "43c6f44cc697edb2aff9776f435e6b293c882d1870971b0f6cef86ea3a2b5e75",
+    "QCG0_REVISION2_REREVIEW_REQUEST.md": "b935018ca8c0b3acc177745a82949ce0693bce9a3f3649a004ff27c76929f728",
+    "REVISION2_REVIEW_CALCULATION_AUTHORIZATION.md": "68f1fa7d8c16997add1ce032d7f410f131484b3efa550881237912f7681f8852"
+  },
+  "reconstructed_revision1_sha256": "b33205e92370a41de5d1b7806f8435057065ea5272ea21866f5700be99025fa8",
+  "reconstruction": "Validated unified-diff context against current R2 and reconstructed R1 entirely in memory; no source mutation and no author scratch access.",
+  "limits": {
+    "max_invocations": 2,
+    "used_invocations": 1,
+    "max_wall_seconds_each": 30,
+    "max_cumulative_external_ceiling_seconds": 60,
+    "consumed_external_ceiling_seconds": 30,
+    "address_space_bytes_each": 1073741824,
+    "max_new_output_bytes": 10485760,
+    "max_reduced_coefficient_bits": 4096,
+    "max_raw_temporary_bits": 16384,
+    "children": 0,
+    "network": false
+  },
+  "prerequisites": {
+    "source_read_before_execution": true,
+    "timeout_version_call": "GNU coreutils 9.12, success",
+    "prlimit_version_call": "util-linux 2.42.4, success",
+    "python_version_call": "Python 3.14.8, success",
+    "new_outputs_created_exclusively": true,
+    "old_pins_checked_before_math_and_at_end": true
+  },
+  "invocations": [
+    {
+      "number": 1,
+      "argv": ["/usr/bin/timeout", "--signal=KILL", "30", "/usr/bin/prlimit", "--as=1073741824:1073741824", "--", "/usr/bin/python3", "-B", "-I", "research/qcg_0/review/revision2_derive.py"],
+      "stdout": "review/revision2_invocation_01.stdout",
+      "stderr": "review/revision2_invocation_01.stderr",
+      "exit_record": "review/revision2_invocation_01.exit",
+      "exit": 0,
+      "result": "COMPLETE",
+      "elapsed_seconds": 0.02363769899966428,
+      "ru_maxrss_kib": 17928,
+      "max_serialized_rational_bits": 82,
+      "new_value_bytes": 35957,
+      "new_CH1_rows": 9,
+      "new_join_rows": 9,
+      "adapted_CellA_rows": 16
+    }
+  ],
+  "artifact_sha256_relative_to_research_qcg_0": {
+    "REVISION2_REVIEW_CERTIFICATE.md": "f90db359a3045e0283a6bfb9163ac6bc231ce9d31d1a9f89b7baa9096bdb9844",
+    "REVISION2_FIXTURE_VALUES.json": "a66af3d68da5a7dba439818778af9e8fe70244e3dc2d8250ea891354124a0b46",
+    "review/revision2_derive.py": "f1f95d0bbc1da3b1cad23cd5ea14cce127f164e59bdafcdee31b7b5bd3b4fca2",
+    "review/revision2_invocation_01.stdout": "434e21db30cacc8ec092234a000f6f464d4ea96373fdc29091b483d8fa5b75ea",
+    "review/revision2_invocation_01.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "review/revision2_invocation_01.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "scope_note": "No quintic regeneration or reselection. Higher geometric join predicates in new values use explicitly stated conditional lower-order gates, proposed for author acceptance rather than asserted already frozen. New fixtures do not imply whole-design PASS, fixture freeze, candidate acceptance or P0 GO. Coordinator runs documentation gates separately. Manifest excludes its own hash."
+}

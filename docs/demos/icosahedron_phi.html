@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Golden Core: exact icosahedron symmetries</title>
+<style>
+:root { color-scheme: light; font: 16px/1.45 system-ui, sans-serif; color: #172033; background: #f4f6fa; }
+body { max-width: 980px; margin: auto; padding: 1.25rem; }
+h1, h2 { line-height: 1.15; }
+.lead, .note { color: #4a556b; }
+section { background: white; border: 1px solid #dce2eb; border-radius: 12px; padding: 1rem; margin: 1rem 0; }
+.controls { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; }
+label { display: inline-flex; flex-direction: column; gap: .25rem; }
+input, select { font: inherit; min-width: 11rem; padding: .4rem .55rem; border: 1px solid #bac5d5; border-radius: 6px; background: white; }
+input[type="range"] { min-width: 14rem; }
+svg { width: 100%; height: auto; background: #fbfcfe; border-radius: 8px; touch-action: manipulation; }
+.math { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+.readout { border-left: 4px solid #4777b8; background: #edf3fb; border-radius: 5px; padding: .75rem; }
+.status { display: inline-block; padding: .12rem .5rem; background: #edf2fa; border-radius: 1rem; }
+.small { font-size: .9rem; }
+@media (max-width: 560px) { body { padding: .7rem; } input[type="range"] { min-width: 12rem; } }
+</style>
+</head>
+<body>
+<h1>One exact golden-ratio icosahedron</h1>
+<p class="lead">The vertex coordinates, incidence and symmetry classification use exact algebra in Q(√5). The drawing uses an approximate floating-point camera projection. Explore how a structure’s labels or weights change which geometric symmetries remain admissible.</p>
+<p class="small"><a href="gc5b_seed_dynamics.html">Explore the GC-5B seed dynamics demo</a>: compare four exact initial states under the two frozen update laws.</p>
+
+<section>
+<h2>Explore exact symmetries</h2>
+<div class="controls">
+  <label for="vertexSelect">Selected vertex
+    <select id="vertexSelect"></select>
+  </label>
+  <label for="structureSelect">Structure carried by the solid
+    <select id="structureSelect">
+      <option value="unlabelled">Unlabelled geometry</option>
+      <option value="marked">One distinguished vertex / weight</option>
+      <option value="unique">A different label on every vertex</option>
+    </select>
+  </label>
+  <label for="symmetrySelect">Admissible symmetry
+    <select id="symmetrySelect"></select>
+  </label>
+  <label for="yaw">Approximate view yaw
+    <input id="yaw" type="range" min="-180" max="180" value="28">
+  </label>
+</div>
+<svg id="mesh" viewBox="0 0 640 480" role="img" aria-label="Approximate projection of an exact icosahedron. The selected vertex and its image under a chosen symmetry are highlighted."></svg>
+<div class="readout math" id="vertexReadout" aria-live="polite"></div>
+<p class="small" id="classification"></p>
+<p class="small"><span class="status">Exact geometry</span> 12 vertices · 30 edges · 20 triangular faces · every edge has squared length 4.</p>
+</section>
+
+<section>
+<h2>What the classification means</h2>
+<p>The unlabelled icosahedron has 60 proper rotations and 60 orientation-reversing symmetries. The latter make its mirror superposable by a proper rotation, so the unlabelled solid is achiral. Distinguishing one vertex or assigning unequal vertex weights restricts the allowed group to the maps that preserve those values. Unique labels leave only the identity and make this labelled structure chiral relative to those labels. The vertex coordinates do not change between these cases.</p>
+<p>In the single-weight view, v00 has exact weight 2 and each other vertex has weight 1. Its gold outline and <span class="math">w2</span> label persist while you select vertices or symmetries.</p>
+<p>The determinant sign describes orientation of a three-dimensional linear map: +1 preserves orientation; −1 reverses it. It is not a label or a property of Galois conjugation.</p>
+</section>
+
+<section>
+<h2>Exact data and display</h2>
+<p>The 12 vertices are cyclic permutations of <span class="math">(0, ±1, ±φ)</span>, where <span class="math">φ=(1+√5)/2</span> and <span class="math">φ²=φ+1</span>. Exact vertex permutations encode the classified maps; exact determinant signs separate proper and orientation-reversing operations. In the SVG, JavaScript approximates φ with <span class="math">Math.sqrt(5)</span>, then applies floating-point view rotation, perspective and screen placement.</p>
+<p class="note small">Pixel positions, marker placement and face shading are display values. They are not exact geometric results and this page does not use the SPU GPU or claim hardware performance.</p>
+</section>
+
+<script>
+"use strict";
+const MODEL = {"vertices_phi":[[[0,0],[1,0],[0,1]],[[1,0],[0,1],[0,0]],[[0,1],[0,0],[1,0]],[[0,0],[1,0],[0,-1]],[[1,0],[0,-1],[0,0]],[[0,-1],[0,0],[1,0]],[[0,0],[-1,0],[0,1]],[[-1,0],[0,1],[0,0]],[[0,1],[0,0],[-1,0]],[[0,0],[-1,0],[0,-1]],[[-1,0],[0,-1],[0,0]],[[0,-1],[0,0],[-1,0]]],"edges":[[0,1],[0,2],[0,5],[0,6],[0,7],[1,2],[1,3],[1,7],[1,8],[2,4],[2,6],[2,8],[3,7],[3,8],[3,9],[3,11],[4,6],[4,8],[4,9],[4,10],[5,6],[5,7],[5,10],[5,11],[6,10],[7,11],[8,9],[9,10],[9,11],[10,11]],"faces":[[0,1,2],[0,1,7],[0,2,6],[0,5,6],[0,5,7],[1,2,8],[1,3,7],[1,3,8],[2,4,6],[2,4,8],[3,7,11],[3,8,9],[3,9,11],[4,6,10],[4,8,9],[4,9,10],[5,6,10],[5,7,11],[5,10,11],[9,10,11]],"symmetries":[{"vertex_image":[0,1,2,3,4,5,6,7,8,9,10,11],"determinant":1},{"vertex_image":[0,1,7,8,11,6,5,2,3,9,10,4],"determinant":-1},{"vertex_image":[0,2,1,4,3,5,7,6,8,9,11,10],"determinant":-1},{"vertex_image":[0,2,6,8,10,7,5,1,4,9,11,3],"determinant":1},{"vertex_image":[0,5,6,11,4,1,2,7,10,9,8,3],"determinant":-1},{"vertex_image":[0,5,7,10,3,2,1,6,11,9,8,4],"determinant":1},{"vertex_image":[0,6,2,10,8,7,1,5,4,9,3,11],"determinant":-1},{"vertex_image":[0,6,5,4,11,1,7,2,10,9,3,8],"determinant":1},{"vertex_image":[0,7,1,11,8,6,2,5,3,9,4,10],"determinant":1},{"vertex_image":[0,7,5,3,10,2,6,1,11,9,4,8],"determinant":-1},{"vertex_image":[1,0,2,5,4,3,8,7,6,10,9,11],"determinant":-1},{"vertex_image":[1,0,7,6,11,8,3,2,5,10,9,4],"determinant":1},{"vertex_image":[1,2,0,4,5,3,7,8,6,10,11,9],"determinant":1},{"vertex_image":[1,2,8,6,9,7,3,0,4,10,11,5],"determinant":-1},{"vertex_image":[1,3,7,9,5,2,0,8,11,10,6,4],"determinant":-1},{"vertex_image":[1,3,8,11,4,0,2,7,9,10,6,5],"determinant":1},{"vertex_image":[1,7,0,11,6,8,2,3,5,10,4,9],"determinant":-1},{"vertex_image":[1,7,3,5,9,2,8,0,11,10,4,6],"determinant":1},{"vertex_image":[1,8,2,9,6,7,0,3,4,10,5,11],"determinant":1},{"vertex_image":[1,8,3,4,11,0,7,2,9,10,5,6],"determinant":-1},{"vertex_image":[2,0,1,5,3,4,8,6,7,11,9,10],"determinant":1},{"vertex_image":[2,0,6,7,10,8,4,1,5,11,9,3],"determinant":-1},{"vertex_image":[2,1,0,3,5,4,6,8,7,11,10,9],"determinant":-1},{"vertex_image":[2,1,8,7,9,6,4,0,3,11,10,5],"determinant":1},{"vertex_image":[2,4,6,9,5,1,0,8,10,11,7,3],"determinant":1},{"vertex_image":[2,4,8,10,3,0,1,6,9,11,7,5],"determinant":-1},{"vertex_image":[2,6,0,10,7,8,1,4,5,11,3,9],"determinant":1},{"vertex_image":[2,6,4,5,9,1,8,0,10,11,3,7],"determinant":-1},{"vertex_image":[2,8,1,9,7,6,0,4,3,11,5,10],"determinant":-1},{"vertex_image":[2,8,4,3,10,0,6,1,9,11,5,7],"determinant":1},{"vertex_image":[3,1,7,2,5,9,11,8,0,6,10,4],"determinant":1},{"vertex_image":[3,1,8,0,4,11,9,7,2,6,10,5],"determinant":-1},{"vertex_image":[3,7,1,5,2,9,8,11,0,6,4,10],"determinant":-1},{"vertex_image":[3,7,11,0,10,8,9,1,5,6,4,2],"determinant":1},{"vertex_image":[3,8,1,4,0,11,7,9,2,6,5,10],"determinant":1},{"vertex_image":[3,8,9,2,10,7,11,1,4,6,5,0],"determinant":-1},{"vertex_image":[3,9,8,10,2,7,1,11,4,6,0,5],"determinant":1},{"vertex_image":[3,9,11,4,5,1,7,8,10,6,0,2],"determinant":-1},{"vertex_image":[3,11,7,10,0,8,1,9,5,6,2,4],"determinant":-1},{"vertex_image":[3,11,9,5,4,1,8,7,10,6,2,0],"determinant":1},{"vertex_image":[4,2,6,1,5,9,10,8,0,7,11,3],"determinant":-1},{"vertex_image":[4,2,8,0,3,10,9,6,1,7,11,5],"determinant":1},{"vertex_image":[4,6,2,5,1,9,8,10,0,7,3,11],"determinant":1},{"vertex_image":[4,6,10,0,11,8,9,2,5,7,3,1],"determinant":-1},{"vertex_image":[4,8,2,3,0,10,6,9,1,7,5,11],"determinant":-1},{"vertex_image":[4,8,9,1,11,6,10,2,3,7,5,0],"determinant":1},{"vertex_image":[4,9,8,11,1,6,2,10,3,7,0,5],"determinant":-1},{"vertex_image":[4,9,10,3,5,2,6,8,11,7,0,1],"determinant":1},{"vertex_image":[4,10,6,11,0,8,2,9,5,7,1,3],"determinant":1},{"vertex_image":[4,10,9,5,3,2,8,6,11,7,1,0],"determinant":-1},{"vertex_image":[5,0,6,1,4,11,10,7,2,8,9,3],"determinant":1},{"vertex_image":[5,0,7,2,3,10,11,6,1,8,9,4],"determinant":-1},{"vertex_image":[5,6,0,4,1,11,7,10,2,8,3,9],"determinant":-1},{"vertex_image":[5,6,10,2,9,7,11,0,4,8,3,1],"determinant":1},{"vertex_image":[5,7,0,3,2,10,6,11,1,8,4,9],"determinant":1},{"vertex_image":[5,7,11,1,9,6,10,0,3,8,4,2],"determinant":-1},{"vertex_image":[5,10,6,9,2,7,0,11,4,8,1,3],"determinant":-1},{"vertex_image":[5,10,11,4,3,0,7,6,9,8,1,2],"determinant":1},{"vertex_image":[5,11,7,9,1,6,0,10,3,8,2,4],"determinant":1},{"vertex_image":[5,11,10,3,4,0,6,7,9,8,2,1],"determinant":-1},{"vertex_image":[6,0,2,7,8,10,4,5,1,3,9,11],"determinant":1},{"vertex_image":[6,0,5,1,11,4,10,2,7,3,9,8],"determinant":-1},{"vertex_image":[6,2,0,8,7,10,5,4,1,3,11,9],"determinant":-1},{"vertex_image":[6,2,4,1,9,5,10,0,8,3,11,7],"determinant":1},{"vertex_image":[6,4,2,9,1,5,0,10,8,3,7,11],"determinant":-1},{"vertex_image":[6,4,10,8,11,0,5,2,9,3,7,1],"determinant":1},{"vertex_image":[6,5,0,11,1,4,2,10,7,3,8,9],"determinant":1},{"vertex_image":[6,5,10,7,9,2,4,0,11,3,8,1],"determinant":-1},{"vertex_image":[6,10,4,11,8,0,2,5,9,3,1,7],"determinant":-1},{"vertex_image":[6,10,5,9,7,2,0,4,11,3,1,8],"determinant":1},{"vertex_image":[7,0,1,6,8,11,3,5,2,4,9,10],"determinant":-1},{"vertex_image":[7,0,5,2,10,3,11,1,6,4,9,8],"determinant":1},{"vertex_image":[7,1,0,8,6,11,5,3,2,4,10,9],"determinant":1},{"vertex_image":[7,1,3,2,9,5,11,0,8,4,10,6],"determinant":-1},{"vertex_image":[7,3,1,9,2,5,0,11,8,4,6,10],"determinant":1},{"vertex_image":[7,3,11,8,10,0,5,1,9,4,6,2],"determinant":-1},{"vertex_image":[7,5,0,10,2,3,1,11,6,4,8,9],"determinant":-1},{"vertex_image":[7,5,11,6,9,1,3,0,10,4,8,2],"determinant":1},{"vertex_image":[7,11,3,10,8,0,1,5,9,4,2,6],"determinant":1},{"vertex_image":[7,11,5,9,6,1,0,3,10,4,2,8],"determinant":-1},{"vertex_image":[8,1,2,7,6,9,4,3,0,5,10,11],"determinant":-1},{"vertex_image":[8,1,3,0,11,4,9,2,7,5,10,6],"determinant":1},{"vertex_image":[8,2,1,6,7,9,3,4,0,5,11,10],"determinant":1},{"vertex_image":[8,2,4,0,10,3,9,1,6,5,11,7],"determinant":-1},{"vertex_image":[8,3,1,11,0,4,2,9,7,5,6,10],"determinant":-1},{"vertex_image":[8,3,9,7,10,2,4,1,11,5,6,0],"determinant":1},{"vertex_image":[8,4,2,10,0,3,1,9,6,5,7,11],"determinant":1},{"vertex_image":[8,4,9,6,11,1,3,2,10,5,7,0],"determinant":-1},{"vertex_image":[8,9,3,10,7,2,1,4,11,5,0,6],"determinant":-1},{"vertex_image":[8,9,4,11,6,1,2,3,10,5,0,7],"determinant":1},{"vertex_image":[9,3,8,7,2,10,4,11,1,0,6,5],"determinant":-1},{"vertex_image":[9,3,11,1,5,4,10,8,7,0,6,2],"determinant":1},{"vertex_image":[9,4,8,6,1,11,3,10,2,0,7,5],"determinant":1},{"vertex_image":[9,4,10,2,5,3,11,8,6,0,7,1],"determinant":-1},{"vertex_image":[9,8,3,2,7,10,11,4,1,0,5,6],"determinant":1},{"vertex_image":[9,8,4,1,6,11,10,3,2,0,5,7],"determinant":-1},{"vertex_image":[9,10,4,5,2,3,8,11,6,0,1,7],"determinant":1},{"vertex_image":[9,10,11,6,7,8,3,4,5,0,1,2],"determinant":-1},{"vertex_image":[9,11,3,5,1,4,8,10,7,0,2,6],"determinant":-1},{"vertex_image":[9,11,10,7,6,8,4,3,5,0,2,1],"determinant":1},{"vertex_image":[10,4,6,8,0,11,5,9,2,1,7,3],"determinant":-1},{"vertex_image":[10,4,9,2,3,5,11,6,8,1,7,0],"determinant":1},{"vertex_image":[10,5,6,7,2,9,4,11,0,1,8,3],"determinant":1},{"vertex_image":[10,5,11,0,3,4,9,6,7,1,8,2],"determinant":-1},{"vertex_image":[10,6,4,0,8,11,9,5,2,1,3,7],"determinant":1},{"vertex_image":[10,6,5,2,7,9,11,4,0,1,3,8],"determinant":-1},{"vertex_image":[10,9,4,3,2,5,6,11,8,1,0,7],"determinant":-1},{"vertex_image":[10,9,11,8,7,6,5,4,3,1,0,2],"determinant":1},{"vertex_image":[10,11,5,3,0,4,6,9,7,1,2,8],"determinant":1},{"vertex_image":[10,11,9,7,8,6,4,5,3,1,2,0],"determinant":-1},{"vertex_image":[11,3,7,8,0,10,5,9,1,2,6,4],"determinant":1},{"vertex_image":[11,3,9,1,4,5,10,7,8,2,6,0],"determinant":-1},{"vertex_image":[11,5,7,6,1,9,3,10,0,2,8,4],"determinant":-1},{"vertex_image":[11,5,10,0,4,3,9,7,6,2,8,1],"determinant":1},{"vertex_image":[11,7,3,0,8,10,9,5,1,2,4,6],"determinant":-1},{"vertex_image":[11,7,5,1,6,9,10,3,0,2,4,8],"determinant":1},{"vertex_image":[11,9,3,4,1,5,7,10,8,2,0,6],"determinant":1},{"vertex_image":[11,9,10,8,6,7,5,3,4,2,0,1],"determinant":-1},{"vertex_image":[11,10,5,4,0,3,7,9,6,2,1,8],"determinant":-1},{"vertex_image":[11,10,9,6,8,7,3,5,4,2,1,0],"determinant":1}]};
+const PHI_APPROX = (1 + Math.sqrt(5)) / 2;
+const vertices = MODEL.vertices_phi.map(v => v.map(([a,b]) => a + b * PHI_APPROX));
+const selector = document.querySelector("#vertexSelect");
+const structure = document.querySelector("#structureSelect");
+const symmetrySelector = document.querySelector("#symmetrySelect");
+const yaw = document.querySelector("#yaw");
+const svg = document.querySelector("#mesh");
+const readout = document.querySelector("#vertexReadout");
+const classification = document.querySelector("#classification");
+
+function exactTerm([a,b]) {
+  if (b === 0) return String(a).replace("-", "−");
+  const phi = b === 1 ? "φ" : b === -1 ? "−φ" : `${b < 0 ? "−" : ""}${Math.abs(b)}φ`;
+  if (a === 0) return phi;
+  return `${a} ${b < 0 ? "−" : "+"} ${Math.abs(b) === 1 ? "" : Math.abs(b)}φ`;
+}
+function exactPoint(index) {
+  return `(${MODEL.vertices_phi[index].map(exactTerm).join(", ")})`;
+}
+function allowed(symmetry) {
+  const image = symmetry.vertex_image;
+  if (structure.value === "marked") return image[0] === 0;
+  if (structure.value === "unique") return image.every((target, source) => target === source);
+  return true;
+}
+function updateSymmetries() {
+  const admissible = MODEL.symmetries.filter(allowed);
+  symmetrySelector.replaceChildren();
+  admissible.forEach((symmetry, index) => {
+    const option = document.createElement("option");
+    option.value = String(MODEL.symmetries.indexOf(symmetry));
+    const orientation = symmetry.determinant === 1 ? "proper" : "orientation-reversing";
+    option.textContent = `${orientation} map ${index + 1}`;
+    symmetrySelector.append(option);
+  });
+  const proper = admissible.filter(item => item.determinant === 1).length;
+  const reversing = admissible.length - proper;
+  const state = reversing
+    ? "This structure has an orientation-reversing self-symmetry; its mirror is superposable by a proper rotation."
+    : "This structure has no orientation-reversing self-symmetry; it is chiral relative to the supplied labels or weights.";
+  classification.textContent = `${admissible.length} admissible maps: ${proper} proper and ${reversing} orientation-reversing. ${state}`;
+  render();
+}
+function project(point) {
+  const theta = Number(yaw.value) * Math.PI / 180;
+  const pitch = .38;
+  const [x,y,z] = point;
+  const xr = Math.cos(theta) * x + Math.sin(theta) * z;
+  const zr = -Math.sin(theta) * x + Math.cos(theta) * z;
+  const yr = Math.cos(pitch) * y - Math.sin(pitch) * zr;
+  const depth = Math.sin(pitch) * y + Math.cos(pitch) * zr;
+  const perspective = 3.8 / (5.6 - depth);
+  return [320 + 132 * xr * perspective, 240 - 132 * yr * perspective, depth];
+}
+function render() {
+  if (!symmetrySelector.value && symmetrySelector.options.length === 0) return;
+  const projected = vertices.map(project);
+  const selected = Number(selector.value || 0);
+  const symmetry = MODEL.symmetries[Number(symmetrySelector.value)];
+  const image = symmetry.vertex_image[selected];
+  const faceSvg = MODEL.faces.map(face => {
+    const depth = face.reduce((sum, i) => sum + projected[i][2], 0) / 3;
+    return {depth, points: face.map(i => `${projected[i][0].toFixed(2)},${projected[i][1].toFixed(2)}`).join(" ")};
+  }).sort((a,b) => a.depth - b.depth).map(face =>
+    `<polygon points="${face.points}" fill="#72a4d8" fill-opacity=".16" stroke="none"/>`).join("");
+  const edgeSvg = MODEL.edges.map(([a,b]) =>
+    `<line x1="${projected[a][0]}" y1="${projected[a][1]}" x2="${projected[b][0]}" y2="${projected[b][1]}"/>`).join("");
+  const vertexSvg = projected.map((p,i) => {
+    const isSelected = i === selected, isImage = i === image;
+    const isMarked = structure.value === "marked" && i === 0;
+    const fill = isSelected && isImage ? "#7b4ab5" : isSelected ? "#d45b2b" : isImage ? "#16866b" : "#205b95";
+    const radius = isSelected || isImage ? 9 : 5;
+    const label = `v${String(i).padStart(2,"0")}${isMarked ? " · w2" : ""}`;
+    return `<g class="vertex" tabindex="0" role="button" aria-label="Vertex ${label}, ${exactPoint(i)}" data-index="${i}"><circle cx="${p[0]}" cy="${p[1]}" r="${radius}" fill="${fill}" stroke="${isMarked ? "#d49b00" : "none"}" stroke-width="${isMarked ? 3 : 0}"/><text x="${p[0]+8}" y="${p[1]-7}">${label}</text></g>`;
+  }).join("");
+  svg.innerHTML = `<style>line{stroke:#52677f;stroke-width:2.2;stroke-linecap:round}text{font:12px system-ui;fill:#20344c;paint-order:stroke;stroke:#fbfcfe;stroke-width:3px;stroke-linejoin:round}.vertex{cursor:pointer;outline:none}.vertex:focus circle{stroke:#f3b51b;stroke-width:4}</style>${faceSvg}<g>${edgeSvg}</g>${vertexSvg}`;
+  readout.innerHTML = `v${String(selected).padStart(2,"0")} exact coordinate = ${exactPoint(selected)}<br>Symmetry sends it to v${String(image).padStart(2,"0")} = ${exactPoint(image)}<br>Determinant sign = ${symmetry.determinant > 0 ? "+1 (orientation-preserving)" : "−1 (orientation-reversing)"}<br>Edge squared length = 4 exactly<br>Approximate projected pixel = (${projected[selected][0].toFixed(1)}, ${projected[selected][1].toFixed(1)})`;
+  svg.querySelectorAll(".vertex").forEach(node => {
+    node.addEventListener("click", () => { selector.value = node.dataset.index; render(); });
+    node.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selector.value = node.dataset.index; render(); }
+    });
+  });
+}
+MODEL.vertices_phi.forEach((_,i) => {
+  const option = document.createElement("option");
+  option.value = String(i);
+  option.textContent = `v${String(i).padStart(2,"0")}`;
+  selector.append(option);
+});
+selector.addEventListener("change", render);
+structure.addEventListener("change", updateSymmetries);
+symmetrySelector.addEventListener("change", render);
+yaw.addEventListener("input", render);
+updateSymmetries();
+</script>
+</body>
+</html>

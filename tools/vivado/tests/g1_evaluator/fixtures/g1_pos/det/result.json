@@ -1,0 +1,10 @@
+{
+  "format": "SPU_DETACHED_JOB_RESULT_V1",
+  "outcome": "COMPLETE",
+  "exit_code": 0,
+  "timeout_seconds": 900,
+  "duration_seconds": 198,
+  "start_time_utc": "2026-10-22T10:32:22Z",
+  "end_time_utc": "2026-10-22T10:35:40Z",
+  "systemd_unit": "spu-detached_g1_pos_01-20261022T103222Z-43785"
+}

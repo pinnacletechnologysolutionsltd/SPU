@@ -1,0 +1,496 @@
+{
+  "W31_CellA_trace": {
+    "B-Horner": [
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 0,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 1,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          8
+        ],
+        "q": 2,
+        "status": "OK"
+      },
+      {
+        "code": "ARITH_LIMIT",
+        "failing_integer": 3026100100,
+        "first_refusal": "B-Horner.Q.q03.a8.1.e1",
+        "limit_bits": 31,
+        "parameter": [
+          8,
+          9
+        ],
+        "q": 3,
+        "status": "REFUSED"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          2
+        ],
+        "q": 4,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          5
+        ],
+        "q": 5,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          6,
+          7
+        ],
+        "q": 6,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          0,
+          1
+        ],
+        "q": 7,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          1
+        ],
+        "q": 8,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          3
+        ],
+        "q": 9,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          7,
+          10
+        ],
+        "q": 10,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          9
+        ],
+        "q": 11,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          6
+        ],
+        "q": 12,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          4
+        ],
+        "q": 13,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 14,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 15,
+        "status": "OK"
+      }
+    ],
+    "B-PH": [
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 0,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 1,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          8
+        ],
+        "q": 2,
+        "status": "OK"
+      },
+      {
+        "code": "ARITH_LIMIT",
+        "failing_integer": 3026100100,
+        "first_refusal": "B-PH.Q.q03.b11.1.e1",
+        "limit_bits": 31,
+        "parameter": [
+          8,
+          9
+        ],
+        "q": 3,
+        "status": "REFUSED"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          2
+        ],
+        "q": 4,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          5
+        ],
+        "q": 5,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          6,
+          7
+        ],
+        "q": 6,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          0,
+          1
+        ],
+        "q": 7,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          1
+        ],
+        "q": 8,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          3
+        ],
+        "q": 9,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          7,
+          10
+        ],
+        "q": 10,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          9
+        ],
+        "q": 11,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          6
+        ],
+        "q": 12,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          4
+        ],
+        "q": 13,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 14,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 15,
+        "status": "OK"
+      }
+    ],
+    "C1": [
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 0,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 1,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          8
+        ],
+        "q": 2,
+        "status": "OK"
+      },
+      {
+        "code": "ARITH_LIMIT",
+        "failing_integer": 3026100100,
+        "first_refusal": "C1.Q.q03.b11.1.e1",
+        "limit_bits": 31,
+        "parameter": [
+          8,
+          9
+        ],
+        "q": 3,
+        "status": "REFUSED"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          2
+        ],
+        "q": 4,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          5
+        ],
+        "q": 5,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          6,
+          7
+        ],
+        "q": 6,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          0,
+          1
+        ],
+        "q": 7,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          1
+        ],
+        "q": 8,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          3
+        ],
+        "q": 9,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          7,
+          10
+        ],
+        "q": 10,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          2,
+          9
+        ],
+        "q": 11,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          6
+        ],
+        "q": 12,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          3,
+          4
+        ],
+        "q": 13,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          1,
+          9
+        ],
+        "q": 14,
+        "status": "OK"
+      },
+      {
+        "first_refusal": null,
+        "parameter": [
+          5,
+          7
+        ],
+        "q": 15,
+        "status": "OK"
+      }
+    ]
+  },
+  "administrative_checks": "Raw r1..rN then reduced e1,e2 follow \u00a73. No K cost claim for internal zero/bound checks; contract should explicitly clarify ledger classification.",
+  "pins": {
+    "QCG0_P0_EXECUTION_CONTRACT.md": "4c95617479b858919c86ad5be3cedad37fb9e547f88b9c6d9a8764e8b083e54f",
+    "QCG0_PREREGISTRATION.md": "eade4b5f0957c3679c94b67d8f4b1f6b6d005d65316a5337e6c8dfb9370b98dd",
+    "QUINTIC_FIXTURE_VALUES.json": "8827ac9e4b9a343f1c5481f1a99211673c0805e16534e361598aff2c28354b34"
+  },
+  "preparation_counts": {
+    "B-Horner": {
+      "A": 30,
+      "D": 14,
+      "G_calls": 87,
+      "M": 43,
+      "S": 8
+    },
+    "B-PH": {
+      "A": 22,
+      "D": 14,
+      "G_calls": 67,
+      "M": 31,
+      "S": 5
+    },
+    "C1": {
+      "A": 22,
+      "D": 14,
+      "G_calls": 67,
+      "M": 31,
+      "S": 5
+    },
+    "C2-prep-only": {
+      "A": 22,
+      "D": 14,
+      "G_calls": 63,
+      "M": 27,
+      "S": 5
+    }
+  },
+  "preparation_scope": "PH5 P1-P15/P1-P11/P1-P9 only; counts exclude administrative bound checks and D internal zero validation as implied by the draft K=0 cross-check.",
+  "schema": "QCG0-p0-contract-r2-local-ledger-stage-expectations-v1",
+  "scope": "Minimal independent arithmetic first-refusal trace for named CellA B-Horner/B-PH/C1 branches only; no screened output evaluation, benchmarks, other arms, full P0 or aggregate cost campaign. Existing source coefficients read and preparation trace checked against immutable values.",
+  "status": "PARTIAL_CERTIFICATE",
+  "uncertified": [
+    "CellB nested PCOMP and post-compose stage naming",
+    "sequential S1 minimal-request program and FD nested stage order",
+    "CellA B-Bezier conversion-stage naming and other untraced branches"
+  ]
+}

@@ -1,0 +1,3 @@
+INC_DIRS: hardware/archive/legacy_rtl/common/rtl/gpu, hardware/common/rtl/core, hardware/common/rtl/triage_inc
+SCAN_DIRS: hardware/archive/legacy_rtl/common/rtl/gpu
+hardware/common/tests/rplu_exp_tb.v

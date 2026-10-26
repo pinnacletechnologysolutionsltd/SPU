@@ -1,0 +1,403 @@
+#!/usr/bin/env python3
+"""Offline acceptance tests for INA226 capture ingestion and evaluation."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sys
+import tempfile
+from pathlib import Path
+
+
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "software"))
+sys.path.insert(0, str(REPO / "tools"))
+
+from ina226_capture_pipeline import run_study  # noqa: E402
+from lib.ina226_capture import (  # noqa: E402
+    ACCEPTED_ROWS,
+    CLASS_NAMES,
+    CaptureDataError,
+    FeatureScaler,
+    build_manifest,
+    canonical_json_bytes,
+    expected_class_order,
+    feature_csv_bytes,
+    load_manifest,
+    manifest_windows,
+    parse_capture_csv,
+    seal_manifest,
+    validate_manifest,
+)
+from som_map import load_map  # noqa: E402
+from som_voronoi_explain import explain  # noqa: E402
+
+
+CONTRACT = REPO / "software/datasets/ina226_coarse_monitor_v5.json"
+
+
+def fixture_rows(class_name: str, block: int, probe: str = "dc_fan_v1") -> list[str]:
+    label = CLASS_NAMES.index(class_name)
+    lines = ["host_iso,probe,phase,t_ms,bus_mV,shunt_uV,current_uA,pulses"]
+    bases = (4_000, 12_000, 24_000)
+    amplitudes = (35, 110, 190)
+    strides = (3, 5, 7)
+    for index in range(ACCEPTED_ROWS + 4):
+        raw = bases[label] + block * (17 + label * 3)
+        raw += (((index * strides[label] + block) % 13) - 6) * (
+            amplitudes[label] + block * 3
+        )
+        if label == 1 and (index + block) % 17 == 0:
+            raw += 240 + block * 5
+        if label == 2 and (index + block) % 8 in (0, 1):
+            raw += 720 + block * 7
+        current_uA = raw * 25
+        shunt_uV = raw * 5 // 2
+        # v3 covariate. Deliberately class-dependent so a fixture that lost
+        # the column would not merely fail parsing but also stop separating.
+        pulses = (10, 6, 0)[label] + (index % 2 if label != 2 else 0)
+        lines.append(
+            f"2026-07-19T12:00:{index // 100:02d}.{index % 100:03d},"
+            f"{probe},{class_name},{1000 + index * 10},{5000 + (index % 3) - 1},"
+            f"{shunt_uV},{current_uA},{pulses}"
+        )
+    return lines
+
+
+def write_fixture(path: Path, class_name: str, block: int) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(fixture_rows(class_name, block)) + "\n", encoding="ascii")
+
+
+def main() -> None:
+    checks = 0
+
+    def check(name: str, condition: bool) -> None:
+        nonlocal checks
+        checks += 1
+        if not condition:
+            raise AssertionError(name)
+
+    def rejects(name: str, action) -> None:
+        nonlocal checks
+        try:
+            action()
+        except CaptureDataError:
+            checks += 1
+        else:
+            raise AssertionError(name)
+
+    check("class rotation block zero", expected_class_order(0) == CLASS_NAMES)
+    check(
+        "class rotation block one",
+        expected_class_order(1) == (CLASS_NAMES[1], CLASS_NAMES[2], CLASS_NAMES[0]),
+    )
+    check("class rotation cycles", expected_class_order(3) == CLASS_NAMES)
+    rejects(
+        "unsafe supply limit rejected",
+        lambda: build_manifest(
+            contract_path=CONTRACT,
+            nominal_bus_mV=5000,
+            probe="dc_fan_v1",
+            actuator_model="unsafe-fixture",
+            actuator_continuous_current_mA=1000,
+            supply_current_limit_mA=800,
+        ),
+    )
+
+    with tempfile.TemporaryDirectory() as temp_name:
+        root = Path(temp_name)
+        manifest_path = root / "capture_manifest.json"
+        manifest = build_manifest(
+            contract_path=CONTRACT,
+            nominal_bus_mV=5000,
+            probe="dc_fan_v1",
+            actuator_model="synthetic-fixture-only",
+            actuator_continuous_current_mA=700,
+            supply_current_limit_mA=650,
+        )
+        check("manifest has 30 sessions", len(manifest["sessions"]) == 30)
+        for session in manifest["sessions"]:
+            write_fixture(
+                root / session["csv_path"], session["class_name"], session["block"]
+            )
+        manifest = seal_manifest(manifest, manifest_path)
+        manifest_path.write_bytes(canonical_json_bytes(manifest))
+        loaded = load_manifest(manifest_path)
+        check("sealed manifest round trip", loaded == manifest)
+
+        windows = manifest_windows(loaded, manifest_path)
+        check("30 sessions become 120 windows", len(windows) == 120)
+        check("whole sessions retain one fold", all(
+            len({row.fold for row in windows if row.session_id == session["session_id"]}) == 1
+            for session in manifest["sessions"]
+        ))
+        check("feature materialization deterministic", feature_csv_bytes(windows) == feature_csv_bytes(windows))
+        check("features remain integer", all(
+            all(isinstance(value, int) for value in row.features) for row in windows
+        ))
+
+        sample_session = manifest["sessions"][0]
+        sample_path = root / sample_session["csv_path"]
+        original = sample_path.read_text(encoding="ascii")
+
+        def reject_mutation(mutator) -> None:
+            lines = original.splitlines()
+            mutator(lines)
+            sample_path.write_text("\n".join(lines) + "\n", encoding="ascii")
+            try:
+                parse_capture_csv(
+                    sample_path,
+                    class_name=sample_session["class_name"],
+                    probe="dc_fan_v1",
+                    nominal_bus_mV=5000,
+                )
+            finally:
+                sample_path.write_text(original, encoding="ascii")
+
+        def duplicate_timestamp(lines: list[str]) -> None:
+            row = lines[3].split(",")
+            row[3] = lines[2].split(",")[3]
+            lines[3] = ",".join(row)
+
+        def cadence_gap(lines: list[str]) -> None:
+            row = lines[3].split(",")
+            row[3] = str(int(lines[2].split(",")[3]) + 20)
+            lines[3] = ",".join(row)
+
+        def wrong_phase(lines: list[str]) -> None:
+            row = lines[2].split(",")
+            row[2] = "elevated_load"
+            lines[2] = ",".join(row)
+
+        def shunt_mismatch(lines: list[str]) -> None:
+            row = lines[2].split(",")
+            row[5] = str(int(row[5]) + 2)
+            lines[2] = ",".join(row)
+
+        def saturation(lines: list[str]) -> None:
+            row = lines[2].split(",")
+            row[5] = "75001"
+            row[6] = "750010"
+            lines[2] = ",".join(row)
+
+        def bus_out_of_range(lines: list[str]) -> None:
+            row = lines[2].split(",")
+            row[4] = "4000"
+            lines[2] = ",".join(row)
+
+        def malformed(lines: list[str]) -> None:
+            lines[2] = ",".join(lines[2].split(",")[:-1])
+
+        for name, mutator in (
+            ("duplicate timestamp rejected", duplicate_timestamp),
+            ("cadence gap rejected", cadence_gap),
+            ("mixed phase rejected", wrong_phase),
+            ("shunt mismatch rejected", shunt_mismatch),
+            ("saturation rejected", saturation),
+            ("bus excursion rejected", bus_out_of_range),
+            ("malformed row rejected", malformed),
+        ):
+            rejects(name, lambda mutator=mutator: reject_mutation(mutator))
+
+        # v3 negative controls. The amendment is only real if a pre-v3 file
+        # is actually rejected -- otherwise old captures would flow through
+        # silently and the covariate would be missing without anyone noticing.
+        v2_shaped = root / "v2_shaped.csv"
+        v2_lines = []
+        for line in original.splitlines():
+            v2_lines.append(line.rsplit(",", 1)[0])
+        v2_shaped.write_text("\n".join(v2_lines) + "\n", encoding="ascii")
+        rejects(
+            "pre-v3 file without the pulses column rejected",
+            lambda: parse_capture_csv(
+                v2_shaped, class_name="normal", probe="dc_fan_v1", nominal_bus_mV=5000
+            ),
+        )
+
+        negative_pulses = root / "negative_pulses.csv"
+        neg_lines = [original.splitlines()[0]]
+        for index, line in enumerate(original.splitlines()[1:]):
+            fields = line.split(",")
+            if index == len(original.splitlines()) - 2:   # the LAST row
+                fields[7] = "-1"
+            neg_lines.append(",".join(fields))
+        negative_pulses.write_text("\n".join(neg_lines) + "\n", encoding="ascii")
+        rejects(
+            "negative pulse count rejected",
+            lambda: parse_capture_csv(
+                negative_pulses, class_name="normal", probe="dc_fan_v1",
+                nominal_bus_mV=5000
+            ),
+        )
+
+        short_path = root / "short.csv"
+        short_path.write_text("\n".join(original.splitlines()[:100]) + "\n", encoding="ascii")
+        rejects(
+            "short session rejected",
+            lambda: parse_capture_csv(
+                short_path, class_name="normal", probe="dc_fan_v1", nominal_bus_mV=5000
+            ),
+        )
+
+        # v2 exemption: a collapsed rail is the defining feature of a
+        # current-limited stall, so that class must validate despite it.
+        def collapsed_fixture(class_name: str, name: str) -> Path:
+            lines = fixture_rows(class_name, 0)
+            out = [lines[0]]
+            for row in lines[1:]:
+                fields = row.split(",")
+                fields[4] = "1490"      # far outside 5000 +/- 250
+                out.append(",".join(fields))
+            target = root / name
+            target.write_text("\n".join(out) + "\n", encoding="ascii")
+            return target
+
+        stall_samples = parse_capture_csv(
+            collapsed_fixture("current_limited_stall", "stall_collapsed.csv"),
+            class_name="current_limited_stall",
+            probe="dc_fan_v1",
+            nominal_bus_mV=5000,
+        )
+        check("stall exempt from bus band", len(stall_samples) == ACCEPTED_ROWS)
+        check("stall exemption keeps the collapsed reading", stall_samples[0].bus_mV == 1490)
+
+        # The exemption must be scoped, not a blanket removal: the same
+        # collapsed rail under a checked class still has to be rejected.
+        normal_collapsed = collapsed_fixture("normal", "normal_collapsed.csv")
+        rejects(
+            "checked class still rejects collapsed bus",
+            lambda: parse_capture_csv(
+                normal_collapsed,
+                class_name="normal",
+                probe="dc_fan_v1",
+                nominal_bus_mV=5000,
+            ),
+        )
+
+        unsealed = json.loads(json.dumps(manifest))
+        unsealed["sessions"][0]["csv_sha256"] = None
+        rejects("unsealed session rejected", lambda: manifest_windows(unsealed, manifest_path))
+        reordered = json.loads(json.dumps(manifest))
+        reordered["sessions"][0], reordered["sessions"][1] = (
+            reordered["sessions"][1], reordered["sessions"][0]
+        )
+        rejects("capture order drift rejected", lambda: validate_manifest(reordered))
+
+        out_a = root / "result_a"
+        out_b = root / "result_b"
+        result_a = run_study(manifest, manifest_path, out_a)
+        result_b = run_study(manifest, manifest_path, out_b)
+        check("synthetic study deterministic", canonical_json_bytes(result_a) == canonical_json_bytes(result_b))
+        check("five complete folds", len(result_a["folds"]) == 5)
+        check("all synthetic SOM1 records match", sum(
+            fold["som_diagnostics"]["som1_oracle_matches"] for fold in result_a["folds"]
+        ) == 120)
+        check("synthetic fixture is not labelled physical", "synthetic fixtures" in result_a["evidence_scope"])
+
+        # spu4_som_edge is scored alongside the seven-node SOM on the same
+        # folds -- same synthetic fixture, independent gate (v4 amendment).
+        check("spu4_som_edge scored on all five folds", all(
+            "spu4_som_edge_diagnostics" in fold for fold in result_a["folds"]
+        ))
+        check("spu4_som_edge weights survive the boot-image round trip on "
+              "every fold", all(
+            fold["spu4_som_edge_diagnostics"]["boot_image_roundtrip_matches"]
+            for fold in result_a["folds"]
+        ))
+        check("spu4_som_edge_three_class present in the aggregate",
+              "spu4_som_edge_three_class" in result_a["aggregate"])
+        check("spu4_som_edge gate keys present in the result",
+              "spu4_som_edge_hardware_replay_eligible" in result_a["gates"]
+              and "spu4_som_edge_baseline_superiority_claim_authorized" in result_a["gates"])
+        check("spu4_som_edge gate is a real bool, not always True by "
+              "construction (this synthetic fixture is not claimed to pass it)",
+              isinstance(result_a["gates"]["spu4_som_edge_hardware_replay_eligible"], bool))
+
+        map_document = load_map(out_a / "fold_0/map.json")
+        first_test = next(row for row in windows if row.fold == 0)
+        scaler = result_a["folds"][0]["scaler"]
+        normalized, _directions = FeatureScaler(
+            tuple(scaler["minima"]), tuple(scaler["maxima"])
+        ).project(first_test.features)
+        explanation = explain(map_document, normalized)
+        check(
+            "Voronoi slack equals quadrance gap",
+            explanation["inequality"]["slack"]
+            == explanation["second_quadrance"] - explanation["best_quadrance"],
+        )
+        check("Voronoi winner inequality holds", explanation["inequality"]["lhs"] <= explanation["inequality"]["rhs"])
+
+    contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+    check("contract format pinned", contract["format"] == "SPU_INA226_COARSE_MONITOR_V5")
+    check(
+        "v5 records the v4 hash it supersedes",
+        contract["supersedes"]["sha256"]
+        == hashlib.sha256(
+            (REPO / "software/datasets/ina226_coarse_monitor_v4.json").read_bytes()
+        ).hexdigest(),
+    )
+    check(
+        "v5 amends while nothing is sealed",
+        contract["supersedes"]["sessions_sealed_when_amended"] == 0,
+    )
+    check(
+        "v5 schema carries the pulses covariate (unchanged since v3)",
+        tuple(contract["sensor"]["csv_columns"])[-1] == "pulses",
+    )
+    # The load-bearing constraint of the v5 amendment: the address correction
+    # is provenance-only and must not have touched anything downstream of it.
+    check(
+        "v5 corrects sensor.address to the module's real strapped address",
+        contract["sensor"]["address"] == "0x44",
+    )
+    check(
+        "v5 leaves sensor.logger unchanged from v4",
+        contract["sensor"]["logger"] == "ina226_logger v2",
+    )
+    # The load-bearing constraint of the v4 amendment, carried unchanged into
+    # v5: spu4_som_edge gets its own gate, independent of and identical in
+    # threshold to the seven-node SOM's, not a softer bar for the newer
+    # classifier.
+    check(
+        "contract declares the spu4_som_edge model",
+        "spu4_som_edge" in contract["models"],
+    )
+    check(
+        "spu4_som_edge gate thresholds match the seven-node SOM gate exactly",
+        contract["gates"]["spu4_som_edge_hardware_replay_eligible"][
+            "aggregate_three_class_balanced_accuracy_ppm_min"
+        ] == contract["gates"]["hardware_replay_eligible"][
+            "aggregate_three_class_som_balanced_accuracy_ppm_min"
+        ]
+        and contract["gates"]["spu4_som_edge_hardware_replay_eligible"][
+            "worst_fold_three_class_balanced_accuracy_ppm_min"
+        ] == contract["gates"]["hardware_replay_eligible"][
+            "worst_fold_three_class_som_balanced_accuracy_ppm_min"
+        ],
+    )
+    # The load-bearing constraint of this amendment. Rotation trivially
+    # separates current_limited_stall, so a model given it would score well
+    # while demonstrating nothing about current-based anomaly detection.
+    # If this check ever fails, the study has been silently invalidated.
+    check(
+        "pulses is a covariate and NOT a feature",
+        "pulses" not in contract["features"],
+    )
+    check(
+        "bus gate scoped to non-stall classes",
+        tuple(contract["validation"]["bus_voltage_checked_classes"])
+        == ("normal", "elevated_load"),
+    )
+    check("contract features pin implementation", tuple(contract["features"]) == (
+        "mean_current_mA",
+        "peak_to_peak_mA",
+        "mean_abs_delta_mA",
+        "mean_abs_deviation_mA",
+    ))
+    print(f"PASS: INA226 capture pipeline ({checks} checks)")
+
+
+if __name__ == "__main__":
+    main()

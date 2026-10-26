@@ -1,0 +1,32 @@
+{
+  "format": "SPU4_INA226_BENCH25_COMPLETION_ARM_ACCEPTANCE_V1",
+  "freeze_sha256": "6dcbb8e73597e0172531eca15baf3c2d666827e056c1eede45e59ab019188de6",
+  "port": "/dev/serial/by-id/usb-SIPEED_USB_Debugger_2025030317-if01-port0",
+  "baud": 115200,
+  "cases_required": 24,
+  "cases_completed": 1,
+  "results": [
+    {
+      "case": 0,
+      "features": [
+        109,
+        39,
+        21,
+        11
+      ],
+      "expected_node": 2,
+      "expected_distance": 63278740,
+      "raw_lines_hex": [
+        "534f4d3a44204e3d3320513d303434333345413420533d3036204c3d30303620493d313032300d0a"
+      ],
+      "status_char": "D",
+      "node": 3,
+      "distance": 71515812,
+      "status": 6,
+      "latency_cycles": 6,
+      "id": 4128
+    }
+  ],
+  "failure": "case 0: classifier parity mismatch",
+  "result": "STOP"
+}

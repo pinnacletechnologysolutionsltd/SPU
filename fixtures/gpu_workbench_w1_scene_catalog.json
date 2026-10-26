@@ -1,0 +1,84 @@
+{
+  "format": "spu_gpu_workbench_scene_catalog_v1",
+  "profile": "t1d-two-triangle-v1",
+  "scenes": [
+    {
+      "id": "baseline",
+      "path": "examples/gpu/t1d_two_triangle.json",
+      "sha256": "fbe44dd9f21e05a51e544ef88c0cee47c060fd36b7eeb309e38b846bab0566ef",
+      "group": "baseline"
+    },
+    {
+      "id": "baseline_vertex_b",
+      "path": "examples/gpu/t1d_two_triangle_vertex_b.json",
+      "sha256": "f0b6be3ccb39c919af5c4eb8cb9ab12f4ccd37b6e7bc5eae90365a489c7e17f5",
+      "group": "baseline"
+    },
+    {
+      "id": "quadray_identity",
+      "path": "examples/gpu/golden_core_tetra_views/identity.json",
+      "sha256": "27dda4d08c307640672f1ed5b655061a9d57889fb8afebfdc1c87e67a2e5d372",
+      "group": "quadray"
+    },
+    {
+      "id": "quadray_rotate_bcd",
+      "path": "examples/gpu/golden_core_tetra_views/rotate_bcd.json",
+      "sha256": "d779dc731b941d734a417e2e5c0be43eb461b11625d4d7356257550dadb0ceda",
+      "group": "quadray"
+    },
+    {
+      "id": "quadray_reflect_bc",
+      "path": "examples/gpu/golden_core_tetra_views/reflect_bc.json",
+      "sha256": "dade87cc881f9ee6b4ec336b2aa32ff0894583317e03a3ed24305e092940c056",
+      "group": "quadray"
+    },
+    {
+      "id": "disjoint_a",
+      "path": "examples/gpu/scene_diversity/disjoint_a.json",
+      "sha256": "ade2b3dad4cfaccc9303dbb8a31a6c3a2dc20733e2f61b111fd389f115bdcef1",
+      "group": "scene_diversity"
+    },
+    {
+      "id": "disjoint_b",
+      "path": "examples/gpu/scene_diversity/disjoint_b.json",
+      "sha256": "43b9a2e76951f2cdf53a28844a38c22c41672879b07733ed4605924a530f6a13",
+      "group": "scene_diversity"
+    },
+    {
+      "id": "overlap_t0_near",
+      "path": "examples/gpu/scene_diversity/overlap_t0_near.json",
+      "sha256": "713c92361dd6e680707666b8d0749424007250e8376f1ecae8e52399c3796e04",
+      "group": "scene_diversity"
+    },
+    {
+      "id": "overlap_t1_near",
+      "path": "examples/gpu/scene_diversity/overlap_t1_near.json",
+      "sha256": "969101289e5536f89142fe051a1dc0839ca05b061db8c1103e97f3218c512db1",
+      "group": "scene_diversity"
+    },
+    {
+      "id": "overlap_tie",
+      "path": "examples/gpu/scene_diversity/overlap_tie.json",
+      "sha256": "ab14581d71c98469b3cf2f396a966f8977536e96929b94ff7aff549ba53c3cfc",
+      "group": "scene_diversity"
+    },
+    {
+      "id": "overlap_shared_rgb",
+      "path": "examples/gpu/scene_diversity/overlap_shared_rgb.json",
+      "sha256": "7e08c9958d91cb097112e3dd4049dcb98fd872e5ec96a734a9dab727c09bfc19",
+      "group": "scene_diversity"
+    },
+    {
+      "id": "sg0_identity",
+      "path": "examples/gpu/sg0/identity.json",
+      "sha256": "e7d13326a973be5bc142073c031fea2cb5fb71722fa7102f845ba59a9c3bb59f",
+      "group": "sg0"
+    },
+    {
+      "id": "sg0_rational_rotation",
+      "path": "examples/gpu/sg0/rational_rotation.json",
+      "sha256": "b690c3a536dbcb14ae7e1affc3594af6f98c38ca1300f17079c1ba8fb9853ceb",
+      "group": "sg0"
+    }
+  ]
+}
