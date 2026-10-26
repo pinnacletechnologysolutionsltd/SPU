@@ -5,6 +5,16 @@
 **Regenerate:** `python3 tools/isa_inventory.py --out docs/isa/isa_v02_o6_inventory.json`
 **Test:** `python3 software/tests/test_isa_inventory.py` (fails if the inventory or the known CONFLICT set changes)
 
+## Scope and limits of the inventory (adversarial review AR1)
+
+- **The inventory is a non-exhaustive, regex-based opcode census.** The RTL extractor scans `spu13_core.v` and five named sidecar files for `[63:56] == 8'hXX` comparisons and `localparam OP_*`. A missing row does not mean the RTL lacks the opcode.
+- **Known miss:** `hardware/rtl/core/spu13/spu13_surd_exec.v:59` decodes the Surd extension (`0x70–0x77`) with `case(op)` over relative indices `0..7`; the core routes the extension opcodes to it. The inventory therefore has no RTL rows for the Surd instructions. The draft's statement that the Surd opcodes are present in RTL is supported by the core dispatch and this executor; the inventory omission is an extractor coverage defect, not a contradiction. The extractor and JSON are unchanged (HOLD).
+- **Other decoders reviewed, not counted:** `spu_instr_decode.v` (untyped `localparam OP_*` and `case(saved_opcode)`; legacy or profile-uncertain, no current top instantiation found), `spu13_lucas_mac.v` (local 3-bit micro-op `case`; its outer ISA decode is the Lucas sidecar, already included), `spu_isa_decoder.v` (v1.0 / ISA-B namespace, out of scope). No exhaustive proof of every alternative decode form exists; SPU-4 is outside the extractor entirely.
+- **The frozen-JSON test is a staleness guard.** `test_isa_inventory.py` regenerates the JSON with the same extractor and classifier and compares. It detects drift from the checked-in file, not common-mode omissions or misclassification. It is not an independent completeness check.
+- **Shadowed `POLY_STEP`.** In `software/spu_vm.py:629-631` the dict binds `0x60` then `0xE0`, so the effective table value is `0xE0`. The inventory keeps both records (intended) but counts both as Python VM support, so support at `0x60` is overstated. Effective support should be derived from the last binding; the tool is unchanged (HOLD).
+- **Class labels are evidence-limited.** "Missing in a claimed profile" rests on the assembler header comment (`software/tools/spu13_asm.py:56`) or an explicit matrix cell; it is not an owner-ratified profile boundary. "Documented profile extension" is generated only from a spec opcode being absent in some software source with no claim found; it does not establish that the gap is documented as intentional. Read it as "implementation coverage gap, no claim found". No rename or regeneration is performed (HOLD).
+- **D1 reachability is source and configuration inference.** No row is backed by elaboration, simulation, synthesis or hardware observation. "Ungated" for `0xE0` means no feature parameter gates the accepted-instruction handler at `spu13_core.v:1899-1907`; it is not active during reset or without an accepted `0xE0`. The `CUSTOM` spin of `spu_a7_top.v` can set `ENABLE_RPLU_V2_EXTENSIONS` (`:119`) and was not evaluated. Scope remains in-tree tops, scripts and testbenches.
+
 Sources read: `knowledge/isa_reference.md`, `software/spu_vm.py`, `software/tools/spu13_asm.py` (+ `surd_cpu_encoding.py`), `software/vm/spu_vm.cpp`, `spu13_core.v` and five opcode-bearing sidecars, `spu_isa_defines.vh`, `ISA_IMPLEMENTATION_MATRIX.md`. Duplicates are preserved (AST/line scan, not dict load). ISA-B/WF is a separate namespace; 27 of its values numerically overlap ISA-A and no conflict is asserted.
 
 ## Findings by class (live counts: 3 / 7 / 19 / 0 / 20)
@@ -37,7 +47,7 @@ Every VM/assembler/C++ opcode is in the spec. The RTL-only cases below are class
 
 ## Recorded qualification blockers (no work done on them)
 1. **QROT operand class.** Spec (`isa_reference.md:112`): `QROT Rd, Rs, n`, `R[d]=R[s]×(2+√3)ⁿ` (scalar form). Both VMs (`spu_vm.py:1622`, `spu_vm.cpp:822`) and the assembler treat it as `QROT QRn`, one in-place rotor step on a Quadray register with no exponent; the Python VM also marks the register `PHI_UNTAGGED`. Spec and implementation describe different operations.
-2. **A31 inverse has no opcode.** `FLAGS.V` is documented, but no ISA-A table encodes an A31 inverse. The inverter (`spu13_fp4_inverter.v`) raises `flags_v` and `done` on zero norm and does not write `inv0..3`, so the outputs hold stale values; whether the RPLU/Padé consumer gates them is not established.
+2. **A31 inverse has no opcode.** `FLAGS.V` is documented, but no ISA-A table encodes an A31 inverse. The inverter (`spu13_fp4_inverter.v`) raises `flags_v` and `done` on zero norm and does not write `inv0..3`, so the outputs hold stale values; consumer behavior differs by path (traced in `ISA_V02_SNAP1_FINDINGS.md` §5: the ordinary RPLU pipeline latches the result without checking the flag; the RPLU2 Padé sidecar uses it to gate `qr_commit_valid`); actual stale-result publication is unverified.
 3. **A31 zero-divisor coverage (HOLD).** The inverter tests one norm, `w0²−3·w1²`. A31 ≅ F_p² × F_p², so whether one check catches every non-invertible element needs a mathematical audit. Not opened, per O6 scope.
 
 ## D1 active-decode and reachability evidence (2026-10-26, read-only audit)
@@ -66,3 +76,7 @@ All synthesis targets found set `ENABLE_CORE_RPLU_V2_EXTENSIONS` to 0 (`spu_a7_t
 **Proposed classification (no encoding changed).** `CORE_CANDIDATE`: `POLY_STEP 0xE0` (encoding only, semantics blocked). `IMPLEMENTATION_EXTENSION`: RPLU2 `0x2A`, `JSCR`, `NSA`. `LEGACY_EXPERIMENTAL`: Lucas, Neuro, SU3. `UNRESOLVED`: SOM `0x2A`/`0x2B` core membership, `PHADD`, `PHCFG`, `RATIO_CMP`.
 
 **Proposed ownership of the amendment items.** Amendment text: `ISA_V0_2_REVIEW_DRAFT.md` §6.2–§6.5, §9 (O9–O13).
+
+## Adversarial-review outcome (AR1)
+
+Independent adversarial review report `/tmp/isa-v02-adversarial-review-eaabd9f.md` (stored outside the repository; reviewed tree: `dev/next` HEAD `eaabd9f`, full `eaabd9fcc3ff40ceb73ec7931f391c1a115fa840`; produced by the Codex reviewer at the owner's direction. No other review revision identifier exists, and none is invented here). Items attributed to it were not independently reproduced by the author unless stated. Accepted findings applied above: O6-1 to O6-4 and D1-1 to D1-5 as wording and scope corrections. Generator, classifier labels and frozen JSON were not changed (HOLD).
