@@ -1,7 +1,7 @@
 # SPU Instruction Set Architecture v0.2
 ## Domain, metric, and exact-execution specification — REVIEW DRAFT
 
-**Document revision:** 0.2-draft.9 (amendments ISA-V02-D1-A, QROT-1, SNAP-1, POLYSTEP-1, STATE-1, A31-R1, A31-R2 and H0-TRANSPORT-1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
+**Document revision:** 0.2-draft.10 (amendments ISA-V02-D1-A, QROT-1, SNAP-1, POLYSTEP-1, STATE-1, A31-R1, A31-R2, H0-TRANSPORT-1 and H0-V1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
 
 **Date:** 26 October 2026  
 **Status:** **NON-NORMATIVE / FOR ENGINEERING REVIEW**  
@@ -278,6 +278,16 @@ Findings: [`ISA_V02_H0TRANSPORT1_FINDINGS.md`](ISA_V02_H0TRANSPORT1_FINDINGS.md)
 
 **PROPOSED single-outstanding H0 protocol (semantics only; no encoding).** One instruction outstanding; a host-readable per-instruction completion indication separate from `0xAE`; a per-completion outcome distinguishing new valid result, refusal and unsupported; transport rejection kept distinct, with an indication or host timeout rule for silent drops; boot-not-ready reported with FAULT distinguishable from HYDRATING; and unsupported opcodes either refused or rejected by the host before dispatch, with the enforcement boundary stated. The A31 repair is to be designed together with this contract.
 
+### 6.9 Directed instruction-acceptance verification (H0-V1)
+
+Findings: [`ISA_V02_H0V1_FINDINGS.md`](ISA_V02_H0V1_FINDINGS.md) (directed simulation on `dev/next` `33d4be2`; Icarus Verilog 11.0; probes and runner in `hardware/tests/spu13/h0_v1/`, outside the regression gate; existing VM, assembler and RTL sources unchanged from public RC2 `b063280`). Normative H0 contract and any repair: **HOLD**.
+
+**Reproduced in simulation (core-level, one-cycle strobes).** Each of QLDI, ROTC, QSUB and the Padé instruction completes correctly alone. 40 opcodes outside the implemented set were each accepted with one `inst_done`, no commit and no state change. When a second instruction overlaps, the core can **swallow** it (QLDI during `qsub_active`; QLDI, ROTC or QSUB on the `rplu2_result_valid` cycle; QSUB on the `rote_done_tdm` cycle) or **lose an in-flight result** (ROTC result lost when a QLDI lands on `rote_done_tdm`, or when a QSUB or a second ROTC arrives mid-operation; a second ROTC can give `done=2` with the first result missing). The core is not wedged afterwards, but `rotc_debug_busy` stays set until a later completion. Repeated identical instructions produce two completions and two identical commit events with no transaction identity. A strobe before READY is lost without any indication and is not replayed. The Padé sidecar is a positive control: a second `0x2A` while busy is rejected with one `error` pulse and the first completes. Consecutive strobes (gap 1) hold `inst_valid` high and the second is ignored; this is a continuous-valid limitation, not an independent collision.
+
+**Not established.** Whether any of these collisions is reachable through the actual Artix-7 SPI transport is **UNRESOLVED**: it depends on the real SCK-to-`clk_fast` relationship, which was not measured and is not assumed. The SCK sampling-margin question raised by the independent review was not tested.
+
+**PROPOSED, not implemented.** The central invariant of the H0 contract: every accepted instruction produces exactly one identifiable terminal outcome, and no invalid result is published as successful. A single-outstanding rule is insufficient unless completion is observable by the host. No encodings are assigned.
+
 ## 7. Conformance and provenance
 
 ### 7.1 Reference baseline
@@ -339,6 +349,8 @@ Independent adversarial review report `/tmp/isa-v02-adversarial-review-eaabd9f.m
 | **O19** | H0 transport contract: single-outstanding submission, per-instruction completion indication and outcome, handling of silent drops and boot-not-ready | **PROPOSED**, not implemented (§6.8, H0-TRANSPORT-1). **HOLD.** |
 | **O20** | In-flight priority-chain behavior of the core under overlapping strobes (swallow, starve) | **UNVERIFIED** source hypotheses (§6.8); directed simulation not run. |
 | **O21** | Host-visible status layout (`0xAC`, `0xAE`) as a normative interface versus implementation diagnostics | **UNRESOLVED**; the bit meanings are spin-dependent today (§6.8). |
+| **O22** | Core instruction-acceptance defects under overlapping strobes (swallow, lost in-flight result, misreported completion) | **Reproduced in directed simulation** at core level (§6.9, H0-V1); SPI reachability **UNRESOLVED**; repair **HOLD**. Supersedes the O20 hypothesis for the cases tested. |
+| **O23** | Real SPI-to-core timing relationship (SCK, `clk_fast`, synchronizer) and the minimum inter-strobe spacing it implies | **UNRESOLVED**; not measured or assumed. |
 | **O8** | Instruction-granularity cost evidence? | SFL-0 pending approved experiment; not a prerequisite for documenting existing semantics, but needed before new fused-op adoption. |
 
 ## 10. Proposed release gate
@@ -354,6 +366,7 @@ This review draft derives its specific implementation claims from the supplied:
 - [`ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md`](ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md) (draft domain/metric/profile matrix).
 - [`SFL0_CONTRACT_DRAFT.md`](SFL0_CONTRACT_DRAFT.md) (unapproved small-form research contract; not authorized to execute).
 - [`ICOS0_FINDINGS.md`](../ICOS0_FINDINGS.md) (software icosian/E₈ oracle findings).
+- [`ISA_V02_H0V1_FINDINGS.md`](ISA_V02_H0V1_FINDINGS.md) (directed instruction-acceptance verification; probes in `hardware/tests/spu13/h0_v1/`).
 - [`ISA_V02_H0TRANSPORT1_FINDINGS.md`](ISA_V02_H0TRANSPORT1_FINDINGS.md) (host-driven transport, completion and status audit, source reading at `836ca5b`).
 - [`ISA_V02_A31R2_FINDINGS.md`](ISA_V02_A31R2_FINDINGS.md) (A31 directed refusal-path simulation; probes in `hardware/tests/spu13/a31_r2/`).
 - [`ISA_V02_A31R1_FINDINGS.md`](ISA_V02_A31R1_FINDINGS.md) (A31 inverter refusal and result-publication paths, source reading at `19b35fa`).

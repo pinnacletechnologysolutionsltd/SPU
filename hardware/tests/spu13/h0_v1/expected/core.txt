@@ -1,0 +1,165 @@
+== B1 baseline timelines (c = cycle index; strobe sampled at c=1)
+  c=1 accept op=1d
+  c=2 inst_done
+  c=2 commit lane=9 A=00000007
+   B1 QLDI: acc=1 done=1 commit=1
+  c=1 accept op=1c
+  c=5 rote_done_tdm
+  c=6 inst_done
+  c=6 commit lane=6 A=00000001
+   B2 ROTC: acc=1 done=1 commit=1
+  c=1 accept op=1b
+  c=4 inst_done
+  c=4 commit lane=5 A=fffffffc
+   B3 QSUB: acc=1 done=1 commit=1 qsub_active_first=2
+  c=1 accept op=2a
+  c=555 rplu2_result_valid
+  c=556 inst_done
+  c=556 commit lane=4 A=00000002
+   B4 Pade 0x2A: acc=1 done=1 commit=1 result_valid_cycle=555
+== S1 single instructions after READY
+RES single qldi acc=1 done=1 commit=1 state_changed=1 QR9_ok=1
+== S2 opcodes outside the implemented set (core: ENABLE_MATH=1, RPLU2 pipeline; SOM, IROTC, Surd, extensions OFF)
+RES op=00 acc=1 done=1 commit=0 state_changed=0
+RES op=01 acc=1 done=1 commit=0 state_changed=0
+RES op=02 acc=1 done=1 commit=0 state_changed=0
+RES op=03 acc=1 done=1 commit=0 state_changed=0
+RES op=04 acc=1 done=1 commit=0 state_changed=0
+RES op=05 acc=1 done=1 commit=0 state_changed=0
+RES op=06 acc=1 done=1 commit=0 state_changed=0
+RES op=07 acc=1 done=1 commit=0 state_changed=0
+RES op=08 acc=1 done=1 commit=0 state_changed=0
+RES op=10 acc=1 done=1 commit=0 state_changed=0
+RES op=11 acc=1 done=1 commit=0 state_changed=0
+RES op=12 acc=1 done=1 commit=0 state_changed=0
+RES op=13 acc=1 done=1 commit=0 state_changed=0
+RES op=14 acc=1 done=1 commit=0 state_changed=0
+RES op=15 acc=1 done=1 commit=0 state_changed=0
+RES op=17 acc=1 done=1 commit=0 state_changed=0
+RES op=18 acc=1 done=1 commit=0 state_changed=0
+RES op=19 acc=1 done=1 commit=0 state_changed=0
+RES op=1a acc=1 done=1 commit=0 state_changed=0
+RES op=1f acc=1 done=1 commit=0 state_changed=0
+RES op=20 acc=1 done=1 commit=0 state_changed=0
+RES op=21 acc=1 done=1 commit=0 state_changed=0
+RES op=22 acc=1 done=1 commit=0 state_changed=0
+RES op=ff acc=1 done=1 commit=0 state_changed=0
+RES op=2b acc=1 done=1 commit=0 state_changed=0
+RES op=d6 acc=1 done=1 commit=0 state_changed=0
+RES op=d7 acc=1 done=1 commit=0 state_changed=0
+RES op=d8 acc=1 done=1 commit=0 state_changed=0
+RES op=70 acc=1 done=1 commit=0 state_changed=0
+RES op=76 acc=1 done=1 commit=0 state_changed=0
+RES op=77 acc=1 done=1 commit=0 state_changed=0
+RES op=48 acc=1 done=1 commit=0 state_changed=0
+RES op=4c acc=1 done=1 commit=0 state_changed=0
+RES op=5a acc=1 done=1 commit=0 state_changed=0
+RES op=a0 acc=1 done=1 commit=0 state_changed=0
+RES op=30 acc=1 done=1 commit=0 state_changed=0
+RES op=31 acc=1 done=1 commit=0 state_changed=0
+RES op=60 acc=1 done=1 commit=0 state_changed=0
+RES op=61 acc=1 done=1 commit=0 state_changed=0
+RES op=e0 acc=1 done=1 commit=0 state_changed=0
+== S3 ROTC (QR6<-QR0 angle1) then QLDI intruder QR9 at gap g (ROTC: accept c=1, rote_done_tdm c=5, done c=6)
+   NOTE gap=1: consecutive strobes hold inst_valid high (continuous-valid); not an independent collision
+RES rotc+qldi gap=1 acc=1 done=1 commit=1 rdt=1 active_ok=1 intruder_ok=0  <-- ANOMALY
+RES rotc+qldi gap=2 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+RES rotc+qldi gap=3 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+RES rotc+qldi gap=4 acc=2 done=1 commit=1 rdt=1 active_ok=0 intruder_ok=1  <-- ANOMALY
+RES rotc+qldi gap=5 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+RES rotc+qldi gap=6 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+RES rotc+qldi gap=7 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+RES rotc+qldi gap=8 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+RES rotc+qldi gap=9 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+== S3b QLDI then ROTC at gap g
+   NOTE gap=1: consecutive strobes hold inst_valid high (continuous-valid); not an independent collision
+RES rotc+qldi gap=1 acc=1 done=1 commit=1 rdt=0 active_ok=0 intruder_ok=1  <-- ANOMALY
+RES rotc+qldi gap=2 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+RES rotc+qldi gap=3 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+RES rotc+qldi gap=4 acc=2 done=2 commit=2 rdt=1 active_ok=1 intruder_ok=1
+== S3c ROTC then ROTC (same dest) at gap g
+   NOTE gap=1: consecutive strobes hold inst_valid high (continuous-valid); not an independent collision
+RES rotc+rotc gap=1 acc=1 done=1 commit=1 QR6=1 QR7=0  <-- ANOMALY
+RES rotc+rotc gap=2 acc=2 done=2 commit=2 QR6=0 QR7=1  <-- ANOMALY
+RES rotc+rotc gap=3 acc=2 done=1 commit=1 QR6=0 QR7=1  <-- ANOMALY
+RES rotc+rotc gap=4 acc=2 done=1 commit=1 QR6=0 QR7=1  <-- ANOMALY
+RES rotc+rotc gap=5 acc=2 done=2 commit=2 QR6=1 QR7=1
+RES rotc+rotc gap=6 acc=2 done=2 commit=2 QR6=1 QR7=1
+RES rotc+rotc gap=7 acc=2 done=2 commit=2 QR6=1 QR7=1
+== S5b after the ROTC/QLDI collision (gap=4): is the core left wedged? follow-up ROTC QR8<-QR0 angle1
+   after collision: rote_active=0 rotc_busy_flag=1 QR6_ok=0
+RES followup rotc acc=1 done=1 commit=1 QR8_ok=1 rote_active=0
+== S4 QSUB (QR5=QR0-QR1; qsub_active from c=2, done c=4) then QLDI intruder at gap g
+   NOTE gap=1: consecutive strobes hold inst_valid high (continuous-valid); not an independent collision
+RES qsub+qldi gap=1 acc=1 done=1 commit=1 active_ok=1 intruder_ok=0  <-- ANOMALY
+RES qsub+qldi gap=2 acc=2 done=1 commit=1 active_ok=1 intruder_ok=0  <-- ANOMALY
+RES qsub+qldi gap=3 acc=2 done=2 commit=2 active_ok=1 intruder_ok=1
+RES qsub+qldi gap=4 acc=2 done=2 commit=2 active_ok=1 intruder_ok=1
+RES qsub+qldi gap=5 acc=2 done=2 commit=2 active_ok=1 intruder_ok=1
+== S4b ROTC then QSUB intruder at gap g
+   NOTE gap=1: consecutive strobes hold inst_valid high (continuous-valid); not an independent collision
+RES rotc+qsub gap=1 acc=1 done=1 commit=1 active_ok=1 intruder_ok=0  <-- ANOMALY
+RES rotc+qsub gap=2 acc=2 done=1 commit=1 active_ok=0 intruder_ok=1  <-- ANOMALY
+RES rotc+qsub gap=3 acc=2 done=1 commit=1 active_ok=0 intruder_ok=1  <-- ANOMALY
+RES rotc+qsub gap=4 acc=2 done=1 commit=1 active_ok=1 intruder_ok=0  <-- ANOMALY
+RES rotc+qsub gap=5 acc=2 done=2 commit=2 active_ok=1 intruder_ok=1
+RES rotc+qsub gap=6 acc=2 done=2 commit=2 active_ok=1 intruder_ok=1
+RES rotc+qsub gap=7 acc=2 done=2 commit=2 active_ok=1 intruder_ok=1
+== S4c Pade 0x2A (accept c=1, rplu2_result_valid c=555, done c=556) then QLDI intruder at gap g
+RES pade+qldi gap=100 acc=2 done=2 commit=2 intruder_ok=1 resv=1
+RES pade+qldi gap=551 acc=2 done=2 commit=2 intruder_ok=1 resv=1
+RES pade+qldi gap=552 acc=2 done=2 commit=2 intruder_ok=1 resv=1
+RES pade+qldi gap=553 acc=2 done=2 commit=2 intruder_ok=1 resv=1
+RES pade+qldi gap=554 acc=2 done=1 commit=1 intruder_ok=0 resv=1  <-- ANOMALY
+RES pade+qldi gap=555 acc=2 done=2 commit=2 intruder_ok=1 resv=1
+RES pade+qldi gap=556 acc=2 done=2 commit=2 intruder_ok=1 resv=1
+RES pade+qldi gap=557 acc=2 done=2 commit=2 intruder_ok=1 resv=1
+== S4d Pade then ROTC/QSUB intruder across result_valid window
+RES pade+rotc gap=553 acc=2 done=2 commit=2 rdt=1 resv=1
+RES pade+rotc gap=554 acc=2 done=1 commit=1 rdt=0 resv=1  <-- ANOMALY
+RES pade+rotc gap=555 acc=2 done=2 commit=2 rdt=1 resv=1
+RES pade+rotc gap=556 acc=2 done=2 commit=2 rdt=1 resv=1
+RES pade+qsub gap=553 acc=2 done=2 commit=2 resv=1 QR5_ok=1
+RES pade+qsub gap=554 acc=2 done=1 commit=1 resv=1 QR5_ok=0  <-- ANOMALY
+RES pade+qsub gap=555 acc=2 done=2 commit=2 resv=1 QR5_ok=1
+RES pade+qsub gap=556 acc=2 done=2 commit=2 resv=1 QR5_ok=1
+== S6 repeated identical instructions
+   NOTE gap=1: consecutive strobes hold inst_valid high (continuous-valid); not an independent collision
+  c=1 accept op=1d
+  c=2 inst_done
+  c=2 commit lane=9 A=00000007
+RES qldi x2 gap=1 acc=1 done=1 commit=1
+  c=1 accept op=1d
+  c=2 inst_done
+  c=2 commit lane=9 A=00000007
+  c=4 accept op=1d
+  c=5 inst_done
+  c=5 commit lane=9 A=00000007
+RES qldi x2 gap=3 acc=2 done=2 commit=2
+  c=1 accept op=1d
+  c=2 inst_done
+  c=2 commit lane=9 A=00000007
+  c=21 accept op=1d
+  c=22 inst_done
+  c=22 commit lane=9 A=00000007
+RES qldi x2 gap=20 acc=2 done=2 commit=2
+  c=1 accept op=2a
+  c=555 rplu2_result_valid
+  c=556 inst_done
+  c=556 commit lane=4 A=00000002
+  c=701 accept op=2a
+  c=1255 rplu2_result_valid
+  c=1256 inst_done
+  c=1256 commit lane=4 A=00000002
+RES pade x2 gap=700 acc=2 done=2 commit=2 resv=2
+== S7 instruction while not READY (boot_done=1; strobe at c cycles after reset release)
+RES boot strobe_at=1 ready_first_seen=14 acc=0 done=0 QR9_ok=0  <-- strobe lost (no accept, no done, no flag)
+RES boot strobe_at=4 ready_first_seen=14 acc=0 done=0 QR9_ok=0  <-- strobe lost (no accept, no done, no flag)
+RES boot strobe_at=7 ready_first_seen=14 acc=0 done=0 QR9_ok=0  <-- strobe lost (no accept, no done, no flag)
+RES boot strobe_at=10 ready_first_seen=14 acc=0 done=0 QR9_ok=0  <-- strobe lost (no accept, no done, no flag)
+RES boot strobe_at=13 ready_first_seen=14 acc=1 done=1 QR9_ok=1
+RES boot strobe_at=16 ready_first_seen=14 acc=1 done=1 QR9_ok=1
+RES boot strobe_at=19 ready_first_seen=14 acc=1 done=1 QR9_ok=1
+RES boot strobe_at=22 ready_first_seen=14 acc=1 done=1 QR9_ok=1
+== S7b boot_done held 0 (never READY); strobe; then boot_done raised
+RES boot_done-late strobe acc=0 done=0 QR9_ok=0 ready=1 (instruction was not replayed after READY)

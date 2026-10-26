@@ -1,0 +1,38 @@
+== SC0 baseline single 0x2A
+  c=116 pade_done
+  c=117 commit lane=4 A=00000002
+RES sidecar single claim=1 err=0 commit=1 pade_done_cycle=116 busy_end=0
+== SC1 second 0x2A at gap g (first accept c=1)
+   NOTE gap=1: consecutive strobes hold inst_valid high (continuous-valid); not an independent collision
+RES sidecar 2A+2A gap=1 claim=2 err=0 commits=1 done=1                      <-- see detail
+RES sidecar 2A+2A gap=2 claim=2 err=1 commits=1 done=1  (second rejected with error pulse)
+RES sidecar 2A+2A gap=3 claim=2 err=1 commits=1 done=1  (second rejected with error pulse)
+RES sidecar 2A+2A gap=4 claim=2 err=1 commits=1 done=1  (second rejected with error pulse)
+RES sidecar 2A+2A gap=5 claim=2 err=1 commits=1 done=1  (second rejected with error pulse)
+RES sidecar 2A+2A gap=6 claim=2 err=1 commits=1 done=1  (second rejected with error pulse)
+RES sidecar 2A+2A gap=7 claim=2 err=1 commits=1 done=1  (second rejected with error pulse)
+  c=12 error pulse
+  c=116 pade_done
+  c=117 commit lane=4 A=00000002
+RES sidecar 2A+2A gap=10 claim=2 err=1 commits=1 done=1
+  c=107 error pulse
+  c=116 pade_done
+  c=117 commit lane=4 A=00000002
+RES sidecar 2A+2A gap=105 claim=2 err=1 commits=1 done=1
+  c=116 pade_done
+  c=117 commit lane=4 A=00000002
+  c=316 pade_done
+  c=317 commit lane=5 A=00000002
+RES sidecar 2A+2A gap=200 claim=2 err=0 commits=2 done=2
+== SC2 second 0x2A just after completion
+RES sidecar 2A+2A gap=112 claim=2 err=1 commits=1 done=1
+RES sidecar 2A+2A gap=113 claim=2 err=1 commits=1 done=1
+RES sidecar 2A+2A gap=114 claim=2 err=1 commits=1 done=1
+RES sidecar 2A+2A gap=115 claim=2 err=0 commits=2 done=2
+RES sidecar 2A+2A gap=116 claim=2 err=0 commits=2 done=2
+RES sidecar 2A+2A gap=117 claim=2 err=0 commits=2 done=2
+RES sidecar 2A+2A gap=118 claim=2 err=0 commits=2 done=2
+RES sidecar 2A+2A gap=119 claim=2 err=0 commits=2 done=2
+RES sidecar 2A+2A gap=120 claim=2 err=0 commits=2 done=2
+RES sidecar 2A+2A gap=121 claim=2 err=0 commits=2 done=2
+RES sidecar 2A+2A gap=122 claim=2 err=0 commits=2 done=2
