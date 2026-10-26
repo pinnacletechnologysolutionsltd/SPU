@@ -1,7 +1,7 @@
 # SPU Instruction Set Architecture v0.2
 ## Domain, metric, and exact-execution specification — REVIEW DRAFT
 
-**Document revision:** 0.2-draft.5 (amendments ISA-V02-D1-A, QROT-1, SNAP-1 and POLYSTEP-1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
+**Document revision:** 0.2-draft.6 (amendments ISA-V02-D1-A, QROT-1, SNAP-1, POLYSTEP-1 and STATE-1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
 
 **Date:** 26 October 2026  
 **Status:** **NON-NORMATIVE / FOR ENGINEERING REVIEW**  
@@ -244,6 +244,20 @@ Findings: [`ISA_V02_SNAP1_FINDINGS.md`](ISA_V02_SNAP1_FINDINGS.md) (source readi
 
 **Status classes (proposed vocabulary).** *Architectural state*: registers, PC and other state a named profile defines. *Architectural status*: faults or results observable through specified mechanisms (for example Surd-extension `SSTAT`, implemented and independent). *Implementation diagnostics*: VM `snap_failures` and `fault_kind`, the SPI-exposed `rotc_debug_status`, pins such as `flags_v`, and the tagged rotor fault outputs. These are not interchangeable and are not unified here.
 
+### 6.6 Execution state and proposed profiles (STATE-1)
+
+Findings: [`ISA_V02_STATE1_FINDINGS.md`](ISA_V02_STATE1_FINDINGS.md) (source reading at `dev/next` `c2f7b36`; existing VM, assembler and RTL sources unchanged from public RC2 `b063280`; no simulation, synthesis or board work). Normative architectural-state contract: **HOLD**.
+
+**The software VMs and the SPU-13 RTL do not implement the same machine model.** The VMs have scalar registers `R0–R25`, `QR0–QR12`, a program counter, a call stack, retirement counting and `halted`/`fault_kind`. The RTL core has `QR0–QR12` (ECC regfile, tags), a boot FSM and a host-driven ingress (`inst_valid`/`inst_word`, `inst_done` pulse); it has no scalar file, PC, call stack or fault state. Matching opcode numbers do not establish equivalent behavior.
+
+**Unsupported opcodes.** The VMs refuse them (`UNSUPPORTED`, atomic in C++). The RTL's final instruction-FSM branch (`spu13_core.v:1662-1678`) pulses `inst_done` with no effect for any accepted opcode it does not implement (for example `LD`, `ADD`, `JMP`, `HALT`, `SNAP`, `QADD`, `QROT`) and for opcodes whose feature parameter is off. A host cannot tell an executed instruction from an acknowledged no-op, and `inst_done` must not be read as successful retirement. No repository profile specifies a hardware refusal; the software profile specifies `UNSUPPORTED`.
+
+**QR reset state and scale.** The VMs reset QRs to zero. The RTL hydrates QR0 and QR1–12 with the 12 cuboctahedron vertices after `boot_done`, in Q12 units (`0x1000` per unit), while `QLDI` loads unscaled integers; how the two scales coexist, and the lane layout, were not established.
+
+**Not shown.** Back-to-back and busy-state behavior of the RTL ingress (so two submitted instructions are not shown to produce two ordered executions) and the consumers of the ECC flags were not traced. The Python VM's gasket/henosis hook can mutate QRs after any instruction; C++ has no such hook.
+
+**PROPOSED profiles (not implemented contracts).** *C0, software execution profile:* a sequential machine with scalar and Quadray registers, PC, call stack, retirement and atomic, non-retiring faults (building on `ISA_SOFTWARE_SEMANTICS_2026-10-10.md`); Python-only gasket/SDF/henosis behavior is a named extension, not C0. *H0, host-driven hardware execution profile:* a Quadray execution engine with an explicit boot FSM, single-instruction ingress with an `inst_done` pulse, and a verified subset of operations; it must specify the QR reset state and scale, the treatment of every opcode outside the subset, and acceptance, busy and ordering behavior. **H0 is not a complete implementation of C0.** The SPI transport (CRC, strobe, sidecar claim, status byte) is host transport, distinct from architectural execution and refusal.
+
 ## 7. Conformance and provenance
 
 ### 7.1 Reference baseline
@@ -297,6 +311,10 @@ Independent adversarial review report `/tmp/isa-v02-adversarial-review-eaabd9f.m
 | **O11** | `QROT` normative form and preserved quantity | Implemented in-place one-step form preferred provisionally; **HOLD**: untagged similarity of ratio `u²` established (§4.4); tag/octave path, operand encoding and bounded refusal unresolved. |
 | **O12** | `SNAP` and the FLAGS-word contract | Stability scan preferred provisionally as a VM diagnostic instruction with explicit diagnostic-state side effects; FLAGS is an unresolved proposal, not an implemented register (§6.5, SNAP-1). **HOLD.** |
 | **O13** | Common-core membership of `SOM`, `PHADD`, `PHCFG`, `RATIO_CMP`, `MIN4`, `REGEN` | **UNRESOLVED**; decided by semantic qualification (§6.2). |
+| **O14** | Machine-state model: C0 software and H0 host-driven hardware profiles | **PROPOSED**, not ratified (§6.6, STATE-1). H0 is not a complete implementation of C0. **HOLD.** |
+| **O15** | Hardware treatment of opcodes outside an implemented subset (acknowledge versus refuse) and the meaning of `inst_done` | **UNRESOLVED** design decision; current RTL acknowledges without effect (§6.6). Proposed as a qualification gate before executable bitstreams are distributed. |
+| **O16** | QR reset state, scale (Q12 hydration versus unscaled `QLDI`) and lane layout in the RTL | **UNRESOLVED** (§6.6). |
+| **O17** | RTL ingress acceptance, busy and ordering behavior | **UNVERIFIED** (§6.6). |
 | **O8** | Instruction-granularity cost evidence? | SFL-0 pending approved experiment; not a prerequisite for documenting existing semantics, but needed before new fused-op adoption. |
 
 ## 10. Proposed release gate
@@ -312,6 +330,7 @@ This review draft derives its specific implementation claims from the supplied:
 - [`ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md`](ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md) (draft domain/metric/profile matrix).
 - [`SFL0_CONTRACT_DRAFT.md`](SFL0_CONTRACT_DRAFT.md) (unapproved small-form research contract; not authorized to execute).
 - [`ICOS0_FINDINGS.md`](../ICOS0_FINDINGS.md) (software icosian/E₈ oracle findings).
+- [`ISA_V02_STATE1_FINDINGS.md`](ISA_V02_STATE1_FINDINGS.md) (architectural-state characterization across spec, VMs and RTL, source reading at `c2f7b36`).
 - [`ISA_V02_POLYSTEP1_FINDINGS.md`](ISA_V02_POLYSTEP1_FINDINGS.md) (`POLY_STEP` characterization, source reading at `fe6365d`).
 - [`ISA_V02_SNAP1_FINDINGS.md`](ISA_V02_SNAP1_FINDINGS.md) (`SNAP`/FLAGS and status-mechanism characterization, source reading at `6deab30`).
 - [`ISA_V02_O6_FINDINGS.md`](ISA_V02_O6_FINDINGS.md) and `isa_v02_o6_inventory.json` (source-derived opcode/state inventory and D1 reachability audit, commit `2cbfa6f`).
