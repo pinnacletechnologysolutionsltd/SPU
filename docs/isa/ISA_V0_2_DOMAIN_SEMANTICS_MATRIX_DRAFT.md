@@ -22,7 +22,7 @@ Rule: exactness in an unbounded oracle does not imply representability in a prof
 | `legacy_dot` | Quadray | Σvᵢwᵢ | NOT a metric: spread(A,A)=8/9 for (1,0,0,0); `qualified:false` |
 | gram_v1 spread | Quadray | N=B(v,v)B(w,w)−B(v,w)², D=B(v,v)B(w,w), unreduced | software conformance only; degenerate iff all four components equal |
 | icosian/E8 form | 8-lane Z[φ]⊗ | B(x,y)=2(a+b)=2·Tr(λ·dot), λ=(5+√5)/10 | positive definite; roots B=2; software-only |
-| Pell ROT/QROT (×(2+√3)) | Q(√3), Quadray | preserves x²−3y² (indefinite), NOT Euclidean quadrance | FIELD-0: Q 24 → 24(7+4√3); a similarity. Semantics UNRESOLVED |
+| Pell ROT/QROT (×(2+√3)) | Q(√3), Quadray | preserves x²−3y² (indefinite), NOT Euclidean quadrance | FIELD-0: Q 24 → 24(7+4√3); a similarity. Semantics UNRESOLVED. Implemented `QROT QRn` is in-place, one step, followed by `normalize()`; its preserved quantity is UNVERIFIED (source comment claims quadrance preserved, contradicting FIELD-0 for plain component scaling). Spec row `QROT Rd,Rs,n` is a different, scalar form |
 | none defined | A₃₁, Q(√3,√5) | – | do not infer a metric from register width or shared basis |
 
 ## 3. Representation & canonicalization (contract 3)
@@ -35,7 +35,7 @@ overflow invokes exact normalization (isa_reference). Open: Quadray gauge canoni
 |---|---|---|---|
 | gram_v1 SPREAD (0x15) | OK / DEGENERATE_METRIC / OVERFLOW(final int32 only, C++) | pre-instruction state preserved except halt/fault status | frozen contract; C++ 4022 cases: OK 1253, OVERFLOW 2761, DEGENERATE 8 |
 | Surd bank ops | SSTAT: OK, OVERFLOW=2, ENGINE_FAULT=3, BAD_ENCODING=4; SSTAT preserves last status | per surd-bank spec | isa_reference |
-| A₃₁ inverse | FLAGS.V on zero divisor | ? | MATHEMATICAL_FOUNDATIONS §8.3 |
+| A₃₁ inverse | FLAGS.V on zero divisor | RTL unit raises `flags_v`+`done` on zero norm and does not write `inv0..3`; consumer gating and architectural FLAGS readout: ? (no ISA-A encoding, no FLAGS word in either VM) | MATHEMATICAL_FOUNDATIONS §8.3; `spu13_fp4_inverter.v`; O6 findings |
 | Python vs C++ vs RTL | differ today (Python unbounded) | must be profile-labelled, not unified silently | ISA_CONFORMANCE reports |
 Principle: a profile states either "atomic: success or no architectural destination change" or lists permitted status/diagnostic writes. Existing profiles are not retro-fitted.
 
@@ -51,3 +51,6 @@ SFL-0 (separate draft) is the test of rows marked "lower first".
 
 ## 6. Open decisions for the owner
 1 Profile naming: legacy_dot vs gram_v1 default for ISA 0.2? 2 Quadray equality: gauge or component? 3 Is QROT a similarity (rename) or to be replaced? 4 Fixed-width semantics for Q(√3,√5) and icosian — in scope for 0.2? 5 Which profiles (Python/C++/RTL) must satisfy atomic refusal?
+
+## 7. D1-A amendment cross-reference (documentation only)
+Common-core vocabulary, extension profiles (`0x2A` SOM vs RPLU2, JSCR/NSA, Lucas/Neuro/SU3), the `POLY_STEP = 0xE0` encoding candidate and its VM/RTL semantic blocker, `QROT` operand form and `SNAP` vs FLAGS are recorded in `ISA_V0_2_REVIEW_DRAFT.md` §6.2–§6.5 and §9 (O9–O13). Reachability evidence with source locations: `ISA_V02_O6_FINDINGS.md` §D1. Nothing here changes an encoding or a frozen definition.

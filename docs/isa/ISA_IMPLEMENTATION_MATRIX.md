@@ -67,3 +67,13 @@ The control row now reflects focused software repairs. The September/October9
 collision findings above are historical diagnoses; the repair code exists, but
 full repository qualification remains pending. Unchanged rows retain their
 original evidence scope. Core fetch/PC/stack was not added.
+
+## D1-A annotation (2026-10-26, documentation only)
+
+Rows above are unchanged historical evidence. The source-derived inventory
+(`isa_v02_o6_inventory.json`, commit `2cbfa6f`) supersedes this table as the
+opcode inventory. Annotations: `POLY_STEP` is `0xE0` in the Python VM and core
+RTL (this table's "legacy" row does not give the value; the spec row says
+`0x60`); the QROT row's operand form and the SNAP/FLAGS contract are on HOLD;
+`0x2A` is SOM or RPLU2 by build configuration. See `ISA_V0_2_REVIEW_DRAFT.md`
+§6.2–§6.5 and `ISA_V02_O6_FINDINGS.md` §D1.

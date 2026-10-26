@@ -1,7 +1,8 @@
 # SPU Instruction Set Architecture v0.2
 ## Domain, metric, and exact-execution specification — REVIEW DRAFT
 
-**Document revision:** 0.2-draft.1  
+**Document revision:** 0.2-draft.2 (amendment ISA-V02-D1-A, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
+
 **Date:** 26 October 2026  
 **Status:** **NON-NORMATIVE / FOR ENGINEERING REVIEW**  
 **Reference integration commit:** `6fc6efc951b4e5b898f0ed0f2451c7434953d5ed`  
@@ -107,6 +108,10 @@ A Quadray direction is degenerate when all four of its components are equal. The
 
 Multiplication by `2+√3` preserves the Pell-type indefinite form `x²−3y²` in its corresponding representation. It does **not** preserve the Quadray Euclidean quadrance used elsewhere: a FIELD-0 witness changes `Q=24` to `Q=24(7+4√3)`.
 
+**Actual software operand form (O6/D1-A, source-checked).** The historical row in `knowledge/isa_reference.md` is `QROT Rd, Rs, n` with `R[d] = R[s] × (2+√3)ⁿ` (scalar registers, exponent operand). The Python VM (`software/spu_vm.py`, `OPCODES["QROT"]`) and the C++ VM (`software/vm/spu_vm.cpp`, `case 0x11`) instead implement `QROT QRn`: one in-place step on Quadray register `n = R1 mod 13`, no exponent. The assembler accepts `QROT QRd [, Rs]` and encodes the optional second operand in `R2`, which both VMs ignore. Each component is multiplied by `(2+√3)` through `rotate_phi()` and the result is then passed through `normalize()` (common-offset removal). The Python VM additionally sets the register's φ-plane tag to `PHI_UNTAGGED`. These are two incompatible contracts; neither is ratified here.
+
+**Metric status: UNVERIFIED.** The source comment on `QuadrayVector.rotate()` asserts that quadrance is preserved (`Q(result) = Q(self) × Q(2,1)⁴`), which conflicts with the FIELD-0 witness recorded above (`Q=24 → 24(7+4√3)` under component scaling by `u`). Whether the *implemented* operation, including the `normalize()` step, preserves any particular form has not been checked against its component transformations, and this draft does not assert that it does. Preferring the implemented one-step in-place form as the starting definition for v0.2 is a **provisional owner direction**; ratification is **HOLD**.
+
 **PROPOSED:** describe the operation in future documentation as a **Pell unit dilation** (uniform scaling of every component by the unit `u=2+√3`; a similarity, not an isometry), not an unqualified Euclidean `QROT` isometry. In the (embedding, conjugate) plane it acts as `diag(u, 1/u)`, which is why "boost" is sometimes used; that wording is avoided here to prevent a Lorentz-boost reading. Existing executable names remain unchanged until separately reviewed. Whether to rename or replace the relevant instruction is **UNRESOLVED**.
 
 ### 4.5 Icosian / E₈ bilinear form
@@ -142,7 +147,7 @@ This proposal requires each instruction to specify its fault precedence where mu
 
 - **Gram v1:** tested refusal categories `DEGENERATE_METRIC` and `OVERFLOW`; the frozen contract protects pre-instruction state other than specified halt/fault reporting. In the Python VM a `DEGENERATE_METRIC` refusal halts the core and records `fault_kind`; halt and fault status are therefore the permitted state effects of this profile's refusal, and any `CHECKED_EXACT` definition must say whether refusal halts.
 - **Surd bank:** documented `SSTAT` values include `OK`, `OVERFLOW=2`, `ENGINE_FAULT=3`, and `BAD_ENCODING=4`; the bank's last-status semantics are profile-specific.
-- **A31 inverse:** zero-divisor handling associates a `FLAGS.V` condition; exact destination and ancillary state effects remain **UNRESOLVED** here.
+- **A31 inverse:** zero-divisor handling associates a `FLAGS.V` condition; exact destination and ancillary state effects remain **UNRESOLVED** here. RTL source (`spu13_fp4_inverter.v`) shows the zero-norm path raising `flags_v` and `done` without writing the `inv0..3` outputs; whether consumers gate those stale values is not established. The inverter checks one norm; whether that detects every non-invertible element of the split algebra is an open mathematical audit (HOLD, not started).
 - **BQ/ICOS:** no finite-width refusal contract exists yet; software exactness is not evidence for one.
 
 ## 6. Instruction vocabulary and status
@@ -154,8 +159,8 @@ This document is a **semantic architecture draft**, not a replacement for the fr
 | Gram v1 `SPREAD` | `0x15` (profile-specific) | Quadray, `B_Q` | Implemented/tested in software VM | Retain; propose Gram semantics for a new explicit v0.2 geometry profile. |
 | `SNORM` | Refer to existing ISA reference | Surd bank | Implemented, profile-specific | Carry forward without redefining encoding/behavior. |
 | Surd arithmetic / conversions | Refer to existing ISA reference | SURD3 | Existing bank/RTL profiles | Record exact width/status per profile. |
-| Pell `ROT`/`QROT` | Refer to existing ISA reference | Pell-type indefinite form | Existing research/implementation, semantic concern | No renaming/metric redefinition until review. |
-| A31 inverse | Refer to existing ISA reference | A31 modular algebra | Existing research/implementation | Refusal post-state audit remains open. |
+| Pell `ROT`/`QROT` | `ROT 0x04`, `QROT 0x11` | Pell-type indefinite form | Operand-form conflict (§4.4); metric of implemented in-place form unverified | HOLD; no renaming/metric redefinition until review. |
+| A31 inverse | **No ISA-A encoding found (O6)**; inverter `flags_v` pin only | A31 modular algebra | Existing RTL unit; not an instruction | Refusal post-state audit and zero-divisor coverage audit remain HOLD (§5.2). |
 | E₈ root reflection | **No encoding assigned** | ICOS/E8 `B_E` | Oracle-qualified | **Lower first**; no dedicated opcode yet. |
 | BQ norm/inverse | **No encoding assigned** | BQ field | Oracle-qualified | Defer fixed-width/ISA inclusion. |
 
@@ -166,6 +171,64 @@ Other current SPU opcodes are **not deleted or renumbered** by omission from thi
 A proposed opcode must offer a clearly stated reason why its observable contract or measured execution is not better served by competent lowering to existing operations. Candidate reasons include: useful atomic refusal, explicit certified metric semantics, bounded intermediates, or measured substantial reduction in cost. A favorable software operation-count result alone does not prove hardware advantage.
 
 **SFL-0** (Small-Form Lowering and Width Inference) is the proposed separate host-only experiment to test that rule for Gram and lattice operations. Its I0 conventional-CSE, I1 domain-aware lowering, and I2 fused cases require comparable primitive-level schedules and identical refusal semantics. **SFL-0 execution remains HOLD** pending reviewed tolerance, scheduling, sound width analysis, frozen inputs and acceptance definitions.
+
+### 6.2 Proposed common-core vocabulary and extension layering (amendment D1-A)
+
+**PROPOSED, documentation only. No opcode is renumbered, added or removed.** Three layers are distinguished: the **core ISA** (registers, scalar/surd/Quadray operations, control, exactness and refusal), **typed architectural extensions** (named, separately enabled mathematical capabilities) and **execution hardware** (units that implement instructions). An extension is an architectural namespace, not necessarily a hardware sidecar; a hardware unit that merely executes a defined native instruction is not an extension. Profile strings such as `SPU-CORE-0.2 + SURD3 + GRAM` are **illustrative only**; names and definitions are not yet assigned.
+
+Membership is an architectural decision and is **not** inferred from agreement among the specification, Python VM and assembler. The opcode inventory is source-derived evidence (`isa_v02_o6_inventory.json`), not a membership ruling. A core *vocabulary* candidate is not a claim of RTL support: the active RTL core implements an explicit subset (see `ISA_CONFORMANCE_2026-10-10.md`).
+
+| Family | Opcodes (ISA-A) | Proposed treatment | Status |
+|---|---|---|---|
+| Scalar | `LD ADD SUB MUL ROT LOG` (`0x00–0x05`) | Core candidate | Spec/VM/assembler present; RTL core scalar execution not established |
+| Control | `JMP HALT CALL RET NOP` (`0x06 0x08 0x20 0x21 0xFF`) | Core candidate | `CALL`/`RET` encodings frozen 2026-10-09 |
+| `SNAP` | `0x07` | **HOLD**, see §6.5 | VM stability scan vs spec FLAGS read |
+| Quadray | `QADD QNORM QLOAD QLOG QSUB QLDI DELTA MIN4 QREAD` | Core candidate | `MIN4` absent from C++ VM |
+| `QROT` | `0x11` | **HOLD**, see §4.4 | Operand-form conflict; metric unverified |
+| Rotation/geometry | `ROTC` (`0x1C`), `SPREAD` (`0x15`), `HEX` (`0x16`), `EQUIL IDNT JINV ANNE` | Core candidate | `SPREAD` metric profile per O1 |
+| `REGEN` | `0x09` | Core candidate | Testbench-verified RTL; no silicon entry in the ledger |
+| `POLY_STEP` | `0xE0` | Core candidate, **encoding candidate only**, see §6.4 | Semantic blocker |
+| Surd extension | `0x70–0x77` | Typed extension (`ENABLE_SURD_CPU`, default 0) | Not in either VM; in assembler and RTL |
+| IROTC extension | `0xD6–0xD8` | Typed extension (`ENABLE_IROTC`, default 0) | Not in C++ VM |
+| SOM / SOM_TRAIN | `0x2A 0x2B` | Extension profile, **core membership unresolved** | See §6.3 |
+| RPLU2 | `0x2A` and config path | Extension profile | See §6.3 |
+| Phinary / legacy poly | `PHADD PHCFG` (`0x30 0x31`), `RATIO_CMP` (`0x61`) | Core membership unresolved | `PHADD` may expose reusable exact arithmetic; judged by semantics, not origin |
+| Lucas, Neuro, SU3 | `0xD0–0xD5`, `0xE0–0xE3`, `0xE8–0xEB` | **Legacy experimental** extensions, outside the common core | See §6.3 |
+| `JSCR`, `NSA` | `0x48`, `0x4C 0x4D` | Implementation extensions | See §6.3 |
+
+**Evidence is preserved, not reclassified.** `docs/hardware_evidence.md` contains entries for Lucas (§3.2e, §3.2e.1, §3.2e.2, §3.2e.7), SU3 (§3.2e.5, §3.2e.6), the Neuro SPI probe (§3.2d), RPLU2 (§3.2c, §3.2e.4, §3.2f) and SOM (§2.6). Classifying a family as an extension neither strengthens nor weakens those entries; this document restates none of them. The ledger has no entry for `JSCR`, `NSA` or `POLY_STEP`.
+
+### 6.3 Extension profiles and reachability (D1 active-decode audit)
+
+"Reachable" means decodable in at least one in-tree build configuration (sources only; external configurations and board qualification were not evaluated). Source locations are in [`ISA_V02_O6_FINDINGS.md`](ISA_V02_O6_FINDINGS.md) §D1.
+
+| Opcode | Owner(s) and enabling conditions | Collision | Classification |
+|---|---|---|---|
+| `0x2A` as **SOM** (classify) | `spu13_core.v`, `ENABLE_CORE_SOM`, and not (`ENABLE_CORE_RPLU_V2` and `..._PIPELINE`) | RPLU2 start on the same value | Extension profile "SOM"; core membership **UNRESOLVED** |
+| `0x2A` as **RPLU2 start** | `spu13_core.v` when `ENABLE_CORE_RPLU_V2 && ..._PIPELINE`; or the coreless `spu13_rplu2_sidecar` / `..._pade_sidecar` | SOM on the same value | Extension profile "RPLU2" (implementation extension) |
+| `0x2B` SOM_TRAIN | `spu13_core.v`, `ENABLE_CORE_SOM` only | none decoded | Extension profile "SOM"; membership **UNRESOLVED** |
+| `0xE0` | `spu13_core.v`: ungated POLY_STEP handler; `spu13_neuro_sidecar_adapter` (Tang probe only) | `NEURO_CFG`; **not reachable together** in any in-tree top | POLY_STEP: core candidate; `NEURO_CFG`: legacy experimental |
+| `0x48` JSCR; `0x4C 0x4D` NSA | `spu13_core.v`, effect only with `ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_EXTENSIONS`; without it `0x48` is acknowledged with no effect | none | Implementation extension |
+| `0xD0–0xD5` Lucas | `spu13_lucas_sidecar`, `SPIN="LUCAS"` | none | Legacy experimental |
+| `0xE8–0xEB` SU3 | `spu13_su3_sidecar`, `SPIN="SU3"`, `"SU3SHARE"` | none | Legacy experimental |
+
+**Current FULL and INTELLIGENCE configuration (Artix-7 `spu_a7_top.v` spin table).** Both spins set `ENABLE_CORE_SOM = 1`, `ENABLE_CORE_RPLU_V2 = 1` and `..._PIPELINE = 1` (extensions off). In those builds the core decodes `0x2A` as **RPLU2 start**; the legacy SOM launch is suppressed for that opcode, while `0x2B` SOM_TRAIN remains decoded under `ENABLE_CORE_SOM`. So these two spins do not provide legacy `0x2A` SOM classification. Whether the SOM-enabled weights and the RPLU2 pipeline's own SOM stage interact on those spins was not audited. The Colorlight RPLU2 top has SOM off and RPLU2 pipeline on (`0x2A` = RPLU2). Resolution of the two meanings (separate profiles that must not co-enable, or an explicit selector) is a future encoding decision and is not made here.
+
+**Arbitration.** In `spu_a7_top.v` a sidecar that claims an instruction masks it from the core (`core_inst_valid = spi_inst_valid && !lucas_claimed && !su3_claimed && !rplu2_sidecar_claimed`). The Neuro adapter is instantiated only in the Tang probe and has no such arbiter alongside a core.
+
+**Board-qualification limits.** `JSCR`/`NSA` are enabled only by two testbenches (`spu13_core_jscr_tb.v`, `spu13_core_nsa_handshake_tb.v`); every synthesis target found sets `EXTENSIONS` to 0, and there is no ledger entry. They are **simulation-only**.
+
+### 6.4 `POLY_STEP` encoding candidate and semantic blocker
+
+**Encoding candidate: `0xE0`**, supported by current executable decode: the Python VM's effective table value, the core RTL handler (`spu13_core.v`), and `L_OP_POLY_STEP` in `spu_lithic_l.h`. The specification row (`0x60`) and a shadowed `0x60` entry in the VM dict are legacy. `RATIO_CMP` remains `0x61`. The retained SIM0 review (`SPU13_SOFT_V1_SIM0_REVIEW_2026-10-15.md`) names `POLY_STEP(60)` as rejected `UNSUPPORTED`; `0xE0` is equally unsupported there, so execution behavior is unchanged. Per `ISA_CONFORMANCE_2026-10-10.md`, legacy records must not be translated by opcode value alone. This is a candidate, not an executed or ratified renumbering of the specification.
+
+**UNRESOLVED qualification blocker (semantics).** The Python VM executes `POLY_STEP Rbase, Rx` as a Padé P(x)/Q(x) (4/4, Q32) evaluation with numerator and denominator written to `R[r1]`, `R[r1+1]`. The core RTL handler issues an RPLU Artery write (`sel = 7`, address index from `inst_word[33:24]`) and writes no scalar result. These are different architectural effects; the instruction has no single observable contract.
+
+### 6.5 `SNAP` implemented behavior and the FLAGS contract
+
+**Implemented (both VMs):** `SNAP` scans scalar registers `R0–R25` and records or reports registers that are non-zero and not laminar (`a² − 3b² ≤ 0`), incrementing a failure counter; the Python VM also evaluates its SDF layer there. No FLAGS word is produced or read. Preferring this stability scan as the starting definition is a **provisional owner direction**; ratification is **HOLD**.
+
+**Unresolved separately:** the 6-bit FLAGS register that `knowledge/isa_reference.md` says is "read via the `SNAP` opcode" (Z, C, V, MISALIGNED, OVERFLOW, INEXACT) is not provided by either VM, and a core `SNAP` handler is not established. A v0.2 document must not advertise an architectural FLAGS readout until an implementation and a read instruction exist. `FLAGS.V` as the A31 zero-divisor indicator is therefore currently unreachable from the instruction set (the inverter drives a `flags_v` pin; no ISA-A encoding is tied to it).
 
 ## 7. Conformance and provenance
 
@@ -206,11 +269,16 @@ Passing one profile does not confer conformance on another. A separately specifi
 |---|---|---|
 | **O1** | Which named profile owns Gram-default spread? | **PROPOSED:** new v0.2 geometry profile; legacy remains explicit. Profile name/compatibility mapping unresolved. |
 | **O2** | How is Quadray geometric gauge equality exposed? | **PROPOSED:** value equality is gauge-based, raw equality component-based. Gauge canonicalization algorithm and encoding unresolved. |
-| **O3** | How to document/name Pell `QROT`? | **PROPOSED:** Pell boost or qualified similarity; frozen instruction naming unchanged pending review. |
+| **O3** | How to document/name Pell `QROT`? | **PROPOSED:** Pell boost or qualified similarity; frozen instruction naming unchanged pending review. Operand-form conflict now recorded (see O11). |
 | **O4** | Are BQ and ICOS fixed-width operations in initial v0.2? | **PROPOSED:** no; retain as oracle-backed research fixtures. |
 | **O5** | Which implemented profiles guarantee atomic refusal? | **UNRESOLVED** pending per-profile state audits; proposed new checked profile only. |
-| **O6** | Exhaustive opcode table, encodings and machine-state model? | **REQUIRED** from `knowledge/isa_reference.md` / implementation matrix before normative release. Not reconstructed from partial excerpts. |
+| **O6** | Exhaustive opcode table, encodings and machine-state model? | Source-derived inventory exists (`isa_v02_o6_inventory.json`, findings in `ISA_V02_O6_FINDINGS.md`); discrepancies are recorded, not repaired. Machine-state model and per-opcode fault precedence remain **REQUIRED**. |
 | **O7** | Exact integer/fixed-point scaling, normalization, fault precedence and register layouts? | **REQUIRED** per profile before normative release. |
+| **O9** | Ownership of `0x2A` (SOM vs RPLU2) and of SOM/SOM_TRAIN core membership | **UNRESOLVED**; reachable collision, see §6.3. FULL/INTELLIGENCE currently resolve to RPLU2. |
+| **O10** | `POLY_STEP` canonical encoding and contract | Encoding candidate `0xE0`; VM/RTL semantic blocker open (§6.4). Spec amendment of the row not executed. |
+| **O11** | `QROT` normative form and preserved quantity | Implemented in-place one-step form preferred provisionally; **HOLD** pending metric verification (§4.4). |
+| **O12** | `SNAP` and the FLAGS-word contract | Stability scan preferred provisionally; FLAGS readout unresolved (§6.5). |
+| **O13** | Common-core membership of `SOM`, `PHADD`, `PHCFG`, `RATIO_CMP`, `MIN4`, `REGEN` | **UNRESOLVED**; decided by semantic qualification (§6.2). |
 | **O8** | Instruction-granularity cost evidence? | SFL-0 pending approved experiment; not a prerequisite for documenting existing semantics, but needed before new fused-op adoption. |
 
 ## 10. Proposed release gate
@@ -226,6 +294,7 @@ This review draft derives its specific implementation claims from the supplied:
 - [`ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md`](ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md) (draft domain/metric/profile matrix).
 - [`SFL0_CONTRACT_DRAFT.md`](SFL0_CONTRACT_DRAFT.md) (unapproved small-form research contract; not authorized to execute).
 - [`ICOS0_FINDINGS.md`](../ICOS0_FINDINGS.md) (software icosian/E₈ oracle findings).
+- [`ISA_V02_O6_FINDINGS.md`](ISA_V02_O6_FINDINGS.md) and `isa_v02_o6_inventory.json` (source-derived opcode/state inventory and D1 reachability audit, commit `2cbfa6f`).
 - `verification_summary.json` (integration revision and full-regression receipt; kept outside git, see §7.1).
 
 The matrix itself identifies further authoritative repository documents to consult before ratification: `knowledge/isa_reference.md`, `docs/isa/ISA_IMPLEMENTATION_MATRIX.md`, `research/sim_cap1_spread/GRAM_V1_CONTRACT_FROZEN.md`, FIELD-0/1 and Golden Core findings, and BQ-0 findings. At review (`6fc6efc`) the following claims were checked against those documents: the Gram form and spread formulas, the 4,022-case outcome counts, the `8/9` legacy self-test, the surd-bank widths and `SSTAT` values, the ICOS-0 form and roots, the BQ-0 131-bit scratch figure, and the FIELD-0 Pell witness. Opcode encodings, instruction-format bits, the exhaustive register layout and unspecified state transitions are still not reproduced here and have not been invented (see O6, O7).
