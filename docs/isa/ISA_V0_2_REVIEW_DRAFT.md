@@ -1,7 +1,7 @@
 # SPU Instruction Set Architecture v0.2
 ## Domain, metric, and exact-execution specification — REVIEW DRAFT
 
-**Document revision:** 0.2-draft.6 (amendments ISA-V02-D1-A, QROT-1, SNAP-1, POLYSTEP-1 and STATE-1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
+**Document revision:** 0.2-draft.7 (amendments ISA-V02-D1-A, QROT-1, SNAP-1, POLYSTEP-1, STATE-1 and A31-R1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
 
 **Date:** 26 October 2026  
 **Status:** **NON-NORMATIVE / FOR ENGINEERING REVIEW**  
@@ -258,6 +258,12 @@ Findings: [`ISA_V02_STATE1_FINDINGS.md`](ISA_V02_STATE1_FINDINGS.md) (source rea
 
 **PROPOSED profiles (not implemented contracts).** *C0, software execution profile:* a sequential machine with scalar and Quadray registers, PC, call stack, retirement and atomic, non-retiring faults (building on `ISA_SOFTWARE_SEMANTICS_2026-10-10.md`); Python-only gasket/SDF/henosis behavior is a named extension, not C0. *H0, host-driven hardware execution profile:* a Quadray execution engine with an explicit boot FSM, single-instruction ingress with an `inst_done` pulse, and a verified subset of operations; it must specify the QR reset state and scale, the treatment of every opcode outside the subset, and acceptance, busy and ordering behavior. **H0 is not a complete implementation of C0.** The SPI transport (CRC, strobe, sidecar claim, status byte) is host transport, distinct from architectural execution and refusal.
 
+### 6.7 A31 inverter refusal and result publication (A31-R1)
+
+Findings: [`ISA_V02_A31R1_FINDINGS.md`](ISA_V02_A31R1_FINDINGS.md) (source reading at `dev/next` `19b35fa`; existing VM, assembler and RTL sources unchanged from public RC2 `b063280`; no simulation, synthesis or board work). Normative refusal semantics and any repair: **HOLD**. `flags_v` is an internal signal and is not an architectural FLAGS register.
+
+On a zero-norm denominator the A31 inverter raises `flags_v`, pulses `done` and retains its previous `inv0..3`; the Padé engine propagates `flags_v` with `done`, does not use the stale inverter outputs, and retains its previous `result_c*`. **SAFE BY CONSTRUCTION** at source level: stale inverter outputs do not reach the Padé multiply; the RPLU2 Padé sidecar commits only when `!pade_flags_v` (`qr_commit_valid`); the SPI `0xAE` latch updates only on commit-valid. **POTENTIALLY UNSAFE** at source level (not reproduced in simulation or on hardware): the ordinary RPLU pipeline latches the Padé result and raises `thimble_valid` without checking `pade_flags_v` (which has no consumer), and the SPU-13 core bridge then sets the QR commit telemetry and `inst_done` from it (`spu13_core.v:1333-1341`); the coreless live-evaluator sidecar (`RPLU2LIVE`) commits on `thimble_valid` in the same way. In those cases a refused transaction can present the previous successful result (or the unreset register contents after reset) with valid indications. No traced path writes the Quadray register file. A zero-divisor denominator needs host-written coefficients or a saddle input; the default denominator (1) cannot be singular. Host-visible refusal signaling is **UNRESOLVED**: on the gated sidecar a refusal leaves the earlier commit in the `0xAE` latch and survives only in sticky debug status. No test exercises the pipeline, core bridge or sidecar gating with a zero-norm denominator, and the ledger has no entry. Whether the inverter's single norm check detects every zero divisor of A31 is an open mathematical audit (HOLD), and is not claimed here.
+
 ## 7. Conformance and provenance
 
 ### 7.1 Reference baseline
@@ -315,6 +321,7 @@ Independent adversarial review report `/tmp/isa-v02-adversarial-review-eaabd9f.m
 | **O15** | Hardware treatment of opcodes outside an implemented subset (acknowledge versus refuse) and the meaning of `inst_done` | **UNRESOLVED** design decision; current RTL acknowledges without effect (§6.6). Proposed as a qualification gate before executable bitstreams are distributed. |
 | **O16** | QR reset state, scale (Q12 hydration versus unscaled `QLDI`) and lane layout in the RTL | **UNRESOLVED** (§6.6). |
 | **O17** | RTL ingress acceptance, busy and ordering behavior | **UNVERIFIED** (§6.6). |
+| **O18** | Arithmetic refusal visibility: what the host sees when an A31 inverse fails (`inst_done`, commit telemetry, status) | **UNRESOLVED**; ordinary RPLU pipeline and core bridge are POTENTIALLY UNSAFE at source level (§6.7, A31-R1). Directed simulation not yet run. **HOLD.** |
 | **O8** | Instruction-granularity cost evidence? | SFL-0 pending approved experiment; not a prerequisite for documenting existing semantics, but needed before new fused-op adoption. |
 
 ## 10. Proposed release gate
@@ -330,6 +337,7 @@ This review draft derives its specific implementation claims from the supplied:
 - [`ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md`](ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md) (draft domain/metric/profile matrix).
 - [`SFL0_CONTRACT_DRAFT.md`](SFL0_CONTRACT_DRAFT.md) (unapproved small-form research contract; not authorized to execute).
 - [`ICOS0_FINDINGS.md`](../ICOS0_FINDINGS.md) (software icosian/E₈ oracle findings).
+- [`ISA_V02_A31R1_FINDINGS.md`](ISA_V02_A31R1_FINDINGS.md) (A31 inverter refusal and result-publication paths, source reading at `19b35fa`).
 - [`ISA_V02_STATE1_FINDINGS.md`](ISA_V02_STATE1_FINDINGS.md) (architectural-state characterization across spec, VMs and RTL, source reading at `c2f7b36`).
 - [`ISA_V02_POLYSTEP1_FINDINGS.md`](ISA_V02_POLYSTEP1_FINDINGS.md) (`POLY_STEP` characterization, source reading at `fe6365d`).
 - [`ISA_V02_SNAP1_FINDINGS.md`](ISA_V02_SNAP1_FINDINGS.md) (`SNAP`/FLAGS and status-mechanism characterization, source reading at `6deab30`).
