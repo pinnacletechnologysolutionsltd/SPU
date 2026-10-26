@@ -1,7 +1,7 @@
 # SPU Instruction Set Architecture v0.2
 ## Domain, metric, and exact-execution specification — REVIEW DRAFT
 
-**Document revision:** 0.2-draft.4 (amendments ISA-V02-D1-A, QROT-1 and SNAP-1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
+**Document revision:** 0.2-draft.5 (amendments ISA-V02-D1-A, QROT-1, SNAP-1 and POLYSTEP-1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
 
 **Date:** 26 October 2026  
 **Status:** **NON-NORMATIVE / FOR ENGINEERING REVIEW**  
@@ -187,7 +187,7 @@ Membership is an architectural decision and is **not** inferred from agreement a
 | `QROT` | `0x11` | **HOLD**, see §4.4 | Operand-form conflict; untagged similarity established, tag path HOLD |
 | Rotation/geometry | `ROTC` (`0x1C`), `SPREAD` (`0x15`), `HEX` (`0x16`), `EQUIL IDNT JINV ANNE` | Core candidate | `SPREAD` metric profile per O1 |
 | `REGEN` | `0x09` | Core candidate | Testbench-verified RTL; no silicon entry in the ledger |
-| `POLY_STEP` | `0xE0` | Core candidate, **encoding candidate only**, see §6.4 | Semantic blocker |
+| `POLY_STEP` | `0xE0` (provisional) | **Not a common-core candidate** (provisional owner direction); Padé-evaluation extension candidate, see §6.4 | Semantic and path blockers |
 | Surd extension | `0x70–0x77` | Typed extension (`ENABLE_SURD_CPU`, default 0) | Not in either VM; in assembler and RTL |
 | IROTC extension | `0xD6–0xD8` | Typed extension (`ENABLE_IROTC`, default 0) | Not in C++ VM |
 | SOM / SOM_TRAIN | `0x2A 0x2B` | Extension profile, **core membership unresolved** | See §6.3 |
@@ -207,7 +207,7 @@ Membership is an architectural decision and is **not** inferred from agreement a
 | `0x2A` as **SOM** (classify) | `spu13_core.v`, `ENABLE_CORE_SOM`, and not (`ENABLE_CORE_RPLU_V2` and `..._PIPELINE`) | RPLU2 start on the same value | Extension profile "SOM"; core membership **UNRESOLVED** |
 | `0x2A` as **RPLU2 start** | `spu13_core.v` when `ENABLE_CORE_RPLU_V2 && ..._PIPELINE`; or the coreless `spu13_rplu2_sidecar` / `..._pade_sidecar` | SOM on the same value | Extension profile "RPLU2" (implementation extension) |
 | `0x2B` SOM_TRAIN | `spu13_core.v`, `ENABLE_CORE_SOM` only | none decoded | Extension profile "SOM"; membership **UNRESOLVED** |
-| `0xE0` | `spu13_core.v`: ungated POLY_STEP handler; `spu13_neuro_sidecar_adapter` (Tang probe only) | `NEURO_CFG`; **not reachable together** in any in-tree top | POLY_STEP: core candidate; `NEURO_CFG`: legacy experimental |
+| `0xE0` | `spu13_core.v`: POLY_STEP handler (no feature parameter gates the accepted-instruction handler); `spu13_neuro_sidecar_adapter` (Tang probe only) | `NEURO_CFG`; **not reachable together** in any in-tree top | POLY_STEP: Padé-evaluation extension candidate (§6.4); `NEURO_CFG`: legacy experimental |
 | `0x48` JSCR; `0x4C 0x4D` NSA | `spu13_core.v`, effect only with `ENABLE_CORE_RPLU_V2 && ENABLE_CORE_RPLU_V2_EXTENSIONS`; without it `0x48` is acknowledged with no effect | none | Implementation extension |
 | `0xD0–0xD5` Lucas | `spu13_lucas_sidecar`, `SPIN="LUCAS"` | none | Legacy experimental |
 | `0xE8–0xEB` SU3 | `spu13_su3_sidecar`, `SPIN="SU3"`, `"SU3SHARE"` | none | Legacy experimental |
@@ -218,11 +218,19 @@ Membership is an architectural decision and is **not** inferred from agreement a
 
 **Board-qualification limits.** `JSCR`/`NSA` are enabled only by two testbenches (`spu13_core_jscr_tb.v`, `spu13_core_nsa_handshake_tb.v`); every synthesis target found sets `EXTENSIONS` to 0, and there is no ledger entry. They are **simulation-only**.
 
-### 6.4 `POLY_STEP` encoding candidate and semantic blocker
+### 6.4 `POLY_STEP`: several operations under one name
 
-**Encoding candidate: `0xE0`**, supported by current executable decode: the Python VM's effective table value, the core RTL handler (`spu13_core.v`), and `L_OP_POLY_STEP` in `spu_lithic_l.h`. The specification row (`0x60`) and a shadowed `0x60` entry in the VM dict are legacy. `RATIO_CMP` remains `0x61`. The retained SIM0 review (`SPU13_SOFT_V1_SIM0_REVIEW_2026-10-15.md`) names `POLY_STEP(60)` as rejected `UNSUPPORTED`; `0xE0` is equally unsupported there, so execution behavior is unchanged. Per `ISA_CONFORMANCE_2026-10-10.md`, legacy records must not be translated by opcode value alone. This is a candidate, not an executed or ratified renumbering of the specification.
+Findings: [`ISA_V02_POLYSTEP1_FINDINGS.md`](ISA_V02_POLYSTEP1_FINDINGS.md) (source reading at `dev/next` `fe6365d`; existing VM, assembler and RTL sources unchanged from public RC2 `b063280`). Normative `POLY_STEP` semantics: **HOLD**.
 
-**UNRESOLVED qualification blocker (semantics).** The Python VM executes `POLY_STEP Rbase, Rx` as a Padé P(x)/Q(x) (4/4, Q32) evaluation with numerator and denominator written to `R[r1]`, `R[r1+1]`. The core RTL handler issues an RPLU Artery write (`sel = 7`, address index from `inst_word[33:24]`) and writes no scalar result. These are different architectural effects; the instruction has no single observable contract.
+The sources use the name for different things: the historical spec row `0x60` ("Horner step via RPLU, legacy Morse potential"); the Python VM's complete [4/4] Padé evaluation (`P` to `R[r1]`, `Q` to `R[r1+1]`, `x` as Q32 in `R[r2].a`), effective opcode `0xE0`; Lithic-L naming (`L_OP_POLY_STEP = 0xE0`, `L_OP_RATIO_CMP = 0xE1`); the SPU-13 RTL core's `0xE0` handler, which emits an Artery chord (`sel = 7`, address from `inst[33:24]`) and returns no result; combinational Horner-step datapath modules; and a host loader option. They are not one instruction with several implementations.
+
+**Python VM defect (existing code, no repair authorized).** The handler reads its coefficients from `hardware/common/rtl/gpu/pade_{num,den}_4_4_q32.mem`, a path that does not exist (the files are in `hardware/rtl/arch/`), and silently falls back to zero coefficients, so in the repository as committed `POLY_STEP` yields `0/0` for every `x`. The repository's own `software/spu_vm_polystep_ratiocmp_test.py` fails in that state and is not in the `run_all_tests.py` gate. With the path supplied from a temporary directory the VM computes the [4/4] Padé approximant of `e^(−x)` in Q32 (x = 0.5 gives 0.606531; x = 1 gives 0.367879); that is a separate observation from the repository-default behavior, and it was not compared with any RTL datapath.
+
+**RTL handler.** It writes no register. On the Artix-7 top the core's Artery outputs are unconnected (`spu_a7_top.v:791`); other tops' consumers and the ownership of selector 7 (torus control in the core's config decode versus "poly_step" in the loader) were not traced. No testbench issuing a `0xE0` word to `spu13_core` was found, and the ledger has no `POLY_STEP` entry. The silicon-tested Padé functionality is reached through the SPI/config path, not an instruction.
+
+**`RATIO_CMP`.** `0x61` in the spec and Python VM, `0xE1` in Lithic-L; `0xE1` is also `NEURO_START` in the Neuro sidecar. Encoding and profile reconciliation: HOLD.
+
+**Proposed disposition (provisional; ratification HOLD).** (1) Padé evaluation: a candidate typed extension with provisional encoding `0xE0`; a definition must fix the coefficient source (identity and hash, not a working-directory-relative path), the `x` domain, the truncating Horner algorithm, the result registers and missing-coefficient behavior. (2) Artery chord emission: a separate, implementation-specific operation, with no claim of equivalence to the VM operation. (3) Historical `0x60`: legacy documentation, not a newly assigned encoding. (4) `POLY_STEP` is removed from the proposed common-core candidates (provisional owner direction; this does not delete or change the existing RTL handler or any opcode table).
 
 ### 6.5 `SNAP` implemented behavior and the FLAGS contract
 
@@ -285,7 +293,7 @@ Independent adversarial review report `/tmp/isa-v02-adversarial-review-eaabd9f.m
 | **O6** | Exhaustive opcode table, encodings and machine-state model? | Source-derived inventory exists (`isa_v02_o6_inventory.json`, findings in `ISA_V02_O6_FINDINGS.md`); discrepancies are recorded, not repaired. Machine-state model and per-opcode fault precedence remain **REQUIRED**. |
 | **O7** | Exact integer/fixed-point scaling, normalization, fault precedence and register layouts? | **REQUIRED** per profile before normative release. |
 | **O9** | Ownership of `0x2A` (SOM vs RPLU2) and of SOM/SOM_TRAIN core membership | **UNRESOLVED**; reachable collision, see §6.3. FULL/INTELLIGENCE currently resolve to RPLU2. |
-| **O10** | `POLY_STEP` canonical encoding and contract | Encoding candidate `0xE0`; VM/RTL semantic blocker open (§6.4). Spec amendment of the row not executed. |
+| **O10** | `POLY_STEP` canonical encoding and contract | Several distinct operations share the name (§6.4, POLYSTEP-1); provisional split into a Padé-evaluation extension candidate (`0xE0`) and an implementation-specific Artery chord emission; not a common-core candidate. Python VM coefficient-path defect recorded, not repaired. Spec row not amended. **HOLD.** |
 | **O11** | `QROT` normative form and preserved quantity | Implemented in-place one-step form preferred provisionally; **HOLD**: untagged similarity of ratio `u²` established (§4.4); tag/octave path, operand encoding and bounded refusal unresolved. |
 | **O12** | `SNAP` and the FLAGS-word contract | Stability scan preferred provisionally as a VM diagnostic instruction with explicit diagnostic-state side effects; FLAGS is an unresolved proposal, not an implemented register (§6.5, SNAP-1). **HOLD.** |
 | **O13** | Common-core membership of `SOM`, `PHADD`, `PHCFG`, `RATIO_CMP`, `MIN4`, `REGEN` | **UNRESOLVED**; decided by semantic qualification (§6.2). |
@@ -304,6 +312,7 @@ This review draft derives its specific implementation claims from the supplied:
 - [`ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md`](ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md) (draft domain/metric/profile matrix).
 - [`SFL0_CONTRACT_DRAFT.md`](SFL0_CONTRACT_DRAFT.md) (unapproved small-form research contract; not authorized to execute).
 - [`ICOS0_FINDINGS.md`](../ICOS0_FINDINGS.md) (software icosian/E₈ oracle findings).
+- [`ISA_V02_POLYSTEP1_FINDINGS.md`](ISA_V02_POLYSTEP1_FINDINGS.md) (`POLY_STEP` characterization, source reading at `fe6365d`).
 - [`ISA_V02_SNAP1_FINDINGS.md`](ISA_V02_SNAP1_FINDINGS.md) (`SNAP`/FLAGS and status-mechanism characterization, source reading at `6deab30`).
 - [`ISA_V02_O6_FINDINGS.md`](ISA_V02_O6_FINDINGS.md) and `isa_v02_o6_inventory.json` (source-derived opcode/state inventory and D1 reachability audit, commit `2cbfa6f`).
 - `verification_summary.json` (integration revision and full-regression receipt; kept outside git, see §7.1).
