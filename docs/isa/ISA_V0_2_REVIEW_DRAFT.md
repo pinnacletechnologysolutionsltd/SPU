@@ -1,7 +1,7 @@
 # SPU Instruction Set Architecture v0.2
 ## Domain, metric, and exact-execution specification — REVIEW DRAFT
 
-**Document revision:** 0.2-draft.3 (amendments ISA-V02-D1-A and QROT-1 summary, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
+**Document revision:** 0.2-draft.4 (amendments ISA-V02-D1-A, QROT-1 and SNAP-1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
 
 **Date:** 26 October 2026  
 **Status:** **NON-NORMATIVE / FOR ENGINEERING REVIEW**  
@@ -226,9 +226,15 @@ Membership is an architectural decision and is **not** inferred from agreement a
 
 ### 6.5 `SNAP` implemented behavior and the FLAGS contract
 
-**Implemented (both VMs):** `SNAP` scans scalar registers `R0–R25` and records or reports registers that are non-zero and not laminar (`a² − 3b² ≤ 0`), incrementing a failure counter; the Python VM also evaluates its SDF layer there. No FLAGS word is produced or read. Preferring this stability scan as the starting definition is a **provisional owner direction**; ratification is **HOLD**.
+Findings: [`ISA_V02_SNAP1_FINDINGS.md`](ISA_V02_SNAP1_FINDINGS.md) (source reading at `dev/next` `6deab30`; executable sources identical to public RC2 `b063280`). Normative `SNAP`/FLAGS semantics: **HOLD**.
 
-**Unresolved separately:** the 6-bit FLAGS register that `knowledge/isa_reference.md` says is "read via the `SNAP` opcode" (Z, C, V, MISALIGNED, OVERFLOW, INEXACT) is not provided by either VM, and a core `SNAP` handler is not established. A v0.2 document must not advertise an architectural FLAGS readout until an implementation and a read instruction exist. `FLAGS.V` as the A31 zero-divisor indicator is therefore currently unreachable from the instruction set (the inverter drives a `flags_v` pin; no ISA-A encoding is tied to it).
+**`SNAP` (`0x07`) as implemented.** Both VMs scan scalar registers `R0–R25` for non-zero registers that are not laminar (`a²−3b² ≤ 0`), increment `snap_failures` once per `SNAP` if any fail, print the result, and continue (nonhalting); no scalar or Quadray register is written. The Python VM additionally evaluates its SDF layer on every `SNAP`; an SDF conflict increments `snap_failures` only when the scalar scan found no failure. The C++ VM has no SDF layer. `snap_failures` is shared with `EQUIL`, and a non-zero value makes either VM process exit with code 2 (host behavior). The SPU-13 RTL core has no `SNAP` decode. `SNAP` therefore does **not** mutate registers but **does** update diagnostic state (`snap_failures`, stdout and, in Python, SDF internal state); it is not free of observable side effects. Proposed treatment: a VM-specific diagnostic instruction, the C++ scalar scan as the common behavior and Python scalar scan plus SDF as an extended diagnostic profile.
+
+**Not `SNAP`.** The RTL core's autonomous per-axis stability network (`stability_bits`, `is_janus_point`) is triggered by the TDM sweep, not by an instruction, and is not an implementation of `SNAP`.
+
+**FLAGS is an unresolved architectural proposal.** The 6-bit FLAGS word that `knowledge/isa_reference.md` says is "read via the `SNAP` opcode" (Z, C, V, MISALIGNED, OVERFLOW, INEXACT) is not implemented as a register: neither VM produces one and no SPU-13 RTL FLAGS register was found. The historical bit positions 3–5 collide with `rotc_debug_flags[3:5]` in `spu13_core.v`, which mean "rotation done" markers; the MISALIGNED/OVERFLOW/INEXACT outputs exist only in the tagged rotor core, instantiated in a Tang probe and a testbench but not in `spu13_core`. A v0.2 document must not advertise an architectural FLAGS readout. `FLAGS.V` for A31 is currently unreachable from the instruction set (the inverter drives a `flags_v` pin; its consumer path was not traced and its architectural visibility is **UNRESOLVED**).
+
+**Status classes (proposed vocabulary).** *Architectural state*: registers, PC and other state a named profile defines. *Architectural status*: faults or results observable through specified mechanisms (for example Surd-extension `SSTAT`, implemented and independent). *Implementation diagnostics*: VM `snap_failures` and `fault_kind`, the SPI-exposed `rotc_debug_status`, pins such as `flags_v`, and the tagged rotor fault outputs. These are not interchangeable and are not unified here.
 
 ## 7. Conformance and provenance
 
@@ -277,7 +283,7 @@ Passing one profile does not confer conformance on another. A separately specifi
 | **O9** | Ownership of `0x2A` (SOM vs RPLU2) and of SOM/SOM_TRAIN core membership | **UNRESOLVED**; reachable collision, see §6.3. FULL/INTELLIGENCE currently resolve to RPLU2. |
 | **O10** | `POLY_STEP` canonical encoding and contract | Encoding candidate `0xE0`; VM/RTL semantic blocker open (§6.4). Spec amendment of the row not executed. |
 | **O11** | `QROT` normative form and preserved quantity | Implemented in-place one-step form preferred provisionally; **HOLD**: untagged similarity of ratio `u²` established (§4.4); tag/octave path, operand encoding and bounded refusal unresolved. |
-| **O12** | `SNAP` and the FLAGS-word contract | Stability scan preferred provisionally; FLAGS readout unresolved (§6.5). |
+| **O12** | `SNAP` and the FLAGS-word contract | Stability scan preferred provisionally as a VM diagnostic instruction with explicit diagnostic-state side effects; FLAGS is an unresolved proposal, not an implemented register (§6.5, SNAP-1). **HOLD.** |
 | **O13** | Common-core membership of `SOM`, `PHADD`, `PHCFG`, `RATIO_CMP`, `MIN4`, `REGEN` | **UNRESOLVED**; decided by semantic qualification (§6.2). |
 | **O8** | Instruction-granularity cost evidence? | SFL-0 pending approved experiment; not a prerequisite for documenting existing semantics, but needed before new fused-op adoption. |
 
@@ -294,6 +300,7 @@ This review draft derives its specific implementation claims from the supplied:
 - [`ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md`](ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md) (draft domain/metric/profile matrix).
 - [`SFL0_CONTRACT_DRAFT.md`](SFL0_CONTRACT_DRAFT.md) (unapproved small-form research contract; not authorized to execute).
 - [`ICOS0_FINDINGS.md`](../ICOS0_FINDINGS.md) (software icosian/E₈ oracle findings).
+- [`ISA_V02_SNAP1_FINDINGS.md`](ISA_V02_SNAP1_FINDINGS.md) (`SNAP`/FLAGS and status-mechanism characterization, source reading at `6deab30`).
 - [`ISA_V02_O6_FINDINGS.md`](ISA_V02_O6_FINDINGS.md) and `isa_v02_o6_inventory.json` (source-derived opcode/state inventory and D1 reachability audit, commit `2cbfa6f`).
 - `verification_summary.json` (integration revision and full-regression receipt; kept outside git, see §7.1).
 
