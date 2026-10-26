@@ -1,7 +1,7 @@
 # SPU Instruction Set Architecture v0.2
 ## Domain, metric, and exact-execution specification — REVIEW DRAFT
 
-**Document revision:** 0.2-draft.2 (amendment ISA-V02-D1-A, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
+**Document revision:** 0.2-draft.3 (amendments ISA-V02-D1-A and QROT-1 summary, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
 
 **Date:** 26 October 2026  
 **Status:** **NON-NORMATIVE / FOR ENGINEERING REVIEW**  
@@ -110,7 +110,7 @@ Multiplication by `2+√3` preserves the Pell-type indefinite form `x²−3y²` 
 
 **Actual software operand form (O6/D1-A, source-checked).** The historical row in `knowledge/isa_reference.md` is `QROT Rd, Rs, n` with `R[d] = R[s] × (2+√3)ⁿ` (scalar registers, exponent operand). The Python VM (`software/spu_vm.py`, `OPCODES["QROT"]`) and the C++ VM (`software/vm/spu_vm.cpp`, `case 0x11`) instead implement `QROT QRn`: one in-place step on Quadray register `n = R1 mod 13`, no exponent. The assembler accepts `QROT QRd [, Rs]` and encodes the optional second operand in `R2`, which both VMs ignore. Each component is multiplied by `(2+√3)` through `rotate_phi()` and the result is then passed through `normalize()` (common-offset removal). The Python VM additionally sets the register's φ-plane tag to `PHI_UNTAGGED`. These are two incompatible contracts; neither is ratified here.
 
-**Metric status: UNVERIFIED.** The source comment on `QuadrayVector.rotate()` asserts that quadrance is preserved (`Q(result) = Q(self) × Q(2,1)⁴`), which conflicts with the FIELD-0 witness recorded above (`Q=24 → 24(7+4√3)` under component scaling by `u`). Whether the *implemented* operation, including the `normalize()` step, preserves any particular form has not been checked against its component transformations, and this draft does not assert that it does. Preferring the implemented one-step in-place form as the starting definition for v0.2 is a **provisional owner direction**; ratification is **HOLD**.
+**QROT-1 characterization** (findings: [`ISA_V02_QROT1_FINDINGS.md`](ISA_V02_QROT1_FINDINGS.md); reproduce with `python3 -I tools/qrot1_repro.py [--cpp]`; analysed on the `19d652a` tree, executable sources identical to public RC2 `b063280`). For **untagged** Quadray components, `QROT` is `normalize(u·v)` with `u = 2+√3`. On gauge classes this is a bijective similarity: quadrance and the Gram form scale by `u² = 7+4√3` (`Q(QROT v) = (7+4√3)·Q(v)`; FIELD-0: Q 24 → `24(7+4√3)`). Spread is preserved (numerator and denominator both scale by `u⁴`), and the field norm of the quadrance is preserved because `N(u)=1`. It is **not** a Euclidean isometry, and quadrance is not preserved; the source comments saying otherwise (`spu_vm.py`, `spu_quadray.h`) are incorrect and unedited. **Not covered by that contract:** Pell-tagged components (from `LD R,1,0`/`ROT` via `QLOAD`) are replaced by the next `PELL_ORBIT` entry; at step 7 the mantissa wraps and mixed steps scale components unequally, so the similarity property does not hold there. Operand encoding (`R2` ignored), tag effects (Python sets `PHI_UNTAGGED`, C++ has no tags), bounded-profile refusal (C++ `int32`, atomic refusal) and a C++ end-of-run display abort remain unresolved. SPU-4's `QROT` (opcode `0x45`, Q8.8 circulant ALU) is a different, profile-specific operation and is not evidence for ISA-A `QROT`. Normative disposition: **HOLD**; the preference for the implemented one-step in-place form stays a provisional owner direction.
 
 **PROPOSED:** describe the operation in future documentation as a **Pell unit dilation** (uniform scaling of every component by the unit `u=2+√3`; a similarity, not an isometry), not an unqualified Euclidean `QROT` isometry. In the (embedding, conjugate) plane it acts as `diag(u, 1/u)`, which is why "boost" is sometimes used; that wording is avoided here to prevent a Lorentz-boost reading. Existing executable names remain unchanged until separately reviewed. Whether to rename or replace the relevant instruction is **UNRESOLVED**.
 
@@ -159,7 +159,7 @@ This document is a **semantic architecture draft**, not a replacement for the fr
 | Gram v1 `SPREAD` | `0x15` (profile-specific) | Quadray, `B_Q` | Implemented/tested in software VM | Retain; propose Gram semantics for a new explicit v0.2 geometry profile. |
 | `SNORM` | Refer to existing ISA reference | Surd bank | Implemented, profile-specific | Carry forward without redefining encoding/behavior. |
 | Surd arithmetic / conversions | Refer to existing ISA reference | SURD3 | Existing bank/RTL profiles | Record exact width/status per profile. |
-| Pell `ROT`/`QROT` | `ROT 0x04`, `QROT 0x11` | Pell-type indefinite form | Operand-form conflict (§4.4); metric of implemented in-place form unverified | HOLD; no renaming/metric redefinition until review. |
+| Pell `ROT`/`QROT` | `ROT 0x04`, `QROT 0x11` | Pell-type indefinite form | Operand-form conflict (§4.4); untagged domain characterized (§4.4); tag path and encoding unresolved | HOLD; no renaming/metric redefinition until review. |
 | A31 inverse | **No ISA-A encoding found (O6)**; inverter `flags_v` pin only | A31 modular algebra | Existing RTL unit; not an instruction | Refusal post-state audit and zero-divisor coverage audit remain HOLD (§5.2). |
 | E₈ root reflection | **No encoding assigned** | ICOS/E8 `B_E` | Oracle-qualified | **Lower first**; no dedicated opcode yet. |
 | BQ norm/inverse | **No encoding assigned** | BQ field | Oracle-qualified | Defer fixed-width/ISA inclusion. |
@@ -184,7 +184,7 @@ Membership is an architectural decision and is **not** inferred from agreement a
 | Control | `JMP HALT CALL RET NOP` (`0x06 0x08 0x20 0x21 0xFF`) | Core candidate | `CALL`/`RET` encodings frozen 2026-10-09 |
 | `SNAP` | `0x07` | **HOLD**, see §6.5 | VM stability scan vs spec FLAGS read |
 | Quadray | `QADD QNORM QLOAD QLOG QSUB QLDI DELTA MIN4 QREAD` | Core candidate | `MIN4` absent from C++ VM |
-| `QROT` | `0x11` | **HOLD**, see §4.4 | Operand-form conflict; metric unverified |
+| `QROT` | `0x11` | **HOLD**, see §4.4 | Operand-form conflict; untagged similarity established, tag path HOLD |
 | Rotation/geometry | `ROTC` (`0x1C`), `SPREAD` (`0x15`), `HEX` (`0x16`), `EQUIL IDNT JINV ANNE` | Core candidate | `SPREAD` metric profile per O1 |
 | `REGEN` | `0x09` | Core candidate | Testbench-verified RTL; no silicon entry in the ledger |
 | `POLY_STEP` | `0xE0` | Core candidate, **encoding candidate only**, see §6.4 | Semantic blocker |
@@ -276,7 +276,7 @@ Passing one profile does not confer conformance on another. A separately specifi
 | **O7** | Exact integer/fixed-point scaling, normalization, fault precedence and register layouts? | **REQUIRED** per profile before normative release. |
 | **O9** | Ownership of `0x2A` (SOM vs RPLU2) and of SOM/SOM_TRAIN core membership | **UNRESOLVED**; reachable collision, see §6.3. FULL/INTELLIGENCE currently resolve to RPLU2. |
 | **O10** | `POLY_STEP` canonical encoding and contract | Encoding candidate `0xE0`; VM/RTL semantic blocker open (§6.4). Spec amendment of the row not executed. |
-| **O11** | `QROT` normative form and preserved quantity | Implemented in-place one-step form preferred provisionally; **HOLD** pending metric verification (§4.4). |
+| **O11** | `QROT` normative form and preserved quantity | Implemented in-place one-step form preferred provisionally; **HOLD**: untagged similarity of ratio `u²` established (§4.4); tag/octave path, operand encoding and bounded refusal unresolved. |
 | **O12** | `SNAP` and the FLAGS-word contract | Stability scan preferred provisionally; FLAGS readout unresolved (§6.5). |
 | **O13** | Common-core membership of `SOM`, `PHADD`, `PHCFG`, `RATIO_CMP`, `MIN4`, `REGEN` | **UNRESOLVED**; decided by semantic qualification (§6.2). |
 | **O8** | Instruction-granularity cost evidence? | SFL-0 pending approved experiment; not a prerequisite for documenting existing semantics, but needed before new fused-op adoption. |

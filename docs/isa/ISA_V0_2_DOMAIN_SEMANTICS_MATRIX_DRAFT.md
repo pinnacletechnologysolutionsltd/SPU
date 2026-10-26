@@ -22,7 +22,7 @@ Rule: exactness in an unbounded oracle does not imply representability in a prof
 | `legacy_dot` | Quadray | Σvᵢwᵢ | NOT a metric: spread(A,A)=8/9 for (1,0,0,0); `qualified:false` |
 | gram_v1 spread | Quadray | N=B(v,v)B(w,w)−B(v,w)², D=B(v,v)B(w,w), unreduced | software conformance only; degenerate iff all four components equal |
 | icosian/E8 form | 8-lane Z[φ]⊗ | B(x,y)=2(a+b)=2·Tr(λ·dot), λ=(5+√5)/10 | positive definite; roots B=2; software-only |
-| Pell ROT/QROT (×(2+√3)) | Q(√3), Quadray | preserves x²−3y² (indefinite), NOT Euclidean quadrance | FIELD-0: Q 24 → 24(7+4√3); a similarity. Semantics UNRESOLVED. Implemented `QROT QRn` is in-place, one step, followed by `normalize()`; its preserved quantity is UNVERIFIED (source comment claims quadrance preserved, contradicting FIELD-0 for plain component scaling). Spec row `QROT Rd,Rs,n` is a different, scalar form |
+| Pell ROT/QROT (×(2+√3)) | Q(√3), Quadray | preserves x²−3y² (indefinite), NOT Euclidean quadrance | FIELD-0: Q 24 → 24(7+4√3); a similarity. Semantics UNRESOLVED. Implemented `QROT QRn` is in-place, one step, followed by `normalize()`; untagged domain: similarity of ratio u² (Q and Gram scale by 7+4√3; spread and Pell norm of quadrance preserved; QROT-1); the source comment claiming quadrance is preserved is incorrect; Pell-tag path HOLD. Spec row `QROT Rd,Rs,n` is a different, scalar form |
 | none defined | A₃₁, Q(√3,√5) | – | do not infer a metric from register width or shared basis |
 
 ## 3. Representation & canonicalization (contract 3)
@@ -46,7 +46,7 @@ An operation is native only if it offers a distinct semantic contract (atomicity
 | Gram spread (0x15, gram_v1) | already native; keep | atomic degeneracy refusal and certified metric identity; lowering would need explicit check ops |
 | E8/icosian reflection s_r(x)=x−B(x,r)r | lower first | expressible via exact bilinear + vector ops; no distinct refusal contract yet |
 | BQ-0 norm/inverse | defer | no fixed-width semantics exist |
-| Pell ROT/QROT | decide metric semantics first | FIELD-0 similarity vs isometry unresolved |
+| Pell ROT/QROT | decide tag/encoding semantics first | QROT-1: untagged domain is a similarity, not an isometry; tag path and operand form unresolved |
 SFL-0 (separate draft) is the test of rows marked "lower first".
 
 ## 6. Open decisions for the owner

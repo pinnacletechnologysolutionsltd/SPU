@@ -1,6 +1,6 @@
 # ISA-V02-QROT-1 — Exact semantic characterization of `QROT` (0x11)
 
-**Status:** findings for adversarial review. Semantic ratification **HOLD**. No opcode, VM, assembler, RTL or ISA-draft change.
+**Status:** scientific PASS for the untagged Quadray domain; ISA qualification and normative ratification **HOLD**. Findings are also under adversarial review. No opcode, VM, assembler or RTL change; no source comment corrected.
 **Reproduction:** `tools/qrot1_repro.py` (+ data in `tools/qrot1_scenarios.py`). Host-side only; writes nothing to the repository.
 
 ## Source identities (not interchangeable)
@@ -13,7 +13,7 @@ All three are in `/home/john/spu-public-v0.2-rc2`. Report conclusions against th
 | `2cbfa6f` | `2cbfa6f3f82106bafd123b85503697069d818005` | O6 inventory commit on `dev/next`. |
 | `19d652a` | `19d652a1475ebf7afcf63e40668a68793d4de3e5` | D1-A documentation amendment on `dev/next`. |
 
-This document and the reproduction tool are committed after `19d652a`; use `git log -1 -- docs/isa/QROT1_FINDINGS.md` for that commit. Analysis ran on the `19d652a` tree. `git diff --name-status b063280 19d652a` shows only documentation, the O6 tools and one O6 test changed, so `software/`, `hardware/` and `knowledge/` executable sources are identical at all three identities.
+This document and the reproduction tool are committed after `19d652a`; use `git log -1 -- docs/isa/ISA_V02_QROT1_FINDINGS.md` for that commit (the file was renamed from `QROT1_FINDINGS.md`, first committed as `f61fee0`). Analysis ran on the `19d652a` tree. `git diff --name-status b063280 19d652a` shows only documentation, the O6 tools and one O6 test changed, so `software/`, `hardware/` and `knowledge/` executable sources are identical at all three identities.
 
 ## Reproduce
 
@@ -58,7 +58,22 @@ Incorrect source comments (not edited): `spu_vm.py` (`QuadrayVector.rotate` docs
 
 ## Recommended normative definition (ratification HOLD)
 
-`QROT QRn` replaces `QR[n]` with `normalize(u·QR[n])`, `u = 2+√3` (a similarity of ratio `u²`; preserves spread, gauge equivalence and the Pell norm of the quadrance; not quadrance). HOLD: whether the SPU-4 `QROT` is the same operation (see Limitations); the Pell-tag/octave path; bounded-profile refusal and the display-path crash; whether `QROT`/`ROT` keep the historical `Rd, Rs, n` form.
+`QROT QRn` replaces `QR[n]` with `normalize(u·QR[n])`, `u = 2+√3` (a similarity of ratio `u²`; preserves spread, gauge equivalence and the Pell norm of the quadrance; not quadrance). HOLD: the Pell-tag/octave path; bounded-profile refusal and the display-path crash; whether `QROT`/`ROT` keep the historical `Rd, Rs, n` form.
+
+## Disposition
+
+| Item | Disposition |
+|---|---|
+| Untagged exact transformation `normalize(u·v)` | Characterized |
+| Quadrance and Gram scaling by `7+4√3`; spread and Pell-norm-of-quadrance invariance; gauge-class bijection | Established algebraically (sampled as regression) |
+| Not an isometry | Established |
+| Pell-tag octave wrap and mixed-tag behavior | HOLD; does not satisfy the similarity contract |
+| C++ end-of-run display abort (10–13 rotations) | Observed defect; location inferred from output position, backtrace not taken |
+| C++ bounded refusal (14th rotation) | Atomic refusal observed; conformance review pending |
+| Python periodic state mutation (henosis) | Must be isolated in conformance tests |
+| Operand encoding (`Rd, Rs, n` vs `QRn`, ignored `R2`) | HOLD |
+| SPU-13 RTL implementation | Not established |
+| SPU-4 `QROT` | Separate profile-specific operation; no bearing on ISA-A ratification |
 
 ## Questions for the adversarial review
 
@@ -71,7 +86,7 @@ Incorrect source comments (not edited): `spu_vm.py` (`QuadrayVector.rotate` docs
 
 - Opcode extraction is regex-based (see question 3).
 - Audits cover in-tree tops and testbenches only; external configurations are not evaluated.
-- **SPU-4 not covered.** The O6 extractor reads only the SPU-13 core and its sidecars, so the inventory has no SPU-4 rows (e.g. `hardware/rtl/core/spu4/spu4_sequencer.v`, `case (opcode)`). `docs/hardware_evidence.md` records a `QROT` on the SPU-4 Sentinel core (silicon entries around §3.2j, and an ABI wrapper described as "QROT-only Euclidean ALU", `ABI_MINOR=1`, `WRAPPER_ID=1`). Whether that `QROT` is the same operation as the ISA-A `QROT` characterized here is **unexamined**; the name and opcode may be reused for a different (Euclidean) operation. No comparison, and no equivalence claim, is made.
+- **SPU-4 `QROT` is a different operation (resolved by independent review, checked at `f61fee0`).** `spu4_sequencer.v:138` decodes `QROT` as `8'h45` (ISA-A: `0x11`; the same arm also starts `QADD` `8'h40`). `spu4_euclidean_alu.v` computes a Q8.8 fixed-point circulant transform of B, C, D with F/G/H coefficients (`B'=F·B+H·C+G·D`, with overflow fold and `henosis_pulse`), A passed separately. The shared mnemonic does not imply shared semantics. The ledger's SPU-4 `QROT` silicon entries (around §3.2j) exercise that circulant ALU with specific fixtures; they are **not** evidence for the ISA-A operation. The O6 inventory is SPU-13/ISA-A only; SPU-4 must be inventoried as its own profile, not merged. Not extended here.
 - The SPU-13 core RTL has no `QROT` decode in the O6 inventory; no SPU-13 RTL comparison was made.
 - Identities `b063280`, `2cbfa6f`, `19d652a` (and the commit containing this file) are distinct; conclusions apply to the identity stated.
 - Nothing here is a silicon claim. The ledger's `QROT` entries concern the SPU-4 implementation; none attests the ISA-A VM semantics characterized here.
