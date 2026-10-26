@@ -1,0 +1,20 @@
+EV t=185000 core qr_commit_valid lane=0 A=0000000000000002 B=0000000000000000 C=0000000000000000 D=0000000000000000
+EV t=185000 inst_done
+---- A: success (den=1, num0=2) ----
+EV t=5755000 pade_done flags_v=0 result_c=00000002/00000000/00000000/00000000
+EV t=5765000 thimble_valid c=00000002/00000000/00000000/00000000 (pade_flags_v now=0)
+EV t=5775000 core qr_commit_valid lane=4 A=0000000000000002 B=0000000000000000 C=0000000000000000 D=0000000000000000
+EV t=5775000 inst_done
+SUMMARY A: success (den=1, num0=2): inst_done pulses=1
+---- B: zero-divisor after success ----
+EV t=20015000 pade_done flags_v=1 result_c=00000002/00000000/00000000/00000000
+EV t=20025000 thimble_valid c=00000002/00000000/00000000/00000000 (pade_flags_v now=1)
+EV t=20035000 core qr_commit_valid lane=4 A=0000000000000002 B=0000000000000000 C=0000000000000000 D=0000000000000000
+EV t=20035000 inst_done
+SUMMARY B: zero-divisor after success: inst_done pulses=1
+---- C: recovery (den=1) ----
+EV t=35855000 pade_done flags_v=0 result_c=00000002/00000000/00000000/00000000
+EV t=35865000 thimble_valid c=00000002/00000000/00000000/00000000 (pade_flags_v now=0)
+EV t=35875000 core qr_commit_valid lane=4 A=0000000000000002 B=0000000000000000 C=0000000000000000 D=0000000000000000
+EV t=35875000 inst_done
+SUMMARY C: recovery (den=1): inst_done pulses=1

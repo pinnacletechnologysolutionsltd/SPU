@@ -1,0 +1,8 @@
+EV t=185000 core qr_commit_valid lane=0 A=0000000000000002 B=0000000000000000 C=0000000000000000 D=0000000000000000
+EV t=185000 inst_done
+---- B0: zero-divisor first after rst ----
+EV t=5005000 pade_done flags_v=1 result_c=xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx
+EV t=5015000 thimble_valid c=xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx (pade_flags_v now=1)
+EV t=5025000 core qr_commit_valid lane=4 A=00000000xxxxxxxx B=00000000xxxxxxxx C=00000000xxxxxxxx D=00000000xxxxxxxx
+EV t=5025000 inst_done
+SUMMARY B0: zero-divisor first after rst: inst_done pulses=1

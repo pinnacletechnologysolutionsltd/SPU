@@ -1,0 +1,9 @@
+---- A: success (den=1, num0=2) ----
+EV t=1285000 pade_done pade_flags_v=0 result_c=00000002/00000000/00000000/00000000
+EV t=1295000 sidecar qr_commit_valid lane=4 A=0000000000000002 B=0000000000000000 C=0000000000000000 D=0000000000000000
+---- B: zero-divisor after success ----
+EV t=15545000 pade_done pade_flags_v=1 result_c=00000002/00000000/00000000/00000000
+EV t=15555000 sidecar error pulse
+---- C: recovery ----
+EV t=31385000 pade_done pade_flags_v=0 result_c=00000002/00000000/00000000/00000000
+EV t=31395000 sidecar qr_commit_valid lane=4 A=0000000000000002 B=0000000000000000 C=0000000000000000 D=0000000000000000

@@ -1,0 +1,3 @@
+---- B0: zero-divisor first after rst ----
+EV t=4795000 pade.done flags_v=1 result_c=xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx
+EV t=4805000 thimble_valid c=xxxxxxxx/xxxxxxxx/xxxxxxxx/xxxxxxxx (pade_flags_v now=1)

@@ -1,0 +1,8 @@
+=== A31-R2 SPI scratch: success, singular, recovery ===
+QRREAD before-any-transaction: valid_byte=00 lane_byte=00 A=0000000000000000
+STATUS after A (success): 7f 2a 13 04
+QRREAD after A (success, num=2 den=1): valid_byte=01 lane_byte=04 A=0000000000000002
+EV t=26873920000 sidecar_error pulse
+STATUS after B (zero-divisor): 7f 2a 13 04
+QRREAD after B (zero-divisor): valid_byte=01 lane_byte=04 A=0000000000000002
+STATUS after B, second status read: 7f 2a 13 04

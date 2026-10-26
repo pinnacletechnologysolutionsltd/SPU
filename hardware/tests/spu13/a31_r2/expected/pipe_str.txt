@@ -1,0 +1,9 @@
+---- A: success (default 1/1) ----
+EV t=5475000 pade.done flags_v=0 result_c=00000001/00000000/00000000/00000000
+EV t=5485000 thimble_valid c=00000001/00000000/00000000/00000000 (pade_flags_v now=0)
+---- B: zero-divisor after success ----
+EV t=19805000 pade.done flags_v=1 result_c=00000001/00000000/00000000/00000000
+EV t=19815000 thimble_valid c=00000001/00000000/00000000/00000000 (pade_flags_v now=1)
+---- C: recovery ----
+EV t=35535000 pade.done flags_v=0 result_c=00000001/00000000/00000000/00000000
+EV t=35545000 thimble_valid c=00000001/00000000/00000000/00000000 (pade_flags_v now=0)
