@@ -1,7 +1,7 @@
 # SPU Instruction Set Architecture v0.2
 ## Domain, metric, and exact-execution specification — REVIEW DRAFT
 
-**Document revision:** 0.2-draft.8 (amendments ISA-V02-D1-A, QROT-1, SNAP-1, POLYSTEP-1, STATE-1, A31-R1 and A31-R2 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
+**Document revision:** 0.2-draft.9 (amendments ISA-V02-D1-A, QROT-1, SNAP-1, POLYSTEP-1, STATE-1, A31-R1, A31-R2 and H0-TRANSPORT-1 summaries, documentation only; source baseline for the amendment is O6 commit `2cbfa6f` on the public-RC2-derived `dev/next` in `/home/john/spu-public-v0.2-rc2`, not the private integration history)
 
 **Date:** 26 October 2026  
 **Status:** **NON-NORMATIVE / FOR ENGINEERING REVIEW**  
@@ -266,6 +266,18 @@ On a zero-norm denominator the A31 inverter raises `flags_v`, pulses `done` and 
 
 **A31-R2 directed simulation** ([`ISA_V02_A31R2_FINDINGS.md`](ISA_V02_A31R2_FINDINGS.md); preserved probes and runner in `hardware/tests/spu13/a31_r2/`, outside the regression gate; Icarus Verilog 11.0; source `dev/next` `7d3e2e1`). With a zero-divisor denominator after a successful transaction, the ordinary RPLU pipeline raised `thimble_valid` with the previous result while `pade_flags_v` was high, and the SPU-13 core bridge raised `qr_commit_valid` (lane 4, the earlier result) and `inst_done`, indistinguishable from success; with the zero-divisor transaction first after reset, both published `x` limbs as valid. The RPLU2 Padé sidecar raised an `error` pulse and suppressed the commit; a recovery transaction succeeded. Reads over SPI after the refusal (`0xAC`, `0xAE`) were identical to those after the earlier success in the test wiring, a host-observability gap. The audited core bridge does not write the Quadray register file on this path: the confirmed defect is false result publication through the completion and commit-telemetry interface. The live-evaluator sidecar was not simulated. These are simulation results for the tested configurations and one witness. No repair is authorized; `inst_done` is not redefined, and absence of a fresh commit is not itself a refusal indication.
 
+### 6.8 Host-driven instruction transport, completion and status (H0-TRANSPORT-1)
+
+Findings: [`ISA_V02_H0TRANSPORT1_FINDINGS.md`](ISA_V02_H0TRANSPORT1_FINDINGS.md) (source reading at `dev/next` `836ca5b`; existing VM, assembler and RTL sources unchanged from public RC2 `b063280`; no simulation or hardware activity). Normative H0 protocol and any repair: **HOLD**. The protocol below is **PROPOSED**, not implemented.
+
+**As built.** SPI command `0xB1` carries one 64-bit instruction and a CRC-8 over the command byte and payload; a matching CRC yields a one-cycle `inst_valid` strobe, with no instruction queue, sequence number or acknowledgement to the host. A sidecar's claim masks the core. The core accepts a strobe only if `boot_ready && !inst_seen && !surd_busy` in that cycle; otherwise the instruction is lost without indication, and `surd_busy` is the only busy gate. `inst_done` is a one-cycle pulse that the Artix-7 top does not expose, and the core also pulses it for opcodes it does not implement. `0xAE` returns the latest commit; its valid byte is sticky until reset and carries no freshness or sequence information. `0xAC` byte 3 carries `{5'h0, boot_ready, crc_error_sticky, rplu_mode}` (the CRC flag clears on read; `boot_ready` is constant 0 on coreless spins; FAULT and HYDRATING are indistinguishable). Silent drops (CS deasserted mid-frame, deadman timeout, unknown command) have no indication.
+
+**Status visibility differs by spin.** On sidecar-status spins `0xAC` byte 2 carries `commit_seen`, `claim_seen` and a sticky sidecar error (cleared by the next SPI instruction), plus the last SPI opcode in bytes 0-1. On core spins `0xAC` carries the ROTC debug word and an OR of fault flags that does not include the Padé `flags_v`, so the A31 refusal of §6.7 reaches no status bit there. Correction to A31-R2: in the Artix-7 top the sidecar error does reach `0xAC` byte 2 bit 2; the earlier SPI probe used the testbench's own wiring (the one-cycle pulse) and could not show it; the top itself was not elaborated.
+
+**UNVERIFIED SOURCE HYPOTHESES.** The core's instruction FSM is a priority `if / else if` chain in which `inst_seen` is set by `inst_accept` independent of the branch taken. An accepted strobe arriving while an earlier-priority in-flight handler fires might be swallowed (no execution, no `inst_done`), and a new-instruction branch above an in-flight handler (for example `QLDI` above the ROTC write-back) might starve it. Neither is demonstrated by simulation.
+
+**PROPOSED single-outstanding H0 protocol (semantics only; no encoding).** One instruction outstanding; a host-readable per-instruction completion indication separate from `0xAE`; a per-completion outcome distinguishing new valid result, refusal and unsupported; transport rejection kept distinct, with an indication or host timeout rule for silent drops; boot-not-ready reported with FAULT distinguishable from HYDRATING; and unsupported opcodes either refused or rejected by the host before dispatch, with the enforcement boundary stated. The A31 repair is to be designed together with this contract.
+
 ## 7. Conformance and provenance
 
 ### 7.1 Reference baseline
@@ -323,7 +335,10 @@ Independent adversarial review report `/tmp/isa-v02-adversarial-review-eaabd9f.m
 | **O15** | Hardware treatment of opcodes outside an implemented subset (acknowledge versus refuse) and the meaning of `inst_done` | **UNRESOLVED** design decision; current RTL acknowledges without effect (§6.6). Proposed as a qualification gate before executable bitstreams are distributed. |
 | **O16** | QR reset state, scale (Q12 hydration versus unscaled `QLDI`) and lane layout in the RTL | **UNRESOLVED** (§6.6). |
 | **O17** | RTL ingress acceptance, busy and ordering behavior | **UNVERIFIED** (§6.6). |
-| **O18** | Arithmetic refusal visibility: what the host sees when an A31 inverse fails (`inst_done`, commit telemetry, status) | **UNRESOLVED**; stale result publication reproduced in directed simulation for the ordinary RPLU pipeline and the core bridge (§6.7, A31-R2); the host cannot distinguish the refusal in the SPI readbacks tested. Repair **HOLD**, to be designed with the H0 transport contract. |
+| **O18** | Arithmetic refusal visibility: what the host sees when an A31 inverse fails (`inst_done`, commit telemetry, status) | **UNRESOLVED**; stale result publication reproduced in directed simulation for the ordinary RPLU pipeline and the core bridge (§6.7, A31-R2); the host cannot distinguish the refusal in the SPI readbacks tested (test wiring; the Artix-7 top status mapping is in §6.8). Repair **HOLD**, to be designed with the H0 transport contract. |
+| **O19** | H0 transport contract: single-outstanding submission, per-instruction completion indication and outcome, handling of silent drops and boot-not-ready | **PROPOSED**, not implemented (§6.8, H0-TRANSPORT-1). **HOLD.** |
+| **O20** | In-flight priority-chain behavior of the core under overlapping strobes (swallow, starve) | **UNVERIFIED** source hypotheses (§6.8); directed simulation not run. |
+| **O21** | Host-visible status layout (`0xAC`, `0xAE`) as a normative interface versus implementation diagnostics | **UNRESOLVED**; the bit meanings are spin-dependent today (§6.8). |
 | **O8** | Instruction-granularity cost evidence? | SFL-0 pending approved experiment; not a prerequisite for documenting existing semantics, but needed before new fused-op adoption. |
 
 ## 10. Proposed release gate
@@ -339,6 +354,7 @@ This review draft derives its specific implementation claims from the supplied:
 - [`ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md`](ISA_V0_2_DOMAIN_SEMANTICS_MATRIX_DRAFT.md) (draft domain/metric/profile matrix).
 - [`SFL0_CONTRACT_DRAFT.md`](SFL0_CONTRACT_DRAFT.md) (unapproved small-form research contract; not authorized to execute).
 - [`ICOS0_FINDINGS.md`](../ICOS0_FINDINGS.md) (software icosian/E₈ oracle findings).
+- [`ISA_V02_H0TRANSPORT1_FINDINGS.md`](ISA_V02_H0TRANSPORT1_FINDINGS.md) (host-driven transport, completion and status audit, source reading at `836ca5b`).
 - [`ISA_V02_A31R2_FINDINGS.md`](ISA_V02_A31R2_FINDINGS.md) (A31 directed refusal-path simulation; probes in `hardware/tests/spu13/a31_r2/`).
 - [`ISA_V02_A31R1_FINDINGS.md`](ISA_V02_A31R1_FINDINGS.md) (A31 inverter refusal and result-publication paths, source reading at `19b35fa`).
 - [`ISA_V02_STATE1_FINDINGS.md`](ISA_V02_STATE1_FINDINGS.md) (architectural-state characterization across spec, VMs and RTL, source reading at `c2f7b36`).
