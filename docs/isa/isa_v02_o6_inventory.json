@@ -1,0 +1,3682 @@
+{
+ "findings": [
+  {
+   "class": "CONFIRMED_ENCODING_CONFLICT",
+   "detail": "python_vm defines POLY_STEP with values 0x60,0xE0 (later entry wins in a dict)",
+   "mnemonic": "POLY_STEP",
+   "opcode": null,
+   "refs": [
+    "python_vm:software/spu_vm.py:629",
+    "python_vm:software/spu_vm.py:631"
+   ]
+  },
+  {
+   "class": "CONFIRMED_ENCODING_CONFLICT",
+   "detail": "python_vm has 0xE0, spec has 0x60",
+   "mnemonic": "POLY_STEP",
+   "opcode": "0xE0",
+   "refs": [
+    "python_vm:software/spu_vm.py:631",
+    "spec:knowledge/isa_reference.md:178"
+   ]
+  },
+  {
+   "class": "CONFIRMED_ENCODING_CONFLICT",
+   "detail": "rtl:spu13_core.v has 0xE0, spec has 0x60",
+   "mnemonic": "POLY_STEP",
+   "opcode": "0xE0",
+   "refs": [
+    "rtl:spu13_core.v:hardware/rtl/core/spu13/spu13_core.v:1903",
+    "spec:knowledge/isa_reference.md:178"
+   ]
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "REGEN",
+   "opcode": "0x09",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "MIN4",
+   "opcode": "0x1F",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "SOM",
+   "opcode": "0x2A",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "SOM_TRAIN",
+   "opcode": "0x2B",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "PHADD",
+   "opcode": "0x30",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "PHCFG",
+   "opcode": "0x31",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "POLY_STEP",
+   "opcode": "0x60",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "RATIO_CMP",
+   "opcode": "0x61",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in python_vm,cpp_vm",
+   "mnemonic": "SLI",
+   "opcode": "0x70",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in python_vm,cpp_vm",
+   "mnemonic": "SLD",
+   "opcode": "0x71",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in python_vm,cpp_vm",
+   "mnemonic": "SRD",
+   "opcode": "0x72",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in python_vm,cpp_vm",
+   "mnemonic": "SMUL",
+   "opcode": "0x73",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in python_vm,cpp_vm",
+   "mnemonic": "SADD",
+   "opcode": "0x74",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in python_vm,cpp_vm",
+   "mnemonic": "SSUB",
+   "opcode": "0x75",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in python_vm,cpp_vm",
+   "mnemonic": "SNORM",
+   "opcode": "0x76",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in python_vm,cpp_vm",
+   "mnemonic": "SSTAT",
+   "opcode": "0x77",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "IROTC",
+   "opcode": "0xD6",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "LOAD2X",
+   "opcode": "0xD7",
+   "refs": []
+  },
+  {
+   "class": "DOCUMENTED_PROFILE_EXTENSION",
+   "detail": "in spec; no contract claims support in cpp_vm",
+   "mnemonic": "SCALE2",
+   "opcode": "0xD8",
+   "refs": []
+  },
+  {
+   "class": "MISSING_IN_CLAIMED_PROFILE",
+   "detail": "assembler header claims sync with spu_vm.py OPCODES; not in assembler table",
+   "mnemonic": "SOM",
+   "opcode": "0x2A",
+   "refs": [
+    "software/tools/spu13_asm.py:56"
+   ]
+  },
+  {
+   "class": "MISSING_IN_CLAIMED_PROFILE",
+   "detail": "assembler header claims sync with spu_vm.py OPCODES; not in assembler table",
+   "mnemonic": "SOM_TRAIN",
+   "opcode": "0x2B",
+   "refs": [
+    "software/tools/spu13_asm.py:56"
+   ]
+  },
+  {
+   "class": "MISSING_IN_CLAIMED_PROFILE",
+   "detail": "assembler header claims sync with spu_vm.py OPCODES; not in assembler table",
+   "mnemonic": "PHADD",
+   "opcode": "0x30",
+   "refs": [
+    "software/tools/spu13_asm.py:56"
+   ]
+  },
+  {
+   "class": "MISSING_IN_CLAIMED_PROFILE",
+   "detail": "assembler header claims sync with spu_vm.py OPCODES; not in assembler table",
+   "mnemonic": "PHCFG",
+   "opcode": "0x31",
+   "refs": [
+    "software/tools/spu13_asm.py:56"
+   ]
+  },
+  {
+   "class": "MISSING_IN_CLAIMED_PROFILE",
+   "detail": "assembler header claims sync with spu_vm.py OPCODES; not in assembler table",
+   "mnemonic": "POLY_STEP",
+   "opcode": "0x60",
+   "refs": [
+    "software/tools/spu13_asm.py:56"
+   ]
+  },
+  {
+   "class": "MISSING_IN_CLAIMED_PROFILE",
+   "detail": "assembler header claims sync with spu_vm.py OPCODES; not in assembler table",
+   "mnemonic": "RATIO_CMP",
+   "opcode": "0x61",
+   "refs": [
+    "software/tools/spu13_asm.py:56"
+   ]
+  },
+  {
+   "class": "MISSING_IN_CLAIMED_PROFILE",
+   "detail": "assembler header claims sync with spu_vm.py OPCODES; not in assembler table",
+   "mnemonic": "POLY_STEP",
+   "opcode": "0xE0",
+   "refs": [
+    "software/tools/spu13_asm.py:56"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "27 numeric values overlap ISA-A; treated as a distinct namespace, no cross-profile conflict asserted",
+   "mnemonic": "ISA-B/WF namespace",
+   "opcode": null,
+   "refs": [
+    "hardware/rtl/arch/spu_isa_defines.vh"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "candidate overlap: rtl:spu13_rplu2_sidecar.v names 0x2A RPLU2_START; spec/VM name it SOM",
+   "mnemonic": "RPLU2_START",
+   "opcode": "0x2A",
+   "refs": [
+    "rtl:spu13_rplu2_sidecar.v:hardware/rtl/core/spu13/spu13_rplu2_sidecar.v:47"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "candidate overlap: rtl:spu13_rplu2_pade_sidecar.v names 0x2A RPLU2_START; spec/VM name it SOM",
+   "mnemonic": "RPLU2_START",
+   "opcode": "0x2A",
+   "refs": [
+    "rtl:spu13_rplu2_pade_sidecar.v:hardware/rtl/core/spu13/spu13_rplu2_pade_sidecar.v:54"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_core.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": null,
+   "opcode": "0x48",
+   "refs": [
+    "rtl:spu13_core.v:hardware/rtl/core/spu13/spu13_core.v:725"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_core.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": null,
+   "opcode": "0x4C",
+   "refs": [
+    "rtl:spu13_core.v:hardware/rtl/core/spu13/spu13_core.v:726"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_core.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": null,
+   "opcode": "0x4D",
+   "refs": [
+    "rtl:spu13_core.v:hardware/rtl/core/spu13/spu13_core.v:727"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_lucas_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "PSCALE",
+   "opcode": "0xD0",
+   "refs": [
+    "rtl:spu13_lucas_sidecar.v:hardware/rtl/core/spu13/spu13_lucas_sidecar.v:53"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_lucas_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "PCHIRAL",
+   "opcode": "0xD1",
+   "refs": [
+    "rtl:spu13_lucas_sidecar.v:hardware/rtl/core/spu13/spu13_lucas_sidecar.v:54"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_lucas_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "PMUL",
+   "opcode": "0xD2",
+   "refs": [
+    "rtl:spu13_lucas_sidecar.v:hardware/rtl/core/spu13/spu13_lucas_sidecar.v:55"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_lucas_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "PINV",
+   "opcode": "0xD3",
+   "refs": [
+    "rtl:spu13_lucas_sidecar.v:hardware/rtl/core/spu13/spu13_lucas_sidecar.v:56"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_lucas_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "PHSLK_LOAD",
+   "opcode": "0xD4",
+   "refs": [
+    "rtl:spu13_lucas_sidecar.v:hardware/rtl/core/spu13/spu13_lucas_sidecar.v:57"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_lucas_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "PHSLK_EXEC",
+   "opcode": "0xD5",
+   "refs": [
+    "rtl:spu13_lucas_sidecar.v:hardware/rtl/core/spu13/spu13_lucas_sidecar.v:58"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "candidate overlap: rtl:spu13_neuro_sidecar_adapter.v names 0xE0 NEURO_CFG; spec/VM name it POLY_STEP",
+   "mnemonic": "NEURO_CFG",
+   "opcode": "0xE0",
+   "refs": [
+    "rtl:spu13_neuro_sidecar_adapter.v:hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v:78"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_neuro_sidecar_adapter.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "NEURO_START",
+   "opcode": "0xE1",
+   "refs": [
+    "rtl:spu13_neuro_sidecar_adapter.v:hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v:79"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_neuro_sidecar_adapter.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "NEURO_SPIKE",
+   "opcode": "0xE2",
+   "refs": [
+    "rtl:spu13_neuro_sidecar_adapter.v:hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v:80"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_neuro_sidecar_adapter.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "NEURO_READ",
+   "opcode": "0xE3",
+   "refs": [
+    "rtl:spu13_neuro_sidecar_adapter.v:hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v:81"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_su3_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "SU3_LOAD_A",
+   "opcode": "0xE8",
+   "refs": [
+    "rtl:spu13_su3_sidecar.v:hardware/rtl/core/spu13/spu13_su3_sidecar.v:57"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_su3_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "SU3_LOAD_B",
+   "opcode": "0xE9",
+   "refs": [
+    "rtl:spu13_su3_sidecar.v:hardware/rtl/core/spu13/spu13_su3_sidecar.v:58"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_su3_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "SU3_START",
+   "opcode": "0xEA",
+   "refs": [
+    "rtl:spu13_su3_sidecar.v:hardware/rtl/core/spu13/spu13_su3_sidecar.v:59"
+   ]
+  },
+  {
+   "class": "UNRESOLVED_PROFILE_OWNERSHIP",
+   "detail": "rtl:spu13_su3_sidecar.v decodes opcode absent from spec/VM/assembler/C++",
+   "mnemonic": "SU3_READ",
+   "opcode": "0xEB",
+   "refs": [
+    "rtl:spu13_su3_sidecar.v:hardware/rtl/core/spu13/spu13_su3_sidecar.v:60"
+   ]
+  }
+ ],
+ "matrix_rows": [
+  {
+   "assembler": "implemented",
+   "cpp_vm": "implemented",
+   "family": "Scalar `LD/ADD/SUB/MUL/ROT/LOG`",
+   "line": 19,
+   "python_vm": "implemented"
+  },
+  {
+   "assembler": "canonical control definitions repaired; COND rejected; focused checks only",
+   "cpp_vm": "partial: canonical control repaired; basic QREAD added; full gates pending",
+   "family": "Control `JMP/SNAP/CALL/RET/HALT/NOP`",
+   "line": 20,
+   "python_vm": "partial: October 10 collision repair passes focused checks; full gates pending"
+  },
+  {
+   "assembler": "canonical source rejected after October 10 repair",
+   "cpp_vm": "source rejected after October 10 repair",
+   "family": "`COND`",
+   "line": 21,
+   "python_vm": "rejected canonically after October 10 repair"
+  },
+  {
+   "assembler": "implemented",
+   "cpp_vm": "absent",
+   "family": "`REGEN (0x09)`",
+   "line": 22,
+   "python_vm": "implemented"
+  },
+  {
+   "assembler": "implemented",
+   "cpp_vm": "partial/implemented subset",
+   "family": "Quadray `QADD/QSUB/QROT/QNORM/QLOAD/QLOG`",
+   "line": 23,
+   "python_vm": "implemented"
+  },
+  {
+   "assembler": "implemented",
+   "cpp_vm": "implemented",
+   "family": "`QLDI (0x1D)` / `DELTA (0x1E)`",
+   "line": 24,
+   "python_vm": "implemented"
+  },
+  {
+   "assembler": "implemented",
+   "cpp_vm": "implemented for table subset",
+   "family": "`ROTC (0x1C)` angles 0\u201335",
+   "line": 25,
+   "python_vm": "implemented with guarded range"
+  },
+  {
+   "assembler": "implemented",
+   "cpp_vm": "absent",
+   "family": "`IROTC (0xD6)`",
+   "line": 26,
+   "python_vm": "implemented with typestate guards"
+  },
+  {
+   "assembler": "implemented",
+   "cpp_vm": "absent",
+   "family": "`LOAD2X (0xD7)` / `SCALE2 (0xD8)`",
+   "line": 27,
+   "python_vm": "implemented"
+  },
+  {
+   "assembler": "catalog-aware emission",
+   "cpp_vm": "absent",
+   "family": "IROTC 60-index main/conjugate catalog",
+   "line": 28,
+   "python_vm": "implemented via generated catalog"
+  },
+  {
+   "assembler": "implemented",
+   "cpp_vm": "implemented",
+   "family": "Geometry `SPREAD/HEX`",
+   "line": 29,
+   "python_vm": "implemented"
+  },
+  {
+   "assembler": "implemented",
+   "cpp_vm": "implemented subset",
+   "family": "VE/Janus `EQUIL/IDNT/JINV/ANNE`",
+   "line": 30,
+   "python_vm": "implemented"
+  },
+  {
+   "assembler": "ISA-A assembler has SOM gap",
+   "cpp_vm": "absent/partial",
+   "family": "SOM `0x2A/0x2B`",
+   "line": 31,
+   "python_vm": "implemented"
+  },
+  {
+   "assembler": "historical",
+   "cpp_vm": "absent or legacy",
+   "family": "Legacy `POLY_STEP/RATIO_CMP`",
+   "line": 32,
+   "python_vm": "historical/partial"
+  },
+  {
+   "assembler": "profile-specific via `--arch wf`",
+   "cpp_vm": "absent",
+   "family": "ISA-B WF `LOAD/STORE/MOVI/QMUL/...`",
+   "line": 33,
+   "python_vm": "only with WF assembler table, no default VM parity"
+  }
+ ],
+ "records": [
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 50,
+   "mnemonic": "SLI",
+   "opcode": 112,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 51,
+   "mnemonic": "SLD",
+   "opcode": 113,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 52,
+   "mnemonic": "SRD",
+   "opcode": 114,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 53,
+   "mnemonic": "SMUL",
+   "opcode": 115,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 54,
+   "mnemonic": "SADD",
+   "opcode": 116,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 55,
+   "mnemonic": "SSUB",
+   "opcode": 117,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 56,
+   "mnemonic": "SNORM",
+   "opcode": 118,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 57,
+   "mnemonic": "SSTAT",
+   "opcode": 119,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 77,
+   "mnemonic": "LD",
+   "opcode": 0,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 78,
+   "mnemonic": "ADD",
+   "opcode": 1,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 79,
+   "mnemonic": "SUB",
+   "opcode": 2,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 80,
+   "mnemonic": "MUL",
+   "opcode": 3,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 81,
+   "mnemonic": "ROT",
+   "opcode": 4,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 82,
+   "mnemonic": "LOG",
+   "opcode": 5,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 83,
+   "mnemonic": "PHADD",
+   "opcode": 48,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 84,
+   "mnemonic": "PHCFG",
+   "opcode": 49,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 98,
+   "mnemonic": "JMP",
+   "opcode": 6,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 99,
+   "mnemonic": "SNAP",
+   "opcode": 7,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 100,
+   "mnemonic": "EQUIL",
+   "opcode": 23,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 101,
+   "mnemonic": "CALL",
+   "opcode": 32,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 102,
+   "mnemonic": "RET",
+   "opcode": 33,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 103,
+   "mnemonic": "HALT",
+   "opcode": 8,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 104,
+   "mnemonic": "REGEN",
+   "opcode": 9,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 105,
+   "mnemonic": "NOP",
+   "opcode": 255,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 111,
+   "mnemonic": "QADD",
+   "opcode": 16,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 112,
+   "mnemonic": "QROT",
+   "opcode": 17,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 113,
+   "mnemonic": "QNORM",
+   "opcode": 18,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 114,
+   "mnemonic": "QLOAD",
+   "opcode": 19,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 115,
+   "mnemonic": "QLOG",
+   "opcode": 20,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 116,
+   "mnemonic": "QSUB",
+   "opcode": 27,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 117,
+   "mnemonic": "ROTC",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 118,
+   "mnemonic": "IROTC",
+   "opcode": 214,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 119,
+   "mnemonic": "LOAD2X",
+   "opcode": 215,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 120,
+   "mnemonic": "SCALE2",
+   "opcode": 216,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 121,
+   "mnemonic": "QLDI",
+   "opcode": 29,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 122,
+   "mnemonic": "DELTA",
+   "opcode": 30,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 123,
+   "mnemonic": "MIN4",
+   "opcode": 31,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 124,
+   "mnemonic": "QREAD",
+   "opcode": 34,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 130,
+   "mnemonic": "SPREAD",
+   "opcode": 21,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 131,
+   "mnemonic": "HEX",
+   "opcode": 22,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 162,
+   "mnemonic": "IDNT",
+   "opcode": 24,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 163,
+   "mnemonic": "JINV",
+   "opcode": 25,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 164,
+   "mnemonic": "ANNE",
+   "opcode": 26,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 178,
+   "mnemonic": "POLY_STEP",
+   "opcode": 96,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 179,
+   "mnemonic": "RATIO_CMP",
+   "opcode": 97,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 185,
+   "mnemonic": "SOM",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "knowledge/isa_reference.md",
+   "line": 186,
+   "mnemonic": "SOM_TRAIN",
+   "opcode": 43,
+   "profile": "ISA-A",
+   "source": "spec"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 607,
+   "mnemonic": "LD",
+   "opcode": 0,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 607,
+   "mnemonic": "ADD",
+   "opcode": 1,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 607,
+   "mnemonic": "SUB",
+   "opcode": 2,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 608,
+   "mnemonic": "MUL",
+   "opcode": 3,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 608,
+   "mnemonic": "PHADD",
+   "opcode": 48,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 608,
+   "mnemonic": "PHCFG",
+   "opcode": 49,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 608,
+   "mnemonic": "ROT",
+   "opcode": 4,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 608,
+   "mnemonic": "LOG",
+   "opcode": 5,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 610,
+   "mnemonic": "JMP",
+   "opcode": 6,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 610,
+   "mnemonic": "SNAP",
+   "opcode": 7,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 611,
+   "mnemonic": "CALL",
+   "opcode": 32,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 611,
+   "mnemonic": "RET",
+   "opcode": 33,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 611,
+   "mnemonic": "HALT",
+   "opcode": 8,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 614,
+   "mnemonic": "REGEN",
+   "opcode": 9,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 616,
+   "mnemonic": "QADD",
+   "opcode": 16,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 616,
+   "mnemonic": "QROT",
+   "opcode": 17,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 616,
+   "mnemonic": "QNORM",
+   "opcode": 18,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 617,
+   "mnemonic": "QLOAD",
+   "opcode": 19,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 617,
+   "mnemonic": "QLOG",
+   "opcode": 20,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 617,
+   "mnemonic": "QSUB",
+   "opcode": 27,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 617,
+   "mnemonic": "ROTC",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 617,
+   "mnemonic": "QLDI",
+   "opcode": 29,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 617,
+   "mnemonic": "DELTA",
+   "opcode": 30,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 619,
+   "mnemonic": "IROTC",
+   "opcode": 214,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 619,
+   "mnemonic": "LOAD2X",
+   "opcode": 215,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 619,
+   "mnemonic": "SCALE2",
+   "opcode": 216,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 620,
+   "mnemonic": "MIN4",
+   "opcode": 31,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 620,
+   "mnemonic": "QREAD",
+   "opcode": 34,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 622,
+   "mnemonic": "SPREAD",
+   "opcode": 21,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 622,
+   "mnemonic": "HEX",
+   "opcode": 22,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 624,
+   "mnemonic": "SOM",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 625,
+   "mnemonic": "SOM_TRAIN",
+   "opcode": 43,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 627,
+   "mnemonic": "EQUIL",
+   "opcode": 23,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 627,
+   "mnemonic": "IDNT",
+   "opcode": 24,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 627,
+   "mnemonic": "JINV",
+   "opcode": 25,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 627,
+   "mnemonic": "ANNE",
+   "opcode": 26,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 629,
+   "mnemonic": "POLY_STEP",
+   "opcode": 96,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 629,
+   "mnemonic": "RATIO_CMP",
+   "opcode": 97,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 631,
+   "mnemonic": "POLY_STEP",
+   "opcode": 224,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/spu_vm.py",
+   "line": 633,
+   "mnemonic": "NOP",
+   "opcode": 255,
+   "profile": "ISA-A",
+   "source": "python_vm"
+  },
+  {
+   "file": "software/tools/surd_cpu_encoding.py",
+   "line": 2,
+   "mnemonic": "SLI",
+   "opcode": 112,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/surd_cpu_encoding.py",
+   "line": 2,
+   "mnemonic": "SLD",
+   "opcode": 113,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/surd_cpu_encoding.py",
+   "line": 2,
+   "mnemonic": "SRD",
+   "opcode": 114,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/surd_cpu_encoding.py",
+   "line": 2,
+   "mnemonic": "SMUL",
+   "opcode": 115,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/surd_cpu_encoding.py",
+   "line": 3,
+   "mnemonic": "SADD",
+   "opcode": 116,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/surd_cpu_encoding.py",
+   "line": 3,
+   "mnemonic": "SSUB",
+   "opcode": 117,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/surd_cpu_encoding.py",
+   "line": 3,
+   "mnemonic": "SNORM",
+   "opcode": 118,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/surd_cpu_encoding.py",
+   "line": 3,
+   "mnemonic": "SSTAT",
+   "opcode": 119,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 61,
+   "mnemonic": "LD",
+   "opcode": 0,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 61,
+   "mnemonic": "ADD",
+   "opcode": 1,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 61,
+   "mnemonic": "SUB",
+   "opcode": 2,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 62,
+   "mnemonic": "MUL",
+   "opcode": 3,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 62,
+   "mnemonic": "ROT",
+   "opcode": 4,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 62,
+   "mnemonic": "LOG",
+   "opcode": 5,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 64,
+   "mnemonic": "JMP",
+   "opcode": 6,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 64,
+   "mnemonic": "SNAP",
+   "opcode": 7,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 65,
+   "mnemonic": "CALL",
+   "opcode": 32,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 65,
+   "mnemonic": "RET",
+   "opcode": 33,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 65,
+   "mnemonic": "HALT",
+   "opcode": 8,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 69,
+   "mnemonic": "REGEN",
+   "opcode": 9,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 70,
+   "mnemonic": "MIN4",
+   "opcode": 31,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 70,
+   "mnemonic": "QREAD",
+   "opcode": 34,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 72,
+   "mnemonic": "QADD",
+   "opcode": 16,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 72,
+   "mnemonic": "QROT",
+   "opcode": 17,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 72,
+   "mnemonic": "QNORM",
+   "opcode": 18,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 73,
+   "mnemonic": "QLOAD",
+   "opcode": 19,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 73,
+   "mnemonic": "QLOG",
+   "opcode": 20,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 73,
+   "mnemonic": "QSUB",
+   "opcode": 27,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 73,
+   "mnemonic": "ROTC",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 73,
+   "mnemonic": "QLDI",
+   "opcode": 29,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 73,
+   "mnemonic": "DELTA",
+   "opcode": 30,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 75,
+   "mnemonic": "SPREAD",
+   "opcode": 21,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 75,
+   "mnemonic": "HEX",
+   "opcode": 22,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 77,
+   "mnemonic": "EQUIL",
+   "opcode": 23,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 77,
+   "mnemonic": "IDNT",
+   "opcode": 24,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 77,
+   "mnemonic": "JINV",
+   "opcode": 25,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 77,
+   "mnemonic": "ANNE",
+   "opcode": 26,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 79,
+   "mnemonic": "IROTC",
+   "opcode": 214,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 79,
+   "mnemonic": "LOAD2X",
+   "opcode": 215,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 79,
+   "mnemonic": "SCALE2",
+   "opcode": 216,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 81,
+   "mnemonic": "NOP",
+   "opcode": 255,
+   "profile": "ISA-A",
+   "source": "assembler"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 89,
+   "mnemonic": "NOP",
+   "opcode": 0,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 89,
+   "mnemonic": "HALT",
+   "opcode": 1,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 89,
+   "mnemonic": "SYNC",
+   "opcode": 2,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 91,
+   "mnemonic": "LOAD",
+   "opcode": 16,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 91,
+   "mnemonic": "STORE",
+   "opcode": 17,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 91,
+   "mnemonic": "MOV",
+   "opcode": 18,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 91,
+   "mnemonic": "MOVI",
+   "opcode": 19,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 92,
+   "mnemonic": "LDO",
+   "opcode": 20,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 92,
+   "mnemonic": "LDC",
+   "opcode": 21,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 92,
+   "mnemonic": "MOV_O",
+   "opcode": 22,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 92,
+   "mnemonic": "MOV_C",
+   "opcode": 23,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 94,
+   "mnemonic": "QADD",
+   "opcode": 32,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 94,
+   "mnemonic": "QSUB",
+   "opcode": 33,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 94,
+   "mnemonic": "QMUL",
+   "opcode": 34,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 94,
+   "mnemonic": "QDIV",
+   "opcode": 35,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 95,
+   "mnemonic": "QNORM",
+   "opcode": 36,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 95,
+   "mnemonic": "QCMP",
+   "opcode": 37,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 97,
+   "mnemonic": "SPRD",
+   "opcode": 48,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 97,
+   "mnemonic": "ROTR",
+   "opcode": 49,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 97,
+   "mnemonic": "CROSS",
+   "opcode": 50,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 97,
+   "mnemonic": "DOT",
+   "opcode": 51,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 98,
+   "mnemonic": "TNSR",
+   "opcode": 52,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 98,
+   "mnemonic": "PROJ",
+   "opcode": 53,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 100,
+   "mnemonic": "OFFR",
+   "opcode": 64,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 100,
+   "mnemonic": "CNFM",
+   "opcode": 65,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 100,
+   "mnemonic": "PHSLK",
+   "opcode": 66,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 100,
+   "mnemonic": "INVJ",
+   "opcode": 67,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 101,
+   "mnemonic": "PHSTA",
+   "opcode": 68,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 101,
+   "mnemonic": "PHCLR",
+   "opcode": 69,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 103,
+   "mnemonic": "RCFG",
+   "opcode": 80,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 103,
+   "mnemonic": "RREAD",
+   "opcode": 81,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 103,
+   "mnemonic": "RLOAD",
+   "opcode": 82,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 103,
+   "mnemonic": "RDISSOC",
+   "opcode": 83,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 105,
+   "mnemonic": "CMP",
+   "opcode": 96,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 105,
+   "mnemonic": "JMP",
+   "opcode": 97,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 105,
+   "mnemonic": "JZ",
+   "opcode": 98,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 105,
+   "mnemonic": "JNZ",
+   "opcode": 99,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 106,
+   "mnemonic": "JC",
+   "opcode": 100,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 106,
+   "mnemonic": "JNC",
+   "opcode": 101,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 106,
+   "mnemonic": "CALL",
+   "opcode": 102,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 106,
+   "mnemonic": "RET",
+   "opcode": 103,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 106,
+   "mnemonic": "IRET",
+   "opcode": 104,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 108,
+   "mnemonic": "MFOLD",
+   "opcode": 112,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 108,
+   "mnemonic": "STAT",
+   "opcode": 113,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 108,
+   "mnemonic": "SCALE",
+   "opcode": 114,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 108,
+   "mnemonic": "QR",
+   "opcode": 115,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 109,
+   "mnemonic": "HEX",
+   "opcode": 116,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 109,
+   "mnemonic": "SENT",
+   "opcode": 117,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 109,
+   "mnemonic": "CHRDOUT",
+   "opcode": 118,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 111,
+   "mnemonic": "SOM",
+   "opcode": 42,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/tools/spu13_asm.py",
+   "line": 111,
+   "mnemonic": "SOM_TRAIN",
+   "opcode": 43,
+   "profile": "ISA-B/WF",
+   "source": "assembler_wf"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 610,
+   "mnemonic": "LD",
+   "opcode": 0,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 617,
+   "mnemonic": "ADD",
+   "opcode": 1,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 630,
+   "mnemonic": "SUB",
+   "opcode": 2,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 640,
+   "mnemonic": "MUL",
+   "opcode": 3,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 658,
+   "mnemonic": "ROT",
+   "opcode": 4,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 683,
+   "mnemonic": "LOG",
+   "opcode": 5,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 688,
+   "mnemonic": "JMP",
+   "opcode": 6,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 694,
+   "mnemonic": "SNAP",
+   "opcode": 7,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 733,
+   "mnemonic": "CALL",
+   "opcode": 32,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 740,
+   "mnemonic": "RET",
+   "opcode": 33,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 752,
+   "mnemonic": "QLOAD",
+   "opcode": 19,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 763,
+   "mnemonic": "QLDI",
+   "opcode": 29,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 780,
+   "mnemonic": "DELTA",
+   "opcode": 30,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 805,
+   "mnemonic": "QADD",
+   "opcode": 16,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 812,
+   "mnemonic": "QSUB",
+   "opcode": 27,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 822,
+   "mnemonic": "QROT",
+   "opcode": 17,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 833,
+   "mnemonic": "ROTC",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 878,
+   "mnemonic": "QREAD",
+   "opcode": 34,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 882,
+   "mnemonic": "QNORM",
+   "opcode": 18,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 889,
+   "mnemonic": "QLOG",
+   "opcode": 20,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 895,
+   "mnemonic": "SPREAD",
+   "opcode": 21,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 939,
+   "mnemonic": "HEX",
+   "opcode": 22,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 951,
+   "mnemonic": "EQUIL",
+   "opcode": 23,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 991,
+   "mnemonic": "IDNT",
+   "opcode": 24,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 1002,
+   "mnemonic": "JINV",
+   "opcode": 25,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 1013,
+   "mnemonic": "ANNE",
+   "opcode": 26,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 1035,
+   "mnemonic": "HALT",
+   "opcode": 8,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "software/vm/spu_vm.cpp",
+   "line": 1038,
+   "mnemonic": "NOP",
+   "opcode": 255,
+   "profile": "ISA-A",
+   "source": "cpp_vm"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 725,
+   "mnemonic": null,
+   "mnemonic_source": "none",
+   "opcode": 72,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 726,
+   "mnemonic": null,
+   "mnemonic_source": "none",
+   "opcode": 76,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 727,
+   "mnemonic": null,
+   "mnemonic_source": "none",
+   "opcode": 77,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1056,
+   "mnemonic": "IROTC",
+   "opcode": 214,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1057,
+   "mnemonic": "LOAD2X",
+   "opcode": 215,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1058,
+   "mnemonic": "SCALE2",
+   "opcode": 216,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1063,
+   "mnemonic": "REGEN",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 9,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1065,
+   "mnemonic": "QLDI",
+   "opcode": 29,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1066,
+   "mnemonic": "IDNT",
+   "opcode": 24,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1067,
+   "mnemonic": "QSUB",
+   "opcode": 27,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1068,
+   "mnemonic": "ROTC",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1069,
+   "mnemonic": "DELTA",
+   "opcode": 30,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1070,
+   "mnemonic": "HEX",
+   "opcode": 22,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1071,
+   "mnemonic": "QLOG",
+   "opcode": 20,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1086,
+   "mnemonic": "QLDI",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 29,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1087,
+   "mnemonic": "QSUB",
+   "opcode": 27,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1088,
+   "mnemonic": "ROTC",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1089,
+   "mnemonic": "QSUB",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 27,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1090,
+   "mnemonic": "ROTC",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1373,
+   "mnemonic": "QLDI",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 29,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1394,
+   "mnemonic": "DELTA",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 30,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1407,
+   "mnemonic": "ROTC",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1418,
+   "mnemonic": "ROTC",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 28,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1564,
+   "mnemonic": "QSUB",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 27,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1572,
+   "mnemonic": "HEX",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 22,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1587,
+   "mnemonic": "SOM",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1593,
+   "mnemonic": "SOM",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1674,
+   "mnemonic": "SOM",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1675,
+   "mnemonic": "SOM",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1676,
+   "mnemonic": "SOM_TRAIN",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 43,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 1903,
+   "mnemonic": "POLY_STEP",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 224,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 2194,
+   "mnemonic": "SOM",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 2201,
+   "mnemonic": "SOM_TRAIN",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 43,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 2326,
+   "mnemonic": "SOM",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 2401,
+   "mnemonic": null,
+   "mnemonic_source": "none",
+   "opcode": 72,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 2402,
+   "mnemonic": "QLDI",
+   "mnemonic_source": "spec/python_vm-by-value",
+   "opcode": 29,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 2469,
+   "mnemonic": null,
+   "mnemonic_source": "none",
+   "opcode": 76,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_core.v",
+   "line": 2470,
+   "mnemonic": null,
+   "mnemonic_source": "none",
+   "opcode": 77,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_core.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_lucas_sidecar.v",
+   "line": 53,
+   "mnemonic": "PSCALE",
+   "opcode": 208,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_lucas_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_lucas_sidecar.v",
+   "line": 54,
+   "mnemonic": "PCHIRAL",
+   "opcode": 209,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_lucas_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_lucas_sidecar.v",
+   "line": 55,
+   "mnemonic": "PMUL",
+   "opcode": 210,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_lucas_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_lucas_sidecar.v",
+   "line": 56,
+   "mnemonic": "PINV",
+   "opcode": 211,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_lucas_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_lucas_sidecar.v",
+   "line": 57,
+   "mnemonic": "PHSLK_LOAD",
+   "opcode": 212,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_lucas_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_lucas_sidecar.v",
+   "line": 58,
+   "mnemonic": "PHSLK_EXEC",
+   "opcode": 213,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_lucas_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_rplu2_sidecar.v",
+   "line": 47,
+   "mnemonic": "RPLU2_START",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_rplu2_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_rplu2_pade_sidecar.v",
+   "line": 54,
+   "mnemonic": "RPLU2_START",
+   "opcode": 42,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_rplu2_pade_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v",
+   "line": 78,
+   "mnemonic": "NEURO_CFG",
+   "opcode": 224,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_neuro_sidecar_adapter.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v",
+   "line": 79,
+   "mnemonic": "NEURO_START",
+   "opcode": 225,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_neuro_sidecar_adapter.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v",
+   "line": 80,
+   "mnemonic": "NEURO_SPIKE",
+   "opcode": 226,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_neuro_sidecar_adapter.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_neuro_sidecar_adapter.v",
+   "line": 81,
+   "mnemonic": "NEURO_READ",
+   "opcode": 227,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_neuro_sidecar_adapter.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_su3_sidecar.v",
+   "line": 57,
+   "mnemonic": "SU3_LOAD_A",
+   "opcode": 232,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_su3_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_su3_sidecar.v",
+   "line": 58,
+   "mnemonic": "SU3_LOAD_B",
+   "opcode": 233,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_su3_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_su3_sidecar.v",
+   "line": 59,
+   "mnemonic": "SU3_START",
+   "opcode": 234,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_su3_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/core/spu13/spu13_su3_sidecar.v",
+   "line": 60,
+   "mnemonic": "SU3_READ",
+   "opcode": 235,
+   "profile": "ISA-A",
+   "source": "rtl:spu13_su3_sidecar.v"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 57,
+   "mnemonic": "NOP",
+   "opcode": 0,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 58,
+   "mnemonic": "HALT",
+   "opcode": 1,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 59,
+   "mnemonic": "SYNC",
+   "opcode": 2,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 64,
+   "mnemonic": "LOAD",
+   "opcode": 16,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 65,
+   "mnemonic": "STORE",
+   "opcode": 17,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 66,
+   "mnemonic": "MOV",
+   "opcode": 18,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 67,
+   "mnemonic": "MOVI",
+   "opcode": 19,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 68,
+   "mnemonic": "LDO",
+   "opcode": 20,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 69,
+   "mnemonic": "LDC",
+   "opcode": 21,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 70,
+   "mnemonic": "MOV_O",
+   "opcode": 22,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 71,
+   "mnemonic": "MOV_C",
+   "opcode": 23,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 76,
+   "mnemonic": "QADD",
+   "opcode": 32,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 77,
+   "mnemonic": "QSUB",
+   "opcode": 33,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 78,
+   "mnemonic": "QMUL",
+   "opcode": 34,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 79,
+   "mnemonic": "QDIV",
+   "opcode": 35,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 80,
+   "mnemonic": "QNORM",
+   "opcode": 36,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 81,
+   "mnemonic": "QCMP",
+   "opcode": 37,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 82,
+   "mnemonic": "SOM",
+   "opcode": 42,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 83,
+   "mnemonic": "SOM_TRAIN",
+   "opcode": 43,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 88,
+   "mnemonic": "SPRD",
+   "opcode": 48,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 89,
+   "mnemonic": "ROTR",
+   "opcode": 49,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 90,
+   "mnemonic": "CROSS",
+   "opcode": 50,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 91,
+   "mnemonic": "DOT",
+   "opcode": 51,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 92,
+   "mnemonic": "TNSR",
+   "opcode": 52,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 93,
+   "mnemonic": "PROJ",
+   "opcode": 53,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 98,
+   "mnemonic": "OFFR",
+   "opcode": 64,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 99,
+   "mnemonic": "CNFM",
+   "opcode": 65,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 100,
+   "mnemonic": "PHSLK",
+   "opcode": 66,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 101,
+   "mnemonic": "INVJ",
+   "opcode": 67,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 102,
+   "mnemonic": "PHSTA",
+   "opcode": 68,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 103,
+   "mnemonic": "PHCLR",
+   "opcode": 69,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 104,
+   "mnemonic": "JSCR",
+   "opcode": 72,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 105,
+   "mnemonic": "NSA_DQADD",
+   "opcode": 76,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 106,
+   "mnemonic": "NSA_DQMUL",
+   "opcode": 77,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 111,
+   "mnemonic": "RCFG",
+   "opcode": 80,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 112,
+   "mnemonic": "RREAD",
+   "opcode": 81,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 113,
+   "mnemonic": "RLOAD",
+   "opcode": 82,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 114,
+   "mnemonic": "RDISSOC",
+   "opcode": 83,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 119,
+   "mnemonic": "CMP",
+   "opcode": 96,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 120,
+   "mnemonic": "JMP",
+   "opcode": 97,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 121,
+   "mnemonic": "JZ",
+   "opcode": 98,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 122,
+   "mnemonic": "JNZ",
+   "opcode": 99,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 123,
+   "mnemonic": "JC",
+   "opcode": 100,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 124,
+   "mnemonic": "JNC",
+   "opcode": 101,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 125,
+   "mnemonic": "CALL",
+   "opcode": 102,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 126,
+   "mnemonic": "RET",
+   "opcode": 103,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 127,
+   "mnemonic": "IRET",
+   "opcode": 104,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 132,
+   "mnemonic": "MFOLD",
+   "opcode": 112,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 133,
+   "mnemonic": "STAT",
+   "opcode": 113,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 134,
+   "mnemonic": "SCALE",
+   "opcode": 114,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 135,
+   "mnemonic": "QR",
+   "opcode": 115,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 136,
+   "mnemonic": "HEX",
+   "opcode": 116,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 137,
+   "mnemonic": "SENT",
+   "opcode": 117,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  },
+  {
+   "file": "hardware/rtl/arch/spu_isa_defines.vh",
+   "line": 138,
+   "mnemonic": "CHRDOUT",
+   "opcode": 118,
+   "profile": "ISA-B/WF",
+   "source": "rtl:spu_isa_defines.vh"
+  }
+ ],
+ "schema": "isa-v02-o6/1",
+ "state": {
+  "faults": [
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "cpp_vm",
+    "refs": [
+     "software/vm/spu_vm.cpp:594"
+    ],
+    "value": "INVALID_REGISTER"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "cpp_vm",
+    "refs": [
+     "software/vm/spu_vm.cpp:598"
+    ],
+    "value": "INVALID_REGISTER"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "cpp_vm",
+    "refs": [
+     "software/vm/spu_vm.cpp:850"
+    ],
+    "value": "UNSUPPORTED"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "cpp_vm",
+    "refs": [
+     "software/vm/spu_vm.cpp:909"
+    ],
+    "value": "DEGENERATE_METRIC"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "cpp_vm",
+    "refs": [
+     "software/vm/spu_vm.cpp:911"
+    ],
+    "value": "OVERFLOW"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "cpp_vm",
+    "refs": [
+     "software/vm/spu_vm.cpp:1043"
+    ],
+    "value": "UNSUPPORTED"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:1362"
+    ],
+    "value": "UNSUPPORTED"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:1368"
+    ],
+    "value": "INVALID_REGISTER"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:1372"
+    ],
+    "value": "UNSUPPORTED"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:2010"
+    ],
+    "value": "DEGENERATE_METRIC"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:2266"
+    ],
+    "value": "OVERFLOW"
+   },
+   {
+    "item": "fault kind",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:2268"
+    ],
+    "value": "OVERFLOW"
+   },
+   {
+    "item": "exception class",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:94"
+    ],
+    "value": "RotcUnverifiedAngleError"
+   },
+   {
+    "item": "exception class",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:108"
+    ],
+    "value": "IrotcBadIndexError"
+   },
+   {
+    "item": "exception class",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:116"
+    ],
+    "value": "IrotcUntaggedError"
+   },
+   {
+    "item": "exception class",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:125"
+    ],
+    "value": "IrotcCatalogMixError"
+   },
+   {
+    "item": "exception class",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:651"
+    ],
+    "value": "DegenerateMetricError"
+   },
+   {
+    "item": "fault precedence and refusal post-state per opcode",
+    "note": "only Gram v1 SPREAD has a frozen contract (research/sim_cap1_spread)",
+    "profile": "python_vm/cpp_vm",
+    "refs": [],
+    "value": "UNRESOLVED"
+   }
+  ],
+  "flags": [
+   {
+    "item": "FLAGS[0] Z",
+    "note": "",
+    "profile": "spec",
+    "refs": [
+     "knowledge/isa_reference.md:257"
+    ],
+    "value": "set by Arithmetic"
+   },
+   {
+    "item": "FLAGS[1] C",
+    "note": "",
+    "profile": "spec",
+    "refs": [
+     "knowledge/isa_reference.md:258"
+    ],
+    "value": "set by Arithmetic"
+   },
+   {
+    "item": "FLAGS[2] V",
+    "note": "",
+    "profile": "spec",
+    "refs": [
+     "knowledge/isa_reference.md:259"
+    ],
+    "value": "set by A\u2083\u2081 inverter"
+   },
+   {
+    "item": "FLAGS[3] MISALIGNED",
+    "note": "",
+    "profile": "spec",
+    "refs": [
+     "knowledge/isa_reference.md:260"
+    ],
+    "value": "set by ROTC tagged"
+   },
+   {
+    "item": "FLAGS[4] OVERFLOW",
+    "note": "",
+    "profile": "spec",
+    "refs": [
+     "knowledge/isa_reference.md:261"
+    ],
+    "value": "set by ROTC tagged"
+   },
+   {
+    "item": "FLAGS[5] INEXACT",
+    "note": "",
+    "profile": "spec",
+    "refs": [
+     "knowledge/isa_reference.md:262"
+    ],
+    "value": "set by ROTC tagged"
+   },
+   {
+    "item": "FLAGS word readable via SNAP",
+    "note": "spec says SNAP reads FLAGS; this VM's SNAP is a Davis-gate scan with no FLAGS word",
+    "profile": "python_vm",
+    "refs": [],
+    "value": "UNRESOLVED"
+   },
+   {
+    "item": "FLAGS word readable via SNAP",
+    "note": "spec says SNAP reads FLAGS; this VM's SNAP is a Davis-gate scan with no FLAGS word",
+    "profile": "cpp_vm",
+    "refs": [],
+    "value": "UNRESOLVED"
+   },
+   {
+    "item": "flags_v (zero-norm)",
+    "note": "no opcode routes this to FLAGS[2]; A31 inverse has no encoding in any ISA-A table",
+    "profile": "rtl:spu13_fp4_inverter.v",
+    "refs": [
+     "hardware/rtl/core/spu13/spu13_fp4_inverter.v:32"
+    ],
+    "value": "output pin"
+   }
+  ],
+  "registers": [
+   {
+    "item": "scalar registers",
+    "note": "",
+    "profile": "python_vm",
+    "refs": [
+     "software/spu_vm.py:1217"
+    ],
+    "value": "R0..R25"
+   },
+   {
+    "item": "scalar registers",
+    "note": "",
+    "profile": "cpp_vm",
+    "refs": [
+     "software/vm/spu_vm.cpp:482"
+    ],
+    "value": "R0..R25"
+   },
+   {
+    "item": "scalar / quadray registers",
+    "note": "",
+    "profile": "spec",
+    "refs": [
+     "knowledge/isa_reference.md:32"
+    ],
+    "value": "R0\u2013R25 / QR0\u2013QR12"
+   },
+   {
+    "item": "surd tuple registers (ENABLE_SURD_CPU)",
+    "note": "",
+    "profile": "spec",
+    "refs": [
+     "knowledge/isa_reference.md:41"
+    ],
+    "value": "S0\u2013S7"
+   },
+   {
+    "item": "register file widths",
+    "note": "not extracted; multi-core RTL register organisation needs its own audit",
+    "profile": "rtl:spu13_core.v",
+    "refs": [],
+    "value": "UNRESOLVED"
+   }
+  ],
+  "transitions": [
+   {
+    "item": "machine-state transition table (fetch/PC/stack/halt)",
+    "note": "core fetch/PC/stack not established in inspected main RTL core per ISA_IMPLEMENTATION_MATRIX.md",
+    "profile": "all",
+    "refs": [],
+    "value": "UNRESOLVED"
+   }
+  ]
+ },
+ "support": {
+  "0x00": {
+   "assembler": "LD",
+   "cpp_vm": "LD",
+   "python_vm": "LD",
+   "spec": "LD"
+  },
+  "0x01": {
+   "assembler": "ADD",
+   "cpp_vm": "ADD",
+   "python_vm": "ADD",
+   "spec": "ADD"
+  },
+  "0x02": {
+   "assembler": "SUB",
+   "cpp_vm": "SUB",
+   "python_vm": "SUB",
+   "spec": "SUB"
+  },
+  "0x03": {
+   "assembler": "MUL",
+   "cpp_vm": "MUL",
+   "python_vm": "MUL",
+   "spec": "MUL"
+  },
+  "0x04": {
+   "assembler": "ROT",
+   "cpp_vm": "ROT",
+   "python_vm": "ROT",
+   "spec": "ROT"
+  },
+  "0x05": {
+   "assembler": "LOG",
+   "cpp_vm": "LOG",
+   "python_vm": "LOG",
+   "spec": "LOG"
+  },
+  "0x06": {
+   "assembler": "JMP",
+   "cpp_vm": "JMP",
+   "python_vm": "JMP",
+   "spec": "JMP"
+  },
+  "0x07": {
+   "assembler": "SNAP",
+   "cpp_vm": "SNAP",
+   "python_vm": "SNAP",
+   "spec": "SNAP"
+  },
+  "0x08": {
+   "assembler": "HALT",
+   "cpp_vm": "HALT",
+   "python_vm": "HALT",
+   "spec": "HALT"
+  },
+  "0x09": {
+   "assembler": "REGEN",
+   "python_vm": "REGEN",
+   "rtl:spu13_core.v": "REGEN",
+   "spec": "REGEN"
+  },
+  "0x10": {
+   "assembler": "QADD",
+   "cpp_vm": "QADD",
+   "python_vm": "QADD",
+   "spec": "QADD"
+  },
+  "0x11": {
+   "assembler": "QROT",
+   "cpp_vm": "QROT",
+   "python_vm": "QROT",
+   "spec": "QROT"
+  },
+  "0x12": {
+   "assembler": "QNORM",
+   "cpp_vm": "QNORM",
+   "python_vm": "QNORM",
+   "spec": "QNORM"
+  },
+  "0x13": {
+   "assembler": "QLOAD",
+   "cpp_vm": "QLOAD",
+   "python_vm": "QLOAD",
+   "spec": "QLOAD"
+  },
+  "0x14": {
+   "assembler": "QLOG",
+   "cpp_vm": "QLOG",
+   "python_vm": "QLOG",
+   "rtl:spu13_core.v": "QLOG",
+   "spec": "QLOG"
+  },
+  "0x15": {
+   "assembler": "SPREAD",
+   "cpp_vm": "SPREAD",
+   "python_vm": "SPREAD",
+   "spec": "SPREAD"
+  },
+  "0x16": {
+   "assembler": "HEX",
+   "cpp_vm": "HEX",
+   "python_vm": "HEX",
+   "rtl:spu13_core.v": "HEX",
+   "spec": "HEX"
+  },
+  "0x17": {
+   "assembler": "EQUIL",
+   "cpp_vm": "EQUIL",
+   "python_vm": "EQUIL",
+   "spec": "EQUIL"
+  },
+  "0x18": {
+   "assembler": "IDNT",
+   "cpp_vm": "IDNT",
+   "python_vm": "IDNT",
+   "rtl:spu13_core.v": "IDNT",
+   "spec": "IDNT"
+  },
+  "0x19": {
+   "assembler": "JINV",
+   "cpp_vm": "JINV",
+   "python_vm": "JINV",
+   "spec": "JINV"
+  },
+  "0x1A": {
+   "assembler": "ANNE",
+   "cpp_vm": "ANNE",
+   "python_vm": "ANNE",
+   "spec": "ANNE"
+  },
+  "0x1B": {
+   "assembler": "QSUB",
+   "cpp_vm": "QSUB",
+   "python_vm": "QSUB",
+   "rtl:spu13_core.v": "QSUB",
+   "spec": "QSUB"
+  },
+  "0x1C": {
+   "assembler": "ROTC",
+   "cpp_vm": "ROTC",
+   "python_vm": "ROTC",
+   "rtl:spu13_core.v": "ROTC",
+   "spec": "ROTC"
+  },
+  "0x1D": {
+   "assembler": "QLDI",
+   "cpp_vm": "QLDI",
+   "python_vm": "QLDI",
+   "rtl:spu13_core.v": "QLDI",
+   "spec": "QLDI"
+  },
+  "0x1E": {
+   "assembler": "DELTA",
+   "cpp_vm": "DELTA",
+   "python_vm": "DELTA",
+   "rtl:spu13_core.v": "DELTA",
+   "spec": "DELTA"
+  },
+  "0x1F": {
+   "assembler": "MIN4",
+   "python_vm": "MIN4",
+   "spec": "MIN4"
+  },
+  "0x20": {
+   "assembler": "CALL",
+   "cpp_vm": "CALL",
+   "python_vm": "CALL",
+   "spec": "CALL"
+  },
+  "0x21": {
+   "assembler": "RET",
+   "cpp_vm": "RET",
+   "python_vm": "RET",
+   "spec": "RET"
+  },
+  "0x22": {
+   "assembler": "QREAD",
+   "cpp_vm": "QREAD",
+   "python_vm": "QREAD",
+   "spec": "QREAD"
+  },
+  "0x2A": {
+   "python_vm": "SOM",
+   "rtl:spu13_core.v": "SOM",
+   "rtl:spu13_rplu2_pade_sidecar.v": "RPLU2_START",
+   "rtl:spu13_rplu2_sidecar.v": "RPLU2_START",
+   "spec": "SOM"
+  },
+  "0x2B": {
+   "python_vm": "SOM_TRAIN",
+   "rtl:spu13_core.v": "SOM_TRAIN",
+   "spec": "SOM_TRAIN"
+  },
+  "0x30": {
+   "python_vm": "PHADD",
+   "spec": "PHADD"
+  },
+  "0x31": {
+   "python_vm": "PHCFG",
+   "spec": "PHCFG"
+  },
+  "0x48": {
+   "rtl:spu13_core.v": null
+  },
+  "0x4C": {
+   "rtl:spu13_core.v": null
+  },
+  "0x4D": {
+   "rtl:spu13_core.v": null
+  },
+  "0x60": {
+   "python_vm": "POLY_STEP",
+   "spec": "POLY_STEP"
+  },
+  "0x61": {
+   "python_vm": "RATIO_CMP",
+   "spec": "RATIO_CMP"
+  },
+  "0x70": {
+   "assembler": "SLI",
+   "spec": "SLI"
+  },
+  "0x71": {
+   "assembler": "SLD",
+   "spec": "SLD"
+  },
+  "0x72": {
+   "assembler": "SRD",
+   "spec": "SRD"
+  },
+  "0x73": {
+   "assembler": "SMUL",
+   "spec": "SMUL"
+  },
+  "0x74": {
+   "assembler": "SADD",
+   "spec": "SADD"
+  },
+  "0x75": {
+   "assembler": "SSUB",
+   "spec": "SSUB"
+  },
+  "0x76": {
+   "assembler": "SNORM",
+   "spec": "SNORM"
+  },
+  "0x77": {
+   "assembler": "SSTAT",
+   "spec": "SSTAT"
+  },
+  "0xD0": {
+   "rtl:spu13_lucas_sidecar.v": "PSCALE"
+  },
+  "0xD1": {
+   "rtl:spu13_lucas_sidecar.v": "PCHIRAL"
+  },
+  "0xD2": {
+   "rtl:spu13_lucas_sidecar.v": "PMUL"
+  },
+  "0xD3": {
+   "rtl:spu13_lucas_sidecar.v": "PINV"
+  },
+  "0xD4": {
+   "rtl:spu13_lucas_sidecar.v": "PHSLK_LOAD"
+  },
+  "0xD5": {
+   "rtl:spu13_lucas_sidecar.v": "PHSLK_EXEC"
+  },
+  "0xD6": {
+   "assembler": "IROTC",
+   "python_vm": "IROTC",
+   "rtl:spu13_core.v": "IROTC",
+   "spec": "IROTC"
+  },
+  "0xD7": {
+   "assembler": "LOAD2X",
+   "python_vm": "LOAD2X",
+   "rtl:spu13_core.v": "LOAD2X",
+   "spec": "LOAD2X"
+  },
+  "0xD8": {
+   "assembler": "SCALE2",
+   "python_vm": "SCALE2",
+   "rtl:spu13_core.v": "SCALE2",
+   "spec": "SCALE2"
+  },
+  "0xE0": {
+   "python_vm": "POLY_STEP",
+   "rtl:spu13_core.v": "POLY_STEP",
+   "rtl:spu13_neuro_sidecar_adapter.v": "NEURO_CFG"
+  },
+  "0xE1": {
+   "rtl:spu13_neuro_sidecar_adapter.v": "NEURO_START"
+  },
+  "0xE2": {
+   "rtl:spu13_neuro_sidecar_adapter.v": "NEURO_SPIKE"
+  },
+  "0xE3": {
+   "rtl:spu13_neuro_sidecar_adapter.v": "NEURO_READ"
+  },
+  "0xE8": {
+   "rtl:spu13_su3_sidecar.v": "SU3_LOAD_A"
+  },
+  "0xE9": {
+   "rtl:spu13_su3_sidecar.v": "SU3_LOAD_B"
+  },
+  "0xEA": {
+   "rtl:spu13_su3_sidecar.v": "SU3_START"
+  },
+  "0xEB": {
+   "rtl:spu13_su3_sidecar.v": "SU3_READ"
+  },
+  "0xFF": {
+   "assembler": "NOP",
+   "cpp_vm": "NOP",
+   "python_vm": "NOP",
+   "spec": "NOP"
+  }
+ }
+}
