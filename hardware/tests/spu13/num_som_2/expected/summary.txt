@@ -1,0 +1,92 @@
+comparator vectors: 34641
+production != unsigned-P exact model: 0
+experimental != signed-P exact model: 0
+production != experimental: 9811 (a P operand has bit 31 set: 9811; both P < 2^31: 0)
+latency (production, experimental) cycles seen: [(35, 35)]
+
+=== WIRED: P-weight=0 Q-weight=1 ===
+case            RTLorig RTLnew fwSgn idNarr key32Diff  outcome
+W_witness             4      6     6      6         0  FIXED-by-patch
+Z_zero                0      0     0      0         0  ok-both
+NP_D3                 0      6     6      6         0  FIXED-by-patch
+PP_C-2                0      0     0      0         0  ok-both
+N6_exact0             6      6     6      6         0  ok-both
+TIE_A1B1              0      0     0      0         0  ok-both
+QR0_reset             0      1     1      1         0  FIXED-by-patch
+NPq_A-1,1             4      0     0      0         0  FIXED-by-patch
+PPq_A2,1              1      1     1      1         0  ok-both
+PPq_A-3,-1            4      4     4      4         0  ok-both
+NPq_A3,-1             1      1     1      1         0  ok-both
+ALIAS_P               1      1     1      1         0  ok-both
+ALIAS_Q               1      1     1      1         0  ok-both
+MAXP                  1      1     1      1         7  ok-both
+MINP                  1      1     1      4         7  residual-arithmetic
+ALIAS_MIN             1      1     1      4         7  residual-arithmetic
+SQ_WRAP               0      4     4      4         7  FIXED-by-patch
+ACC_2x2^16            1      1     1      1         7  ok-both
+ACC_4xMIN             1      6     6      4         7  residual-arithmetic (winner changed)
+B_+9457,+9457         1      1     1      1         0  ok-both
+B_-9457,+9457         1      1     1      1         0  ok-both
+B_+9457,-9457         4      4     4      4         0  ok-both
+B_-9457,-9457         4      4     4      4         0  ok-both
+B_+9458,+9458         1      1     1      1         0  ok-both
+B_-9458,+9458         1      1     1      1         0  ok-both
+B_+9459,+9459         1      1     1      1         0  ok-both
+B_-9459,+9459         1      1     1      1         0  ok-both
+B_+9500,+9500         1      1     1      1         7  ok-both
+B_-9500,+9500         1      1     1      1         7  ok-both
+B_mixed               0      3     3      3         0  FIXED-by-patch
+BIG_A46341            0      0     0      1         6  residual-arithmetic
+BIG_A46340            4      4     4      1         1  residual-arithmetic
+BIG_A-46341           0      0     0      4         6  residual-arithmetic
+outcome counts [base19]: FIXED-by-patch=5, ok-both=11, residual-arithmetic=3
+outcome counts [boundary]: FIXED-by-patch=1, ok-both=10
+outcome counts [big]: residual-arithmetic=3
+
+=== CONTROL: P-weight=1 Q-weight=0 ===
+case            RTLorig RTLnew fwSgn idNarr key32Diff  outcome
+W_witness             6      6     6      6         0  ok-both
+Z_zero                0      0     0      0         0  ok-both
+NP_D3                 6      6     6      6         0  ok-both
+PP_C-2                0      0     0      0         0  ok-both
+N6_exact0             6      6     6      6         0  ok-both
+TIE_A1B1              0      0     0      0         0  ok-both
+QR0_reset             1      1     1      1         0  ok-both
+NPq_A-1,1             0      0     0      0         0  ok-both
+PPq_A2,1              1      1     1      1         0  ok-both
+PPq_A-3,-1            4      4     4      4         0  ok-both
+NPq_A3,-1             1      1     1      1         0  ok-both
+ALIAS_P               1      1     1      1         0  ok-both
+ALIAS_Q               1      1     1      1         0  ok-both
+MAXP                  1      1     1      1         7  ok-both
+MINP                  0      1     1      4         7  residual-arithmetic (winner changed)
+ALIAS_MIN             0      1     1      4         7  residual-arithmetic (winner changed)
+SQ_WRAP               0      4     4      4         7  FIXED-by-patch
+ACC_2x2^16            0      1     1      1         7  FIXED-by-patch
+ACC_4xMIN             0      6     6      4         7  residual-arithmetic (winner changed)
+B_+9457,+9457         1      1     1      1         0  ok-both
+B_-9457,+9457         1      1     1      1         0  ok-both
+B_+9457,-9457         4      4     4      4         0  ok-both
+B_-9457,-9457         4      4     4      4         0  ok-both
+B_+9458,+9458         1      1     1      1         0  ok-both
+B_-9458,+9458         1      1     1      1         0  ok-both
+B_+9459,+9459         1      1     1      1         0  ok-both
+B_-9459,+9459         1      1     1      1         0  ok-both
+B_+9500,+9500         1      1     1      1         0  ok-both
+B_-9500,+9500         1      1     1      1         0  ok-both
+B_mixed               3      3     3      3         0  ok-both
+BIG_A46341            1      0     0      1         6  REGRESSED-by-patch
+BIG_A46340            1      4     4      1         1  REGRESSED-by-patch
+BIG_A-46341           4      0     0      4         6  REGRESSED-by-patch
+outcome counts [base19]: FIXED-by-patch=2, ok-both=14, residual-arithmetic=3
+outcome counts [boundary]: ok-both=11
+outcome counts [big]: REGRESSED-by-patch=3
+host-derived box bound (wired, provisional): |P|,|Q| <= 9458; worst accumulated key 2147117334 at B, 2147571366 at B+1
+host-derived box bound (control, provisional): |P|,|Q| <= 11584; worst accumulated key 2147163912 at B, 2147534628 at B+1
+
+spu13_som_bmu_tb production: PASS lines=1 FAIL lines=0
+spu13_som_bmu_tb experimental: PASS lines=1 FAIL lines=0
+spu13_som_bmu_tb: outputs identical between variants: True
+spu_som_train_tb production: PASS lines=5 FAIL lines=0
+spu_som_train_tb experimental: PASS lines=5 FAIL lines=0
+spu_som_train_tb: outputs identical between variants: True
