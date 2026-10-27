@@ -1,8 +1,8 @@
-# H0-C1 — Minimum host-driven execution protocol: contract draft (revision 5)
+# H0-C1 — Minimum host-driven execution protocol: contract draft (revision 6)
 
 **Status:** NON-NORMATIVE DRAFT for independent review. Nothing here is implemented, qualified, ratified or an encoding. Normative ratification and RTL implementation **HOLD**.
-**Revision:** r5. Earlier revisions are in git history: r1 `ff98404134ae63bc481e9ea9d6dd4d3ad1398f8e`, r2 `96c75a6c8b447a4c7168ef5b75f4109d75d8e1db`, r3 `b7eddd84cf088b83504dbcf9f17aed65c55589c5`.
-**Baseline identity for this revision:** `dev/next` at `cc257838811b5751a1314a5c71146457ed6924e8` (clean before editing). Existing VM, assembler and RTL sources are unchanged from public RC2 `b063280`.
+**Revision:** r6. Earlier revisions are in git history: r1 `ff98404134ae63bc481e9ea9d6dd4d3ad1398f8e`, r2 `96c75a6c8b447a4c7168ef5b75f4109d75d8e1db`, r3 `b7eddd84cf088b83504dbcf9f17aed65c55589c5`.
+**Baseline identity for this revision:** `dev/next` at `15e9c961b41ebaceb332f8f5f7a744847d76c941` (clean before editing). Existing VM, assembler and RTL sources are unchanged from public RC2 `b063280`.
 **Language:** MUST/SHALL mark requirements of this *proposed* contract, not properties of the current design. Mechanisms described here are not claimed to exist in the RTL unless a source fact is cited. No instruction-set or mathematical change; no queue; no autonomous program counter; no unified FLAGS register; no counter width, SPI command value or bit position is assigned.
 **Goal and limit.** One small Artix-7 execution profile that accepts only defined commands, executes them correctly, reports exactly what happened and never presents an invalid result as successful. It is not a protocol for every experimental subsystem. This alignment does not authorize implementation or normative ratification.
 
@@ -121,7 +121,7 @@ Proposed profile requirements, not a claim that the current RTL enforces them or
 
 | Record | Updated when | Content (semantic) |
 |---|---|---|
-| **Transaction record** | An instruction is accepted; then completed | state (NONE / executing / completed); identity; terminal outcome; result-valid; result telemetry (zero or one payload) |
+| **Transaction record** | An instruction is accepted; then completed | state (NONE / executing / completed); identity; terminal outcome and applicable refusal reason; result-valid; result telemetry (zero or one payload) |
 | **Rejection record** | A submission or configuration write is rejected | state (NONE / present); rejection identity; kind; command class if known |
 
 Each record is NONE until its first event after reset. Reset overrides both records. Otherwise the records update **independently**: a completion and a rejection on the same edge update both, and neither suppresses the other.
@@ -163,7 +163,8 @@ Four things are kept distinct: **architectural QR state mutation**, **host-visib
 `0x2A` returns host-visible telemetry; the lane label names the destination associated with the result and is **not** a QR register write. A later QSUB or ROTC cannot consume the `0x2A` result by naming that lane. A future design that writes Padé results to the QR file is a separate architectural decision with its own tests. The simulator must reflect this distinction. The baselines produced exactly one commit per supported instruction (an observation; the payload layout is left to the numerical contract).
 
 - **SUCCESS:** specified effects committed; result-valid true with that one telemetry item.
-- **REFUSED:** terminal, no commit. In this profile, arithmetic refusal of `0x2A` (A31 zero divisor): `pade_done && flags_v` is REFUSED, `pade_done && !flags_v` is SUCCESS. This addresses the A31-R2 witness only; it is not a proof that every failure is detected. The one-hot BTU input of this configuration narrows the multiple-result concern; this is an assumption to confirm in the exact image.
+- **REFUSED:** terminal, no commit or fresh telemetry. For an accepted canonical `0x2A`, read its selected QR lane and check all eight original signed 32-bit P/Q coefficients against `[-9457, 9457]` before narrowing or starting SOM. If any are outside, publish exactly one **REFUSED / NUMERIC_DOMAIN** completion for that transaction, with result-valid false; start neither SOM, BTU nor Padé and make no QR write. The reason is observable with the transaction record; its encoding is not chosen. Previously held telemetry is historical and is not associated with the refused transaction. Reset cancellation and same-edge rules in §5 still apply. This is a proposed H0 behavior and is not implemented in the current core.
+- The separate characterized A₃₁ arithmetic refusal is `pade_done && flags_v`; `pade_done && !flags_v` is SUCCESS only when the other success and integrity requirements are met. This addresses the A31-R2 witness only; it is not a proof that every failure is detected. The one-hot BTU input of this configuration narrows the multiple-result concern; this is an assumption to confirm in the exact image.
 - **UNSUPPORTED:** terminal, no effect over the protected partitions, no telemetry.
 - **Integrity and other errors.** Transport errors (CRC and related) are rejection events, not outcomes. ECC double errors, RNS errors, quadray-coherence faults, pipeline stalls and other datapath faults require **explicit classification by the owning subsystem** (D7); they are not silently mapped to A31 arithmetic refusal, and no new fault outcome is invented here. Until classified, the contract makes only this guarantee: an accepted transaction affected by such an event MUST NOT be published as SUCCESS with a fresh valid result.
 - A refusal may leave physical registers holding old data; that data is never associated with the new transaction or flagged valid.
@@ -207,7 +208,7 @@ A **separate numerical-semantics contract** for QLDI, QSUB, ROTC and `0x2A` is m
 | QLDI | Immediate decoding and sign extension, register-lane selection (`qr_lane` wraps an 8-bit index modulo 13), scale and canonical representation (boot hydration uses Q12 `0x1000` per unit; QLDI loads unscaled integers) |
 | QSUB | Operand interpretation, arithmetic width (the two 32-bit halves subtract independently), truncation and result state |
 | ROTC | Candidate angles `{0, 2, 5}`, identity/permutation mappings, component patterns, tags and committed state; divide-by-three rotations are outside initial H0 |
-| `0x2A` | Input interpretation, narrowing of coefficient halves to 18 bits, Padé arithmetic, refusal, telemetry format and lane label; the contents of SET-N and SET-R |
+| `0x2A` | Original eight signed 32-bit coefficients guarded at `[-9457, 9457]` before narrowing; signed-P/Q nearest-node semantics; numeric-domain and A₃₁ refusal; Padé arithmetic, telemetry and SET-N/SET-R identities |
 
 ## 11. Relationship to existing SPI commands
 
@@ -219,7 +220,7 @@ A **separate numerical-semantics contract** for QLDI, QSUB, ROTC and `0x2A` is m
 | `0xAE` | Same command, layout and sticky "last commit" meaning; its valid byte MUST NOT be the only freshness evidence. After the refusal fix the latch is updated only by SUCCESS telemetry. |
 | New reads | An **additive** mechanism (for example new read-only commands) for the records, lifecycle state and configuration progress is the compatibility-preserving direction; no value or layout is assigned. |
 
-**Compatibility wording.** For existing hosts the command values, framing, field meanings and documented clear/sticky behavior are preserved. Response *values* may change where invalid prior behavior is repaired: an A31 refusal no longer produces a fresh commit (so the first-after-reset refusal no longer leaves `0xAE` valid with undefined data), and `0xA5` writes may now be rejected as listed. Status fields are spin-dependent; no particular spin's value is generalized.
+**Compatibility wording.** For existing hosts the command values, framing, field meanings and documented clear/sticky behavior are preserved. Response *values* may change where invalid prior behavior is repaired: an A31 refusal no longer produces a fresh commit (so the first-after-reset refusal no longer leaves `0xAE` valid with undefined data), an out-of-domain `0x2A` is refused before narrowing rather than executing an alias, and `0xA5` writes may now be rejected as listed. Status fields are spin-dependent; no particular spin's value is generalized.
 
 **Real SPI timing is UNVERIFIED (qualification blocker).** H0-V1 results are core-level. A `0xB1` frame is at least 80 SCK bit periods, but the relationship between SCK, `clk_fast` (`A7_CLK_DIV_LOG2`, spin dividers) and the slave's three-sample synchronizer limit is not established. No ratio is assumed and no collision window is claimed reachable on the board. The contract requires hardware rejection (INV-2, INV-3) regardless. No buffering is proposed.
 
@@ -247,9 +248,12 @@ Two classes: **core-ingress injection** (clock-level stimulus at the shared ingr
 | AC-14 | Commit before publish: a QLDI/QSUB/ROTC record is never published before the QR write has committed; reset at the commit boundary leaves no completed record; a following instruction sees the committed state. |
 | AC-15 | `0x2A` telemetry: exactly one terminal record; telemetry only, no QR register-file write; result associated with its record across consecutive operations; no late results; the one-hot BTU assumption confirmed in the exact image. |
 | AC-16 | Elaboration check that disabled REGEN removes its counter **and** the chain instance (or both are explicitly gated), and that the image enables only the listed blocks and permitted background activity. |
+| AC-18 | `0x2A` numerical domain: for each of the eight original coefficient positions test −9458, −9457, 9457, 9458 and signed 32-bit extremes, plus original values whose low 18 bits alias in-range values. In-domain cases use the selected lane and signed-P/Q comparator; out-of-domain cases each yield one REFUSED / NUMERIC_DOMAIN record with result-valid false, no SOM/BTU/Padé start, no QR mutation, no fresh telemetry or late publication; verify prior telemetry is historical and a later valid operation recovers. Test both comparator modes, legacy unsigned default, legacy large-key witnesses, exact ties and simultaneous reset/rejection per §5. The simulator runner must require exit status zero and matching expected output. |
 | AC-17 | Board-level reset: the documented physical reset mechanism of the actual Wukong setup asserts reset reliably and repeatedly (power-up and power-cycle behavior included), and the host can use it for timeout recovery. |
 
 ## 13. Decisions
+
+**NUM-SOM-3 owner decisions:** the pre-narrowing `0x2A` domain and REFUSED / NUMERIC_DOMAIN behavior in §7, signed P/Q nearest-node ordering, and legacy-default compile-time signedness direction are approved profile decisions; none is implemented or qualified. QSUB wrap is unchanged.
 
 **Resolved by owner decision for r4:** reset provider (physical), configuration allowlist, SET-N/SET-R, ordered hardware-checked comparison, INITIALIZING rule, reset-scoped identity, integrity-error separation, ROTC as candidates, numerical contract ownership, configuration after reset (mandatory host-driven rehydration), `0x2A` telemetry-only.
 
