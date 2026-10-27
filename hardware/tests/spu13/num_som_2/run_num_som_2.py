@@ -5,7 +5,8 @@
 
 Not registered in run_all_tests.py. Builds and runs everything in a temporary directory, writes nothing to
 the repository, and compares with expected/*. Mismatches are reported and never rewritten; there is no option
-to regenerate expectations. Requires iverilog and vvp. Takes about 30 seconds.
+to regenerate expectations. Requires iverilog and vvp. A simulator process must exit 0 as well as match the expected output (a
+built-in negative control checks this). Takes about 30 seconds.
 """
 import hashlib
 import re
@@ -41,7 +42,25 @@ def build_run(tmp, name, srcs, top, defs=(), plus=(), cwd=None):
     c = sh(["iverilog", "-g2012", *defs, "-s", top, "-o", str(vvp), *map(str, srcs)])
     if c.returncode:
         raise RuntimeError(f"{name}: compile error\n{c.stderr[:400]}")
-    return sh(["vvp", str(vvp), *plus], cwd=cwd or tmp).stdout
+    run = sh(["vvp", str(vvp), *plus], cwd=cwd or tmp)
+    if run.returncode:
+        raise RuntimeError(f"{name}: simulator exited with status {run.returncode} (matching output is not a pass)")
+    return run.stdout
+
+
+NEG_CONTROL = 'module nc; initial begin $display("DONE"); $fatal(1, "forced nonzero exit"); end endmodule\n'
+
+
+def negative_control():
+    """Output that would match, followed by a nonzero vvp exit, must be rejected by build_run."""
+    with tempfile.TemporaryDirectory() as tmp:
+        src = Path(tmp) / "nc.v"
+        src.write_text(NEG_CONTROL)
+        try:
+            build_run(tmp, "nc", [src], "nc")
+        except RuntimeError:
+            return True
+        return False
 
 
 def legacy(tmp):
@@ -108,6 +127,10 @@ def main():
         print("FAIL:", exc)
         return 1
     bad = []
+    nc = negative_control()
+    print(("PASS " if nc else "FAIL ") + "negative control (matching output then nonzero simulator exit is rejected)")
+    if not nc:
+        bad.append("negative_control")
     for name, lines in sorted(got.items()):
         want = (expected / name).read_text().splitlines()
         ok = [ln.rstrip() for ln in lines] == want
