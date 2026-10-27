@@ -153,7 +153,8 @@ module rplu_pipeline #(
     spu_som_bmu #(
         .NUM_FEATURES(NUM_FEATURES),
         .MAX_NODES(MAX_NODES),
-        .WIDTH(WIDTH)
+        .WIDTH(WIDTH),
+        .SIGNED_P_COMPARE(1)  // RPLU2 distances carry a signed P slot (weights P=0,Q=1)
     ) u_som (
         .clk(clk), .rst_n(rst_n),
         .start(som_start_accept),

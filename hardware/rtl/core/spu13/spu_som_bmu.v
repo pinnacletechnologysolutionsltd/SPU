@@ -16,7 +16,10 @@
 module spu_som_bmu #(
     parameter NUM_FEATURES = 4,
     parameter MAX_NODES    = 7,
-    parameter WIDTH        = 18
+    parameter WIDTH        = 18,
+    // 0: comparator reads the P half of each distance as unsigned (legacy).
+    // 1: comparator sign-extends the P half (signed P/Q distance coefficients).
+    parameter SIGNED_P_COMPARE = 0
 ) (
     input  wire         clk,
     input  wire         rst_n,
@@ -129,7 +132,7 @@ module spu_som_bmu #(
     wire cmp_done;
     wire cmp_lt;
 
-    spu_surd_lt_serial u_surd_lt (
+    spu_surd_lt_serial #(.SIGNED_P_COMPARE(SIGNED_P_COMPARE)) u_surd_lt (
         .clk(clk), .rst_n(rst_n), .start(cmp_start),
         .lhs(scan_cand_q), .rhs(cmp_rhs),
         .done(cmp_done), .lt(cmp_lt)
@@ -408,7 +411,10 @@ endmodule
 // Exact less-than comparator for non-negative Q(sqrt(3)) distances encoded as
 // {P[31:0], Q[31:0]}. For mixed-sign component differences it evaluates
 // |a|^2 versus 3|b|^2 with 33 shift-add steps instead of inferred multipliers.
-module spu_surd_lt_serial (
+// SIGNED_P_COMPARE=0 zero-extends the P half (legacy); 1 sign-extends it.
+module spu_surd_lt_serial #(
+    parameter SIGNED_P_COMPARE = 0
+) (
     input  wire        clk,
     input  wire        rst_n,
     input  wire        start,
@@ -429,8 +435,8 @@ module spu_surd_lt_serial (
     reg direct_case;
     reg direct_lt;
 
-    wire signed [32:0] da = $signed({1'b0, lhs[63:32]})
-                                  - $signed({1'b0, rhs[63:32]});
+    wire signed [32:0] da = $signed({SIGNED_P_COMPARE ? lhs[63] : 1'b0, lhs[63:32]})
+                                  - $signed({SIGNED_P_COMPARE ? rhs[63] : 1'b0, rhs[63:32]});
     wire signed [32:0] db = $signed({lhs[31], lhs[31:0]})
                                   - $signed({rhs[31], rhs[31:0]});
     wire [65:0] add_a = abs_a[bit_idx]
