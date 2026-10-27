@@ -1,0 +1,123 @@
+=== WIRED: P-weight=0 Q-weight=1 ===
+case         RTL emu fwSgn idNarr idRaw cmpBad keyDiff  narrowed  class
+W_witness      4   4     6      6     6      2       0  False     comparator
+  node: mathematical (P',Q') | encoded P32,Q32 hex
+    node0: (0,31) | 00000000,0000001f
+    node1: (0,47) | 00000000,0000002f
+    node2: (0,47) | 00000000,0000002f
+    node3: (0,47) | 00000000,0000002f
+    node4: (0,23) | 00000000,00000017
+    node5: (0,23) | 00000000,00000017
+    node6: (-6,23) | fffffffa,00000017
+  comparator log (st 3=vs best, 5=vs second): cand lhs(P,Q) rhs(P,Q) rtl_lt signedP_lt
+    st=3 node1 00000000,0000002f 00000000,0000001f 0 0
+    st=3 node2 00000000,0000002f 00000000,0000001f 0 0
+    st=5 node2 00000000,0000002f 00000000,0000002f 0 0
+    st=3 node3 00000000,0000002f 00000000,0000001f 0 0
+    st=5 node3 00000000,0000002f 00000000,0000002f 0 0
+    st=3 node4 00000000,00000017 00000000,0000001f 1 1
+    st=5 node4 00000000,00000017 00000000,0000002f 1 1
+    st=3 node5 00000000,00000017 00000000,00000017 0 0
+    st=5 node5 00000000,00000017 00000000,0000001f 1 1
+    st=3 node6 fffffffa,00000017 00000000,00000017 0 1
+    st=5 node6 fffffffa,00000017 00000000,00000017 0 1
+Z_zero         0   0     0      0     0      0       0  False     agree
+NP_D3          0   0     6      6     6      2       0  False     comparator
+PP_C-2         0   0     0      0     0      0       0  False     agree
+N6_exact0      6   6     6      6     6      0       0  False     agree
+TIE_A1B1       0   0     0      0     0      0       0  False     agree
+QR0_reset      0   0     1      1     1      2       0  False     comparator
+  node: mathematical (P',Q') | encoded P32,Q32 hex
+    node0: (0,3) | 00000000,00000003
+    node1: (-12,7) | fffffff4,00000007
+    node2: (0,7) | 00000000,00000007
+    node3: (0,7) | 00000000,00000007
+    node4: (12,7) | 0000000c,00000007
+    node5: (0,7) | 00000000,00000007
+    node6: (6,11) | 00000006,0000000b
+  comparator log (st 3=vs best, 5=vs second): cand lhs(P,Q) rhs(P,Q) rtl_lt signedP_lt
+    st=3 node1 fffffff4,00000007 00000000,00000003 0 1
+    st=3 node2 00000000,00000007 00000000,00000003 0 0
+    st=5 node2 00000000,00000007 fffffff4,00000007 1 0
+    st=3 node3 00000000,00000007 00000000,00000003 0 0
+    st=5 node3 00000000,00000007 00000000,00000007 0 0
+    st=3 node4 0000000c,00000007 00000000,00000003 0 0
+    st=5 node4 0000000c,00000007 00000000,00000007 0 0
+    st=3 node5 00000000,00000007 00000000,00000003 0 0
+    st=5 node5 00000000,00000007 00000000,00000007 0 0
+    st=3 node6 00000006,0000000b 00000000,00000003 0 0
+    st=5 node6 00000006,0000000b 00000000,00000007 0 0
+NPq_A-1,1      4   4     0      0     0      4       0  False     comparator
+PPq_A2,1       1   1     1      1     1      0       0  False     agree
+PPq_A-3,-1     4   4     4      4     4      0       0  False     agree
+NPq_A3,-1      1   1     1      1     1      0       0  False     agree
+ALIAS_P        1   1     1      1     1      0       0  False     agree
+ALIAS_Q        1   1     1      1     1      0       0  False     agree
+MAXP           1   1     1      1     1      0       1  False     agree
+MINP           1   1     1      4     4      0       1  False     arithmetic
+ALIAS_MIN      1   1     1      4     1      0       1  True      arithmetic,narrowing
+SQ_WRAP        0   0     4      4     4      2       7  False     comparator
+ACC_2x2^16     1   1     1      1     1      0       0  False     agree
+ACC_4xMIN      1   1     6      4     4      2       4  False     arithmetic,comparator
+
+=== CONTROL: P-weight=1 Q-weight=0 ===
+case         RTL emu fwSgn idNarr idRaw cmpBad keyDiff  narrowed  class
+W_witness      6   6     6      6     6      0       0  False     agree
+  node: mathematical (P',Q') | encoded P32,Q32 hex
+    node0: (31,0) | 0000001f,00000000
+    node1: (47,0) | 0000002f,00000000
+    node2: (47,0) | 0000002f,00000000
+    node3: (47,0) | 0000002f,00000000
+    node4: (23,0) | 00000017,00000000
+    node5: (23,0) | 00000017,00000000
+    node6: (23,-2) | 00000017,fffffffe
+  comparator log (st 3=vs best, 5=vs second): cand lhs(P,Q) rhs(P,Q) rtl_lt signedP_lt
+    st=3 node1 0000002f,00000000 0000001f,00000000 0 0
+    st=3 node2 0000002f,00000000 0000001f,00000000 0 0
+    st=5 node2 0000002f,00000000 0000002f,00000000 0 0
+    st=3 node3 0000002f,00000000 0000001f,00000000 0 0
+    st=5 node3 0000002f,00000000 0000002f,00000000 0 0
+    st=3 node4 00000017,00000000 0000001f,00000000 1 1
+    st=5 node4 00000017,00000000 0000002f,00000000 1 1
+    st=3 node5 00000017,00000000 00000017,00000000 0 0
+    st=5 node5 00000017,00000000 0000001f,00000000 1 1
+    st=3 node6 00000017,fffffffe 00000017,00000000 1 1
+    st=5 node6 00000017,fffffffe 00000017,00000000 1 1
+Z_zero         0   0     0      0     0      0       0  False     agree
+NP_D3          6   6     6      6     6      0       0  False     agree
+PP_C-2         0   0     0      0     0      0       0  False     agree
+N6_exact0      6   6     6      6     6      0       0  False     agree
+TIE_A1B1       0   0     0      0     0      0       0  False     agree
+QR0_reset      1   1     1      1     1      0       0  False     agree
+  node: mathematical (P',Q') | encoded P32,Q32 hex
+    node0: (3,0) | 00000003,00000000
+    node1: (7,-4) | 00000007,fffffffc
+    node2: (7,0) | 00000007,00000000
+    node3: (7,0) | 00000007,00000000
+    node4: (7,4) | 00000007,00000004
+    node5: (7,0) | 00000007,00000000
+    node6: (11,2) | 0000000b,00000002
+  comparator log (st 3=vs best, 5=vs second): cand lhs(P,Q) rhs(P,Q) rtl_lt signedP_lt
+    st=3 node1 00000007,fffffffc 00000003,00000000 1 1
+    st=3 node2 00000007,00000000 00000007,fffffffc 0 0
+    st=5 node2 00000007,00000000 00000003,00000000 0 0
+    st=3 node3 00000007,00000000 00000007,fffffffc 0 0
+    st=5 node3 00000007,00000000 00000003,00000000 0 0
+    st=3 node4 00000007,00000004 00000007,fffffffc 0 0
+    st=5 node4 00000007,00000004 00000003,00000000 0 0
+    st=3 node5 00000007,00000000 00000007,fffffffc 0 0
+    st=5 node5 00000007,00000000 00000003,00000000 0 0
+    st=3 node6 0000000b,00000002 00000007,fffffffc 0 0
+    st=5 node6 0000000b,00000002 00000003,00000000 0 0
+NPq_A-1,1      0   0     0      0     0      0       0  False     agree
+PPq_A2,1       1   1     1      1     1      0       0  False     agree
+PPq_A-3,-1     4   4     4      4     4      0       0  False     agree
+NPq_A3,-1      1   1     1      1     1      0       0  False     agree
+ALIAS_P        1   1     1      1     1      0       0  False     agree
+ALIAS_Q        1   1     1      1     1      0       0  False     agree
+MAXP           1   1     1      1     1      0       1  False     agree
+MINP           0   0     1      4     4      4       1  False     arithmetic,comparator
+ALIAS_MIN      0   0     1      4     1      4       1  True      arithmetic,comparator,narrowing
+SQ_WRAP        0   0     4      4     4      2       7  False     comparator
+ACC_2x2^16     0   0     1      1     1      3       0  False     comparator
+ACC_4xMIN      0   0     6      4     4      6       4  False     arithmetic,comparator
