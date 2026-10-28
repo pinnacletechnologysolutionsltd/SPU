@@ -1,0 +1,13 @@
+H0-C1-T4-R2 manifest, 2026-10-28
+repo HEAD: 71c8a5a46ce920f46b6e4185c21b84ba1c610fb5  branch: dev/next
+T1/T2: 6556d22422549cac6848494dd640d1c224fc124a
+source baseline: 2a9a9f12760bb13fb47bcf192b66f44645f35ef9
+Phase B baseline: 71c8a5a46ce920f46b6e4185c21b84ba1c610fb5
+R1 originals (unchanged; byte-identical to /tmp reviewed copies):
+0e51b12a377cc5e0bdffbcbc4b6c57717e616533dd41e27432b7c5ab4a1a2d54  H0_C1_T4_R1_CONTRACT.md
+d326ebdae82cec2b7f30bcd8c2ba18a06cbfb0fed51836e47fbd43678a9265ac  H0_C1_T4_R1_FROZEN_TRACES.md
+0e51b12a377cc5e0bdffbcbc4b6c57717e616533dd41e27432b7c5ab4a1a2d54  /tmp/H0_C1_T4_R1_CONTRACT.md
+d326ebdae82cec2b7f30bcd8c2ba18a06cbfb0fed51836e47fbd43678a9265ac  /tmp/H0_C1_T4_R1_FROZEN_TRACES.md
+R2 deliverables:
+ae54fadf4c109156cc346787c80d7e8bad947f7d28f56ecf0c85b4eb0c4e775d  H0_C1_T4_R2_CONTRACT.md
+4bbfbb09c1ca60c7a305abc9b2904b95e71571e652fdfa5875a50d0a49477515  H0_C1_T4_R2_FROZEN_TRACES.md
