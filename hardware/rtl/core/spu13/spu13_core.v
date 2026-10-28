@@ -81,7 +81,11 @@ module spu13_core #(
     // Instruction input (optional). When unused, tie inst_valid=0 at instantiation.
     input  wire                    inst_valid,
     input  wire [63:0]             inst_word,
-    output wire                    inst_done,   // pulsed when instruction completes
+    output wire                    inst_done,   // pulsed when instruction completes (generic handshake release; not success)
+    // NUM-SOM-4 Phase B: one-core-clock pulse, high on the same cycle as inst_done when an accepted RPLU2 (0x2A)
+    // instruction is refused by the numeric-domain guard (contract: docs/isa/H0_NUMSOM4_B2_COMPLETION_CONTRACT_DRAFT.md).
+    // Tied low outside the core RPLU2 pipeline branch. Not a host-visible outcome.
+    output wire                    rplu2_domain_refused,
 
     // REGEN compensation knob (Stage B; 2^-16 rad units; 0 = drift-free)
     input  wire [7:0]              regen_dphi_cfg,
@@ -1247,7 +1251,7 @@ module spu13_core #(
         end
     endgenerate
 
-    assign inst_done = inst_done_r;
+    assign inst_done = inst_done_r | rplu2_domain_refused;
     assign rotc_debug_status = {
         rotc_debug_flags[7],
         rotc_debug_busy,
@@ -2313,16 +2317,36 @@ module spu13_core #(
             assign rplu2_result_c2 = rplu2_thimble_c2;
             assign rplu2_result_c3 = rplu2_thimble_c3;
 
+            // H0 numeric-domain guard (NUM-SOM-4 Phase B): all eight original signed 32-bit P/Q
+            // halves of the selected QR lane must lie in [-9457, 9457] before the 18-bit extraction
+            // (rplu2_features) is allowed to reach the SOM. Evaluated at the pending-launch decision.
+            function rplu2_in_domain;
+                input [31:0] v;
+                begin
+                    rplu2_in_domain = ($signed(v) >= -32'sd9457) && ($signed(v) <= 32'sd9457);
+                end
+            endfunction
+            wire rplu2_domain_ok =
+                rplu2_in_domain(qrf_rd_A[31:0]) && rplu2_in_domain(qrf_rd_A[63:32]) &&
+                rplu2_in_domain(qrf_rd_B[31:0]) && rplu2_in_domain(qrf_rd_B[63:32]) &&
+                rplu2_in_domain(qrf_rd_C[31:0]) && rplu2_in_domain(qrf_rd_C[63:32]) &&
+                rplu2_in_domain(qrf_rd_D[31:0]) && rplu2_in_domain(qrf_rd_D[63:32]);
+            reg rplu2_domain_refused_r;
+            assign rplu2_domain_refused = rplu2_domain_refused_r;
+
             // SOM classification start — triggered by SOM opcode (0x2A)
             always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
                     rplu2_som_start <= 0;
                     rplu2_som_pending <= 0;
+                    rplu2_domain_refused_r <= 0;
                 end else begin
                     rplu2_som_start <= 0;
+                    rplu2_domain_refused_r <= 0;
                     if (rplu2_som_pending && !rplu2_busy) begin
-                        rplu2_som_start <= 1;
                         rplu2_som_pending <= 0;
+                        if (rplu2_domain_ok) rplu2_som_start <= 1;
+                        else                 rplu2_domain_refused_r <= 1;
                     end else if (inst_accept && eff_inst_word[63:56] == 8'h2A && !rplu2_busy) begin
                         rplu2_som_pending <= 1;
                     end
@@ -2334,6 +2358,7 @@ module spu13_core #(
             // but omit the full SOM/BTU/Padé/inverter evaluator.
             assign rplu_dissoc = 1'b0;
             assign rplu2_core_rns_error = 1'b0;
+            assign rplu2_domain_refused = 1'b0;
             assign rplu2_result_valid = 1'b0;
             assign rplu2_result_c0 = 32'd0;
             assign rplu2_result_c1 = 32'd0;
@@ -2351,6 +2376,7 @@ module spu13_core #(
         end else begin : gen_no_rplu_v2
             // v2 disabled — no-op (handled by legacy gen_rplu block)
             assign rplu2_core_rns_error = 1'b0;
+            assign rplu2_domain_refused = 1'b0;
             assign rplu2_result_valid = 1'b0;
             assign rplu2_result_c0 = 32'd0;
             assign rplu2_result_c1 = 32'd0;

@@ -1,0 +1,120 @@
+== zero vector
+CASE zero exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+== boundaries +-9457 (accepted) and +-9458 (refused), each of the eight coefficient positions
+CASE p+9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p-9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p+9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p-9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p+9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p-9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p+9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p-9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p+9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p-9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p+9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p-9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p+9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p-9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p+9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p-9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p+9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p-9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p+9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p-9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p+9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p-9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p+9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p-9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p+9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p-9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p+9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p-9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p+9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p-9457 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE p+9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE p-9458 exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+== signed 32-bit extremes
+CASE pMAX exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMIN exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMAX exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMIN exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMAX exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMIN exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMAX exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMIN exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMAX exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMIN exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMAX exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMIN exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMAX exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMIN exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMAX exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE pMIN exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+== pre-narrowing aliases (low 18 bits in range, original value out of domain)
+CASE alias+ exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias- exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias+ exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias- exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias+ exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias- exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias+ exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias- exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias+ exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias- exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias+ exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias- exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias+ exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias- exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias+ exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE alias- exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+== valid mixed-sign operands
+CASE mixed1 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE mixed2 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+CASE mixed3 exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+== sequential accepted operations (refuse, launch, refuse) with minimal gaps
+SEQ ref=2 done=3 start=1 resv=1 commit=1 pend=3
+== reset during pending
+RST pending ref=0 done=0 start=0
+CASE recover-refuse exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE recover-launch exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+== reset coincident with the guard decision edge (refusing input)
+RST guard-edge ref=0 done=0 start=0
+CASE recover-refuse exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE recover-launch exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+== reset during the refusal pulse cycle
+RST pulse-cycle ref=0 done=0 start=0
+CASE recover-refuse exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE recover-launch exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+== reset during launch (start cycle) and mid-pipeline
+RST launch+0 ref=0 done=0 resv=0 commit=0
+CASE recover-refuse exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE recover-launch exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+RST launch+200 ref=0 done=0 resv=0 commit=0
+CASE recover-refuse exp=REFUSE ref=1 done=1 start=0 resv=0 commit=0 pend=1
+CASE recover-launch exp=LAUNCH ref=0 done=1 start=1 resv=1 commit=1 pend=1
+== previous result remains historical across a refusal
+HIST ref=1 commit=0 unchanged=1
+== OBSERVATIONS (not supported behavior): second instruction while a refusal is pending
+OBS qldi-after-refusal gap=2 ref=1 done=2 start=0 qr9_written=1
+OBS qldi-after-refusal gap=3 ref=1 done=2 start=0 qr9_written=1
+OBS qldi-after-refusal gap=4 ref=1 done=2 start=0 qr9_written=1
+OBS qldi-after-refusal gap=5 ref=1 done=2 start=0 qr9_written=1
+== OBSERVATIONS: refusing 0x2A issued while a valid 0x2A is in flight
+OBS refuse-during-flight ref=0 done=1 start=1 resv=1 commit=1 acc=2 last_guard_lane=5 last_start_lane=5
+== OBSERVATIONS: refusing 0x2A near the completion cycle of a valid 0x2A
+OBS calibration result_cycle=556
+OBS offset=-3
+OBS near-completion ref=0 done=1 start=1 resv=1 commit=1 acc=2 last_guard_lane=5 last_start_lane=5
+OBS offset=-2
+OBS near-completion ref=0 done=2 start=2 resv=2 commit=2 acc=2 last_guard_lane=5 last_start_lane=5
+OBS offset=-1
+OBS near-completion ref=1 done=2 start=1 resv=1 commit=1 acc=2 last_guard_lane=3 last_start_lane=5
+OBS offset=0
+OBS near-completion ref=1 done=2 start=1 resv=1 commit=1 acc=2 last_guard_lane=3 last_start_lane=5
+OBS offset=1
+OBS near-completion ref=1 done=2 start=1 resv=1 commit=1 acc=2 last_guard_lane=3 last_start_lane=5
+OBS offset=2
+OBS near-completion ref=1 done=2 start=1 resv=1 commit=1 acc=2 last_guard_lane=3 last_start_lane=5
+OBS offset=3
+OBS near-completion ref=1 done=2 start=1 resv=1 commit=1 acc=2 last_guard_lane=3 last_start_lane=5
+TOTAL checks=450 fails=0
