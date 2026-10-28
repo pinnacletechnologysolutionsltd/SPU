@@ -1,0 +1,837 @@
+{
+ "manifest_name": "SET-N-CANDIDATE",
+ "status": "CANDIDATE - NOT QUALIFIED - NOT RATIFIED",
+ "source_commit": "0f631e37caeabb629b81b84a782cee1d881ac0b9",
+ "entries_sha256": "6483d9adc453e35e4713c38fa466fbbf4a6fe313ac97976e9636c77f052243ec",
+ "entry_count": 34,
+ "entries": [
+  {
+   "index": 0,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x000",
+   "address_decode": {
+    "coeff_index": 0,
+    "half": "LOW"
+   },
+   "header_word64": "0xA501000000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000002",
+   "value_limbs": {
+    "low32": "0x00000002",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_num_c0/c1[0]",
+   "pair_with": 1,
+   "status": "evidenced_A31R3",
+   "note": "num coefficient 0 low pair (c0,c1)"
+  },
+  {
+   "index": 1,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x008",
+   "address_decode": {
+    "coeff_index": 0,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA501002000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade num_coeff[0][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 0,
+   "status": "evidenced_A31R3",
+   "note": "num coefficient 0 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 2,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x001",
+   "address_decode": {
+    "coeff_index": 1,
+    "half": "LOW"
+   },
+   "header_word64": "0xA501000400000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_num_c0/c1[1]",
+   "pair_with": 3,
+   "status": "proposed_completion_unexercised",
+   "note": "num coefficient 1 low pair (c0,c1)"
+  },
+  {
+   "index": 3,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x009",
+   "address_decode": {
+    "coeff_index": 1,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA501002400000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade num_coeff[1][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 2,
+   "status": "proposed_completion_unexercised",
+   "note": "num coefficient 1 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 4,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x002",
+   "address_decode": {
+    "coeff_index": 2,
+    "half": "LOW"
+   },
+   "header_word64": "0xA501000800000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_num_c0/c1[2]",
+   "pair_with": 5,
+   "status": "proposed_completion_unexercised",
+   "note": "num coefficient 2 low pair (c0,c1)"
+  },
+  {
+   "index": 5,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x00A",
+   "address_decode": {
+    "coeff_index": 2,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA501002800000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade num_coeff[2][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 4,
+   "status": "proposed_completion_unexercised",
+   "note": "num coefficient 2 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 6,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x003",
+   "address_decode": {
+    "coeff_index": 3,
+    "half": "LOW"
+   },
+   "header_word64": "0xA501000C00000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_num_c0/c1[3]",
+   "pair_with": 7,
+   "status": "proposed_completion_unexercised",
+   "note": "num coefficient 3 low pair (c0,c1)"
+  },
+  {
+   "index": 7,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x00B",
+   "address_decode": {
+    "coeff_index": 3,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA501002C00000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade num_coeff[3][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 6,
+   "status": "proposed_completion_unexercised",
+   "note": "num coefficient 3 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 8,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x004",
+   "address_decode": {
+    "coeff_index": 4,
+    "half": "LOW"
+   },
+   "header_word64": "0xA501001000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_num_c0/c1[4]",
+   "pair_with": 9,
+   "status": "proposed_completion_unexercised",
+   "note": "num coefficient 4 low pair (c0,c1)"
+  },
+  {
+   "index": 9,
+   "selector": 1,
+   "selector_name": "PADE_NUM",
+   "material": 0,
+   "address": "0x00C",
+   "address_decode": {
+    "coeff_index": 4,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA501003000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade num_coeff[4][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 8,
+   "status": "proposed_completion_unexercised",
+   "note": "num coefficient 4 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 10,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x000",
+   "address_decode": {
+    "coeff_index": 0,
+    "half": "LOW"
+   },
+   "header_word64": "0xA502000000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000001",
+   "value_limbs": {
+    "low32": "0x00000001",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_den_c0/c1[0]",
+   "pair_with": 11,
+   "status": "evidenced_A31R3",
+   "note": "den coefficient 0 low pair (c0,c1)"
+  },
+  {
+   "index": 11,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x008",
+   "address_decode": {
+    "coeff_index": 0,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA502002000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade den_coeff[0][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 10,
+   "status": "evidenced_A31R3",
+   "note": "den coefficient 0 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 12,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x001",
+   "address_decode": {
+    "coeff_index": 1,
+    "half": "LOW"
+   },
+   "header_word64": "0xA502000400000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_den_c0/c1[1]",
+   "pair_with": 13,
+   "status": "proposed_completion_unexercised",
+   "note": "den coefficient 1 low pair (c0,c1)"
+  },
+  {
+   "index": 13,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x009",
+   "address_decode": {
+    "coeff_index": 1,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA502002400000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade den_coeff[1][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 12,
+   "status": "proposed_completion_unexercised",
+   "note": "den coefficient 1 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 14,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x002",
+   "address_decode": {
+    "coeff_index": 2,
+    "half": "LOW"
+   },
+   "header_word64": "0xA502000800000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_den_c0/c1[2]",
+   "pair_with": 15,
+   "status": "proposed_completion_unexercised",
+   "note": "den coefficient 2 low pair (c0,c1)"
+  },
+  {
+   "index": 15,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x00A",
+   "address_decode": {
+    "coeff_index": 2,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA502002800000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade den_coeff[2][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 14,
+   "status": "proposed_completion_unexercised",
+   "note": "den coefficient 2 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 16,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x003",
+   "address_decode": {
+    "coeff_index": 3,
+    "half": "LOW"
+   },
+   "header_word64": "0xA502000C00000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_den_c0/c1[3]",
+   "pair_with": 17,
+   "status": "proposed_completion_unexercised",
+   "note": "den coefficient 3 low pair (c0,c1)"
+  },
+  {
+   "index": 17,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x00B",
+   "address_decode": {
+    "coeff_index": 3,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA502002C00000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade den_coeff[3][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 16,
+   "status": "proposed_completion_unexercised",
+   "note": "den coefficient 3 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 18,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x004",
+   "address_decode": {
+    "coeff_index": 4,
+    "half": "LOW"
+   },
+   "header_word64": "0xA502001000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "STAGED",
+   "destination": "core staging array rplu2_pade_den_c0/c1[4]",
+   "pair_with": 19,
+   "status": "proposed_completion_unexercised",
+   "note": "den coefficient 4 low pair (c0,c1)"
+  },
+  {
+   "index": 19,
+   "selector": 2,
+   "selector_name": "PADE_DEN",
+   "material": 0,
+   "address": "0x00C",
+   "address_decode": {
+    "coeff_index": 4,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA502003000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_PAIR",
+   "destination": "rplu_thimble_pade den_coeff[4][0..3] <- {staged c0,c1 ; data c2,c3}",
+   "pair_with": 18,
+   "status": "proposed_completion_unexercised",
+   "note": "den coefficient 4 high pair (c2,c3); commits the staged low half together with c2,c3"
+  },
+  {
+   "index": 20,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x000",
+   "address_decode": {
+    "btu_row": 0,
+    "half": "LOW"
+   },
+   "header_word64": "0xA503000000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000001",
+   "value_limbs": {
+    "low32": "0x00000001",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c0,c1 row 0 (immediate, no staging)",
+   "pair_with": 21,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 0 low pair (c0,c1)"
+  },
+  {
+   "index": 21,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x040",
+   "address_decode": {
+    "btu_row": 0,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA503010000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c2,c3 row 0 (immediate, no staging)",
+   "pair_with": 20,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 0 high pair (c2,c3)"
+  },
+  {
+   "index": 22,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x001",
+   "address_decode": {
+    "btu_row": 1,
+    "half": "LOW"
+   },
+   "header_word64": "0xA503000400000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000001",
+   "value_limbs": {
+    "low32": "0x00000001",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c0,c1 row 1 (immediate, no staging)",
+   "pair_with": 23,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 1 low pair (c0,c1)"
+  },
+  {
+   "index": 23,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x041",
+   "address_decode": {
+    "btu_row": 1,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA503010400000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c2,c3 row 1 (immediate, no staging)",
+   "pair_with": 22,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 1 high pair (c2,c3)"
+  },
+  {
+   "index": 24,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x002",
+   "address_decode": {
+    "btu_row": 2,
+    "half": "LOW"
+   },
+   "header_word64": "0xA503000800000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000001",
+   "value_limbs": {
+    "low32": "0x00000001",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c0,c1 row 2 (immediate, no staging)",
+   "pair_with": 25,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 2 low pair (c0,c1)"
+  },
+  {
+   "index": 25,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x042",
+   "address_decode": {
+    "btu_row": 2,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA503010800000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c2,c3 row 2 (immediate, no staging)",
+   "pair_with": 24,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 2 high pair (c2,c3)"
+  },
+  {
+   "index": 26,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x003",
+   "address_decode": {
+    "btu_row": 3,
+    "half": "LOW"
+   },
+   "header_word64": "0xA503000C00000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000001",
+   "value_limbs": {
+    "low32": "0x00000001",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c0,c1 row 3 (immediate, no staging)",
+   "pair_with": 27,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 3 low pair (c0,c1)"
+  },
+  {
+   "index": 27,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x043",
+   "address_decode": {
+    "btu_row": 3,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA503010C00000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c2,c3 row 3 (immediate, no staging)",
+   "pair_with": 26,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 3 high pair (c2,c3)"
+  },
+  {
+   "index": 28,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x004",
+   "address_decode": {
+    "btu_row": 4,
+    "half": "LOW"
+   },
+   "header_word64": "0xA503001000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000001",
+   "value_limbs": {
+    "low32": "0x00000001",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c0,c1 row 4 (immediate, no staging)",
+   "pair_with": 29,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 4 low pair (c0,c1)"
+  },
+  {
+   "index": 29,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x044",
+   "address_decode": {
+    "btu_row": 4,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA503011000000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c2,c3 row 4 (immediate, no staging)",
+   "pair_with": 28,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 4 high pair (c2,c3)"
+  },
+  {
+   "index": 30,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x005",
+   "address_decode": {
+    "btu_row": 5,
+    "half": "LOW"
+   },
+   "header_word64": "0xA503001400000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000001",
+   "value_limbs": {
+    "low32": "0x00000001",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c0,c1 row 5 (immediate, no staging)",
+   "pair_with": 31,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 5 low pair (c0,c1)"
+  },
+  {
+   "index": 31,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x045",
+   "address_decode": {
+    "btu_row": 5,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA503011400000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c2,c3 row 5 (immediate, no staging)",
+   "pair_with": 30,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 5 high pair (c2,c3)"
+  },
+  {
+   "index": 32,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x006",
+   "address_decode": {
+    "btu_row": 6,
+    "half": "LOW"
+   },
+   "header_word64": "0xA503001800000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000001",
+   "value_limbs": {
+    "low32": "0x00000001",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c0,c1 row 6 (immediate, no staging)",
+   "pair_with": 33,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 6 low pair (c0,c1)"
+  },
+  {
+   "index": 33,
+   "selector": 3,
+   "selector_name": "BTU_ROW",
+   "material": 0,
+   "address": "0x046",
+   "address_decode": {
+    "btu_row": 6,
+    "half": "HIGH"
+   },
+   "header_word64": "0xA503011800000000",
+   "subfield_layout": "low: c0=data[31:0] (rational), c1=data[63:32] (sqrt3); high: c2=data[31:0] (sqrt5), c3=data[63:32] (sqrt15)",
+   "value64": "0x0000000000000000",
+   "value_limbs": {
+    "low32": "0x00000000",
+    "high32": "0x00000000"
+   },
+   "write_class": "COMMITTED_HALF",
+   "destination": "BTU BRAM lanes c2,c3 row 6 (immediate, no staging)",
+   "pair_with": 32,
+   "status": "evidenced_A31R3",
+   "note": "BTU row 6 high pair (c2,c3)"
+  }
+ ],
+ "exp_math": {
+  "outcome": "SUCCESS",
+  "result_limbs": [
+   2,
+   0,
+   0,
+   0
+  ],
+  "telemetry": "qr_commit_A = {32'd0, c0}, B..D = {32'd0, c1..c3}",
+  "lane_label": 4
+ },
+ "predicted_existing_artix_top_telemetry_after_exactly_these_frames_since_reset": {
+  "rplu_cfg_count": 34,
+  "rplu_cfg_checksum": "0x10FF8B92",
+  "rplu2_cfg_sum_checksum": "0xEA480992",
+  "last_record": {
+   "sel": 3,
+   "material": 0,
+   "addr": "0x046",
+   "data": "0x0000000000000000"
+  },
+  "basis": "bit model of cfg_checksum_next / cfg_sum_checksum_next in hardware/boards/artix7/spu_a7_top.v; host arithmetic, not RTL-observed"
+ },
+ "preconditions": {
+  "instruction_sequence": "after all entries: QLDI lane 3 = (A=2,B=0,C=0,D=0) [not a configuration entry], then 0x2A with source lane 3 [47:40] and result label lane 4 [55:48]; reserved bits zero",
+  "source_operand_domain": "all eight P/Q halves of lane 3 within [-9457, 9457] (A.P = 2)",
+  "initial_state": "READY after reset and hydration; single outstanding instruction; no instruction in flight during configuration",
+  "expected_som_winner": 1,
+  "expected_btu_row": 1,
+  "expected_saddle_x": [
+   1,
+   0,
+   0,
+   0
+  ]
+ },
+ "optional_entries_not_in_identity": [
+  {
+   "selector": 6,
+   "selector_name": "KAPPA",
+   "address": "0x000",
+   "value64": "0x0000000000000003",
+   "status": "unresolved",
+   "note": "A31-R3 bench wrote kappa=3 (copied from the historical Artix RPLU2 consume bench); it feeds only quadray coherence/dissociation telemetry, not result, completion or refusal; its necessity for H0 is undecided"
+  }
+ ]
+}

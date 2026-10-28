@@ -1,0 +1,254 @@
+{
+ "manifest_name": "SET-N-X1-CANDIDATE",
+ "status": "CANDIDATE - SUPPLEMENTARY WITNESS - NOT QUALIFIED - NOT RATIFIED",
+ "source_commit": "0f631e37caeabb629b81b84a782cee1d881ac0b9",
+ "entry_count": 34,
+ "sequence_sha256": "3cd15e7cefb91a57c7eaafe1c6bcac0adba82918621a1b704277b2bdc59bffbd",
+ "entries": [
+  {
+   "index": 0,
+   "selector": 1,
+   "address": "0x000",
+   "header_word64": "0xA501000000000000",
+   "value64": "0x0000000000000002"
+  },
+  {
+   "index": 1,
+   "selector": 1,
+   "address": "0x008",
+   "header_word64": "0xA501002000000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 2,
+   "selector": 1,
+   "address": "0x001",
+   "header_word64": "0xA501000400000000",
+   "value64": "0x0000000200000001"
+  },
+  {
+   "index": 3,
+   "selector": 1,
+   "address": "0x009",
+   "header_word64": "0xA501002400000000",
+   "value64": "0x0000000400000003"
+  },
+  {
+   "index": 4,
+   "selector": 1,
+   "address": "0x002",
+   "header_word64": "0xA501000800000000",
+   "value64": "0x0000000000000007"
+  },
+  {
+   "index": 5,
+   "selector": 1,
+   "address": "0x00A",
+   "header_word64": "0xA501002800000000",
+   "value64": "0x0000000900000000"
+  },
+  {
+   "index": 6,
+   "selector": 1,
+   "address": "0x003",
+   "header_word64": "0xA501000C00000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 7,
+   "selector": 1,
+   "address": "0x00B",
+   "header_word64": "0xA501002C00000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 8,
+   "selector": 1,
+   "address": "0x004",
+   "header_word64": "0xA501001000000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 9,
+   "selector": 1,
+   "address": "0x00C",
+   "header_word64": "0xA501003000000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 10,
+   "selector": 2,
+   "address": "0x000",
+   "header_word64": "0xA502000000000000",
+   "value64": "0x0000000000000001"
+  },
+  {
+   "index": 11,
+   "selector": 2,
+   "address": "0x008",
+   "header_word64": "0xA502002000000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 12,
+   "selector": 2,
+   "address": "0x001",
+   "header_word64": "0xA502000400000000",
+   "value64": "0x0000000100000000"
+  },
+  {
+   "index": 13,
+   "selector": 2,
+   "address": "0x009",
+   "header_word64": "0xA502002400000000",
+   "value64": "0x0000000200000000"
+  },
+  {
+   "index": 14,
+   "selector": 2,
+   "address": "0x002",
+   "header_word64": "0xA502000800000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 15,
+   "selector": 2,
+   "address": "0x00A",
+   "header_word64": "0xA502002800000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 16,
+   "selector": 2,
+   "address": "0x003",
+   "header_word64": "0xA502000C00000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 17,
+   "selector": 2,
+   "address": "0x00B",
+   "header_word64": "0xA502002C00000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 18,
+   "selector": 2,
+   "address": "0x004",
+   "header_word64": "0xA502001000000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 19,
+   "selector": 2,
+   "address": "0x00C",
+   "header_word64": "0xA502003000000000",
+   "value64": "0x0000000000000000"
+  },
+  {
+   "index": 20,
+   "selector": 3,
+   "address": "0x000",
+   "header_word64": "0xA503000000000000",
+   "value64": "0x0000001E00000014"
+  },
+  {
+   "index": 21,
+   "selector": 3,
+   "address": "0x040",
+   "header_word64": "0xA503010000000000",
+   "value64": "0x0000003200000028"
+  },
+  {
+   "index": 22,
+   "selector": 3,
+   "address": "0x001",
+   "header_word64": "0xA503000400000000",
+   "value64": "0x0000000500000003"
+  },
+  {
+   "index": 23,
+   "selector": 3,
+   "address": "0x041",
+   "header_word64": "0xA503010400000000",
+   "value64": "0x0000000B00000007"
+  },
+  {
+   "index": 24,
+   "selector": 3,
+   "address": "0x002",
+   "header_word64": "0xA503000800000000",
+   "value64": "0x0000002000000016"
+  },
+  {
+   "index": 25,
+   "selector": 3,
+   "address": "0x042",
+   "header_word64": "0xA503010800000000",
+   "value64": "0x000000340000002A"
+  },
+  {
+   "index": 26,
+   "selector": 3,
+   "address": "0x003",
+   "header_word64": "0xA503000C00000000",
+   "value64": "0x0000002100000017"
+  },
+  {
+   "index": 27,
+   "selector": 3,
+   "address": "0x043",
+   "header_word64": "0xA503010C00000000",
+   "value64": "0x000000350000002B"
+  },
+  {
+   "index": 28,
+   "selector": 3,
+   "address": "0x004",
+   "header_word64": "0xA503001000000000",
+   "value64": "0x0000002200000018"
+  },
+  {
+   "index": 29,
+   "selector": 3,
+   "address": "0x044",
+   "header_word64": "0xA503011000000000",
+   "value64": "0x000000360000002C"
+  },
+  {
+   "index": 30,
+   "selector": 3,
+   "address": "0x005",
+   "header_word64": "0xA503001400000000",
+   "value64": "0x0000002300000019"
+  },
+  {
+   "index": 31,
+   "selector": 3,
+   "address": "0x045",
+   "header_word64": "0xA503011400000000",
+   "value64": "0x000000370000002D"
+  },
+  {
+   "index": 32,
+   "selector": 3,
+   "address": "0x006",
+   "header_word64": "0xA503001800000000",
+   "value64": "0x000000240000001A"
+  },
+  {
+   "index": 33,
+   "selector": 3,
+   "address": "0x046",
+   "header_word64": "0xA503011800000000",
+   "value64": "0x000000380000002E"
+  }
+ ],
+ "oracle": [
+  1802234782,
+  506891096,
+  1918494961,
+  831706698
+ ],
+ "preconditions": "QLDI lane 3=(2,0,0,0) then 0x2A src lane 3, label lane 4; expected SOM winner node 1, BTU row 1, x=(3,5,7,11); entries share the CONFIG-1 ordering and (selector,address,value) encoding"
+}
