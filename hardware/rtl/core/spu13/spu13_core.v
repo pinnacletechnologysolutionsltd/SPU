@@ -86,6 +86,9 @@ module spu13_core #(
     // instruction is refused by the numeric-domain guard (contract: docs/isa/H0_NUMSOM4_B2_COMPLETION_CONTRACT_DRAFT.md).
     // Tied low outside the core RPLU2 pipeline branch. Not a host-visible outcome.
     output wire                    rplu2_domain_refused,
+    // A31-R3: one-core-clock pulse, high on the same cycle as inst_done when an accepted RPLU2 (0x2A) instruction ends in the
+    // characterized A31 zero-norm arithmetic refusal (Pade flags_v). No result-valid, commit or QR write accompanies it.
+    output wire                    rplu2_arith_refused,
 
     // REGEN compensation knob (Stage B; 2^-16 rad units; 0 = drift-free)
     input  wire [7:0]              regen_dphi_cfg,
@@ -1251,7 +1254,7 @@ module spu13_core #(
         end
     endgenerate
 
-    assign inst_done = inst_done_r | rplu2_domain_refused;
+    assign inst_done = inst_done_r | rplu2_domain_refused | rplu2_arith_refused;
     assign rotc_debug_status = {
         rotc_debug_flags[7],
         rotc_debug_busy,
@@ -2238,7 +2241,7 @@ module spu13_core #(
             wire [63:0] rplu2_som_best_q;
             wire [31:0] rplu2_thimble_c0, rplu2_thimble_c1,
                         rplu2_thimble_c2, rplu2_thimble_c3;
-            wire        rplu2_thimble_valid;
+            wire        rplu2_thimble_valid, rplu2_thimble_refused;
             wire        rplu2_busy, rplu2_stall, rplu2_rns_error;
             wire [31:0] rplu2_quadray_delta;
             wire        rplu2_quadray_coherent;
@@ -2274,6 +2277,7 @@ module spu13_core #(
                 .thimble_c2(rplu2_thimble_c2),
                 .thimble_c3(rplu2_thimble_c3),
                 .thimble_valid(rplu2_thimble_valid),
+                .thimble_refused(rplu2_thimble_refused),
                 .quadray_delta(rplu2_quadray_delta),
                 .quadray_coherent(rplu2_quadray_coherent),
                 .quadray_valid(rplu2_quadray_valid),
@@ -2311,7 +2315,15 @@ module spu13_core #(
             // meaningful over M31, while magnitude/order comparisons are not.
             assign rplu_dissoc = rplu2_dissoc;
             assign rplu2_core_rns_error = rplu2_rns_error;
-            assign rplu2_result_valid = rplu2_thimble_valid;
+            // A31-R3: a refused Padé completion is not a result. It ends the instruction through the refusal pulse below
+            // (aligned with inst_done), never through the result/commit path.
+            assign rplu2_result_valid = rplu2_thimble_valid && !rplu2_thimble_refused;
+            reg rplu2_arith_refused_r;
+            assign rplu2_arith_refused = rplu2_arith_refused_r;
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) rplu2_arith_refused_r <= 1'b0;
+                else        rplu2_arith_refused_r <= rplu2_thimble_valid && rplu2_thimble_refused;
+            end
             assign rplu2_result_c0 = rplu2_thimble_c0;
             assign rplu2_result_c1 = rplu2_thimble_c1;
             assign rplu2_result_c2 = rplu2_thimble_c2;
@@ -2359,6 +2371,7 @@ module spu13_core #(
             assign rplu_dissoc = 1'b0;
             assign rplu2_core_rns_error = 1'b0;
             assign rplu2_domain_refused = 1'b0;
+            assign rplu2_arith_refused = 1'b0;
             assign rplu2_result_valid = 1'b0;
             assign rplu2_result_c0 = 32'd0;
             assign rplu2_result_c1 = 32'd0;
@@ -2377,6 +2390,7 @@ module spu13_core #(
             // v2 disabled — no-op (handled by legacy gen_rplu block)
             assign rplu2_core_rns_error = 1'b0;
             assign rplu2_domain_refused = 1'b0;
+            assign rplu2_arith_refused = 1'b0;
             assign rplu2_result_valid = 1'b0;
             assign rplu2_result_c0 = 32'd0;
             assign rplu2_result_c1 = 32'd0;

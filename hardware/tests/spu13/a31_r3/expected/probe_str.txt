@@ -1,0 +1,19 @@
+== SET-N success / SET-R refusal / recovery in one session
+TXN S1 success (num0=2 den0=1) kind=0 done=1 aref=0 dref=0 resv=1 commit=1 thim=1 thimref=0 A=0000000000000002
+TXN R1 refusal after success kind=1 done=1 aref=1 dref=0 resv=0 commit=0 thim=1 thimref=1 A=0000000000000002
+TXN S1b success after refusal kind=0 done=1 aref=0 dref=0 resv=1 commit=1 thim=1 thimref=0 A=0000000000000002
+== second independent success vector (num0=3 den0=2 -> 3/2 = 1073741825)
+TXN S2 success (3/2) kind=0 done=1 aref=0 dref=0 resv=1 commit=1 thim=1 thimref=0 A=0000000040000001
+== refusal as the first transaction after reset
+TXN R0 refusal first after reset kind=1 done=1 aref=1 dref=0 resv=0 commit=0 thim=1 thimref=1 A=0000000000000002
+== numeric-domain refusal unchanged (out-of-domain operand, valid denominator)
+DOM done=1 dref=1 aref=0 resv=0 thim=0
+== reset during an outstanding operation (mid-Pade) then recovery
+RST mid-Pade done=0 aref=0 dref=0 resv=0 commit=0
+TXN S1 recovery after reset kind=0 done=1 aref=0 dref=0 resv=1 commit=1 thim=1 thimref=0 A=0000000000000002
+== reset in the cycle where a refusal completes (pade_done) and in the thimble_refused cycle
+RST at-pade_done done=0 aref=0 dref=0 resv=0 commit=0
+TXN R recovery after reset kind=1 done=1 aref=1 dref=0 resv=0 commit=0 thim=1 thimref=1 A=0000000000000002
+RST at-thimble_refused done=0 aref=0 dref=0 resv=0 commit=0
+TXN R recovery after reset kind=1 done=1 aref=1 dref=0 resv=0 commit=0 thim=1 thimref=1 A=0000000000000002
+TOTAL checks=36 fails=0

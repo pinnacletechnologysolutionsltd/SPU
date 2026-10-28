@@ -1,0 +1,5 @@
+h0_noRPLU2: LOCK v2=1 pipe=1 som=0 mode=0 ops=160 ops_2A=0 cycles=1513 base_done=160 refusals_new=0 mismatches=0
+h0_inDomain2A: LOCK v2=1 pipe=1 som=0 mode=1 ops=160 ops_2A=64 cycles=36827 base_done=160 refusals_new=0 mismatches=0
+rplu2_cfg_only: LOCK v2=1 pipe=0 som=0 mode=2 ops=160 ops_2A=64 cycles=1510 base_done=160 refusals_new=0 mismatches=0
+legacy_som: LOCK v2=0 pipe=0 som=1 mode=2 ops=160 ops_2A=64 cycles=29478 base_done=160 refusals_new=0 mismatches=0
+no_rplu_no_som: LOCK v2=0 pipe=0 som=0 mode=2 ops=160 ops_2A=64 cycles=1510 base_done=160 refusals_new=0 mismatches=0

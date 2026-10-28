@@ -48,6 +48,10 @@ module rplu_pipeline #(
     // ── Φ₄: Final output ───────────────────────────────────────────
     output wire [31:0]  thimble_c0, thimble_c1, thimble_c2, thimble_c3,
     output wire         thimble_valid,
+    // A31-R3: high on the same cycle as thimble_valid when the Padé evaluator completed with flags_v (zero-norm
+    // singularity, i.e. an arithmetic refusal). thimble_valid keeps its completion meaning for all consumers; the
+    // thimble_c* data of a refused completion is stale or undefined and must not be published as a result.
+    output wire         thimble_refused,
     output wire [31:0]  quadray_delta,
     output wire         quadray_coherent,
     output wire         quadray_valid,
@@ -111,7 +115,7 @@ module rplu_pipeline #(
     wire        pade_flags_v;
 
     // ── Pipeline stage latches ─────────────────────────────────────
-    reg         phi3_valid, phi4_valid;
+    reg         phi3_valid, phi4_valid, phi4_refused;
     reg         som_active;
     reg         pade_inflight;
     reg [3:0]  quadray_pending;
@@ -468,6 +472,7 @@ module rplu_pipeline #(
             phi1_best_id <= 6'd0;
             phi3_valid <= 1'b0;
             phi4_valid <= 1'b0;
+            phi4_refused <= 1'b0;
             som_active <= 1'b0;
             pade_inflight <= 1'b0;
             quadray_pending <= 4'b0000;
@@ -481,6 +486,7 @@ module rplu_pipeline #(
             btu_fifo_overflow <= 1'b0;
         end else begin
             phi4_valid <= 1'b0;
+            phi4_refused <= 1'b0;
 
             if (som_start_accept)
                 som_active <= 1'b1;
@@ -537,6 +543,7 @@ module rplu_pipeline #(
             // Φ₃ → Φ₄: latch Padé result independently of BTU stall state.
             if (pade_done) begin
                 phi4_valid <= 1'b1;
+                phi4_refused <= pade_flags_v;
                 phi4_c0 <= pade_result_c0; phi4_c1 <= pade_result_c1;
                 phi4_c2 <= pade_result_c2; phi4_c3 <= pade_result_c3;
                 phi3_valid <= 1'b0;
@@ -554,6 +561,7 @@ module rplu_pipeline #(
     assign thimble_c2    = phi4_c2;
     assign thimble_c3    = phi4_c3;
     assign thimble_valid = phi4_valid;
+    assign thimble_refused = phi4_refused;
     assign quadray_delta = quadray_delta_w;
     assign quadray_coherent = quadray_coherent_w;
     assign quadray_valid = quadray_valid_w;
