@@ -492,7 +492,13 @@ def main():
                         timeout=TEST_TIMEOUTS.get(tb.name, 5),
                     )
                     output = rr.stdout.decode('utf-8', errors='replace') + rr.stderr.decode('utf-8', errors='replace')
-                    if "FAIL" in output or "FAIL:" in output:
+                    if rr.returncode != 0:
+                        # A PASS line does not outweigh a nonzero exit: the
+                        # bench crashed, was killed, or hit $fatal.
+                        print(f"[{disp}] FAILED (Verilator exe exit {rr.returncode})")
+                        print(output.strip())
+                        failed += 1
+                    elif "FAIL" in output or "FAIL:" in output:
                         print(f"[{disp}] FAILED")
                         print(output.strip())
                         failed += 1
@@ -536,7 +542,13 @@ def main():
                 output = run_result.stdout.decode('utf-8', errors='replace')
             except UnicodeDecodeError:
                 output = run_result.stdout.decode('latin-1', errors='replace')
-            if "FAIL" in output or "FAIL:" in output:
+            if run_result.returncode != 0:
+                # A PASS line does not outweigh a nonzero exit: vvp died
+                # (signal, $fatal, missing $dumpfile dir) after printing it.
+                print(f"[{disp}] FAILED (vvp exit {run_result.returncode})")
+                print(output.strip())
+                failed += 1
+            elif "FAIL" in output or "FAIL:" in output:
                 print(f"[{disp}] FAILED")
                 print(output.strip())
                 failed += 1
@@ -949,6 +961,29 @@ def main():
     else:
         rotc_bad_angle_pass = rotc_bad_angle_fail = 0
 
+    # Runner verdict path (REGRESS-EXIT-1): a bench's PASS text must not
+    # outweigh a nonzero simulator exit. Missing file counts as a failure.
+    exit_verdict_test = os.path.join(root_dir, "software", "tests", "test_runner_exit_verdict.py")
+    exit_verdict_skip = None  # set when real-tool coverage was skipped by explicit opt-in
+    if os.path.exists(exit_verdict_test):
+        result_exit_verdict = subprocess.run(
+            [sys.executable, exit_verdict_test],
+            capture_output=True, text=True, timeout=180
+        )
+        exit_verdict_skip = next((l for l in result_exit_verdict.stdout.splitlines()
+                                  if l.startswith("SKIPPED-REAL-TOOLS:")), None)
+        if result_exit_verdict.returncode == 0 and not exit_verdict_skip:
+            exit_verdict_pass, exit_verdict_fail = 1, 0
+        else:
+            # Skipped required real-tool coverage is incomplete qualification:
+            # it counts as a failure so exit-code-only gates cannot accept it.
+            exit_verdict_pass, exit_verdict_fail = 0, 1
+            kind = "INCOMPLETE (real-tool coverage skipped)" if exit_verdict_skip else "FAILED"
+            print(f"\n  test_runner_exit_verdict.py {kind}:\n{result_exit_verdict.stdout[-500:]}")
+    else:
+        exit_verdict_pass, exit_verdict_fail = 0, 1
+        print("\n  test_runner_exit_verdict.py MISSING — counted as a failure.")
+
     # ROTC VM-vs-RTL trace equivalence, all 12 angles (0-11) against both
     # rotor datapaths — needs iverilog/vvp, same as the Verilog TBs above.
     # This is the load-bearing cross-verification proof behind
@@ -1263,6 +1298,11 @@ def main():
     print(f"\nROTC Bad-Angle Fault Tests: {rotc_bad_angle_pass + rotc_bad_angle_fail}")
     print(f"Passed:                     {rotc_bad_angle_pass}")
     print(f"Failed:                     {rotc_bad_angle_fail}")
+    print(f"\nRunner Exit-Verdict Tests:  {exit_verdict_pass + exit_verdict_fail}")
+    print(f"Passed:                     {exit_verdict_pass}")
+    print(f"Failed:                     {exit_verdict_fail}")
+    if exit_verdict_skip:
+        print(f"INCOMPLETE:                 real-tool coverage skipped by opt-in, counted as FAILED -- {exit_verdict_skip}")
 
     print(f"\nROTC Trace Equivalence Tests: {rotc_trace_pass + rotc_trace_fail}")
     print(f"Passed:                       {rotc_trace_pass}")
@@ -1345,7 +1385,7 @@ def main():
         + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
         + audio_pass + host_pass + spu4_probe_parser_pass + spu4_probe_client_pass
         + som_product_pass + robotics_demo_pass
-        + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + rotc_trace_pass
+        + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + exit_verdict_pass + rotc_trace_pass
         + regen_pass + cpu_profile_pass + gram_pass
         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
         + bench_metrics_pass
@@ -1360,7 +1400,7 @@ def main():
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
         + audio_fail + host_fail + spu4_probe_parser_fail + spu4_probe_client_fail
         + som_product_fail + robotics_demo_fail
-        + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + rotc_trace_fail
+        + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + exit_verdict_fail + rotc_trace_fail
         + regen_fail + cpu_profile_fail + gram_fail
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + bench_metrics_fail
@@ -1378,6 +1418,9 @@ def main():
     )
     print(f"\nTotal PASS:  {total_pass}")
     print(f"Total FAIL:  {total_fail}")
+    if exit_verdict_skip:
+        print("QUALIFICATION INCOMPLETE: required real-tool coverage was skipped by explicit opt-in "
+              "(SPU_ALLOW_SKIP_REAL_TOOLS=1); this run is NOT complete qualification and counts as a failure.")
     print("=============================================")
 
     # Exit non-zero when anything failed. Until 2026-09-05 this script had NO
