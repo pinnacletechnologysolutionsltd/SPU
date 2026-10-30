@@ -7313,3 +7313,227 @@ no switching CE check applies to those endpoints. Synchronous SR setup/hold,
 asynchronous recovery/removal and DSP timing coverage remain unqualified.
 25 MHz operation is not established. Timing review:
 `build/spu_surd_register/backend_compatibility_20261012/packet06_audit_reconciliation_01/packet06_master_qualification_20261015_rev05.json`.
+
+### 3.40 — CPU-BOARD-4C-R1 first fixed-program Surd CPU run over UART (2026-10-30)
+
+**Classification:** **SILICON OBSERVATION PASS (single run, fixed program).** One
+volatile load of the autonomous Surd CPU image on one physical Wukong produced
+one complete, CRC-valid UART record equal to the expected record. Independently
+reviewed (PASS, single-run silicon observation with the limits below); not yet committed.
+
+```text
+Claim: this exact bitstream, loaded once into SRAM on this unit, executed the
+  fixed 14-instruction Surd program and reported the expected result record. Attribution of the
+  record to this load is subject to the attribution limit below.
+Evidence dimension: silicon (single observation); interface (UART TX only, as observed)
+Source revision / dirty-tree identity: isolated clone /home/john/.local/gate/spu-int3b-c3efc18,
+  HEAD c3efc1878e5ae35601ec01a9e87e52ef032a7fc7 plus untracked experiment/ sources
+  (CPU-INTEGRATE-4 27-entry manifest + CPU-BOARD-2R wrapper board_top.v
+  f11f72f75ea4856b9f4f1494625f3dc505fc32d85c2358ea02569df177689c30); production RTL unchanged
+Build/test command and configuration: Vivado 2026.1 synth, opt/place/route, write_bitstream
+  (CPU-BOARD-3 Phase S/P, CPU-BOARD-4B; UNUSEDPIN=PULLNONE, COMPRESS=FALSE,
+  USR_ACCESS=0x48E0E161, CFGBVS=VCCO, CONFIG_VOLTAGE=3.3); load and capture by
+  build/cpu-board-4c-r1-preflight/run_4c_r1.py (sha256
+  f2f5c3670367256571abe00e7f79409a5611babe1f08b06cfd7ceb18ceae5f71) with loader_run.py
+  8ba17f1c0897b6f24ff5fe7a5ad6eba0a1bfe67e8e9b9c5c2251458616f0219c, capture.py
+  a5205549465eff76cb1153ea53fbc9a7335b5f1e60fe414b6651f8a2988c06c0, parse_record.py
+  9c5d48be364fdeb549cb78a817bbf09cf367bcf0c6a3ab95819c5dc57d57dcc5
+Device and toolchain: board QMTECH Wukong, owner-identified revision V3 (V03 schematic
+  Rev 3.0, sha256 bec53e6201c5c47a7059ce5b5af86e0f3a48535ebdf5643af7583171f7331aee);
+  device XC7A100T-1FGG676C per the seller listing and owner acceptance, NOT physically
+  verified (no marking read); JTAG idcode 0x3631093 (XC7A100T die; says nothing about
+  grade). openFPGALoader v1.2.0 (OSS CAD Suite 20261027), DirtyJTAG CB81353DCE678119,
+  CH340 /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0, Python 3.10.12, Linux 6.8.0-138
+Artifact identity: cpu_board_2r_top.bit sha256
+  442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea (3,826,011 bytes);
+  .bin sha256 cc259988b32dcd890a25c8a1765c6a28e3fafa280bcaed1aa5073f552dbc156c;
+  routed checkpoint sha256 48e0e1613a76315592852d8462bf2f91680c2ed87bfa5575ea690a941988a5c8
+Oracle and checked scope: expected record equals the bytes simulated from the RTL
+  (CPU-BOARD-2 mode 0 testbench) and an independent zlib CRC-32 of bytes 0-28; expected
+  value (1+2*sqrt3)^2/9 = (13+4*sqrt3)/9 as tuple (a,b,d) = (13,4,9). Checked scope: the
+  one fixed program, one run.
+Result and evidence artifact path: PASS; build/cpu-board-4c-r1-01/ (10-entry
+  MANIFEST.sha256, sha256 4c033bca3e2baebbcfd1f6351516c9faaf56996e562b91a5cfc400f666006793)
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result:** Capture was started first (115200 baud, 8N1, raw, no flow
+control) and drained for 1 s (0 stale bytes); then exactly one command
+`openFPGALoader -c dirtyJtag --freq 1000000 <bit>` (SRAM load, no flash options)
+returned exit 0 after **31.363 s**, reporting `Load SRAM 100.00%`, `Done`,
+`isc_done 1`, `init 1`, `done 1` (`loader_output.txt`, sha256
+724bc75b554fab00ba2599fd697b305580930dbe5c2d30ffa296feab7f560365). The UART delivered
+exactly 33 bytes during the load, before the loader returned (`raw_all.bin` sha256
+182c3453f3279af508c04da36c7d3e78e2feb26cf9685ca97512d8a05a8165cf), in two USB chunks
+31,320.07 and 31,320.53 ms after the load started (about 43 ms before the loader
+returned):
+
+```text
+a5 01 01 3f 0e | 0d000000 00000000 04000000 00000000 09000000 00000000 | 422b6b75
+magic/version a5 01, status 01 (successful HALT), result-valid mask 3f, PC 14,
+slices [13,0,4,0,9,0] little-endian, CRC-32/ISO-HDLC 756b2b42 (zlib.crc32 of bytes 0-28)
+```
+
+No other byte, truncated frame, contradictory or repeated record appeared during the
+30 s observation window. A read-only JTAG detect after the window found one device,
+idcode 0x3631093 (`session.json` sha256
+499fb2d0912fa6607b68f01814e571c1a091e240646e7a502ee09ef9cf82047b). Session length
+62.5 s from capture start. Owner reports (not independently measured): the rails and
+configuration straps were checked visually and by continuity, not measured, as recorded in
+the owner rail/strap confirmation section of
+`build/cpu-board-4-readiness/CPU_BOARD_4A_RECONCILIATION.md`; the owner's immediate
+pre-run confirmation of normal power and cables was given interactively and is noted in
+`RESULT_NOTE.md`, not preserved as a separate artifact. `owner_observations.txt` records
+only that the DONE LED was on and the board looked normal before R1, so the LED did not
+show the load itself.
+
+**Attribution limit (freshness):** The UART record carries no execution epoch or session
+identifier, and the board was already configured (DONE LED on) before R1, so attributing
+the record to this load rests on procedure and timing, not on independent proof. What the
+preserved evidence shows: capture was initialized before the load, a 1 s drain returned 0
+bytes, no byte arrived during the first 31.32 s of loading, and the only record arrived
+about 43 ms before the loader returned. That strongly associates the record with this
+load, but it does not independently establish when configuration completed relative to
+transmission, does not exclude an earlier record buffered in the CH340/USB/OS path after
+the drain, and cannot exclude an unrecorded manual action; the session script recorded
+no second load and no KEY0 press, which establishes only what the recorded workflow did.
+
+**Prior attempt:** The first CPU-BOARD-4C Step A attempt (`build/cpu-board-4c-01/`)
+remains a separate **HOLD**: the loader had not returned within its 30 s timeout, was
+killed, and 0 UART bytes were captured. The payload needs at least 30.6 s at 1 MHz, so
+the limit was too short; this is a hypothesis consistent with the 31.363 s load here,
+not a tested root cause, and the board state after that interrupted load was not read.
+This entry does not supersede or erase it.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Full ISA qualification: one fixed 14-instruction program (SLI, SLD, SMUL, SRD) ran once;
+  no other opcodes, operands, overflow/refusal paths or repeated runs on hardware.
+- Physical reset qualification: the KEY0 button, reset-pulse capture, bounce and re-run
+  behaviour were NOT RUN (Step B was not authorized). The run began from the
+  configuration-time reset-hold only.
+- General timing/electrical qualification: routed timing is internal only (WNS +6.360 ns,
+  WHS +0.060 ns, recovery +17.927 ns, removal +0.233 ns); `raw_rst_n` has no input delay and
+  `uart_tx` no output delay; no rail measurement, clock/baud measurement or margin test.
+  A single successful run does not establish operation across voltage, temperature or
+  repeated power-ups.
+- Device identity: speed/temperature grade and board revision remain owner-accepted,
+  unverified assumptions; the 100T die is supported by the JTAG idcode only.
+- Persistence: nothing was written to the SPI flash; the image is volatile.
+- Execution epoch / freshness: no epoch or session ID in the record; attribution to the
+  load is timing- and procedure-based (see the attribution limit above).
+- Repeatability: one run on one unit; no repeated-run, cross-build or cross-device agreement.
+
+### 3.41 — CPU-ROM-2B one-word ROM variant: operand variation over UART (run 2026-10-30; entry prepared 2026-10-31)
+
+**Classification:** **SILICON OBSERVATION PASS (single run, one authorised ROM-word change).**
+A fresh volatile load of the one-word variant image produced one complete, CRC-valid
+UART record equal to the independently predicted record, with no change to the CPU RTL.
+It is separate from, and does not reinterpret, section 3.40. Independently reviewed
+(PASS, single-run silicon observation with the limits below); not yet committed.
+
+```text
+Claim: this exact bitstream (golden image with ROM word 0 changed), loaded once into SRAM
+  on this unit, executed the fixed 14-instruction Surd program with operands (a,b,d) = (2,2,3)
+  and reported the predicted raw result (16,8,9). Attribution of the record to this load is
+  subject to the freshness limit below.
+Evidence dimension: silicon (single observation); interface (UART TX only, as observed)
+Source revision / dirty-tree identity: same sources as 3.40 (isolated clone
+  /home/john/.local/gate/spu-int3b-c3efc18, HEAD c3efc1878e5ae35601ec01a9e87e52ef032a7fc7 plus
+  untracked experiment/ sources; wrapper board_top.v
+  f11f72f75ea4856b9f4f1494625f3dc505fc32d85c2358ea02569df177689c30); production RTL unchanged
+Build/test command and configuration: golden routed checkpoint (sha256
+  48e0e1613a76315592852d8462bf2f91680c2ed87bfa5575ea690a941988a5c8) opened in Vivado 2026.1;
+  RAMB36 INIT for ROM word 0 (low half 0x100 -> 0x200) edited in memory only; write_bitstream
+  with the 3.40 properties (UNUSEDPIN=PULLNONE, COMPRESS=FALSE, USR_ACCESS=0x48E0E161) by
+  build/cpu-rom-2a/prep/cand_bitgen.tcl (sha256 ec7af37bcbae5e3a9ccf9722e805b68cc950358c0d82d92f79043815baa0ebec).
+  updatemem was NOT used (CPU-ROM-1: HOLD). Load and capture by
+  build/cpu-rom-2b-preflight/run_2b.py (sha256 80a3b693980b3b4767ad7f2a2e24be09447950b85553cd0fb7c4c230a2efc4b7)
+Device and toolchain: as 3.40 (QMTECH Wukong, owner-identified V3; XC7A100T-1FGG676C per seller
+  listing and owner acceptance, NOT physically verified; JTAG idcode 0x3631093;
+  openFPGALoader v1.2.0; DirtyJTAG CB81353DCE678119; CH340 by-id usb-1a86_USB_Serial-if00-port0)
+Artifact identity: oneword.bit sha256
+  a71284850c56c17f4bab5ddb8b5b95e021315c954d9a324503756e8c58d20cc9 (3,826,011 bytes);
+  oneword.bin sha256 058dc3fbaa49050ca413da60f4a6612c467cabaffea412a677a48d93bdec12cf
+  (3,825,788 bytes); golden .bit 442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea
+  unchanged
+Oracle and checked scope: exact oracle ((2+2*sqrt3)/3)^2: raw SMUL tuple (a^2+3b^2, 2ab, d^2) =
+  (16,8,9), value (16+8*sqrt3)/9, the CPU commits fitting arithmetic unreduced (gcd 1 here);
+  agreed with the RTL simulation of the CPU-BOARD-2R wrapper with the ROM word patched
+  (build/cpu-rom-2a/out/sim/vectors.log). Checked scope: one program, one run.
+Result and evidence artifact path: PASS; build/cpu-rom-2b-01/ (9-entry MANIFEST.sha256, sha256
+  5f1f6b6fc7dd3ee3276a5fb637d14fad67ece16476f8714c91d964a34dcbc16b); image evidence
+  build/cpu-rom-2a/out/ (83-entry MANIFEST.sha256, sha256
+  b5fc1c4cbf40c8554e1aff30fe47d5eec477adb370633162a0bbf55b6d6707e1)
+Adjacent evidence dimensions not established: see below
+```
+
+**Image identity and difference to golden (CPU-ROM-2A, offline):** The golden image
+regenerated by the same script is bit-identical to the original `.bin`. The one-word image
+differs from golden in exactly three 32-bit payload words: 917032 (xor 0x00010000) and
+917038 (xor 0x00000001), which are the two ROM bits flipped (INIT bits 8 and 9, positions
+measured with separate single-bit probe bitstreams), and the configuration CRC word 955926
+(golden c9fec49a, candidate 57c5f93d). The candidate's first data CRC was recomputed
+independently (CRC-32C over data and register address, `bitcrc.py`) and equals the stored
+value and the value for the predicted payload; all 16 ROM words reconstructed from the
+bitstream difference and from the in-memory INIT match the intended program (word 0 changed
+only); bitstream DRC reported 0 errors; the image equals the CPU-ROM-1 reference
+`ref_w0_0x200.bin`. A second, constant CRC write later in the stream (word 956044,
+e3ad7ea5, identical in every image) is not modelled by `bitcrc.py`; the owner reports this
+was understood and independently checked in Terra's review, and it is not re-derived here.
+Operand payloads stay below 2^16 and logical ROM bits 24 and 29 (unconnected in this image)
+are clear.
+
+**Procedure and result:** Capture was started first (115200 baud, 8N1, raw, no flow
+control) and drained for 1 s (0 stale bytes); the board had been running the golden image
+(3.40). Exactly one `openFPGALoader -c dirtyJtag --freq 1000000 <oneword.bit>` (SRAM load,
+no flash options) returned exit 0 after **31.359 s**: `Load SRAM 100.00%`, `Done`,
+`isc_done 1`, `init 1`, `done 1` (`loader_output.txt` sha256
+0f5d9b8278c2ad152915688debbe5968de02380f31af0bd1e9e0f351bf82394f). The UART delivered
+exactly 33 bytes during the load, before the loader returned (`raw_all.bin` sha256
+aec07df22d320512cf93ca3e0775b52e7513afbaa7435250c7a0e76339e633bc), in two USB chunks 31,307.49
+and 31,310.27 ms after the load started (loader returned at 31,359 ms):
+
+```text
+a5 01 01 3f 0e | 10000000 00000000 08000000 00000000 09000000 00000000 | 71400c97
+status 01 (successful HALT), mask 3f, PC 14, slices [16,0,8,0,9,0] little-endian,
+CRC-32/ISO-HDLC 970c4071 (zlib.crc32 of bytes 0-28); golden record was 756b2b42
+```
+
+No other byte, truncated frame, contradictory valid record (a golden-image record would have
+been flagged) or repeated record appeared in the 30 s window. A read-only JTAG detect after
+the window found one device, idcode 0x3631093 (`session.json` sha256
+1144ecc281ecde06c3a9723679497d31d127febbd2c6bba51a60d73b7bb3d405). Session 62.5 s from
+capture start. The owner's immediate pre-run confirmation of normal power, cables and
+rails/straps was given interactively and is noted in `RESULT_NOTE.md`; rails and straps were
+not measured (3.40).
+
+**Provenance of the harness:** `capture.py` (a5205549465eff76cb1153ea53fbc9a7335b5f1e60fe414b6651f8a2988c06c0)
+and `loader_run.py` (8ba17f1c0897b6f24ff5fe7a5ad6eba0a1bfe67e8e9b9c5c2251458616f0219c) are
+byte-identical to the 3.40 run. The session script differs: it waits for a non-empty
+`READY` file (an empty-file race found in offline testing; the 3.40 script has the same
+latent race, which was not observed to trigger in that run), and its
+parser (`parse_record_2b.py`, sha256 ce1e7ee58a36c22f23ecf94131050ea5abcf152978956a4f8d2d4700be971dfb)
+expects the one-word record. The repair removes the observed race; it does not by itself
+exclude every possible partial-write race.
+
+**Attribution limit (freshness):** As in 3.40, the record carries no execution epoch or
+session identifier. Attribution to this load rests on procedure and timing: capture
+initialized first, a 1 s drain returned 0 bytes, no byte arrived during the first 31.3 s of
+loading, and the only record arrived about 52 ms before the loader returned and was a
+different valid record from the golden one. This strongly associates it with this load but
+does not independently establish when configuration completed relative to transmission, does
+not exclude a record buffered in the CH340/USB/OS path after the drain, and cannot exclude an
+unrecorded manual action.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Full ISA qualification: one program with one changed operand word (a: 1 to 2; denominator
+  unchanged at 3); no other opcodes, no overflow/refusal path, no normalization (SNORM) path.
+- Repeatability: one load of this variant on one unit; no repeated loads, other variants,
+  cross-build or cross-device agreement.
+- Runtime reset: the KEY0 button, reset-pulse capture and re-run behaviour were NOT RUN; the
+  run began from the configuration-time reset-hold only.
+- Timing/electrical: as 3.40 (internal routed timing only; no rail, clock or baud measurement;
+  raw reset has no input delay and UART no output delay).
+- Device identity: speed/temperature grade and board revision remain owner-accepted,
+  unverified assumptions.
+- Persistence: nothing was written to the SPI flash; the image is volatile.
