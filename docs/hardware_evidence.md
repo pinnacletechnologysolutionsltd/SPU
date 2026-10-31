@@ -7537,3 +7537,115 @@ unrecorded manual action.
 - Device identity: speed/temperature grade and board revision remain owner-accepted,
   unverified assumptions.
 - Persistence: nothing was written to the SPI flash; the image is volatile.
+
+### 3.42 — CPU-BOARD-4C Step B: single KEY0 restart of the resident one-word image (2026-10-31)
+
+**Classification:** **SILICON OBSERVATION PASS (single press, scoped restart functionality).**
+After a 10 s UART silence with no bytes, an owner-reported single KEY0 press on this unit
+was followed by one complete, CRC-valid UART record equal to the expected record, which
+supports a restart of the resident one-word image without reconfiguration. No press
+timestamp was captured. A first attempt the same day is recorded separately as a **HOLD**.
+This entry does not establish asynchronous reset safety. Entry prepared for review; not yet
+reviewed or committed.
+
+```text
+Claim: with the CPU-ROM-2B one-word image resident in SRAM, an owner-reported single KEY0
+  press (made on the PRESS NOW notification; no press timestamp was captured) was followed by
+  the expected record (16,8,9) on UART, supporting a restart of the resident program; no
+  reload, no flash, no second press.
+Evidence dimension: silicon (single observation, restart functionality); interface (KEY0 to
+  reset path and UART TX, as observed)
+Source revision / dirty-tree identity: unchanged from 3.40/3.41 (isolated clone
+  /home/john/.local/gate/spu-int3b-c3efc18, HEAD c3efc1878e5ae35601ec01a9e87e52ef032a7fc7 plus
+  untracked experiment/ sources; wrapper board_top.v f11f72f75ea4856b9f4f1494625f3dc505fc32d85c2358ea02569df177689c30);
+  repository documentation baseline 82719ce; production RTL unchanged
+Build/test command and configuration: no build, no load: build/cpu-board-4c-keyb-r1-preflight/run_keyb.py
+  (sha256 b77892174489f6d09ed7305d7217cc71c49e6e536dc7da6d421c13b521dcba2d; preflight_keyb.py
+  0fa97e2933619dc1ef6f8b62f64a454a595143ba5e6670ee657cb8b0ab6ab9b5; test_offline_keyb.py
+  8300109c1ea085c37612bb763fc4a1cf258e3f38c8999066b340bea9caa25d9d; capture.py
+  a5205549465eff76cb1153ea53fbc9a7335b5f1e60fe414b6651f8a2988c06c0 and parse_record_2b.py
+  ce1e7ee58a36c22f23ecf94131050ea5abcf152978956a4f8d2d4700be971dfb, byte-identical to 3.41)
+Device and toolchain: as 3.40/3.41 (QMTECH Wukong, owner-identified V3; XC7A100T-1FGG676C per
+  seller listing and owner acceptance, NOT physically verified; JTAG idcode 0x3631093;
+  DirtyJTAG CB81353DCE678119; CH340 by-id usb-1a86_USB_Serial-if00-port0)
+Artifact identity: resident image = oneword.bit sha256
+  a71284850c56c17f4bab5ddb8b5b95e021315c954d9a324503756e8c58d20cc9 (loaded in 3.41; residency
+  rests on the owner's statement of continuous power, host-side consistent, and on the record
+  content; there is no readback)
+Oracle and checked scope: expected record = the one-word record of 3.41 (raw (16,8,9), CRC-32
+  970c4071); checked scope: one press, one record
+Result and evidence artifact path: PASS; build/cpu-board-4c-keyb-r1-01/ (10-entry
+  MANIFEST.sha256, sha256 c4fda2c0c973fa46a964af4e6f96beaf69a76391750900e1b47da3a35a286f6a)
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result (retry R1):** Full preflight passed (frozen scripts, offline tests,
+one DirtyJTAG and one CH340, port free, read-only JTAG detect idcode 0x3631093); the owner
+gave an immediate go/no-go. Capture was started first (115200 baud, 8N1, raw, no flow
+control) and drained for 1 s (0 bytes). A 10 s quiet interval followed with **0 bytes**. The
+single notification "KEY0 TEST: PRESS KEY0 NOW" was issued 11.04 s after capture start; the
+owner pressed KEY0 once for about half a second (owner-reported; no press or release marks
+were made, so there is no press timestamp). The 30 s window closed at 41.05 s; one read-only
+JTAG detect afterwards found idcode 0x3631093 (`session.json` sha256
+82348754b63f48741d675923427b1530ffd85d3ad824dd63b78a2cd8f4a74d06). Session 41.5 s (limit
+120 s). The UART delivered exactly 33 bytes (`raw_all.bin` sha256
+aec07df22d320512cf93ca3e0775b52e7513afbaa7435250c7a0e76339e633bc; raw file and per-chunk
+jsonl both total 33 bytes, `capture.jsonl` sha256
+6bca566c557ab1ce910ace2d772ee487e3cb4b9de251519de600c0ecb54d41ba) in two USB chunks 1,521.8
+and 1,524.6 ms after the end of the quiet interval (the notification was issued 0.8 ms after
+that end, so about 1,521.0 and 1,523.8 ms after the notification; `RESULT_NOTE.md` in the
+evidence directory gives the offsets relative to the notification, and `session.json` is
+authoritative):
+
+```text
+a5 01 01 3f 0e | 10000000 00000000 08000000 00000000 09000000 00000000 | 71400c97
+status 01, mask 3f, PC 14, slices [16,0,8,0,9,0], CRC-32 970c4071
+```
+
+No truncated, garbage, repeated or contradictory bytes appeared. The record is byte-identical
+to the 3.41 record.
+
+**First attempt (separate HOLD):** `build/cpu-board-4c-keyb-01/` (MANIFEST sha256
+e890a2b10101db6a86dee6b65580b0650a700589d8b7539d8b55460b70380439). The owner pressed KEY0
+during the quiet interval, before any press instruction; the same 33-byte record arrived
+1,279.7 ms after the quiet interval started (`raw_all.bin` sha256 aec07df2...e633bc, identical
+to the retry's). The first-attempt harness (`run_keyb.py` sha256
+071c1993cbf40db12c57ab412220ad6aae111e765b05890151f95bc0ec45111a) evaluated the quiet
+interval only after its full 10 s and had sent an early "DO NOT PRESS YET" notice; it reported
+HOLD and a STOPPED notice about 10 s after the bytes arrived (session 11.5 s). It is **not**
+Step B evidence and is not a PASS; it is nonetheless a first, uncontrolled KEY0 restart of
+this board (the board was therefore restarted once before the retry). The retry harness
+removed the early notice and aborts on the first stray byte (addendum
+HOLD_NOTE_ADDENDUM_2026-10-31.md).
+
+**Reset-path analysis and simulation supporting the interpretation (offline, not hardware
+evidence):** `build/cpu-board-4c-stepb-prep/` (13-entry MANIFEST, sha256
+0e1466b621b81a216930511a9f64ebaa913c09b48e7b4768dab39da62ba30cc8). From the routed
+checkpoint (sha256 48e0e1613a76315592852d8462bf2f91680c2ed87bfa5575ea690a941988a5c8):
+`raw_rst_n` asynchronously sets the supervisor's `request_pending` and `reset_hold`
+(12 asynchronous pins in total, all single-input drivers); the released `cpu_rst_n` reaches
+6,480 of 6,752 flip-flops (mostly as synchronous resets); the 272 flip-flops outside the cone
+are the supervisor (9) and the packetizer (263: 235 data registers loaded before use, 27
+control registers cleared through the synchronized `ok`, `rs[1]`). Simulation of the
+CPU-BOARD-2R wrapper (`sim/bounce_results.txt`, sha256
+87c0b7625e4361c8a209f4bd1f5c20c34399155b19ea1aac19c89d6e409fc6f8): a clean press, a bounce
+train, a late glitch and a 3 ns pulse each end with one fresh valid record about 107 us after
+the last raw release. The hardware press here is a single sample of that behaviour.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Asynchronous reset safety: assertion and release across clock phases, metastability margin,
+  glitch immunity and switch-bounce statistics were not measured; one successful restart does
+  not establish them (routed removal +0.233 ns and recovery +17.927 ns are internal estimates;
+  `raw_rst_n` has no input delay).
+- Press timing: no hardware or host press timestamp was captured, so when the press occurred
+  is not established; the record's arrival time (about 1.52 s after the notification) is
+  recorded but does not by itself date the press.
+- Presses during arithmetic execution or UART transmission, repeated presses, and power-up
+  behaviour were NOT RUN.
+- Execution epoch / freshness: the record carries no epoch; attribution rests on 0 bytes in
+  the 10 s quiet interval, the drain, and the arrival after the notification, and cannot
+  exclude an unrecorded action or a record buffered in the CH340/USB/OS path.
+- Resident-image identity: inferred from continuous power (owner statement) and the record
+  content, with no configuration readback.
+- Device identity, timing and electrical qualification, and general ISA qualification: as in
+  3.40 and 3.41.
