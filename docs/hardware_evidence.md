@@ -7777,3 +7777,109 @@ cannot exclude an unrecorded manual action.
 - Device identity: speed/temperature grade and board revision remain owner-accepted,
   unverified assumptions.
 - Persistence: nothing was written to the SPI flash; the image is volatile.
+
+### 3.44 — J11-GPIO-1 Wukong J11 lower-row GPIO diagnostic (2026-10-31)
+
+**Classification:** **PASS: four-channel GPIO operation at logic-analyser threshold, with a
+supplementary owner-reported voltage observation on pin 7.** This is a standalone Wukong GPIO
+diagnostic. **It is a GPIO observation, not an SPU CPU result**, and it neither supports nor
+extends sections 3.40 to 3.43. Entry prepared for review; not yet reviewed or committed.
+
+```text
+Claim: a single diagnostic bitstream, loaded once into SRAM, drove four registered square waves
+  on J11 pins 7-10 of this Wukong V3 at approximately 1, 2, 4 and 8 Hz, observed by a logic
+  analyser in two independent 8 s captures; an owner-reported multimeter reading on pin 7 was
+  an alternation between about 3.3 V and about 0 V.
+Evidence dimension: silicon (single observation); interface (GPIO, as observed)
+Source revision / dirty-tree identity: standalone design outside tracked sources (repository
+  baseline c922a01); no SPU CPU RTL, constraints, checkpoint or bitstream involved
+Build/test command and configuration: Vivado 2026.1 non-project batch
+  (build/j11-gpio-1-build/build_j11.tcl, sha256 2b3cd243e106dfcd3f70ad0f789477fe4e9f3998cd4e4e0a75cf0632018cb24e):
+  synth, opt, place, route, write_bitstream; part xc7a100tfgg676-1; UNUSEDPIN=PULLNONE,
+  COMPRESS=FALSE, USR_ACCESS=0x4A110001, CFGBVS=VCCO, CONFIG_VOLTAGE=3.3. Design
+  rtl/j11_gpio1_top.v (12 lines, sha256 a66f950194481226e8136c2281facf11c0471aa2616922316a5d33b5d5277f41)
+  and j11_gpio1.xdc (sha256 d272ceebdc1fbe2a27b9bbde403fccc1ce2720b757567b86e5cb29e5ea8915d0)
+Device and toolchain: board QMTECH Wukong, owner-identified V3 (V03 schematic Rev 3.0, sha256
+  bec53e6201c5c47a7059ce5b5af86e0f3a48535ebdf5643af7583171f7331aee); device XC7A100T-1FGG676C
+  per seller listing and owner acceptance, NOT physically verified (as 3.40); JTAG idcode
+  0x3631093; openFPGALoader v1.2.0 with DirtyJTAG; analyser: Saleae-type 0925:3881 (fixed input
+  threshold) via sigrok-cli 0.7.2 and libsigrok 0.5.2, driver fx2lafw
+Artifact identity: j11_gpio1.bit sha256
+  a4ddc66c6fb41e3b00d1726436af7ae08afbbe11d626821fd435c19b9ecc120f (3,826,008 bytes);
+  j11_gpio1.bin sha256 06dd158206eb4317496198d9708f9a837ab72b770cfa578ba3d9054a1a06a1f5
+Oracle and checked scope: the design's exact timing (50 MHz / 3,125,000 cycles = 16 Hz tick;
+  channels 8, 4, 2, 1 Hz) simulated at full and scaled size, with four mutants detected
+  (build/j11-gpio-1-prep/sim); checked scope: two 8 s captures of four pins
+Result and evidence artifact path: PASS; build/j11-gpio-1-run-01/ (12-entry MANIFEST.sha256,
+  sha256 3d185b382f63c2727cdce88cbfe63916d86ce8351f8122c66c07527fafdba998); build evidence
+  build/j11-gpio-1-build/ (30-entry manifest, sha256
+  2364d2524f933bf285ed80cb37f7f753fe58a9923bffb8c122c2e4949d8d4971); design and procedure
+  build/j11-gpio-1-prep/ (13-entry manifest, sha256
+  d516cc5d6810f9692ac4212bc5e58c6f0127bf2f9d3df1648ead5058295a733d)
+Adjacent evidence dimensions not established: see below
+```
+
+**Pin mapping (V03 sheet 2, read from the schematic itself):** J11 is a 12-pin PMOD header.
+Lower-row pins 7, 8, 9 and 10 are nets BANK35_J4, BANK35_G4, BANK35_B4 and BANK35_B5, i.e. FPGA
+balls J4, G4, B4 and B5 in bank 35, whose VCCO is tied to 3V3; pins 5 and 11 are GND and pins 6
+and 12 are 3V3. Each net appears only at the FPGA ball and at J11. The tool's pin report
+(`routed_io.rpt`) shows all four as LVCMOS33, DRIVE 8, SLEW SLOW. Channel assignment: CH0 = pin
+7 (J4) 1 Hz, CH1 = pin 8 (G4) 2 Hz, CH2 = pin 9 (B4) 4 Hz, CH3 = pin 10 (B5) 8 Hz.
+
+**Build:** COMPLETE, exit 0, 135 s (detached unit spu-j11-gpio-1-build-01-20261031T043836Z-265029);
+0 unrouted nets, bitstream DRC 0 errors, no critical warnings, timing met (WNS +15.942 ns, WHS
++0.245 ns), 7 LUT and 26 FF; each GPIO output is an OBUF driven directly by a flip-flop.
+
+**Procedure and result:** With the RP2350 and everything else disconnected from J11 and the
+analyser the only device on J11 (D0 to D3 on pins 7 to 10, ground on pin 11; owner statement),
+the session ran a 3 s baseline capture (CPU-ROM-2C image running, pins undriven by the design:
+all four channels constant high), then exactly one `openFPGALoader -c dirtyJtag --freq 1000000
+<bit>` (SRAM load, no flash options), exit 0 after 31.365 s (`Load SRAM 100.00%`, `Done`,
+`isc_done 1`, `init 1`, `done 1`; `loader_output.txt` sha256
+6d61d3fd0952e1f609b4b12e083b769e178ee4efd41844e86c854eb6aed78d85). Two independent 8 s
+captures at 100 kHz (`sigrok-cli -d fx2lafw`, channels D0 to D3, VCD) started about 2 s after
+the load returned and about 5 s after the first capture ended
+(`capture1.vcd` sha256 8adaa4c3e2903cae68e8825810ebb99b9b9394068ed4e4a4bfb84dcaec6ff2a8,
+`capture2.vcd` sha256 ea00fc1275e664c7783c1ba8356bcfaeb89ec57cb9ebc15d37b3502e6a19f16a;
+`session.json` sha256 5343894f5038c53a736a9a32c679237af0efcdbb376ce334975e961a3f8b6629).
+Both captures gave the same verdict:
+
+| Channel | Pin (ball) | Edges in 8 s (expected) | Frequency | Duty | Shortest pulse |
+|---|---|---|---|---|---|
+| CH0 | 7 (J4) | 16 (16) | 0.9999 Hz | 0.500 | 0.500 s |
+| CH1 | 8 (G4) | 32 (32) | 1.9999 Hz | 0.500 | 0.250 s |
+| CH2 | 9 (B4) | 64 (64) | 3.9998 Hz | 0.500 | 0.125 s |
+| CH3 | 10 (B5) | 128 (128) | 7.9996 Hz | 0.500 | 0.0625 s |
+
+The four channels form a 4-bit binary counter that increments every 62.5 ms (CH3 least
+significant); the decoded code (8*CH0 + 4*CH1 + 2*CH2 + CH3, sampled mid-tick) incremented by
+exactly 1 at each of 127 tick boundaries in both captures. Both logic states were seen on every
+channel, no two channels were identical, and no pulse shorter than the expected half-period
+(no glitch) and no stuck or floating channel appeared. A post-load read-only JTAG detect found
+idcode 0x3631093. The analyser script (`analyze_capture.py` sha256
+e68c2266d9ebac5db222044ee7536d604df7f80b22d51c3230e013ef84cfb37a) failed all seven defective
+synthetic captures in its offline tests. The owner's immediate pre-run confirmation of the
+wiring and board condition was given interactively and is noted in `RESULT_NOTE.md`
+(sha256 72bfa64b35232ab4bf0f389a0d86d2ec26becc47d979cb6de2aa1adabc139c84, unchanged).
+
+**Owner-reported multimeter observation (supplementary):** After the session, with the diagnostic
+image still running, the owner reported "Alternate pulsing between 3.3 and 0.0v on the pin 7 of
+J11 checked with a digital multimeter" (`OWNER_MULTIMETER_2026-10-31.md`, sha256
+b45444ed6256e99edd21d3c678a6852918f147595f654e7d5c26deaaf11388d9). Limitations: meter model,
+range, ground point and accuracy were not recorded; the values are rounded, owner-reported
+readings with no stored measurement or timestamp; only pin 7 (the 1 Hz channel) was measured;
+pins 8 to 10 were observed by the analyser only. No calibrated voltage accuracy is claimed.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Voltage levels beyond the single owner-reported reading: the analyser reports logic state at
+  its fixed threshold only; no calibrated, stored or per-pin voltage measurement exists.
+- Loaded drive capability, signal integrity, edge rates, noise margin and long-term stability:
+  NOT RUN (unloaded probes, two 8 s captures).
+- Pin state before configuration: the pre-load baseline (all high) reflects undriven pins under
+  the analyser's input and board pull state, not a design-controlled level.
+- Pin health of J11 pins 1 to 4 and 6, 12 (top row, power): NOT RUN; the top row is recorded
+  elsewhere as damaged and was not used.
+- SPU CPU behaviour: none; this load replaced the CPU-ROM-2C image in SRAM (volatile, flash
+  untouched), and the CPU image has not been reloaded.
+- Device identity, repeatability across loads or units, and timing/electrical qualification: not
+  established (one load, one unit; speed grade and revision as in 3.40).
