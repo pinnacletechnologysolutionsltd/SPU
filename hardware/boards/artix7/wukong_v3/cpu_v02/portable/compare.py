@@ -1,5 +1,5 @@
 """Compare a CPU-REPRO-1 run directory with the golden build. Read-only.
-Usage: python3 -I compare.py RUNDIR   (env GOLDEN_VIVADO = golden build/vivado directory containing board3_01, board3p_01, board4b_01)
+Usage: python3 -I compare.py RUNDIR [OUTFILE]   (default OUTFILE = RUNDIR/COMPARE_DETAIL.txt; pass another path to leave a finished run untouched; env GOLDEN_VIVADO = golden build/vivado directory containing board3_01, board3p_01, board4b_01)
 Verdict is decided ONLY by the .bin / bitstream payload hash. Report differences are listed for diagnosis and never upgrade a verdict."""
 import hashlib, os, re, struct, sys
 G_BIN = 'cc259988b32dcd890a25c8a1765c6a28e3fafa280bcaed1aa5073f552dbc156c'
@@ -15,6 +15,8 @@ def norm(path):
     keep = []
     for l in open(path, errors='replace').read().splitlines():
         if re.match(r'\|\s*(Date|Host|Command)\s*:', l): continue
+        if re.fullmatch(r'-{20,}', l.strip()): continue   # separator width follows the (ignored) Command line length
+        l = re.sub(r'\S*/cpu_board_3\.xdc', '<XDC>', l)    # same constraint file bytes at a different path (hash checked via run_manifest)
         keep.append(l.replace(gold, '<ROOT>').replace(run, '<ROOT>').replace(gold_root, '<ROOT>'))
     return keep
 def cmp_file(tag, g, n):
@@ -72,4 +74,4 @@ say(f'.bit sha256 {sha(bitp)} ({"EQUAL" if sha(bitp) == G_BIT else "different"} 
 say(f'report differences: {len(diffs)}'); [say('  ' + x) for x in diffs]
 if sha(binp) == G_BIN and payload == b: say('VERDICT PASS-BIT-EXACT (configuration payload identical to golden)'); code = 0
 else: say('VERDICT HOLD (payload differs or is inconsistent; functional equivalence is NOT established by this tool)'); code = 1
-open(os.path.join(run, 'COMPARE_DETAIL.txt'), 'w').write('\n'.join(out) + '\n'); sys.exit(code)
+open(sys.argv[2] if len(sys.argv) > 2 else os.path.join(run, 'COMPARE_DETAIL.txt'), 'w').write('\n'.join(out) + '\n'); sys.exit(code)

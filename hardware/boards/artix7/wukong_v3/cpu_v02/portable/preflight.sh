@@ -3,7 +3,7 @@
 #   --offline : skip Vivado, memory, disk and process checks (hash and structure checks only).
 # Env: VIVADO_SETTINGS (path to settings64.sh; required unless --offline), GOLDEN_VIVADO (golden build/vivado dir; optional, enables golden-artifact checks).
 set -u
-OFFLINE=0; [ "${1:-}" = "--offline" ] && { OFFLINE=1; shift; }
+WAIVED=""; OFFLINE=0; [ "${1:-}" = "--offline" ] && { OFFLINE=1; shift; }
 RUN_ID=${1:-}
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd); PKG=$(cd "$HERE/.." && pwd); REPO=$(cd "$PKG/../../../../.." && pwd)
 cd "$REPO" || exit 90
@@ -31,9 +31,18 @@ if [ $OFFLINE = 0 ]; then
   ver=$(bash -c "source '$VIVADO_SETTINGS' > /dev/null 2>&1; cd "$(mktemp -d)" && vivado -version 2>&1 | head -3")
   echo "$ver" | grep -q 'vivado v2026.1 ' || fail 94 "Vivado is not 2026.1"
   echo "$ver" | grep -q 'SW Build 6511674 ' || fail 94 "Vivado SW build is not 6511674"
-  avail=$(awk '/MemAvailable/{print $2}' /proc/meminfo); [ "$avail" -ge 5242880 ] || fail 96 "MemAvailable ${avail} kB < 5242880 kB (5 GiB)"
+  avail=$(awk '/MemAvailable/{print $2}' /proc/meminfo)
+  if [ "$avail" -lt 5242880 ]; then
+    # Single-run owner waiver (CPU-REPRO-1B, 2026-11-02): only for RUN_ID repro1-b01, only with the exact token, and only with working swap.
+    # Every other check in this script is unchanged. Without the token the 5 GiB floor is a hard HOLD.
+    [ "${SPU_MEM_WAIVER:-}" = "OWNER_WAIVER_CPU_REPRO_1B_RAM_SWAP_2026-11-02" ] && [ "$RUN_ID" = "repro1-b01" ] || fail 96 "MemAvailable ${avail} kB < 5242880 kB (5 GiB)"
+    swt=$(awk '/SwapTotal/{print $2}' /proc/meminfo); swf=$(awk '/SwapFree/{print $2}' /proc/meminfo)
+    [ "$swt" -gt 0 ] && [ "$swf" -ge 4194304 ] || fail 96 "waiver needs working swap with >= 4 GiB free (SwapTotal ${swt} kB, SwapFree ${swf} kB)"
+    [ "$avail" -ge 3145728 ] || fail 96 "waiver needs MemAvailable >= 3 GiB (have ${avail} kB)"
+    WAIVED="mem_waiver=ACTIVE(MemAvailable=${avail}kB,SwapFree=${swf}kB)"
+  fi
   [ "$(df -k --output=avail "$REPO" | tail -1)" -ge 20971520 ] || fail 93 "less than 20 GiB free"
   pgrep -f '[v]ivado -mode' > /dev/null && fail 88 "another Vivado is running"
 fi
 [ -z "$RUN_ID" ] || { [ ! -e "$REPO/build/cpu-repro-1/$RUN_ID" ] || fail 89 "build/cpu-repro-1/$RUN_ID exists"; }
-echo "PREFLIGHT_OK repo=$(git rev-parse --short HEAD) dirty=$(git status --porcelain -- hardware tools | wc -l) offline=$OFFLINE"
+echo "PREFLIGHT_OK ${WAIVED:-mem_waiver=none} repo=$(git rev-parse --short HEAD) dirty=$(git status --porcelain -- hardware tools | wc -l) offline=$OFFLINE"

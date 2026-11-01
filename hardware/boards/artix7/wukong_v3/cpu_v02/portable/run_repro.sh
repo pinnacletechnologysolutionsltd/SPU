@@ -15,6 +15,11 @@ mkdir -p "$B"/{synth,route,bit,meta,analysis,work} || exit 98
 source "$VIVADO_SETTINGS" > /dev/null 2>&1
 source "$PKG/provenance/original_flow/guard.sh"          # byte-identical to the original memory guard
 { date -u +%FT%TZ; free -m; cat /proc/pressure/memory; uname -r; git rev-parse HEAD; git status --porcelain | sha256sum; } > "$M/host_before.txt" 2>&1
+grep -E 'MemTotal|MemAvailable|SwapTotal|SwapFree' /proc/meminfo > "$M/memory_before.txt"
+git status --porcelain > "$M/git_status.txt"; git diff HEAD -- "$REL/portable" > "$M/portable_uncommitted.diff"
+if [ -n "${SPU_MEM_WAIVER:-}" ]; then   # preflight has already validated the token, run id and swap; record it
+  { echo "WAIVER SPU_MEM_WAIVER=$SPU_MEM_WAIVER run_id=$RUN_ID"; echo "scope: 5 GiB MemAvailable launch floor only, single attempt; owner justification: previous successful Vivado runs on this workstation"; cat "$M/memory_before.txt"; } > "$M/WAIVER.txt"
+fi
 ( cd "$PKG" && sha256sum -c PACKAGE_SHA256.txt; sha256sum -c portable/PORTABLE_SHA256.txt ) > "$M/package_verify.txt" 2>&1
 run_phase() {   # name, then the vivado -source script and its -tclargs
   local name=$1; shift

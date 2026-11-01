@@ -12,7 +12,7 @@ Original: `provenance/original_flow/` (preserved, unmodified). Portable: this di
 | Phase P input | fixed path to golden `synth.dcp`; gated on its sha256 `938f0772…` | `route.tcl` takes the checkpoint as argv1 (the run's own synth.dcp); no hash gate | the only line changed from `route_phase_p.tcl` is `open_checkpoint` |
 | Phase 4B input | fixed path to golden `routed.dcp`; gated on `48e0e161…` | `bitstream.tcl` takes argv1 (the run's own routed.dcp); no hash gate | the only line changed from `gen_bitstream.tcl` is `open_checkpoint` |
 | Memory guard | `guard.sh` | the same file, sourced from `provenance/original_flow/` | none |
-| Launch floor | MemAvailable >= 5 GiB, disk >= 20 GiB | same, in `preflight.sh` | none |
+| Launch floor | MemAvailable >= 5 GiB, disk >= 20 GiB | same, in `preflight.sh`; for run `repro1-b01` only, the exact owner token `SPU_MEM_WAIVER` lowers the memory floor to 3 GiB if swap has >= 4 GiB free; recorded in `meta/WAIVER.txt` | none on design; run-time guard unchanged |
 | ROM validation | `rom_check.py` with `build/cpu-board-2r-isolated/board_tb.v` and `frontend.v` | not run; ROM properties and load nets are dumped with the preserved `dump_rom*.tcl` and diffed against the golden dumps | `board_tb.v` is not needed for synthesis or bitstream; it was used only by this post-hoc check |
 | Post-build checks | `bit_check.py` | `compare.py` (payload, header, golden-vs-run) | the verdict rests on the `.bin` hash only |
 | Output location | `build/vivado/*` in the clone | `build/cpu-repro-1/<RUN>/{synth,route,bit,analysis,meta,work}` | none |
