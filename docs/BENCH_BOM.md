@@ -18,7 +18,7 @@ than prices — see §4, and note the interlock is **LCSC**, not DigiKey.
 | Tamiya 75026 Mini Motor Set | 280 mA rated. **Ships with a rubber tube — that is the intended repeatable friction load** for `elevated_load` and `current_limited_stall`. Use it rather than improvising |
 | ZK-5KX bench supply | Provides the CC clamp. The INA226 measures current, it does not limit it |
 | JBL Cinema SB180 PSU (salvaged) | 18.44 V open circuit, red = positive. Unplug at the wall before working on it |
-| Wukong Artix-7 100T, Tang Primer 25K | J11 bottom row only; top row backfeed-damaged and retired |
+| Wukong Artix-7 100T, Tang Primer 25K | J11 bottom row only; top row backfeed-exposed 2026-07, kept out of use; output function observed once (ledger 3.45), levels, drive and input function unqualified |
 | 100 Ω resistors, 4× inline on SPI | **Installed.** Caps fault current at ~33 mA/pin. Current backfeed mitigation |
 | 1N4001-class diodes | **Have** (confirmed 2026-08-16). Flyback across the motor |
 | Enamel (magnet) wire | **Have** (confirmed 2026-08-16). This is the soldered sensor harness stock — see the stripping note in §2 before using it |

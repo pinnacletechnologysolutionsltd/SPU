@@ -51,7 +51,7 @@ ls -l /dev/serial/by-id/
 ```
 
 For Wukong, use only the proven J11 bottom-row remap; the top row on the
-recorded unit is damaged:
+recorded unit was backfeed-exposed and is only partly characterised (ledger 3.45):
 
 | Signal | Wukong J11/package pin | RP2350 |
 |---|---|---|

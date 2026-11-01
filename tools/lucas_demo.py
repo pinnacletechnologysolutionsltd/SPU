@@ -17,8 +17,8 @@ Two acts, per docs/SPIN_CATALOG.md's first-hour story for LUCAS:
    the hardware matches the exact integers bit-for-bit at every step, for
    as many steps as you care to wait for.
 
-Wiring: RP2350 southbridge -> Wukong J11 (see AGENTS.md's J11 pin-damage
-notes -- confirm the bottom-row remap before connecting). Board must be
+Wiring: RP2350 southbridge -> Wukong J11 (see docs/BENCH_ELECTRICAL_SAFETY.md and
+the J11 notes in spu_a7_100t.xdc -- confirm the bottom-row remap before connecting). Board must be
 flashed with the LUCAS spin: `bash hardware/boards/artix7/build_a7.sh
 100t lucas synth/pnr/pack`, then SRAM-loaded.
 

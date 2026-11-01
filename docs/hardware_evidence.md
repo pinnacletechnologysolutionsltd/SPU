@@ -7883,3 +7883,133 @@ pins 8 to 10 were observed by the analyser only. No calibrated voltage accuracy 
   untouched), and the CPU image has not been reloaded.
 - Device identity, repeatability across loads or units, and timing/electrical qualification: not
   established (one load, one unit; speed grade and revision as in 3.40).
+
+### 3.45 — J11-TOP-2 Wukong J11 upper-row output diagnostic (2026-11-01)
+
+**Classification:** **PASS: four-channel digital output observation on J11 pins 1 to 4 at
+logic-analyser threshold, through owner-reported 1 kΩ series resistors.** This is a standalone
+Wukong GPIO diagnostic, **not an SPU CPU result**; it neither supports nor extends sections 3.40
+to 3.43. It is a single-run output-function observation and **not** a qualification of the pins.
+Entry prepared 2026-11-01 and committed with the owner's authorisation; reviewer comments on the
+companion documentation patch were addressed before commit.
+
+```text
+Claim: a single diagnostic bitstream, loaded once into SRAM, drove four registered square waves
+  on J11 pins 1-4 (balls H4, F4, A4, A5) of this Wukong V3 at approximately 1, 2, 4 and 8 Hz,
+  observed by a logic analyser in two 8 s captures with owner-reported 1 kOhm series resistors in
+  the analyser signal leads; the captures were clean (correct frequencies, 50 percent duty, a
+  127-step counter sequence, no glitch, no stuck output) and a post-run JTAG detect succeeded.
+Evidence dimension: silicon (single observation); interface (GPIO output, as observed)
+Source revision / dirty-tree identity: standalone design outside tracked sources (repository
+  baseline 5a278ce); no SPU CPU RTL, constraints, checkpoint or bitstream involved
+Build/test command and configuration: Vivado 2026.1 non-project batch
+  (build/j11-top-2-build/build_top2.tcl, sha256 c3366c685b2ec2fbddeca11de25b9f583bcc77ce2729a65bf8e452b1f2722e5b):
+  synth, opt, place, route, write_bitstream; part xc7a100tfgg676-1; UNUSEDPIN=PULLNONE,
+  COMPRESS=FALSE, USR_ACCESS=0x4A110003, CFGBVS=VCCO, CONFIG_VOLTAGE=3.3. Design
+  rtl/j11_top2_top.v (12 lines, sha256 04dfb2321be54ab22446f1073a4dc4fd48b91d94cf284d7e0711126e2cb8121d)
+  and j11_top2.xdc (sha256 08dcab25887263768b5f6bf18eed9347732068c28b32049c77b2daa9af5c4a1c)
+Device and toolchain: board QMTECH Wukong, owner-identified V3 (V03 schematic Rev 3.0, sha256
+  bec53e6201c5c47a7059ce5b5af86e0f3a48535ebdf5643af7583171f7331aee); device XC7A100T-1FGG676C
+  per seller listing and owner acceptance, NOT physically verified (as 3.40); JTAG idcode
+  0x3631093; openFPGALoader v1.2.0 with DirtyJTAG at 1 MHz; analyser: Saleae-type 0925:3881 (fixed
+  input threshold) via sigrok-cli 0.7.2 and libsigrok 0.5.2, driver fx2lafw
+Artifact identity: j11_top2.bit sha256
+  d914b7a4067bc80e272a2d7b583e55ffd16e4741661de567488a95f42404dc42 (3,826,007 bytes);
+  j11_top2.bin sha256 04112080d97cf7c57019d1ca3311fdabd4634df73eebef2cbb1c973590972853
+Oracle and checked scope: the design is the J11-GPIO-1 counter (50 MHz / 3,125,000 cycles = 16 Hz
+  tick; outputs 1, 2, 4, 8 Hz) on different ports; simulated at full and scaled size with four
+  mutants detected (build/j11-top-2-prep/sim); checked scope: two 8 s captures of four pins
+Result and evidence artifact path: PASS; build/j11-top-2-run-01/ (10-entry MANIFEST.sha256,
+  sha256 b6142a9c46ed877f4b098ccb69e336c3353efa1cf084efae2e8048513c98bc16); build evidence
+  build/j11-top-2-build/ (30-entry manifest, sha256
+  de422915e8cc265897b2923d9091c11cd6fe3cefa4b5905f758ccda4af06f2d0); design and procedure
+  build/j11-top-2-prep/ (14-entry manifest, sha256
+  8b2cc3d7eae304d3b991ef63a62a4ac35143d378d68b1df85523774c6574ba65)
+Adjacent evidence dimensions not established: see below
+```
+
+**Pin mapping (V03 sheet 2; balls and bank from Vivado 2026.1 package data):** J11 pins 1, 2, 3, 4
+are nets BANK35_H4, F4, A4, A5, i.e. FPGA balls H4, F4, A4, A5 in bank 35, whose VCCO is tied to
+3V3 (`routed_io.rpt`: VCCO_35 3.30 V). All four are outputs LVCMOS33, DRIVE 4 mA, SLEW SLOW, no
+pull, each an OBUF driven directly by a flip-flop; the design has exactly four OBUFs and one IBUF
+(the 50 MHz clock, M21), no OBUFT, IOBUF or differential buffer. Channel assignment: D0 = pin 1
+(H4) 1 Hz, D1 = pin 2 (F4) 2 Hz, D2 = pin 3 (A4) 4 Hz, D3 = pin 4 (A5) 8 Hz; analyser ground on
+pin 5. Balls and bank are those of the J11 top row of the same connector as 3.44's pins 7 to 10.
+
+**Build:** COMPLETE, exit 0, 153 s (detached unit spu-j11-top-2-build-01-20261101T032616Z-290752);
+40 of 40 routable nets routed, bitstream DRC 0 errors, no critical warnings, timing met (WNS
++15.942 ns, WHS +0.245 ns), 7 LUT and 26 FF; the analyser `J11_TOP2_BUILD_CHECK` printed PASS
+(17 checks, no amendment needed).
+
+**Procedure and result:** With the RP2350 and every other peripheral disconnected, the owner
+stated that each analyser signal lead D0 to D3 was fitted in series with a 1 kΩ resistor (measured
+0.9 to 1.1 kΩ per the procedure), to J11 pins 1 to 4, ground on pin 5, fitted with the board
+unpowered and passively checked (no bridging, no reading below 100 Ω to GND or 3V3, nothing on
+pins 6 to 12); **these wiring and resistor statements are owner-reported and were not verified
+by instrument**. The session ran exactly one `openFPGALoader -c dirtyJtag --freq 1000000 <bit>`
+(SRAM load, no flash options), exit 0 after 31.363 s (`Load SRAM 100.00%`, `Done`; `loader_output.txt`
+sha256 f2d0220b9d3cd149ca24537447188debfff918005b5436b53921d107b1844c96), then two 8 s captures
+at 100 kHz (`sigrok-cli -d fx2lafw`, channels D0 to D3, VCD) about 2 s and about 5 s later
+(`capture1.vcd` sha256 3d9d065e5f92691a94873088dc7511fd0048900d74fc41bdf3130960a12b6b18,
+`capture2.vcd` sha256 c3bb9c7efdc937d7ca649ffa54a47d20d2108727cba5e05dbccfc44bd4b9e1be;
+`session.json` sha256 0429de6cec7316afa6a3fd343a6254af383ec047a8a956dfd310fd8d2c334388), 2026-11-01
+07:52 UTC. Both captures gave the same verdict:
+
+| Channel | Pin (ball) | Edges in 8 s (expected) | Frequency | Duty | Shortest pulse |
+|---|---|---|---|---|---|
+| D0 | 1 (H4) | 16 (16) | 0.9999 Hz | 0.500 | 0.500 s |
+| D1 | 2 (F4) | 32 (32) | 1.9999 Hz | 0.500 | 0.250 s |
+| D2 | 3 (A4) | 64 (64) | 3.9998 Hz | 0.500 | 0.125 s |
+| D3 | 4 (A5) | 128 (128) | 7.9996 Hz | 0.500 | 0.0625 s |
+
+The four channels form a 4-bit binary counter that increments every 62.5 ms (D3 least
+significant); the decoded code (8*D0 + 4*D1 + 2*D2 + D3, sampled mid-tick) incremented by exactly
+1 at each of 127 tick boundaries in both captures. Both logic states were seen on every channel,
+no two channels were identical, and no pulse shorter than the expected half-period (no glitch) and
+no stuck or floating channel appeared. A post-load read-only JTAG detect found idcode 0x3631093.
+The analyser script (`analyze_capture.py`, J11-GPIO-1 logic with names only changed, sha256
+db4d10f4c7f8ea64b1f33bea79b4e74cae236e3774f220cbadd2a565bd9cb1f6) failed all seven defective
+synthetic captures in its offline tests. A POWER DOWN desktop notice was issued after the
+captures (07:53:08 UTC); the time the board was powered down was not recorded.
+
+**Context and attempts that are not results:** (1) J11-TOP-1 (an input-sampling design, built and
+verified offline: build/j11-top-1-build/, manifest sha256
+8ba9f14b3e30775549a50ec67ac44f5174e3c47e2440e82ab800029a0d057d8b) and its Stage A load
+(build/j11-top-1-run-01/, REVISE) and (2) a GPIO-1 control load (build/j11-gpio-1-control-01/,
+HOLD) both returned four constant-high channels. The owner then reported the analyser leads had
+been on J11 pins 1 to 6 (the top row) instead of pins 7 to 10; both runs are therefore invalid as
+tests (placement error), say nothing about the images or pins, and no output was driven on pins
+1 to 4 in either (addenda in those directories). The J11-TOP-1 input-sampling experiment was not
+completed. (3) A passive unpowered multimeter inspection of J11 pins 1 to 4 against the lower row
+(build/j11-toprow-inspection-run/, manifest sha256
+e448dc1eed9d7a2ed471e471c3b4d95923eab068700b8958d92f920201531b32) was rough and inconclusive:
+no pin was consistent with the reference pins, the sheet had unit and missing-reading defects,
+and meter diode-mode drops of about 1.15 V appeared on healthy and suspect pins alike.
+
+**Relation to the historical record:** the repository records J11 pins 1 to 3 as damaged by an
+RP2350 backfeed incident in July 2026 (RP2350 powered and driving the pins while the FPGA board
+was unpowered; a meter reading of about 1.0 V noted at the time). This observation does not test
+that incident's cause and does not establish that the pins are undamaged. It shows only that,
+under the stated conditions, the four output buffers produced correct logic square waves once.
+Section 3.44's statement that the top row was "recorded elsewhere as damaged and was not used" is
+accurate for that entry and is not altered.
+**Resulting top-row classification (J11 pins 1 to 4): BACKFEED-EXPOSED, HISTORICALLY JUDGED DAMAGED,
+DIGITAL OUTPUT OBSERVED ONCE, REMAINING FUNCTIONS UNQUALIFIED; provisionally excluded from new SPU
+interfaces.**
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Voltage levels: the analyser reports logic state at its fixed threshold only; no voltage
+  measurement was made on pins 1 to 4 (the optional meter reading was not taken).
+- Drive strength: NOT RUN; DRIVE 4 mA behind 1 kΩ into a high-impedance analyser input; behaviour
+  at higher drive, without the resistor, or under load is not established.
+- Input-buffer function of pins 1 to 4: NOT RUN (J11-TOP-1 was not completed).
+- Long-term reliability, repeatability across loads or units, signal integrity, edge rates,
+  noise margin, thermal behaviour and supply current: NOT RUN (one load, one unit, two 8 s
+  captures); no current, heat or supply measurement was made.
+- Wiring and resistor values: owner-reported, not instrument-verified; the power-down time was
+  not recorded.
+- Pin 5 (GND) and pins 6, 12 (3V3) as used by the analyser ground: not separately qualified.
+- SPU CPU behaviour: none; this load replaced whatever image was in SRAM (volatile, flash
+  untouched), and the CPU image has not been reloaded.
+- Device identity and timing/electrical qualification: not established (speed grade and revision
+  as in 3.40).

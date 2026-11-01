@@ -7,8 +7,8 @@ zero accumulated error, not "close enough". This is the headline claim of
 the whole platform made concrete: forward kinematics with no floating-point
 drift, checked bit-for-bit on hardware you can hold, not simulated.
 
-Wiring: RP2350 southbridge -> Wukong J11 (see AGENTS.md's J11 pin-damage
-notes -- confirm the bottom-row remap before connecting). Board must be
+Wiring: RP2350 southbridge -> Wukong J11 (see docs/BENCH_ELECTRICAL_SAFETY.md and
+the J11 notes in spu_a7_100t.xdc -- confirm the bottom-row remap before connecting). Board must be
 flashed with the ROBOTICS spin: `bash hardware/boards/artix7/build_a7.sh
 100t robotics synth/pnr/pack`, then SRAM-loaded.
 

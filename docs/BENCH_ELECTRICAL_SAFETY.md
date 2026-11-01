@@ -8,8 +8,8 @@ Nothing here is new discipline. Every rule was learned on this bench, at the
 cost of a specific piece of hardware, and the provenance is cited so it can be
 argued with rather than obeyed.
 
-**The ledger this exists to stop growing:** J11 top row (H4/F4/A4, permanent,
-2026-07-13), the iCESugar, L5 on the Tang dock, `led_out[3:0]` (mechanism
+**The ledger this exists to stop growing:** J11 top row (H4/F4/A4, judged
+damaged 2026-07-13; later partly re-observed working, ledger 3.45), the iCESugar, L5 on the Tang dock, `led_out[3:0]` (mechanism
 still unknown), and an RP2350-Zero DirtyJTAG programmer (2026-09-04).
 
 ---
@@ -29,7 +29,7 @@ still unknown), and an RP2350-Zero DirtyJTAG programmer (2026-09-04).
 
 - [ ] **Series resistors present** on every MCU→FPGA signal: 100–200 Ω on
       JTAG (TCK/TMS/TDI/TDO), 100 Ω on SPI.
-      *Provenance: J11's top row took confirmed backfeed damage without them.
+      *Provenance: J11's top row was exposed to backfeed without them (2026-07; later observations: ledger 3.45).
       Note the limit — they protect signal lines, and do nothing about a fault
       returning through ground.*
 

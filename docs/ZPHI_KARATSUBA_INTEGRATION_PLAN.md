@@ -409,7 +409,7 @@ and no external device drives an unpowered bank. Require repeated
 The `TENSEGRITYLINK` confirmation must wait for the safe power-ready interlock
 or an equivalently reviewed power-sequencing arrangement. Re-run the complete
 admission, mechanical-negative, corrupt-payload rollback, and recovery sequence
-three times. Do not use the damaged J11 top row.
+three times. Do not use the backfeed-exposed J11 top row for new signals (ledger 3.45).
 
 Only after this phase may public material say the production Karatsuba-backed
 tensegrity path is silicon-verified.

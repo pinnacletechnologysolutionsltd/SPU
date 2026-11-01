@@ -66,8 +66,8 @@ firmware's `flags.make`, not just the CMake defaults.
    adapter is 3V3-native. A *module with chips on it* (regulator + level
    shifter) needs 5 V. Getting this backwards can destroy the card, and on a
    bare adapter it also puts 5 V onto a **non-5V-tolerant** RP2350 GPIO via the
-   card's DO line — the same damage class as the J11 backfeed that retired pins
-   1-3, with no series resistors on these lines. On 2026-08-09 a 3V3 bare
+   card's DO line — the same damage class as the J11 backfeed (2026-07) that took pins
+   1-3 out of use, with no series resistors on these lines. On 2026-08-09 a 3V3 bare
    adapter was briefly run at 5 V; the card survived, but treat that as luck.
 3. **`sdinit` passing does not mean reads work.** Init runs at 400 kHz
    (`spu_sd.c:181`) and only then switches to `SPU_SD_BAUD_HZ`, 8 MHz by default
@@ -130,7 +130,7 @@ ledger entry** rather than leaving "positive control" ticked by assertion.
 ## Power sequencing — the rule that cost J11 pins 1-3
 
 FPGA powered **first**, RP2350 connected **after**. On the way down, RP2350
-off/disconnected **first**. J11 **bottom row only**; the top row is retired.
+off/disconnected **first**. J11 **bottom row only**; the top row stays out of use (ledger 3.45).
 `usbreset 1209:c0ca` before every DirtyJTAG load — the adapter stalls under
 sustained use and silently voided three campaigns on 2026-08-04/05.
 

@@ -22,8 +22,8 @@ the separate Lucas oracle test carries the one-million-step zero-drift proof.
   [the toolchain guide](toolchain_setup.md)
 
 The current constraints use the remapped **bottom row** of Wukong J11. On the
-repository's bench unit, J11 pins 1-3 were damaged by backfeeding and must not
-be used.
+repository's bench unit, J11 pins 1-3 were exposed to backfeed in 2026-07 and are only
+partly characterised (ledger 3.45); keep using the bottom row.
 
 ## 2. Wire the southbridge
 

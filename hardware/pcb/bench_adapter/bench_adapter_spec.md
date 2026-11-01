@@ -75,7 +75,7 @@ reboot — required by the FPGA-side SPI deadman timer.
 J11 damage):** the original 33 Ω was sized for signal termination, not fault
 current. `hardware/rp2040/`/`rp2350/` bring-up on the Wukong A7 confirmed via
 multimeter that J11 CS/SCK/MOSI (all three are Pico-driven outputs into the
-FPGA) took permanent I/O damage from sustained backfeed while the FPGA board
+FPGA) was judged to have taken I/O damage from sustained backfeed (later output observation: ledger 3.45) while the FPGA board
 was unpowered but the Pico stayed powered and driving — 33 Ω limits that
 fault current to ~100 mA (3.3 V / 33 Ω), which is high enough to stress an
 unpowered pin's clamp diodes over a long/repeated exposure. 100 Ω caps it at
@@ -470,7 +470,7 @@ Rejected alternative, recorded so it is not re-proposed: driving the ACT LED
 from 5 V and sinking it with GP14. It appears to work — at Vf 3.0 V the pin is
 never pulled up, because 5 − 3.3 = 1.7 V is below the forward drop — but it
 places a 5 V rail one component failure away from a non-5 V-tolerant pin, the
-same failure class as the J11 backfeed damage in §2.1. If only high-Vf parts are
+same failure class as the J11 backfeed incident in §2.1. If only high-Vf parts are
 available, fit a small NPN/MOSFET driver rather than this.
 
 **Decoupling was missing from Rev B and is not optional.** The original BOM

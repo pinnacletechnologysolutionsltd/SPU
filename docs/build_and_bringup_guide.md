@@ -322,8 +322,8 @@ make
 
 ### 4.2 Wukong J11 SPI Wiring
 
-**REMAPPED 2026-07-13** to J11's bottom row after confirmed backfeed damage
-to the top row (pins 1-3). J11 is a 12-pin (2x6) connector; the bottom row
+**REMAPPED 2026-07-13** to J11's bottom row after a backfeed incident that
+exposed the top row (pins 1-3) and left it reading abnormally. J11 is a 12-pin (2x6) connector; the bottom row
 (pins 7-10) was never connected to anything before this and requires no
 RTL/firmware change — only the physical wire destination moves. Current
 wiring:
@@ -340,11 +340,11 @@ E3 / uart_tx             ────  GP5 (UART1 RX) [optional]
 GND                      ────  GND
 ```
 
-**Retired, DAMAGED, do not use** — J11's top row:
+**Retired from use after the 2026-07 backfeed incident; status updated 2026-11-01 (ledger 3.45: output function observed once through 1 kOhm at DRIVE 4; levels, drive strength and input function unqualified). Do not use for new signals** — J11's top row:
 ```
-J11-1 / H4 / spi_cs_n    (backfeed-damaged, 1.0V not clean logic levels)
-J11-2 / F4 / spi_sck     (backfeed-damaged)
-J11-3 / A4 / spi_mosi    (backfeed-damaged)
+J11-1 / H4 / spi_cs_n    (backfeed-exposed 2026-07; a meter then read about 1.0V, not clean logic levels)
+J11-2 / F4 / spi_sck     (backfeed-exposed)
+J11-3 / A4 / spi_mosi    (backfeed-exposed)
 J11-4 / A5 / spi_miso    (reads healthy, but stranded on the abandoned row)
 J11-5 or J11-6           (GND / 3V3 — harmless, but no reason to use this row)
 ```
@@ -624,9 +624,10 @@ passed JTAG, reset, UART, and southbridge smoke tests.
 ### 5.3a Wukong Post-Damage Peripheral Inventory (do this before trusting the
 board for any new claim, 2026-07-13)
 
-This unit took confirmed RP2350-backfeed damage to J11 pins 1-3
-(spi_cs_n/spi_sck/spi_mosi — see `spu_a7_100t.xdc` comments and AGENTS.md
-"Known board limitations"). Treat it as a constrained compute/proof board,
+This unit's J11 pins 1-3 took an RP2350 backfeed incident in 2026-07
+(spi_cs_n/spi_sck/spi_mosi — see `spu_a7_100t.xdc` comments,
+`docs/BENCH_ELECTRICAL_SAFETY.md` and ledger 3.45 for the later output
+observation; AGENTS.md has no "Known board limitations" section). Treat it as a constrained compute/proof board,
 not a fully-trusted one, until this checklist has been run fresh:
 
 1. **Confirm JTAG/configuration is still reliable.**
