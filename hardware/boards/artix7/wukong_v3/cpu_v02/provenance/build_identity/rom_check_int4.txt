@@ -1,0 +1,25 @@
+cell f/rom_data_reg mapped_logical_bits=62 unmapped_bits=[24, 29]
+word[ 0] hw=7000000000000100 expected=7000000000000100 OK
+word[ 1] hw=7000010000000000 expected=7000010000000000 OK
+word[ 2] hw=7000020000000200 expected=7000020000000200 OK
+word[ 3] hw=7000030000000000 expected=7000030000000000 OK
+word[ 4] hw=7000040000000300 expected=7000040000000300 OK
+word[ 5] hw=7000050000000000 expected=7000050000000000 OK
+word[ 6] hw=7100000000000000 expected=7100000000000000 OK
+word[ 7] hw=7300000000000000 expected=7300000000000000 OK
+word[ 8] hw=7200000000000000 expected=7200000000000000 OK
+word[ 9] hw=7200010000000000 expected=7200010000000000 OK
+word[10] hw=7200020000000000 expected=7200020000000000 OK
+word[11] hw=7200030000000000 expected=7200030000000000 OK
+word[12] hw=7200040000000000 expected=7200040000000000 OK
+word[13] hw=7200050000000000 expected=7200050000000000 OK
+word[14] hw=0000000000000000 expected=0000000000000000 OK
+word[15] hw=0000000000000000 expected=0000000000000000 OK
+words_match_all16=True unmapped_bits_zero_in_expected=True stray_nonzero_init_outside_rom_words=False
+negative_control corrupt_one_bit_word0_low: REJECTED
+negative_control corrupt_one_bit_word13_high_half: REJECTED
+negative_control corrupt_parity_bit_word0: REJECTED
+negative_control nonzero_unused_word14: REJECTED
+negative_control swap_words_1_2: REJECTED
+negative_control all_zero_rom: REJECTED
+ROM_CHECK PASS

@@ -1,0 +1,4 @@
+# Preserved byte-for-byte: no end-of-line conversion anywhere in this package.
+* -text
+# provenance/ holds tool output and diffs exactly as produced; their trailing spaces are part of the preserved bytes.
+provenance/** whitespace=-trailing-space

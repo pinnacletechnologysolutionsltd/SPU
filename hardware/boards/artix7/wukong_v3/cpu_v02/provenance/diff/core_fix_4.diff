@@ -1,0 +1,12 @@
+--- experiment/cpu-integrate-3b/rtl/spu13_core.v	2026-10-30 12:38:19.481839742 +1300
++++ experiment/cpu-integrate-4/rtl/spu13_core.v	2026-10-30 13:11:01.338735035 +1300
+@@ -917,7 +917,8 @@
+             assign qrf_wr_C = 64'd0; assign qrf_wr_D = 64'd0;
+             assign rote_B_out = 64'd0; assign rote_C_out = 64'd0;
+             assign rote_D_out = 64'd0;
+-            assign rote_F = 64'd0; assign rote_G = 64'd0; assign rote_H = 64'd0;
++            // rote_F/G/H: driven only by the module-level angle tables below in every configuration (CPU-INTEGRATE-4); the former
++            // constant drivers here conflicted with them when no QR file exists.
+             assign rote_done_tdm = 1'b0;
+             assign rote_debug_state = 4'd0;
+             assign ecc_single_err = 1'b0;

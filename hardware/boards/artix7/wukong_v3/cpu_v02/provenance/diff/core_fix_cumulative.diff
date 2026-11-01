@@ -1,0 +1,49 @@
+--- hardware/rtl/core/spu13/spu13_core.v	2026-10-30 12:38:19.037851927 +1300
++++ experiment/cpu-integrate-4/rtl/spu13_core.v	2026-10-30 13:11:01.338735035 +1300
+@@ -917,12 +917,13 @@
+             assign qrf_wr_C = 64'd0; assign qrf_wr_D = 64'd0;
+             assign rote_B_out = 64'd0; assign rote_C_out = 64'd0;
+             assign rote_D_out = 64'd0;
+-            assign rote_F = 64'd0; assign rote_G = 64'd0; assign rote_H = 64'd0;
++            // rote_F/G/H: driven only by the module-level angle tables below in every configuration (CPU-INTEGRATE-4); the former
++            // constant drivers here conflicted with them when no QR file exists.
+             assign rote_done_tdm = 1'b0;
+             assign rote_debug_state = 4'd0;
+             assign ecc_single_err = 1'b0;
+             assign ecc_double_err = 1'b0;
+-            assign regen_debug_status = 16'd0;   // no QR path -> no REGEN
++            // regen_debug_status for the no-QR-file case is forced to zero by the single driver below (CPU-INTEGRATE-3B).
+         end
+     endgenerate
+ 
+@@ -1138,6 +1139,7 @@
+         .bk_angle_k(bk_angle_k)
+     );
+ 
++    wire [15:0] regen_debug_status_int;   // CPU-INTEGRATE-3B: single-driver staging net
+     generate if (ENABLE_REGEN) begin : gen_regen
+         spu13_regen u_regen (
+             .clk(clk), .rst_n(rst_n),
+@@ -1159,7 +1161,7 @@
+             .done(regen_done),
+             .regen_prec_fault(regen_prec_fault),
+             .block_op_count(regen_block_op_count),
+-            .regen_debug_status(regen_debug_status)
++            .regen_debug_status(regen_debug_status_int)
+         );
+     end else begin : gen_no_regen
+         assign regen_done = 1'b0;
+@@ -1170,8 +1172,12 @@
+         assign regen_rec_qr0_c = 32'd0; assign regen_rec_qr0_d = 32'd0;
+         assign regen_rec_qr1_a = 32'd0; assign regen_rec_qr1_b = 32'd0;
+         assign regen_rec_qr1_c = 32'd0; assign regen_rec_qr1_d = 32'd0;
+-        assign regen_debug_status = {6'd0, regen_unsupported, 9'd0};
++        assign regen_debug_status_int = {6'd0, regen_unsupported, 9'd0};
+     end endgenerate
++    // CPU-INTEGRATE-3B: exactly one driver in every configuration. With a QR file (same condition as gen_qrf) the output is the
++    // REGEN telemetry exactly as before; without one it is the constant zero the old no-QR branch intended ("no QR path -> no REGEN").
++    localparam HAS_QR_FILE = (ENABLE_MATH || ENABLE_CORE_SOM || ENABLE_CORE_RPLU_V2 || ENABLE_IROTC) ? 1 : 0;
++    assign regen_debug_status = HAS_QR_FILE ? regen_debug_status_int : 16'd0;
+     reg [1:0] qr_tags [0:12];
+     reg [3:0] qsub_lhs_lane;        // for the QSUB tag lattice join
+     reg       irotc_active;         // dispatch accepted, waiting one cycle
