@@ -1159,6 +1159,23 @@ def main():
     else:
         host_pass = host_fail = 0
 
+    # H0-SW-1 abstract lifecycle model (no hardware required). Required: a
+    # missing test file is a failure, not a skip.
+    h0_model_test = os.path.join(root_dir, "software", "tests", "test_h0_model.py")
+    if os.path.exists(h0_model_test):
+        result_h0 = subprocess.run(
+            [sys.executable, h0_model_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_h0.returncode == 0:
+            host_pass += 1
+        else:
+            host_fail += 1
+            print(f"\n  test_h0_model.py FAILED:\n{(result_h0.stdout + result_h0.stderr)[-500:]}")
+    else:
+        host_fail += 1
+        print(f"\n  test_h0_model.py MISSING: {h0_model_test}")
+
     # SPU-4 SOM edge probe UART line parser (no hardware required) -- shared
     # grammar between the fixed self-test probe and the interactive probe.
     spu4_probe_parser_test = os.path.join(
