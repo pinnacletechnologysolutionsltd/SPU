@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import tempfile
 from pathlib import Path
 
 SKIP_DISCOVERY_DIRS = {
@@ -72,6 +73,32 @@ def run_cpp_tests(root_dir):
                 binary.unlink()
 
     return passed, failed, errors
+
+
+def run_cpu_frontend_test(root_dir):
+    """Run the required self-driven frontend test and retain its transcripts."""
+    script = root_dir / "hardware/tests/cpu_frontend_v02/run.py"
+    if not script.is_file():
+        print(f"CPU frontend test MISSING: {script}")
+        return 0, 1
+    try:
+        build_dir = root_dir / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        evidence = Path(tempfile.mkdtemp(prefix="cpu_frontend_regression_", dir=build_dir)) / "results"
+        result = subprocess.run([sys.executable, str(script), "--output", str(evidence)],
+                                cwd=root_dir, capture_output=True, text=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        print("CPU frontend test TIMEOUT")
+        return 0, 1
+    except OSError as exc:
+        print(f"CPU frontend test ERROR: {exc}")
+        return 0, 1
+    print(f"CPU frontend test evidence: {evidence}")
+    if result.returncode:
+        print(f"CPU frontend test FAILED:\n{(result.stdout + result.stderr)[-2000:]}")
+        return 0, 1
+    print("CPU frontend test PASSED")
+    return 1, 0
 
 
 def main():
@@ -1246,6 +1273,8 @@ def main():
         host_fail += 1
         print(f"\n  test_release_manifest.py MISSING: {rm_test}")
 
+    cpu_frontend_pass, cpu_frontend_fail = run_cpu_frontend_test(root_dir)
+
     # SPU-4 SOM edge probe UART line parser (no hardware required) -- shared
     # grammar between the fixed self-test probe and the interactive probe.
     spu4_probe_parser_test = os.path.join(
@@ -1467,10 +1496,14 @@ def main():
         print(f"Passed: {_p}")
         print(f"Failed: {_f}")
 
+    print(f"\nCPU Frontend Tests: {cpu_frontend_pass + cpu_frontend_fail}")
+    print(f"Passed: {cpu_frontend_pass}")
+    print(f"Failed: {cpu_frontend_fail}")
+
     total_pass = (
         passed + cpp_p + py_pass + cv_pass + lucas_pass + bq_pass + icos_pass + lucas_harness_pass
         + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
-        + audio_pass + host_pass + spu4_probe_parser_pass + spu4_probe_client_pass
+        + audio_pass + host_pass + cpu_frontend_pass + spu4_probe_parser_pass + spu4_probe_client_pass
         + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + exit_verdict_pass + rotc_trace_pass
         + regen_pass + cpu_profile_pass + gram_pass
@@ -1485,7 +1518,7 @@ def main():
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
-        + audio_fail + host_fail + spu4_probe_parser_fail + spu4_probe_client_fail
+        + audio_fail + host_fail + cpu_frontend_fail + spu4_probe_parser_fail + spu4_probe_client_fail
         + som_product_fail + robotics_demo_fail
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + exit_verdict_fail + rotc_trace_fail
         + regen_fail + cpu_profile_fail + gram_fail
