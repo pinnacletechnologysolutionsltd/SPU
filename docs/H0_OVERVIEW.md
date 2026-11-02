@@ -4,8 +4,8 @@
 synthesized (no entry in [`hardware_evidence.md`](hardware_evidence.md)). H0 is the
 control layer between a host and the execution hardware: load a program, validate
 it, start one execution, and read results, without the host managing instruction
-fetch, handshakes or reset sequencing. Implementation record and full limitations:
-`research/h0_rtl_1f_r3/INTEGRATION.md`.
+fetch, handshakes or reset sequencing. Experimental evidence and the full list of
+limitations: [`research/h0_rtl_1f_r3/INTEGRATION.md`](../research/h0_rtl_1f_r3/INTEGRATION.md).
 
 ## Pieces and their evidence
 
@@ -21,9 +21,10 @@ validate/promote, START) and have **not** been checked against each other.
 
 ## Behaviour demonstrated in RTL simulation
 
-- **Two banks.** Each holds 14 words of 64 bits. A candidate is written to the
-  inactive bank and promoted only after a scan of the fixed instruction shape and a
-  CRC-32 match; a failed replacement leaves the previous program intact. CRC-32
+- **Two banks.** Each holds 14 words of 64 bits (R3 storage). This is distinct from
+  the frozen frontend's fixed 16-word ROM, which R3 does not modify or reuse. A candidate is written to the
+  inactive bank and promoted only after a scan of the fixed instruction shape (six SLI,
+  SLD, SMUL, six SRD) and a CRC-32 comparison against the expected value; a failed replacement leaves the previous program intact. CRC-32
   detects accidental corruption only. It is not authentication.
 - **Single owner.** An accepted START reserves ownership; competing START, load and
   promotion requests are refused until completion. A rejected START that stays high
@@ -42,18 +43,15 @@ validate/promote, START) and have **not** been checked against each other.
 - **Retirement is untagged.** The frozen core's retirement carries no execution id.
   An injected retirement while awaiting completion cannot be told from the real one
   (`research/h0_rtl_1f/COUNTEREXAMPLE.md`). R3 relies on reset coverage of the
-  single retirement-producing hierarchy, supported by source inspection and
-  simulation only.
+  single retirement-producing hierarchy. This holds only if the clock and reset are
+  shared and reliable, nothing else drives retirement, and no new issue is accepted
+  during the reset flush; it is supported by source inspection and simulation, not
+  proven or physically qualified.
 - **Reset and clock** are a single-domain simulation expression, not a reviewed
   physical reset or CDC design.
 - **Run identity** (`run_id`) wraps and resets on physical reset; freshness is tested
   within one session, not across resets.
 - Fixed 14-instruction program shape; wrapper ends at PC 14 and does not use the
   frozen frontend's HALT state.
-- No synthesis, timing or hardware results exist for H0.
-
-## Direction (not implemented)
-
-Keeping transport independence, validation, ownership and result association in a
-small common control model could let other devices reuse the host-control concepts
-with their own execution formats. This is a possibility, not a design or a claim.
+- Incomplete: UART/SPI transport, synthesis, timing closure and physical hardware
+  qualification. No such results exist for H0.
