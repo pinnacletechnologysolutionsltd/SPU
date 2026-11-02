@@ -1,0 +1,20 @@
+# Known research-bench failures (REGRESS-CLEAN-1). Used only by SPU_TEST_SET=research.
+# Format: bench path | kind | signature | reason. signature = sha256 of the failing instance's
+# runner output with the checkout root replaced by <ROOT> and whitespace collapsed
+# (tools/release_manifest.py: signature). Recorded with Icarus 14.0 + Verilator 5.053
+# (OSS CAD Suite 20261027); a different toolchain can change a compile-error signature,
+# which then shows as NEW-FAIL (visible, never a pass). They reproduce on a clean 6f9ad7b
+# (build/regress/h0-sw-1-full-01 and h0-sw-1-baseline-01, untracked evidence).
+# KNOWN-FAIL = matches this file; NEW-FAIL = failure absent here or with a changed signature;
+# RESOLVED = listed but now passes (informational). None of these is a pass; do not delete
+# a line without an owner decision. The ROTC rounding divergence is a recorded finding, not
+# a defect declared here.
+spu_strategy/cpu_fetch_1c/results/real_lat_tb.v | COMPILE | 4a059f796b66326ed10533178561db2d1a21e426b39d4cdcb8546c9e13bff8d6 | cpu_fetch_1b not found: silicon frontend now lives in hardware/boards/artix7/wukong_v3/cpu_v02/rtl, not scanned by the runner; bench has no filelist
+spu_strategy/cpu_fetch_1c/synthtop_review/halt_tb.v | COMPILE | b0241ee0e22f368fd5851dc8f877b5cf45a722a720c418802a28466b7d974a5b | cpu_fetch_1b not found (same cause as real_lat_tb)
+spu_strategy/cpu_fetch_1c/synthtop_review/res_tb.v | COMPILE | b875c8382222aa1f6699ddfb5637bdfb8052d01a4113c5ee2194dabb49c7ebde | cpu_fetch_1c_synth_top not found (module not in any scanned directory)
+spu_strategy/cpu_rst_1/rst1_equiv_tb.v | COMPILE | 314694598e55889fb892f11b4e4c61659bd0f5c40cf125efe7d9d668b0f4f078 | needs the CPU-RST-1 source list (spu_strategy/cpu_rst_1/run_rst1_checks.sh); not compilable by the generic runner
+spu_strategy/cpu_rst_1/rst1_heal_tb.v | COMPILE | e783712ff04a3592d6cef8ae4e59b965004cd22eb873134afefb71620f71120c | needs the CPU-RST-1 source list (spu_strategy/cpu_rst_1/run_rst1_checks.sh); not compilable by the generic runner
+spu_strategy/evidence/rotc_2026-10-28/rotc_round_witness_tb.v | FAIL | 1f856e59cba09c9d8a3095608b0d735cd5533035fe6a42272d09612f2a1a82fd | hard-coded $dumpfile into a deleted scratchpad directory; vvp exits 1 (environment, not design)
+spu_strategy/evidence/rotc_2026-10-28/rotc_xcheck_tb.v | FAIL | 7283c5aafd0109df6b488ea223202c9bcddcdecfefb705d5ba3dcff247e2d638 | documented ROTC-XCHECK-1 finding: VM rounds to nearest, RTL truncates toward zero on 417 inexact thirds cases (3336 = 417 x 8 FAIL lines); evidence archive records UNEXPLAINED: 0
+spu_strategy/h0_c1_t5_r8/tb/t5_tb.v | COMPILE | b587ce693ae857fa161b6b1cc92a9a7a596772beaf8a564251c3aee3060655c3 | cannot find t5_cases.vh: runner has no -I for the bench directory (own driver run_t5.py copies it to a build dir)
+spu_strategy/h0_c1_t5_r9/tb/t5_tb.v | COMPILE | 5f6148a7a25ba5f56031f9b4d34b38df7e3422bdf89d0ca23dbf757d41ce9b6c | cannot find t5_cases.vh: runner has no -I for the bench directory (own driver run_t5.py copies it to a build dir)

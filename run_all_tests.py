@@ -96,8 +96,32 @@ def main():
             test_files.add(f)
 
     test_files = list(test_files)
-    # Optional: limit to a single test file prefix for quicker triage
+    # REGRESS-CLEAN-1 test sets. Default `release` runs exactly tools/release_tests.txt
+    # (tracked benches under hardware/tests/) and refuses untracked RTL under hardware/.
+    # SPU_TEST_SET=research runs every other discovered bench alone and classifies it
+    # against tools/known_failures.txt; its results never enter the release totals.
+    # TB_FILTER alone is legacy triage: repo-wide discovery, manifest not enforced.
     tb_filter = os.getenv('TB_FILTER')
+    test_set = os.getenv('SPU_TEST_SET')
+    if test_set not in (None, 'release', 'research'):
+        print(f"Invalid SPU_TEST_SET={test_set!r} (use release|research)")
+        return 2
+    mode = test_set or ('triage' if tb_filter else 'release')
+    rm = None
+    if mode != 'triage':
+        sys.path.insert(0, str(root_dir / "tools"))
+        import release_manifest as rm
+        problems = rm.check_manifest(root_dir, SKIP_DISCOVERY_DIRS)
+        if mode == 'release':
+            problems += rm.untracked_rtl(root_dir)
+        if problems:
+            print("RELEASE PREFLIGHT FAILED (nothing was run):")
+            for prob in problems:
+                print(f"  {prob}")
+            return 2
+        test_files = rm.select(root_dir, mode, SKIP_DISCOVERY_DIRS)
+    print(f"Test set: {mode}" + (" (legacy triage: manifest not enforced, not release results)" if mode == 'triage' else ""))
+    # Optional: limit to a single test file prefix for quicker triage
     if tb_filter:
         test_files = [f for f in test_files if tb_filter in f.name]
     # CPU profile scoping (CPU-PROFILE-2). SPU_PROFILE=full (default) runs
@@ -236,6 +260,18 @@ def main():
     timeouts = 0
     compile_errors = 0
 
+    research_tee = None
+    if mode == 'research':
+        class _Tee:
+            def __init__(self, real):
+                self.real, self.parts = real, []
+            def write(self, text):
+                self.parts.append(text)
+                return self.real.write(text)
+            def flush(self):
+                self.real.flush()
+        research_tee = _Tee(sys.stdout)
+        sys.stdout = research_tee
     for tb, variant, param_override in test_variants:
         disp = f"{tb.name} [{variant}]" if variant else tb.name
         print(f"\n--- Running Test: {disp} ---")
@@ -567,6 +603,23 @@ def main():
 
         if out_vvp.exists():
             out_vvp.unlink()
+
+    if research_tee is not None:
+        sys.stdout = research_tee.real
+        import re as _re_cr
+        blocks = _re_cr.split(r"^--- Running Test: .* ---$", "".join(research_tee.parts), flags=_re_cr.M)[1:]
+        if len(blocks) != len(test_variants):
+            print(f"RESEARCH CLASSIFICATION ERROR: {len(blocks)} output blocks for {len(test_variants)} tests")
+            return 2
+        results = []
+        for (tb, variant, _), block in zip(test_variants, blocks):
+            rel = tb.relative_to(root_dir).as_posix()
+            results.append((rel, rm.verdict(block), rm.signature(block, root_dir)))
+        report, status = rm.research_report(results, rm.load_known(root_dir), [r[0] for r in results])
+        print("\n============ RESEARCH SUMMARY (not release results) ============")
+        print("\n".join(report))
+        print(f"Research status: {'NEW-FAIL/MISSING present' if status else 'no new failures'} (exit {status})")
+        return status
 
     print("\n================== SUMMARY ==================")
     print(f"Verilog Tests: {len(test_variants)}")
@@ -1175,6 +1228,23 @@ def main():
     else:
         host_fail += 1
         print(f"\n  test_h0_model.py MISSING: {h0_model_test}")
+
+    # REGRESS-CLEAN-1 release manifest / research classification (no hardware
+    # required). Required: a missing test file is a failure, not a skip.
+    rm_test = os.path.join(root_dir, "software", "tests", "test_release_manifest.py")
+    if os.path.exists(rm_test):
+        result_rm = subprocess.run(
+            [sys.executable, rm_test],
+            capture_output=True, text=True, timeout=120
+        )
+        if result_rm.returncode == 0:
+            host_pass += 1
+        else:
+            host_fail += 1
+            print(f"\n  test_release_manifest.py FAILED:\n{(result_rm.stdout + result_rm.stderr)[-500:]}")
+    else:
+        host_fail += 1
+        print(f"\n  test_release_manifest.py MISSING: {rm_test}")
 
     # SPU-4 SOM edge probe UART line parser (no hardware required) -- shared
     # grammar between the fixed self-test probe and the interactive probe.
