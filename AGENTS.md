@@ -70,7 +70,8 @@ Before declaring any task complete or committing changes, execute the required g
 # 1. Automated Repo Hygiene & Regression Gate (Runs full suite + citation checks)
 bash tools/verify_repo.sh
 
-# 2. Scoped Triage Gate (during active development)
+# 2. Scoped Triage Gate (during active development; legacy discovery, not release results.
+#    The release gate is the unfiltered default run, driven by tools/release_tests.txt)
 TB_FILTER=<subsystem_prefix> python3 run_all_tests.py
 
 # 3. ROTC / IROTC Trace Equivalence Gate

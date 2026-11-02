@@ -21,13 +21,14 @@ See "Development Ethos" in the imported `AGENTS.md`; it applies here unchanged.
 
 `run_all_tests.py` is the single regression runner (CI runs exactly this). It has three stages, run in order:
 
-1. **Verilog testbenches** — auto-discovers `*_tb.v`, `*tb*.v`, `testbench*.v` (skipping `archive/`, `build/`, `/reference/`) and runs each with `iverilog -g2012` + `vvp`.
+1. **Verilog testbenches** — the default **release** set is exactly the tracked benches listed in `tools/release_tests.txt` (the `*_tb.v` / `*tb*.v` / `testbench*.v` files under `hardware/tests/`), each run with `iverilog -g2012` + `vvp`. Before running anything the runner exits 2 if a listed bench is absent or untracked, an eligible tracked bench is missing from the list, or an untracked/ignored `.v`/`.vh`/`.sv` exists under `hardware/`; so a clean and a research-filled checkout select the same tests. A new bench under `hardware/tests/` must be added to the manifest (kept sorted). Benches outside the manifest (untracked `spu_strategy/` and other research benches) are **not** release tests: run them with `SPU_TEST_SET=research`, which runs only those, prints a separate summary (never merged into release totals) and classifies each against `tools/known_failures.txt` (`KNOWN-FAIL`, `NEW-FAIL` — nonzero exit, `RESOLVED` — informational). `TB_FILTER` on its own is legacy triage: repo-wide discovery, manifest not enforced, not release results.
 2. **C++** — auto-discovers `*_test.cpp`, builds with `g++ -std=c++17 -Isoftware/common/include`.
-3. **Python** — an **explicit list** inside `run_all_tests.py` (`spu_vm_test.py`, `cross_validate.py`, selected `software/tests/test_*.py`). A new Python test in `software/tests/` is *not* part of the gate until it is added there.
+3. **Python** — an **explicit list** inside `run_all_tests.py` (`spu_vm_test.py`, `cross_validate.py`, selected `software/tests/test_*.py`). A new Python test in `software/tests/` is *not* part of the gate until it is added there. The Gen-1 CPU frontend simulation (`hardware/tests/cpu_frontend_v02/run.py`) is a separately registered **required** test (a missing script, nonzero exit or timeout is a failure); its bench is named `frontend_check.v` on purpose so the `*tb*.v` patterns do not treat it as a generic-runner bench, and it is not in the manifest.
 
 ```bash
-python3 run_all_tests.py                          # full regression
-TB_FILTER=spu_depth python3 run_all_tests.py      # only TBs whose filename contains the substring
+python3 run_all_tests.py                          # full release regression (default SPU_TEST_SET=release)
+SPU_TEST_SET=research python3 run_all_tests.py    # research-only benches, classified against tools/known_failures.txt
+TB_FILTER=spu_depth python3 run_all_tests.py      # legacy triage: only TBs whose filename contains the substring (not release results)
 python3 software/tests/test_<name>.py             # one Python test directly
 SKIP_TESTS=1 bash tools/verify_repo.sh            # hygiene + citation checks without the regression
 ```
