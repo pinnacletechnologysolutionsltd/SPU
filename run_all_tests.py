@@ -1256,6 +1256,23 @@ def main():
         host_fail += 1
         print(f"\n  test_h0_model.py MISSING: {h0_model_test}")
 
+    # H0-SW-2 bounded program-lifecycle software prototype (no hardware
+    # required). Required: a missing test file is a failure, not a skip.
+    h0_prog_test = os.path.join(root_dir, "software", "tests", "test_h0_program.py")
+    if os.path.exists(h0_prog_test):
+        result_h0p = subprocess.run(
+            [sys.executable, h0_prog_test],
+            capture_output=True, text=True, timeout=30
+        )
+        if result_h0p.returncode == 0:
+            host_pass += 1
+        else:
+            host_fail += 1
+            print(f"\n  test_h0_program.py FAILED:\n{(result_h0p.stdout + result_h0p.stderr)[-500:]}")
+    else:
+        host_fail += 1
+        print(f"\n  test_h0_program.py MISSING: {h0_prog_test}")
+
     # REGRESS-CLEAN-1 release manifest / research classification (no hardware
     # required). Required: a missing test file is a failure, not a skip.
     rm_test = os.path.join(root_dir, "software", "tests", "test_release_manifest.py")
