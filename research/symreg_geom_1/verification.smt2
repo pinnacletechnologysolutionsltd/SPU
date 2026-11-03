@@ -1,0 +1,16 @@
+; Integer-coordinate cross-form Q(x,y)=2x²+2xy+2y².
+; Transform (-y,x+y), and incorrect (-y,x).
+(set-logic QF_NIA)
+(declare-const x Int)
+(declare-const y Int)
+(define-fun q ((a Int) (b Int)) Int (+ (* 2 a a) (* 2 a b) (* 2 b b)))
+(push)
+(assert (not (= (q x y) (q (- y) (+ x y)))))
+(check-sat)
+(pop)
+(push)
+(assert (and (<= (- 3) x) (<= x 3) (<= (- 3) y) (<= y 3)))
+(assert (not (= (q x y) (q (- y) x))))
+(check-sat)
+(get-value (x y))
+(pop)
