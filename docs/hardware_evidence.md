@@ -8013,3 +8013,95 @@ interfaces.**
   untouched), and the CPU image has not been reloaded.
 - Device identity and timing/electrical qualification: not established (speed grade and revision
   as in 3.40).
+
+### 3.46 — H0-BOARD-UART-3B first UART-loaded programmable H0 CPU run on Wukong (2026-11-03 UTC)
+
+**Classification:** **PASS: single-session silicon observation.** One SRAM-configured
+image of the experimental H0 programmable Gen-1 Surd CPU accepted two distinct 14-word programs
+over the onboard CH340 USB-UART, executed both and returned the exact oracle results, without
+reconfiguration between them; a KEY0 reset then invalidated the program and result state and the
+UART recovered. This is one run of one bitstream on one board. It is **not** a qualification of
+the UART interface, timing margin, electrical behaviour or the H0 design; the H0 path is
+experimental research RTL (`research/`), not production RTL.
+
+```text
+Claim: bitstream h0_board_uart.bit (sha256 775f2a36...cdad28), loaded once into SRAM, received
+  host-encoded protocol-v1 frames at 115200 8N1 on F3 and answered on E3. Program A (15 LOAD, VALIDATE,
+  START) returned six slices (13,0,4,0,9,0) as run 1; program B, loaded in the same recorded
+  session after the single SRAM configuration, returned (7,0,4,0,4,0) as run 2; every LOAD/VALIDATE/START/STATUS/RESULT
+  reply had status 00. After one owner KEY0 press, STATUS reported image invalid, not complete,
+  run 0; RESULT and START were refused (0x20); STATUS still answered.
+Evidence dimension: silicon (single observation); interface (UART RX/TX, as observed)
+Source revision / dirty-tree identity: dev/next d9a25d2 (H0-UART-1C-R1 integration) plus the
+  untracked board package research/h0_board_uart_1a/ in build/h0-board-uart-1a-worktree,
+  SOURCES.sha256 39f4cf8bfa3464719596a491d47073f0b1c2c4a58a5a30b1860731d006396807 (50/50 OK);
+  frozen Gen-1 package PACKAGE_SHA256.txt 36/36 OK
+Build/test command and configuration: H0-BOARD-UART-2 Vivado 2026.1 non-project synth/opt/place/
+  route (job spu-job-01-20261103T204107Z-495095, COMPLETE 882 s; external 5 GiB-preflight
+  waiver wrapper sha256 979ad98d...; owner-authorized) -> routed.dcp sha256 4098ab7f...e3124c6b;
+  H0-BOARD-UART-3A write_bitstream (job spu-job-01-20261103T210904Z-500166, COMPLETE 128 s),
+  UNUSEDPIN=PULLNONE; part xc7a100tfgg676-1; CLKS_PER_BIT 217 at nominal 25 MHz cpu_clk
+Device and toolchain: board QMTECH Wukong, owner-identified V3 (V03 schematic sha256
+  bec53e62...7331aee); device XC7A100T-1FGG676C per seller listing, NOT physically verified (as
+  3.40); JTAG idcode 0x3631093 before and after; openFPGALoader v1.2.0 with DirtyJTAG
+  CB81353DCE678119 at 1 MHz; CH340 1a86:7523 /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0;
+  host Linux 6.8.0-138, Python 3.10.12, raw termios (no pyserial)
+Artifact identity: h0_board_uart.bit sha256
+  775f2a36b71788eebb4704ac8be07122bc344721dd69fc67aba44569f2cdad28 (3,826,000 bytes)
+Oracle and checked scope: board_oracle / H0-ORACLE-1 expected slices A (13,0,4,0,9,0),
+  B (7,0,4,0,4,0); host frames from committed research/h0_uart_1c/host_loader.py (sha256
+  8a1092af...) via execute(); checked scope: two programs, one reset, one session
+Result and evidence artifact path: PASS; build/h0-board-uart-3b/ (17-entry MANIFEST.sha256,
+  sha256 8348fb763b334c5f9f86a21d1bf3ec52fb41c58d303401ffba8c289ba3e34024)
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result.** Preflight 2026-11-03 21:17 UTC: bitstream hash matched, JTAG detect
+found one device (idcode 0x3631093); `fuser` reported no process holding /dev/ttyUSB0,
+/dev/ttyACM0 or /dev/ttyACM1, while the recorded process-pattern check
+(`pgrep -fc 'hw_server|openFPGALoader|minicom|picocom'`) returned `conflicting_procs=2` and did
+not identify those processes (`preflight/preflight.txt`); no logic analyser enumerated; the bitstream assigns only M21, H7, F3, E3 (no J11 pin; unused pins
+high-impedance). Exactly one `openFPGALoader -c dirtyJtag --freq 1000000 <bit>` (SRAM, no flash
+options): exit 0 after 31.4 s, `Done`, `isc_done 1 init 1 done 1` (`program/loader_output.txt`
+sha256 f25f27da...). Session `run-01` (21:18:36 UTC, 0.92 s; 475 bytes sent, 341 received,
+0 stale bytes drained before):
+
+| Step | Replies | Observed |
+|---|---|---|
+| Initial STATUS | 00 | flags 0x00, run 0 |
+| Program A: LOAD CRC + 14 words, VALIDATE, START | 15 x 00, 00, 00 | — |
+| A: STATUS (poll), RESULT, STATUS | 00, 00, 00 | complete, run 1; slices **(13,0,4,0,9,0)** = oracle |
+| Program B: LOAD CRC + 14 words, VALIDATE, START | 15 x 00, 00, 00 | no recorded openFPGALoader call between A and B |
+| B: STATUS (poll), RESULT, STATUS | 00, 00, 00 | complete, run 2; slices **(7,0,4,0,4,0)** = oracle |
+
+Bank selection: under the reviewed controller implementation, promoting program B places it in
+the alternate bank; the bank in use is not reported over UART, so this placement was not directly
+observed in the captured traffic. Continuity: the evidence contains one successful SRAM
+programming command, one continuous recorded A/B UART session and STATUS run IDs progressing
+from 1 to 2. These observations support execution of A and B without intervening
+reconfiguration, but they do not independently exclude unrecorded external actions or prove
+continuous image validity between the recorded STATUS replies.
+The owner then pressed KEY0 once and reported power and DONE LEDs on and nothing unusual
+(owner-reported, `owner_observations.txt`). Session `post-01` (21:19:44 UTC): STATUS 00 flags 0x00
+run 0 (image invalid, no owner, not complete); RESULT refused 0x20 with no payload; START refused
+0x20 (no valid image); final STATUS 00 flags 0x00 run 0. A post-session JTAG detect returned
+idcode 0x3631093. Raw traffic: `run-01/traffic.jsonl` (sha256 d24ac0c6...), `post-01/traffic.jsonl`
+(sha256 47c51c41...); decoded summaries `run-01/decoded.json`, `post-01/decoded.json`; harness
+`session.py` (sha256 845681e6...).
+
+**Relation to other evidence (reported separately).** Simulation: H0-UART-1C/1D focused suites
+and the independent asynchronous-host bench (217 cycles/bit, ±2% baud) — RTL only. Implementation:
+H0-BOARD-UART-2 retained 1,792/1,792 bank and 192/192 result bits with 192/192 result-to-TX paths,
+reset structure UNSAFE=0 (1,287 endpoints), cpu_clk WNS +5.968 ns, WHS +0.015 ns, recovery
++17.164 ns, removal +0.387 ns — tool reports, not measurements. H0-PHYS-2 (program-A-specialized)
+and H0-OPT-2 (synthesis-only) are not extended by this entry.
+
+**Adjacent evidence dimensions not established:**
+- Only two fixed programs, one session, one reset; no other programs, operands or repeat runs.
+- No baud-error, clock or rail measurement; no signal-integrity, temperature or margin testing.
+- Hold slack is +15 ps (tool estimate); asynchronous reset input timing not analysed.
+- KEY0 press and LED states are owner-reported, not instrumented; the reset is inferred from
+  the post-reset STATUS.
+- No error-injection on the physical link (malformed frames, timeouts, drain) was performed.
+- XOR frame check; lost-response ambiguity; run-ID wrap/reset; untagged-retirement caveat remain.
+- No configuration-flash image; volatile SRAM only. Device grade not physically verified.
