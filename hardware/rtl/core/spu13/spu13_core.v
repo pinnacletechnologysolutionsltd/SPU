@@ -1057,6 +1057,9 @@ module spu13_core #(
     // reset default (tags reset UNTAGGED; hydration precedes boot_done, and
     // no φ-plane op can dispatch before the sequencer/SPI paths open).
     localparam [1:0] TAG_UNTAGGED = 2'd0;
+    // Same condition as gen_qrf: IDNT (0x18) executes only where a QR file exists.
+    localparam HAS_QRF = ENABLE_MATH || ENABLE_CORE_SOM || ENABLE_CORE_RPLU_V2 || ENABLE_IROTC;
+    wire core_idnt_opcode = HAS_QRF && (eff_inst_word[63:56] == 8'h18);
     localparam [1:0] TAG_FRESH    = 2'd1;
     localparam [1:0] TAG_MAIN     = 2'd2;
     localparam [1:0] TAG_CONJ     = 2'd3;
@@ -1091,6 +1094,7 @@ module spu13_core #(
     // (contract_regen_stageB_2026-08-20.md)
     wire        chain_op_strobe = inst_accept && (
         (eff_inst_word[63:56] == 8'h1D) ||  // QLDI (load)
+        core_idnt_opcode ||                 // IDNT (load of identity)
         (eff_inst_word[63:56] == 8'h1B) ||  // QSUB
         (eff_inst_word[63:56] == 8'h1C));   // ROTC
     wire [2:0]  chain_op_type = (eff_inst_word[63:56] == 8'h1B) ? 3'd1 :
@@ -1099,10 +1103,10 @@ module spu13_core #(
     wire [3:0]  chain_op_src_a = eff_inst_word[47:40];
     wire [3:0]  chain_op_src_b = eff_inst_word[11:8];   // p1_b[3:0]
     wire [5:0]  chain_rotc_angle = eff_inst_word[29:24];
-    wire [31:0] chain_load_a = {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
-    wire [31:0] chain_load_b = {{24{eff_inst_word[31]}}, eff_inst_word[31:24]};
-    wire [31:0] chain_load_c = {{24{eff_inst_word[23]}}, eff_inst_word[23:16]};
-    wire [31:0] chain_load_d = {{24{eff_inst_word[15]}}, eff_inst_word[15:8]};
+    wire [31:0] chain_load_a = core_idnt_opcode ? 32'd1 : {{24{eff_inst_word[39]}}, eff_inst_word[39:32]};
+    wire [31:0] chain_load_b = core_idnt_opcode ? 32'd0 : {{24{eff_inst_word[31]}}, eff_inst_word[31:24]};
+    wire [31:0] chain_load_c = core_idnt_opcode ? 32'd0 : {{24{eff_inst_word[23]}}, eff_inst_word[23:16]};
+    wire [31:0] chain_load_d = core_idnt_opcode ? 32'd0 : {{24{eff_inst_word[15]}}, eff_inst_word[15:8]};
     wire [41:0] bk_qr0_ma, bk_qr0_mb, bk_qr0_mc, bk_qr0_md;
     wire [41:0] bk_qr1_ma, bk_qr1_mb, bk_qr1_mc, bk_qr1_md;
     wire [9:0]  bk_sigma_exp0, bk_sigma_exp1;
@@ -1396,6 +1400,24 @@ module spu13_core #(
                 qr_commit_B_r <= {32'd0, {{24{eff_inst_word[31]}}, eff_inst_word[31:24]}};
                 qr_commit_C_r <= {32'd0, {{24{eff_inst_word[23]}}, eff_inst_word[23:16]}};
                 qr_commit_D_r <= {32'd0, {{24{eff_inst_word[15]}}, eff_inst_word[15:8]}};
+                inst_done_r <= 1;
+
+            // ── IDNT Handler (0x18): QRd = (1,0,0,0), QLDI write path ──
+            end else if (inst_accept && core_idnt_opcode) begin
+                qrf_wr_en   <= 1;
+                qrf_wr_lane <= qr_lane(eff_inst_word[55:48]);
+                qr_tags[qr_lane(eff_inst_word[55:48])] <= TAG_UNTAGGED; // raw load
+                instr_wr_A <= {32'd0, 32'd1};
+                instr_wr_B <= 64'd0;
+                instr_wr_C <= 64'd0;
+                instr_wr_D <= 64'd0;
+                instr_wr_active <= 1;
+                qr_commit_valid_r <= 1;
+                qr_commit_lane_r <= qr_lane(eff_inst_word[55:48]);
+                qr_commit_A_r <= {32'd0, 32'd1};
+                qr_commit_B_r <= 64'd0;
+                qr_commit_C_r <= 64'd0;
+                qr_commit_D_r <= 64'd0;
                 inst_done_r <= 1;
 
             end else if (inst_accept && eff_inst_word[63:56] == 8'h1E) begin

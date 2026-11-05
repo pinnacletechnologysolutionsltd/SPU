@@ -85,6 +85,7 @@ hardware/tests/spu13/spu13_batch_inverter_tb.v
 hardware/tests/spu13/spu13_composition_policy_tb.v
 hardware/tests/spu13/spu13_core_boot_fsm_tb.v
 hardware/tests/spu13/spu13_core_hex_conformance_tb.v
+hardware/tests/spu13/spu13_core_idnt_tb.v
 hardware/tests/spu13/spu13_core_irotc_opcode_tb.v
 hardware/tests/spu13/spu13_core_jscr_tb.v
 hardware/tests/spu13/spu13_core_nsa_handshake_tb.v
