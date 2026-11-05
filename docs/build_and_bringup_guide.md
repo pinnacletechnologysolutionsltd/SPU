@@ -81,11 +81,11 @@ Arch: `sudo pacman -S arm-none-eabi-gcc arm-none-eabi-newlib cmake`
 
 ## 2. Board Targets
 
-Current hardware priority: the Tang Primer 25K is active for subsystem
+Historical board-target snapshot: the Tang Primer 25K was active for subsystem
 regression via split-build probes. The Wukong Artix-7 100T is the target for
 silicon evidence, sidecar proofs, and constrained integration. Full concurrent
-RPLU2 + Lucas MAC + sidecar integration is an Artix-7 200T / Kintex-class
-funding target. Use the bring-up checklists in `docs/` for execution. For
+RPLU2 + Lucas MAC + sidecar integration was a prospective Artix-7 200T /
+Kintex-class target, not a current funding gate. Use the bring-up checklists in `docs/` for execution. For
 semantic boundaries and claim levels, see
 `docs/SPU13_IDENTITY_AND_BOUNDARIES.md`.
 

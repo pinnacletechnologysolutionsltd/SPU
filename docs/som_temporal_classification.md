@@ -12,7 +12,9 @@ seven nodes in ascending address order, computes exact weighted quadrances in
 Q(sqrt(3)), and retains both the winner and runner-up. Its latency is fixed and
 test-pinned at **434 clocks**. That exact-order path is silicon-proven on Tang
 Primer 25K and Wukong Artix-7, including complete SOM1 result-frame agreement
-with the software oracle.
+with the software oracle on the tested Iris corpus ([ledger §3.2g.5–3.2g.6](hardware_evidence.md#32g5-som1-full-decision-evidence-silicon-proof)).
+Those inputs lie inside the safe region; the current RTL has a full-domain
+arithmetic defect described in the [capability matrix](CAPABILITY_MATRIX.md#known-limitations).
 
 The older fully parallel `spu_som_node` / `spu_som_node_array` implementation
 is archived under `hardware/boards/tang_primer_25k/archive/`. It is not an

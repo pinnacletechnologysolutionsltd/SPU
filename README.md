@@ -14,8 +14,9 @@ Architectural invention is the ambition; demonstrated utility is the test.
 
 - **A software stack.** A Python virtual machine, an assembler, an exact robotics
   chain and an offline GPU model, all runnable without any hardware.
-- **Verilog and FPGA builds** for Tang Primer 25K and Wukong Artix-7 boards. Some
-  blocks have recorded board observations; the integrated CPU does not.
+- **Verilog and FPGA builds** for Tang Primer 25K and Wukong Artix-7 boards.
+  The experimental H0 programmable Gen-1 Surd CPU has a limited board observation
+  described below; it is not a qualified CPU release.
 - **Exact-geometry and classification work**, with its limits stated in the
   [capability matrix](docs/CAPABILITY_MATRIX.md), which separates mathematical
   argument, host software, RTL simulation, FPGA synthesis and physical hardware,
@@ -45,8 +46,10 @@ commands, including a robotics chain and a scene edit, with expected output. Use
 
 State these before citing any result:
 
-- **The CPU is not qualified.** The integrated Surd CPU has no board result. Its placement
-  passed an audit; routing and 25 MHz timing are not qualified.
+- **The CPU is not qualified.** One experimental H0 image ran two UART-loaded
+  programs in one Wukong session, with oracle-matching results and a subsequent
+  reset observation. This is a single-session result, not qualification of the
+  CPU, UART or timing margins. See [hardware evidence §3.46](docs/hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc).
 - **The SOM RTL has a full-domain arithmetic defect.** For some inputs the uploader accepts, the
   current classifier RTL can return wrong distances without a flag. The Iris board evidence lies
   inside the safe region. An exact portable C reference that detects the unsafe cases has been written but is
@@ -60,6 +63,20 @@ State these before citing any result:
   in the [hardware evidence ledger](docs/hardware_evidence.md).
 
 Details and evidence boundaries: [capability matrix](docs/CAPABILITY_MATRIX.md#known-limitations).
+The [H0 overview](docs/H0_OVERVIEW.md) separates the earlier simulation from
+the later board observation.
+
+## Recent development
+
+- The experimental H0 work includes a host transaction model, RTL controller and
+  UART loading path. The board observation above covers only the stated image and
+  session; simulation, tool timing and physical evidence remain separate.
+- Symbolic representation, geometry and nonlinear relational bounds are being
+  investigated under [research](research/). These are bounded experiments, not
+  architectural guarantees or demonstrated performance gains.
+- The [simulator integration policy](docs/SIMULATOR_INTEGRATION_POLICY.md)
+  sets conformance and capability-manifest requirements for future releases;
+  the policy itself does not establish that current builds satisfy them.
 
 ## Reproduce, review, contribute
 

@@ -506,10 +506,11 @@ load-bearing.
   rotation matrices themselves is research, not engineering — the φ-module
   representation of the icosahedral group is a genuine open derivation.
 
-- **Silicon runs.** Board runs for the tagged ROTC core probe and the full
-  36-angle catalog (0-35) on Artix-7; the ROTC TDM core with angles 0-5
-  is silicon-verified on Artix-7, and the tagged-core, extended-angle, and
-  octahedral bitstream paths build clean in simulation.
+- **Silicon runs.** The TDM core's angles 0–5 have a bounded Tang board probe;
+  the tagged core remains testbench-verified and awaiting a board run in the
+  [hardware ledger](hardware_evidence.md#core-architecture). This does not
+  establish board coverage of the full 36-angle catalog. The Artix-7 ROBOTICS
+  smoke is a separate recorded observation ([§3.0](hardware_evidence.md#30-wukong-artix-7-robotics-main-core-smoke)).
 
 ## Acknowledgments
 

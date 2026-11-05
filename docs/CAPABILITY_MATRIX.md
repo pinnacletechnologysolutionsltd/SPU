@@ -2,7 +2,8 @@
 
 What exists, and **what kind of evidence** backs it. The five layers are independent: a result in one
 does not imply any other. Layer definitions follow the [hardware evidence ledger](hardware_evidence.md#evidence-claim-boundaries)
-and the [research identity](RESEARCH_IDENTITY.md). Dated 2026-10-20; each cell is scoped to the cited record.
+and the [research identity](RESEARCH_IDENTITY.md). Originally dated 2026-10-20;
+the CPU row was reconciled with later ledger entries on 2026-11-05. Each cell is scoped to the cited record.
 
 | Layer | Meaning | Does **not** establish |
 |---|---|---|
@@ -21,17 +22,18 @@ and the [research identity](RESEARCH_IDENTITY.md). Dated 2026-10-20; each cell i
 | **ROTC / IROTC exact rotations** | Rotation catalogs and the icosahedral derivation ([ROTC](../knowledge/rotc_tables.md), [IROTC](IROTC_SPEC.md)) | VM/RTL trace equivalence tests | Yes | Builds recorded | ROTC angles 0–5 ([§3.2g](hardware_evidence.md#32g-rotc-0-5-silicon-probe)); IROTC engine and conjugate catalog on Tang 25K ([§3.2k](hardware_evidence.md#32k-irotc-icosahedral-rotation-engine-silicon-probe), [§3.2k.1](hardware_evidence.md#32k1-irotc-spi-core-integration--conjugate-catalog-silicon-proof)) |
 | **SPU-4 Sentinel edge node** | — | Python/C++ oracles | Yes | Builds recorded | Standalone core, ABI v1.1 and edge-node SOM on Tang 25K ([§3.2j](hardware_evidence.md#32j-spu-4-sentinel-standalone-silicon-probe)) |
 | **SOM v1 classifier** (7 nodes, 4 features) | Exact surd ordering; full-domain arithmetic bounds derived ([SOM-RP0a](../research/som_rp0/FINDINGS.md)) | Python oracle; exact portable C99 BMU over the **full** signed-18-bit domain (host-only; Cortex-M33 compile-only) | Yes, incl. an exact-order adversarial case | Tang sidecar: 12,865/23,040 LUT4, 79.38 MHz vs 50 MHz clock (tool output) | Iris map: 150/150 FPGA winners equal the oracle on Tang 25K and Wukong A7 ([§3.2g.4–3.2g.6](hardware_evidence.md#32g4-reproducible-iris-som-corpus-silicon-proof)) — **inside the RTL-safe input region only**; see [limitations](#known-limitations) |
+| **HEX-SOM search research** | — | A handover reports fewer evaluations without an established accuracy gain, but the specific experiment and reproduction record have not been located in this checkout. Software validation, efficiency and negative accuracy results cannot yet be independently assessed here. | Not established | Not established | Not established |
 | **GPU (T1d rasterizer, depth, VGA)** | Exact reference renderer | Python ideal + finite-width device model (quickstart below); a separate C++ renderer matches byte-for-byte (not yet published) | Yes | Routed Artix-7 builds with tool timing per tranche ([ledger](hardware_evidence.md)); Vivado routed baseline of the standalone VGA image ([note](../hardware/boards/artix7/spu_a7_gpu_vga_vivado_baseline_2026-10-25.md); internal timing only) | First video, first triangle, two-triangle depth ([§3.8–3.10](hardware_evidence.md#38-first-video-output--640x480-vga-on-a-monitor-2026-09-04)); T1G visual switching passed ([§3.37](hardware_evidence.md#337--t1g-two-cycle-visual-acceptance-retry-2026-10-07)); T1H H1 **on hold** ([§3.38](hardware_evidence.md#338--t1h-scalar-diagnostic-visual-replay-2026-10-07)) |
-| **Surd CPU** (integrated core) | — | Arithmetic accepted for its tested software scope | Yes | Placement audit passed (52,090 cells, 80 DSPs); one routed artifact passed an integrity audit with timing **unqualified** ([§3.39](hardware_evidence.md#339--packet-06-routed-cpu-integrity-audit-2026-10-15)); OpenXC7 routing did not finish in three bounded attempts | **Not run** |
+| **Surd CPU** (integrated core) | — | Arithmetic accepted for its tested software scope | Yes | Packet 06 routed-artifact integrity audit passed, timing unqualified ([§3.39](hardware_evidence.md#339--packet-06-routed-cpu-integrity-audit-2026-10-15)); later H0 UART image routed with tool-reported timing ([§3.46](hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc)) | Fixed-program single runs ([§3.40](hardware_evidence.md#340--cpu-board-4c-r1-first-fixed-program-surd-cpu-run-over-uart-2026-10-30), [§3.41](hardware_evidence.md#341--cpu-rom-2b-one-word-rom-variant-operand-variation-over-uart-run-2026-10-30-entry-prepared-2026-10-31), [§3.43](hardware_evidence.md#343--cpu-rom-2c-variant-b-denominator-25-operand-variation-over-uart-2026-10-31)); experimental H0: two UART-loaded programs in one session ([§3.46](hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc)). Not CPU qualification. |
 | **Relational / hex geometry experiments** (PHY-R1–3, REL-1, HEX-C1, GEO-I1, NGW-H1) | Exact equilibrium family and strict-stability argument for rigid struts ([PHY-R3](../research/phy_r3/FINDINGS.md)) | Yes: exact arithmetic, independent oracles, negative controls | Not run | Not run | Not run |
-| **Python VM, C++ VM, assembler** | — | Python VM: `spu_vm_test.py` 88 passed, 0 failed on the integration branch (the count is revision-dependent); C++ VM is a bounded subset ([conformance](isa/ISA_CONFORMANCE_2026-10-10.md)) | — | — | — |
-| **RP2350 southbridge** (SPI/SD hydration) | — | Host client library | Not run | — | SPI/SD hydration verified ([§3.2b](hardware_evidence.md#32b-rp2350-southbridge-write--sd-hydration-proof)); USB/HID/sensors not wired or tested |
+| **Python VM, C++ VM, assembler** | — | Python VM: `spu_vm_test.py` 88 passed, 0 failed in a scoped smoke run (count revision-dependent). The dated [conformance review](isa/ISA_CONFORMANCE_2026-10-10.md) lists supported subsets and tested agreements alongside conflicts and unsupported Surd instructions; no release-wide conformance follows from the smoke run. | — | — | — |
+| **RP2350 southbridge** (SPI/SD hydration) | — | Host client library | Not run | — | SPI/SD hydration observed for the recorded setup ([§3.2b](hardware_evidence.md#32b-rp2350-southbridge-write--sd-hydration-proof)); USB/HID/sensors not wired or tested. The later H0 CPU session used onboard CH340 UART ([§3.46](hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc)); RP2350 was not required for that session. |
 
 ## Known limitations
 
 Read these before relying on any row above.
 
-1. **CPU timing and routing are not qualified.** The Surd CPU has no board result. Its OpenXC7 route did not complete in three
+1. **CPU timing and routing are not qualified.** The board observations above cover specific images and runs, not the CPU's full behavior or timing margins. The earlier OpenXC7 route did not complete in three
    bounded attempts (3 × 3,600 s, all timeouts); a routed artifact from a different backend passed an integrity audit, but its
    40.886 MHz figure is an unqualified tool estimate and 25 MHz is not established. A separate Vivado routed run of the Base CPU profile was made on another machine; its report has not yet been recovered into this repository, so this matrix claims no Base CPU figures ([RTL identity](../hardware/boards/artix7/spu_a7_surd_cpu_base_rtl_identity_2026-10-26.md)). A router-policy study
    ([ROUTE-ALG-1–3](../research/route_alg3/FINDINGS.md)) found no benefit from reopening the search and says nothing about why the CPU does not finish.
@@ -48,6 +50,9 @@ Read these before relying on any row above.
    rational-coordinate backend cannot materialize; that is a representation property, not a performance result.
 5. **Software scope.** The Python `spu-sim` entry point is a legacy VM; the C++ VM covers a bounded subset; the standalone SIM-1
    simulator lives in a separate repository that is not yet published. Software results are not hardware results.
+6. **GPU timing and physical scope.** The standalone VGA Vivado baseline reports internal timing for its specified clocks;
+   board-level I/O timing and reset behavior remain unqualified ([baseline note](../hardware/boards/artix7/spu_a7_gpu_vga_vivado_baseline_2026-10-25.md)).
+   The T1G result above is bounded operator-observed scene switching, not exact physical pixel verification.
 
 ## Reproduce the software layer
 

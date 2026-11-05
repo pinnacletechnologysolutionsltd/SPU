@@ -1,7 +1,8 @@
 # H0 overview: experimental host-control layer for the Gen-1 Surd CPU
 
-**Status: experimental, simulation only.** Nothing here is silicon-verified or
-synthesized (no entry in [`hardware_evidence.md`](hardware_evidence.md)). H0 is the
+**Status: experimental.** The R3 controller described below has simulation
+evidence; a later UART-equipped H0 image has separate implementation-tool and
+single-session board evidence ([ledger §3.46](hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc)). Neither establishes design qualification. H0 is the
 control layer between a host and the execution hardware: load a program, validate
 it, start one execution, and read results, without the host managing instruction
 fetch, handshakes or reset sequencing. Experimental evidence and the full list of
@@ -13,7 +14,7 @@ limitations: [`research/h0_rtl_1f_r3/INTEGRATION.md`](../research/h0_rtl_1f_r3/I
 |---|---|---|
 | Software model | `software/spu_host/h0_program.py`: load / verify / execute / result for one restricted 14-instruction program shape; `docs/H0_SW_2_PROGRAM_INTERFACE.md` | 5 unit tests in the release regression |
 | RTL controller | `research/h0_rtl_1f_r3/`: two program banks, START ownership, reset sequencing, frontend, frozen Gen-1 core | RTL simulation: `run_focused.py`, 4 negative controls, independent arithmetic oracle |
-| Transport (UART/SPI) | not implemented | none |
+| Transport | Experimental UART path and board package; SPI not established here | UART RTL simulation and one board session, separately described in [§3.46](hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc) |
 
 The software model and the RTL controller are separate. They expose different
 operations (the model: load/verify/execute/result; the RTL: bank write,
@@ -33,7 +34,8 @@ validate/promote, START) and have **not** been checked against each other.
   for at least two sampled clock edges, releases it synchronously, and enables
   fetch/issue only after initialization and core boot. The verified bank is kept.
   Two different programs (A, B) ran in sequence in simulation without any
-  reconfiguration; no board has run this.
+  reconfiguration in the R3 simulation. The later UART-equipped board image ran
+  two programs without recorded intervening reconfiguration ([§3.46](hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc)).
 - **Results.** Six 32-bit slices, e.g. program A gives (13, 0, 4, 0, 9, 0), which is
   (13 + 4√3)/9. A new START clears the previous result; faults and aborted runs do
   not publish a fresh result.
@@ -47,11 +49,13 @@ validate/promote, START) and have **not** been checked against each other.
   shared and reliable, nothing else drives retirement, and no new issue is accepted
   during the reset flush; it is supported by source inspection and simulation, not
   proven or physically qualified.
-- **Reset and clock** are a single-domain simulation expression, not a reviewed
-  physical reset or CDC design.
+- **Reset and clock:** R3's simulation is not itself a physical reset or CDC
+  qualification. The later board image's tool-reported reset and timing checks
+  and their limitations are recorded separately in §3.46.
 - **Run identity** (`run_id`) wraps and resets on physical reset; freshness is tested
   within one session, not across resets.
 - Fixed 14-instruction program shape; wrapper ends at PC 14 and does not use the
   frozen frontend's HALT state.
-- Incomplete: UART/SPI transport, synthesis, timing closure and physical hardware
-  qualification. No such results exist for H0.
+- SPI transport and physical qualification remain open. The later UART image was
+  synthesized, routed and observed on one board; tool timing estimates are not
+  measured timing margins, and the single session does not qualify the interface.

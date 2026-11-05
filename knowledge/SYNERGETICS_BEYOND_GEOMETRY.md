@@ -37,7 +37,9 @@ analog. None of this was designed as one system; it accreted because
 tension, precision, dissonance, and equilibrium are all names for the
 same relationship: **an exact scalar measuring distance from
 equilibrium/prior, checked against an exact tolerance for how far it may
-go.** That primitive (Davis Ratio, C = τ/K) is real and silicon-proven.
+go.** This conceptual relationship does not establish a silicon result for the
+Davis Ratio (C = τ/K). The ledger records the Davis Gate / Henosis correction
+pulse as simulated, not captured on hardware ([hardware evidence, core architecture](../docs/hardware_evidence.md#core-architecture)).
 Tensegrity, precession, and synergy-as-emergence are the *un-built*
 expressions of it; Jitterbug and the Davis Gate itself are the *built*
 ones. `knowledge/HARDWARE_MANIFEST_SPU13.md` §5 even shows the original
