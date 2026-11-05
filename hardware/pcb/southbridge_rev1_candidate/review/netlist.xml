@@ -2,11 +2,11 @@
 <export version="E">
   <design>
     <source>/tmp/spu-southbridge-rev1-review/hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch</source>
-    <date>2026-11-05T13:16:41</date>
+    <date>2026-11-05T15:10:44</date>
     <tool>Eeschema 10.0.7</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
-        <title>SPU Southbridge Rev 1 - translator candidate</title>
+        <title>RP2350 FPGA interface / debug - Rev 1 candidate</title>
         <company/>
         <rev>R1-CANDIDATE</rev>
         <date>2026-11-05</date>
@@ -271,6 +271,40 @@
             <pin num="4"/>
             <pin num="5"/>
             <pin num="6"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="J3">
+      <value>DEBUG_8_SIGNALS</value>
+      <footprint>Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector_Generic" part="Conn_02x05_Odd_Even" description="Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="connector"/>
+      <property name="ki_fp_filters" value="Connector*:*_2x??_*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>8cd43740-a6a8-5e44-bd0c-64a0873a7861</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="3"/>
+            <pin num="5"/>
+            <pin num="7"/>
+            <pin num="9"/>
+            <pin num="2"/>
+            <pin num="4"/>
+            <pin num="6"/>
+            <pin num="8"/>
+            <pin num="10"/>
           </pins>
         </unit>
       </units>
@@ -587,6 +621,281 @@
         </unit>
       </units>
     </comp>
+    <comp ref="TP1">
+      <value>P_SCK</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>7b17cf21-1b78-5a15-ae86-19789eff86a5</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP2">
+      <value>P_MOSI</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>198b57cc-9a8b-5979-8f03-2323b578b1dd</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP3">
+      <value>P_MISO</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>1e847685-efd9-56c7-8c36-ed36aad3149a</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP4">
+      <value>P_CS_N</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>f2be75fc-b518-5aa6-8ddf-97dd09baeda0</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP5">
+      <value>F_SCK</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>2d649837-fbb1-5f55-9e7f-ec4981d8115e</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP6">
+      <value>F_MOSI</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>f7e2cfd9-069e-5cfc-b202-c5eb268d948a</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP7">
+      <value>F_MISO</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>64beac17-572c-5da8-b6cb-bb91326f2725</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP8">
+      <value>F_CS_N</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>d5f59a09-f097-53ba-83d7-3644573b4e2f</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP9">
+      <value>PICO_3V3</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>25581608-db28-595c-a1d9-4d613d53d05f</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP10">
+      <value>TARGET_VCCO_3V3</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>890f8849-903f-5c55-9be4-91b83f3f3692</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP11">
+      <value>GND</value>
+      <footprint>TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</footprint>
+      <fields>
+        <field name="MPN"/>
+        <field name="Footprint">TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="Connector" part="TestPoint" description="test point"/>
+      <property name="MPN" value=""/>
+      <property name="Sheetname" value="Root"/>
+      <property name="Sheetfile" value="hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch"/>
+      <property name="ki_keywords" value="test point tp"/>
+      <property name="ki_fp_filters" value="Pin* Test*"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>9ced14bf-af64-5ac5-b124-99006bd7390c</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
     <comp ref="U1">
       <value>SN74LVC2T45DCUR</value>
       <footprint>Package_SO:VSSOP-8_2.3x2mm_P0.5mm</footprint>
@@ -684,6 +993,23 @@
     </comp>
   </components>
   <libparts>
+    <libpart lib="Connector" part="TestPoint">
+      <description>test point</description>
+      <footprints>
+        <fp>Pin*</fp>
+        <fp>Test*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">TP</field>
+        <field name="Value">TestPoint</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description">test point</field>
+      </fields>
+      <pins>
+        <pin num="1" name="1" type="passive"/>
+      </pins>
+    </libpart>
     <libpart lib="Connector_Generic" part="Conn_01x06">
       <description>Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)</description>
       <footprints>
@@ -703,6 +1029,31 @@
         <pin num="4" name="Pin_4" type="passive"/>
         <pin num="5" name="Pin_5" type="passive"/>
         <pin num="6" name="Pin_6" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Connector_Generic" part="Conn_02x05_Odd_Even">
+      <description>Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)</description>
+      <footprints>
+        <fp>Connector*:*_2x??_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">J</field>
+        <field name="Value">Conn_02x05_Odd_Even</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description">Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)</field>
+      </fields>
+      <pins>
+        <pin num="1" name="Pin_1" type="passive"/>
+        <pin num="2" name="Pin_2" type="passive"/>
+        <pin num="3" name="Pin_3" type="passive"/>
+        <pin num="4" name="Pin_4" type="passive"/>
+        <pin num="5" name="Pin_5" type="passive"/>
+        <pin num="6" name="Pin_6" type="passive"/>
+        <pin num="7" name="Pin_7" type="passive"/>
+        <pin num="8" name="Pin_8" type="passive"/>
+        <pin num="9" name="Pin_9" type="passive"/>
+        <pin num="10" name="Pin_10" type="passive"/>
       </pins>
     </libpart>
     <libpart lib="Device" part="C">
@@ -844,6 +1195,9 @@
     </libpart>
   </libparts>
   <libraries>
+    <library logical="Connector">
+      <uri>${KICAD10_SYMBOL_DIR}/Connector.kicad_sym</uri>
+    </library>
     <library logical="Connector_Generic">
       <uri>${KICAD10_SYMBOL_DIR}/Connector_Generic.kicad_sym</uri>
     </library>
@@ -864,23 +1218,31 @@
     </net>
     <net code="2" name="/F_CS_N" class="Default">
       <node ref="J2" pin="1" pinfunction="Pin_1_1" pintype="passive"/>
+      <node ref="J3" pin="4" pinfunction="Pin_4_4" pintype="passive"/>
       <node ref="R2" pin="2" pintype="passive"/>
       <node ref="R9" pin="2" pintype="passive"/>
+      <node ref="TP8" pin="1" pinfunction="1_1" pintype="passive"/>
     </net>
     <net code="3" name="/F_MISO" class="Default">
       <node ref="J2" pin="3" pinfunction="Pin_3_3" pintype="passive"/>
+      <node ref="J3" pin="3" pinfunction="Pin_3_3" pintype="passive"/>
       <node ref="R12" pin="2" pintype="passive"/>
+      <node ref="TP7" pin="1" pinfunction="1_1" pintype="passive"/>
       <node ref="U3" pin="4" pinfunction="B_4" pintype="bidirectional"/>
     </net>
     <net code="4" name="/F_MOSI" class="Default">
       <node ref="J2" pin="2" pinfunction="Pin_2_2" pintype="passive"/>
+      <node ref="J3" pin="2" pinfunction="Pin_2_2" pintype="passive"/>
       <node ref="R11" pin="2" pintype="passive"/>
       <node ref="R3" pin="2" pintype="passive"/>
+      <node ref="TP6" pin="1" pinfunction="1_1" pintype="passive"/>
     </net>
     <net code="5" name="/F_SCK" class="Default">
       <node ref="J2" pin="4" pinfunction="Pin_4_4" pintype="passive"/>
+      <node ref="J3" pin="1" pinfunction="Pin_1_1" pintype="passive"/>
       <node ref="R1" pin="2" pintype="passive"/>
       <node ref="R10" pin="2" pintype="passive"/>
+      <node ref="TP5" pin="1" pinfunction="1_1" pintype="passive"/>
     </net>
     <net code="6" name="/GND" class="Default">
       <node ref="A1" pin="13" pinfunction="GND_13" pintype="passive"/>
@@ -897,12 +1259,15 @@
       <node ref="C5" pin="2" pintype="passive"/>
       <node ref="C6" pin="2" pintype="passive"/>
       <node ref="J2" pin="5" pinfunction="Pin_5_5" pintype="passive"/>
+      <node ref="J3" pin="10" pinfunction="Pin_10_10" pintype="passive"/>
+      <node ref="J3" pin="9" pinfunction="Pin_9_9" pintype="passive"/>
       <node ref="R10" pin="1" pintype="passive"/>
       <node ref="R11" pin="1" pintype="passive"/>
       <node ref="R12" pin="1" pintype="passive"/>
       <node ref="R6" pin="1" pintype="passive"/>
       <node ref="R7" pin="1" pintype="passive"/>
       <node ref="R8" pin="1" pintype="passive"/>
+      <node ref="TP11" pin="1" pinfunction="1_1" pintype="passive"/>
       <node ref="U1" pin="4" pinfunction="GND_4" pintype="power_in"/>
       <node ref="U2" pin="2" pinfunction="GND_2" pintype="power_in"/>
       <node ref="U3" pin="2" pinfunction="GND_2" pintype="power_in"/>
@@ -922,105 +1287,115 @@
       <node ref="C3" pin="1" pintype="passive"/>
       <node ref="C5" pin="1" pintype="passive"/>
       <node ref="R5" pin="1" pintype="passive"/>
+      <node ref="TP9" pin="1" pinfunction="1_1" pintype="passive"/>
       <node ref="U1" pin="1" pinfunction="VCCA_1" pintype="power_in"/>
       <node ref="U1" pin="5" pinfunction="DIR_5" pintype="input"/>
       <node ref="U2" pin="1" pinfunction="VCCA_1" pintype="power_in"/>
       <node ref="U2" pin="5" pinfunction="DIR_5" pintype="input"/>
       <node ref="U3" pin="1" pinfunction="VCCA_1" pintype="power_in"/>
     </net>
-    <net code="10" name="/P_CS_N" class="Default">
+    <net code="10" name="/P_AUX0" class="Default">
+      <node ref="A1" pin="9" pinfunction="GPIO6_9" pintype="bidirectional"/>
+      <node ref="J3" pin="5" pinfunction="Pin_5_5" pintype="passive"/>
+    </net>
+    <net code="11" name="/P_AUX1" class="Default">
+      <node ref="A1" pin="10" pinfunction="GPIO7_10" pintype="bidirectional"/>
+      <node ref="J3" pin="6" pinfunction="Pin_6_6" pintype="passive"/>
+    </net>
+    <net code="12" name="/P_AUX2" class="Default">
+      <node ref="A1" pin="19" pinfunction="GPIO14_19" pintype="bidirectional"/>
+      <node ref="J3" pin="7" pinfunction="Pin_7_7" pintype="passive"/>
+    </net>
+    <net code="13" name="/P_AUX3" class="Default">
+      <node ref="A1" pin="26" pinfunction="GPIO20_26" pintype="bidirectional"/>
+      <node ref="J3" pin="8" pinfunction="Pin_8_8" pintype="passive"/>
+    </net>
+    <net code="14" name="/P_CS_N" class="Default">
       <node ref="A1" pin="22" pinfunction="GPIO17_22" pintype="bidirectional"/>
       <node ref="R5" pin="2" pintype="passive"/>
+      <node ref="TP4" pin="1" pinfunction="1_1" pintype="passive"/>
       <node ref="U1" pin="3" pinfunction="A2_3" pintype="bidirectional"/>
     </net>
-    <net code="11" name="/P_MISO" class="Default">
+    <net code="15" name="/P_MISO" class="Default">
       <node ref="A1" pin="21" pinfunction="GPIO16_21" pintype="bidirectional"/>
       <node ref="R4" pin="2" pintype="passive"/>
       <node ref="R8" pin="2" pintype="passive"/>
+      <node ref="TP3" pin="1" pinfunction="1_1" pintype="passive"/>
     </net>
-    <net code="12" name="/P_MOSI" class="Default">
+    <net code="16" name="/P_MOSI" class="Default">
       <node ref="A1" pin="25" pinfunction="GPIO19_25" pintype="bidirectional"/>
       <node ref="R7" pin="2" pintype="passive"/>
+      <node ref="TP2" pin="1" pinfunction="1_1" pintype="passive"/>
       <node ref="U2" pin="3" pinfunction="A_3" pintype="bidirectional"/>
     </net>
-    <net code="13" name="/P_SCK" class="Default">
+    <net code="17" name="/P_SCK" class="Default">
       <node ref="A1" pin="24" pinfunction="GPIO18_24" pintype="bidirectional"/>
       <node ref="R6" pin="2" pintype="passive"/>
+      <node ref="TP1" pin="1" pinfunction="1_1" pintype="passive"/>
       <node ref="U1" pin="2" pinfunction="A1_2" pintype="bidirectional"/>
     </net>
-    <net code="14" name="/SCK_DRV" class="Default">
+    <net code="18" name="/SCK_DRV" class="Default">
       <node ref="R1" pin="1" pintype="passive"/>
       <node ref="U1" pin="7" pinfunction="B1_7" pintype="bidirectional"/>
     </net>
-    <net code="15" name="/TARGET_VCCO_3V3" class="Default">
+    <net code="19" name="/TARGET_VCCO_3V3" class="Default">
       <node ref="C2" pin="1" pintype="passive"/>
       <node ref="C4" pin="1" pintype="passive"/>
       <node ref="C6" pin="1" pintype="passive"/>
       <node ref="J2" pin="6" pinfunction="Pin_6_6" pintype="passive"/>
       <node ref="R9" pin="1" pintype="passive"/>
+      <node ref="TP10" pin="1" pinfunction="1_1" pintype="passive"/>
       <node ref="U1" pin="8" pinfunction="VCCB_8" pintype="power_in"/>
       <node ref="U2" pin="6" pinfunction="VCCB_6" pintype="power_in"/>
       <node ref="U3" pin="6" pinfunction="VCCB_6" pintype="power_in"/>
     </net>
-    <net code="16" name="unconnected-(A1-3V3_EN-Pad37)" class="Default">
+    <net code="20" name="unconnected-(A1-3V3_EN-Pad37)" class="Default">
       <node ref="A1" pin="37" pinfunction="3V3_EN_37" pintype="passive+no_connect"/>
     </net>
-    <net code="17" name="unconnected-(A1-ADC_VREF-Pad35)" class="Default">
+    <net code="21" name="unconnected-(A1-ADC_VREF-Pad35)" class="Default">
       <node ref="A1" pin="35" pinfunction="ADC_VREF_35" pintype="power_in+no_connect"/>
     </net>
-    <net code="18" name="unconnected-(A1-AGND-Pad33)" class="Default">
+    <net code="22" name="unconnected-(A1-AGND-Pad33)" class="Default">
       <node ref="A1" pin="33" pinfunction="AGND_33" pintype="power_out+no_connect"/>
     </net>
-    <net code="19" name="unconnected-(A1-GPIO0-Pad1)" class="Default">
+    <net code="23" name="unconnected-(A1-GPIO0-Pad1)" class="Default">
       <node ref="A1" pin="1" pinfunction="GPIO0_1" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="20" name="unconnected-(A1-GPIO1-Pad2)" class="Default">
+    <net code="24" name="unconnected-(A1-GPIO1-Pad2)" class="Default">
       <node ref="A1" pin="2" pinfunction="GPIO1_2" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="21" name="unconnected-(A1-GPIO2-Pad4)" class="Default">
+    <net code="25" name="unconnected-(A1-GPIO2-Pad4)" class="Default">
       <node ref="A1" pin="4" pinfunction="GPIO2_4" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="22" name="unconnected-(A1-GPIO3-Pad5)" class="Default">
+    <net code="26" name="unconnected-(A1-GPIO3-Pad5)" class="Default">
       <node ref="A1" pin="5" pinfunction="GPIO3_5" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="23" name="unconnected-(A1-GPIO4-Pad6)" class="Default">
+    <net code="27" name="unconnected-(A1-GPIO4-Pad6)" class="Default">
       <node ref="A1" pin="6" pinfunction="GPIO4_6" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="24" name="unconnected-(A1-GPIO5-Pad7)" class="Default">
+    <net code="28" name="unconnected-(A1-GPIO5-Pad7)" class="Default">
       <node ref="A1" pin="7" pinfunction="GPIO5_7" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="25" name="unconnected-(A1-GPIO6-Pad9)" class="Default">
-      <node ref="A1" pin="9" pinfunction="GPIO6_9" pintype="bidirectional+no_connect"/>
-    </net>
-    <net code="26" name="unconnected-(A1-GPIO7-Pad10)" class="Default">
-      <node ref="A1" pin="10" pinfunction="GPIO7_10" pintype="bidirectional+no_connect"/>
-    </net>
-    <net code="27" name="unconnected-(A1-GPIO8-Pad11)" class="Default">
+    <net code="29" name="unconnected-(A1-GPIO8-Pad11)" class="Default">
       <node ref="A1" pin="11" pinfunction="GPIO8_11" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="28" name="unconnected-(A1-GPIO9-Pad12)" class="Default">
+    <net code="30" name="unconnected-(A1-GPIO9-Pad12)" class="Default">
       <node ref="A1" pin="12" pinfunction="GPIO9_12" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="29" name="unconnected-(A1-GPIO10-Pad14)" class="Default">
+    <net code="31" name="unconnected-(A1-GPIO10-Pad14)" class="Default">
       <node ref="A1" pin="14" pinfunction="GPIO10_14" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="30" name="unconnected-(A1-GPIO11-Pad15)" class="Default">
+    <net code="32" name="unconnected-(A1-GPIO11-Pad15)" class="Default">
       <node ref="A1" pin="15" pinfunction="GPIO11_15" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="31" name="unconnected-(A1-GPIO12-Pad16)" class="Default">
+    <net code="33" name="unconnected-(A1-GPIO12-Pad16)" class="Default">
       <node ref="A1" pin="16" pinfunction="GPIO12_16" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="32" name="unconnected-(A1-GPIO13-Pad17)" class="Default">
+    <net code="34" name="unconnected-(A1-GPIO13-Pad17)" class="Default">
       <node ref="A1" pin="17" pinfunction="GPIO13_17" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="33" name="unconnected-(A1-GPIO14-Pad19)" class="Default">
-      <node ref="A1" pin="19" pinfunction="GPIO14_19" pintype="bidirectional+no_connect"/>
-    </net>
-    <net code="34" name="unconnected-(A1-GPIO15-Pad20)" class="Default">
+    <net code="35" name="unconnected-(A1-GPIO15-Pad20)" class="Default">
       <node ref="A1" pin="20" pinfunction="GPIO15_20" pintype="bidirectional+no_connect"/>
-    </net>
-    <net code="35" name="unconnected-(A1-GPIO20-Pad26)" class="Default">
-      <node ref="A1" pin="26" pinfunction="GPIO20_26" pintype="bidirectional+no_connect"/>
     </net>
     <net code="36" name="unconnected-(A1-GPIO21-Pad27)" class="Default">
       <node ref="A1" pin="27" pinfunction="GPIO21_27" pintype="bidirectional+no_connect"/>

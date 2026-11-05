@@ -22,3 +22,15 @@ C3,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
 C4,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
 C5,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
 C6,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
+J3,DEBUG_8_SIGNALS,,Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical
+TP1,P_SCK,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP2,P_MOSI,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP3,P_MISO,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP4,P_CS_N,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP5,F_SCK,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP6,F_MOSI,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP7,F_MISO,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP8,F_CS_N,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP9,PICO_3V3,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP10,TARGET_VCCO_3V3,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm
+TP11,GND,,TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm

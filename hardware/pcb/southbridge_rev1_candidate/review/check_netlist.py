@@ -15,6 +15,11 @@ expected = {
     'U2': [P, G, 'P_MOSI', 'MOSI_DRV', P, F],
     'U3': [P, G, 'MISO_DRV', 'F_MISO', G, F],
     'J2': ['F_CS_N', 'F_MOSI', 'F_MISO', 'F_SCK', G, F],
+    'J3': ['F_SCK', 'F_MOSI', 'F_MISO', 'F_CS_N', 'P_AUX0',
+           'P_AUX1', 'P_AUX2', 'P_AUX3', G, G],
+    **{f'TP{i}': [net] for i, net in enumerate([
+        'P_SCK', 'P_MOSI', 'P_MISO', 'P_CS_N', 'F_SCK', 'F_MOSI',
+        'F_MISO', 'F_CS_N', P, F, G], 1)},
     'R1': ['SCK_DRV', 'F_SCK'], 'R2': ['CS_DRV', 'F_CS_N'],
     'R3': ['MOSI_DRV', 'F_MOSI'], 'R4': ['MISO_DRV', 'P_MISO'],
     'R5': [P, 'P_CS_N'], 'R6': [G, 'P_SCK'],
@@ -26,6 +31,7 @@ expected = {
 checks = {(ref, str(pin)): net for ref, pins in expected.items()
           for pin, net in enumerate(pins, 1)}
 checks.update({('A1', str(pin)): net for pin, net in {
+    9: 'P_AUX0', 10: 'P_AUX1', 19: 'P_AUX2', 26: 'P_AUX3',
     21: 'P_MISO', 22: 'P_CS_N', 24: 'P_SCK', 25: 'P_MOSI', 36: P,
     **{pin: G for pin in (3, 8, 13, 18, 23, 28, 38)},
 }.items()})
@@ -53,6 +59,11 @@ for ref, mpn, footprint in [
         errors.append(f'{ref}: wrong manufacturer part')
     if c.findtext('footprint') != footprint:
         errors.append(f'{ref}: wrong footprint')
+if components['J3'].findtext('footprint') != 'Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical':
+    errors.append('J3: wrong debug-header footprint')
+for i in range(1, 12):
+    if components[f'TP{i}'].findtext('footprint') != 'TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm':
+        errors.append(f'TP{i}: wrong test-point footprint')
 if errors:
     raise SystemExit('\n'.join(errors))
 print(f'PASS: {len(checks)} connected pins; {len(components)} components; '

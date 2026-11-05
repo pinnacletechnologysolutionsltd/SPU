@@ -1,4 +1,4 @@
-# SPU southbridge Rev 1 — schematic candidate
+# RP2350 FPGA interface and debugging breakout — Rev 1 candidate
 
 Status: **DRAFT; NOT FOR FABRICATION**. Owner-authorized schematic exploration,
 2026-11-05. This is a separate alternative to the comparator/bus-switch
@@ -82,10 +82,10 @@ or level shifters must not be assumed to work from 3.3V.
 
 A logic-analyser header exports signals and ground only; it does not supply
 the analyser, which has its own USB power. Future peripheral headers will
-use Pico-derived 3.3V and ground. Provision a peripheral disconnect jumper,
-indicator, and labelled PICO_3V3 / TARGET_VCCO_3V3 / GND test points when
-capturing the peripheral sheet; these are not present in this interface-only
-candidate. Current limiting remains a component/cost decision, not an
+use Pico-derived 3.3V and ground. Provision a peripheral disconnect jumper
+and indicator when capturing the peripheral sheet; these are not present
+in this interface-only candidate. The three rail/ground test points are now
+included in the interface schematic. Current limiting remains a component/cost decision, not an
 implemented feature. Disconnecting peripheral power alone can leave GPIO
 backfeed paths; the future sheet must handle those paths too.
 
@@ -138,31 +138,66 @@ C1/C2 bypass U1 VCCA/VCCB; C3/C4 bypass U2; C5/C6 bypass U3.
 Each is 100nF, X7R, at least 16V, 0805, to GND. Place each at its supply
 pin with a short return. All resistors use 0805 footprints.
 
-## Physical cable and firmware profile
+## Generic target and debug connectors
 
-| Signal | A1 Pico GPIO / physical pin | Adapter J2 | This Wukong J11 / FPGA ball |
-|---|---|---|---|
-| CS# | GP17 / 22 | 1 | 7 / J4 |
-| MOSI | GP19 / 25 | 2 | 9 / B4 |
-| MISO | GP16 / 21 | 3 | 10 / B5 |
-| SCK | GP18 / 24 | 4 | 8 / G4 |
-| GND | All digital ground pads | 5 | 11 |
-| Target bank 3.3V | **Never Pico pin 36** | 6 | 12, provisional pending rail verification |
+J2 is a 1x6 2.54mm male target header. Pin 1 = CS#, 2 = MOSI,
+3 = MISO, 4 = SCK, 5 = GND, 6 = target bank 3.3V input. Verify target
+voltage and connector mapping for every board. This revision is designed
+for 3.3V endpoints; translator voltage range alone does not qualify other
+voltages. [SPU / Wukong wiring and firmware](SPU_WUKONG_EXAMPLE.md) is a
+separate application example. No SPU toolchain is needed to inspect the
+schematic or use the electrical connections.
 
-J2 is a 1x6 2.54mm male header. The cable is mapped, **not straight-through**
-to Wukong or Tang. Confirm pin 1 and viewing orientation physically.
-A1 pin 33 (AGND) is unused on this carrier; analog circuitry is not connected.
-VBUS, VSYS, 3V3_EN, RUN, ADC_VREF and unused GPIOs are explicitly NC.
-The module remains powered by its own USB connector.
+J3 is **LOGIC ANALYSER / DEBUG — 8 SIGNALS**, a standard 2x5 2.54mm male
+header. It exposes eight signals and two grounds, with no supply pin.
+The assignment below is the intended component-side top view, with the
+square pin-1 pad at top left; confirm the footprint and eventual PCB
+silkscreen before assembling a cable.
 
-The GP16–19 profile matches
-[the full-size Pico firmware](../../rp2350/rp2350_su3_j11_smoke.c), which sets
-CPOL=0/CPHA=0. It differs from older RP2350-Zero GP0–3 wiring; use a matching
-firmware build. The live source currently requests 25kHz; historical 2MHz
-operation does not qualify this new circuit at 2MHz.
-The remapped target balls follow
-[the current Artix constraints](../../boards/artix7/spu_a7_100t.xdc).
-Do not reuse this unit's damaged J11 upper-row pins.
+| Left pin / signal | Right pin / signal | Electrical domain |
+|---|---|---|
+| 1 SCK | 2 MOSI | Target-side SPI (F_SCK / F_MOSI) |
+| 3 MISO | 4 CS# | Target-side SPI (F_MISO / F_CS_N) |
+| 5 AUX0 | 6 AUX1 | Pico GP6 / GP7 (physical module pins 9 / 10) |
+| 7 AUX2 | 8 AUX3 | Pico GP14 / GP20 (physical module pins 19 / 26) |
+| 9 GND | 10 GND | Common signal ground |
+
+AUX0–3 are direct, unprotected 3.3V Pico GPIOs, available for firmware-defined
+PIO/debug use; they are not FPGA IRQ/reset signals and are not routed to J2.
+They must not bypass the translators or connect to independently powered
+boards without another electrical review. Their driven-load current counts
+against the Pico/interface budget. No firmware configures them in this change.
+
+Use individual instrument leads assigned by signal name, not a presumed
+Saleae, DSLogic or Digilent ribbon-cable pinout. This is a documented breakout
+assignment, not a universal analyser plug. The analyser has its own power;
+configure multifunction instruments as inputs before attaching them. Check
+the instrument's input voltage, threshold, loading and powered-off behaviour.
+High impedance does not mean zero capacitance or zero leakage. The probe
+connection does not inherit translator protection against external drive.
+Keep probe leads/stubs short; place header and target test points near the
+corresponding nets in layout, with accessible ground returns.
+[Saleae's probing guidance](https://www.saleae.com/support/specifications-hardware/electrical-characteristics/are-the-ground-pins-required-for-each-input-used)
+explains common-ground inputs; [its troubleshooting notes](https://www.saleae.com/support/troubleshooting/capture-and-recording-issues/logic-interferes-with-circuit)
+also describe probe loading and instruments with input pull-ups. Check the
+actual analyser, including power-loss combinations, rather than assuming
+all eight-channel instruments behave identically.
+
+| Test points | Signals |
+|---|---|
+| TP1–TP4 | Pico SCK, MOSI, MISO, CS# |
+| TP5–TP8 | Target SCK, MOSI, MISO, CS# |
+| TP9 / TP10 / TP11 | PICO_3V3 / TARGET_VCCO_3V3 / GND |
+
+Test points are 2mm through-hole pads with 1mm holes; they are probe access,
+not protected outputs or peripheral supply connectors. Both SPI sides are
+available without jumpers. The default debug header observes target-side SPI.
+
+Generic SPI loopback/test-peripheral firmware, example captures and a PCB
+layout are future work. This schematic addition makes no protocol-demo,
+voltage-compatibility or physical signal-integrity claim. OSHWA certification
+has not been requested or obtained; open release/licensing and electrical
+verification remain separate steps.
 
 ## Electrical review holds and proposed bench acceptance
 
@@ -256,3 +291,18 @@ PDF was rendered and inspected. The CSV slots sum to 100mA. README local links
 and whitespace checks pass. Repository doc audit exits 0 with the same
 master-based findings above, except 120 orphans after tracking this README.
 No current, voltage-droop or thermal measurements have been made.
+
+
+Generic debug update (2026-11-05): J3 adds four target-side SPI probes,
+four direct Pico AUX GPIOs and two grounds. TP1–TP11 expose both SPI sides
+and the two rails/ground. No source-selection jumpers, FPGA IRQ/reset
+connections or firmware changes are introduced. Historical 74-pin/23-part
+checks above describe the earlier candidate; the updated checker covers
+the expanded circuit. The generic name changes no electrical qualification.
+
+Updated validation: ERC 0 errors / 0 warnings; exported-netlist checks pass
+for **99 connected pins and 35 components**, including J3/TP footprints.
+BOM inventory matches the exported netlist. PDF rendered and inspected;
+local links and whitespace checks passed. Doc audit exits 0 with the same
+repository findings recorded above; the new application example was also
+checked directly for broken local links. No electrical bench tests ran.

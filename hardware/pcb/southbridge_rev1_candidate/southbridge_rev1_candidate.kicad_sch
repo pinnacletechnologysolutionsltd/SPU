@@ -1,4 +1,4 @@
-(kicad_sch (version 20250114) (generator "eeschema") (uuid "0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad") (paper "A3") (title_block (title "SPU Southbridge Rev 1 - translator candidate") (date "2026-11-05") (rev "R1-CANDIDATE") (comment 1 "NOT FOR FABRICATION; no brownout threshold")) (lib_symbols (symbol "Logic_LevelTranslator:SN74LVC2T45DCUR"
+(kicad_sch (version 20250114) (generator "eeschema") (uuid "0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad") (paper "A3") (title_block (title "RP2350 FPGA interface / debug - Rev 1 candidate") (date "2026-11-05") (rev "R1-CANDIDATE") (comment 1 "NOT FOR FABRICATION; no brownout threshold")) (lib_symbols (symbol "Logic_LevelTranslator:SN74LVC2T45DCUR"
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -2381,7 +2381,520 @@
 			)
 		)
 		(embedded_fonts no)
-	))
+	)(symbol "Connector_Generic:Conn_02x05_Odd_Even"
+		(pin_names
+			(offset 1.016)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "J"
+			(at 1.27 7.62 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Conn_02x05_Odd_Even"
+			(at 1.27 -7.62 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, double row, 02x05, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "connector"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_fp_filters" "Connector*:*_2x??_*"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "Conn_02x05_Odd_Even_1_1"
+			(rectangle
+				(start -1.27 6.35)
+				(end 3.81 -6.35)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type background)
+				)
+			)
+			(rectangle
+				(start -1.27 5.207)
+				(end 0 4.953)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start -1.27 2.667)
+				(end 0 2.413)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start -1.27 0.127)
+				(end 0 -0.127)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start -1.27 -2.413)
+				(end 0 -2.667)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start -1.27 -4.953)
+				(end 0 -5.207)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start 3.81 5.207)
+				(end 2.54 4.953)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start 3.81 2.667)
+				(end 2.54 2.413)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start 3.81 0.127)
+				(end 2.54 -0.127)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start 3.81 -2.413)
+				(end 2.54 -2.667)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(rectangle
+				(start 3.81 -4.953)
+				(end 2.54 -5.207)
+				(stroke
+					(width 0.1524)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(pin passive line
+				(at -5.08 5.08 0)
+				(length 3.81)
+				(name "Pin_1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 5.08 180)
+				(length 3.81)
+				(name "Pin_2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -5.08 2.54 0)
+				(length 3.81)
+				(name "Pin_3"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "3"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 2.54 180)
+				(length 3.81)
+				(name "Pin_4"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "4"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -5.08 0 0)
+				(length 3.81)
+				(name "Pin_5"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "5"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 0 180)
+				(length 3.81)
+				(name "Pin_6"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "6"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -5.08 -2.54 0)
+				(length 3.81)
+				(name "Pin_7"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "7"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 -2.54 180)
+				(length 3.81)
+				(name "Pin_8"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "8"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at -5.08 -5.08 0)
+				(length 3.81)
+				(name "Pin_9"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "9"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 7.62 -5.08 180)
+				(length 3.81)
+				(name "Pin_10"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "10"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+(symbol "Connector:TestPoint"
+		(pin_numbers
+			(hide yes)
+		)
+		(pin_names
+			(offset 0.762)
+			(hide yes)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "TP"
+			(at 0 6.858 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "TestPoint"
+			(at 0 5.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 5.08 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 5.08 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_keywords" "test point tp"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ki_fp_filters" "Pin* Test*"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "TestPoint_0_1"
+			(circle
+				(center 0 3.302)
+				(radius 0.762)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+		)
+		(symbol "TestPoint_1_1"
+			(pin passive line
+				(at 0 0 90)
+				(length 2.54)
+				(name "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+)
 (symbol (lib_id "MCU_Module:RaspberryPi_Pico") (at 53.34 78.74 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "1e4d606c-0051-588f-a4ca-7ea9d3a36116")(property "Reference" "A1" (at 53.34 36.83 0) (effects (font (size 1 1))))(property "Value" "Pico 2 (socketed)" (at 53.34 39.37 0) (effects (font (size 1 1))))(property "Footprint" "Module:RaspberryPi_Pico_Common_THT" (at 53.34 78.74 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf" (at 53.34 78.74 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "SC1631" (at 53.34 78.74 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "1d6a9233-282f-598e-9947-1a655ee91741"))(pin "2" (uuid "983dd222-37c4-51b4-a246-609edce9b45d"))(pin "3" (uuid "bb0aeb3e-957d-5f72-9b3e-72090555cc0c"))(pin "4" (uuid "9a9b422a-330d-55d5-9159-e0e0bdcc3f87"))(pin "5" (uuid "2767dcc8-7dfc-514e-9ef9-dd4fdca2474d"))(pin "6" (uuid "c029935c-289f-5913-9d7d-7e509babddcb"))(pin "7" (uuid "2ce0695d-6ab4-58e4-b41a-acc605fa668f"))(pin "8" (uuid "d86e0312-4262-5c73-93f3-9eeacbff584b"))(pin "9" (uuid "ec5fa99a-292e-5e52-b493-9b1e332fcfc5"))(pin "10" (uuid "69ddf52b-6778-56bf-8577-a08189dc4e9c"))(pin "11" (uuid "08c228d6-2904-5116-b7c0-67e305abf4fb"))(pin "12" (uuid "f9170658-a4d7-5367-8612-7b68f93439d8"))(pin "13" (uuid "d5fb6c0e-5239-539a-b486-ed994a004ce5"))(pin "14" (uuid "61357196-2ce9-56c3-979a-079f4d536329"))(pin "15" (uuid "29373ed4-9b31-5642-a0ec-74dea2f745a1"))(pin "16" (uuid "741fafaa-10f8-50c8-b39f-85254476edc0"))(pin "17" (uuid "51216122-8b5c-5ff8-80cc-4f6a5503c920"))(pin "18" (uuid "85208375-c51e-5a6b-a214-423724f226d7"))(pin "19" (uuid "89a5bd87-3d98-596a-a98b-637afeb1cecb"))(pin "20" (uuid "5c176b5f-b199-51ab-99d6-c7b865424139"))(pin "21" (uuid "ca01b692-1e2a-53dd-bad2-a6e47819df68"))(pin "22" (uuid "e5a09864-182e-5af0-b77e-672f424721d7"))(pin "23" (uuid "80a29cb5-5c21-5c83-a2ab-7c469e449dc6"))(pin "24" (uuid "885dde42-958f-50d7-ae79-e65441db81c8"))(pin "25" (uuid "a01040b1-62ce-58f5-8527-67c491d0dfda"))(pin "26" (uuid "dcb3b0fc-56d8-5ca2-9068-748a359fad76"))(pin "27" (uuid "1669e266-f8e4-5b28-b72d-80e8d2262e3c"))(pin "28" (uuid "ebdbc3e0-e46f-5c74-b715-f0459cdfa2c6"))(pin "29" (uuid "fa5ce05e-39ac-52e3-a97c-ded32b6d7edb"))(pin "30" (uuid "faacd7c3-011a-5d97-ab92-a158ef8e3533"))(pin "31" (uuid "b9507f07-9898-5539-960f-42fff1fb3bc1"))(pin "32" (uuid "5cfbfdf4-13e2-5bfb-bc93-e2f028910055"))(pin "33" (uuid "eb19dee6-7633-58f4-b32a-73b910ffe7b9"))(pin "34" (uuid "84bf25ff-62e0-5410-8e48-777fc132a97e"))(pin "35" (uuid "cd157ed8-3546-5ab8-8e9c-2b365d3b760d"))(pin "36" (uuid "bcfbd429-7046-5f36-8503-3170ff41807e"))(pin "37" (uuid "bdf979f0-ee29-54c0-a3c6-aba725a4f8ce"))(pin "38" (uuid "9738c0fc-beb4-5ce4-96b1-e9d5e38f904a"))(pin "39" (uuid "47205672-1fac-5661-8db0-6a643aedbeb0"))(pin "40" (uuid "81ba3424-328f-5ed6-8ee1-9ec5cfc5b556"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "A1") (unit 1)))))
 (no_connect (at 30.48 63.5) (uuid "893ce894-cb15-504b-b4ca-5d2e857e8c73"))
 (no_connect (at 30.48 66.04) (uuid "2cdee26e-ce5f-54c1-9bdf-c7acf5533c43"))
@@ -2393,8 +2906,8 @@
 (no_connect (at 30.48 76.2) (uuid "08a9608b-0228-57fd-9083-7fd005c11954"))
 (wire (pts (xy 53.34 114.3) (xy 53.34 121.92)) (stroke (width 0) (type default)) (uuid "6e924e0a-d942-5025-9b98-0cce64ce9406"))
 (label "GND" (at 53.34 121.92 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "c0945384-4386-5b29-bd44-18ec66e1e9d3"))
-(no_connect (at 30.48 78.74) (uuid "2e544021-b5a4-5a18-ba74-238f9dfb846e"))
-(no_connect (at 30.48 81.28) (uuid "6b5c6dfe-6f29-578a-90a7-6ec005ef14b5"))
+
+
 (no_connect (at 30.48 83.82) (uuid "1beb2826-be32-52c5-9b27-70bca2255862"))
 (no_connect (at 30.48 86.36) (uuid "f3f1c522-6ef8-5210-b232-db68b687ae8e"))
 (wire (pts (xy 53.34 114.3) (xy 53.34 121.92)) (stroke (width 0) (type default)) (uuid "11be1d52-3217-5914-a999-32e76a1cbbc4"))
@@ -2405,7 +2918,7 @@
 (no_connect (at 30.48 96.52) (uuid "607b824d-2e70-5637-b997-ea2add6c3387"))
 (wire (pts (xy 53.34 114.3) (xy 53.34 121.92)) (stroke (width 0) (type default)) (uuid "b126d1ec-e45e-525b-940f-783a37c07b4f"))
 (label "GND" (at 53.34 121.92 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "46c2d8a0-4611-52d3-a0c9-12deffcfdd5d"))
-(no_connect (at 30.48 99.06) (uuid "6d086efc-6b26-50cf-bd9f-eafbdb003ff0"))
+
 (no_connect (at 30.48 101.6) (uuid "d90e3f77-12ce-508c-8f7c-db24a6819100"))
 (wire (pts (xy 76.2 66.04) (xy 83.82 66.04)) (stroke (width 0) (type default)) (uuid "42c03102-3cf8-549f-9507-4c4659528c8d"))
 (label "P_MISO" (at 83.82 66.04 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "93e1d9ce-e653-5cb1-a128-ee23e061528c"))
@@ -2417,7 +2930,7 @@
 (label "P_SCK" (at 83.82 71.12 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "6e63d27d-448c-5496-b348-0dc4b82e8283"))
 (wire (pts (xy 76.2 73.66) (xy 83.82 73.66)) (stroke (width 0) (type default)) (uuid "c55645a2-ff5e-5ac7-b650-3decba133152"))
 (label "P_MOSI" (at 83.82 73.66 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "cfb79888-0761-5ede-ba3e-4ab62f23be9e"))
-(no_connect (at 76.2 76.2) (uuid "36d88230-3ba5-5d56-95c2-c1df67cdbf81"))
+
 (no_connect (at 76.2 78.74) (uuid "c5be1dc0-0186-5364-9312-14bf690c1c15"))
 (wire (pts (xy 53.34 114.3) (xy 53.34 121.92)) (stroke (width 0) (type default)) (uuid "09fd325c-90e2-5a4a-8fd9-bb2ac4e4dd65"))
 (label "GND" (at 53.34 121.92 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "d50a2356-a893-5157-9cb2-a87a435cc535"))
@@ -2581,10 +3094,7 @@
 (label "TARGET_VCCO_3V3" (at 271.78 245.11 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "2795c419-c7e5-5fa7-bd4d-46f74526d87d"))
 (wire (pts (xy 271.78 260.35) (xy 271.78 267.97)) (stroke (width 0) (type default)) (uuid "5eaf188e-139e-51f8-9922-d23a33b0dfb7"))
 (label "GND" (at 271.78 267.97 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "5379f407-0c01-5326-9f3a-730d47f9375e"))
-(symbol (lib_id "power:PWR_FLAG") (at 332.74 104.14 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "0e65c0cb-bc45-55bd-aeac-dbf9cf364724")(property "Reference" "#FLG01" (at 332.74 88.9 0) (effects (font (size 1 1))))(property "Value" "PWR_FLAG" (at 332.74 91.44 0) (effects (font (size 1 1))))(property "Footprint" "" (at 332.74 104.14 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 332.74 104.14 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 332.74 104.14 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "2b702add-cf96-5208-ac5d-9275aa2ea634"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "#FLG01") (unit 1)))))
-(wire (pts (xy 332.74 104.14) (xy 332.74 111.76)) (stroke (width 0) (type default)) (uuid "87c5d682-1451-522c-8cab-59d8b22648d9"))
-(label "TARGET_VCCO_3V3" (at 332.74 111.76 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "39028720-8ce5-5444-a0bf-785f880f6c77"))
-(text "SPU SOUTHBRIDGE REV 1 - TRANSLATOR CANDIDATE" (at 20.32 15.24 0) (effects (font (size 2 2)) (justify left)) (uuid "0ef84957-4f35-5c93-9524-7c17e9c6f8a7"))
+(text "RP2350 FPGA INTERFACE / DEBUG - REV 1 CANDIDATE" (at 20.32 15.24 0) (effects (font (size 2 2)) (justify left)) (uuid "0ef84957-4f35-5c93-9524-7c17e9c6f8a7"))
 (text "DRAFT / NOT FOR FABRICATION - independent 3.3 V domains; dedicated SPI mode 0" (at 20.32 22.86 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "2aef6f9f-e87d-5213-b7e9-c0e76d487545"))
 (text "Pico USB powered; VBUS / VSYS / 3V3_EN / RUN unused on carrier." (at 20.32 127 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "e3f590a3-0c07-5fcf-8d67-aab6d5ac0dc9"))
 (text "A1 footprint: two 1x20 sockets; verify fit before layout." (at 20.32 134.62 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "d73e7746-b277-5c0c-ae46-71dbb3e0efc4"))
@@ -2595,12 +3105,12 @@
 (text "Idle bias - each net uses its own domain only" (at 20.32 144.78 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "78b0180f-1511-5d92-9d32-dcadc31d4406"))
 (text "No rail tie. Common ground must connect first." (at 304.8 121.92 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "4f97acf6-f501-52c4-82d8-e4a9472ca185"))
 (text "TARGET rail powers VCCB; not sense-only." (at 304.8 129.54 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "20693fc5-5796-5df8-bd37-a5cb429fd6e7"))
-(text "J2 cable to THIS Wukong remap:" (at 304.8 144.78 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "72de99d9-dcf7-59e1-ae26-487eb95fd7a9"))
-(text "1 CS# -> J11-7    2 MOSI -> J11-9" (at 304.8 152.4 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "21fcd6f1-b122-5a67-ad58-3f1949eb7995"))
-(text "3 MISO -> J11-10  4 SCK -> J11-8" (at 304.8 160.02 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "4dad04ee-6458-5cb8-b642-d7fc8d362a29"))
-(text "5 GND -> J11-11   6 VCCO -> J11-12*" (at 304.8 167.64 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "53f9dffd-a68e-5cdb-8b10-9f772ccbe764"))
-(text "* HOLD: verify J11-12 equals actual bank rail." (at 304.8 175.26 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "de42668e-c683-5525-b2c8-94b2dd20797a"))
-(text "No 1:1 cable to Wukong or Tang." (at 304.8 182.88 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "2f73740c-5e4f-5ab7-8e9a-d7ff836cb164"))
+(text "J2 target connector: mapped cable required." (at 304.8 144.78 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "72de99d9-dcf7-59e1-ae26-487eb95fd7a9"))
+(text "1 CS# | 2 MOSI | 3 MISO | 4 SCK" (at 304.8 152.4 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "21fcd6f1-b122-5a67-ad58-3f1949eb7995"))
+(text "5 GND | 6 TARGET_VCCO_3V3 (input)" (at 304.8 160.02 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "4dad04ee-6458-5cb8-b642-d7fc8d362a29"))
+(text "Verify target voltage, bank rail and pinout." (at 304.8 167.64 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "53f9dffd-a68e-5cdb-8b10-9f772ccbe764"))
+(text "J3 SPI: target domain; AUX0-3: Pico domain." (at 304.8 175.26 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "de42668e-c683-5525-b2c8-94b2dd20797a"))
+(text "AUX0-3 unprotected; never bypass U1-U3." (at 304.8 182.88 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "2f73740c-5e4f-5ab7-8e9a-d7ff836cb164"))
 (text "Bypass pairs: C1/C2 U1; C3/C4 U2; C5/C6 U3." (at 203.2 182.88 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "6f6e5b77-20d4-53d0-8f58-3275c146719d"))
 (text "Place at IC supply pins; short ground returns." (at 203.2 187.96 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "a18c18d9-7d17-5d7f-a9fd-d19f698bac5d"))
 (text "Power-off isolation candidate; no UVLO / power-good / OE." (at 20.32 238.76 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "c20c7fb2-f964-5c07-b383-946c265ae708"))
@@ -2615,4 +3125,72 @@
 (text "Storage 50 | LEDs 2 | Margin 23 = 100" (at 304.8 223.52 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "e841dc0c-4356-5950-b1b4-54d14968a52f"))
 (text "Modules TBD; check peak/startup current before fitting." (at 304.8 231.14 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "91f5eb5a-721f-5682-9410-e7259bce7905"))
 (text "Target VCCO: B-sides only; never peripheral power." (at 304.8 238.76 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "2db4f682-dd8b-5fe2-829b-111824b94311"))
+
+(symbol (lib_id "Connector_Generic:Conn_02x05_Odd_Even") (at 355.6 91.44 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "8cd43740-a6a8-5e44-bd0c-64a0873a7861")(property "Reference" "J3" (at 355.6 76.2 0) (effects (font (size 1 1))))(property "Value" "DEBUG_8_SIGNALS" (at 355.6 78.74 0) (effects (font (size 1 1))))(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical" (at 355.6 91.44 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 355.6 91.44 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 355.6 91.44 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "7de44a2a-7647-5aba-b4fb-dcfb7a700fd5"))(pin "2" (uuid "88bbb74c-b4bc-5199-bb07-9dac6fa4d5c1"))(pin "3" (uuid "588d58da-98c5-5dfa-8732-2c2e11a46944"))(pin "4" (uuid "e434e493-9073-548a-a757-754fab759e69"))(pin "5" (uuid "7ed0bf7c-26d1-5e2a-92e7-315c447422c1"))(pin "6" (uuid "8887cda0-3029-5118-9f57-f12fd2b97507"))(pin "7" (uuid "193c35df-863f-5bc1-8e14-fe42459d7073"))(pin "8" (uuid "a3f1aede-c65a-5e53-82de-feabfab874de"))(pin "9" (uuid "7d64975c-601f-52c2-a77a-4745d31c19c0"))(pin "10" (uuid "dc197a6a-9b93-51d9-af8a-22e7bec5bc87"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "J3") (unit 1)))))
+(wire (pts (xy 350.52 86.36) (xy 342.9 86.36)) (stroke (width 0) (type default)) (uuid "4f7c3034-1942-5fea-a37c-72305a5d881d"))
+(label "F_SCK" (at 342.9 86.36 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "08fc04e9-3838-5dec-bf44-d32255d98525"))
+(wire (pts (xy 363.22 86.36) (xy 370.84 86.36)) (stroke (width 0) (type default)) (uuid "95e90523-4772-5d01-b897-077dcbeb8505"))
+(label "F_MOSI" (at 370.84 86.36 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "3318c242-2c8c-5882-9239-7071df784b5b"))
+(wire (pts (xy 350.52 88.9) (xy 342.9 88.9)) (stroke (width 0) (type default)) (uuid "3d7c834c-a28f-5193-be26-2004090dcfdf"))
+(label "F_MISO" (at 342.9 88.9 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "8eb533fe-6302-5e6b-866d-da710277108e"))
+(wire (pts (xy 363.22 88.9) (xy 370.84 88.9)) (stroke (width 0) (type default)) (uuid "a394e36a-5e7d-5b54-ba5c-9a10c6627744"))
+(label "F_CS_N" (at 370.84 88.9 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "9fbd4271-5295-5e38-81c7-801c8246a3d0"))
+(wire (pts (xy 350.52 91.44) (xy 342.9 91.44)) (stroke (width 0) (type default)) (uuid "70b05a10-e325-5284-8d76-39a90a8c884b"))
+(label "P_AUX0" (at 342.9 91.44 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "48b56730-abca-5882-acc7-3bb7e0da5eea"))
+(wire (pts (xy 363.22 91.44) (xy 370.84 91.44)) (stroke (width 0) (type default)) (uuid "9e6ff69f-029a-5272-ba3e-c410bb0ba706"))
+(label "P_AUX1" (at 370.84 91.44 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "36968fe3-0957-52fd-91a4-585c767769e1"))
+(wire (pts (xy 350.52 93.98) (xy 342.9 93.98)) (stroke (width 0) (type default)) (uuid "75737f14-31e4-54c9-aaa7-56cf15e5f40e"))
+(label "P_AUX2" (at 342.9 93.98 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "988ce343-c64a-5886-9aa2-9a9a7a54466a"))
+(wire (pts (xy 363.22 93.98) (xy 370.84 93.98)) (stroke (width 0) (type default)) (uuid "9b3d327a-1769-5a5c-a091-40a0ffa3b0b8"))
+(label "P_AUX3" (at 370.84 93.98 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "ef64857b-4802-5531-940d-a96c7d083c7f"))
+(wire (pts (xy 350.52 96.52) (xy 342.9 96.52)) (stroke (width 0) (type default)) (uuid "a9b55f83-443b-5b53-9079-01b3c82c195c"))
+(label "GND" (at 342.9 96.52 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "7b594c77-be6e-50cd-9c37-8fa9fb2bacfa"))
+(wire (pts (xy 363.22 96.52) (xy 370.84 96.52)) (stroke (width 0) (type default)) (uuid "4ea594cd-0ff0-580d-b17f-9267c7886449"))
+(label "GND" (at 370.84 96.52 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "098f062f-af86-5873-8d4d-b9741cd054d2"))
+(symbol (lib_id "Connector:TestPoint") (at 111.76 43.18 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "7b17cf21-1b78-5a15-ae86-19789eff86a5")(property "Reference" "TP1" (at 111.76 38.1 0) (effects (font (size 1 1))))(property "Value" "P_SCK" (at 111.76 40.64 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 111.76 43.18 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 111.76 43.18 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 111.76 43.18 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "d1d3659c-df2a-5611-be07-fe4c6673892c"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP1") (unit 1)))))
+(wire (pts (xy 111.76 43.18) (xy 111.76 50.8)) (stroke (width 0) (type default)) (uuid "d2fe29d5-fb44-5f7c-ae3e-0e5a0014248a"))
+(label "P_SCK" (at 111.76 50.8 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "81c40da2-46f0-52f2-be6f-939d407d514e"))
+(symbol (lib_id "Connector:TestPoint") (at 111.76 66.04 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "198b57cc-9a8b-5979-8f03-2323b578b1dd")(property "Reference" "TP2" (at 111.76 60.96 0) (effects (font (size 1 1))))(property "Value" "P_MOSI" (at 111.76 63.5 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 111.76 66.04 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 111.76 66.04 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 111.76 66.04 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "74cb15a6-4414-5316-9119-3be9ce536ce0"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP2") (unit 1)))))
+(wire (pts (xy 111.76 66.04) (xy 111.76 73.66)) (stroke (width 0) (type default)) (uuid "f0244960-a32f-550c-9ee4-97686b89bc56"))
+(label "P_MOSI" (at 111.76 73.66 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "4ab24b29-2b8f-5633-a7a0-1a7ac178bd5e"))
+(symbol (lib_id "Connector:TestPoint") (at 111.76 88.9 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "1e847685-efd9-56c7-8c36-ed36aad3149a")(property "Reference" "TP3" (at 111.76 83.82 0) (effects (font (size 1 1))))(property "Value" "P_MISO" (at 111.76 86.36 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 111.76 88.9 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 111.76 88.9 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 111.76 88.9 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "530f3256-ede9-5c19-975c-c24434599953"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP3") (unit 1)))))
+(wire (pts (xy 111.76 88.9) (xy 111.76 96.52)) (stroke (width 0) (type default)) (uuid "0992a19c-40ba-5fb6-9c82-0cdf2310eaf0"))
+(label "P_MISO" (at 111.76 96.52 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "645bf913-7fd8-5bef-b482-f841a24cee15"))
+(symbol (lib_id "Connector:TestPoint") (at 111.76 111.76 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "f2be75fc-b518-5aa6-8ddf-97dd09baeda0")(property "Reference" "TP4" (at 111.76 106.68 0) (effects (font (size 1 1))))(property "Value" "P_CS_N" (at 111.76 109.22 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 111.76 111.76 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 111.76 111.76 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 111.76 111.76 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "a24feab0-bcc2-5140-8e47-0019db226e59"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP4") (unit 1)))))
+(wire (pts (xy 111.76 111.76) (xy 111.76 119.38)) (stroke (width 0) (type default)) (uuid "9f6c5e27-d2b7-577a-b23e-f4943c01f00b"))
+(label "P_CS_N" (at 111.76 119.38 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "c82dee36-31d4-5d6d-a872-896947911bd3"))
+(symbol (lib_id "Connector:TestPoint") (at 210.82 43.18 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "2d649837-fbb1-5f55-9e7f-ec4981d8115e")(property "Reference" "TP5" (at 210.82 38.1 0) (effects (font (size 1 1))))(property "Value" "F_SCK" (at 210.82 40.64 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 210.82 43.18 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 210.82 43.18 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 210.82 43.18 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "ff830ce7-6b76-5648-8607-e3c050a9230a"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP5") (unit 1)))))
+(wire (pts (xy 210.82 43.18) (xy 210.82 50.8)) (stroke (width 0) (type default)) (uuid "6ed50772-2cbb-5801-8bfc-096916ddcf60"))
+(label "F_SCK" (at 210.82 50.8 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "70bff0c9-6dce-5cf7-a54c-3d6d87296a56"))
+(symbol (lib_id "Connector:TestPoint") (at 210.82 66.04 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "f7e2cfd9-069e-5cfc-b202-c5eb268d948a")(property "Reference" "TP6" (at 210.82 60.96 0) (effects (font (size 1 1))))(property "Value" "F_MOSI" (at 210.82 63.5 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 210.82 66.04 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 210.82 66.04 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 210.82 66.04 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "a0089bcd-ed0d-5be9-8035-1db17c85bb06"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP6") (unit 1)))))
+(wire (pts (xy 210.82 66.04) (xy 210.82 73.66)) (stroke (width 0) (type default)) (uuid "7cf1f77d-7424-5b5e-acb0-119c1266ca42"))
+(label "F_MOSI" (at 210.82 73.66 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "03804272-51b4-5ac0-aed8-a04c045eee8d"))
+(symbol (lib_id "Connector:TestPoint") (at 210.82 88.9 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "64beac17-572c-5da8-b6cb-bb91326f2725")(property "Reference" "TP7" (at 210.82 83.82 0) (effects (font (size 1 1))))(property "Value" "F_MISO" (at 210.82 86.36 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 210.82 88.9 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 210.82 88.9 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 210.82 88.9 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "1ca9606c-0c1a-52e8-84ff-8e07bc8d34b9"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP7") (unit 1)))))
+(wire (pts (xy 210.82 88.9) (xy 210.82 96.52)) (stroke (width 0) (type default)) (uuid "d2d3603b-db83-5bf3-b564-b178b5e8f5ef"))
+(label "F_MISO" (at 210.82 96.52 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "7339a157-b864-5e48-b52e-5b379827e711"))
+(symbol (lib_id "Connector:TestPoint") (at 210.82 111.76 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "d5f59a09-f097-53ba-83d7-3644573b4e2f")(property "Reference" "TP8" (at 210.82 106.68 0) (effects (font (size 1 1))))(property "Value" "F_CS_N" (at 210.82 109.22 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 210.82 111.76 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 210.82 111.76 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 210.82 111.76 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "f0d374f0-4de4-5f31-ad34-1867d519a2d1"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP8") (unit 1)))))
+(wire (pts (xy 210.82 111.76) (xy 210.82 119.38)) (stroke (width 0) (type default)) (uuid "b2afc15e-9603-5f91-94aa-f8eb2973b1de"))
+(label "F_CS_N" (at 210.82 119.38 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "688dfa0b-d552-5330-85e2-f6834a5b589f"))
+(symbol (lib_id "Connector:TestPoint") (at 294.64 43.18 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "25581608-db28-595c-a1d9-4d613d53d05f")(property "Reference" "TP9" (at 294.64 38.1 0) (effects (font (size 1 1))))(property "Value" "PICO_3V3" (at 294.64 40.64 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 294.64 43.18 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 294.64 43.18 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 294.64 43.18 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "e5486fd1-c722-5f94-a0ab-10bfa67100d8"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP9") (unit 1)))))
+(wire (pts (xy 294.64 43.18) (xy 294.64 50.8)) (stroke (width 0) (type default)) (uuid "c142ee1d-74c2-5505-807e-ae6a60009c37"))
+(label "PICO_3V3" (at 294.64 50.8 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "f7a4ab29-6cbb-5188-90ca-bda0035c7000"))
+(symbol (lib_id "Connector:TestPoint") (at 294.64 73.66 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "890f8849-903f-5c55-9be4-91b83f3f3692")(property "Reference" "TP10" (at 294.64 68.58 0) (effects (font (size 1 1))))(property "Value" "TARGET_VCCO_3V3" (at 294.64 71.12 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 294.64 73.66 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 294.64 73.66 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 294.64 73.66 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "f605baf6-020e-5d7a-a141-135631e06dd3"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP10") (unit 1)))))
+(wire (pts (xy 294.64 73.66) (xy 294.64 81.28)) (stroke (width 0) (type default)) (uuid "c38e7f89-f7d7-59e1-a64c-067f5ecf8645"))
+(label "TARGET_VCCO_3V3" (at 294.64 81.28 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "1715c4a6-3954-5490-b859-6f61e6608c18"))
+(symbol (lib_id "Connector:TestPoint") (at 294.64 104.14 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "9ced14bf-af64-5ac5-b124-99006bd7390c")(property "Reference" "TP11" (at 294.64 99.06 0) (effects (font (size 1 1))))(property "Value" "GND" (at 294.64 101.6 0) (effects (font (size 1 1))))(property "Footprint" "TestPoint:TestPoint_THTPad_D2.0mm_Drill1.0mm" (at 294.64 104.14 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 294.64 104.14 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 294.64 104.14 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "d008e91a-61bc-5bf2-91d8-b79dd4070a31"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "TP11") (unit 1)))))
+(wire (pts (xy 294.64 104.14) (xy 294.64 111.76)) (stroke (width 0) (type default)) (uuid "5d032ea7-d677-5cba-b119-98eb3bfdf4ed"))
+(label "GND" (at 294.64 111.76 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "b67e8218-bf5f-51f3-ae31-fa81645484d2"))
+(wire (pts (xy 30.48 78.74) (xy 22.86 78.74)) (stroke (width 0) (type default)) (uuid "1cd12620-79cb-5e4e-a9d4-d3a502798239"))
+(label "P_AUX0" (at 22.86 78.74 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "ec70f829-1e80-5762-8ff0-4027700559c6"))
+(wire (pts (xy 30.48 81.28) (xy 22.86 81.28)) (stroke (width 0) (type default)) (uuid "af30f03e-b221-50aa-a274-d2c25fdc7a3f"))
+(label "P_AUX1" (at 22.86 81.28 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "0fbdaf87-cb0c-580e-a8d7-ff005c138028"))
+(wire (pts (xy 30.48 99.06) (xy 22.86 99.06)) (stroke (width 0) (type default)) (uuid "078f38fe-0d4a-55c3-a9a0-cf43be34b97b"))
+(label "P_AUX2" (at 22.86 99.06 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "4c5b2dec-29b8-5ca8-aa6f-1ebedb6787bd"))
+(wire (pts (xy 76.2 76.2) (xy 83.82 76.2)) (stroke (width 0) (type default)) (uuid "6680e56d-8b6d-50e9-8c38-23fb15d2d4d9"))
+(label "P_AUX3" (at 83.82 76.2 0) (effects (font (size 1 1)) (justify left bottom)) (uuid "a21501d5-c102-552d-8cf2-4acac6105fe8"))
+(text "J3: LOGIC ANALYSER / DEBUG - 8 SIGNALS" (at 304.8 111.76 0) (effects (font (size 1.1 1.1)) (justify left)) (uuid "d37beefa-01c5-51cc-abcb-3692594ff1f7"))
+
+(symbol (lib_id "power:PWR_FLAG") (at 393.7 30.48 0) (unit 1) (in_bom yes) (on_board yes) (dnp no) (uuid "0e65c0cb-bc45-55bd-aeac-dbf9cf364724")(property "Reference" "#FLG01" (at 393.7 15.24 0) (effects (font (size 1 1))))(property "Value" "PWR_FLAG" (at 393.7 17.78 0) (effects (font (size 1 1))))(property "Footprint" "" (at 393.7 30.48 0) (effects (font (size 1 1)) (hide yes)))(property "Datasheet" "" (at 393.7 30.48 0) (effects (font (size 1 1)) (hide yes)))(property "MPN" "" (at 393.7 30.48 0) (effects (font (size 1 1)) (hide yes)))(pin "1" (uuid "2b702add-cf96-5208-ac5d-9275aa2ea634"))(instances (project "southbridge_rev1_candidate" (path "/0ab8ecf2-9be7-5eb2-b1c8-1cbb6b7e90ad" (reference "#FLG01") (unit 1)))))
+(wire (pts (xy 393.7 30.48) (xy 393.7 38.1)) (stroke (width 0) (type default)) (uuid "87c5d682-1451-522c-8cab-59d8b22648d9"))
+(label "TARGET_VCCO_3V3" (at 393.7 38.1 0) (effects (font (size 1 1)) (justify right bottom)) (uuid "39028720-8ce5-5444-a0bf-785f880f6c77"))
 )
