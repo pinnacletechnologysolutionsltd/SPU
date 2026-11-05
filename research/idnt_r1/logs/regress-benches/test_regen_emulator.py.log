@@ -1,0 +1,26 @@
+== Gate 1: reproduce Step 5 ==
+  dT=2.0K K= 1: conditioned= 100.00% (must be 100)  unconditioned= 69.63% [Step-5 A=69.17% @2K]  PASS
+  dT=2.0K K= 2: conditioned= 100.00% (must be 100)  unconditioned= 12.95% [Step-5 A=13.09% @2K]  PASS
+  dT=2.0K K= 4: conditioned= 100.00% (must be 100)  unconditioned=  0.00% [Step-5 A= 0.00% @2K]  PASS
+  dT=2.0K K= 8: conditioned= 100.00% (must be 100)  unconditioned=  0.00% [Step-5 A= 0.00% @2K]  PASS
+  dT=2.0K K=16: conditioned= 100.00% (must be 100)  unconditioned=  0.00% [Step-5 A= 0.00% @2K]  PASS
+  dT=5.0K K= 1: conditioned= 100.00% (must be 100)  unconditioned=  5.83% [Step-5 A=69.17% @2K]  PASS
+  dT=5.0K K= 2: conditioned= 100.00% (must be 100)  unconditioned=  0.00% [Step-5 A=13.09% @2K]  PASS
+  dT=5.0K K= 4: conditioned= 100.00% (must be 100)  unconditioned=  0.00% [Step-5 A= 0.00% @2K]  PASS
+  dT=5.0K K= 8: conditioned= 100.00% (must be 100)  unconditioned=  0.00% [Step-5 A= 0.00% @2K]  PASS
+  dT=5.0K K=16: conditioned= 100.00% (must be 100)  unconditioned=  0.00% [Step-5 A= 0.00% @2K]  PASS
+  Gate 1 result: PASS
+== Gate 2: backend abstraction ==
+  identical exact state across 3 backends == oracle: 3000/3000 (100.0%)
+  photonic Sigma != fpga Sigma in 2792/3000 trials (metadata differs, semantics identical)
+  Gate 2 result: PASS
+== Gate 3: block legality + REGEN idempotence ==
+  PASS: K=4 with 3 ops rejected (block declares K=4 but contains 3 ops)
+  PASS: K=4 with 5 ops rejected (block declares K=4 but contains 5 ops)
+  PASS: valid K=4 block parsed (4 ops)
+  PASS: REGEN(REGEN(S)) == S on photonic
+  PASS: REGEN(REGEN(S)) == S on fpga
+  PASS: REGEN(REGEN(S)) == S on digital
+  Gate 3 result: PASS
+
+ALL GATES: PASS

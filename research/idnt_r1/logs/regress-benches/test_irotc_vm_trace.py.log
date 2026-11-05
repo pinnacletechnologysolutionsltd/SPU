@@ -1,0 +1,40 @@
+== importing constructive derivation (oracle self-checks run now) ==
+== construction ==
+  PASS  60 pairwise-distinct rotations from 60 flags
+  PASS  every R: orthogonal, det +1, permutes the 12 vertices
+  PASS  closure: A5 x A5 stays inside the 60
+  PASS  inverse-closed (R^T in the set)
+  PASS  conjugacy class sizes 1/15/20/24 by period: {1: 1, 5: 24, 2: 15, 3: 20}
+  PASS  trace spectrum {3:1, -1:15, 0:20, phi:12, 1-phi:12}
+  PASS  independently built A4 (shifts x even signs) sits inside A5
+  PASS  integer-entry subset of A5 == A4 exactly
+  PASS  48 genuinely new rotations beyond A4
+  PASS  quadray BCD entries lie in (1/2)Z[phi] and halves DO occur (pure-Z[phi] claim is false)
+  PASS  A4 members convert to integer BCD matrices (consistency)
+  PASS  doubled entries only in {0,+-1,+-2,+-phi,+-phi^-1,+-sqrt5} (PSCALE/add chains, no general PMUL)
+  PASS  every new rotation: exactly 16/64 safe residue classes mod 2 (rank 1 over F4)
+  PASS  doubling theorem: 300 random 10-step A5 chains, doubled load, all divisions exact, values track exact rationals
+  PASS  control: raw (undoubled) integer loads fault often (145/200) — the /2 is genuinely fallible without conditioning
+  PASS  phi -> 1-phi maps all 48 new rotations OUT of this A5 (onto the dual icosahedron's A5)
+  PASS  the conjugate A5 shares exactly A4 with this one
+  PASS  mixed-catalog products conj(M1)·M2 reach denominator 4 — catalog switching needs re-conditioning (CATMIX guard is necessary)
+  PASS  canonical index 0 is the identity
+  PASS  canonical catalog checksum stable: aabef37c9c8b0317
+  PASS  all 12 ROTC bypass angles (0,2,5,15-23) alias into the IROTC index space via VM permutation semantics
+  PASS  alias set == the A4 (integer) members of the canonical list
+  PASS  spu13_irotc_engine.v inline code ROM: all 540 entries match the derivation (no drift vs the generated table)
+
+23 checks, 0 failed
+ICOSAHEDRAL CATALOG DERIVATION: ALL PASS
+  PASS  main catalog: all 60 indices x 3 random tagged inputs bit-exact vs exact-Fraction oracle (0 mismatches)
+  PASS  main catalog: A always recomputed from zero-sum, source A ignored
+  PASS  main catalog: DOUBLED tag preserved across IROTC
+  PASS  conjugate catalog: all 60 indices x 3 random tagged inputs bit-exact vs exact-Fraction oracle (0 mismatches)
+  PASS  conjugate catalog: A always recomputed from zero-sum, source A ignored
+  PASS  conjugate catalog: DOUBLED tag preserved across IROTC
+  PASS  all 12 A4 aliases: IROTC idx and ROTC angle produce identical registers on zero-sum doubled data
+  PASS  all 12 A4 aliases: both encodings preserve the DOUBLED tag
+  PASS  sel[6] is a don't-care for the 12 aliased indices (conjugation fixes rational matrices)
+
+9 passed, 0 failed
+IROTC VM TRACE EQUIVALENCE (60 indices x both catalogs): PASS

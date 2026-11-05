@@ -1,0 +1,19 @@
+{
+  "clock": "CLOCK_BOOTTIME",
+  "timeout_seconds": 1200,
+  "started": {
+    "boottime_ns": 28110398052123,
+    "monotonic_ns": 26932890986844,
+    "utc_ns": 1793882624783916809
+  },
+  "ended": {
+    "boottime_ns": 28132048120740,
+    "monotonic_ns": 26954541055487,
+    "utc_ns": 1793882646433982584
+  },
+  "elapsed_seconds": 21.650068617,
+  "active_seconds": 21.650068643,
+  "command_exit_code": 0,
+  "elapsed_deadline_breached": false,
+  "exit_code": 0
+}

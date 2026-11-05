@@ -1,0 +1,2 @@
+PASS HEX public all256 byte indices, signed output, held-valid retirement; preselect_profile=0
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_hex_conformance_tb.v:97: $finish called at 33905000 (1ps)

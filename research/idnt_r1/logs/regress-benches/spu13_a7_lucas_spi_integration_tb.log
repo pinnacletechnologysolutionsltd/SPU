@@ -1,0 +1,10 @@
+case PSCALE ok valid=1 lane=2 A=0000000800000005
+  status ok raw=5a d0 13 00 (IV/IW=d0 claim=1 commit=1 err=0)
+case PCHIRAL ok valid=1 lane=12 A=0000020400000008
+  status ok raw=5a d1 13 00 (IV/IW=d1 claim=1 commit=1 err=0)
+case PMUL ok valid=1 lane=3 A=0000004200000029
+  status ok raw=5a d2 13 00 (IV/IW=d2 claim=1 commit=1 err=0)
+case PINV ok valid=1 lane=4 A=0000000500000201
+  status ok raw=5a d3 13 00 (IV/IW=d3 claim=1 commit=1 err=0)
+PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_a7_lucas_spi_integration_tb.v:240: $finish called at 6137635000 (1ps)

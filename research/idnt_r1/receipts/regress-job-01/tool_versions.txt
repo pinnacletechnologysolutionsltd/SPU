@@ -1,0 +1,5 @@
+GNU bash, version 5.1.16(1)-release (x86_64-pc-linux-gnu)
+Python 3.10.12
+tools/run_detached_job.sh: line 82: yosys: command not found
+tools/run_detached_job.sh: line 83: nextpnr-himbaechel: command not found
+tools/run_detached_job.sh: line 84: nextpnr-xilinx: command not found

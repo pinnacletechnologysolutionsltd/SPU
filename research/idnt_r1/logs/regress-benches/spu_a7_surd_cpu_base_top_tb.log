@@ -1,0 +1,2 @@
+PASS: spu_a7_surd_cpu_base_top_tb (latency=257 min_high=20.000000 min_low=20.000000)
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu_a7_surd_cpu_base_top_tb.v:141: $finish called at 188090000 (1ps)

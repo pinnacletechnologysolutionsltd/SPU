@@ -1,0 +1,16 @@
+PASS: er 2 QLDI -> no REGEN_PREC fault
+PASS: C1: counter cleared
+PASS: after 1 QLDI -> REGEN_PREC fault
+PASS: C2: counter kept at 1
+PASS: ted (QLDI+LD, REGEN K=1 -> pass)
+PASS: OTC (ENABLE_IROTC=0) not counted
+PASS: clean pass-through (idempotence)
+PASS: ,2,4) from the fixed-point chain
+PASS: : REGEN recovers QR1 = (1,0,0,0)
+PASS: tion recovers the same exact QR0
+PASS: tion recovers the same exact QR1
+PASS:  K=3 faulted (counter kept at 4)
+PASS: GEN K=4 recovers the exact state
+PASS: t-then-clear: QR1 also recovered
+spu13_core_regen_tb: PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_regen_tb.v:328: $finish called at 1945000 (1ps)

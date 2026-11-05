@@ -1,0 +1,2 @@
+PASS: fpga_chain_abs_bitlen_tb
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/fpga_chain_abs_bitlen_tb.v:76: $finish called at 0 (1ps)

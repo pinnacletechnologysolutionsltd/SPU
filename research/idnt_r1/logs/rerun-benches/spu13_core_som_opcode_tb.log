@@ -1,0 +1,19 @@
+VCD info: dumpfile build/spu13_core_som_opcode_tb.vcd opened for output.
+TEST 1: QLDI source QR0 = (2,1,0,0)
+PASS: QLDI loaded SOM feature vector
+TEST 2: SOM_CLASSIFY waits for reduced label
+PASS: SOM_CLASSIFY emitted label=1 ambiguous=0
+PASS: SOM_CLASSIFY start was a single pulse
+TEST 3: RCA₀ level — small integer feature, expect no fault
+PASS: RCA₀ gatekeeper silent (no overflow, no fractional bits)
+TEST 4: WKL₀ level — same feature, expect no fault
+PASS: WKL₀ gatekeeper silent
+TEST 5: OFF level — gatekeeper disabled, expect no fault
+PASS: OFF gatekeeper silent
+PASS: fault_count=0 across all levels
+TEST 6: integrated RCA₀ overflow positive control
+PASS: integrated overflow reached core status outputs
+TEST 7: chirality 6 (16'h000C) must leave RCA₀ armed
+PASS: chirality and axiomatic level are independent fields
+spu13_core_som_opcode_tb: PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_som_opcode_tb.v:250: $finish called at 18016000 (1ps)

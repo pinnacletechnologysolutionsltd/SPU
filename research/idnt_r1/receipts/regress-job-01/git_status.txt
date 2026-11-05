@@ -1,0 +1,2 @@
+ M hardware/rtl/core/spu13/spu13_core.v
+?? hardware/tests/spu13/spu13_core_idnt_tb.v

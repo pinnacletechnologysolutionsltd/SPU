@@ -1,0 +1,15 @@
+PASS: valid K=2 block assembles; REGEN P1_A=2 (3 words)
+PASS: valid K=4 block (QLDI+QSUB+ROTC+IDNT) assembles (5 words)
+PASS: K=2 with 1 op -> too-short (<input>:3: block declares K=2 but contains 1 ops)
+PASS: K=2 with 3 ops -> too-long (<input>:5: block declares K=2 but contains 3 ops)
+PASS: K=4 with 3 eligible ops -> too-short (<input>:5: block declares K=4 but contains 3 ops)
+PASS: K=4 with 5 eligible ops -> too-long (<input>:7: block declares K=4 but contains 5 ops)
+PASS: orphan .regen (<input>:2: orphan .regen)
+PASS: unterminated .block (<input>: unterminated .block (K=2))
+PASS: ineligible LD inside block (<input>:2: 'LD' is not block-eligible (E_REGEN = ['DELTA', 'HEX', 'IDNT', 'IROTC', 'QLDI', 'QLOG', 'QSUB', 'ROTC']))
+PASS: nested .block (<input>:3: nested .block)
+PASS: label before block + JMP back assembles (4 words)
+PASS: two consecutive K=1 blocks (4 words)
+PASS: both REGENs carry P1_A=1
+
+test_regen_asm: PASS

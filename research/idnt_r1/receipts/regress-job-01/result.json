@@ -1,0 +1,10 @@
+{
+  "format": "SPU_DETACHED_JOB_RESULT_V1",
+  "outcome": "FAILED",
+  "exit_code": 1,
+  "timeout_seconds": 1800,
+  "duration_seconds": 588,
+  "start_time_utc": "2026-11-05T12:32:58Z",
+  "end_time_utc": "2026-11-05T12:42:46Z",
+  "systemd_unit": "spu-regress-job-01-20261105T123258Z-57280"
+}

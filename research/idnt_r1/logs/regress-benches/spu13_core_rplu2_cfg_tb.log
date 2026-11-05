@@ -1,0 +1,2 @@
+PASS: spu13_core_rplu2_cfg_tb
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_rplu2_cfg_tb.v:299: $finish called at 30255000 (1ps)

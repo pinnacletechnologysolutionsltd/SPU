@@ -1,0 +1,8 @@
+Stage C: 120 chains, 243 blocks, 232 K>0 boundaries
+PASS: Digital reference == VM == Stage-A RTL == Stage-B RTL
+PASS: dphi sweep {0, 100, 255} — compensation exercised, including
+      near its precision limit (dphi=255, K=16)
+PASS: photonic backend == oracle at deltaT = {2, 5} K (conditioned)
+      — the photonic substrate satisfies the frozen execution contract
+PASS: no substrate-specific detail leaked through the REGEN boundary
+      across all nine hostile categories

@@ -1,0 +1,7 @@
+PASS: A: 5 commits match VM values
+PASS: no fault before any REGEN
+PASS: off: fault latched, not silent
+PASS: off: REGEN wrote no QR state
+PASS: off: sticky, later ops still run
+spu13_core_regen_off_tb: PASS REGEN_EN=0
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_regen_off_tb.v:289: $finish called at 775000 (1ps)

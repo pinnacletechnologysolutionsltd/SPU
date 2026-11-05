@@ -1,0 +1,6 @@
+hardware/tests/spu13/spu13_core_qsub_delta_tb.v
+hardware/tests/spu13/spu13_core_rotc_opcode_tb.v
+hardware/tests/spu13/spu13_core_som_opcode_tb.v
+hardware/tests/spu13/spu13_spi_core_boot_status_tb.v
+hardware/tests/spu13/spu13_spi_core_irotc_tb.v
+hardware/tests/spu13/spu13_spi_core_rotc_tb.v

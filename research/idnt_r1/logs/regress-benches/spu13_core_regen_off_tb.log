@@ -1,0 +1,6 @@
+PASS: A: 5 commits match VM values
+PASS: no fault before any REGEN
+PASS: on: REGEN K=6 passes, no fault
+PASS: on: REGEN committed both lanes
+spu13_core_regen_off_tb: PASS REGEN_EN=1
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_regen_off_tb.v:289: $finish called at 775000 (1ps)

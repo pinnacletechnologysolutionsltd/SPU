@@ -1,0 +1,6 @@
+VCD info: dumpfile build/spu13_spi_core_rotc_tb.vcd opened for output.
+PASS: SPI QR0 commit A=0000000000000001 B=0000000000000002 C=0000000000000003 D=0000000000000004
+PASS: SPI QR6 commit A=0000000000000001 B=0000000000000002 C=0000000000000003 D=0000000000000004
+PASS: SPI QR7 commit A=0000000000000001 B=0000000000000003 C=0000000000000002 D=0000000000000004
+spu13_spi_core_rotc_tb: PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_spi_core_rotc_tb.v:292: $finish called at 43920320000 (1ps)

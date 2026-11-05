@@ -1,0 +1,14 @@
+VCD info: dumpfile build/spu13_core_jscr_tb.vcd opened for output.
+TEST 1: QLDI hydrates topology6 shadow lane 2
+PASS: lane2 pos AB = A-B
+PASS: lane2 pos AC = A-C
+PASS: lane2 pos AD = A-D
+PASS: lane2 neg AD = D-A
+TEST 2: JSCR piston writes topology lane 3
+PASS: lane3 pos AB unchanged
+PASS: lane3 pos CD unchanged
+PASS: lane3 neg AB = old neg CD
+PASS: lane3 neg AC = old neg BD
+PASS: lane3 neg BD = old neg AD
+PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_jscr_tb.v:159: $finish called at 226000 (1ps)

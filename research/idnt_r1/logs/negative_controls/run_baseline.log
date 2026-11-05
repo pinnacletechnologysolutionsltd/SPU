@@ -1,0 +1,21 @@
+PASS: T4 REGEN counter = 3 after QLDI, QLDI, IDNT
+PASS: T4 REGEN K=3 no fault
+FAIL: T4 recovered QR0 = (1,0,0,0)
+PASS: T4 recovered QR1.A = 5
+FAIL: T4 QR0 after REGEN = (1,0,0,0)
+PASS: T1 precondition QR3 = (3,5,0,1)
+FAIL: T1 IDNT QR3: one commit, lane 3, (1,0,0,0) full width
+FAIL: T1 QR3 stored value is (1,0,0,0), surd parts 0
+PASS: T1 neighbour QR4 unchanged (1,2,3,4)
+FAIL: T1 HEX telemetry order unchanged: (B-D,A-D) = (0,1)
+FAIL: T2 overwrite (-2,7,0,4) then IDNT twice -> (1,0,0,0)
+FAIL: T3 IDNT QR12 commits lane 12
+FAIL: T3 QR12 = (1,0,0,0)
+PASS: T3 QR11 unchanged (6,6,6,6)
+FAIL: T3 IDNT QR13 wraps to lane 0
+FAIL: T3 QR0 = (1,0,0,0) after QR13
+FAIL: T3 IDNT QR255 wraps to lane 8
+FAIL: T3 QR8 = (1,0,0,0)
+PASS: T5 no-QR build: IDNT done exactly once, no QR commit
+FAIL: spu13_core_idnt_tb 12 error(s)
+hardware/tests/spu13/spu13_core_idnt_tb.v:155: $finish called at 3605000 (1ps)

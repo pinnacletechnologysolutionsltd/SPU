@@ -1,0 +1,8 @@
+VCD info: dumpfile build/spu13_core_qsub_delta_tb.vcd opened for output.
+TEST 1: live-core QLDI/QSUB
+PASS: QLDI telemetry reports QR1=(10,20,30,40)
+PASS: QSUB QR3 = QR1 - QR2
+TEST 2: live-core DELTA
+PASS: DELTA QR4 = (7,0,10,0)
+spu13_core_qsub_delta_tb: PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_qsub_delta_tb.v:166: $finish called at 346000 (1ps)

@@ -1,0 +1,7 @@
+PASS             1.6s spu13_core_qsub_delta_tb
+PASS             5.7s spu13_core_rotc_opcode_tb
+PASS             1.1s spu13_core_som_opcode_tb
+PASS             1.3s spu13_spi_core_boot_status_tb
+PASS             6.8s spu13_spi_core_irotc_tb
+PASS             4.4s spu13_spi_core_rotc_tb
+SUMMARY: 6/6 PASS

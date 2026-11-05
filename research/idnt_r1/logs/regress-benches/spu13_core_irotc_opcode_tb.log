@@ -1,0 +1,27 @@
+PASS LOAD2X doubles into QR1
+PASS LOAD2X sets FRESH
+PASS IROTC idx36 main bit-exact
+PASS IROTC main output is MAIN
+PASS IROTC idx36 conj bit-exact
+PASS IROTC conj output is CONJ
+PASS BADIDX idx 60 faults, QR4 pinned
+PASS QLDI raw load clears tag
+PASS TAGGED source faults, QR4 pinned
+PASS  conj-on-MAIN faults, QR4 pinned
+PASS  main-on-CONJ faults, QR4 pinned
+PASS chain idx40(idx36) bit-exact
+PASS chain stays MAIN
+PASS thirds ROTC clears to UNTAGGED
+PASS OTC after thirds faults UNTAGGED
+PASS A4 bypass ROTC preserves MAIN
+PASS al ROTC demotes MAIN to UNTAGGED
+PASS hedral ROTC passes FRESH through
+PASS SCALE2 doubles MAIN data
+PASS SCALE2 reconditions to FRESH
+PASS  rotation after SCALE2 bit-exact
+PASS tioned catalog switch lands CONJ
+PASS QSUB MAIN-MAIN joins to MAIN
+PASS QSUB values componentwise
+PASS SUB MAIN-CONJ clears to UNTAGGED
+spu13_core_irotc_opcode_tb: PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_irotc_opcode_tb.v:304: $finish called at 1665000 (1ps)

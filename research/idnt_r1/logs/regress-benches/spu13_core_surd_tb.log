@@ -1,0 +1,11 @@
+INS -1 118 0 2 0 0 0 0 0 0 1
+INS -1 112 0 2 0 0 0 0 0 0 0
+INS -1 112 0 2 0 0 0 0 0 0 0
+INS -1 112 0 2 0 0 0 0 0 0 0
+INS -1 112 0 2 0 0 0 0 0 0 0
+INS -1 112 0 2 0 0 0 0 0 0 0
+INS -1 112 0 2 0 0 0 0 0 0 0
+INS -1 113 0 2 0 0 0 0 0 0 0
+INS -1 115 0 5 0 0 2 0 0 0 0
+spu13_core_surd_tb: PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_surd_tb.v:46: $finish called at 610000 (1ps)

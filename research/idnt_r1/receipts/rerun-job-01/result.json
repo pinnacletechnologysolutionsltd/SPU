@@ -1,0 +1,10 @@
+{
+  "format": "SPU_DETACHED_JOB_RESULT_V1",
+  "outcome": "COMPLETE",
+  "exit_code": 0,
+  "timeout_seconds": 1200,
+  "duration_seconds": 22,
+  "start_time_utc": "2026-11-05T12:43:44Z",
+  "end_time_utc": "2026-11-05T12:44:06Z",
+  "systemd_unit": "spu-rerun-job-01-20261105T124344Z-58817"
+}

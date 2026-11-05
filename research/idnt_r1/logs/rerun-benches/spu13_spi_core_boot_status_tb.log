@@ -1,0 +1,4 @@
+PASS: first AC read after settled READY reflects boot_ready
+PASS: second consecutive AC read stable (boot_ready set, no stuck CRC error)
+PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_spi_core_boot_status_tb.v:216: $finish called at 3438400000 (1ps)

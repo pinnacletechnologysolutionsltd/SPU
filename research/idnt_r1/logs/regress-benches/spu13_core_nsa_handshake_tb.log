@@ -1,0 +1,5 @@
+VCD info: dumpfile build/spu13_core_nsa_handshake_tb.vcd opened for output.
+TEST: NSA_DQADD waits for NSA core completion
+PASS: NSA_DQADD completion delayed 18 cycles
+PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_nsa_handshake_tb.v:104: $finish called at 216000 (1ps)

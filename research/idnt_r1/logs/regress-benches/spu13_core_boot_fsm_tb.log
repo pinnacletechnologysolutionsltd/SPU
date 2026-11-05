@@ -1,0 +1,11 @@
+PASS  boot_ready low at reset release
+PASS boot_ready rises after hydration
+PASS in VE walk + margin (<30 cycles)
+PASS -hydration completes after READY
+PASS  intact (not eaten by hydration)
+PASS ever rises without SOM hydration
+PASS : FSM in FAULT.HYDRATION_TIMEOUT
+PASS ion accepted in FAULT (terminal)
+PASS letes after 28 SOM writes, READY
+spu13_core_boot_fsm_tb: PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_core_boot_fsm_tb.v:203: $finish called at 2155000 (1ps)

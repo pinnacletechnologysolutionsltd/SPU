@@ -1,0 +1,9 @@
+VCD info: dumpfile build/spu13_spi_core_irotc_tb.vcd opened for output.
+PASS: SPI QR1 commit A=0000000000000000 B=0000000000000006 C=00000000fffffff4 D=0000000000000012
+PASS: SPI QR2 commit A=00000006fffffffd B=00000009fffffff4 C=fffffff100000003 D=000000000000000c
+PASS: SPI QR3 commit A=fffffffa00000003 B=fffffff7fffffffd C=0000000ffffffff4 D=000000000000000c
+PASS: SPI QR3 commit A=fffffffa00000003 B=fffffff7fffffffd C=0000000ffffffff4 D=000000000000000c
+PASS: SPI QR5 commit A=0000000cfffffffa B=00000012ffffffe8 C=ffffffe200000006 D=0000000000000018
+PASS: SPI QR6 commit A=000000090000000c B=ffffffee00000018 C=00000018ffffffeb D=fffffff1fffffff1
+spu13_spi_core_irotc_tb: PASS
+/home/john/spu-public-v0.2-rc2/build/idnt-r1-worktree/hardware/tests/spu13/spu13_spi_core_irotc_tb.v:342: $finish called at 87815360000 (1ps)
