@@ -1,0 +1,24 @@
+Reference,Value,ManufacturerPartNumber,Footprint
+A1,Pico 2 (socketed),SC1631,Module:RaspberryPi_Pico_Common_THT
+U1,SN74LVC2T45DCUR,SN74LVC2T45DCUR,Package_SO:VSSOP-8_2.3x2mm_P0.5mm
+U2,SN74LVC1T45DBV,SN74LVC1T45DBVR,Package_TO_SOT_SMD:SOT-23-6
+U3,SN74LVC1T45DBV,SN74LVC1T45DBVR,Package_TO_SOT_SMD:SOT-23-6
+J2,TARGET_SPI_3V3,,Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical
+R1,100,,Resistor_SMD:R_0805_2012Metric
+R2,100,,Resistor_SMD:R_0805_2012Metric
+R3,100,,Resistor_SMD:R_0805_2012Metric
+R4,100,,Resistor_SMD:R_0805_2012Metric
+R5,10k,,Resistor_SMD:R_0805_2012Metric
+R6,10k,,Resistor_SMD:R_0805_2012Metric
+R7,10k,,Resistor_SMD:R_0805_2012Metric
+R8,10k,,Resistor_SMD:R_0805_2012Metric
+R9,10k,,Resistor_SMD:R_0805_2012Metric
+R10,10k,,Resistor_SMD:R_0805_2012Metric
+R11,10k,,Resistor_SMD:R_0805_2012Metric
+R12,10k,,Resistor_SMD:R_0805_2012Metric
+C1,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
+C2,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
+C3,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
+C4,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
+C5,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
+C6,100n 16V X7R,,Capacitor_SMD:C_0805_2012Metric
