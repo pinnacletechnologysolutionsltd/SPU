@@ -222,6 +222,19 @@ C++ parity: `software/common/tests/spu_rational_som_test.cpp`
 | `wildberger_higher_dim.lith` | Cross matrix, diagonal rule, 2-subspaces |
 | `call_demo.lith` | CALL/RET subroutine test |
 
+**Annotation (2026-11-05; original entry preserved above).** This entry is an
+inventory, not a test result: it records no command or output. The files are
+under `software/programs/`, not `tools/`. `wildberger_geometry`, `wildberger_layer2`
+and `wildberger_chromogeometry` contained scalar Pell lines (`IDNT R0`,
+`QROT Rd, Rs, 1`) that the historical assembler silently encoded as Quadray
+operations on QR0, so any earlier run of them did not execute the written
+scalar Pell steps. Their sources were corrected and regenerated on 2026-11-05
+(see `docs/isa/CANONICAL_CONTROL_RECONCILIATION.md`, legacy binary boundary).
+On the historical public Python VM, CALL shared opcode 0x20 with COND and was
+executed as COND, so `call_demo` could not have exercised CALL/RET there;
+canonical CALL/RET is tested by `software/tests/test_canonical_control.py`.
+None of this is silicon evidence.
+
 ### 2.10 C++ Test Suite
 
 11 C++ test files under `software/common/tests/`:

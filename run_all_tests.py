@@ -1140,6 +1140,30 @@ def main():
     gram_pass = sum(p for p, _ in gram_results.values())
     gram_fail = sum(f for _, f in gram_results.values())
 
+    # ISA compatibility (canonical CALL/RET/QREAD words, COND refusal, C++ VM
+    # exit codes and fault rollback) and program-image reproducibility
+    # (every tracked software/programs/*.bin == canonical assembly of its .sas).
+    # Needs g++ for the C++ VM checks. Required: a missing script is a failure.
+    isa_compat_results = {}
+    for isa_name in ("test_canonical_control.py", "test_isa_conformance.py",
+                     "test_isa_software_semantics.py", "test_program_images.py"):
+        isa_path = os.path.join(root_dir, "software", "tests", isa_name)
+        if not os.path.exists(isa_path):
+            print(f"\n  {isa_name} MISSING (required suite)")
+            isa_compat_results[isa_name] = (0, 1)
+            continue
+        try:
+            r = subprocess.run([sys.executable, isa_path],
+                               capture_output=True, text=True, timeout=180)
+            ok, out = (r.returncode == 0), r.stdout + r.stderr
+        except subprocess.TimeoutExpired:
+            ok, out = False, "timeout"
+        isa_compat_results[isa_name] = (1, 0) if ok else (0, 1)
+        if not ok:
+            print(f"\n  {isa_name} FAILED:\n{out[-500:]}")
+    isa_compat_pass = sum(p for p, _ in isa_compat_results.values())
+    isa_compat_fail = sum(f for _, f in isa_compat_results.values())
+
     # IROTC VM suite (trace equivalence / poison proofs / chain tests) —
     # φ-plane icosahedral opcodes, no hardware required. The trace and
     # chain tests import test_icosahedral_catalog.py, so the derivation's
@@ -1453,6 +1477,9 @@ def main():
     print(f"\nGram v1 SPREAD Tests: {gram_pass + gram_fail}")
     print(f"Passed:               {gram_pass}")
     print(f"Failed:               {gram_fail}")
+    print(f"\nISA Compatibility Tests: {isa_compat_pass + isa_compat_fail}")
+    print(f"Passed:                  {isa_compat_pass}")
+    print(f"Failed:                  {isa_compat_fail}")
     print(f"\nProfile scoping: SPU_PROFILE={spu_profile}")
     if profile_skipped:
         print(f"  SKIPPED ({len(profile_skipped)}, REGEN full-profile-only, inapplicable to base):")
@@ -1523,7 +1550,7 @@ def main():
         + audio_pass + host_pass + cpu_frontend_pass + spu4_probe_parser_pass + spu4_probe_client_pass
         + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + exit_verdict_pass + rotc_trace_pass
-        + regen_pass + cpu_profile_pass + gram_pass
+        + regen_pass + cpu_profile_pass + gram_pass + isa_compat_pass
         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
         + bench_metrics_pass
         + composition_pass
@@ -1538,7 +1565,7 @@ def main():
         + audio_fail + host_fail + cpu_frontend_fail + spu4_probe_parser_fail + spu4_probe_client_fail
         + som_product_fail + robotics_demo_fail
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + exit_verdict_fail + rotc_trace_fail
-        + regen_fail + cpu_profile_fail + gram_fail
+        + regen_fail + cpu_profile_fail + gram_fail + isa_compat_fail
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + bench_metrics_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)
