@@ -168,7 +168,7 @@ def expand_arc(emitter: AsmEmitter, regs: RegisterPool,
     offset = point - center  →  QR[tmp]
     For k in 1..steps:
         QR[tmp] = QROT(QR[tmp])     ; Pell-rotate the offset
-        QR[out] = QADD(QR[tmp], QR[c])  ; new point = center + offset
+        QR[out] = QREAD(QR[tmp]); QADD(QR[out], QR[c])  ; new point = center + offset
     """
     c_reg = f"QR{center_reg[1]}"
     p_reg = f"QR{point_reg[1]}"
@@ -196,8 +196,9 @@ def expand_arc(emitter: AsmEmitter, regs: RegisterPool,
         emitter.comment(f"step {k}")
         # Rotate offset by Pell rotor
         emitter.instr("QROT", f"QR{tmp_offset}", f"R{r_pell}")
-        # new_point = center + rotated_offset
-        emitter.instr("QADD", f"QR{tmp_result}", f"QR{tmp_offset}", c_reg)
+        # new_point = center + rotated_offset (QADD is in-place: copy, then add)
+        emitter.instr("QREAD", f"QR{tmp_result}", f"QR{tmp_offset}")
+        emitter.instr("QADD", f"QR{tmp_result}", c_reg)
         # Output
         emitter.instr("QLOG", f"QR{tmp_result}")
 
