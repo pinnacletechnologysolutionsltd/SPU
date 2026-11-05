@@ -2607,4 +2607,12 @@
 (text "Brownout transaction blocking is NOT implemented." (at 20.32 246.38 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "9761864b-6cc4-50c7-aa7d-f883b2ba1302"))
 (text "No UART / flash / other cross-board bypass paths included." (at 20.32 254 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "180967a6-2f1a-5f94-b918-063c93e8916a"))
 (text "No bench qualification; VCCO identity and ramp tests outstanding." (at 20.32 261.62 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "fe28a40d-2d60-522b-8a60-65f8ce82a7a1"))
+
+(text "Rev 1 power: USB -> Pico regulator; no extra regulator." (at 304.8 198.12 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "51d3db81-21d3-54d5-a79b-7105091181b8"))
+(text "Pico external 3V3 budget: <=100mA initial target." (at 304.8 205.74 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "f66947c5-20a5-5819-a0db-9ce59f1c9f50"))
+(text "Planning slots (mA), NOT measured:" (at 304.8 213.36 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "d49e36fe-5752-5856-9dec-0767ffd9516d"))
+(text "Interface 10 | INA226 5 | I2C sensors 10" (at 304.8 218.44 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "3431625b-1eb1-5afc-a882-86175cd0687a"))
+(text "Storage 50 | LEDs 2 | Margin 23 = 100" (at 304.8 223.52 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "e841dc0c-4356-5950-b1b4-54d14968a52f"))
+(text "Modules TBD; check peak/startup current before fitting." (at 304.8 231.14 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "91f5eb5a-721f-5682-9410-e7259bce7905"))
+(text "Target VCCO: B-sides only; never peripheral power." (at 304.8 238.76 0) (effects (font (size 1.2 1.2)) (justify left)) (uuid "2db4f682-dd8b-5fe2-829b-111824b94311"))
 )

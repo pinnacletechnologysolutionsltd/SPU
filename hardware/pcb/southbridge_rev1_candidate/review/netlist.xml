@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <export version="E">
   <design>
-    <source>/home/john/Projects/hardware/SPU/hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch</source>
-    <date>2026-11-05T12:46:43</date>
+    <source>/tmp/spu-southbridge-rev1-review/hardware/pcb/southbridge_rev1_candidate/southbridge_rev1_candidate.kicad_sch</source>
+    <date>2026-11-05T13:16:41</date>
     <tool>Eeschema 10.0.7</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>

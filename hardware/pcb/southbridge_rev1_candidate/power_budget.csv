@@ -1,0 +1,9 @@
+Rail,Load,PlanningSlot_mA,SelectedPart,DocumentedPeak_mA,MeasuredPeak_mA,Status
+PICO_3V3,Translator A-sides and interface loads,10,SN74LVC2T45DCUR + 2x SN74LVC1T45DBVR,,,Unmeasured
+PICO_3V3,INA226 module,5,TBD,,,Not drawn
+PICO_3V3,I2C sensors total,10,TBD,,,Not drawn
+PICO_3V3,SPI storage total,50,TBD,,,Not drawn - no microSD approved
+PICO_3V3,External indicator LEDs,2,TBD,,,Not drawn
+PICO_3V3,Unallocated margin,23,,,,Planning reserve
+PICO_3V3,TOTAL ENVELOPE,100,,,,Not a measured load
+TARGET_VCCO_3V3,Translator B-sides and target bias,,TBD,,,Separate Wukong budget unresolved

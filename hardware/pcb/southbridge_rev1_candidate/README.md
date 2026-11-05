@@ -32,6 +32,68 @@ use standard KiCad libraries; no project-local library is required.
 - No UART, flash-programmer or other cross-board connection is included.
   Such paths require their own power-domain review before use.
 
+## Rev 1 power distribution and planning budget
+
+Owner direction: USB powers Pico 2, whose onboard regulator supplies the
+breakout's small 3.3V loads. No additional regulator or external power input
+is planned for Rev 1. Wukong retains its own supply; TARGET_VCCO_3V3 is only
+for the translator B-side circuitry and target-side pulls, never peripherals.
+The grounds are common. The translators form a power-domain interface, not
+a galvanic isolation barrier.
+
+The [official Pico 2 datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf),
+section 3.1, recommends less than 300mA external load on pin 36; available
+current depends on RP2350 load and VSYS voltage. This is not 300mA of
+unconditionally spare capacity. Our initial external-load ceiling is **100mA**,
+subject to checking USB source/cable capacity, Pico workload and temperature.
+It covers simultaneous peaks and startup, not just average module currents.
+
+The following are **proposed allocation slots**, not measured currents,
+manufacturer limits or evidence that a module fits. Exact modules are not yet
+selected. Unused slots remain headroom; exceeding a slot requires revisiting
+the budget. The same table is supplied as [CSV](power_budget.csv), with a
+summary on the KiCad schematic.
+
+| Load on Pico pin 36 | Planning slot (mA) | Evidence / implementation status |
+|---|---:|---|
+| Translator A-sides, Pico-side bias, signal-load allowance | 10 | Circuit drawn; switching current and loads unmeasured |
+| INA226 module, including its LEDs/pull-ups | 5 | Module compatibility and total current TBD; not drawn |
+| Small I2C sensors, including all pull-ups | 10 | Exact modules and peak currents TBD; not drawn |
+| SPI storage total, including startup/write bursts | 50 | Flash or microSD selection TBD; not drawn; no card approved |
+| External indicator LEDs | 2 | LED/resistor selection TBD; not drawn |
+| Unallocated margin | 23 | Keep available for uncertainty and transients |
+| **Total envelope** | **100** | 77mA allocated + 23mA margin; not a load measurement |
+
+The Pico's own RP2350/onboard loads are outside this *external* table but
+still consume regulator and USB capacity. Translator dynamic current depends
+on frequency, capacitance and driven loads; quiescent current alone cannot
+close the budget. B-side currents and target-side bias belong in Wukong's
+separate bank-rail budget, which is still TBD. Decoupling inrush must also be
+considered in both domains.
+
+Before approving any module, record its exact part/revision, 3.3V supply and
+logic compatibility, documented maximum continuous and startup/burst current,
+measured peak under simultaneous activity, and its rail. Sum the concurrent
+peaks; retain margin and demonstrate acceptable voltage droop at the farthest
+header under storage writes and maximum intended Pico activity. A 50mA slot
+does not mean an arbitrary microSD card fits; select a documented device or
+revise/defer that option. Generic 5V microSD modules with onboard regulators
+or level shifters must not be assumed to work from 3.3V.
+
+A logic-analyser header exports signals and ground only; it does not supply
+the analyser, which has its own USB power. Future peripheral headers will
+use Pico-derived 3.3V and ground. Provision a peripheral disconnect jumper,
+indicator, and labelled PICO_3V3 / TARGET_VCCO_3V3 / GND test points when
+capturing the peripheral sheet; these are not present in this interface-only
+candidate. Current limiting remains a component/cost decision, not an
+implemented feature. Disconnecting peripheral power alone can leave GPIO
+backfeed paths; the future sheet must handle those paths too.
+
+ESP32/radio modules and motors/servos/actuators have no allocation in this
+revision. External powered devices must not feed either 3.3V rail or bypass
+the protected FPGA interface. Industrial 12V/24V inputs, regulators and
+protection belong to a later variant. No physical power testing has run.
+
 ## Exact identities and pin connections
 
 Sources: TI [SN74LVC2T45, SCES516N](https://www.ti.com/lit/ds/symlink/sn74lvc2t45.pdf)
@@ -186,3 +248,11 @@ No purchasing comparison was performed. Lower cost or superiority over the
 power-ready circuit is not established; the two candidates provide different
 undervoltage behaviour. Publication of this draft does not release hardware
 or supersede the existing design.
+
+Power-plan update validation (2026-11-05): only schematic text annotations,
+budget files and review exports changed; electrical connectivity is unchanged.
+ERC again reports 0 errors / 0 warnings and all 74 netlist pin checks pass.
+PDF was rendered and inspected. The CSV slots sum to 100mA. README local links
+and whitespace checks pass. Repository doc audit exits 0 with the same
+master-based findings above, except 120 orphans after tracking this README.
+No current, voltage-droop or thermal measurements have been made.
