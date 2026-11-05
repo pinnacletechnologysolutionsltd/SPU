@@ -603,6 +603,12 @@ Bits [ 7: 0]  (reserved)
 
 ### 6.2 Complete Opcode Table
 
+**Reconciliation pending (2026-11-05):** the `QNORM`, `IDNT`, `HEX` and `QLOAD`
+rows below have not been reconciled with [the ISA reference](isa_reference.md)
+and the assembler/VM implementations, and their operands or descriptions may be
+out of date. Use the ISA reference for these instructions until this table is
+reviewed. No replacement semantics are given here.
+
 **Scalar Q(√3) Arithmetic**
 
 | Mnemonic | Opcode | Operation |
@@ -620,10 +626,15 @@ Bits [ 7: 0]  (reserved)
 |----------|--------|-----------|
 | `JMP LABEL` | 0x06 | Unconditional jump |
 | `SNAP` | 0x07 | Assert all regs laminar; exit 2 on failure |
-| `COND Rn, LABEL` | 0x20 | Jump if Q(Rn) > 0; fall through if Q ≤ 0 |
-| `CALL LABEL` | 0x21 | Push PC, jump |
-| `RET` | 0x22 | Pop PC, jump |
+| `CALL LABEL` | 0x20 | Push PC, jump |
+| `RET` | 0x21 | Pop PC, jump |
 | `NOP` | 0xFF | No operation |
+
+`COND` has no canonical encoding and is rejected; the canonical ISA has no
+conditional branch. This table previously listed COND 0x20, CALL 0x21 and
+RET 0x22, the historical C++ VM encoding (corrected 2026-11-05; see
+[the canonical control record](../docs/isa/CANONICAL_CONTROL_RECONCILIATION.md)
+and [the ISA reference](isa_reference.md), which is authoritative).
 
 **Quadray IVM**
 
@@ -631,7 +642,7 @@ Bits [ 7: 0]  (reserved)
 |----------|--------|-----------|
 | `QLOAD QRn, Rb` | 0x13 | Pack R[Rb..Rb+3] into QRn |
 | `QADD QRd, QRs` | 0x10 | `QRd ← QRd + QRs` |
-| `QROT QRn` | 0x11 | `(a,b,c,d) → (b,c,d,a)` — cyclic IVM rotation |
+| `QROT QRn` | 0x11 | Each component of QRn ×= (2+√3), then normalized — Pell rotor (corrected 2026-11-05; previously described as a cyclic rotation) |
 | `QNORM QRd, QRs` | 0x12 | Quadrance of QRs into QRd |
 | `QLOG QRn` | 0x14 | Print Quadray (debug) |
 
@@ -773,7 +784,7 @@ rightness at runtime.
 | Layer 1 | 64-bit binary ISA encoding | ✅ Defined (spu_vm.py) |
 | Layer 2 | SAS assembler (spu13_asm.py) | ✅ Working |
 | Layer 2 | Python soft-CPU (spu_vm.py) | ✅ Working |
-| Layer 2 | SAS demo programs | ✅ poiseuille, kinematic, laminar_vs_cubic |
+| Layer 2 | SAS demo programs | ✅ poiseuille, kinematic (laminar_vs_cubic is a legacy COND example and does not assemble) |
 | Layer 3 | `spu_surd.h` — Q(√3) RationalSurd arithmetic | ✅ Complete (30 tests) |
 | Layer 3 | `spu_quadray.h` — 4-axis IVM Quadray + Spread | ✅ Complete (40+ tests) |
 | Layer 3 | `spu_ivm.h` — Manifold13 + Nguyen weight oracle | ✅ Complete (35+ tests) |

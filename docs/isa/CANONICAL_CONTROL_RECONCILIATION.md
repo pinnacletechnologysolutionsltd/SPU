@@ -51,8 +51,8 @@ Boundary identity and focused commands are frozen in
 
 ## Legacy binary boundary (2026-11-05)
 
-Recorded during the public-`master` reconciliation review
-(`docs/PUBLIC_BRANCH_RECONCILIATION_REVIEW_2026-11-05.md`). Program images
+Recorded during the 2026-11-05 review of public `master` against the RC2
+line. Program images
 (`software/programs/*.bin`) are raw big-endian 8-byte words with no header or
 encoding identifier, so an image cannot state which encoding it expects.
 

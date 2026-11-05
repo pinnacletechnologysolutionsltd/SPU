@@ -174,7 +174,7 @@ python3 software/spu_forge.py simulate software/programs/poiseuille_flow.sas
 python3 software/spu_forge.py simulate software/programs/kinematic_chain.sas
 python3 software/spu_forge.py simulate software/programs/jitterbug.sas
 python3 software/spu_forge.py simulate software/programs/fibonacci_pulse.sas
-python3 software/spu_forge.py simulate software/programs/equilibrium_test.sas
+python3 software/spu_forge.py simulate software/programs/equilibrium_test.sas  # reports FAIL: the program ends with 2 SNAP failures (VM exit 2); same on the historical public VM
 
 # Run all tests (Verilog)
 python3 run_all_tests.py
