@@ -8406,3 +8406,92 @@ status 01, mask 3f, PC 14, slices [7,0,4,0,9,0] little-endian, CRC-32 7e5ddbf3
 - **Device identity:** speed/temperature grade and board revision remain owner-accepted,
   unverified assumptions.
 - **Persistence and boot:** the image is volatile; no power-cycle or flash boot.
+
+### 3.50 — GEN1-POWER-CYCLE-1: cold power cycle observed; device self-configured from flash at power-on (2026-11-06 UTC)
+
+**Classification:** **HOLD (by design, at the post-power-on gate).** The bounded cold power cycle
+was carried out and observed: owner-performed removal of DC and board USB power for 40.5 s,
+with both USB devices re-enumerating. Afterwards, the FPGA reported a configured state without
+any JTAG load. The procedure required an unconfigured state at that point, so it stopped before
+the final golden load. This entry establishes no Gen-1 result after a power cycle. It records a
+golden pre-load PASS, which is one more instance of the 3.47 procedure, and a board-state
+finding. Entry reviewed and approved for commit by the owner (2026-11-06).
+
+```text
+Claim: on this unit, after one owner-performed removal of all board power (DC plug and board
+  USB, 40.5 s, board observed fully dark by the owner), the XC7A100T reported STAT
+  0x401079fc (DONE=1, MODE=001 master SPI, no CRC error) about 30 s after power-on with no
+  JTAG load. This is attributed to configuration from the bitstream the owner states is
+  present in the on-board configuration flash; that bitstream was not identified.
+Evidence dimension: silicon (single observation); board configuration state; USB topology
+Source revision / dirty-tree identity: golden image and sources as 3.40/3.47; repository
+  documentation baseline e818108; harness build/gen1-power-cycle-1/harness/pc_session.py
+  (sha256 0a3e73b53b74d11c8dbe4993a7caadccba746b4ffea465c4d195c875a8243522), with loads by
+  run_load.py, the 3.47 session with only the output root changed
+Build/test command and configuration: no build. One golden SRAM load
+  (openFPGALoader -c dirtyJtag --freq 1000000, no flash options); read-only --detect; four
+  read-only `openFPGALoader --read-register STAT` reads (v1.2.0; a plain read, see 3.34 audit)
+Device and toolchain: as 3.40 to 3.49 (QMTECH Wukong; JTAG idcode 0x3631093; DirtyJTAG
+  CB81353DCE678119; CH340 by-id usb-1a86_USB_Serial-if00-port0)
+Artifact identity: golden .bit 442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea;
+  flash content NOT identified (no flash read was made)
+Oracle and checked scope: golden record as 3.40 (CRC 756b2b42) for the pre-load; the
+  procedure fixed in advance required STAT "unconfigured" after power-on (DONE=0,
+  INIT_B=INIT_COMPLETE=1, two identical reads)
+Result and evidence artifact path: HOLD; build/gen1-power-cycle-1/ (19-entry MANIFEST.sha256,
+  sha256 eec3840b975ecec4...; run-02/MANIFEST.sha256 19 entries, sha256
+  d4419e60a6a01fb2b5b221493975ae5dddbf753e77d775cffbabdee411eb75f6; run-01/MANIFEST.sha256,
+  sha256 5d389abd3ea64663cd2eddc4dab9fae19d43ffe388ec30b81a0311d91a98b17b)
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result:**
+- **run-01:** HOLD at its first check. No board operation. Neither USB device was present at
+  00:49:06Z, because the owner had unplugged the hub and DC power (kernel log
+  13:48:39–13:49:07 local).
+- **run-02:** the board started unconfigured after that unplug, and the procedure was amended
+  (`pc_session_run02_changes.diff`):
+  - one golden pre-load was added;
+  - the power-off step became "DC plug and board USB";
+  - offline tests 19/19, run twice;
+  - the owner gave a go.
+- **Golden pre-load:** PASS.
+  - Exactly one expected record, 33 bytes, drain 0; loader exit 0 after 31.357 s.
+  - `raw_all.bin` sha256 182c3453f3279af508c04da36c7d3e78e2feb26cf9685ca97512d8a05a8165cf.
+- **Status before the cycle:** STAT read twice, both 0x401079fc. This is the value 3.35 recorded
+  for a configured device.
+- **The cycle:**
+  - Programmer unplugged at the host at 00:57:00.
+  - CH340 left USB at 00:57:22.96, when DC and board USB were removed; the owner reports the
+    board was fully dark.
+  - CH340 returned at 00:58:03.51, 40.55 s off.
+  - Programmer returned at 00:58:23.25.
+  - USB device numbers changed: CH340 14 → 17, DirtyJTAG 15 → 18. Programmer down first and
+    board up first, as the bench rule requires.
+- **Power-on window:**
+  - Capture ran from 00:58:03.51 to 00:58:33.64 and received 0 bytes.
+  - Detect: one device, idcode 0x3631093.
+  - STAT read twice, both 0x401079fc. DONE, INIT_B, INIT_COMPLETE, EOS, GWE and RELEASE_DONE all
+    1; no CRC or ID error; MODE 001; startup state 4.
+  - `run-02/session.json` sha256 714d9494b0cb6fe61176c28b4ff0033f2702c92b4dd0d7453fe19db920aaa034.
+  - The gate classified the state as configured and stopped the run. No final load was made.
+- **State left:** the board is running whatever configured at power-on. There was no flash access
+  and no KEY0.
+
+**Interpretation and limits:**
+- **Attribution.** The owner reports the board went completely dark and that a previous
+  bitstream is still in the configuration flash; the board LEDs were not blinking. DONE=1 after
+  a full power-off, with master-SPI mode pins, is therefore attributed to configuration from
+  flash.
+- **Not identified.** STAT reads the same for any configured design, and this loader cannot read
+  USR_ACCESS. So the design that booted, and whether it drove the UART before capture started,
+  are NOT identified. The owner believes the flash holds "the last gpu image that was
+  created"; this is not verified and no hash is recorded.
+- **Earlier-entry scope.** Earlier entries were written as "volatile SRAM only". That remains
+  true of what they loaded, but this board does not power up unconfigured.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Gen-1 behaviour after a cold power cycle: the final golden load did not run.
+- Loss of the SRAM image as an observation: the image the flash restored masks it.
+- Flash content, identity and pin behaviour of the flash design; no flash read was made.
+- Rail ramps, power-on reset timing, brown-out; timing margin; repeatability.
