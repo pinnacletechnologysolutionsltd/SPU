@@ -8495,3 +8495,76 @@ Adjacent evidence dimensions not established: see below
 - Loss of the SRAM image as an observation: the image the flash restored masks it.
 - Flash content, identity and pin behaviour of the flash design; no flash read was made.
 - Rail ramps, power-on reset timing, brown-out; timing margin; repeatability.
+
+### 3.51 — GEN1-POWER-CYCLE-1 run-03: golden Gen-1 load after a cold power cycle (2026-11-06 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS (single run).** After one owner-performed cold power
+cycle, the board came back with both USB devices re-enumerated and configured itself from its
+flash bitstream, as 3.50 established. Exactly one golden SRAM load then produced exactly one
+record equal to the 3.40 record. This extends 3.47 (repeated loads) to a load made after a cold
+power-on. It does not reinterpret 3.50. Entry reviewed and approved for commit by the owner
+(2026-11-06).
+
+```text
+Claim: on this unit, after removal of all board power (DC plug and board USB) for 75.3 s and
+  its restoration, one SRAM load of the golden Gen-1 image (442a229e...) executed the fixed
+  14-instruction Surd program and reported the expected record (status 01, PC 14,
+  (13,0,4,0,9,0), CRC-32 756b2b42). Attribution follows the 3.40 limit (no execution epoch);
+  the image running before the load was the flash design, not Gen-1.
+Evidence dimension: silicon (single observation); interface (UART TX only, as observed)
+Source revision / dirty-tree identity: golden image and sources as 3.40/3.47; repository
+  documentation baseline 23a8604; harness build/gen1-power-cycle-1/harness/pc_session.py
+  (sha256 c2d94c1c2a45530e0ee5a8c4d549be27f6086b035bcbf3361f32c5bb7cc7760a); changes from run-02:
+  no golden pre-load, and "configured" expected after power-on (pc_session_run03_changes.diff;
+  offline tests 19/19, run twice)
+Build/test command and configuration: no build. One SRAM load (openFPGALoader -c dirtyJtag
+  --freq 1000000, no flash options) by run_load.py (the 3.47 session, output root only
+  changed); read-only --detect and --read-register STAT (plain read, 3.34 audit)
+Device and toolchain: as 3.40 to 3.50
+Artifact identity: golden .bit 442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea;
+  flash content not identified (3.50)
+Oracle and checked scope: frozen 3.40 parser EXPECTED record; checked scope: one cold cycle,
+  one load
+Result and evidence artifact path: PASS; build/gen1-power-cycle-1/run-03/ (19-entry
+  MANIFEST.sha256, sha256 5c01478c01836aa8fb6c2648decf3fc7314387695c5d799058a0507680c969ab);
+  campaign MANIFEST.sha256 (25 entries, sha256 72c7362b423e02f5...)
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result:**
+- **Owner go:** recorded in `owner_confirmation.txt`.
+- **Before the cycle:** STAT read twice, both 0x401079fc. The flash design was running.
+- **The cycle:**
+  - Programmer unplugged at the host at 02:19:08.
+  - CH340 left USB at 02:19:47.25, with DC and board USB removed.
+  - CH340 returned at 02:21:02.57, 75.32 s off.
+  - Programmer returned at 02:21:23.80.
+  - USB device numbers changed: CH340 17 → 19, DirtyJTAG 18 → 20.
+- **Power-on window** (02:21:02.57 to 02:21:32.71): 0 UART bytes. Detect: one device, idcode
+  0x3631093. STAT read twice, both 0x401079fc (configured from flash, as expected).
+- **Golden load:**
+  - Capture started first; drain 0 bytes.
+  - Exactly one load, exit 0 after 31.366 s: `Load SRAM 100.00%`, `isc_done 1`, `init 1`,
+    `done 1` (`loader_output.txt` sha256
+    724bc75b554fab00ba2599fd697b305580930dbe5c2d30ffa296feab7f560365).
+  - Exactly 33 bytes arrived, in two USB chunks 31,312.2 and 31,315.0 ms after load start. The
+    loader returned at 31,366.5 ms. `raw_all.bin` sha256
+    182c3453f3279af508c04da36c7d3e78e2feb26cf9685ca97512d8a05a8165cf.
+  - No other byte, contradictory record or bad header in 30 s.
+  - Final detect OK. `load/session.json` sha256
+    2ed4c957797d0e0d5b9f89807f0d2c156a303eb1816ba2f6cb46d4dfa5298152.
+
+```text
+a5 01 01 3f 0e | 0d000000 00000000 04000000 00000000 09000000 00000000 | 422b6b75
+status 01, mask 3f, PC 14, slices [13,0,4,0,9,0], CRC-32 756b2b42
+```
+
+**Manifest note:** the campaign-level `build/gen1-power-cycle-1/MANIFEST.sha256` was regenerated
+after run-03. The hash cited in 3.50 (eec3840b...) is therefore superseded. The run-01 and
+run-02 manifests cited in 3.50 are unchanged and verify.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Loss of the SRAM image at power-off as an observation: masked by the flash boot (3.50).
+- Flash boot of Gen-1; flash content identity; what the flash design drives during its window.
+- Rail ramps, power-on reset timing, brown-out; timing margin; electrical measurement.
+- Repeatability: one cold cycle and one load. One program and one unit.
