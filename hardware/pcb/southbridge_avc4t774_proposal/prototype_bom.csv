@@ -1,0 +1,11 @@
+Item,Qty,Description,Proposed value or part,Status
+U1,1,Four-channel dual-supply translator,SN74AVC4T774PWR TSSOP-16,Preferred candidate; PW pinout checked; physical package fit unverified
+R_OE,1,OE pull-up to VCCA,10 kOhm,Starting value; confirm GPIO reset state and sink capability
+R_SCK;R_MOSI;R_CS;R_MISO,4,Translator output series resistors,33 Ohm,Starting values; signal integrity and transitions unmeasured
+R_A_SCK;R_A_MOSI;R_A_CS;R_B_MISO,4,Translator input idle pulls,10 kOhm,A_SCK A_MOSI B_MISO to GND; A_CS to VCCA
+R_B_SCK;R_B_MOSI;R_B_CS;R_A_MISO,4,Endpoint-side idle pulls,10 kOhm,B_SCK B_MOSI A_MISO to GND; B_CS to VCCB
+C_A;C_B,2,Local rail bypass capacitors,100 nF ceramic,One each VCCA and VCCB to GND; voltage and dielectric review pending
+J_TARGET,1,Target connector,1x06 2.54 mm header,Mapping provisional; cable orientation and bank rail need verification
+J_PICO,2,Pico 2 module sockets,1x20 2.54 mm sockets,Mechanical fit and module pinout need review
+TP_VCCA;TP_VCCB;TP_GND;TP_OE,4,Rail and OE test points,TBD,Footprint and placement not designed
+TP_SPI,8,Four SPI nets on each side of translator,TBD,Footprint and placement not designed

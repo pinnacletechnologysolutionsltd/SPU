@@ -7,6 +7,12 @@ hardware evidence logs, and older tactical roadmaps. Prefer updating current
 documents instead of deleting historical logs; many older files preserve useful
 bring-up context.
 
+## Proposed future directions
+
+- [v0.2 master roadmap](../spu_strategy/SPU_V02_MASTER_ROADMAP.md): proposed programmable platform, demonstrations and release milestones.
+- [Post-v0.2 contract architecture](../spu_strategy/POST_V02_STATE_MACHINE_CONTRACT_ARCHITECTURE.md): proposed bounded agent autonomy and evidence-based state transitions.
+- [SOUL-AI conceptual research](../spu_strategy/SOUL_AI_CONCEPTUAL_RESEARCH_DIRECTION.md): prospective adaptive intelligence and mathematical claim boundaries.
+
 ## Current Source Of Truth
 
 [Public research identity and maturity vocabulary](RESEARCH_IDENTITY.md): shared

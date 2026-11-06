@@ -24,7 +24,10 @@ Architectural invention is the ambition; demonstrated utility is the test.
 
 ## Try it in two minutes
 
-You need Python 3.10 or newer and Git. No board, no installation, no network.
+You need Python 3.10 or newer and Git. Cloning requires network access; the
+commands that follow run locally without a board or package installation.
+This README describes the development checkout; the public default branch may
+contain a different snapshot until the histories are reconciled.
 
 ```bash
 git clone https://github.com/pinnacletechnologysolutionsltd/SPU.git && cd SPU
@@ -65,6 +68,24 @@ State these before citing any result:
 Details and evidence boundaries: [capability matrix](docs/CAPABILITY_MATRIX.md#known-limitations).
 The [H0 overview](docs/H0_OVERVIEW.md) separates the earlier simulation from
 the later board observation.
+
+## Gen-1 CPU progress
+
+The preserved Wukong CPU sources include a board-local core copy with a
+driver-conflict fix. That fix has not been promoted to the shared core; see the
+[source package](hardware/boards/artix7/wukong_v3/cpu_v02/README.md). The
+fixed-program CPU and ROM variants produced expected UART records in separate,
+limited board runs ([ledger §3.40–3.43](docs/hardware_evidence.md#340--cpu-board-4c-r1-first-fixed-program-surd-cpu-run-over-uart-2026-10-30)).
+The later experimental H0 image accepted two 14-word programs over UART and
+returned oracle-matching results in one session ([§3.46](docs/hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc)).
+
+A separate Vivado rebuild reproduced the fixed-program image's configuration
+payload bit-for-bit in one attempt; it was not a new board run ([reproduction
+record](hardware/boards/artix7/wukong_v3/cpu_v02/portable/REPRO_1B_RESULT.md)).
+That later result supersedes the source package README's earlier statement that
+the package had not been rebuilt.
+These results demonstrate the recorded programs and images, not general CPU
+correctness, interface qualification or measured timing margins.
 
 ## Recent development
 
