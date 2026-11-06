@@ -1,0 +1,738 @@
+{
+  "C0": {
+    "beliefs": [
+      {
+        "evidence": [
+          "o1"
+        ],
+        "id": "b-o1",
+        "key": [
+          "inside",
+          "key"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "box"
+      },
+      {
+        "evidence": [
+          "o2"
+        ],
+        "id": "b-o2",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "reason": "observation",
+        "status": "superseded",
+        "supersedes": null,
+        "value": "blue"
+      },
+      {
+        "evidence": [
+          "o3"
+        ],
+        "id": "b-o3",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "reason": "correction-of-o2",
+        "status": "current",
+        "supersedes": "b-o2",
+        "value": "red"
+      },
+      {
+        "evidence": [
+          "o4"
+        ],
+        "id": "b-o4",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "reason": "observation",
+        "status": "superseded",
+        "supersedes": null,
+        "value": "closed"
+      },
+      {
+        "evidence": [
+          "o5"
+        ],
+        "id": "b-o5",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "reason": "world-changed-after-o4",
+        "status": "current",
+        "supersedes": "b-o4",
+        "value": "open"
+      },
+      {
+        "evidence": [
+          "o6"
+        ],
+        "id": "b-o6",
+        "key": [
+          "rule",
+          "inside_transitive"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "yes"
+      },
+      {
+        "evidence": [
+          "o9"
+        ],
+        "id": "b-o9",
+        "key": [
+          "inside",
+          "pearl"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "bag"
+      },
+      {
+        "evidence": [
+          "o10"
+        ],
+        "id": "b-o10",
+        "key": [
+          "inside",
+          "bag"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "chest"
+      }
+    ],
+    "goals": [
+      "answer only with evidence"
+    ],
+    "observations": [
+      {
+        "id": "o1",
+        "key": [
+          "inside",
+          "key"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 1,
+        "source": "sensor:o1",
+        "strength": "strong",
+        "value": "box"
+      },
+      {
+        "id": "o2",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 2,
+        "source": "sensor:o2",
+        "strength": "strong",
+        "value": "blue"
+      },
+      {
+        "id": "o3",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "kind": "fact",
+        "reason": "correction-of-o2",
+        "seq": 3,
+        "source": "sensor:o3",
+        "strength": "strong",
+        "value": "red"
+      },
+      {
+        "id": "o4",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 4,
+        "source": "sensor:o4",
+        "strength": "strong",
+        "value": "closed"
+      },
+      {
+        "id": "o5",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "kind": "fact",
+        "reason": "world-changed-after-o4",
+        "seq": 5,
+        "source": "sensor:o5",
+        "strength": "strong",
+        "value": "open"
+      },
+      {
+        "id": "o6",
+        "key": [
+          "rule",
+          "inside_transitive"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 6,
+        "source": "sensor:o6",
+        "strength": "strong",
+        "value": "yes"
+      },
+      {
+        "id": "o7",
+        "key": [
+          "colour",
+          "coin"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 7,
+        "source": "sensor:o7",
+        "strength": "weak",
+        "value": "gold"
+      },
+      {
+        "id": "o8",
+        "key": [
+          "colour",
+          "coin"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 8,
+        "source": "sensor:o8",
+        "strength": "weak",
+        "value": "silver"
+      },
+      {
+        "id": "o9",
+        "key": [
+          "inside",
+          "pearl"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 9,
+        "source": "sensor:o9",
+        "strength": "strong",
+        "value": "bag"
+      },
+      {
+        "id": "o10",
+        "key": [
+          "inside",
+          "bag"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 10,
+        "source": "sensor:o10",
+        "strength": "strong",
+        "value": "chest"
+      }
+    ]
+  },
+  "C1": {
+    "beliefs": [
+      {
+        "evidence": [
+          "o1"
+        ],
+        "id": "b-o1",
+        "key": [
+          "inside",
+          "key"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "box"
+      },
+      {
+        "evidence": [
+          "o2"
+        ],
+        "id": "b-o2",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "reason": "observation",
+        "status": "superseded",
+        "supersedes": null,
+        "value": "blue"
+      },
+      {
+        "evidence": [
+          "o3"
+        ],
+        "id": "b-o3",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "reason": "correction-of-o2",
+        "status": "current",
+        "supersedes": "b-o2",
+        "value": "red"
+      },
+      {
+        "evidence": [
+          "o4"
+        ],
+        "id": "b-o4",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "reason": "observation",
+        "status": "superseded",
+        "supersedes": null,
+        "value": "closed"
+      },
+      {
+        "evidence": [
+          "o5"
+        ],
+        "id": "b-o5",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "reason": "world-changed-after-o4",
+        "status": "current",
+        "supersedes": "b-o4",
+        "value": "open"
+      },
+      {
+        "evidence": [
+          "o6"
+        ],
+        "id": "b-o6",
+        "key": [
+          "rule",
+          "inside_transitive"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "yes"
+      },
+      {
+        "evidence": [
+          "o9"
+        ],
+        "id": "b-o9",
+        "key": [
+          "inside",
+          "pearl"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "bag"
+      },
+      {
+        "evidence": [
+          "o10"
+        ],
+        "id": "b-o10",
+        "key": [
+          "inside",
+          "bag"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "chest"
+      }
+    ],
+    "goals": [
+      "answer only with evidence"
+    ],
+    "observations": [
+      {
+        "id": "o1",
+        "key": [
+          "inside",
+          "key"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 1,
+        "source": "sensor:o1",
+        "strength": "strong",
+        "value": "box"
+      },
+      {
+        "id": "o2",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 2,
+        "source": "sensor:o2",
+        "strength": "strong",
+        "value": "blue"
+      },
+      {
+        "id": "o3",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "kind": "fact",
+        "reason": "correction-of-o2",
+        "seq": 3,
+        "source": "sensor:o3",
+        "strength": "strong",
+        "value": "red"
+      },
+      {
+        "id": "o4",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 4,
+        "source": "sensor:o4",
+        "strength": "strong",
+        "value": "closed"
+      },
+      {
+        "id": "o5",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "kind": "fact",
+        "reason": "world-changed-after-o4",
+        "seq": 5,
+        "source": "sensor:o5",
+        "strength": "strong",
+        "value": "open"
+      },
+      {
+        "id": "o6",
+        "key": [
+          "rule",
+          "inside_transitive"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 6,
+        "source": "sensor:o6",
+        "strength": "strong",
+        "value": "yes"
+      },
+      {
+        "id": "o7",
+        "key": [
+          "colour",
+          "coin"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 7,
+        "source": "sensor:o7",
+        "strength": "weak",
+        "value": "gold"
+      },
+      {
+        "id": "o8",
+        "key": [
+          "colour",
+          "coin"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 8,
+        "source": "sensor:o8",
+        "strength": "weak",
+        "value": "silver"
+      },
+      {
+        "id": "o9",
+        "key": [
+          "inside",
+          "pearl"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 9,
+        "source": "sensor:o9",
+        "strength": "strong",
+        "value": "bag"
+      },
+      {
+        "id": "o10",
+        "key": [
+          "inside",
+          "bag"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 10,
+        "source": "sensor:o10",
+        "strength": "strong",
+        "value": "chest"
+      }
+    ]
+  },
+  "C2": {
+    "beliefs": [
+      {
+        "evidence": [
+          "summary-1"
+        ],
+        "id": "b-summary-1",
+        "key": [
+          "inside",
+          "key"
+        ],
+        "reason": "summary",
+        "status": "current",
+        "supersedes": null,
+        "value": "box"
+      },
+      {
+        "evidence": [
+          "summary-2"
+        ],
+        "id": "b-summary-2",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "reason": "summary",
+        "status": "current",
+        "supersedes": null,
+        "value": "red"
+      },
+      {
+        "evidence": [
+          "summary-3"
+        ],
+        "id": "b-summary-3",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "reason": "summary",
+        "status": "current",
+        "supersedes": null,
+        "value": "open"
+      },
+      {
+        "evidence": [
+          "summary-4"
+        ],
+        "id": "b-summary-4",
+        "key": [
+          "rule",
+          "inside_transitive"
+        ],
+        "reason": "summary",
+        "status": "current",
+        "supersedes": null,
+        "value": "yes"
+      },
+      {
+        "evidence": [
+          "o9"
+        ],
+        "id": "b-o9",
+        "key": [
+          "inside",
+          "pearl"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "bag"
+      },
+      {
+        "evidence": [
+          "o10"
+        ],
+        "id": "b-o10",
+        "key": [
+          "inside",
+          "bag"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "chest"
+      }
+    ],
+    "goals": [
+      "answer only with evidence"
+    ],
+    "observations": [
+      {
+        "id": "summary-1",
+        "key": [
+          "inside",
+          "key"
+        ],
+        "kind": "fact",
+        "reason": "summary",
+        "seq": 1,
+        "source": "compacted-state",
+        "strength": "strong",
+        "value": "box"
+      },
+      {
+        "id": "summary-2",
+        "key": [
+          "colour",
+          "ball"
+        ],
+        "kind": "fact",
+        "reason": "summary",
+        "seq": 3,
+        "source": "compacted-state",
+        "strength": "strong",
+        "value": "red"
+      },
+      {
+        "id": "summary-3",
+        "key": [
+          "door",
+          "gate"
+        ],
+        "kind": "fact",
+        "reason": "summary",
+        "seq": 5,
+        "source": "compacted-state",
+        "strength": "strong",
+        "value": "open"
+      },
+      {
+        "id": "summary-4",
+        "key": [
+          "rule",
+          "inside_transitive"
+        ],
+        "kind": "fact",
+        "reason": "summary",
+        "seq": 6,
+        "source": "compacted-state",
+        "strength": "strong",
+        "value": "yes"
+      },
+      {
+        "id": "o9",
+        "key": [
+          "inside",
+          "pearl"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 9,
+        "source": "sensor:o9",
+        "strength": "strong",
+        "value": "bag"
+      },
+      {
+        "id": "o10",
+        "key": [
+          "inside",
+          "bag"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 10,
+        "source": "sensor:o10",
+        "strength": "strong",
+        "value": "chest"
+      }
+    ]
+  },
+  "C3": {
+    "beliefs": [
+      {
+        "evidence": [
+          "o9"
+        ],
+        "id": "b-o9",
+        "key": [
+          "inside",
+          "pearl"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "bag"
+      },
+      {
+        "evidence": [
+          "o10"
+        ],
+        "id": "b-o10",
+        "key": [
+          "inside",
+          "bag"
+        ],
+        "reason": "observation",
+        "status": "current",
+        "supersedes": null,
+        "value": "chest"
+      }
+    ],
+    "goals": [
+      "answer only with evidence"
+    ],
+    "observations": [
+      {
+        "id": "o9",
+        "key": [
+          "inside",
+          "pearl"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 9,
+        "source": "sensor:o9",
+        "strength": "strong",
+        "value": "bag"
+      },
+      {
+        "id": "o10",
+        "key": [
+          "inside",
+          "bag"
+        ],
+        "kind": "fact",
+        "reason": "observation",
+        "seq": 10,
+        "source": "sensor:o10",
+        "strength": "strong",
+        "value": "chest"
+      }
+    ]
+  }
+}

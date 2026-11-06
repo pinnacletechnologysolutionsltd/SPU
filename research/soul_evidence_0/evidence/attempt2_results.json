@@ -1,0 +1,1827 @@
+{
+  "cases": [
+    {
+      "expected": "SUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "proposition": [
+            "key",
+            "inside",
+            "box"
+          ],
+          "refs": [
+            "f"
+          ],
+          "type": "direct"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "direct_valid",
+        "records": [
+          {
+            "id": "f",
+            "kind": "fact",
+            "proposition": [
+              "key",
+              "inside",
+              "box"
+            ]
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "cdf5de42c0ab0dbc4b1e7fff11c53da5fee7a59632b585d6a9b563a87b110f40",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "f": "d1287f925d091c69f85961c38d350055b636ef3728e41ab3590d6c4981e94d77"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "direct_valid",
+      "pass": true,
+      "result": {
+        "verdict": "SUPPORTED"
+      }
+    },
+    {
+      "expected": "UNSUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "proposition": [
+            "key",
+            "inside",
+            "case"
+          ],
+          "refs": [
+            "f"
+          ],
+          "type": "direct"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "direct_unrelated",
+        "records": [
+          {
+            "id": "f",
+            "kind": "fact",
+            "proposition": [
+              "key",
+              "inside",
+              "box"
+            ]
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "cdf5de42c0ab0dbc4b1e7fff11c53da5fee7a59632b585d6a9b563a87b110f40",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "f": "d1287f925d091c69f85961c38d350055b636ef3728e41ab3590d6c4981e94d77"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "direct_unrelated",
+      "pass": true,
+      "result": {
+        "verdict": "UNSUPPORTED"
+      }
+    },
+    {
+      "expected": "SUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "proposition": [
+            "A",
+            "subset",
+            "C"
+          ],
+          "refs": [
+            "r1",
+            "r2"
+          ],
+          "rule": "transitive",
+          "type": "deduction"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "derived_valid",
+        "records": [
+          {
+            "id": "r1",
+            "kind": "relation",
+            "left": "A",
+            "relation": "subset",
+            "right": "B"
+          },
+          {
+            "id": "r2",
+            "kind": "relation",
+            "left": "B",
+            "relation": "subset",
+            "right": "C"
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "12722804248ec03efbdf4e81f7b8eb493b8ffaa5bd3531717ad219d78709b459",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "r1": "253828adefcc92d8192d329649c779707726fae089be8e96f9f51fde52bbcb65",
+            "r2": "78e5b778876e1e3d055210e8e06dc5dadf64ddf0a0bd367240727d06ee35a710"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "derived_valid",
+      "pass": true,
+      "result": {
+        "verdict": "SUPPORTED"
+      }
+    },
+    {
+      "expected": "UNSUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "proposition": [
+            "A",
+            "subset",
+            "C"
+          ],
+          "refs": [
+            "r2",
+            "r1"
+          ],
+          "rule": "transitive",
+          "type": "deduction"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "derived_bad_chain",
+        "records": [
+          {
+            "id": "r1",
+            "kind": "relation",
+            "left": "A",
+            "relation": "subset",
+            "right": "B"
+          },
+          {
+            "id": "r2",
+            "kind": "relation",
+            "left": "B",
+            "relation": "subset",
+            "right": "C"
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "12722804248ec03efbdf4e81f7b8eb493b8ffaa5bd3531717ad219d78709b459",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "r1": "253828adefcc92d8192d329649c779707726fae089be8e96f9f51fde52bbcb65",
+            "r2": "78e5b778876e1e3d055210e8e06dc5dadf64ddf0a0bd367240727d06ee35a710"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "derived_bad_chain",
+      "pass": true,
+      "result": {
+        "verdict": "UNSUPPORTED"
+      }
+    },
+    {
+      "expected": "UNKNOWN",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "proposition": [
+            "A",
+            "subset",
+            "C"
+          ],
+          "refs": [
+            "r1"
+          ],
+          "rule": "transitive",
+          "type": "deduction"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "missing_premise",
+        "records": [
+          {
+            "id": "r1",
+            "kind": "relation",
+            "left": "A",
+            "relation": "subset",
+            "right": "B"
+          },
+          {
+            "id": "r2",
+            "kind": "relation",
+            "left": "B",
+            "relation": "subset",
+            "right": "C"
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "12722804248ec03efbdf4e81f7b8eb493b8ffaa5bd3531717ad219d78709b459",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "r1": "253828adefcc92d8192d329649c779707726fae089be8e96f9f51fde52bbcb65",
+            "r2": "78e5b778876e1e3d055210e8e06dc5dadf64ddf0a0bd367240727d06ee35a710"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "missing_premise",
+      "pass": true,
+      "result": {
+        "verdict": "UNKNOWN"
+      }
+    },
+    {
+      "expected": "UNVERIFIED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "proposition": [
+            "A",
+            "subset",
+            "C"
+          ],
+          "refs": [
+            "r1",
+            "r2"
+          ],
+          "rule": "imaginary",
+          "type": "deduction"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "unsupported_rule",
+        "records": [
+          {
+            "id": "r1",
+            "kind": "relation",
+            "left": "A",
+            "relation": "subset",
+            "right": "B"
+          },
+          {
+            "id": "r2",
+            "kind": "relation",
+            "left": "B",
+            "relation": "subset",
+            "right": "C"
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "12722804248ec03efbdf4e81f7b8eb493b8ffaa5bd3531717ad219d78709b459",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "r1": "253828adefcc92d8192d329649c779707726fae089be8e96f9f51fde52bbcb65",
+            "r2": "78e5b778876e1e3d055210e8e06dc5dadf64ddf0a0bd367240727d06ee35a710"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "unsupported_rule",
+      "pass": true,
+      "result": {
+        "verdict": "UNVERIFIED"
+      }
+    },
+    {
+      "expected": "SUPPORTED",
+      "expected_finding": "MULTIPLE_SURVIVORS",
+      "input": {
+        "claim": {
+          "survivors": [
+            "linked",
+            "linked_and_fixed"
+          ],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "provisional_multiple",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "36aba9197e69bfa81f22a8ffc536ff018323d2fe38a83fcc1926a6937cbb90c1",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "provisional_multiple",
+      "pass": true,
+      "result": {
+        "finding": "MULTIPLE_SURVIVORS",
+        "survivors": [
+          "linked",
+          "linked_and_fixed"
+        ],
+        "verdict": "SUPPORTED"
+      }
+    },
+    {
+      "expected": "UNSUPPORTED",
+      "expected_finding": "MULTIPLE_SURVIVORS",
+      "input": {
+        "claim": {
+          "survivors": [
+            "linked",
+            "linked_and_fixed"
+          ],
+          "type": "survivors",
+          "unique": true
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "forged_unique",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "36aba9197e69bfa81f22a8ffc536ff018323d2fe38a83fcc1926a6937cbb90c1",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "forged_unique",
+      "pass": true,
+      "result": {
+        "finding": "MULTIPLE_SURVIVORS",
+        "survivors": [
+          "linked",
+          "linked_and_fixed"
+        ],
+        "verdict": "UNSUPPORTED"
+      }
+    },
+    {
+      "expected": "UNSUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [
+            "linked"
+          ],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "incorrect_elimination",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "36aba9197e69bfa81f22a8ffc536ff018323d2fe38a83fcc1926a6937cbb90c1",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "incorrect_elimination",
+      "pass": true,
+      "result": {
+        "finding": "MULTIPLE_SURVIVORS",
+        "survivors": [
+          "linked",
+          "linked_and_fixed"
+        ],
+        "verdict": "UNSUPPORTED"
+      }
+    },
+    {
+      "expected": "SUPPORTED",
+      "expected_finding": "CONTRADICTED",
+      "input": {
+        "claim": {
+          "hypothesis": "linked",
+          "refs": [
+            "c"
+          ],
+          "type": "reject"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "rejection_valid",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "rejection_valid",
+      "pass": true,
+      "result": {
+        "finding": "CONTRADICTED",
+        "verdict": "SUPPORTED"
+      }
+    },
+    {
+      "expected": "UNSUPPORTED",
+      "expected_finding": "CONSISTENT",
+      "input": {
+        "claim": {
+          "hypothesis": "linked",
+          "refs": [
+            "a"
+          ],
+          "type": "reject"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "false_counterexample",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "false_counterexample",
+      "pass": true,
+      "result": {
+        "finding": "CONSISTENT",
+        "verdict": "UNSUPPORTED"
+      }
+    },
+    {
+      "expected": "UNSUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [
+            "linked",
+            "linked_and_fixed"
+          ],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "incorrect_retention",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "incorrect_retention",
+      "pass": true,
+      "result": {
+        "finding": "SINGLE_SURVIVOR",
+        "survivors": [
+          "linked_and_fixed"
+        ],
+        "verdict": "UNSUPPORTED"
+      }
+    },
+    {
+      "expected": "SUPPORTED",
+      "expected_finding": "UNIQUE_WITHIN_DECLARED_HYPOTHESIS_AND_EVIDENCE_BOUNDARY",
+      "input": {
+        "claim": {
+          "survivors": [
+            "linked_and_fixed"
+          ],
+          "type": "survivors",
+          "unique": true
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "revised_unique",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "revised_unique",
+      "pass": true,
+      "result": {
+        "finding": "UNIQUE_WITHIN_DECLARED_HYPOTHESIS_AND_EVIDENCE_BOUNDARY",
+        "survivors": [
+          "linked_and_fixed"
+        ],
+        "verdict": "SUPPORTED"
+      }
+    },
+    {
+      "expected": "SUPPORTED",
+      "expected_finding": "NO_SURVIVORS",
+      "input": {
+        "claim": {
+          "survivors": [],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "zero_survivors",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "d",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "4422009a605286fdf57385a7c607f2cfb23c2e35aae5ad4d4b4e09a2971d2441",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "d": "645dcaa56781922a24d626cb603fd5c7949b2cfb22c75d35d3263cea6bc27e3f"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "zero_survivors",
+      "pass": true,
+      "result": {
+        "finding": "NO_SURVIVORS",
+        "survivors": [],
+        "verdict": "SUPPORTED"
+      }
+    },
+    {
+      "expected": "UNSUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [
+            "linked"
+          ],
+          "type": "survivors",
+          "unique": true
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "unique_contradicted",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "unique_contradicted",
+      "pass": true,
+      "result": {
+        "finding": "SINGLE_SURVIVOR",
+        "survivors": [
+          "linked_and_fixed"
+        ],
+        "verdict": "UNSUPPORTED"
+      }
+    },
+    {
+      "expected": "SUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "features": {
+            "fixed": false,
+            "linked": true
+          },
+          "hypothesis": "linked",
+          "prediction": true,
+          "type": "prediction"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "prediction_derived_incorrect_empirically",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "36aba9197e69bfa81f22a8ffc536ff018323d2fe38a83fcc1926a6937cbb90c1",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "prediction_derived_incorrect_empirically",
+      "pass": true,
+      "result": {
+        "hypothesis_status": "consistent",
+        "survivors": [
+          "linked",
+          "linked_and_fixed"
+        ],
+        "verdict": "SUPPORTED"
+      }
+    },
+    {
+      "expected": "UNSUPPORTED",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "features": {
+            "fixed": false,
+            "linked": true
+          },
+          "hypothesis": "linked",
+          "prediction": false,
+          "type": "prediction"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "prediction_invalid",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "36aba9197e69bfa81f22a8ffc536ff018323d2fe38a83fcc1926a6937cbb90c1",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "prediction_invalid",
+      "pass": true,
+      "result": {
+        "hypothesis_status": "consistent",
+        "survivors": [
+          "linked",
+          "linked_and_fixed"
+        ],
+        "verdict": "UNSUPPORTED"
+      }
+    },
+    {
+      "expected": "UNKNOWN",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "hypothesis": "linked",
+          "refs": [
+            "missing"
+          ],
+          "type": "reject"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "forged_reference",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "forged_reference",
+      "pass": true,
+      "result": {
+        "verdict": "UNKNOWN"
+      }
+    },
+    {
+      "expected": "UNKNOWN",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [
+            "linked_and_fixed"
+          ],
+          "type": "survivors",
+          "unique": true
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "incomplete_false_unique",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "430ef7638239a40c9cd3a795ce4065e2a87f2a056a7a646b72894e472da520d9",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3",
+            "d": "645dcaa56781922a24d626cb603fd5c7949b2cfb22c75d35d3263cea6bc27e3f"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "incomplete_false_unique",
+      "pass": true,
+      "result": {
+        "verdict": "UNKNOWN"
+      }
+    },
+    {
+      "expected": "UNKNOWN",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "missing_record",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "missing_record",
+      "pass": true,
+      "result": {
+        "verdict": "UNKNOWN"
+      }
+    },
+    {
+      "expected": "INVALID_EVIDENCE",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "altered_membership",
+        "records": [
+          {
+            "fixed": true,
+            "id": "other",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "altered_membership",
+      "pass": true,
+      "result": {
+        "verdict": "INVALID_EVIDENCE"
+      }
+    },
+    {
+      "expected": "INVALID_EVIDENCE",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "0",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "substituted_language",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "substituted_language",
+      "pass": true,
+      "result": {
+        "verdict": "INVALID_EVIDENCE"
+      }
+    },
+    {
+      "expected": "INVALID_EVIDENCE",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "substituted_rules",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "080543624a28a4dc2a6426cc69151318f449bb657f8b3fdd76745eb95d41a8ad",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "substituted_rules",
+      "pass": true,
+      "result": {
+        "verdict": "INVALID_EVIDENCE"
+      }
+    },
+    {
+      "expected": "UNKNOWN",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "missing_anchor",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": null,
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "missing_anchor",
+      "pass": true,
+      "result": {
+        "verdict": "UNKNOWN"
+      }
+    },
+    {
+      "expected": "INVALID_EVIDENCE",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "survivors": [],
+          "type": "survivors",
+          "unique": false
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "invalid_anchor",
+        "records": [
+          {
+            "fixed": true,
+            "id": "a",
+            "kind": "observation",
+            "linked": true,
+            "outcome": true
+          },
+          {
+            "fixed": true,
+            "id": "b",
+            "kind": "observation",
+            "linked": false,
+            "outcome": false
+          },
+          {
+            "fixed": false,
+            "id": "c",
+            "kind": "observation",
+            "linked": true,
+            "outcome": false
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "0000000000000000000000000000000000000000000000000000000000000000",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "a": "767c6c7def5ec63481875c354e245dddaa3f28d0ab8d9dbd04d26e2cc3849bfc",
+            "b": "6f699992f3b4c27b31420112602208a5bd6792d5a5c06c7caafd35cbd0ca5b70",
+            "c": "7abe2dccdd9ce0357049ffed60eefb3982f360ed83c2c240cdd5cfcdf57c47a3"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "invalid_anchor",
+      "pass": true,
+      "result": {
+        "verdict": "INVALID_EVIDENCE"
+      }
+    },
+    {
+      "expected": "INVALID_EVIDENCE",
+      "expected_finding": null,
+      "input": {
+        "claim": {
+          "proposition": [
+            "A",
+            "subset",
+            "C"
+          ],
+          "refs": [
+            "bad",
+            "r2"
+          ],
+          "rule": "transitive",
+          "type": "deduction"
+        },
+        "language": {
+          "candidates": {
+            "fixed": "F",
+            "linked": "L",
+            "linked_and_fixed": "L&F",
+            "never": "0"
+          },
+          "version": "h1"
+        },
+        "name": "malformed_anchored_relation",
+        "records": [
+          {
+            "id": "bad",
+            "kind": "relation",
+            "relation": "subset"
+          },
+          {
+            "id": "r2",
+            "kind": "relation",
+            "left": "B",
+            "relation": "subset",
+            "right": "C"
+          }
+        ],
+        "rules": {
+          "inference": [
+            "direct",
+            "transitive"
+          ],
+          "predicates": [
+            "linked",
+            "fixed"
+          ],
+          "version": "r1"
+        },
+        "trusted_anchor": "4e839608e5592c845471748103ff3834a00c0be1fabdb9d074367f00b303d4c2",
+        "trusted_manifest": {
+          "language": "a88d2b0ae0af351f9c188982b45bb5f4a2cfbcd775212b21ef422d446b9ac640",
+          "records": {
+            "bad": "7c4e65b525387a3970e56915920ede370c5df3e5cabfc2b090187b0f33938e04",
+            "r2": "78e5b778876e1e3d055210e8e06dc5dadf64ddf0a0bd367240727d06ee35a710"
+          },
+          "rules": "6f510b0f352f78a311f84d5be7df99407ff2d93ce12cab7061dcf0a39d304a37"
+        }
+      },
+      "name": "malformed_anchored_relation",
+      "pass": true,
+      "result": {
+        "verdict": "INVALID_EVIDENCE"
+      }
+    }
+  ],
+  "passed": 26,
+  "prediction_accuracy_control": {
+    "derived_prediction": true,
+    "empirically_correct": false,
+    "observed_outcome": false
+  },
+  "total": 26
+}

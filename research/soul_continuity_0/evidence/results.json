@@ -1,0 +1,95 @@
+{
+  "controls": {
+    "altered_reference_digest_detected": true,
+    "altered_reference_rehashed_detected": true,
+    "incorrect_predecessor_detected": true,
+    "necessary_relationship_removed_detected": true,
+    "unknown_not_established": true,
+    "unresolved_contradiction_abstains": true,
+    "valid_checkpoint_usable": true
+  },
+  "fork_valid": true,
+  "migration": {
+    "destination_engine": "B-index-fold-1",
+    "destination_representation": "soul-state-1",
+    "input_digest": "2d76b0895918145f411a2732c7530292c69c9651e8fc8c6e94c151b99bb72710",
+    "intentionally_omitted": [],
+    "missing_or_altered": 0,
+    "output_digest": "2d76b0895918145f411a2732c7530292c69c9651e8fc8c6e94c151b99bb72710",
+    "procedure": "canonical JSON serialization and load; no translation",
+    "source_engine": "A-event-scan-1",
+    "source_representation": "soul-state-1",
+    "untranslatable": [],
+    "validated": true
+  },
+  "results": {
+    "C0": {
+      "answers": {
+        "colour": "red",
+        "door": "open",
+        "persistent": "box",
+        "transfer": "chest",
+        "unknown": "unknown"
+      },
+      "change_history": 1,
+      "historical_recall": 1.0,
+      "provenance_integrity": 1.0,
+      "relationship_accuracy": 1.0,
+      "revision_correctness": 1,
+      "state_integrity": true,
+      "transfer_performance": 1,
+      "unknown_calibration": 1
+    },
+    "C1": {
+      "answers": {
+        "colour": "red",
+        "door": "open",
+        "persistent": "box",
+        "transfer": "chest",
+        "unknown": "unknown"
+      },
+      "change_history": 1,
+      "historical_recall": 1.0,
+      "provenance_integrity": 1.0,
+      "relationship_accuracy": 1.0,
+      "revision_correctness": 1,
+      "state_integrity": true,
+      "transfer_performance": 1,
+      "unknown_calibration": 1
+    },
+    "C2": {
+      "answers": {
+        "colour": "red",
+        "door": "open",
+        "persistent": "box",
+        "transfer": "chest",
+        "unknown": "unknown"
+      },
+      "change_history": 0,
+      "historical_recall": 0.0,
+      "provenance_integrity": 0.0,
+      "relationship_accuracy": 1.0,
+      "revision_correctness": 0,
+      "state_integrity": true,
+      "transfer_performance": 1,
+      "unknown_calibration": 1
+    },
+    "C3": {
+      "answers": {
+        "colour": "unknown",
+        "door": "unknown",
+        "persistent": "unknown",
+        "transfer": "unknown",
+        "unknown": "unknown"
+      },
+      "change_history": 0,
+      "historical_recall": 0.0,
+      "provenance_integrity": 0.0,
+      "relationship_accuracy": 0.0,
+      "revision_correctness": 0,
+      "state_integrity": true,
+      "transfer_performance": 0,
+      "unknown_calibration": 1
+    }
+  }
+}

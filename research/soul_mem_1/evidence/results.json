@@ -1,0 +1,1034 @@
+{
+  "controls": {
+    "disabled_trigger_loses_retrieval_and_answer": true,
+    "irrelevant_history_not_retrieved": true,
+    "misleading_evidence_outweighed": true,
+    "missing_critical_evidence_abstains": true,
+    "provenance_alteration_digest_detected": true,
+    "provenance_alteration_semantic_detected": true,
+    "summary_sufficient_no_retrieval": true,
+    "valid_provenance_accepted": true
+  },
+  "registered_scenarios": [
+    {
+      "id": "S1_stable",
+      "queries": [
+        {
+          "epoch": null,
+          "expected": "box",
+          "key": "key",
+          "kind": "current",
+          "relevant": [
+            "a"
+          ]
+        }
+      ],
+      "records": [
+        {
+          "epoch": 0,
+          "id": "a",
+          "key": "key",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "box"
+        },
+        {
+          "epoch": 0,
+          "id": "d1",
+          "key": "lamp",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "on"
+        },
+        {
+          "epoch": 0,
+          "id": "d2",
+          "key": "leaf",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "green"
+        }
+      ],
+      "world": "key remains in box"
+    },
+    {
+      "id": "S2_correction",
+      "queries": [
+        {
+          "epoch": null,
+          "expected": "red",
+          "key": "ball",
+          "kind": "current",
+          "relevant": [
+            "a",
+            "b",
+            "r"
+          ]
+        }
+      ],
+      "records": [
+        {
+          "epoch": 0,
+          "id": "a",
+          "key": "ball",
+          "kind": "fact",
+          "source": "faulty",
+          "strength": 3,
+          "value": "blue"
+        },
+        {
+          "epoch": 0,
+          "id": "b",
+          "key": "ball",
+          "kind": "fact",
+          "source": "trusted",
+          "strength": 2,
+          "value": "red"
+        },
+        {
+          "id": "r",
+          "key": "ball",
+          "kind": "revoke",
+          "target": "a"
+        },
+        {
+          "epoch": 0,
+          "id": "d1",
+          "key": "lamp",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "on"
+        },
+        {
+          "epoch": 0,
+          "id": "d2",
+          "key": "leaf",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "green"
+        }
+      ],
+      "world": "ball is red; initial blue sensor later invalidated"
+    },
+    {
+      "id": "S3_change",
+      "queries": [
+        {
+          "epoch": null,
+          "expected": "open",
+          "key": "gate",
+          "kind": "current",
+          "relevant": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "epoch": 0,
+          "expected": "closed",
+          "key": "gate",
+          "kind": "history",
+          "relevant": [
+            "a"
+          ]
+        }
+      ],
+      "records": [
+        {
+          "epoch": 0,
+          "id": "a",
+          "key": "gate",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "closed"
+        },
+        {
+          "epoch": 1,
+          "id": "b",
+          "key": "gate",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "open"
+        },
+        {
+          "epoch": 0,
+          "id": "d1",
+          "key": "lamp",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "on"
+        },
+        {
+          "epoch": 0,
+          "id": "d2",
+          "key": "leaf",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "green"
+        }
+      ],
+      "world": "gate closed at epoch 0, open at epoch 1"
+    },
+    {
+      "id": "S4_conflict",
+      "queries": [
+        {
+          "epoch": null,
+          "expected": "red",
+          "key": "marker",
+          "kind": "current",
+          "relevant": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      ],
+      "records": [
+        {
+          "epoch": 0,
+          "id": "a",
+          "key": "marker",
+          "kind": "fact",
+          "source": "calibrated",
+          "strength": 3,
+          "value": "red"
+        },
+        {
+          "epoch": 0,
+          "id": "b",
+          "key": "marker",
+          "kind": "fact",
+          "source": "weak1",
+          "strength": 1,
+          "value": "blue"
+        },
+        {
+          "epoch": 0,
+          "id": "c",
+          "key": "marker",
+          "kind": "fact",
+          "source": "weak2",
+          "strength": 1,
+          "value": "blue"
+        },
+        {
+          "epoch": 0,
+          "id": "d1",
+          "key": "lamp",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "on"
+        }
+      ],
+      "world": "marker is red; strong source outranks two weak conflicting sensors"
+    },
+    {
+      "id": "S5_transfer",
+      "queries": [
+        {
+          "epoch": null,
+          "expected": "chest",
+          "key": "pearl",
+          "kind": "transfer",
+          "relevant": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      ],
+      "records": [
+        {
+          "epoch": 0,
+          "id": "ex1",
+          "key": "example_chain_1",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "valid"
+        },
+        {
+          "epoch": 0,
+          "id": "ex2",
+          "key": "example_chain_2",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "valid"
+        },
+        {
+          "epoch": 0,
+          "id": "a",
+          "key": "rule",
+          "kind": "fact",
+          "source": "supplied_rule",
+          "strength": 2,
+          "value": "transitive"
+        },
+        {
+          "epoch": 0,
+          "id": "b",
+          "key": "pearl",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "bag"
+        },
+        {
+          "epoch": 0,
+          "id": "c",
+          "key": "bag",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "chest"
+        },
+        {
+          "epoch": 0,
+          "id": "d1",
+          "key": "lamp",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "on"
+        }
+      ],
+      "world": "learned containment rule applies to pearl in bag in chest"
+    },
+    {
+      "id": "S6_reactivation",
+      "queries": [
+        {
+          "epoch": null,
+          "expected": "depot",
+          "key": "parcel",
+          "kind": "current",
+          "relevant": [
+            "a",
+            "b",
+            "r"
+          ]
+        }
+      ],
+      "records": [
+        {
+          "epoch": 0,
+          "id": "a",
+          "key": "parcel",
+          "kind": "fact",
+          "source": "witness",
+          "strength": 2,
+          "value": "depot"
+        },
+        {
+          "epoch": 0,
+          "id": "b",
+          "key": "parcel",
+          "kind": "fact",
+          "source": "bad_sensor",
+          "strength": 3,
+          "value": "port"
+        },
+        {
+          "id": "r",
+          "key": "parcel",
+          "kind": "revoke",
+          "target": "b"
+        },
+        {
+          "epoch": 0,
+          "id": "d1",
+          "key": "lamp",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "on"
+        },
+        {
+          "epoch": 0,
+          "id": "d2",
+          "key": "leaf",
+          "kind": "fact",
+          "source": "sensor",
+          "strength": 2,
+          "value": "green"
+        }
+      ],
+      "world": "parcel is at depot; latest higher-priority report invalidated"
+    }
+  ],
+  "runs": [
+    {
+      "ingest_operations": 3,
+      "persistent_archive_records": 0,
+      "persistent_bytes": 327,
+      "policy": "M0",
+      "queries": [
+        {
+          "answer": "box",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": true,
+          "expected": "box",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": null,
+            "key": "key",
+            "kind": "current"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S1_stable",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 3,
+      "persistent_archive_records": 3,
+      "persistent_bytes": 620,
+      "policy": "M1",
+      "queries": [
+        {
+          "answer": "box",
+          "archive_bytes": 278,
+          "archive_record_ids": [
+            "a",
+            "d1",
+            "d2"
+          ],
+          "archived_records_accessed": 3,
+          "correct": true,
+          "expected": "box",
+          "index_bytes": 0,
+          "operations": 4,
+          "query": {
+            "epoch": null,
+            "key": "key",
+            "kind": "current"
+          },
+          "relevant_accesses": 1,
+          "retrieval_precision": 0.3333333333333333,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S1_stable",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 6,
+      "persistent_archive_records": 3,
+      "persistent_bytes": 662,
+      "policy": "M2",
+      "queries": [
+        {
+          "answer": "box",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": true,
+          "expected": "box",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": null,
+            "key": "key",
+            "kind": "current"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S1_stable",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 5,
+      "persistent_archive_records": 0,
+      "persistent_bytes": 264,
+      "policy": "M0",
+      "queries": [
+        {
+          "answer": "unknown",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": false,
+          "expected": "red",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": null,
+            "key": "ball",
+            "kind": "current"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": null,
+          "source_id": null,
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S2_correction",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 5,
+      "persistent_archive_records": 5,
+      "persistent_bytes": 706,
+      "policy": "M1",
+      "queries": [
+        {
+          "answer": "red",
+          "archive_bytes": 425,
+          "archive_record_ids": [
+            "a",
+            "b",
+            "r",
+            "d1",
+            "d2"
+          ],
+          "archived_records_accessed": 5,
+          "correct": true,
+          "expected": "red",
+          "index_bytes": 0,
+          "operations": 6,
+          "query": {
+            "epoch": null,
+            "key": "ball",
+            "kind": "current"
+          },
+          "relevant_accesses": 3,
+          "retrieval_precision": 0.6,
+          "source_attribution_correct": true,
+          "source_id": "b",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S2_correction",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 10,
+      "persistent_archive_records": 5,
+      "persistent_bytes": 753,
+      "policy": "M2",
+      "queries": [
+        {
+          "answer": "red",
+          "archive_bytes": 238,
+          "archive_record_ids": [
+            "a",
+            "b",
+            "r"
+          ],
+          "archived_records_accessed": 3,
+          "correct": true,
+          "expected": "red",
+          "index_bytes": 33,
+          "operations": 5,
+          "query": {
+            "epoch": null,
+            "key": "ball",
+            "kind": "current"
+          },
+          "relevant_accesses": 3,
+          "retrieval_precision": 1.0,
+          "source_attribution_correct": true,
+          "source_id": "b",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S2_correction",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 4,
+      "persistent_archive_records": 0,
+      "persistent_bytes": 330,
+      "policy": "M0",
+      "queries": [
+        {
+          "answer": "open",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": true,
+          "expected": "open",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": null,
+            "key": "gate",
+            "kind": "current"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": true,
+          "source_id": "b",
+          "unjustified_certainty": false
+        },
+        {
+          "answer": "unknown",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": false,
+          "expected": "closed",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": 0,
+            "key": "gate",
+            "kind": "history"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": null,
+          "source_id": null,
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S3_change",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 4,
+      "persistent_archive_records": 4,
+      "persistent_bytes": 721,
+      "policy": "M1",
+      "queries": [
+        {
+          "answer": "open",
+          "archive_bytes": 375,
+          "archive_record_ids": [
+            "a",
+            "b",
+            "d1",
+            "d2"
+          ],
+          "archived_records_accessed": 4,
+          "correct": true,
+          "expected": "open",
+          "index_bytes": 0,
+          "operations": 5,
+          "query": {
+            "epoch": null,
+            "key": "gate",
+            "kind": "current"
+          },
+          "relevant_accesses": 2,
+          "retrieval_precision": 0.5,
+          "source_attribution_correct": true,
+          "source_id": "b",
+          "unjustified_certainty": false
+        },
+        {
+          "answer": "closed",
+          "archive_bytes": 375,
+          "archive_record_ids": [
+            "a",
+            "b",
+            "d1",
+            "d2"
+          ],
+          "archived_records_accessed": 4,
+          "correct": true,
+          "expected": "closed",
+          "index_bytes": 0,
+          "operations": 5,
+          "query": {
+            "epoch": 0,
+            "key": "gate",
+            "kind": "history"
+          },
+          "relevant_accesses": 1,
+          "retrieval_precision": 0.25,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S3_change",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 8,
+      "persistent_archive_records": 4,
+      "persistent_bytes": 766,
+      "policy": "M2",
+      "queries": [
+        {
+          "answer": "open",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": true,
+          "expected": "open",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": null,
+            "key": "gate",
+            "kind": "current"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": true,
+          "source_id": "b",
+          "unjustified_certainty": false
+        },
+        {
+          "answer": "closed",
+          "archive_bytes": 188,
+          "archive_record_ids": [
+            "a",
+            "b"
+          ],
+          "archived_records_accessed": 2,
+          "correct": true,
+          "expected": "closed",
+          "index_bytes": 31,
+          "operations": 4,
+          "query": {
+            "epoch": 0,
+            "key": "gate",
+            "kind": "history"
+          },
+          "relevant_accesses": 1,
+          "retrieval_precision": 0.5,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S3_change",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 4,
+      "persistent_archive_records": 0,
+      "persistent_bytes": 234,
+      "policy": "M0",
+      "queries": [
+        {
+          "answer": "red",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": true,
+          "expected": "red",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": null,
+            "key": "marker",
+            "kind": "current"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S4_conflict",
+      "summary_keys": 2
+    },
+    {
+      "ingest_operations": 4,
+      "persistent_archive_records": 4,
+      "persistent_bytes": 628,
+      "policy": "M1",
+      "queries": [
+        {
+          "answer": "red",
+          "archive_bytes": 378,
+          "archive_record_ids": [
+            "a",
+            "b",
+            "c",
+            "d1"
+          ],
+          "archived_records_accessed": 4,
+          "correct": true,
+          "expected": "red",
+          "index_bytes": 0,
+          "operations": 5,
+          "query": {
+            "epoch": null,
+            "key": "marker",
+            "kind": "current"
+          },
+          "relevant_accesses": 3,
+          "retrieval_precision": 0.75,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S4_conflict",
+      "summary_keys": 2
+    },
+    {
+      "ingest_operations": 8,
+      "persistent_archive_records": 4,
+      "persistent_bytes": 666,
+      "policy": "M2",
+      "queries": [
+        {
+          "answer": "red",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": true,
+          "expected": "red",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": null,
+            "key": "marker",
+            "kind": "current"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S4_conflict",
+      "summary_keys": 2
+    },
+    {
+      "ingest_operations": 6,
+      "persistent_archive_records": 0,
+      "persistent_bytes": 694,
+      "policy": "M0",
+      "queries": [
+        {
+          "answer": "chest",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": true,
+          "expected": "chest",
+          "index_bytes": 0,
+          "operations": 3,
+          "query": {
+            "epoch": null,
+            "key": "pearl",
+            "kind": "transfer"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": true,
+          "source_id": "c",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S5_transfer",
+      "summary_keys": 6
+    },
+    {
+      "ingest_operations": 6,
+      "persistent_archive_records": 6,
+      "persistent_bytes": 1310,
+      "policy": "M1",
+      "queries": [
+        {
+          "answer": "chest",
+          "archive_bytes": 1794,
+          "archive_record_ids": [
+            "ex1",
+            "ex2",
+            "a",
+            "b",
+            "c",
+            "d1",
+            "ex1",
+            "ex2",
+            "a",
+            "b",
+            "c",
+            "d1",
+            "ex1",
+            "ex2",
+            "a",
+            "b",
+            "c",
+            "d1"
+          ],
+          "archived_records_accessed": 18,
+          "correct": true,
+          "expected": "chest",
+          "index_bytes": 0,
+          "operations": 21,
+          "query": {
+            "epoch": null,
+            "key": "pearl",
+            "kind": "transfer"
+          },
+          "relevant_accesses": 9,
+          "retrieval_precision": 0.5,
+          "source_attribution_correct": true,
+          "source_id": "c",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S5_transfer",
+      "summary_keys": 6
+    },
+    {
+      "ingest_operations": 12,
+      "persistent_archive_records": 6,
+      "persistent_bytes": 1408,
+      "policy": "M2",
+      "queries": [
+        {
+          "answer": "chest",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": true,
+          "expected": "chest",
+          "index_bytes": 0,
+          "operations": 3,
+          "query": {
+            "epoch": null,
+            "key": "pearl",
+            "kind": "transfer"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": true,
+          "source_id": "c",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S5_transfer",
+      "summary_keys": 6
+    },
+    {
+      "ingest_operations": 5,
+      "persistent_archive_records": 0,
+      "persistent_bytes": 266,
+      "policy": "M0",
+      "queries": [
+        {
+          "answer": "unknown",
+          "archive_bytes": 0,
+          "archive_record_ids": [],
+          "archived_records_accessed": 0,
+          "correct": false,
+          "expected": "depot",
+          "index_bytes": 0,
+          "operations": 1,
+          "query": {
+            "epoch": null,
+            "key": "parcel",
+            "kind": "current"
+          },
+          "relevant_accesses": 0,
+          "retrieval_precision": null,
+          "source_attribution_correct": null,
+          "source_id": null,
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S6_reactivation",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 5,
+      "persistent_archive_records": 5,
+      "persistent_bytes": 720,
+      "policy": "M1",
+      "queries": [
+        {
+          "answer": "depot",
+          "archive_bytes": 437,
+          "archive_record_ids": [
+            "a",
+            "b",
+            "r",
+            "d1",
+            "d2"
+          ],
+          "archived_records_accessed": 5,
+          "correct": true,
+          "expected": "depot",
+          "index_bytes": 0,
+          "operations": 6,
+          "query": {
+            "epoch": null,
+            "key": "parcel",
+            "kind": "current"
+          },
+          "relevant_accesses": 3,
+          "retrieval_precision": 0.6,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S6_reactivation",
+      "summary_keys": 3
+    },
+    {
+      "ingest_operations": 10,
+      "persistent_archive_records": 5,
+      "persistent_bytes": 769,
+      "policy": "M2",
+      "queries": [
+        {
+          "answer": "depot",
+          "archive_bytes": 250,
+          "archive_record_ids": [
+            "a",
+            "b",
+            "r"
+          ],
+          "archived_records_accessed": 3,
+          "correct": true,
+          "expected": "depot",
+          "index_bytes": 35,
+          "operations": 5,
+          "query": {
+            "epoch": null,
+            "key": "parcel",
+            "kind": "current"
+          },
+          "relevant_accesses": 3,
+          "retrieval_precision": 1.0,
+          "source_attribution_correct": true,
+          "source_id": "a",
+          "unjustified_certainty": false
+        }
+      ],
+      "scenario": "S6_reactivation",
+      "summary_keys": 3
+    }
+  ]
+}

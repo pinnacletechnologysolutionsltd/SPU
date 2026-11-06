@@ -1,0 +1,25 @@
+{
+  "budgets": {
+    "large": 815,
+    "medium": 431,
+    "small": 239
+  },
+  "rule": "maximum policy state size after 2, 4, and 8 unique calibration records",
+  "samples": {
+    "2": {
+      "M0": 178,
+      "M1": 175,
+      "M2": 239
+    },
+    "4": {
+      "M0": 328,
+      "M1": 325,
+      "M2": 431
+    },
+    "8": {
+      "M0": 628,
+      "M1": 625,
+      "M2": 815
+    }
+  }
+}

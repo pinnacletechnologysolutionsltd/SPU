@@ -1,0 +1,470 @@
+[
+  {
+    "body": {
+      "engine": "B-index-fold-1",
+      "id": "fork-left",
+      "lineage": "lineage-1",
+      "predecessor": "2d76b0895918145f411a2732c7530292c69c9651e8fc8c6e94c151b99bb72710",
+      "schema": "soul-state-1",
+      "state": {
+        "beliefs": [
+          {
+            "evidence": [
+              "o1"
+            ],
+            "id": "b-o1",
+            "key": [
+              "inside",
+              "key"
+            ],
+            "reason": "observation",
+            "status": "current",
+            "supersedes": null,
+            "value": "box"
+          },
+          {
+            "evidence": [
+              "o2"
+            ],
+            "id": "b-o2",
+            "key": [
+              "colour",
+              "ball"
+            ],
+            "reason": "observation",
+            "status": "superseded",
+            "supersedes": null,
+            "value": "blue"
+          },
+          {
+            "evidence": [
+              "o3"
+            ],
+            "id": "b-o3",
+            "key": [
+              "colour",
+              "ball"
+            ],
+            "reason": "correction-of-o2",
+            "status": "current",
+            "supersedes": "b-o2",
+            "value": "red"
+          },
+          {
+            "evidence": [
+              "o4"
+            ],
+            "id": "b-o4",
+            "key": [
+              "door",
+              "gate"
+            ],
+            "reason": "observation",
+            "status": "superseded",
+            "supersedes": null,
+            "value": "closed"
+          },
+          {
+            "evidence": [
+              "o5"
+            ],
+            "id": "b-o5",
+            "key": [
+              "door",
+              "gate"
+            ],
+            "reason": "world-changed-after-o4",
+            "status": "current",
+            "supersedes": "b-o4",
+            "value": "open"
+          },
+          {
+            "evidence": [
+              "o6"
+            ],
+            "id": "b-o6",
+            "key": [
+              "rule",
+              "inside_transitive"
+            ],
+            "reason": "observation",
+            "status": "current",
+            "supersedes": null,
+            "value": "yes"
+          },
+          {
+            "evidence": [
+              "fork-left"
+            ],
+            "id": "b-fork-left",
+            "key": [
+              "location",
+              "traveller"
+            ],
+            "reason": "observation",
+            "status": "current",
+            "supersedes": null,
+            "value": "north"
+          }
+        ],
+        "goals": [
+          "answer only with evidence"
+        ],
+        "observations": [
+          {
+            "id": "o1",
+            "key": [
+              "inside",
+              "key"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 1,
+            "source": "sensor:o1",
+            "strength": "strong",
+            "value": "box"
+          },
+          {
+            "id": "o2",
+            "key": [
+              "colour",
+              "ball"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 2,
+            "source": "sensor:o2",
+            "strength": "strong",
+            "value": "blue"
+          },
+          {
+            "id": "o3",
+            "key": [
+              "colour",
+              "ball"
+            ],
+            "kind": "fact",
+            "reason": "correction-of-o2",
+            "seq": 3,
+            "source": "sensor:o3",
+            "strength": "strong",
+            "value": "red"
+          },
+          {
+            "id": "o4",
+            "key": [
+              "door",
+              "gate"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 4,
+            "source": "sensor:o4",
+            "strength": "strong",
+            "value": "closed"
+          },
+          {
+            "id": "o5",
+            "key": [
+              "door",
+              "gate"
+            ],
+            "kind": "fact",
+            "reason": "world-changed-after-o4",
+            "seq": 5,
+            "source": "sensor:o5",
+            "strength": "strong",
+            "value": "open"
+          },
+          {
+            "id": "o6",
+            "key": [
+              "rule",
+              "inside_transitive"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 6,
+            "source": "sensor:o6",
+            "strength": "strong",
+            "value": "yes"
+          },
+          {
+            "id": "o7",
+            "key": [
+              "colour",
+              "coin"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 7,
+            "source": "sensor:o7",
+            "strength": "weak",
+            "value": "gold"
+          },
+          {
+            "id": "o8",
+            "key": [
+              "colour",
+              "coin"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 8,
+            "source": "sensor:o8",
+            "strength": "weak",
+            "value": "silver"
+          },
+          {
+            "id": "fork-left",
+            "key": [
+              "location",
+              "traveller"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 9,
+            "source": "sensor:fork-left",
+            "strength": "strong",
+            "value": "north"
+          }
+        ]
+      }
+    },
+    "digest": "25d3be0b3f2a7d00f137b23d34696834eb98f0178f14e7d27505d3ff9779e5f3"
+  },
+  {
+    "body": {
+      "engine": "B-index-fold-1",
+      "id": "fork-right",
+      "lineage": "lineage-1",
+      "predecessor": "2d76b0895918145f411a2732c7530292c69c9651e8fc8c6e94c151b99bb72710",
+      "schema": "soul-state-1",
+      "state": {
+        "beliefs": [
+          {
+            "evidence": [
+              "o1"
+            ],
+            "id": "b-o1",
+            "key": [
+              "inside",
+              "key"
+            ],
+            "reason": "observation",
+            "status": "current",
+            "supersedes": null,
+            "value": "box"
+          },
+          {
+            "evidence": [
+              "o2"
+            ],
+            "id": "b-o2",
+            "key": [
+              "colour",
+              "ball"
+            ],
+            "reason": "observation",
+            "status": "superseded",
+            "supersedes": null,
+            "value": "blue"
+          },
+          {
+            "evidence": [
+              "o3"
+            ],
+            "id": "b-o3",
+            "key": [
+              "colour",
+              "ball"
+            ],
+            "reason": "correction-of-o2",
+            "status": "current",
+            "supersedes": "b-o2",
+            "value": "red"
+          },
+          {
+            "evidence": [
+              "o4"
+            ],
+            "id": "b-o4",
+            "key": [
+              "door",
+              "gate"
+            ],
+            "reason": "observation",
+            "status": "superseded",
+            "supersedes": null,
+            "value": "closed"
+          },
+          {
+            "evidence": [
+              "o5"
+            ],
+            "id": "b-o5",
+            "key": [
+              "door",
+              "gate"
+            ],
+            "reason": "world-changed-after-o4",
+            "status": "current",
+            "supersedes": "b-o4",
+            "value": "open"
+          },
+          {
+            "evidence": [
+              "o6"
+            ],
+            "id": "b-o6",
+            "key": [
+              "rule",
+              "inside_transitive"
+            ],
+            "reason": "observation",
+            "status": "current",
+            "supersedes": null,
+            "value": "yes"
+          },
+          {
+            "evidence": [
+              "fork-right"
+            ],
+            "id": "b-fork-right",
+            "key": [
+              "location",
+              "traveller"
+            ],
+            "reason": "observation",
+            "status": "current",
+            "supersedes": null,
+            "value": "south"
+          }
+        ],
+        "goals": [
+          "answer only with evidence"
+        ],
+        "observations": [
+          {
+            "id": "o1",
+            "key": [
+              "inside",
+              "key"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 1,
+            "source": "sensor:o1",
+            "strength": "strong",
+            "value": "box"
+          },
+          {
+            "id": "o2",
+            "key": [
+              "colour",
+              "ball"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 2,
+            "source": "sensor:o2",
+            "strength": "strong",
+            "value": "blue"
+          },
+          {
+            "id": "o3",
+            "key": [
+              "colour",
+              "ball"
+            ],
+            "kind": "fact",
+            "reason": "correction-of-o2",
+            "seq": 3,
+            "source": "sensor:o3",
+            "strength": "strong",
+            "value": "red"
+          },
+          {
+            "id": "o4",
+            "key": [
+              "door",
+              "gate"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 4,
+            "source": "sensor:o4",
+            "strength": "strong",
+            "value": "closed"
+          },
+          {
+            "id": "o5",
+            "key": [
+              "door",
+              "gate"
+            ],
+            "kind": "fact",
+            "reason": "world-changed-after-o4",
+            "seq": 5,
+            "source": "sensor:o5",
+            "strength": "strong",
+            "value": "open"
+          },
+          {
+            "id": "o6",
+            "key": [
+              "rule",
+              "inside_transitive"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 6,
+            "source": "sensor:o6",
+            "strength": "strong",
+            "value": "yes"
+          },
+          {
+            "id": "o7",
+            "key": [
+              "colour",
+              "coin"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 7,
+            "source": "sensor:o7",
+            "strength": "weak",
+            "value": "gold"
+          },
+          {
+            "id": "o8",
+            "key": [
+              "colour",
+              "coin"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 8,
+            "source": "sensor:o8",
+            "strength": "weak",
+            "value": "silver"
+          },
+          {
+            "id": "fork-right",
+            "key": [
+              "location",
+              "traveller"
+            ],
+            "kind": "fact",
+            "reason": "observation",
+            "seq": 9,
+            "source": "sensor:fork-right",
+            "strength": "strong",
+            "value": "south"
+          }
+        ]
+      }
+    },
+    "digest": "33bf174cf43d0383d5db1e6dd06a125295bd38d55551b241792e017ca1f60fa1"
+  }
+]

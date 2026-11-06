@@ -1,0 +1,229 @@
+{
+  "controls": {
+    "contradiction_unresolved_not_false": true,
+    "initial_ambiguity_unresolved": true,
+    "initial_unknown": true,
+    "memorizer_abstains_unseen": true,
+    "no_counter_no_revision": true,
+    "rejected_retains_counterexample": true
+  },
+  "counter_before_feedback": {
+    "case": {
+      "fixed": false,
+      "id": "feedback_detachable",
+      "linked": true
+    },
+    "prediction": {
+      "answer": true,
+      "hypothesis": "linked",
+      "status": "unresolved"
+    },
+    "truth": false
+  },
+  "initial_state": {
+    "active": null,
+    "observations": [],
+    "rejected": {},
+    "status": "unknown",
+    "viable": [
+      "never",
+      "linked",
+      "fixed",
+      "linked_and_fixed"
+    ]
+  },
+  "memorization_only_post": [
+    {
+      "answer": null,
+      "id": "post_new_detachable",
+      "truth": false
+    },
+    {
+      "answer": null,
+      "id": "post_new_fixed",
+      "truth": true
+    },
+    {
+      "answer": null,
+      "id": "post_new_unlinked",
+      "truth": false
+    }
+  ],
+  "metrics": {
+    "counter_prediction_correct": false,
+    "post_heldout_correct": 3,
+    "post_heldout_total": 3,
+    "pre_heldout_correct": 2,
+    "pre_heldout_total": 2,
+    "prior_hypothesis_rejected_by_counter": true,
+    "restored_exactly": true,
+    "restored_post_equal": true,
+    "revision_changed_hypothesis": true,
+    "training_recall": 2,
+    "training_total": 2
+  },
+  "post_heldout": [
+    {
+      "case": {
+        "fixed": false,
+        "id": "post_new_detachable",
+        "linked": true
+      },
+      "correct": true,
+      "prediction": {
+        "answer": false,
+        "hypothesis": "linked_and_fixed",
+        "status": "established"
+      },
+      "truth": false
+    },
+    {
+      "case": {
+        "fixed": true,
+        "id": "post_new_fixed",
+        "linked": true
+      },
+      "correct": true,
+      "prediction": {
+        "answer": true,
+        "hypothesis": "linked_and_fixed",
+        "status": "established"
+      },
+      "truth": true
+    },
+    {
+      "case": {
+        "fixed": false,
+        "id": "post_new_unlinked",
+        "linked": false
+      },
+      "correct": true,
+      "prediction": {
+        "answer": false,
+        "hypothesis": "linked_and_fixed",
+        "status": "established"
+      },
+      "truth": false
+    }
+  ],
+  "pre_heldout": [
+    {
+      "case": {
+        "fixed": true,
+        "id": "pre_new_fixed",
+        "linked": true
+      },
+      "correct": true,
+      "prediction": {
+        "answer": true,
+        "hypothesis": "linked",
+        "status": "unresolved"
+      },
+      "truth": true
+    },
+    {
+      "case": {
+        "fixed": true,
+        "id": "pre_new_unlinked",
+        "linked": false
+      },
+      "correct": true,
+      "prediction": {
+        "answer": false,
+        "hypothesis": "linked",
+        "status": "unresolved"
+      },
+      "truth": false
+    }
+  ],
+  "restored_state": {
+    "active": "linked_and_fixed",
+    "observations": [
+      {
+        "fixed": true,
+        "id": "train_linked_fixed",
+        "linked": true,
+        "outcome": true
+      },
+      {
+        "fixed": true,
+        "id": "train_unlinked_fixed",
+        "linked": false,
+        "outcome": false
+      },
+      {
+        "fixed": false,
+        "id": "feedback_detachable",
+        "linked": true,
+        "outcome": false
+      }
+    ],
+    "rejected": {
+      "fixed": "train_unlinked_fixed",
+      "linked": "feedback_detachable",
+      "never": "train_linked_fixed"
+    },
+    "status": "established",
+    "viable": [
+      "linked_and_fixed"
+    ]
+  },
+  "revised_state": {
+    "active": "linked_and_fixed",
+    "observations": [
+      {
+        "fixed": true,
+        "id": "train_linked_fixed",
+        "linked": true,
+        "outcome": true
+      },
+      {
+        "fixed": true,
+        "id": "train_unlinked_fixed",
+        "linked": false,
+        "outcome": false
+      },
+      {
+        "fixed": false,
+        "id": "feedback_detachable",
+        "linked": true,
+        "outcome": false
+      }
+    ],
+    "rejected": {
+      "fixed": "train_unlinked_fixed",
+      "linked": "feedback_detachable",
+      "never": "train_linked_fixed"
+    },
+    "status": "established",
+    "viable": [
+      "linked_and_fixed"
+    ]
+  },
+  "trained_state": {
+    "active": "linked",
+    "observations": [
+      {
+        "fixed": true,
+        "id": "train_linked_fixed",
+        "linked": true,
+        "outcome": true
+      },
+      {
+        "fixed": true,
+        "id": "train_unlinked_fixed",
+        "linked": false,
+        "outcome": false
+      }
+    ],
+    "rejected": {
+      "fixed": "train_unlinked_fixed",
+      "never": "train_linked_fixed"
+    },
+    "status": "unresolved",
+    "viable": [
+      "linked",
+      "linked_and_fixed"
+    ]
+  }
+}
