@@ -8290,3 +8290,119 @@ owner's report of one press per prompt; no press edge was captured.
   are not established.
 - Five presses establish repeated restart only for this image, unit and session, not a
   failure rate.
+
+### 3.49 — GEN1-VARIANT-A: operand variation (2,1,3) of the fixed-program Surd CPU over UART (2026-11-06 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS (single run, one authorised two-word ROM change).**
+One fresh volatile load of the CPU-ROM-2A Variant A image produced one complete, CRC-valid
+UART record. The record equals the result predicted before the run, and the CPU RTL was not
+changed. This entry is the third operand variant after 3.41 and 3.43. It is separate from
+sections 3.40 to 3.48 and does not reinterpret them. Entry reviewed and approved for commit
+by the owner (2026-11-06).
+
+```text
+Claim: this exact bitstream (golden image with ROM words 0 and 2 changed), loaded once into
+  SRAM on this unit, executed the fixed 14-instruction Surd program with operands (a,b,d) =
+  (2,1,3) and reported the predicted raw result (7,4,9), i.e. ((2+sqrt3)/3)^2 = (7+4*sqrt3)/9.
+  Attribution of the record to this load is subject to the freshness limit of 3.43.
+Evidence dimension: silicon (single observation); interface (UART TX only, as observed)
+Source revision / dirty-tree identity: same sources as 3.40 to 3.43 (isolated clone
+  /home/john/.local/gate/spu-int3b-c3efc18, HEAD c3efc1878e5ae35601ec01a9e87e52ef032a7fc7 plus
+  untracked experiment/ sources); production RTL, ISA and loader unchanged; repository
+  documentation baseline 5769c0e
+Build/test command and configuration: no new build. Image A was produced by the CPU-ROM-2A job
+  (build/cpu-rom-2a/prep/cand_bitgen.tcl, as 3.43: RAMB36 INIT low halves of ROM words 0 and 2
+  edited in memory only, 0x100 -> 0x200 and 0x200 -> 0x100; updatemem NOT used). Load and capture
+  by build/gen1-variant-a/harness/run_a.py (sha256
+  03aec7b8f77b266c6aebd4310000867376f2b712a54a765d58f4c08535fe82da)
+Device and toolchain: as 3.40 to 3.48 (QMTECH Wukong, owner-identified V3; XC7A100T-1FGG676C per
+  seller listing and owner acceptance, NOT physically verified; JTAG idcode 0x3631093;
+  openFPGALoader v1.2.0; DirtyJTAG CB81353DCE678119; CH340 by-id
+  usb-1a86_USB_Serial-if00-port0)
+Artifact identity: A.bit sha256 dc08af303c58738e0399374a9fe8cc2c620f834aab5123f001f2a9923cf242a1;
+  A.bin sha256 13ee02b8148cc52a7b508e401ac65e6105459980078cf80a24c0068e95e12cb3; golden .bit
+  442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea unchanged
+Oracle and checked scope: expected record derived before the run and independently of any
+  capture (build/gen1-variant-a/expected/derive_expected.py, 11/11 checks): exact rational
+  arithmetic gives (7,4,9); record CRC 7e5ddbf3 from a bitwise CRC-32 written for the
+  derivation, equal to zlib; agrees with ROM-2A READINESS/analysis and the RTL simulation of the
+  board wrapper (build/cpu-rom-2a/out/sim/vectors.log). Checked scope: one program, one run.
+Result and evidence artifact path: PASS; build/gen1-variant-a/run-01/ (6-entry MANIFEST.sha256,
+  sha256 9b157d1b597044e9ec71bd626193ed5dbb776cfa588eab162dc0797ff11bc22f); preparation,
+  preflight and owner confirmation in build/gen1-variant-a/ (19-entry MANIFEST.sha256, sha256
+  a6684ca07df909a58d9cf4fcecf200c1973f67f7f9fd8069016cd6950b5f5184); image evidence
+  build/cpu-rom-2a/out/ (83-entry MANIFEST.sha256, sha256
+  b5fc1c4cbf40c8554e1aff30fe47d5eec477adb370633162a0bbf55b6d6707e1)
+Adjacent evidence dimensions not established: see below
+```
+
+**Image identity and difference to golden (recomputed for this entry):**
+- **ROM:** A's in-memory INIT_00 decodes to operands (2,1,3); golden decodes to (1,2,3). All
+  other INIT/INITP properties are identical.
+- **Bitstream:** A.bin differs from the golden .bin (cc259988...) in exactly three 32-bit words:
+  - 917032 (xor 00030000) and 917038 (xor 00000003). These equal the XOR of the single-bit
+    probe images for INIT bits 8, 9, 72 and 73.
+  - 955926, the configuration CRC word.
+- **Configuration CRC:** both configuration CRC writes of A were reproduced earlier
+  (build/cpu-rom-2c-crc2-check/, ALL_BOTH_MATCH; see 3.43).
+
+**Procedure and result:**
+- **Harness:** a mechanical copy of the frozen 3.43 harness.
+  - capture.py and loader_run.py are byte-identical to 3.43.
+  - The other changes are only the image path and hashes, the expected record, the output path
+    and the evidence-integrity list (build/gen1-variant-a/harness_vs_rom2c.diff).
+  - The offline tests passed.
+- **Preflight, attempt 1:** stopped at an import-path defect in preflight_a.py, before any USB
+  enumeration, detect or load. The output was kept. One line was fixed and the harness hashes
+  refrozen. The superseded preparation manifest (PREP.MANIFEST.sha256, ec4e1724...) is kept as
+  historical evidence.
+- **Preflight, attempt 2:** PASS, 18/18. It verified the image hashes and manifests, that the
+  earlier hardware evidence was unchanged, one DirtyJTAG and one CH340, a free port, and a
+  read-only detect returning idcode 0x3631093.
+- **Owner go:** the owner, at the board, answered "Go" immediately after the preflight.
+- **Capture:** started first (115200 baud, 8N1, raw, no flow control) and drained for 1 s
+  (0 stale bytes). The board had been running the golden image resident since 3.48.
+- **Load:** exactly one `openFPGALoader -c dirtyJtag --freq 1000000 <A.bit>`. It was an SRAM
+  load with no flash options.
+  - It returned exit 0 after **31.363 s**: `Load SRAM 100.00%`, `Done`, `isc_done 1`, `init 1`,
+    `done 1`.
+  - `loader_output.txt` sha256: b552220a8723968021dc8de97ee11bb4aea40b4d0a889d643382b2d6eab33d75.
+- **Capture result:** exactly 33 bytes arrived, in two USB chunks.
+  - The chunks arrived 31,317.3 and 31,320.1 ms after the load started. The loader returned at
+    31,363.3 ms, so the chunks arrived about 46.0 and 43.2 ms before it returned.
+  - `raw_all.bin` sha256 25373c31aecea8664145c898953cffad987446312ca608f611f20a9b68a4da06.
+  - `capture.jsonl` sha256 f892db20a59fe0c288400162a5fdb4eb97911ee9cd9e0371016d04f0132834ab.
+  - The raw file and the per-chunk jsonl both total 33 bytes.
+
+```text
+a5 01 01 3f 0e | 07000000 00000000 04000000 00000000 09000000 00000000 | f3db5d7e
+status 01, mask 3f, PC 14, slices [7,0,4,0,9,0] little-endian, CRC-32 7e5ddbf3
+(golden record 756b2b42, Variant B 02e6ead8, one-word 970c4071)
+```
+
+**After the record:**
+- In the 30 s window, no other byte appeared: no truncated frame, no contradictory valid record
+  and no repeated record. A resident golden record would have been flagged as contradictory.
+- The read-only JTAG detect after the window found one device, idcode 0x3631093.
+  `session.json` sha256: 5b07146b0447b8e86ad4f83428f0032875b653442d07186d7022cb5691997d7a.
+- The session took 62.5 s from capture start; the limit was 180 s.
+- The board was left with Variant A resident in SRAM. Nothing was written to flash and KEY0 was
+  not pressed.
+
+**Attribution limit (freshness):** as in 3.43.
+- The record carries no execution epoch.
+- Attribution to this load rests on procedure and timing, plus one fact: the record differs from
+  the record of the image resident before the load (golden).
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- **Full ISA qualification:** one program with changed operand words (a: 1 to 2, b: 2 to 1;
+  d unchanged). No other opcodes, no overflow/refusal path and no normalization path; the result
+  is already reduced.
+- **Repeatability:** Variant A was loaded once on one unit. There is no cross-build or
+  cross-device agreement.
+- **Runtime reset:** KEY0 behaviour of this image was NOT RUN.
+- **Timing/electrical:** as 3.40 (internal routed timing only; no rail, clock or baud
+  measurement).
+- **Device identity:** speed/temperature grade and board revision remain owner-accepted,
+  unverified assumptions.
+- **Persistence and boot:** the image is volatile; no power-cycle or flash boot.
