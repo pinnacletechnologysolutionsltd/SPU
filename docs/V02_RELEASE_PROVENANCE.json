@@ -26,9 +26,9 @@
   {
    "path": "CONTRIBUTING.md",
    "change": "M",
-   "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
-   "git_blob": "428717cb8f3604460d3d47f8d736ca3cd477b837",
-   "sha256": "22000015d6130d58750697f0e8c94af782a24d73eb370d3843999504cb9955f6",
+   "source_revision": "c276d4dfb9708e2e8d8f1d235f3bc0598178de8b",
+   "git_blob": "e1d486671e5b8d54e64b10de1d002bf2743a39b8",
+   "sha256": "5fb12003d64198b7b0a960c3b70484ee5c438572540e1a40e8b7c3810738de04",
    "disposition": "imported"
   },
   {
@@ -42,9 +42,9 @@
   {
    "path": "README.md",
    "change": "M",
-   "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
-   "git_blob": "bf8cebd610024ac14ecdd9cc25845c24cdb8dfcf",
-   "sha256": "d015f9eed2509dd5700f254deb1f842e96ac685f249ef8429fee017fa71430bd",
+   "source_revision": "c276d4dfb9708e2e8d8f1d235f3bc0598178de8b",
+   "git_blob": "0ff9963f805fd88039684952f1b5290cb4151834",
+   "sha256": "97c4b235243030ee66abfe42d2472b00c2df53a37a40a9b3d54c13df7c176078",
    "disposition": "imported"
   },
   {
@@ -2268,6 +2268,30 @@
     "sha256": "907e0403b731fc5f374a568bb18a4afedf0384040cb6033b81a90440fc728a0a"
    },
    "previous_manifest_commit": "994456b635b4b67d25b7fba371f6a38e316179dc"
+  },
+  {
+   "purpose": "Final documentation: README contract precedence statement; CONTRIBUTING licence row consistency",
+   "integration_source": {
+    "ref": "dev/next",
+    "commit": "c276d4dfb9708e2e8d8f1d235f3bc0598178de8b"
+   },
+   "paths": [
+    "README.md",
+    "CONTRIBUTING.md"
+   ],
+   "previous": {
+    "CONTRIBUTING.md": {
+     "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
+     "git_blob": "428717cb8f3604460d3d47f8d736ca3cd477b837",
+     "sha256": "22000015d6130d58750697f0e8c94af782a24d73eb370d3843999504cb9955f6"
+    },
+    "README.md": {
+     "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
+     "git_blob": "bf8cebd610024ac14ecdd9cc25845c24cdb8dfcf",
+     "sha256": "d015f9eed2509dd5700f254deb1f842e96ac685f249ef8429fee017fa71430bd"
+    }
+   },
+   "previous_manifest_commit": "7b9ab3622488dbb09ba4ef795127c150598ea947"
   }
  ]
 }

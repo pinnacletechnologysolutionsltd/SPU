@@ -86,7 +86,7 @@ The defaults are:
 | `hardware/` | CERN-OHL-W-2.0, from [hardware/LICENSE](hardware/LICENSE) |
 | `docs/` and `knowledge/` | CC0 1.0 Universal, from [docs/LICENSE](docs/LICENSE) |
 | `examples/` and `fixtures/` | MIT, from [software/LICENSE](software/LICENSE), for original content by the repository owner |
-| `spu_strategy/` and `research/` | Apache-2.0, from the root [LICENSE](LICENSE), unless a file carries a more-specific notice |
+| `spu_strategy/` and `research/` | Apache-2.0, from the root [LICENSE](LICENSE), for original content by the repository owner, unless a file specifies otherwise |
 | Root-level files and `tools/` without a more-specific notice | Apache-2.0, from [LICENSE](LICENSE) |
 
 A more-specific file or directory notice takes precedence. Preserve existing

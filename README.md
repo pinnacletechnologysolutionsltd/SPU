@@ -33,6 +33,8 @@ The rational GPU, HEX-SOM, the experimental H0 programmable image and the wider
 mathematical research below are **experimental components**. They are not
 features of the canonical CPU.
 
+Where any historical document in this repository (for example earlier ISA, rotor or accelerator descriptions) conflicts with the Gen-1 architectural contract, the contract is authoritative for v0.2; historical documents are kept for provenance, not as descriptions of supported hardware.
+
 ## What is here
 
 - **A software stack.** A Python virtual machine, a C++ VM with the `gen1-surd`
