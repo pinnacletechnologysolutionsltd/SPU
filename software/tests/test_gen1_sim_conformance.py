@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
-"""gen1-surd C++ profile conformance (SPU-GEN1-SIM-IMPL-0). Standalone; NOT part of run_all_tests.py.
-
-Usage: python3 software/tests/test_gen1_sim_conformance.py OUT_DIR   (OUT_DIR must not exist)
-Pure Python: shares no code with the C++ model. References: the frozen GEN1-ISA-COVERAGE-2 fixture
-(RTL simulation), the hardware evidence ledger text (silicon success frames) and an expected-state
-model written here from docs/GEN1_ARCHITECTURAL_CONTRACT.md §7. Writes results.json (PASS/FAIL/ERROR)
-in every case; every check keeps its boolean and observed value. Exit 0 only on PASS.
-"""
+"""gen1-surd C++ profile conformance (SPU-GEN1-SIM-IMPL-0); required in run_all_tests.py. Usage: OUT_DIR (must not exist).
+Pure Python, no code shared with the C++ model. References: frozen RTL fixtures (seven cases + FA), ledger silicon
+frames, an expected-state model from docs/GEN1_ARCHITECTURAL_CONTRACT.md §7. results.json always written; exit 0 only on PASS."""
 import hashlib, json, math, subprocess, sys, traceback, zlib
 from pathlib import Path
 
@@ -18,15 +13,22 @@ CONTRACT_SHA = '0e1c1566a52e24a9124165a19c4b1ac0a272cc8932a84a7e45d64782d08f2a2e
 LEDGER = ROOT / 'docs/hardware_evidence.md'
 FA = ROOT / 'hardware/tests/spu13/gen1_integration/fixtures/fault_after_srd.json'   # RTL-derived directed case
 FA_SHA = 'faf52b7ae790550adc61fc4ffb8145b888783ba58d98af9935f1e26ff616d1cf'
-LEGACY_REV = '5948d8d5189602cfdca42023aa7e99e3fd0763e5'   # last revision before the gen1-surd profile (14ab48a6)
+# Historical legacy VM baseline (the VM before the gen1-surd profile), pinned by content: these git blobs are
+# identical in public main 9fe2ceeb and dev/next 5948d8d5, so the check needs no development-only commit.
+LEGACY = {'spu_vm.cpp': '22b54011dca474382e39fe2e4949c79eabd81db2', 'checked_math.h': '03448d1d88ce77a8e42f9eac193e9b0618bc716e',
+          'assembly_operands.h': '2a4f085f7792e01b835a4792c44d973f1168b40c'}
 G340 = 'a5 01 01 3f 0e | 0d000000 00000000 04000000 00000000 09000000 00000000 | 422b6b75'
 CHECKS = []
-
-def check(name, ok, observed):
-    CHECKS.append(dict(name=name, ok=bool(ok), observed=repr(observed)[:2000]))
+def check(name, ok, observed): CHECKS.append(dict(name=name, ok=bool(ok), observed=repr(observed)[:2000]))
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def run(args, **kw): return subprocess.run(args, capture_output=True, text=True, timeout=60, **kw)
-
+def legacy_file(name, blob):
+    """Fetch one pinned baseline blob; any failure is an explicit error, never an empty or substitute file."""
+    r = subprocess.run(['git', '-C', str(ROOT), 'cat-file', 'blob', blob], capture_output=True, timeout=60)
+    h = subprocess.run(['git', 'hash-object', '--stdin'], input=r.stdout, capture_output=True).stdout.decode().strip()
+    if r.returncode or not r.stdout or h != blob:
+        raise RuntimeError(f'legacy baseline {name} (blob {blob}) unavailable or mismatched: rc={r.returncode} bytes={len(r.stdout)} got={h}')
+    return r.stdout
 def expected_s0(a, b, d):
     """Contract §7 written independently: SLD needs d != 0; SMUL raw-fit else gcd-normalize else refuse."""
     if d == 0: return None                                   # SLD INVALID: S0 stays uninitialized
@@ -36,14 +38,12 @@ def expected_s0(a, b, d):
     g = math.gcd(math.gcd(A, B), D)
     A, B, D = (0, 0, 1) if A == B == 0 else (A // g, B // g, D // g)
     return (A, B, D) if fit(A, B, D) else (a, b, d)          # OVERFLOW preserves S0
-
 def rom_bytes(words): return b''.join(int(w, 16).to_bytes(8, 'big') for w in words)
 def frame_of(t, ok=True):
     a, b, d = (x % 2**64 for x in t)
     body = bytes([0xA5, 1, 1 if ok else 2, 0x3F, 14]) + b''.join(
         v.to_bytes(4, 'little') for v in (a & 0xffffffff, a >> 32, b & 0xffffffff, b >> 32, d & 0xffffffff, d >> 32))
     return body + zlib.crc32(body).to_bytes(4, 'little')
-
 def gen1(exe, out, rom, *extra):
     p = out / 'roms' / (hashlib.sha256(rom).hexdigest()[:16] + '.bin'); p.parent.mkdir(exist_ok=True); p.write_bytes(rom)
     diag = p.with_suffix('.diag.json'); raw = p.with_suffix('.frame')
@@ -53,7 +53,7 @@ def gen1(exe, out, rom, *extra):
 def main(out):
     out = Path(out).resolve(); out.mkdir(parents=True)       # refuses an existing directory
     res = dict(status='ERROR', harness_sha256=sha(__file__), fixture_sha256=sha(FIXTURE),
-               fa_fixture_sha256=sha(FA), contract_sha256=sha(CONTRACT), legacy_baseline_revision=LEGACY_REV)
+               fa_fixture_sha256=sha(FA), contract_sha256=sha(CONTRACT), legacy_baseline_blobs=LEGACY)
     try:
         check('fixture identity', res['fixture_sha256'] == FIXTURE_SHA, res['fixture_sha256'])
         check('contract identity', res['contract_sha256'] == CONTRACT_SHA, res['contract_sha256'])
@@ -63,10 +63,11 @@ def main(out):
         check('build', b.returncode == 0, b.stderr[-500:])
         base.mkdir(parents=True)                                  # HEAD legacy VM; ../common/include as in-tree
         (base.parent / 'common').symlink_to(ROOT / 'software/common', target_is_directory=True)
-        for n in ('spu_vm.cpp', 'checked_math.h', 'assembly_operands.h'):   # legacy baseline pinned before gen1-surd
-            (base / n).write_text(run(['git', '-C', str(ROOT), 'show', f'{LEGACY_REV}:software/vm/{n}']).stdout)
+        for n, blob in LEGACY.items():                        # historical legacy VM, verified by content
+            (base / n).write_bytes(legacy_file(n, blob))
+        check('legacy baseline content matches pinned blobs', True, LEGACY)
         bb = run(['c++', '-std=c++17', '-O2', '-Wall', '-o', str(base / 'spu_vm'), str(base / 'spu_vm.cpp')])
-        check('baseline build (HEAD legacy VM)', bb.returncode == 0, bb.stderr[-500:])
+        check('baseline build (historical legacy VM)', bb.returncode == 0, bb.stderr[-500:])
         res.update(executable_sha256=sha(exe), compiler=run(['c++', '--version']).stdout.splitlines()[0],
                    sources={n: sha(ROOT / 'software/vm' / n) for n in
                             ('Makefile', 'spu_vm.cpp', 'gen1_wide.hpp', 'gen1_surd.hpp', 'gen1_cli.hpp')})

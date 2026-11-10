@@ -428,9 +428,9 @@
   {
    "path": "software/tests/test_gen1_sim_conformance.py",
    "change": "A",
-   "source_revision": "a2cfee7321010d3e2a58b84e66c26d0646165c01",
-   "git_blob": "6e12bb684592bd1f9e9ef0f1b07cbb0399641398",
-   "sha256": "907e0403b731fc5f374a568bb18a4afedf0384040cb6033b81a90440fc728a0a",
+   "source_revision": "69af13a273cc9f1af15f4e5a340d13c9d643152b",
+   "git_blob": "1681bb1565cb87e15b8432e45d6544c722a00a35",
+   "sha256": "d5ca5b69a9d4540fc925dfb0e533984301a3138fe387a337b43e4d6f4c58ca45",
    "disposition": "imported"
   },
   {
@@ -2250,6 +2250,24 @@
    "path": "research/xc7_qual_2/stage.py",
    "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
    "disposition": "excluded: research added on dev/next after the public base"
+  }
+ ],
+ "amendments": [
+  {
+   "purpose": "SPU-V02-RELEASE-PORTABILITY-1: legacy baseline pinned by blob content",
+   "integration_source": {
+    "ref": "dev/next",
+    "commit": "69af13a273cc9f1af15f4e5a340d13c9d643152b"
+   },
+   "paths": [
+    "software/tests/test_gen1_sim_conformance.py"
+   ],
+   "previous": {
+    "source_revision": "a2cfee7321010d3e2a58b84e66c26d0646165c01",
+    "git_blob": "6e12bb684592bd1f9e9ef0f1b07cbb0399641398",
+    "sha256": "907e0403b731fc5f374a568bb18a4afedf0384040cb6033b81a90440fc728a0a"
+   },
+   "previous_manifest_commit": "994456b635b4b67d25b7fba371f6a38e316179dc"
   }
  ]
 }
