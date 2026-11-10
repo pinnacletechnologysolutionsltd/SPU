@@ -91,14 +91,13 @@ norm Q is preserved exactly through all rotations.
 | `HALT` | 0x08 | `HALT` | Stop execution |
 | `NOP` | 0xFF | `NOP` | No operation |
 
-**Compatibility limitation:** `COND` has no allocated canonical encoding.
-The current Python VM/assembler collide COND with CALL at 0x20; the C++ VM
-still uses legacy CALL/RET values. The table above follows the canonical
-reference, not a claim of current executable parity. See
-[the frozen boundary and compatibility plan](../docs/isa/CANONICAL_CONTROL_RECONCILIATION.md).
+**No conditional branch:** `COND` has no allocated canonical encoding and the
+canonical ISA has no conditional branch (control flow is `JMP`, `CALL`, `RET`,
+`HALT`). The Python VM, C++ VM and `spu13_asm.py` all use CALL 0x20, RET 0x21,
+QREAD 0x22 and reject `COND` source. Binaries from the older public tools use
+other encodings; see the
+[legacy binary boundary](../docs/isa/CANONICAL_CONTROL_RECONCILIATION.md#legacy-binary-boundary-2026-11-05).
 Do not execute an ambiguous historical binary by guessing its profile.
-`QREAD` retains 0x22. A COND source requires an explicit future allocation
-or a separately identified legacy profile before canonical assembly.
 
 ---
 
@@ -159,7 +158,7 @@ LOOP:
         ADD  R0, R1        ; R0 = R0 + R1
         LOG  R1
         ADD  R1, R0        ; R1 = R1 + R0
-        JMP  LOOP          ; (use COND + counter to terminate)
+        JMP  LOOP          ; (no conditional branch: stops at the --steps budget)
 ```
 
 Labels are identifiers followed by `:`. They are resolved in a two-pass assembly.
@@ -173,10 +172,9 @@ Immediates are signed 16-bit decimal integers.
 # Individual programs
 python3 software/spu_forge.py simulate software/programs/poiseuille_flow.sas
 python3 software/spu_forge.py simulate software/programs/kinematic_chain.sas
-python3 software/spu_forge.py simulate software/programs/laminar_vs_cubic.sas
 python3 software/spu_forge.py simulate software/programs/jitterbug.sas
 python3 software/spu_forge.py simulate software/programs/fibonacci_pulse.sas
-python3 software/spu_forge.py simulate software/programs/equilibrium_test.sas
+python3 software/spu_forge.py simulate software/programs/equilibrium_test.sas  # reports FAIL: the program ends with 2 SNAP failures (VM exit 2); same on the historical public VM
 
 # Run all tests (Verilog)
 python3 run_all_tests.py
@@ -214,15 +212,10 @@ ROT  R0          ; R0 = (7+4√3)
 ROT  R0          ; R0 = (26+15√3)  — P²−3Q² = 1 all the way
 ```
 
-### Detect cubic leak (not SNAP)
-```asm
-        COND R1, LAMINAR   ; jump if laminar
-        LOG  R1             ; print the leak value
-        JMP  DONE
-LAMINAR:
-        SNAP               ; now safe — all registers are laminar
-DONE:
-```
+### Detect cubic leak
+The canonical ISA has no conditional branch, so a leak is detected with `SNAP`
+(exit status 2 on failure). `software/programs/laminar_vs_cubic.sas` is a
+preserved legacy example that used the unallocated `COND`; it does not assemble.
 
 ### IVM 60° spread check
 ```asm

@@ -101,6 +101,32 @@ def run_cpu_frontend_test(root_dir):
     return 1, 0
 
 
+def run_gen1_sim_conformance(root_dir):
+    """Required: C++ gen1-surd profile vs frozen Gen-1 fixtures (software conformance, not RTL/silicon)."""
+    script = root_dir / "software/tests/test_gen1_sim_conformance.py"
+    if not script.is_file():
+        print(f"Gen-1 simulator conformance MISSING: {script}")
+        return 0, 1
+    try:
+        build_dir = root_dir / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        evidence = Path(tempfile.mkdtemp(prefix="gen1_sim_conformance_", dir=build_dir)) / "results"
+        result = subprocess.run([sys.executable, str(script), str(evidence)],
+                                cwd=root_dir, capture_output=True, text=True, timeout=300)
+    except subprocess.TimeoutExpired:
+        print("Gen-1 simulator conformance TIMEOUT")
+        return 0, 1
+    except OSError as exc:
+        print(f"Gen-1 simulator conformance ERROR: {exc}")
+        return 0, 1
+    print(f"Gen-1 simulator conformance evidence: {evidence}")
+    if result.returncode:
+        print(f"Gen-1 simulator conformance FAILED:\n{(result.stdout + result.stderr)[-2000:]}")
+        return 0, 1
+    print("Gen-1 simulator conformance PASSED")
+    return 1, 0
+
+
 def main():
     root_dir = Path(__file__).resolve().parent
     os.chdir(root_dir)
@@ -1140,6 +1166,30 @@ def main():
     gram_pass = sum(p for p, _ in gram_results.values())
     gram_fail = sum(f for _, f in gram_results.values())
 
+    # ISA compatibility (canonical CALL/RET/QREAD words, COND refusal, C++ VM
+    # exit codes and fault rollback) and program-image reproducibility
+    # (every tracked software/programs/*.bin == canonical assembly of its .sas).
+    # Needs g++ for the C++ VM checks. Required: a missing script is a failure.
+    isa_compat_results = {}
+    for isa_name in ("test_canonical_control.py", "test_isa_conformance.py",
+                     "test_isa_software_semantics.py", "test_program_images.py"):
+        isa_path = os.path.join(root_dir, "software", "tests", isa_name)
+        if not os.path.exists(isa_path):
+            print(f"\n  {isa_name} MISSING (required suite)")
+            isa_compat_results[isa_name] = (0, 1)
+            continue
+        try:
+            r = subprocess.run([sys.executable, isa_path],
+                               capture_output=True, text=True, timeout=180)
+            ok, out = (r.returncode == 0), r.stdout + r.stderr
+        except subprocess.TimeoutExpired:
+            ok, out = False, "timeout"
+        isa_compat_results[isa_name] = (1, 0) if ok else (0, 1)
+        if not ok:
+            print(f"\n  {isa_name} FAILED:\n{out[-500:]}")
+    isa_compat_pass = sum(p for p, _ in isa_compat_results.values())
+    isa_compat_fail = sum(f for _, f in isa_compat_results.values())
+
     # IROTC VM suite (trace equivalence / poison proofs / chain tests) —
     # φ-plane icosahedral opcodes, no hardware required. The trace and
     # chain tests import test_icosahedral_catalog.py, so the derivation's
@@ -1291,6 +1341,7 @@ def main():
         print(f"\n  test_release_manifest.py MISSING: {rm_test}")
 
     cpu_frontend_pass, cpu_frontend_fail = run_cpu_frontend_test(root_dir)
+    gen1_sim_pass, gen1_sim_fail = run_gen1_sim_conformance(root_dir)
 
     # SPU-4 SOM edge probe UART line parser (no hardware required) -- shared
     # grammar between the fixed self-test probe and the interactive probe.
@@ -1453,6 +1504,9 @@ def main():
     print(f"\nGram v1 SPREAD Tests: {gram_pass + gram_fail}")
     print(f"Passed:               {gram_pass}")
     print(f"Failed:               {gram_fail}")
+    print(f"\nISA Compatibility Tests: {isa_compat_pass + isa_compat_fail}")
+    print(f"Passed:                  {isa_compat_pass}")
+    print(f"Failed:                  {isa_compat_fail}")
     print(f"\nProfile scoping: SPU_PROFILE={spu_profile}")
     if profile_skipped:
         print(f"  SKIPPED ({len(profile_skipped)}, REGEN full-profile-only, inapplicable to base):")
@@ -1516,14 +1570,17 @@ def main():
     print(f"\nCPU Frontend Tests: {cpu_frontend_pass + cpu_frontend_fail}")
     print(f"Passed: {cpu_frontend_pass}")
     print(f"Failed: {cpu_frontend_fail}")
+    print(f"\nGen-1 Simulator Conformance Tests: {gen1_sim_pass + gen1_sim_fail}")
+    print(f"Passed: {gen1_sim_pass}")
+    print(f"Failed: {gen1_sim_fail}")
 
     total_pass = (
         passed + cpp_p + py_pass + cv_pass + lucas_pass + bq_pass + icos_pass + lucas_harness_pass
         + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
-        + audio_pass + host_pass + cpu_frontend_pass + spu4_probe_parser_pass + spu4_probe_client_pass
+        + audio_pass + host_pass + cpu_frontend_pass + gen1_sim_pass + spu4_probe_parser_pass + spu4_probe_client_pass
         + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + exit_verdict_pass + rotc_trace_pass
-        + regen_pass + cpu_profile_pass + gram_pass
+        + regen_pass + cpu_profile_pass + gram_pass + isa_compat_pass
         + irotc_pass + tensegrity_pass + boot_sequence_pass + cyclotomic_pass
         + bench_metrics_pass
         + composition_pass
@@ -1535,10 +1592,10 @@ def main():
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
-        + audio_fail + host_fail + cpu_frontend_fail + spu4_probe_parser_fail + spu4_probe_client_fail
+        + audio_fail + host_fail + cpu_frontend_fail + gen1_sim_fail + spu4_probe_parser_fail + spu4_probe_client_fail
         + som_product_fail + robotics_demo_fail
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + exit_verdict_fail + rotc_trace_fail
-        + regen_fail + cpu_profile_fail + gram_fail
+        + regen_fail + cpu_profile_fail + gram_fail + isa_compat_fail
         + irotc_fail + tensegrity_fail + boot_sequence_fail + cyclotomic_fail
         + bench_metrics_fail
         + (0 if lucas_harness_pass else 1) + (1 - icosa_pass) + (1 - su3_pass)

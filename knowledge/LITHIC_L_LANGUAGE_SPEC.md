@@ -603,6 +603,23 @@ Bits [ 7: 0]  (reserved)
 
 ### 6.2 Complete Opcode Table
 
+**Reconciliation status (2026-11-06):** the `QNORM`, `IDNT` and `HEX` operand
+forms below were corrected to agree with [the ISA reference](isa_reference.md),
+`spu13_asm.py` and both VMs. Still unresolved, with no replacement semantics
+given here:
+
+- `QLOAD`: the row below matches the assembler and both VMs, but the ISA
+  reference describes `QLOAD QRd` as "Load QR from manifold lane", and the
+  Lithic-L C++ constructor `L_QLOAD` (`software/common/include/spu_lithic_l.h`)
+  places immediates in P1_A/P1_B, which both VMs ignore.
+- `HEX`: the coordinate order conflicts between the VMs and the core RTL
+  (see the row note), and `L_HEX` places the Quadray source in the R1 field,
+  which the VMs read as the scalar destination.
+
+The core RTL acknowledges `QNORM`, `QLOAD` and `IDNT` without a state change
+([ISA v0.2 State 1 findings](../docs/isa/ISA_V02_STATE1_FINDINGS.md)). These rows
+describe software behaviour, not RTL conformance.
+
 **Scalar Q(√3) Arithmetic**
 
 | Mnemonic | Opcode | Operation |
@@ -620,10 +637,15 @@ Bits [ 7: 0]  (reserved)
 |----------|--------|-----------|
 | `JMP LABEL` | 0x06 | Unconditional jump |
 | `SNAP` | 0x07 | Assert all regs laminar; exit 2 on failure |
-| `COND Rn, LABEL` | 0x20 | Jump if Q(Rn) > 0; fall through if Q ≤ 0 |
-| `CALL LABEL` | 0x21 | Push PC, jump |
-| `RET` | 0x22 | Pop PC, jump |
+| `CALL LABEL` | 0x20 | Push PC, jump |
+| `RET` | 0x21 | Pop PC, jump |
 | `NOP` | 0xFF | No operation |
+
+`COND` has no canonical encoding and is rejected; the canonical ISA has no
+conditional branch. This table previously listed COND 0x20, CALL 0x21 and
+RET 0x22, the historical C++ VM encoding (corrected 2026-11-05; see
+[the canonical control record](../docs/isa/CANONICAL_CONTROL_RECONCILIATION.md)
+and [the ISA reference](isa_reference.md), which is authoritative).
 
 **Quadray IVM**
 
@@ -631,8 +653,8 @@ Bits [ 7: 0]  (reserved)
 |----------|--------|-----------|
 | `QLOAD QRn, Rb` | 0x13 | Pack R[Rb..Rb+3] into QRn |
 | `QADD QRd, QRs` | 0x10 | `QRd ← QRd + QRs` |
-| `QROT QRn` | 0x11 | `(a,b,c,d) → (b,c,d,a)` — cyclic IVM rotation |
-| `QNORM QRd, QRs` | 0x12 | Quadrance of QRs into QRd |
+| `QROT QRn` | 0x11 | Each component of QRn ×= (2+√3), then normalized — Pell rotor (corrected 2026-11-05; previously described as a cyclic rotation) |
+| `QNORM QRn` | 0x12 | `QRn ← QRn − min(A,B,C,D)` — canonical IVM form (minimum component 0) |
 | `QLOG QRn` | 0x14 | Print Quadray (debug) |
 
 **Geometry**
@@ -640,14 +662,14 @@ Bits [ 7: 0]  (reserved)
 | Mnemonic | Opcode | Operation |
 |----------|--------|-----------|
 | `SPREAD Rd, QRa, QRb` | 0x15 | `Rd=numer, Rd+1=denom`; never divides |
-| `HEX Rn` | 0x16 | Output register as hex surd |
+| `HEX Rd, QRs` | 0x16 | Hex projection of QRs from rational parts into `R[d]` and `R[(d+1) mod 26]`. Both VMs write (A−D, B−D); the core RTL emits 16-bit (B−D, A−D) telemetry and does not write `R[d]` — order unresolved ([conformance record](../docs/isa/ISA_CONFORMANCE_2026-10-10.md)) |
 
 **Vector Equilibrium & Janus Layer**
 
 | Mnemonic | Opcode | Operation |
 |----------|--------|-----------|
 | `EQUIL Rd` | 0x17 | Check VE state; write tension to Rd |
-| `IDNT Rd, Rs` | 0x18 | Identity monad: `Rd ← Rs` with provenance |
+| `IDNT QRn` | 0x18 | `QRn ← (1, 0, 0, 0)` — canonical Quadray unity |
 | `JINV Rn` | 0x19 | Janus inversion: `Rn ← (P, −Q)` — negate surd component only |
 | `ANNE Rd, Rs` | 0x1A | Anneal: smooth manifold tension |
 
@@ -773,7 +795,7 @@ rightness at runtime.
 | Layer 1 | 64-bit binary ISA encoding | ✅ Defined (spu_vm.py) |
 | Layer 2 | SAS assembler (spu13_asm.py) | ✅ Working |
 | Layer 2 | Python soft-CPU (spu_vm.py) | ✅ Working |
-| Layer 2 | SAS demo programs | ✅ poiseuille, kinematic, laminar_vs_cubic |
+| Layer 2 | SAS demo programs | ✅ poiseuille, kinematic (laminar_vs_cubic is a legacy COND example and does not assemble) |
 | Layer 3 | `spu_surd.h` — Q(√3) RationalSurd arithmetic | ✅ Complete (30 tests) |
 | Layer 3 | `spu_quadray.h` — 4-axis IVM Quadray + Spread | ✅ Complete (40+ tests) |
 | Layer 3 | `spu_ivm.h` — Manifold13 + Nguyen weight oracle | ✅ Complete (35+ tests) |

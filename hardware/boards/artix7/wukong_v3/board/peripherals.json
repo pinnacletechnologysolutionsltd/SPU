@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "disposition": "provisional_not_hardware_qualified",
+  "board_revision": "3.0",
+  "schematic": {
+    "filename": "QMTECH-XC7A100T_200T-Wukong-Board-V03-20240121.pdf",
+    "sha256": "bec53e6201c5c47a7059ce5b5af86e0f3a48535ebdf5643af7583171f7331aee",
+    "sheets": 7
+  },
+  "device": {
+    "schematic_label": "XC7A100T-200T_FGG676",
+    "owner_reported_target": "xc7a100tfgg676-1",
+    "speed_grade_from_schematic": null,
+    "physical_marking_verified": false,
+    "pinned_prjxray_support_verified": false
+  },
+  "peripherals": [
+    {
+      "id": "clock",
+      "part": "SG-8002JC-50.0000M-PCB",
+      "frequency_hz": 50000000,
+      "sheet": 2
+    },
+    {
+      "id": "buttons",
+      "sheet": 2,
+      "notes": "KEY0 and KEY1 are active low with external 4.7 kohm pull-ups."
+    },
+    {
+      "id": "leds",
+      "sheet": 2,
+      "notes": "Two FPGA user LEDs: D5/LED0 and D6/LED1, active low. D4 is a supply LED; D1 is DONE. No V2 assignments reused."
+    },
+    {
+      "id": "uart",
+      "part": "CH340N",
+      "sheet": 6,
+      "physical_evidence": "docs/hardware_evidence.md section 3.11; 115200 8N1 echo, 20/20 in one session; not sustained-throughput qualification"
+    },
+    {
+      "id": "hdmi",
+      "connector": "P3",
+      "companion": "U16 TPD12S016",
+      "sheet": 6,
+      "topology": "FPGA-generated differential video; U16 protection and sideband level shifting; no external video serializer",
+      "notes": "LS_OE and CT_HPD tied to 3V3. HDMI 5V sourced via U16 from VIN. FPGA I/O standards and serialization remain unqualified."
+    },
+    {
+      "id": "ddr3",
+      "part": "MT41K128M16JT-125:K",
+      "sheet": 4,
+      "status": "partial",
+      "unresolved_control_group": [
+        "DDR_RESETN",
+        "DDR_CKE",
+        "DDR_CS",
+        "DDR_RAS",
+        "DDR_CAS",
+        "DDR_WE",
+        "DDR_ODT"
+      ],
+      "notes": "No balls assigned to control group. Address/data/masks/differential clocks and strobes only."
+    },
+    {
+      "id": "ethernet",
+      "part": "RTL8211EG",
+      "sheet": 5,
+      "interface": "GMII (schematic annotation)",
+      "notes": "Schematic states PHY address 001b and 3.3V I/O; no physical validation."
+    },
+    {
+      "id": "microsd",
+      "connector": "J9",
+      "sheet": 6
+    },
+    {
+      "id": "pmod",
+      "connectors": [
+        "J10",
+        "J11",
+        "J13",
+        "J14"
+      ],
+      "sheet": 2,
+      "power_pins": {
+        "5": "GND",
+        "11": "GND",
+        "6": "3V3",
+        "12": "3V3"
+      }
+    },
+    {
+      "id": "expansion",
+      "connector": "J12",
+      "sheet": 3,
+      "status": "not_in_pin_inventory",
+      "notes": "Bank13 voltage option and complete connector mapping not verified; no electrical standard assigned."
+    },
+    {
+      "id": "sdram",
+      "part": "MN1 SDRAM 256Mbit",
+      "sheet": 2,
+      "status": "not_in_pin_inventory"
+    },
+    {
+      "id": "configuration",
+      "sheet": 2,
+      "status": "not_in_pin_inventory",
+      "flash": "U3 N25Q64A",
+      "notes": "JTAG, flash, PROG_B and DONE not enumerated as user I/O. CFGBVS ball AB15 tied to 3V3."
+    }
+  ],
+  "evidence_classification": {
+    "schematic_derived": "Direct PDF text plus rendered-sheet review; not hardware validation",
+    "constraint_matched": "Exact ball/port checked in cited existing XDC",
+    "physically_verified": "Existing hardware_evidence.md explicitly supports the stated narrow function; no new measurements"
+  },
+  "discrepancies": [
+    "Older XDC assigns four LEDs V17/W21/Y21/V26; V3 has user LEDs G21/G20. Older comment claiming no external H7 pull-up conflicts with V3 R37. Files left unchanged.",
+    "Earlier conversational DDR3 control table was inconsistent and is not authoritative; entire control group remains unresolved."
+  ],
+  "limitations": [
+    "Inventory is partial, not an exhaustive connector/power/package pinout.",
+    "No FPGA speed grade inferred.",
+    "No electrical standards prescribed; bank voltages are schematic values, not measurements.",
+    "No chip database, toolchain support or peripheral timing qualification established."
+  ]
+}

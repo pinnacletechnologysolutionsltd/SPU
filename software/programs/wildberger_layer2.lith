@@ -37,9 +37,13 @@ QLOG QR5
 
 ;; ── Demo 3: Spread polynomial S₁(s) via Pell rotor ───────────────────
 ;; Pell rotor period-8 evaluates Sₙ(s). Identity seed gives s=0.
-IDNT R0              ;; R0 = (1,0) unity Pell seed
-QROT R1, R0, 1       ;; R1 = Pell step 1 → S₁
-QROT R2, R1, 1       ;; R2 = Pell step 2 → S₂
+;; ROT is in-place (R ×= 2+√3); each Rk is seeded at (1,0) and stepped k times.
+LD R0, 1, 0          ;; R0 = (1,0) unity Pell seed
+LD R1, 1, 0
+ROT R1               ;; R1 = Pell step 1 → S₁
+LD R2, 1, 0
+ROT R2
+ROT R2               ;; R2 = Pell step 2 → S₂
 hex R1, QR2
 hex R2, QR5
 

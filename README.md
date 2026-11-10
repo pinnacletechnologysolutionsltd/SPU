@@ -10,13 +10,38 @@ in correctness, determinism, speed, energy, verification or system complexity.
 
 Architectural invention is the ambition; demonstrated utility is the test.
 
+## SPU v0.2: canonical machine, the Gen-1 Surd CPU
+
+Each SPU release identifies one canonical machine, its architectural contract and
+the evidence for it. For v0.2 that machine is the **Gen-1 Surd CPU**. It is
+deliberately narrow, and it is the reference point for everything this release
+claims about the processor.
+
+| Property | SPU v0.2 |
+|---|---|
+| Machine | Frozen Gen-1 Surd CPU ([architectural contract](docs/GEN1_ARCHITECTURAL_CONTRACT.md); [source package](hardware/boards/artix7/wukong_v3/cpu_v02/README.md)) |
+| Arithmetic | Exact multiplication in Q(√3), (a + b√3)/d with 64-bit fields: raw results that fit are committed unreduced, otherwise exact normalization-to-fit, otherwise refusal |
+| Programming model | One architectural register (S0); four accepted instruction forms (SLI, SLD, SMUL, SRD); a fixed 14-instruction ROM program built into the bitstream; no control flow |
+| Output | One 33-byte UART frame per reset (success or fault) |
+| FPGA | Artix-7 XC7A100T on a Wukong V3 board, configured over JTAG into SRAM |
+| Simulator | C++ `spu_vm --profile gen1-surd` ([usage](docs/software_guide.md)); conforms to the registered RTL fixtures and recorded silicon frames (software conformance only) |
+| Physical status | Experimental single-unit observations: golden program and operand variants, repeated reloads, scoped reset recovery (ledger §3.40–3.43, §3.47–3.49, §3.51–3.52, starting at [§3.40](docs/hardware_evidence.md#340--cpu-board-4c-r1-first-fixed-program-surd-cpu-run-over-uart-2026-10-30)); nominal routed timing analysis; bit-exact rebuild of the configuration payload |
+| Not established | General CPU qualification, flash boot, I/O and reset timing, metastability, multiple units |
+| Release status | Release candidate; not yet published ([readiness](docs/V02_RELEASE_READINESS.md)) |
+
+The rational GPU, HEX-SOM, the experimental H0 programmable image and the wider
+mathematical research below are **experimental components**. They are not
+features of the canonical CPU.
+
 ## What is here
 
-- **A software stack.** A Python virtual machine, an assembler, an exact robotics
-  chain and an offline GPU model, all runnable without any hardware.
-- **Verilog and FPGA builds** for Tang Primer 25K and Wukong Artix-7 boards.
-  The experimental H0 programmable Gen-1 Surd CPU has a limited board observation
-  described below; it is not a qualified CPU release.
+- **A software stack.** A Python virtual machine, a C++ VM with the `gen1-surd`
+  profile for the canonical machine, an assembler, an exact robotics chain and an
+  offline GPU model, all runnable without any hardware.
+- **Verilog and FPGA builds** for Tang Primer 25K and Wukong Artix-7 boards. The
+  canonical v0.2 machine is the Gen-1 Surd CPU above. The experimental H0
+  programmable image is a separate configuration with its own single-session
+  observation, not part of the canonical release.
 - **Exact-geometry and classification work**, with its limits stated in the
   [capability matrix](docs/CAPABILITY_MATRIX.md), which separates mathematical
   argument, host software, RTL simulation, FPGA synthesis and physical hardware,
@@ -24,7 +49,10 @@ Architectural invention is the ambition; demonstrated utility is the test.
 
 ## Try it in two minutes
 
-You need Python 3.10 or newer and Git. No board, no installation, no network.
+You need Python 3.10 or newer and Git. Cloning requires network access; the
+commands that follow run locally without a board or package installation.
+This README describes the development checkout; the public default branch may
+contain a different snapshot until the histories are reconciled.
 
 ```bash
 git clone https://github.com/pinnacletechnologysolutionsltd/SPU.git && cd SPU
@@ -46,10 +74,12 @@ commands, including a robotics chain and a scene edit, with expected output. Use
 
 State these before citing any result:
 
-- **The CPU is not qualified.** One experimental H0 image ran two UART-loaded
-  programs in one Wukong session, with oracle-matching results and a subsequent
-  reset observation. This is a single-session result, not qualification of the
-  CPU, UART or timing margins. See [hardware evidence §3.46](docs/hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc).
+- **The CPU is not qualified.** The Gen-1 evidence consists of single-unit board
+  observations of a fixed program, plus nominal timing analysis. It does not cover
+  general correctness, flash boot, I/O or reset timing, or more than one board. The
+  separate experimental H0 image ran two UART-loaded programs in one session
+  ([§3.46](docs/hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc)).
+  That is not a qualification of the CPU, UART or timing margins.
 - **The SOM RTL has a full-domain arithmetic defect.** For some inputs the uploader accepts, the
   current classifier RTL can return wrong distances without a flag. The Iris board evidence lies
   inside the safe region. An exact portable C reference that detects the unsafe cases has been written but is
@@ -65,6 +95,30 @@ State these before citing any result:
 Details and evidence boundaries: [capability matrix](docs/CAPABILITY_MATRIX.md#known-limitations).
 The [H0 overview](docs/H0_OVERVIEW.md) separates the earlier simulation from
 the later board observation.
+
+## Gen-1 CPU progress
+
+The preserved Wukong CPU sources include a board-local core copy with a
+driver-conflict fix. That fix has not been promoted to the shared core; see the
+[source package](hardware/boards/artix7/wukong_v3/cpu_v02/README.md). The
+fixed-program CPU and ROM variants produced expected UART records in separate,
+limited board runs ([ledger §3.40–3.43, §3.49](docs/hardware_evidence.md#340--cpu-board-4c-r1-first-fixed-program-surd-cpu-run-over-uart-2026-10-30)).
+Later entries record repeated reloads, KEY0 restarts and scoped timed-pulse reset
+recovery of the golden image (§3.47, §3.48, [§3.52](docs/hardware_evidence.md#352--gen1-reset-edge-1-timed-key0-reset-recovery-of-the-golden-gen-1-image-2026-11-08-utc)). Nominal routed
+static timing analysis passed ([GEN1-STA-1](docs/GEN1_STA_1_CLOSURE_2026-11-07.md)).
+The later experimental H0 image accepted two 14-word programs over UART and
+returned oracle-matching results in one session ([§3.46](docs/hardware_evidence.md#346--h0-board-uart-3b-first-uart-loaded-programmable-h0-cpu-run-on-wukong-2026-11-03-utc)).
+
+A separate Vivado rebuild reproduced the fixed-program image's configuration
+payload bit-for-bit in one attempt; it was not a new board run ([reproduction
+record](hardware/boards/artix7/wukong_v3/cpu_v02/portable/REPRO_1B_RESULT.md)).
+A second single run on a different host produced the same payload, with no
+report differences against the golden build ([desktop
+record](docs/CPU_REPRO_DESKTOP_2026-11-06.md)).
+That later result supersedes the source package README's earlier statement that
+the package had not been rebuilt.
+These results demonstrate the recorded programs and images, not general CPU
+correctness, interface qualification or measured timing margins.
 
 ## Recent development
 

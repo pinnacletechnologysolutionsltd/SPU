@@ -1,0 +1,52 @@
+; GEN1-RESET-EDGE-1 reset-pulse sequencer. One SET pin (GP2) drives an external NPN
+; whose collector pulls the Wukong KEY0 net low: pin HIGH = reset asserted.
+; Three words are pushed per sequence (WA, GAP, WB); nothing runs until all three are pulled,
+; so CPU/USB latency delays the start only, never an interval. 1 instruction = 1 cycle (clkdiv 1).
+;   A high  = WA + 2 cycles
+;   gap low = GAP + 4 cycles   (A release -> B assert)
+;   B high  = WB + 2 cycles; WB == 0 skips pulse B
+.program gen1_reset_seq
+    pull block
+    mov x, osr          ; WA
+    pull block
+    mov y, osr          ; GAP
+    pull block          ; WB stays in OSR
+    set pins, 1         ; assert A
+la:
+    jmp x-- la
+    set pins, 0         ; release A
+    mov x, osr          ; WB
+gap:
+    jmp y-- gap
+    jmp !x done
+    set pins, 1         ; assert B
+lb:
+    jmp x-- lb
+    set pins, 0         ; release B
+done:
+    irq 0               ; sequence complete; wrap to next pull
+
+; Direct open-drain variant (no transistor): GP2 wired straight to KEY0.
+; The output latch is set LOW once at init and never changed; only the direction toggles:
+; pindir 1 = drive LOW (reset asserted), pindir 0 = high-Z (R37 pulls KEY0 high). It cannot drive HIGH.
+; Cycle accounting is identical to gen1_reset_seq.
+.program gen1_reset_seq_od
+    pull block
+    mov x, osr
+    pull block
+    mov y, osr
+    pull block
+    set pindirs, 1      ; assert A (pull low)
+la:
+    jmp x-- la
+    set pindirs, 0      ; release A (high-Z)
+    mov x, osr
+gap:
+    jmp y-- gap
+    jmp !x done
+    set pindirs, 1      ; assert B
+lb:
+    jmp x-- lb
+    set pindirs, 0      ; release B
+done:
+    irq 0

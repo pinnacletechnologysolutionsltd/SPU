@@ -23,7 +23,7 @@ Open an issue before large changes. Do not add silicon-verified claims without a
 
 ## Developer Certificate of Origin (DCO)
 
-All commits submitted to this repository must be signed off to certify that you wrote the code or have the right to submit it under the project's open-source license.
+All commits submitted to this repository must be signed off to certify that you wrote the code or have the right to submit it under the open-source license that applies to each file you contribute. The repository uses different licenses for different directories; see [Licensing](#licensing) below and [LICENSING.md](LICENSING.md).
 
 We use the standard Developer Certificate of Origin (DCO) version 1.1. By signing off your commits, you assert the following:
 
@@ -85,6 +85,8 @@ The defaults are:
 | `software/` | MIT, from [software/LICENSE](software/LICENSE) |
 | `hardware/` | CERN-OHL-W-2.0, from [hardware/LICENSE](hardware/LICENSE) |
 | `docs/` and `knowledge/` | CC0 1.0 Universal, from [docs/LICENSE](docs/LICENSE) |
+| `examples/` and `fixtures/` | MIT, from [software/LICENSE](software/LICENSE), for original content by the repository owner |
+| `spu_strategy/` and `research/` | Apache-2.0, from the root [LICENSE](LICENSE), unless a file carries a more-specific notice |
 | Root-level files and `tools/` without a more-specific notice | Apache-2.0, from [LICENSE](LICENSE) |
 
 A more-specific file or directory notice takes precedence. Preserve existing
@@ -94,9 +96,11 @@ retains its own terms and must be identified with its source and applicable
 notices. Submit only material you have the right to contribute under those
 terms, as certified by the Developer Certificate of Origin above.
 
-For `research/` and other scopes not explicitly covered by the licensing map,
-ask maintainers to resolve the applicable terms before contribution acceptance.
-This amendment makes no new licensing decision for those scopes.
+[LICENSING.md](LICENSING.md) is authoritative where this summary and it differ,
+including its exceptions (for example, hardware source copies stored under
+`research/` keep the hardware license). For scopes the licensing map does not
+cover, ask maintainers to resolve the applicable terms before contribution
+acceptance. This amendment makes no new licensing decision for those scopes.
 
 This policy is prospective. It does not relicense existing material, withdraw
 existing grants, or establish that historic contributors agreed to different

@@ -1,0 +1,10 @@
+bank,vcco_volts,rail,electrical_standard,schematic_sheet,status,notes
+0,3.3,3V3,,1,schematic_derived,Supply wiring only; not a physical voltage measurement. No blanket I/O standard assigned.
+12,3.3,3V3,,1,schematic_derived,Supply wiring only; not a physical voltage measurement. No blanket I/O standard assigned.
+13,,VCCO_13,,1,unresolved_fitted_option,R14 selects regulated 3V3; R15 selects VIN (regulated 5V input); mutually exclusive fitted option not verified. No I/O standard assigned.
+14,3.3,3V3,,1,schematic_derived,Supply wiring only; not a physical voltage measurement. No blanket I/O standard assigned.
+15,3.3,3V3,,1,schematic_derived,Supply wiring only; not a physical voltage measurement. No blanket I/O standard assigned.
+16,1.35,1V35,,1,schematic_derived,Supply wiring only; not a physical voltage measurement. No blanket I/O standard assigned.
+33,3.3,3V3,,1,schematic_derived,Supply wiring only; not a physical voltage measurement. No blanket I/O standard assigned.
+34,3.3,3V3,,1,schematic_derived,Supply wiring only; not a physical voltage measurement. No blanket I/O standard assigned.
+35,3.3,3V3,,1,schematic_derived,Supply wiring only; not a physical voltage measurement. No blanket I/O standard assigned.

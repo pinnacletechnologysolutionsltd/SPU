@@ -40,6 +40,13 @@ relicense existing contributions. In particular:
   distribution.
 - `research/` (research experiments, their findings and frozen records) is covered by the root fallback
   (Apache-2.0) unless a file carries a more-specific notice.
+- Exception: where present, the historical source snapshots in `research/xc7_qual_1/src/` and
+  `research/xc7_qual_2/src_*/` contain unmodified copies of `.v`, `.xdc` and `.ys` files from `hardware/`. Each copy is byte-identical to a
+  version of a `hardware/` file in this repository's history, and those versions carry no more-specific notice.
+  The copies keep the `hardware/` license (CERN-OHL-W-2.0); being stored under `research/` does not relicense
+  them. The `HEAD_COMMIT` and `SOURCES.sha256` records in those directories were written by the experiments and
+  follow the `research/` fallback. These XC7 snapshots are in the development history; they are not part of
+  the curated v0.2 release tree, in which this exception therefore has no files to apply to.
 - Vivado- and nextpnr-generated report excerpts and logs under `tools/vivado/tests/` are tool output kept as
   test fixtures; they retain any notice printed by the tool that produced them.
 - The `.bin` files under `software/` and `fixtures/` are assembled program images, lookup tables and wire

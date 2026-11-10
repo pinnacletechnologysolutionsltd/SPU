@@ -1,0 +1,2255 @@
+{
+ "format": "SPU_RELEASE_PROVENANCE_V1",
+ "release_branch": "release/v0.2",
+ "base": {
+  "ref": "public/main",
+  "commit": "9fe2ceeb6f1113b7323a541d80316784d6cc526f",
+  "tree": "b1efcb22eae7d97c051b9604fd14b3b4af6f71fb",
+  "files": 3197,
+  "research_tree": "4680e862598bded82e72e9994f09d54d58b78d07",
+  "spu_strategy_tree": "5bb433267f62063a5665c9f9afa52ef7c86fe46c"
+ },
+ "integration_source": {
+  "ref": "dev/next",
+  "commit": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3"
+ },
+ "method": "path-based allowlist: git checkout <integration_source> -- <imported paths>; no cherry-picks; dev/next and the research clone unchanged",
+ "unchanged_from_base": "every path not listed under imported is byte-identical to the base commit; research/ and spu_strategy/ trees equal the base tree IDs above",
+ "counts": {
+  "imported": 58,
+  "imported_modified": 1,
+  "excluded": 352,
+  "unchanged_from_base": 3166
+ },
+ "manifest_identity": "not self-referential: this file is not listed; its sha256 is recorded in the integration commit message",
+ "imported": [
+  {
+   "path": "CONTRIBUTING.md",
+   "change": "M",
+   "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
+   "git_blob": "428717cb8f3604460d3d47f8d736ca3cd477b837",
+   "sha256": "22000015d6130d58750697f0e8c94af782a24d73eb370d3843999504cb9955f6",
+   "disposition": "imported"
+  },
+  {
+   "path": "LICENSING.md",
+   "change": "M",
+   "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
+   "git_blob": "f0f9d70e1242c5cc657a9a3bc9c1458b34220ddd",
+   "sha256": "644462b4915c9687882acc033de5ee5d12ba4f00df2cd20690098b5c66b20fb9",
+   "disposition": "imported"
+  },
+  {
+   "path": "README.md",
+   "change": "M",
+   "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
+   "git_blob": "bf8cebd610024ac14ecdd9cc25845c24cdb8dfcf",
+   "sha256": "d015f9eed2509dd5700f254deb1f842e96ac685f249ef8429fee017fa71430bd",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/CAPABILITY_MATRIX.md",
+   "change": "M",
+   "source_revision": "a2cfee7321010d3e2a58b84e66c26d0646165c01",
+   "git_blob": "51e67a591fb8ef5e34b6676c3037e79ec8aae51c",
+   "sha256": "d609bbe380760340b838e93cfd2bf260553463831e3db6386336f46164e68247",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/CPU_REPRO_DESKTOP_2026-11-06.md",
+   "change": "A",
+   "source_revision": "dbf57f77553717e8518efd178f7c3ebcabb494c9",
+   "git_blob": "dc7beea0c378b749d04628b0f82e9b2bb85d8c72",
+   "sha256": "f2bdd5bdb8aa696e3a33dcd3f86df6e9714a7e611c8150f4563c6be0e5dd3797",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/GEN1_ARCHITECTURAL_CONTRACT.md",
+   "change": "A",
+   "source_revision": "5948d8d5189602cfdca42023aa7e99e3fd0763e5",
+   "git_blob": "1ce674395baf29f2fa2c4f3cb392b4e078c26959",
+   "sha256": "0e1c1566a52e24a9124165a19c4b1ac0a272cc8932a84a7e45d64782d08f2a2e",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/GEN1_STA_1_CLOSURE_2026-11-07.md",
+   "change": "A",
+   "source_revision": "078b2ada5db33f8d0421452c3584eb9e230b3ed3",
+   "git_blob": "156fe3b1f3a435964734fae39a4baf64bfcb0f03",
+   "sha256": "78475c5d71e0e2220a5580342b0303b87d91869843629a0b4bd08d1e0cad68ec",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/PUBLICATION_REDACTIONS.md",
+   "change": "M",
+   "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
+   "git_blob": "0cc4963fcd8698dae6e6089a130d6c220934fc05",
+   "sha256": "37fab9ed6e2efca4738c9797e57810ba4cec59e2b3a2130496eaa44f518dfe94",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/README.md",
+   "change": "M",
+   "source_revision": "fc75beeb1b84fe20fd1376f1fb1677e1078b90f3",
+   "git_blob": "6fc5322fbebf67e6278b8edcadb8e3d4ab112814",
+   "sha256": "177d78e707d9d5ea6f8beb695d6320ea130f2758635ce029021bfdd8941808e8",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/V02_RELEASE_READINESS.md",
+   "change": "A",
+   "source_revision": "3c24258895ee9ba7ffb1f4a0e770b90e1080425e",
+   "git_blob": "c12bb9dfdfe59e910cf84a128b976dc7e125c6a4",
+   "sha256": "06404a63e50f771d26cfaff0a0acdbcd795393ebdf1c4e46e0c4c4dc01b487a6",
+   "disposition": "imported-modified",
+   "source_blob": "5afc0b99450f2b7b4a074b3a8cef98413aa8f46c",
+   "modification": "XC7 preservation link reworded: record is not part of the curated release"
+  },
+  {
+   "path": "docs/hardware_evidence.md",
+   "change": "M",
+   "source_revision": "d35e166d9d3b621006af48a45a9feb61423189b2",
+   "git_blob": "edbce3ee556cb33c3815e7947ab9e1d3fcd2c4a4",
+   "sha256": "e55cc30716ee4a303026621605d40625ee5ea1d8fbac47a94146d1bc57545445",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/isa/CANONICAL_CONTROL_RECONCILIATION.md",
+   "change": "M",
+   "source_revision": "469cb9eb1ac8e304181e4f527d03afd6c9ee0d8a",
+   "git_blob": "543148a7933b745f21609806d5f1351fe0ed9cdc",
+   "sha256": "05605460609385e01eb7b39802e219b04f6fcf1aa43502d3ff87a8c827e1b0dd",
+   "disposition": "imported"
+  },
+  {
+   "path": "docs/software_guide.md",
+   "change": "M",
+   "source_revision": "14ab48a6530796fe6bc8fefd81c38f32c9391d35",
+   "git_blob": "52925192fe1e8e13480a2434445c88bb09bcdea0",
+   "sha256": "ba7cbc8f51eca09bbaf6063b7ee1def97b6ab9dfcafa550b0c9ce322923dc531",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/boards/artix7/wukong_v3/board/README.md",
+   "change": "A",
+   "source_revision": "21ea715c772b5d18bbfa4be93f9e7c8fafe267e6",
+   "git_blob": "3b1b2764e7c9459aed3b647147ae84a2a3ba0803",
+   "sha256": "f4dafd6200830f40b923d0886f4076e4025eeabddc76e2f37a6129a8bd0852ce",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/boards/artix7/wukong_v3/board/banks.csv",
+   "change": "A",
+   "source_revision": "21ea715c772b5d18bbfa4be93f9e7c8fafe267e6",
+   "git_blob": "679f46aaed6b85616d5930b04726ad5343f7e24c",
+   "sha256": "15b263252ec9a1c0b5d55e7a61b1bcef533f2541e1d152c3d210df380fa5c8fd",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/boards/artix7/wukong_v3/board/peripherals.json",
+   "change": "A",
+   "source_revision": "21ea715c772b5d18bbfa4be93f9e7c8fafe267e6",
+   "git_blob": "65baeb647d18367cb7f2277551cd4062c7a9a50f",
+   "sha256": "f1e38af4a883facaa6547960ec7df126e0ad4e46a09f6e9c07942c0f18eb5ea7",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/boards/artix7/wukong_v3/board/pins.csv",
+   "change": "A",
+   "source_revision": "21ea715c772b5d18bbfa4be93f9e7c8fafe267e6",
+   "git_blob": "06d8cf54dac5b06946e2713bf171bc936458cfd6",
+   "sha256": "46ef0f72cc31fb4bdc2b8a2173f3a35f560927880550c57430114d126fbc03b3",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/boards/artix7/wukong_v3/board/validation.json",
+   "change": "A",
+   "source_revision": "21ea715c772b5d18bbfa4be93f9e7c8fafe267e6",
+   "git_blob": "abd496387f24a3bf542e15281f8f31c9ad7cd902",
+   "sha256": "fe17794359ac461851c7de33e5cf4bcb0952bd3f98de1ab0f2eacbea0f6c3ecd",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/rp2350/gen1_reset_pulse/CMakeLists.txt",
+   "change": "A",
+   "source_revision": "d35e166d9d3b621006af48a45a9feb61423189b2",
+   "git_blob": "491dcf33b4c43e583ef493d34d9164ba281441ea",
+   "sha256": "fe42e9aafce7312de1ab0cd1b32993d7f821b593176d055de3cf546297180c15",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/rp2350/gen1_reset_pulse/README.md",
+   "change": "A",
+   "source_revision": "d35e166d9d3b621006af48a45a9feb61423189b2",
+   "git_blob": "13014bc4d2e729a00a66ed516306cefce8d52c6b",
+   "sha256": "0d1bb41280f26302600e762729f599f9781cd68c1d25d99c92c5e8bd9bad0ff2",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/rp2350/gen1_reset_pulse/gen1_reset_pulse.c",
+   "change": "A",
+   "source_revision": "d35e166d9d3b621006af48a45a9feb61423189b2",
+   "git_blob": "b16f0fccda6642038f51e326ad0038246c61d860",
+   "sha256": "3cbe2ffa58c2bdc991225c148ad4393c59de75c344abb8cf447c320e0f03a858",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/rp2350/gen1_reset_pulse/gen1_reset_pulse.pio",
+   "change": "A",
+   "source_revision": "d35e166d9d3b621006af48a45a9feb61423189b2",
+   "git_blob": "9d6f32c7b6f5bcad6a0370ad4a875899f3db0ebb",
+   "sha256": "1fed5e643a814f071a7b9fcb7f22b19a151724986e697fad6e08ff8266ab8f4c",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/README.md",
+   "change": "A",
+   "source_revision": "599dbd0a33980fa156eed998ea3169f9ee218cca",
+   "git_blob": "cb7ba46215a5eab16e678811dc661f4e8ed9255c",
+   "sha256": "e272c7259dd2bf24fd87a65268569b3351f56b98ccec5f649ed1d90af5393e71",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/fault_after_srd.py",
+   "change": "A",
+   "source_revision": "a2cfee7321010d3e2a58b84e66c26d0646165c01",
+   "git_blob": "86984f775bfb186595888c3dac1fc8305d252169",
+   "sha256": "9553a9832477c3400709d911a1dbd70a1475bd800f514c886a76fa6c9d547f62",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/fixtures/expected_records.json",
+   "change": "A",
+   "source_revision": "599dbd0a33980fa156eed998ea3169f9ee218cca",
+   "git_blob": "258b1ee6552614fbdf5b727a3093e86c2905187e",
+   "sha256": "3268eed2b374c5fdea7e3ac9ca78ac119fad059c8d1d0c98b4f8dfdefa01b832",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/fixtures/fault_after_srd.json",
+   "change": "A",
+   "source_revision": "a2cfee7321010d3e2a58b84e66c26d0646165c01",
+   "git_blob": "6d894c3892b536376e30a850f69365c2352d7e4e",
+   "sha256": "faf52b7ae790550adc61fc4ffb8145b888783ba58d98af9935f1e26ff616d1cf",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/fixtures/source_hashes.sha256",
+   "change": "A",
+   "source_revision": "599dbd0a33980fa156eed998ea3169f9ee218cca",
+   "git_blob": "bfda7e59d6e6f19e459d779692e9ba8f8e214d81",
+   "sha256": "6ba4198b5c2aea090bd30a9f436ee31c37b407bebd171e5cc2b7338d587f8ed0",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/gen1_integration_sim.v",
+   "change": "A",
+   "source_revision": "599dbd0a33980fa156eed998ea3169f9ee218cca",
+   "git_blob": "4db3ec3e9c1ed40f5cedb440fff0c5540cc210bd",
+   "sha256": "76ab6767ec0bb1ffaa298a9364bcd3228c505950e6b009cf3bf0b5ae1a6f077b",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/oracle.py",
+   "change": "A",
+   "source_revision": "599dbd0a33980fa156eed998ea3169f9ee218cca",
+   "git_blob": "d2f0f6972cd66297b0266476f04d640b290c7ed0",
+   "sha256": "4e82c15a72c4271687de10ead15309034a2a8e08f88ad0756952e6500586edaf",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/parse_record.py",
+   "change": "A",
+   "source_revision": "599dbd0a33980fa156eed998ea3169f9ee218cca",
+   "git_blob": "a0ffb03d22b31635a6c544a38da0e2e0433f4cb5",
+   "sha256": "9c5d48be364fdeb549cb78a817bbf09cf367bcf0c6a3ab95819c5dc57d57dcc5",
+   "disposition": "imported"
+  },
+  {
+   "path": "hardware/tests/spu13/gen1_integration/run_gen1_integration.py",
+   "change": "A",
+   "source_revision": "599dbd0a33980fa156eed998ea3169f9ee218cca",
+   "git_blob": "0a10dc01420e1722b494db85981ea6554db810cb",
+   "sha256": "ce268b7bf91699fbfc21bd3a15bf3d8060d5f4e8917e4d52154cf9feaa9f8335",
+   "disposition": "imported"
+  },
+  {
+   "path": "knowledge/ISA_QUICKSTART.md",
+   "change": "M",
+   "source_revision": "469cb9eb1ac8e304181e4f527d03afd6c9ee0d8a",
+   "git_blob": "f869ba9f2a40adbb114afb475e783e4adc6b9450",
+   "sha256": "d0b131c39abd71288d7efc1c8c541ecaac99883a066cfa58b85667ef17eacb23",
+   "disposition": "imported"
+  },
+  {
+   "path": "knowledge/LITHIC_L_LANGUAGE_SPEC.md",
+   "change": "M",
+   "source_revision": "f35d03cb1175de3a2a474936812d12757b7f57be",
+   "git_blob": "8a101889f4a1564f3b8a2c84def1e8e84e7add4c",
+   "sha256": "de04d014635ecc35599d615759a7a6c0fc6da7e63ccb4972badbd49dcf2f168d",
+   "disposition": "imported"
+  },
+  {
+   "path": "knowledge/isa_reference.md",
+   "change": "M",
+   "source_revision": "469cb9eb1ac8e304181e4f527d03afd6c9ee0d8a",
+   "git_blob": "f357787a631fb05b9b6947839c28650071a28780",
+   "sha256": "93ff446d694abe822c99f854786ee3dce59a9fe7637ced17eea428f77fda7b2c",
+   "disposition": "imported"
+  },
+  {
+   "path": "run_all_tests.py",
+   "change": "M",
+   "source_revision": "a2cfee7321010d3e2a58b84e66c26d0646165c01",
+   "git_blob": "44c1bdc56ea42474e7ccb5277f58b41740df1b73",
+   "sha256": "9d4f27192adeda13a484679e01c3682e70d319910dc02f043d57b5fd74300ab9",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/isa_test.bin",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "21fa2a43a2b817fe233316cf90f72032ced35a27",
+   "sha256": "b0d3e4f1f7a7396087d8be47b219ef80bbe363cc173a5bd87c4d24d604ffccb4",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/laminar_vs_cubic.sas",
+   "change": "M",
+   "source_revision": "1934197277d503360adc198324af1b85051f949a",
+   "git_blob": "f897b8858f5e9ca4578d72c56a298b486492670b",
+   "sha256": "eaf89e2c945b5b2d80181100baef4047f10acac494b31f38a5960723bb154d02",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/robot_arm_demo.bin",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "c1a2a7cf81350b779e2f207627bdbfe06ec39935",
+   "sha256": "de9a81900b7f4ae8410e9de20e4986c1adc05856746eeba0620400e7e131aca8",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/robot_arm_demo.sas",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "cf59e3eea921f0c91a5c63152b21030086828287",
+   "sha256": "5806808e7af348a5baf93faebe691e70292d11c6d7c286b3ad77500e36f1cb23",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/ve_orbit.bin",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "6961ac4ab40d286949d57ed4e986694c72ec9bfb",
+   "sha256": "4cf7085e381d536b2d1dcd1b64a2aa29cde9f37f17afb32d9721305b7ddf84b8",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_chromogeometry.bin",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "96c244c094c46472e73a200892df656212b74945",
+   "sha256": "9333d33f080970fa372f6e029f3159835bd10144bb557a59697b6799a84cc46f",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_chromogeometry.lith",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "c7be42d81e57c80afb5ec04547e75aeec3ffc77e",
+   "sha256": "7608d85680b9e46e778b82d6c5f1c7a1f1b415ecc61426976e3719344c8a83bd",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_chromogeometry.sas",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "6fa9f8b2fe526561704890c7d1ce8539ecf206ed",
+   "sha256": "e77275f7832e35dfab9f579dca55d2d5d69fa731b165e4e457641ca72be7f79f",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_geometry.bin",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "42430c7d3a3a9d945ee0b2d90d801de19b3ccdbc",
+   "sha256": "279380f99ba8e44ad488d29fbf3ccdcf36275e8887b71e20dd566063f68bfcb9",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_geometry.lith",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "8e13a2f118974c11d28135ebada98acb60852640",
+   "sha256": "fe1254505e55875c47c74b4b381fad32ed23a33ff4e37fb080bcd8c625b990e1",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_geometry.sas",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "5894f717dcbf4aab6fd90de12d18aa224e0a6e55",
+   "sha256": "b8e89dbbf8f6d74159fbe172cbf2b667c8cd4e25865ab1be7d623667f3ddb922",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_layer2.bin",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "2cd2ff11bec99c25b38d2e4cb63daeab9c380eaf",
+   "sha256": "b00267d6b5f8a8afddbc7db8658145c7a4b553dcc2dd888df2049ad830b6d9ad",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_layer2.lith",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "ef3e3789ae09cd99a8513efd9a5fc07d694fd85e",
+   "sha256": "7ce50c2c76fe30238e8b0004dab98ca681b05ea8a5f5269a6c85ba155b1bee17",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/programs/wildberger_layer2.sas",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "dba76e9d02edf2176d490accd0796e751c1dde03",
+   "sha256": "f9c9b4d8a5dfa5ef5201f631969b56bfc0786c5a7dff614c9daed35746cc2411",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/spu_compiler.py",
+   "change": "M",
+   "source_revision": "a12c3182758765cfb99027214242d94a4e71ae13",
+   "git_blob": "814f15ebb800d318bacd335628f078baa8e57758",
+   "sha256": "2ad5058788e64237527905880c6e56f1d0ad6d5f9c449f03ffdee1ea51f9908d",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/tests/test_gen1_sim_conformance.py",
+   "change": "A",
+   "source_revision": "a2cfee7321010d3e2a58b84e66c26d0646165c01",
+   "git_blob": "6e12bb684592bd1f9e9ef0f1b07cbb0399641398",
+   "sha256": "907e0403b731fc5f374a568bb18a4afedf0384040cb6033b81a90440fc728a0a",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/tests/test_program_images.py",
+   "change": "A",
+   "source_revision": "1934197277d503360adc198324af1b85051f949a",
+   "git_blob": "89db7d4d9d737ffd3432a181e93cdbbecfcff947",
+   "sha256": "1d995ec4cbd38727b00f651227c4c7baccd16fead5f712fa40ba6cf11bb32294",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/tests/test_spu13_core_surd.py",
+   "change": "M",
+   "source_revision": "d8bedfbb88e0cb5689af2cb16f864c3413ec4383",
+   "git_blob": "882a2f06e492b9e43519c4560b8d5fc69790b422",
+   "sha256": "3dbf068674eb704b36eb67c25ac08b00d922e284a3dcd27480bdc615ff4c4229",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/vm/Makefile",
+   "change": "M",
+   "source_revision": "14ab48a6530796fe6bc8fefd81c38f32c9391d35",
+   "git_blob": "85deef470475354dd68bb9a64aed74d8736cf246",
+   "sha256": "63a09789ceb62c6302a8da96da28ea5c4807152003a79cb48fc4932fd225e576",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/vm/gen1_cli.hpp",
+   "change": "A",
+   "source_revision": "14ab48a6530796fe6bc8fefd81c38f32c9391d35",
+   "git_blob": "83cb2ecfcfe44b642e56e29b8b8b10fa6ee6233c",
+   "sha256": "c050c0f0f41629fa954b50351e52ceba6a1c5bc3634903b29b78826cee929fbf",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/vm/gen1_surd.hpp",
+   "change": "A",
+   "source_revision": "14ab48a6530796fe6bc8fefd81c38f32c9391d35",
+   "git_blob": "90b3864591b15fde4c6b3b80ae8d7b3318fd8535",
+   "sha256": "51d17a82d2eeee173b0eb0325a6f273dc446efe301e4245fa5687cdd5431093f",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/vm/gen1_wide.hpp",
+   "change": "A",
+   "source_revision": "14ab48a6530796fe6bc8fefd81c38f32c9391d35",
+   "git_blob": "4f47e8217c6e975a506d70f314ba714f3a0e2b78",
+   "sha256": "0c70d275255baaefd55bbcb13402ae265e6d8b9e32a5fd1cd6152ddc0025ff30",
+   "disposition": "imported"
+  },
+  {
+   "path": "software/vm/spu_vm.cpp",
+   "change": "M",
+   "source_revision": "14ab48a6530796fe6bc8fefd81c38f32c9391d35",
+   "git_blob": "d96ca385097cce47c80219f534acd85a4c02239b",
+   "sha256": "ee96987469e8b205b228506b9906f776bad1f6017188958dea16c7fb4a60ad7c",
+   "disposition": "imported"
+  }
+ ],
+ "excluded": [
+  {
+   "path": "research/SOUL_EVIDENCE_0_PROPOSAL.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/SOUL_RESEARCH_CONSOLIDATION.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/SOUL_RESEARCH_HANDOVER_2026-11-06.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/SYMBOLIC_REPRESENTATION_FOLLOWUPS.md",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/XC7_PRESERVATION_2026-11-06.md",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/obs_0/FINDINGS.md",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/obs_0/observability_test.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_expr_graph_0/FINDINGS.md",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_expr_graph_0/experiment.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_expr_graph_0/model.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_expr_graph_0/test_model.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_expr_graph_1/FINDINGS.md",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_expr_graph_1/experiment.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_expr_graph_1/model.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_expr_graph_1/test_model.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_ir_0/FINDINGS.md",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_ir_0/experiment.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_ir_0/model.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_ir_0/test_model.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_ir_1/FINDINGS.md",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_ir_1/checker.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_ir_1/experiment.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_ir_1/test_checker.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_obs_0/FINDINGS.md",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_obs_0/experiment.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_obs_0/proof.smt2",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/qaf_obs_0/test_experiment.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/FINDINGS.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/README.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/engines.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/evaluate.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/evidence/checkpoint.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/evidence/final-states.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/evidence/forks.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/evidence/migration-output.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/evidence/results.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/evidence/source-sha256.txt",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/model.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/scenarios.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_continuity_0/test_experiment.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/CONTRACT.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/FINDINGS.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/README.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/checker.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evaluate.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_registration.sha256",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_results.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_source/CONTRACT.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_source/README.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_source/checker.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_source/evaluate.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_source/producer.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_source/scenarios.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt1_source/test_experiment.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/attempt2_results.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/evidence/registration.sha256",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/producer.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/scenarios.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_evidence_0/test_experiment.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/CONTRACT.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/FINDINGS.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/README.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/evaluate.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/evidence/registration.sha256",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/evidence/results.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/learner.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/scenarios.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_learn_0/test_experiment.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/CONTRACT.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/FINDINGS.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/README.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/evaluate.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/evidence/registration.sha256",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/evidence/results.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/memory.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/scenarios.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_1/test_experiment.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/CONTRACT.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/FINDINGS.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/README.md",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/calibrate.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/evaluate.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/evidence/calibration.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/evidence/registered-1.json",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/evidence/registration.sha256",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/memory.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/scenarios.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/support.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/soul_mem_2/test_experiment.py",
+   "source_revision": "2773b7c3f62532db13582d9d4d1e0cf356a9ff2e",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_0/FINDINGS.md",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_0/SPECIFICATION.md",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_0/experiment.py",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_0/test_experiment.py",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_0/verification.smt2",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_2/FINDINGS.md",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_2/baseline.cpp",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_2/certificate.py",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_bound_2/test_certificate.py",
+   "source_revision": "6ca2ec8c448d99a50b4d9268b7ba7e8909297e95",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_symreg_1/model.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/spu_symreg_1/test_model.py",
+   "source_revision": "2ae862f299fed678cca97443cf6b119eef9f1cfa",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_1/FINDINGS.md",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_1/bisect_real.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_1/minimal_fix.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_1/run_configs.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/FINDINGS.md",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/SOURCE_IDENTITY.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/SOURCE_SHA256.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/commit/0001-xc7-gpu-2-gpuvga-fix.patch",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/commit/COMMIT_IDENTITY.md",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/commit/adopt_xc7_gpu_2.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/commit/adopt_xc7_gpu_2.v1-to-v2.diff",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/commit/xc7-gpu-2.bundle",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/compare_hashes.py",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/inspect_params.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/logs/N2_forced.il",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/logs/stageA_console.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/mk_trees.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/neg_controls.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/patch/A_gpuvga_scoped.patch",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/patch/B_generic_hierarchy_top.patch",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/results.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/run_all_head.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/run_all_patched.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/run_cfg.py",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_gpu_2/run_stageA.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/FINDINGS.md",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/NEXT_COMMANDS.md",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run/3_fasm2fr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run/4_bit.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run/outputs.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run/src.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run/stages.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run/synth.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_flow.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_flow_repeat.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_repeat/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_repeat/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_repeat/3_fasm2fr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_repeat/4_bit.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_repeat/first.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_repeat/outputs.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_repeat/stages.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/run_repeat/synth.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/src/hal_vga.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/src/spu_a7_vga_fix.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/src/spu_a7_vga_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/src/spu_video_pattern.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/src/spu_video_timing.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_1/src/synth_a7_vga_fix.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/CANONICAL_HASHES.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/FINDINGS.md",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run1/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run1/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run1/3_fasm2frames.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run1/4_bit.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run1/hashes.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run1/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run1/stages.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run2/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run2/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run2/3_fasm2frames.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run2/4_bit.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run2/hashes.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run2/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_run2/stages.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_757e998_run1/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_757e998_run1/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_757e998_run1/3_fasm2frames.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_757e998_run1/4_bit.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_757e998_run1/hashes.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_757e998_run1/stages.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_757e998_run1/synth.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run1/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run1/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run1/3_fasm2frames.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run1/4_bit.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run1/hashes.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run1/stages.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run1/synth.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run2/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run2/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run2/3_fasm2frames.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run2/4_bit.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run2/hashes.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run2/stages.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/a_singlesynth_run2/synth.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run1/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run1/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run1/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run1/stages.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run2/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run2/2_pnr.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run2/3_fasm2frames.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run2/4_bit.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run2/hashes.txt",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run2/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_eb27177_run2/stages.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_run1/1_synth.out",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_run1/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/b_run1/stages.jsonl",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/bisect/235c108/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/bisect/c7ff65f/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/bisect/daedef2/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/bisect/e62c7e3/pre.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/bisect_synth.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/bit_payload.py",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/extract_src.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/pathtest.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/pathtest/D.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/pathtest/E.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/pathtest/F.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/pathtest/G.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/pathtest/S.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/removed_intermediates.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/run_flow.sh",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/HEAD_COMMIT",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/SOURCES.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/hal_vga.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_a7_gpu_vga.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_a7_gpu_vga_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_attr_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_depth_compare.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_depth_compare4.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_depth_dispatch.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_depth_dispatch4.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_depth_math.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_dual_raster.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_edge_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_gpu_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_pixel_output_register.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_prepared_scalar_attribute4.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_prepared_scene_control.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_prepared_scene_control4.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_quad_raster.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_raster_unit.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_reciprocal_core.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_scene_loader.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_scene_profile_unpack.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_scene_unpack.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_shared_mult35.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/spu_video_timing.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga/synth_a7_gpu_vga.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/HEAD_COMMIT",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/SOURCES.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/hal_vga.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_a7_gpu_vga.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_a7_gpu_vga_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_attr_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_depth_compare.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_depth_compare4.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_depth_dispatch.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_depth_dispatch4.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_depth_math.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_dual_raster.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_edge_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_gpu_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_pixel_output_register.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_prepared_scalar_attribute4.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_prepared_scene_control.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_prepared_scene_control4.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_quad_raster.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_raster_unit.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_reciprocal_core.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_scene_loader.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_scene_profile_unpack.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_scene_unpack.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_shared_mult35.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/spu_video_timing.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_235c108/synth_a7_gpu_vga.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/HEAD_COMMIT",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/SOURCES.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/hal_vga.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_a7_gpu_vga.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_a7_gpu_vga_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_attr_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_depth_compare.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_depth_dispatch.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_depth_math.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_dual_raster.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_edge_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_gpu_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_raster_unit.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_reciprocal_core.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_shared_mult35.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/spu_video_timing.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_c7ff65f/synth_a7_gpu_vga.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/HEAD_COMMIT",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/SOURCES.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/hal_vga.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_a7_gpu_vga.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_a7_gpu_vga_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_attr_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_depth_compare.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_depth_dispatch.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_depth_math.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_dual_raster.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_edge_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_gpu_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_raster_unit.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_reciprocal_core.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_shared_mult35.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/spu_video_timing.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_daedef2/synth_a7_gpu_vga.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/HEAD_COMMIT",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/SOURCES.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/hal_vga.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_a7_gpu_vga.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_a7_gpu_vga_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_attr_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_depth_compare.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_depth_dispatch.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_depth_math.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_dual_raster.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_edge_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_gpu_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_raster_unit.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_reciprocal_core.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_shared_mult35.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/spu_video_timing.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_e62c7e3/synth_a7_gpu_vga.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/HEAD_COMMIT",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/SOURCES.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/hal_vga.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_a7_gpu_vga.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_a7_gpu_vga_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_attr_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_depth_compare.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_depth_dispatch.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_depth_math.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_dual_raster.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_edge_stepper.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_gpu_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_raster_unit.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_reciprocal_core.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_shared_mult35.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/spu_video_timing.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_gpuvga_eb27177/synth_a7_gpu_vga.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop/HEAD_COMMIT",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop/SOURCES.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop/spu_a7_uart_loopback.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop/spu_a7_uart_loopback_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop/spu_uart_rx.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop/synth_a7_uart_loopback.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop_757e998/HEAD_COMMIT",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop_757e998/SOURCES.sha256",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop_757e998/spu_a7_uart_loopback.xdc",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop_757e998/spu_a7_uart_loopback_top.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop_757e998/spu_uart_rx.v",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/src_uartloop_757e998/synth_a7_uart_loopback.ys",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  },
+  {
+   "path": "research/xc7_qual_2/stage.py",
+   "source_revision": "6e9cbb0176bd28106ac0fd93d14f9eca62495e9a",
+   "disposition": "excluded: research added on dev/next after the public base"
+  }
+ ]
+}

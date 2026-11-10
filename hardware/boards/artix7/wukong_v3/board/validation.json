@@ -1,0 +1,22 @@
+{
+  "scope": "WUKONG-V3-BOARD-0 documentation only",
+  "pin_rows": 127,
+  "unique_balls": 127,
+  "complete_differential_pairs": 7,
+  "duplicate_balls": [],
+  "constraint_matched_balls": [
+    "M21",
+    "H7",
+    "E3",
+    "F3"
+  ],
+  "bank_conflicts": [],
+  "source_checks": "Each net and ball present on cited PDF sheet; mapping visually reviewed on sheets 2,4,5,6. This token check alone is not proof of connectivity.",
+  "unresolved": [
+    "DDR3 control group excluded",
+    "Bank13 fitted voltage option",
+    "FPGA physical marking and speed grade",
+    "J12/SDRAM/configuration pin inventory omitted"
+  ],
+  "hardware_tests_run": false
+}

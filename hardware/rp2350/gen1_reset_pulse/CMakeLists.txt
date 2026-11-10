@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 3.13)
+# GEN1-RESET-EDGE-1 Stage 0 reset-pulse generator; standalone so it does not pull in spu_rp_common/FatFS.
+set(PICO_BOARD pico2)
+if(NOT DEFINED PICO_SDK_PATH AND DEFINED ENV{PICO_SDK_PATH})
+    set(PICO_SDK_PATH "$ENV{PICO_SDK_PATH}")
+endif()
+include("${PICO_SDK_PATH}/external/pico_sdk_import.cmake")
+project(gen1_reset_pulse C CXX ASM)
+set(CMAKE_C_STANDARD 11)
+pico_sdk_init()
+
+add_executable(gen1_reset_pulse gen1_reset_pulse.c)
+pico_generate_pio_header(gen1_reset_pulse ${CMAKE_CURRENT_LIST_DIR}/gen1_reset_pulse.pio)
+target_link_libraries(gen1_reset_pulse pico_stdlib hardware_pio hardware_clocks)
+target_compile_options(gen1_reset_pulse PRIVATE -Wall -Wextra)
+pico_enable_stdio_usb(gen1_reset_pulse 1)
+pico_enable_stdio_uart(gen1_reset_pulse 0)
+pico_add_extra_outputs(gen1_reset_pulse)
+
+# Direct open-drain build: GP2 wired straight to KEY0, no transistor. Never drives the pin HIGH.
+add_executable(gen1_reset_pulse_od gen1_reset_pulse.c)
+pico_generate_pio_header(gen1_reset_pulse_od ${CMAKE_CURRENT_LIST_DIR}/gen1_reset_pulse.pio)
+target_compile_definitions(gen1_reset_pulse_od PRIVATE GEN1_DIRECT_OD=1)
+target_link_libraries(gen1_reset_pulse_od pico_stdlib hardware_pio hardware_clocks)
+target_compile_options(gen1_reset_pulse_od PRIVATE -Wall -Wextra)
+pico_enable_stdio_usb(gen1_reset_pulse_od 1)
+pico_enable_stdio_uart(gen1_reset_pulse_od 0)
+pico_add_extra_outputs(gen1_reset_pulse_od)

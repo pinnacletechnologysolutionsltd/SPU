@@ -103,3 +103,44 @@ that the program reached a HALT instruction. The C++ CLI returns status 3 for
 that stop, while a HALT on the last permitted step returns status 0. See the
 [dated release review](isa/CPP_VM_RELEASE_REVIEW_2026-10-15.md) for the exact
 checks and current scope limits.
+
+### Gen-1 Surd CPU profile (`gen1-surd`)
+
+`--profile gen1-surd` runs the frozen Gen-1 Surd CPU as defined in the
+[Gen-1 architectural contract](GEN1_ARCHITECTURAL_CONTRACT.md). It is a separate,
+explicitly selected profile: without `--profile`, the VM behaves exactly as before. The
+legacy VM still rejects opcodes 0x70–0x77; they carry Surd meanings only under
+this profile. The input is a raw ROM image of exactly 128 bytes (16 big-endian
+64-bit words). Only the four instruction patterns in contract §5 execute; any
+other word faults, as on the hardware.
+
+```bash
+make -C software/vm
+mkdir -p build
+python3 -c "import json; r=json.load(open('hardware/tests/spu13/gen1_integration/fixtures/expected_records.json'))['0']['rom']; open('build/gen1_golden.bin','wb').write(b''.join(bytes.fromhex(w) for w in r))"
+./software/vm/spu_vm --profile gen1-surd build/gen1_golden.bin
+./software/vm/spu_vm --profile gen1-surd build/gen1_golden.bin --diag-out build/gen1_golden.diag.json
+./software/vm/spu_vm --profile gen1-surd --capabilities
+```
+
+- **Hardware-visible output.** stdout is the 33-byte UART frame in hex: the
+  only output the hardware produces. The golden program gives
+  `a501013f0e0d000000…422b6b75`, matching ledger §3.40. Byte 2 is `01` for
+  success and `02` for a fault frame.
+- **Exit status.** 0 means a frame was produced, success or fault. 1 means a
+  usage or input error, including an unknown, repeated or incomplete `--profile`.
+- **Diagnostics.** `--diag-out` writes retirements, status codes, the fault cause and S0, labelled
+  `"hardware_observable": false`. The hardware does not transmit any of these.
+- **Capabilities.** `--capabilities` prints the build's capability manifest
+  ([policy](SIMULATOR_INTEGRATION_POLICY.md)). It reports `conformance: not_run`;
+  conformance evidence is recorded separately by the standalone suite:
+
+```bash
+python3 software/tests/test_gen1_sim_conformance.py build/gen1-sim-conformance-$(date -u +%Y%m%dT%H%M%SZ)
+```
+
+The suite compares the simulator against the seven RTL-simulation fixture frames,
+the recorded silicon success frames and an independent expected-state model. It
+also checks that legacy behaviour is unchanged. It is not part of `run_all_tests.py`.
+The simulator agreeing with the fixtures is software conformance; it is not RTL or
+silicon evidence.

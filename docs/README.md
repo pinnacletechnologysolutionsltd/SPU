@@ -33,6 +33,8 @@ Newcomer path: [guided tour](NEWCOMER_TOUR.md) →
 | [Guided newcomer tour](NEWCOMER_TOUR.md) | Umbrella onboarding path across browser lessons, exact Python checks, and standalone SIM-1; SIM-1's own README remains its component build guide |
 | `SUPPORTED_DEMOS.md` | Newcomer path for software, Quadray/Golden Core, and Wukong T1G demonstrations, with claim limits |
 | [Project status and release milestone](PROJECT_STATUS_2026-10-17.md) | One page for Golden Core, public demos, CPU deployment, and simulator release status |
+| [Gen-1 architectural contract](GEN1_ARCHITECTURAL_CONTRACT.md) | The canonical v0.2 machine: the frozen Gen-1 Surd CPU's accepted encodings, arithmetic, reset, UART frames, exclusions and evidence levels |
+| [v0.2 release readiness](V02_RELEASE_READINESS.md) | Evidence-linked v0.2 index: Gen-1 board observations, timing (nominal STA PASS), simulator conformance, GPU and HEX-SOM status, discrepancies and publication HOLD items |
 | [Symbolic state-machine architecture](SSM_ARCHITECTURE_2026-10-18.md) | Qualified SSM-0–3 software operations, proof semantics, limits, evidence and reuse path |
 | [Golden Core research snapshot](GOLDEN_CORE_RESEARCH_SNAPSHOT_2026-10-17.md) | GC-2A through GC-6 results, fixtures, interpretations, limitations, and reproduction commands |
 | `CURRENT_STATUS.md` | Short current board status, proof level, and priority list |
@@ -52,11 +54,11 @@ Newcomer path: [guided tour](NEWCOMER_TOUR.md) →
 
 | Review | Status |
 |---|---|
-| [SG-0 symbolic-to-GPU interface](SG0_SYMBOLIC_GPU_INTERFACE_DESIGN_2026-10-18.md) | Focused software PASS; [qualified local baseline](../research/sg0_baseline_20261018/README.md) preserves source/evidence; full repository suite not run |
+| [SG-0 symbolic-to-GPU interface](SG0_SYMBOLIC_GPU_INTERFACE_DESIGN_2026-10-18.md) | Focused software PASS; a qualified local baseline (`research/sg0_baseline_20261018/`, not in this repository) preserves source/evidence; full repository suite not run |
 | [SSM-4 certified geometric state](SSM4_CERTIFIED_GEOMETRIC_STATE_DESIGN_2026-10-18.md) | Implemented in software; recovery qualification UNAVAILABLE because its terminal marker is absent; [current evidence boundaries](SSM_SG0_CONTINUATION_2026-10-19.md) |
-| [Selective observation fixture](../research/selective_observation/README.md) | Experimental software result: five test groups PASS; immutable request/receipt binding, deferred subsets, correlation retention and guarded conversion; shared replay dependencies, no performance or SSM-4 qualification claim |
-| [SSM-5 composition and observation fixtures](../research/ssm5/FINDINGS.md) | Preliminary Class A results: two composition and two incremental-observation groups PASS; exact dependency reuse reduces counted kernel work with higher metadata cost; no overall efficiency or architecture qualification claim |
-| [SSM-6 certified reuse fixture](../research/ssm6/FINDINGS.md) | Preliminary Class A result: five groups PASS; explicit assumptions, complete dependencies and child-bound certificates; full source checks remain, with no reduced-validation or combined-machine qualification claim |
+| Selective observation fixture (`research/selective_observation/`, not in this repository) | Experimental software result: five test groups PASS; immutable request/receipt binding, deferred subsets, correlation retention and guarded conversion; shared replay dependencies, no performance or SSM-4 qualification claim |
+| SSM-5 composition and observation fixtures (`research/ssm5/`, not in this repository) | Preliminary Class A results: two composition and two incremental-observation groups PASS; exact dependency reuse reduces counted kernel work with higher metadata cost; no overall efficiency or architecture qualification claim |
+| SSM-6 certified reuse fixture (`research/ssm6/`, not in this repository) | Preliminary Class A result: five groups PASS; explicit assumptions, complete dependencies and child-bound certificates; full source checks remain, with no reduced-validation or combined-machine qualification claim |
 | [SOM–symbolic interface design](SOM_SYMBOLIC_INTERFACE_DESIGN_2026-10-18.md) | DESIGN ONLY; adaptive candidate ranking separated from exact admission and proof replay; no bridge implementation or campaign |
 | [Algebraic–geometric machine direction](ALGEBRAIC_GEOMETRIC_MACHINE_RESEARCH_DIRECTION.md) | PROPOSED AOR/SGN synthesis; five research gates, representation boundaries and end-to-end falsifiers; no unified-machine or RTL execution authorized |
 | [SGN-1 research specification](SGN1_RESEARCH_SPECIFICATION.md) | Frozen Phase A definitions and software qualification history; later status in the closeout review |

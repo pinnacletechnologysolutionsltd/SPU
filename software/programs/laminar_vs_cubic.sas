@@ -1,3 +1,6 @@
+; LEGACY EXAMPLE (2026-11-05): not runnable on the canonical toolchain. It needs the conditional branch COND,
+; which has no allocated encoding; the canonical ISA has no conditional branch, so no migration exists.
+; See docs/isa/CANONICAL_CONTROL_RECONCILIATION.md (legacy binary boundary).
 ; COMPATIBILITY NOTICE (research-baseline integration, 2026-10-22): this program uses the legacy COND instruction.
 ; The canonical profile (CALL=0x20, RET=0x21) rejects COND, which has no allocated encoding, so this program does
 ; not run on the canonical VM until it is migrated. It is preserved unchanged below as a historical source.

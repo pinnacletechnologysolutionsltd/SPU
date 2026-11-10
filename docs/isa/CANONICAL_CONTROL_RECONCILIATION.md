@@ -49,6 +49,40 @@ reserved-field policy and make no main-core control-flow implementation claim.
 Boundary identity and focused commands are frozen in
 `build/repo_audit/repairs_20261010_01/repair_boundary.json`.
 
+## Legacy binary boundary (2026-11-05)
+
+Recorded during the 2026-11-05 review of public `master` against the RC2
+line. Program images
+(`software/programs/*.bin`) are raw big-endian 8-byte words with no header or
+encoding identifier, so an image cannot state which encoding it expects.
+
+| Historical tool (public `master`) | Non-canonical behaviour |
+|---|---|
+| C++ VM `software/vm/spu_vm.cpp` and the prebuilt executable `software/vm/spu_vm` (commit `2822bb5`) | COND 0x20, CALL 0x21, RET 0x22 |
+| Python VM `software/spu_vm.py` | CALL and COND both 0x20; 0x20 executed as COND. Built-in assembler dropped QLDI C/D, DELTA steps and a third ADD operand, and skipped unknown mnemonics |
+| Assembler `software/tools/spu13_asm.py` | Assembled COND as CALL 0x20; accepted and silently mis-encoded operand forms that the current validator refuses |
+
+Images produced or interpreted by these tools are not supported by the
+canonical toolchain and must not be executed by guessing a profile. A headerless
+image is **unversioned**, not presumed legacy: in-repository images are
+reproducible from their sources and `software/tests/test_program_images.py`
+(release gate) requires every tracked image to equal canonical assembly of its
+`.sas`. Distributable images and a loader (southbridge/H0) need an explicit
+encoding identifier before use; that container format is not yet defined.
+
+Repairs on 2026-11-05: `spu_compiler.py` now lowers the three-operand arc
+addition as `QREAD` + in-place `QADD`; three Wildberger `.lith` sources replace
+`IDNT R0` with `LD R0, 1, 0` and the scalar `QROT Rd, Rs, 1` lines with in-place
+`ROT`; the four affected programs and the stale `isa_test.bin`/`ve_orbit.bin`
+were regenerated. `laminar_vs_cubic.sas` remains a preserved legacy COND source;
+no conditional branch exists in the canonical ISA.
+
+C++ VM exit status: 0 clean completion; 1 usage, I/O, assembly or execution
+rejection (a faulting instruction commits no state); 2 one or more SNAP
+failures (takes precedence over the step budget); 3 `--steps` budget reached
+before HALT with no SNAP failure. Checked by `software/tests/test_isa_conformance.py`
+and `test_isa_software_semantics.py`.
+
 ## Proposed implementation qualification
 
 Freeze the edit set and exact commands first. Required focused checks include

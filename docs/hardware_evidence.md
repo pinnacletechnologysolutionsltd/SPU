@@ -222,6 +222,19 @@ C++ parity: `software/common/tests/spu_rational_som_test.cpp`
 | `wildberger_higher_dim.lith` | Cross matrix, diagonal rule, 2-subspaces |
 | `call_demo.lith` | CALL/RET subroutine test |
 
+**Annotation (2026-11-05; original entry preserved above).** This entry is an
+inventory, not a test result: it records no command or output. The files are
+under `software/programs/`, not `tools/`. `wildberger_geometry`, `wildberger_layer2`
+and `wildberger_chromogeometry` contained scalar Pell lines (`IDNT R0`,
+`QROT Rd, Rs, 1`) that the historical assembler silently encoded as Quadray
+operations on QR0, so any earlier run of them did not execute the written
+scalar Pell steps. Their sources were corrected and regenerated on 2026-11-05
+(see `docs/isa/CANONICAL_CONTROL_RECONCILIATION.md`, legacy binary boundary).
+On the historical public Python VM, CALL shared opcode 0x20 with COND and was
+executed as COND, so `call_demo` could not have exercised CALL/RET there;
+canonical CALL/RET is tested by `software/tests/test_canonical_control.py`.
+None of this is silicon evidence.
+
 ### 2.10 C++ Test Suite
 
 11 C++ test files under `software/common/tests/`:
@@ -8105,3 +8118,566 @@ and H0-OPT-2 (synthesis-only) are not extended by this entry.
 - No error-injection on the physical link (malformed frames, timeouts, drain) was performed.
 - XOR frame check; lost-response ambiguity; run-ID wrap/reset; untagged-retirement caveat remain.
 - No configuration-flash image; volatile SRAM only. Device grade not physically verified.
+
+### 3.47 — GEN1-REPEAT-1: three independent reloads of the golden fixed-program Surd CPU image (2026-11-05 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS (three independent volatile loads, one session,
+fixed program).** The golden Gen-1 image of 3.40 was loaded into SRAM three times in sequence
+on the same unit. Each load produced exactly one complete, CRC-valid UART record, equal to the
+expected record and byte-identical across the three runs. This is the first repeated
+observation of any Gen-1 image. It is **not** CPU qualification: one board, one session, one
+program, and no reset, timing-margin or electrical measurement. Entry reviewed and approved for commit by
+the owner (2026-11-06).
+
+```text
+Claim: bitstream cpu_board_2r_top.bit (sha256 442a229e...b153ea, the 3.40 image), loaded into
+  SRAM three separate times with the frozen 3.40 procedure, executed the fixed 14-instruction
+  Surd program after each load and reported the expected record each time; attribution per
+  run follows the 3.40 attribution limit.
+Evidence dimension: silicon (repeated observation, n=3, single session); interface (UART TX
+  only, as observed)
+Source revision / dirty-tree identity: image and sources unchanged from 3.40 (isolated clone
+  /home/john/.local/gate/spu-int3b-c3efc18, HEAD c3efc1878e5ae35601ec01a9e87e52ef032a7fc7 plus
+  untracked experiment/ sources; preserved as hardware/boards/artix7/wukong_v3/cpu_v02/, whose
+  CPU-REPRO-1B rebuild reproduced the configuration payload .bin cc259988...); repository
+  baseline dev/next f35d03c; no source change
+Build/test command and configuration: no build. Per run, build/gen1-repeat-1/harness/run_repeat.py
+  <run-id> (sha256 7eae284d2fecba42864288844ccdbbdbfbf0558dd76a65a9793660e5c425b15a), a copy of
+  the frozen 3.40 run_4c_r1.py (f2f5c367...) in which only the output path changed
+  (run_repeat.diff, sha256 6b33b2d4...); it imports the frozen loader_run.py, capture.py and
+  parse_record.py unchanged (hashes as 3.40). Load: openFPGALoader -c dirtyJtag --freq 1000000
+  <bit> (SRAM, no flash options), loader timeout 120 s, 30 s observation, session deadline 180 s.
+  Sequenced by harness/campaign.sh (sha256 57688872...) as detached job
+  spu-job-01-20261105T204458Z-74550 (COMPLETE, exit 0, 203 s): stop at the first non-PASS,
+  0 retries, 5 s between runs; no KEY0, no power cycle between runs
+Device and toolchain: as 3.40 (QMTECH Wukong, owner-identified V3; XC7A100T-1FGG676C per seller
+  listing and owner acceptance, NOT physically verified; JTAG idcode 0x3631093; openFPGALoader
+  v1.2.0 (OSS CAD Suite 20261027); DirtyJTAG CB81353DCE678119; CH340 1a86:7523 by-id
+  usb-1a86_USB_Serial-if00-port0; Linux 6.8.0-138, Python 3.10.12)
+Artifact identity: cpu_board_2r_top.bit sha256
+  442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea (checked before each load)
+Oracle and checked scope: expected record = 3.40 record (frozen parse_record.EXPECTED): status
+  01, PC 14, slices (13,0,4,0,9,0), CRC-32 756b2b42; checked scope: three loads, one record each
+Result and evidence artifact path: PASS 3/3; build/gen1-repeat-1/ (MANIFEST.sha256, 28 entries,
+  sha256 6bd08045d647234e...; 27 entries verify; the 28th lists MANIFEST.sha256 itself with the
+  empty-file hash, written while the file was being generated, and carries no evidence; job
+  record job-01/ with job-01.MANIFEST.sha256 (verify from inside job-01/), 18 entries,
+  sha256 10971740bc95c667...)
+Adjacent evidence dimensions not established: see below
+```
+
+**Preflight and authorization.** The frozen read-only preflight `preflight_4c_r1.py` passed
+checks 1-8 (bitstream hash, CPU-BOARD-4B manifest, exactly one DirtyJTAG and one CH340, stable
+serial path, port free, read-only JTAG detect idcode 0x3631093, frozen script hashes, offline
+tests). Check 9 failed only because the frozen script's own evidence directory
+`build/cpu-board-4c-r1-01/` exists (preserved); the runs wrote to new directories
+(`preflight_result.txt`). The owner confirmed normal power, only the DirtyJTAG and CH340 USB
+connected, nothing on J11 and no logic analyser, and authorized three runs
+(`owner_confirmation.txt`). No owner action occurred during the runs.
+
+| Run | Started (UTC) | Drain | Loader | Bytes | First byte after load start | Before loader returned | Post-run detect | Disposition |
+|---|---|---|---|---|---|---|---|---|
+| run-01 | 20:44:58 | 0 B | exit 0, `done 1`, 31.4 s | 33 | 31.316 s | 43 ms | idcode OK | PASS |
+| run-02 | 20:46:06 | 0 B | exit 0, `done 1`, 31.4 s | 33 | 31.309 s | 52 ms | idcode OK | PASS |
+| run-03 | 20:47:13 | 0 B | exit 0, `done 1`, 31.4 s | 33 | 31.303 s | 54 ms | idcode OK | PASS |
+
+Each run received exactly one 33-byte record,
+`a501013f0e0d0000000000000004000000000000000900000000000000422b6b75`
+(magic/version a5 01, status 01, result-valid mask 3f, PC 14, slices [13,0,4,0,9,0], CRC-32
+756b2b42), and no other byte. The three `raw_all.bin` files are byte-identical (sha256
+182c3453f3279af5...).
+
+**Attribution limit:** as 3.40. The record carries no execution epoch. Each record arrived
+43-54 ms before the loader returned, after a 0-byte drain and with no byte during the rest of
+the load, which strongly associates it with that load. It does not exclude buffering in the
+CH340/USB/OS path or an unrecorded external action.
+
+**Adjacent evidence dimensions not established:**
+- One board, one session, one program (the 3.40 program); no other operands or opcodes in
+  this entry, and no overflow or refusal paths.
+- No KEY0 or reset testing in this entry (3.42 remains a single press); no reset during
+  execution.
+- No power cycle between runs; no configuration-flash or power-on boot.
+- No clock, rail, baud-error, temperature or signal-integrity measurement; timing margin and
+  speed grade are not established (tool reports only, see 3.40).
+- Three runs establish repeatability only for this image, unit and session, not a
+  statistical failure rate.
+
+### 3.48 — GEN1-KEY0-REPEAT-1: five KEY0 restarts of the golden Surd CPU image after one load (2026-11-05 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS (one load, five owner-reported KEY0 presses,
+one session).** After one SRAM load of the golden Gen-1 image of 3.40, the image produced its
+initial record. Then each of five owner-reported KEY0 presses, made on prompted windows
+separated by byte-free quiet intervals, was followed by exactly one record equal to the
+expected record. This extends 3.42 (one press, one-word image) to repeated restarts of the
+golden image without reconfiguration. It does **not** establish asynchronous reset safety:
+press edges, bounce and press-during-execution were not measured or tested. Entry reviewed
+and approved for commit by the owner (2026-11-06).
+
+```text
+Claim: with cpu_board_2r_top.bit (sha256 442a229e...b153ea) loaded once into SRAM, the fixed
+  14-instruction Surd program reported the expected record once after the load and once after
+  each of five owner-reported KEY0 presses (6 records in total, all identical to the expected
+  record); no reload, no flash, no retry.
+Evidence dimension: silicon (repeated restart functionality, n=5, single load, single session);
+  interface (KEY0 to reset path and UART TX, as observed)
+Source revision / dirty-tree identity: image and sources unchanged from 3.40 (isolated clone
+  /home/john/.local/gate/spu-int3b-c3efc18, HEAD c3efc1878e5ae35601ec01a9e87e52ef032a7fc7 plus
+  untracked experiment/ sources; preserved as hardware/boards/artix7/wukong_v3/cpu_v02/);
+  repository baseline dev/next f35d03c; no source change
+Build/test command and configuration: no build. build/gen1-key0-repeat-1/harness/run_key0_repeat.py
+  run-01 (sha256 d3756953281bd1ac...), with judge_repeat.py (5aa9c29f9e2463af...); it imports
+  the frozen 3.40 loader_run.py, capture.py and parse_record.py unchanged (checked against
+  PREFLIGHT_4C_R1.sha256 at start). One openFPGALoader -c dirtyJtag --freq 1000000 <bit> SRAM
+  load, 30 s observation, then 5 x (10 s quiet interval that must hold 0 bytes, then a desktop
+  notification and bell "PRESS KEY0 NOW (i of 5)" and a 30 s window that must hold exactly one
+  expected record); stop at the first deviation. Offline tests test_offline_key0.py
+  (8d18c192fc9f38ef...): 16/16 PASS (synthetic judge cases and five pty mock sessions,
+  including missed press, wrong record, no initial record and a stray byte in a quiet
+  interval). Detached job spu-job-01-20261105T225359Z-121851 (COMPLETE, exit 0, 274 s)
+Device and toolchain: as 3.40 (QMTECH Wukong, owner-identified V3; XC7A100T-1FGG676C per seller
+  listing and owner acceptance, NOT physically verified; JTAG idcode 0x3631093; openFPGALoader
+  v1.2.0; DirtyJTAG CB81353DCE678119; CH340 1a86:7523 by-id usb-1a86_USB_Serial-if00-port0)
+Artifact identity: cpu_board_2r_top.bit sha256
+  442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea (checked before the load)
+Oracle and checked scope: expected record = 3.40 record (frozen parse_record.EXPECTED): status
+  01, PC 14, slices (13,0,4,0,9,0), CRC-32 756b2b42; checked scope: one load, five presses
+Result and evidence artifact path: PASS; build/gen1-key0-repeat-1/ (MANIFEST.sha256, 20 entries,
+  sha256 20d9201472f057e4...; job record job-01/ with job-01.MANIFEST.sha256 (verify from inside
+  job-01/), 18 entries,
+  sha256 6bad12f749349e87...)
+Adjacent evidence dimensions not established: see below
+```
+
+**Preflight and authorization.** As for 3.47, the frozen read-only preflight passed checks 1-8,
+including a JTAG detect with idcode 0x3631093. Check 9 failed only because the frozen script's
+own evidence directory already exists. The owner confirmed being at the board, normal power and
+only the DirtyJTAG and CH340 USB connected, and authorized the run (`owner_confirmation.txt`).
+
+**Procedure and result (session started 22:54:00 UTC).** The drain returned 0 bytes. The load
+exited 0 after 33.0 s (`done 1`). The initial record arrived 32.968 s after load start, 51 ms
+before the loader returned. Every interval and window behaved as required:
+
+| Segment | Bytes | Content | Record after PRESS NOW notice |
+|---|---|---|---|
+| before load | 0 | — | — |
+| load + 30 s | 33 | expected record | — |
+| quiet 1-5 (10 s each) | 0 each | — | — |
+| press 1 (22:55:14 UTC notice) | 33 | expected record | 2.215 s |
+| press 2 | 33 | expected record | 2.807 s |
+| press 3 | 33 | expected record | 2.405 s |
+| press 4 | 33 | expected record | 2.717 s |
+| press 5 (22:57:56 UTC notice) | 33 | expected record | 2.198 s |
+| tail (after window 5) | 0 | — | — |
+
+The total was 198 bytes = 6 x 33, with no unexpected bytes, truncated frames or contradictory
+records (the frozen parser finds the expected record at offsets 0, 33, ..., 165). `raw_all.bin`
+equals the logged chunks byte for byte (sha256 ee9c794939d8ff38...). The post-session JTAG
+detect returned idcode 0x3631093. All notifications and bells returned exit 0. The 2.2-2.8 s
+delays include the owner's reaction time.
+
+**Attribution limit.** Records carry no execution epoch. Attribution of each record to a press
+rests on the prompted windows, the byte-free quiet intervals before each window, and the
+owner's report of one press per prompt; no press edge was captured.
+
+**Adjacent evidence dimensions not established:**
+- KEY0 press edges, bounce, pulse width and the reset synchronizer were not observed; the
+  presses are owner-reported and not instrumented.
+- No press during program execution; each press came after the previous record was complete.
+- One load, one board, one session, one program; no power cycle and no configuration-flash
+  or power-on boot.
+- No clock, rail, temperature or signal-integrity measurement; timing margin and speed grade
+  are not established.
+- Five presses establish repeated restart only for this image, unit and session, not a
+  failure rate.
+
+### 3.49 — GEN1-VARIANT-A: operand variation (2,1,3) of the fixed-program Surd CPU over UART (2026-11-06 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS (single run, one authorised two-word ROM change).**
+One fresh volatile load of the CPU-ROM-2A Variant A image produced one complete, CRC-valid
+UART record. The record equals the result predicted before the run, and the CPU RTL was not
+changed. This entry is the third operand variant after 3.41 and 3.43. It is separate from
+sections 3.40 to 3.48 and does not reinterpret them. Entry reviewed and approved for commit
+by the owner (2026-11-06).
+
+```text
+Claim: this exact bitstream (golden image with ROM words 0 and 2 changed), loaded once into
+  SRAM on this unit, executed the fixed 14-instruction Surd program with operands (a,b,d) =
+  (2,1,3) and reported the predicted raw result (7,4,9), i.e. ((2+sqrt3)/3)^2 = (7+4*sqrt3)/9.
+  Attribution of the record to this load is subject to the freshness limit of 3.43.
+Evidence dimension: silicon (single observation); interface (UART TX only, as observed)
+Source revision / dirty-tree identity: same sources as 3.40 to 3.43 (isolated clone
+  /home/john/.local/gate/spu-int3b-c3efc18, HEAD c3efc1878e5ae35601ec01a9e87e52ef032a7fc7 plus
+  untracked experiment/ sources); production RTL, ISA and loader unchanged; repository
+  documentation baseline 5769c0e
+Build/test command and configuration: no new build. Image A was produced by the CPU-ROM-2A job
+  (build/cpu-rom-2a/prep/cand_bitgen.tcl, as 3.43: RAMB36 INIT low halves of ROM words 0 and 2
+  edited in memory only, 0x100 -> 0x200 and 0x200 -> 0x100; updatemem NOT used). Load and capture
+  by build/gen1-variant-a/harness/run_a.py (sha256
+  03aec7b8f77b266c6aebd4310000867376f2b712a54a765d58f4c08535fe82da)
+Device and toolchain: as 3.40 to 3.48 (QMTECH Wukong, owner-identified V3; XC7A100T-1FGG676C per
+  seller listing and owner acceptance, NOT physically verified; JTAG idcode 0x3631093;
+  openFPGALoader v1.2.0; DirtyJTAG CB81353DCE678119; CH340 by-id
+  usb-1a86_USB_Serial-if00-port0)
+Artifact identity: A.bit sha256 dc08af303c58738e0399374a9fe8cc2c620f834aab5123f001f2a9923cf242a1;
+  A.bin sha256 13ee02b8148cc52a7b508e401ac65e6105459980078cf80a24c0068e95e12cb3; golden .bit
+  442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea unchanged
+Oracle and checked scope: expected record derived before the run and independently of any
+  capture (build/gen1-variant-a/expected/derive_expected.py, 11/11 checks): exact rational
+  arithmetic gives (7,4,9); record CRC 7e5ddbf3 from a bitwise CRC-32 written for the
+  derivation, equal to zlib; agrees with ROM-2A READINESS/analysis and the RTL simulation of the
+  board wrapper (build/cpu-rom-2a/out/sim/vectors.log). Checked scope: one program, one run.
+Result and evidence artifact path: PASS; build/gen1-variant-a/run-01/ (6-entry MANIFEST.sha256,
+  sha256 9b157d1b597044e9ec71bd626193ed5dbb776cfa588eab162dc0797ff11bc22f); preparation,
+  preflight and owner confirmation in build/gen1-variant-a/ (19-entry MANIFEST.sha256, sha256
+  a6684ca07df909a58d9cf4fcecf200c1973f67f7f9fd8069016cd6950b5f5184); image evidence
+  build/cpu-rom-2a/out/ (83-entry MANIFEST.sha256, sha256
+  b5fc1c4cbf40c8554e1aff30fe47d5eec477adb370633162a0bbf55b6d6707e1)
+Adjacent evidence dimensions not established: see below
+```
+
+**Image identity and difference to golden (recomputed for this entry):**
+- **ROM:** A's in-memory INIT_00 decodes to operands (2,1,3); golden decodes to (1,2,3). All
+  other INIT/INITP properties are identical.
+- **Bitstream:** A.bin differs from the golden .bin (cc259988...) in exactly three 32-bit words:
+  - 917032 (xor 00030000) and 917038 (xor 00000003). These equal the XOR of the single-bit
+    probe images for INIT bits 8, 9, 72 and 73.
+  - 955926, the configuration CRC word.
+- **Configuration CRC:** both configuration CRC writes of A were reproduced earlier
+  (build/cpu-rom-2c-crc2-check/, ALL_BOTH_MATCH; see 3.43).
+
+**Procedure and result:**
+- **Harness:** a mechanical copy of the frozen 3.43 harness.
+  - capture.py and loader_run.py are byte-identical to 3.43.
+  - The other changes are only the image path and hashes, the expected record, the output path
+    and the evidence-integrity list (build/gen1-variant-a/harness_vs_rom2c.diff).
+  - The offline tests passed.
+- **Preflight, attempt 1:** stopped at an import-path defect in preflight_a.py, before any USB
+  enumeration, detect or load. The output was kept. One line was fixed and the harness hashes
+  refrozen. The superseded preparation manifest (PREP.MANIFEST.sha256, ec4e1724...) is kept as
+  historical evidence.
+- **Preflight, attempt 2:** PASS, 18/18. It verified the image hashes and manifests, that the
+  earlier hardware evidence was unchanged, one DirtyJTAG and one CH340, a free port, and a
+  read-only detect returning idcode 0x3631093.
+- **Owner go:** the owner, at the board, answered "Go" immediately after the preflight.
+- **Capture:** started first (115200 baud, 8N1, raw, no flow control) and drained for 1 s
+  (0 stale bytes). The board had been running the golden image resident since 3.48.
+- **Load:** exactly one `openFPGALoader -c dirtyJtag --freq 1000000 <A.bit>`. It was an SRAM
+  load with no flash options.
+  - It returned exit 0 after **31.363 s**: `Load SRAM 100.00%`, `Done`, `isc_done 1`, `init 1`,
+    `done 1`.
+  - `loader_output.txt` sha256: b552220a8723968021dc8de97ee11bb4aea40b4d0a889d643382b2d6eab33d75.
+- **Capture result:** exactly 33 bytes arrived, in two USB chunks.
+  - The chunks arrived 31,317.3 and 31,320.1 ms after the load started. The loader returned at
+    31,363.3 ms, so the chunks arrived about 46.0 and 43.2 ms before it returned.
+  - `raw_all.bin` sha256 25373c31aecea8664145c898953cffad987446312ca608f611f20a9b68a4da06.
+  - `capture.jsonl` sha256 f892db20a59fe0c288400162a5fdb4eb97911ee9cd9e0371016d04f0132834ab.
+  - The raw file and the per-chunk jsonl both total 33 bytes.
+
+```text
+a5 01 01 3f 0e | 07000000 00000000 04000000 00000000 09000000 00000000 | f3db5d7e
+status 01, mask 3f, PC 14, slices [7,0,4,0,9,0] little-endian, CRC-32 7e5ddbf3
+(golden record 756b2b42, Variant B 02e6ead8, one-word 970c4071)
+```
+
+**After the record:**
+- In the 30 s window, no other byte appeared: no truncated frame, no contradictory valid record
+  and no repeated record. A resident golden record would have been flagged as contradictory.
+- The read-only JTAG detect after the window found one device, idcode 0x3631093.
+  `session.json` sha256: 5b07146b0447b8e86ad4f83428f0032875b653442d07186d7022cb5691997d7a.
+- The session took 62.5 s from capture start; the limit was 180 s.
+- The board was left with Variant A resident in SRAM. Nothing was written to flash and KEY0 was
+  not pressed.
+
+**Attribution limit (freshness):** as in 3.43.
+- The record carries no execution epoch.
+- Attribution to this load rests on procedure and timing, plus one fact: the record differs from
+  the record of the image resident before the load (golden).
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- **Full ISA qualification:** one program with changed operand words (a: 1 to 2, b: 2 to 1;
+  d unchanged). No other opcodes, no overflow/refusal path and no normalization path; the result
+  is already reduced.
+- **Repeatability:** Variant A was loaded once on one unit. There is no cross-build or
+  cross-device agreement.
+- **Runtime reset:** KEY0 behaviour of this image was NOT RUN.
+- **Timing/electrical:** as 3.40 (internal routed timing only; no rail, clock or baud
+  measurement).
+- **Device identity:** speed/temperature grade and board revision remain owner-accepted,
+  unverified assumptions.
+- **Persistence and boot:** the image is volatile; no power-cycle or flash boot.
+
+### 3.50 — GEN1-POWER-CYCLE-1: cold power cycle observed; device self-configured from flash at power-on (2026-11-06 UTC)
+
+**Classification:** **HOLD (by design, at the post-power-on gate).** The bounded cold power cycle
+was carried out and observed: owner-performed removal of DC and board USB power for 40.5 s,
+with both USB devices re-enumerating. Afterwards, the FPGA reported a configured state without
+any JTAG load. The procedure required an unconfigured state at that point, so it stopped before
+the final golden load. This entry establishes no Gen-1 result after a power cycle. It records a
+golden pre-load PASS, which is one more instance of the 3.47 procedure, and a board-state
+finding. Entry reviewed and approved for commit by the owner (2026-11-06).
+
+```text
+Claim: on this unit, after one owner-performed removal of all board power (DC plug and board
+  USB, 40.5 s, board observed fully dark by the owner), the XC7A100T reported STAT
+  0x401079fc (DONE=1, MODE=001 master SPI, no CRC error) about 30 s after power-on with no
+  JTAG load. This is attributed to configuration from the bitstream the owner states is
+  present in the on-board configuration flash; that bitstream was not identified.
+Evidence dimension: silicon (single observation); board configuration state; USB topology
+Source revision / dirty-tree identity: golden image and sources as 3.40/3.47; repository
+  documentation baseline e818108; harness build/gen1-power-cycle-1/harness/pc_session.py
+  (sha256 0a3e73b53b74d11c8dbe4993a7caadccba746b4ffea465c4d195c875a8243522), with loads by
+  run_load.py, the 3.47 session with only the output root changed
+Build/test command and configuration: no build. One golden SRAM load
+  (openFPGALoader -c dirtyJtag --freq 1000000, no flash options); read-only --detect; four
+  read-only `openFPGALoader --read-register STAT` reads (v1.2.0; a plain read, see 3.34 audit)
+Device and toolchain: as 3.40 to 3.49 (QMTECH Wukong; JTAG idcode 0x3631093; DirtyJTAG
+  CB81353DCE678119; CH340 by-id usb-1a86_USB_Serial-if00-port0)
+Artifact identity: golden .bit 442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea;
+  flash content NOT identified (no flash read was made)
+Oracle and checked scope: golden record as 3.40 (CRC 756b2b42) for the pre-load; the
+  procedure fixed in advance required STAT "unconfigured" after power-on (DONE=0,
+  INIT_B=INIT_COMPLETE=1, two identical reads)
+Result and evidence artifact path: HOLD; build/gen1-power-cycle-1/ (19-entry MANIFEST.sha256,
+  sha256 eec3840b975ecec4...; run-02/MANIFEST.sha256 19 entries, sha256
+  d4419e60a6a01fb2b5b221493975ae5dddbf753e77d775cffbabdee411eb75f6; run-01/MANIFEST.sha256,
+  sha256 5d389abd3ea64663cd2eddc4dab9fae19d43ffe388ec30b81a0311d91a98b17b)
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result:**
+- **run-01:** HOLD at its first check. No board operation. Neither USB device was present at
+  00:49:06Z, because the owner had unplugged the hub and DC power (kernel log
+  13:48:39–13:49:07 local).
+- **run-02:** the board started unconfigured after that unplug, and the procedure was amended
+  (`pc_session_run02_changes.diff`):
+  - one golden pre-load was added;
+  - the power-off step became "DC plug and board USB";
+  - offline tests 19/19, run twice;
+  - the owner gave a go.
+- **Golden pre-load:** PASS.
+  - Exactly one expected record, 33 bytes, drain 0; loader exit 0 after 31.357 s.
+  - `raw_all.bin` sha256 182c3453f3279af508c04da36c7d3e78e2feb26cf9685ca97512d8a05a8165cf.
+- **Status before the cycle:** STAT read twice, both 0x401079fc. This is the value 3.35 recorded
+  for a configured device.
+- **The cycle:**
+  - Programmer unplugged at the host at 00:57:00.
+  - CH340 left USB at 00:57:22.96, when DC and board USB were removed; the owner reports the
+    board was fully dark.
+  - CH340 returned at 00:58:03.51, 40.55 s off.
+  - Programmer returned at 00:58:23.25.
+  - USB device numbers changed: CH340 14 → 17, DirtyJTAG 15 → 18. Programmer down first and
+    board up first, as the bench rule requires.
+- **Power-on window:**
+  - Capture ran from 00:58:03.51 to 00:58:33.64 and received 0 bytes.
+  - Detect: one device, idcode 0x3631093.
+  - STAT read twice, both 0x401079fc. DONE, INIT_B, INIT_COMPLETE, EOS, GWE and RELEASE_DONE all
+    1; no CRC or ID error; MODE 001; startup state 4.
+  - `run-02/session.json` sha256 714d9494b0cb6fe61176c28b4ff0033f2702c92b4dd0d7453fe19db920aaa034.
+  - The gate classified the state as configured and stopped the run. No final load was made.
+- **State left:** the board is running whatever configured at power-on. There was no flash access
+  and no KEY0.
+
+**Interpretation and limits:**
+- **Attribution.** The owner reports the board went completely dark and that a previous
+  bitstream is still in the configuration flash; the board LEDs were not blinking. DONE=1 after
+  a full power-off, with master-SPI mode pins, is therefore attributed to configuration from
+  flash.
+- **Not identified.** STAT reads the same for any configured design, and this loader cannot read
+  USR_ACCESS. So the design that booted, and whether it drove the UART before capture started,
+  are NOT identified. The owner believes the flash holds "the last gpu image that was
+  created"; this is not verified and no hash is recorded.
+- **Earlier-entry scope.** Earlier entries were written as "volatile SRAM only". That remains
+  true of what they loaded, but this board does not power up unconfigured.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Gen-1 behaviour after a cold power cycle: the final golden load did not run.
+- Loss of the SRAM image as an observation: the image the flash restored masks it.
+- Flash content, identity and pin behaviour of the flash design; no flash read was made.
+- Rail ramps, power-on reset timing, brown-out; timing margin; repeatability.
+
+### 3.51 — GEN1-POWER-CYCLE-1 run-03: golden Gen-1 load after a cold power cycle (2026-11-06 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS (single run).** After one owner-performed cold power
+cycle, the board came back with both USB devices re-enumerated and configured itself from its
+flash bitstream, as 3.50 established. Exactly one golden SRAM load then produced exactly one
+record equal to the 3.40 record. This extends 3.47 (repeated loads) to a load made after a cold
+power-on. It does not reinterpret 3.50. Entry reviewed and approved for commit by the owner
+(2026-11-06).
+
+```text
+Claim: on this unit, after removal of all board power (DC plug and board USB) for 75.3 s and
+  its restoration, one SRAM load of the golden Gen-1 image (442a229e...) executed the fixed
+  14-instruction Surd program and reported the expected record (status 01, PC 14,
+  (13,0,4,0,9,0), CRC-32 756b2b42). Attribution follows the 3.40 limit (no execution epoch);
+  the image running before the load was the flash design, not Gen-1.
+Evidence dimension: silicon (single observation); interface (UART TX only, as observed)
+Source revision / dirty-tree identity: golden image and sources as 3.40/3.47; repository
+  documentation baseline 23a8604; harness build/gen1-power-cycle-1/harness/pc_session.py
+  (sha256 c2d94c1c2a45530e0ee5a8c4d549be27f6086b035bcbf3361f32c5bb7cc7760a); changes from run-02:
+  no golden pre-load, and "configured" expected after power-on (pc_session_run03_changes.diff;
+  offline tests 19/19, run twice)
+Build/test command and configuration: no build. One SRAM load (openFPGALoader -c dirtyJtag
+  --freq 1000000, no flash options) by run_load.py (the 3.47 session, output root only
+  changed); read-only --detect and --read-register STAT (plain read, 3.34 audit)
+Device and toolchain: as 3.40 to 3.50
+Artifact identity: golden .bit 442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea;
+  flash content not identified (3.50)
+Oracle and checked scope: frozen 3.40 parser EXPECTED record; checked scope: one cold cycle,
+  one load
+Result and evidence artifact path: PASS; build/gen1-power-cycle-1/run-03/ (19-entry
+  MANIFEST.sha256, sha256 5c01478c01836aa8fb6c2648decf3fc7314387695c5d799058a0507680c969ab);
+  campaign MANIFEST.sha256 (25 entries, sha256 72c7362b423e02f5...)
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result:**
+- **Owner go:** recorded in `owner_confirmation.txt`.
+- **Before the cycle:** STAT read twice, both 0x401079fc. The flash design was running.
+- **The cycle:**
+  - Programmer unplugged at the host at 02:19:08.
+  - CH340 left USB at 02:19:47.25, with DC and board USB removed.
+  - CH340 returned at 02:21:02.57, 75.32 s off.
+  - Programmer returned at 02:21:23.80.
+  - USB device numbers changed: CH340 17 → 19, DirtyJTAG 18 → 20.
+- **Power-on window** (02:21:02.57 to 02:21:32.71): 0 UART bytes. Detect: one device, idcode
+  0x3631093. STAT read twice, both 0x401079fc (configured from flash, as expected).
+- **Golden load:**
+  - Capture started first; drain 0 bytes.
+  - Exactly one load, exit 0 after 31.366 s: `Load SRAM 100.00%`, `isc_done 1`, `init 1`,
+    `done 1` (`loader_output.txt` sha256
+    724bc75b554fab00ba2599fd697b305580930dbe5c2d30ffa296feab7f560365).
+  - Exactly 33 bytes arrived, in two USB chunks 31,312.2 and 31,315.0 ms after load start. The
+    loader returned at 31,366.5 ms. `raw_all.bin` sha256
+    182c3453f3279af508c04da36c7d3e78e2feb26cf9685ca97512d8a05a8165cf.
+  - No other byte, contradictory record or bad header in 30 s.
+  - Final detect OK. `load/session.json` sha256
+    2ed4c957797d0e0d5b9f89807f0d2c156a303eb1816ba2f6cb46d4dfa5298152.
+
+```text
+a5 01 01 3f 0e | 0d000000 00000000 04000000 00000000 09000000 00000000 | 422b6b75
+status 01, mask 3f, PC 14, slices [13,0,4,0,9,0], CRC-32 756b2b42
+```
+
+**Manifest note:** the campaign-level `build/gen1-power-cycle-1/MANIFEST.sha256` was regenerated
+after run-03. The hash cited in 3.50 (eec3840b...) is therefore superseded. The run-01 and
+run-02 manifests cited in 3.50 are unchanged and verify.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- Loss of the SRAM image at power-off as an observation: masked by the flash boot (3.50).
+- Flash boot of Gen-1; flash content identity; what the flash design drives during its window.
+- Rail ramps, power-on reset timing, brown-out; timing margin; electrical measurement.
+- Repeatability: one cold cycle and one load. One program and one unit.
+
+### 3.52 — GEN1-RESET-EDGE-1: timed KEY0 reset recovery of the golden Gen-1 image (2026-11-08 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS — scoped physical reset recovery, 15/15 trials across three cases, one Wukong unit.**
+- An RP2350 PIO pulse generator, wired directly to the KEY0 net, drove timed reset pulses into the unchanged golden image.
+- Every trial produced exactly the expected number of CRC-valid records equal to the 3.40 record. That held for:
+  - a single pulse (C0);
+  - a second pulse whose falling edge was **measured on KEY0** 1.75–2.00 µs after the first pulse's release (T);
+  - a second pulse 10 ms later, after HALT (C2).
+
+**What T measures, and what it does not:**
+- That the CPU was executing when the second pulse arrived is **inferred** from simulation of the frozen sources (execution 0.37–3.29 µs after `raw_rst_n` rises) and nominal 25 MHz cpu_clk. It is **not observed**.
+- This entry establishes **no** directly observed execution overlap, exhaustive reset-phase coverage, metastability qualification, or general reset correctness.
+
+Entry reviewed and approved for commit by the owner (2026-11-08).
+
+```text
+Claim: with the golden Gen-1 image (442a229e...) resident in SRAM after one volatile load, timed
+  KEY0 pulses from an RP2350 open-drain PIO generator were followed, in every one of 15 trials,
+  by exactly the expected count of CRC-valid records equal to the 3.40 record (C0: 1 per trial,
+  T: 1 per trial, C2: 2 per trial), with no fault, truncated, contradictory or extra record and no
+  unexpected byte. In T the second pulse's falling edge was measured on KEY0 at 1.75-2.00 us
+  (+/-0.25 us sampling) after the first pulse's release; that this fell during CPU execution is
+  inferred from simulation, not observed.
+Evidence dimension: silicon (scoped observation, 3 cases x 5 trials, one unit); interface (KEY0
+  input and UART TX, as observed)
+Source revision / dirty-tree identity: FPGA image and sources as 3.40/3.47 (frozen package
+  hardware/boards/artix7/wukong_v3/cpu_v02/, unchanged); repository documentation baseline 078b2ada;
+  pulse-generator source hardware/rp2350/gen1_reset_pulse/ (untracked at run time; CMakeLists.txt
+  fe42e9aa..., gen1_reset_pulse.c 3cbe2ffa..., gen1_reset_pulse.pio 1fed5e64...); case runner
+  build/gen1-reset-edge-1/run_case.py (b9b37c14...)
+Build/test command and configuration: no FPGA build. One SRAM load (openFPGALoader -c dirtyJtag
+  --freq 1000000, no flash options). Pulse generator build target gen1_reset_pulse_od (Pico SDK
+  2.3.1, 150 MHz PIO, 6.67 ns step; output latch fixed low, direction-only toggling, input buffer
+  and pulls disabled). Per case: frozen 3.40 capture.py on the CH340; KEY0 on a logic analyser at
+  4 MS/s for 3.0 s; one USB-CDC command `SEQ <a_ns> <gap_ns> <b_ns> 5 500`
+Device and toolchain: as 3.40 to 3.51 (QMTECH Wukong, owner-identified V3; XC7A100T-1FGG676C per
+  seller listing and owner acceptance, NOT physically verified; JTAG idcode 0x3631093; DirtyJTAG;
+  CH340). Pulse generator: Raspberry Pi Pico 2 (RP2350, QFN60, stepping not determined). Analyser:
+  Saleae-type 0925:3881 via sigrok-cli 0.7.2 / libsigrok 0.5.2, fx2lafw, fixed input threshold
+Artifact identity: golden .bit 442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea
+  (3,826,011 bytes); gen1_reset_pulse_od.uf2
+  1f4456e5a9f269765de6a063f48e16fa31d433446fbba24903a316bbf1d4dcc4 (bit-identical clean rebuild
+  from the source above)
+Oracle and checked scope: frozen 3.40 parser EXPECTED record (parse_record.py; preflight hashes
+  verified); records binned per trial by host monotonic time [TRIAL line - 50 ms, + 450 ms);
+  checked scope: 3 cases x 5 trials, 500 ms apart, one load, one unit
+Result and evidence artifact path: PASS; build/gen1-reset-edge-1/ (34-entry MANIFEST.sha256,
+  sha256 f22157e6f0038d1580d3809b529556c251bdc75b5221195f00ce7f4c1c9882f4); bench pre-check
+  build/gen1-reset-edge-1-stage0-od/ (6-entry MANIFEST.sha256); private archive copy
+  ~/Archive/gen1-reset-edge-1-evidence-20261108T063542Z/ (tar.gz sha256 ddea1a38...),
+  second copy on removable media verified by read-back
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result (2026-11-08 UTC):**
+
+**1. Golden load** (`load-01/`, 06:26):
+- Capture started first; drain 0 bytes.
+- One SRAM load, exit 0, `isc_done 1`, `init 1`, `done 1`.
+- Exactly 33 bytes followed: one record equal to EXPECTED. `raw_all.bin` 182c3453…, identical to 3.51.
+
+**2. Wiring**, made after the golden load, with the Wukong powered:
+- Pico GP2 directly to the SW2 KEY0 leg (KEY0 net: R37 4.7 kΩ to 3V3, FPGA ball H7; V03 sheet 2).
+- Pico GND to board GND.
+- Analyser D0 to the same KEY0 leg through 1 kΩ.
+
+**3. Silent check** (`silent-01/`, 06:28): 0 UART bytes in 5 s with the generator connected and idle; KEY0 high for 4 s.
+
+The single-pulse readings in step 4 are the first that show D0 is attached, because a floating analyser input also reads high.
+
+**4. Cases** (06:29), each with one command, 5 trials 500 ms apart:
+
+| Case | Command (commanded A / gap / B) | KEY0 measured (4 MS/s) | Records per trial | Result |
+|---|---|---|---|---|
+| C0: no second pulse | `SEQ 200000 1000 0 5 500` | 5 low pulses, 200.00–200.25 µs | 1,1,1,1,1 (165 bytes) | PASS |
+| T: inferred execution overlap | `SEQ 200000 2070 200000 5 500` (quantized gap 2.073 µs) | 10 low pulses, 200.00–200.25 µs; A release → B assert **2.00, 2.00, 2.00, 1.75, 1.75 µs** | 1,1,1,1,1 (165 bytes) | PASS |
+| C2: after HALT | `SEQ 200000 10000000 200000 5 500` | 10 low pulses; A release → B assert 10.000–10.0005 ms | 2,2,2,2,2 (330 bytes) | PASS |
+
+- Every case had 0 bad headers, 0 unexpected bytes, 0 records outside trial bins, and 0 generator errors.
+- C0 and T `raw_all.bin` are identical (41ed8dd5…: five EXPECTED records).
+- Per-case `result.json`:
+  - C0 f1e96906…
+  - T b755e3ed…
+  - C2 a9c12a63…
+
+**Timing basis for T (simulation, not silicon):**
+- Basis: the frozen sources under iverilog (bench `gen1_exec_window_sim.v`, untracked; preserved in the private archive package).
+- From `raw_rst_n` rising:
+  - `cpu_rst_n` releases at +250 ns;
+  - the first non-BOOT state is at +370 ns;
+  - HALT is at +3,290 ns (73 cpu_clk of execution);
+  - the first UART start bit is at +107.45 µs.
+- The measured gap, including ±0.25 µs sampling (1.50–2.25 µs), lies inside +0.37 … +3.29 µs with ≥ 1.0 µs margin on each side.
+- Unmeasured contributions:
+  - the difference between the analyser and FPGA input thresholds on the open-drain rising edge (the release reaches the analyser threshold about 0.2 µs after the commanded edge on the bench);
+  - synchroniser phase;
+  - cpu_clk frequency.
+- No execution marker or UART TX timing tap was used.
+
+**Schedule:** no KEY0 edge was placed within release + 107 µs … release + 2.97 ms, when a record is in transmission. UART interruption is outside this entry.
+
+**Driver choice:**
+- **Configuration used on silicon:** build target `gen1_reset_pulse_od` only (UF2 1f4456e5…), with GP2 wired directly to KEY0. The generator pulls KEY0 low or releases it; the firmware never drives it high.
+- The push-pull `gen1_reset_pulse` build, intended for an NPN driver, was **not used** in any trial of this entry. The NPN driver was prepared and set aside after bench contact faults.
+- The direct connection rests on RP2350 fault-tolerant GPIO ratings (Table 1680) and the design that cannot drive high. The analysis and the bench pre-check (100/100 sequences on a 4.7 kΩ stand-in) are in the evidence package.
+
+**Adjacent evidence dimensions not established (NOT RUN or not covered):**
+- **Directly observed** execution at the second reset edge; per-cycle or per-phase reset coverage; metastability or recovery/removal behaviour.
+- Reset during UART transmission. Pulse widths other than 200 µs. Human KEY0 presses during execution.
+- FPGA input-threshold crossing times. cpu_clk frequency. Electrical levels on KEY0 under drive (no meter reading on the Wukong).
+- Repeatability beyond 5 trials per case. Other units, temperatures, rails.
+- Flash boot of Gen-1. The flash design that ran before the load is unidentified, as in 3.50.

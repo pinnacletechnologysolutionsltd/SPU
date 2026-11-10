@@ -78,7 +78,7 @@ zero canonicalization differs from this raw-fit policy; its evidence is preserve
 | 0x01 | ADD | Rd, Rs | R[d] += R[s] |
 | 0x02 | SUB | Rd, Rs | R[d] -= R[s] |
 | 0x03 | MUL | Rd, Rs | R[d] ×= R[s] |
-| 0x04 | ROT | Rd, Rs, n | Pell rotor step: R[d] = R[s] × rⁿ |
+| 0x04 | ROT | Rd [, Rs] | Pell rotor step in place: R[d] ×= (2+√3). An optional Rs is encoded but ignored; there is no exponent operand (see note below) |
 | 0x05 | LOG | Rd | Print R[d] to UART |
 | 0x30 | PHADD | Rd, Rs | Phinary-packed addition |
 | 0x31 | PHCFG | Rd, val | Phinary configuration |
@@ -109,7 +109,7 @@ execution. See
 | Opcode | Mnemonic | Operands | Description |
 |--------|----------|----------|-------------|
 | 0x10 | QADD | QRd, QRs | QR[d] += QR[s] |
-| 0x11 | QROT | Rd, Rs, n | Pell rotor: R[d] = R[s] × (2+√3)ⁿ |
+| 0x11 | QROT | QRd [, Rs] | Pell rotor in place: each component of QR[d] ×= (2+√3), then normalized. An optional Rs is encoded but ignored (see note below) |
 | 0x12 | QNORM | QRd | Normalize QR by subtracting min component |
 | 0x13 | QLOAD | QRd | Load QR from manifold lane |
 | 0x14 | QLOG | QRd | Print QR to UART (quadrance + components) |
@@ -122,6 +122,13 @@ execution. See
 | **0x1E** | **DELTA** | QRd, Q1,Q2,k | Triple quadrance parameterization |
 | **0x1F** | **MIN4** | QRd | Normalize: subtract min(A,B,C,D) |
 | **0x22** | **QREAD** | QRd, QRs | QR[d] = QR[s] (copy) |
+
+**ROT/QROT operands (corrected 2026-11-05):** these rows previously read
+`Rd, Rs, n` with `R[d] = R[s] × rⁿ`. No toolchain implements that form:
+`spu13_asm.py` accepts `ROT Rd [, Rs]` and `QROT QRd [, Rs]`, and the Python and
+C++ VMs apply one in-place Pell step to the destination, ignoring the second
+register. To compute `R[d] = R[s] × rⁿ`, load or copy into `R[d]` and apply `ROT`
+n times. Encodings are unchanged. RTL decode of these words was not checked.
 
 ### Geometry Output
 

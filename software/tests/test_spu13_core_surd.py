@@ -134,7 +134,8 @@ def main():
         raise AssertionError('missing preservation/alias/fault verification coverage')
     report = summarize(log,records)
     report.update(status='PASS_DIRECTED_CPU_RTL',kernels_executed=bool(records),
-                  tuple_input_sha256=hashlib.sha256(CORPUS.read_bytes()).hexdigest(),
+                  # Kernel input is a dependency only of --kernels runs (kernels() reads it and fails if absent).
+                  tuple_input_sha256=hashlib.sha256(CORPUS.read_bytes()).hexdigest() if args.kernels else None,
                   program_sha256=hashlib.sha256(program.read_bytes()).hexdigest(),
                   baseline='UNSUPPORTED_IN_ACTIVE_CANONICAL_CORE',speedup='UNMEASURED',
                   instruction_elimination='UNMEASURED',energy='UNMEASURED',
