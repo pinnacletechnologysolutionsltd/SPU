@@ -27,7 +27,7 @@ claims about the processor.
 | Simulator | C++ `spu_vm --profile gen1-surd` ([usage](docs/software_guide.md)); conforms to the registered RTL fixtures and recorded silicon frames (software conformance only) |
 | Physical status | Experimental single-unit observations: golden program and operand variants, repeated reloads, scoped reset recovery (ledger §3.40–3.43, §3.47–3.49, §3.51–3.52, starting at [§3.40](docs/hardware_evidence.md#340--cpu-board-4c-r1-first-fixed-program-surd-cpu-run-over-uart-2026-10-30)); nominal routed timing analysis; bit-exact rebuild of the configuration payload |
 | Not established | General CPU qualification, flash boot, I/O and reset timing, metastability, multiple units |
-| Release status | Release candidate; not yet published ([readiness](docs/V02_RELEASE_READINESS.md)) |
+| Release status | SPU v0.2.0, experimental Gen-1 Surd CPU; see the [v0.2.0 release](https://github.com/pinnacletechnologysolutionsltd/SPU/releases/tag/v0.2.0) and the [readiness record](docs/V02_RELEASE_READINESS.md#12-publication-record-2026-11-11) |
 
 The rational GPU, HEX-SOM, the experimental H0 programmable image and the wider
 mathematical research below are **experimental components**. They are not

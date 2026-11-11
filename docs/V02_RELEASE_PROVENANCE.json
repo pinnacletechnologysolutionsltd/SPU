@@ -42,9 +42,9 @@
   {
    "path": "README.md",
    "change": "M",
-   "source_revision": "c276d4dfb9708e2e8d8f1d235f3bc0598178de8b",
-   "git_blob": "0ff9963f805fd88039684952f1b5290cb4151834",
-   "sha256": "97c4b235243030ee66abfe42d2472b00c2df53a37a40a9b3d54c13df7c176078",
+   "source_revision": "9ed2c1acac5b3e52d23a51640837cb74268c7cfe",
+   "git_blob": "19a5e9433aea8560ba2c77ad6404d395c079e335",
+   "sha256": "602deb6aa3a1fa12029a730ff391dbe75cb73aa7626244f80d0a406c06bf1468",
    "disposition": "imported"
   },
   {
@@ -98,12 +98,12 @@
   {
    "path": "docs/V02_RELEASE_READINESS.md",
    "change": "A",
-   "source_revision": "3c24258895ee9ba7ffb1f4a0e770b90e1080425e",
-   "git_blob": "c12bb9dfdfe59e910cf84a128b976dc7e125c6a4",
-   "sha256": "06404a63e50f771d26cfaff0a0acdbcd795393ebdf1c4e46e0c4c4dc01b487a6",
+   "source_revision": "9ed2c1acac5b3e52d23a51640837cb74268c7cfe",
+   "git_blob": "5fdf5fa5803465856ff333d79888c8c11759f782",
+   "sha256": "e0310bcd8ebe5d23ed855f3b38b07b5eb06736a58d9ffc489816be728f136116",
    "disposition": "imported-modified",
-   "source_blob": "5afc0b99450f2b7b4a074b3a8cef98413aa8f46c",
-   "modification": "XC7 preservation link reworded: record is not part of the curated release"
+   "source_blob": "dc87541c7e342419adfb1f175945f2da1f4bce6c",
+   "modification": "XC7 preservation link reworded: record is not part of the curated release; v0.2.0 status amendment applied as a patch of the source commit"
   },
   {
    "path": "docs/hardware_evidence.md",
@@ -2292,6 +2292,36 @@
     }
    },
    "previous_manifest_commit": "7b9ab3622488dbb09ba4ef795127c150598ea947"
+  },
+  {
+   "purpose": "v0.2.0 release status: README release-status row; readiness status line, historical markers and §12 publication record (documentation only)",
+   "integration_source": {
+    "ref": "dev/next",
+    "commit": "9ed2c1acac5b3e52d23a51640837cb74268c7cfe"
+   },
+   "paths": [
+    "README.md",
+    "docs/V02_RELEASE_READINESS.md"
+   ],
+   "method": "README.md by path checkout; docs/V02_RELEASE_READINESS.md by applying the source commit's diff, preserving the existing XC7 modification",
+   "previous": {
+    "README.md": {
+     "source_revision": "c276d4dfb9708e2e8d8f1d235f3bc0598178de8b",
+     "git_blob": "0ff9963f805fd88039684952f1b5290cb4151834",
+     "sha256": "97c4b235243030ee66abfe42d2472b00c2df53a37a40a9b3d54c13df7c176078"
+    },
+    "docs/V02_RELEASE_READINESS.md": {
+     "source_revision": "3c24258895ee9ba7ffb1f4a0e770b90e1080425e",
+     "git_blob": "c12bb9dfdfe59e910cf84a128b976dc7e125c6a4",
+     "sha256": "06404a63e50f771d26cfaff0a0acdbcd795393ebdf1c4e46e0c4c4dc01b487a6"
+    }
+   },
+   "previous_manifest_commit": "ba30dcaa75079fe8ba6e8be1fcce2ad2743a11db",
+   "pending_publication_link": {
+    "url": "https://github.com/pinnacletechnologysolutionsltd/SPU/releases/tag/v0.2.0",
+    "in": "README.md",
+    "state": "resolves only after the v0.2.0 release is published; verify after push"
+   }
   }
  ]
 }

@@ -1,6 +1,6 @@
 # SPU v0.2 release readiness index
 
-**Status (2026-11-10, §11): TECHNICALLY READY as a scoped experimental release at `a2cfee73`; NOT PUBLICATION-READY. Publication: HOLD.** Prepared 2026-11-06 under SPU-V02-READINESS-INDEX-0 (documentation only);
+**Status (2026-11-11, §12): `v0.2-rc1` published as a GitHub prerelease at `ba30dcaa`; the final `v0.2.0` tag is cut from the curated `release/v0.2` branch.** The 2026-11-10 assessment (§11) and the earlier sections are kept as dated records. Prepared 2026-11-06 under SPU-V02-READINESS-INDEX-0 (documentation only);
 updated 2026-11-07 for the GEN1-STA-1 closure, 2026-11-08 for the GEN1-RESET-EDGE-1 closure and the removable-media
 backups of both Gen-1 evidence packages, and 2026-11-09 for the portable Gen-1 integration regression, branch relationships
 and release-packaging constraints (§1, §3, §9, §10).
@@ -14,7 +14,7 @@ Each row uses the disposition of its cited source. Where sources disagree, the d
 | Item | Value |
 |---|---|
 | Revision inspected | Current: `599dbd0a33980fa156eed998ea3169f9ee218cca` on local `dev/next` (portable Gen-1 integration regression), the source revision for this 2026-11-09 update. Historical baselines, kept: first prepared against `6e9cbb0`; 2026-11-06/07 `21ea715c772b5d18bbfa4be93f9e7c8fafe267e6`; 2026-11-08 `d35e166d9d3b621006af48a45a9feb61423189b2` |
-| Public state | **Not published.** As of 2026-11-09T04:14Z. Remote refs were read with `git ls-remote public` (no fetch); they equal the local remote-tracking refs. Counts are `git rev-list --left-right --count <ref>...dev/next` at `599dbd0a`; the commit containing this update adds one more to each "ahead" figure. <br>• `main` at `9fe2ceeb6f1113b7323a541d80316784d6cc526f`: an ancestor of local `dev/next`; `0 22` (local 22 ahead, 0 behind). It is also an ancestor of public `dev/next` (`0 8`). <br>• `dev/next` at `e7d37aa6714b42aa79b07df1a9c625143dd112b4`: an ancestor of local `dev/next`; `0 14`. History of this figure: `0 9` at `21ea715`, `0 11` at `d35e166`. <br>• `master` at `4e0d5b908e5bb1e0e86ba979b87affb83bd2a372`: the remote `HEAD` (GitHub default branch); separate history with no merge base (`883 82`). <br>Nothing in this index is on the public remote until a separately authorized push. A fast-forward of public `main` to a reviewed local revision is **proposed only** (§10) and needs separate approval. |
+| Public state | **Historical (superseded by §12).** **Not published.** As of 2026-11-09T04:14Z. Remote refs were read with `git ls-remote public` (no fetch); they equal the local remote-tracking refs. Counts are `git rev-list --left-right --count <ref>...dev/next` at `599dbd0a`; the commit containing this update adds one more to each "ahead" figure. <br>• `main` at `9fe2ceeb6f1113b7323a541d80316784d6cc526f`: an ancestor of local `dev/next`; `0 22` (local 22 ahead, 0 behind). It is also an ancestor of public `dev/next` (`0 8`). <br>• `dev/next` at `e7d37aa6714b42aa79b07df1a9c625143dd112b4`: an ancestor of local `dev/next`; `0 14`. History of this figure: `0 9` at `21ea715`, `0 11` at `d35e166`. <br>• `master` at `4e0d5b908e5bb1e0e86ba979b87affb83bd2a372`: the remote `HEAD` (GitHub default branch); separate history with no merge base (`883 82`). <br>Nothing in this index is on the public remote until a separately authorized push. A fast-forward of public `main` to a reviewed local revision is **proposed only** (§10) and needs separate approval. |
 | Gen-1 CPU package | [`hardware/boards/artix7/wukong_v3/cpu_v02/`](../hardware/boards/artix7/wukong_v3/cpu_v02/README.md), frozen; 36 + 9 entries in `PACKAGE_SHA256.txt` / `portable/PORTABLE_SHA256.txt` |
 | Build configuration | Vivado 2026.1 SW Build 6511674; part `xc7a100tfgg676-1` (speed −1); top `cpu_board_2r_top`; clocks `sys_clk` 20 ns, generated `cpu_clk` 40 ns |
 | Golden image | `.bit` `442a229e…`, configuration payload `.bin` `cc259988…` ([SOURCE_MANIFEST](../hardware/boards/artix7/wukong_v3/cpu_v02/SOURCE_MANIFEST.md)) |
@@ -161,7 +161,7 @@ No branch update, tag or Release has been made or authorized.
 | Release notes limits | Fixed 14-instruction program reporting over UART, not a freely programmable image; SRAM load (`openFPGALoader -c dirtyJtag`, no flash options); the image does not boot from flash after a power cycle; the §2 and §4 limits |
 | Existing `v0.2-*` tags | `v0.2-lucas` (on the public remote, in `master`'s history, not in local `dev/next`) and `v0.2-h0-uart-silicon` (local only, annotated, an ancestor of `dev/next`; the experimental H0 image, blocker 2). A future `v0.2.0` release tag must be distinguished from both in its notes |
 | GPU and HEX-SOM | No GPU bitstream is proposed unless its identity, board compatibility and evidence are reviewed (§5). HEX-SOM is software only (§6) |
-| Open blockers | §9 items 6–10 remain; item 2 decided 2026-11-10 (H0 excluded); item 5 closed 2026-11-09. Superseded by §11 for packaging direction; publication remains **HOLD** |
+| Open blockers | §9 items 6–10 remain; item 2 decided 2026-11-10 (H0 excluded); item 5 closed 2026-11-09. Superseded by §11 for packaging direction; publication remained **HOLD** until the §12 publication record |
 
 ## 11. Final readiness assessment at `a2cfee73` (2026-11-10)
 
@@ -205,4 +205,12 @@ Owner-accepted, read-only assessment. It changes no ledger entry and qualifies n
 **States:**
 - **Approved direction:** a curated release candidate; `main` as the eventual default; H0 excluded.
 - **Pending execution:** the curated-branch plan and construction, the licence-wording correction, branch synchronization, the public README revision against the curated tree.
-- **Still HOLD:** pushes, public tags, release publication, default-branch changes.
+- **Still HOLD** (at the time of this assessment; see §12): pushes, public tags, release publication, default-branch changes.
+
+## 12. Publication record (2026-11-11)
+
+This section records publication events. It changes no qualification result, observation or evidence count above.
+
+- **`v0.2-rc1` (published 2026-11-11):** public `main` was fast-forwarded from `9fe2ceeb` to `ba30dcaa75079fe8ba6e8be1fcce2ad2743a11db`, the curated `release/v0.2` candidate (P1), with no force operation. The annotated tag `v0.2-rc1` (object `5c6cc055`) points to `ba30dcaa`. The GitHub prerelease carries one asset, the golden `cpu_board_2r_top.bit`, verified after download as sha256 `442a229e9d8dc76485dee9e757ff2b6fecd9eca5f5d0c4cf17530501e3b153ea`; the untested `.bin` was omitted. The default branch is now `main` (P3); `master` is unchanged at `4e0d5b90`.
+- **Verification of the candidate:** standalone `--no-local --single-branch` clone; full gate `tools/verify_repo.sh` 270 PASS / 0 FAIL; `gen1-surd` conformance 80/80 (the harness grew from 79 to 80 checks after §11).
+- **`v0.2.0`:** cut from the curated `release/v0.2` branch by a documentation-only amendment (this section and the README release-status row). CPU sources, the simulator and verification inputs are unchanged from `ba30dcaa`, so the evidence above applies. The release is an experimental, fixed-program CPU with single-unit observations; it is not production-qualified (§11 limitations).
