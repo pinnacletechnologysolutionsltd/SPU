@@ -29,6 +29,23 @@ claims about the processor.
 | Not established | General CPU qualification, flash boot, I/O and reset timing, metastability, multiple units |
 | Release status | SPU v0.2.0, experimental Gen-1 Surd CPU; see the [v0.2.0 release](https://github.com/pinnacletechnologysolutionsltd/SPU/releases/tag/v0.2.0) and the [readiness record](docs/V02_RELEASE_READINESS.md#12-publication-record-2026-11-11) |
 
+## SPU v0.3: programmable-surd CPU (in preparation)
+
+This branch adds the v0.3 `programmable-surd` machine beside the v0.2 Gen-1 CPU above. v0.3 is a
+programmable exact-arithmetic processor with a verified toolchain. It is experimental, it makes no
+performance claim, and this branch has not been published as a release.
+
+| Property | SPU v0.3 (`programmable-surd`) |
+|---|---|
+| Contract | [Frozen v0.3 contract](docs/design/SPU_V03_CONTRACT_CANDIDATE.md): the authoritative ISA. The other `SPU_V03_*` design records in `docs/design/` are historical provenance, not current requirements |
+| Machine | Sequential, multicycle, in-order; eight Surd registers S0–S7; programs of 1–256 words; no data memory |
+| Arithmetic | Bounded exact Q(√3), (a + b√3)/d with 64-bit fields. A refused `SMUL`, `SADD` or `SSUB` leaves its destination unchanged and sets the refusal flags; the program must check them |
+| Inputs | A program image and an instruction budget, supplied by the host. There is no general runtime operand input: input values are part of the image |
+| Tools | [SDK](software/sdk/README.md) (assembler, disassembler, `spu` CLI), C++ `spu_vm --profile programmable-surd`, a Python oracle and a UART host client |
+| Examples | [`software/sdk/examples/`](software/sdk/examples/): exact √3 arithmetic (Pell K=33), exact orientation, and a refusal-and-recovery branch (Pell K=34) |
+| Physical status | One recorded session on one Wukong unit and one SDK-driven run (ledger §3.53 and §3.54 in [`docs/hardware_evidence.md`](docs/hardware_evidence.md)): observations, not a qualification |
+| Not established | Qualification of the UART interface, timing margin or reset behaviour; operation across reloads, supply or temperature; multiple units |
+
 The rational GPU, HEX-SOM, the experimental H0 programmable image and the wider
 mathematical research below are **experimental components**. They are not
 features of the canonical CPU.
@@ -53,8 +70,8 @@ Where any historical document in this repository (for example earlier ISA, rotor
 
 You need Python 3.10 or newer and Git. Cloning requires network access; the
 commands that follow run locally without a board or package installation.
-This README describes the development checkout; the public default branch may
-contain a different snapshot until the histories are reconciled.
+This README describes the curated `release/v0.3` branch, which carries the v0.2 release
+content plus the v0.3 additions listed above; other branches may contain a different snapshot.
 
 ```bash
 git clone https://github.com/pinnacletechnologysolutionsltd/SPU.git && cd SPU

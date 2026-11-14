@@ -50,6 +50,27 @@ Newcomer path: [guided tour](NEWCOMER_TOUR.md) →
 | `ZPHI_KARATSUBA_INTEGRATION_PLAN.md` | Active phased integration, A/B P&R gates, rollback rules, and agent handoff |
 | [Surd CPU Lorentz research milestone](SURD_LORENTZ_RESEARCH_MILESTONE_2026-10-11.md) | Focused instruction-executing RTL simulation, application invariants, model counterexample and preserved evidence |
 
+## SPU v0.3 Programmable-Surd CPU
+
+| Document | Status |
+|---|---|
+| [SPU v0.3 contract](design/SPU_V03_CONTRACT_CANDIDATE.md) | **FROZEN v0.3 ISA** for the `programmable-surd` profile (the file name keeps its historical "candidate" suffix). This is the authoritative reference |
+| [SDK README](../software/sdk/README.md) | Assembler, simulator, oracle and UART host workflow, and the three canonical examples |
+| [Hardware evidence ledger](hardware_evidence.md) | Recorded observations; §3.53 (RTL-0C session) and §3.54 (SDK-HW-0), each a single-unit observation and not a qualification |
+
+The remaining v0.3 records are **historical design provenance**. They show how the machine was designed
+and verified; where they differ from the frozen contract, the contract governs.
+
+| Document | Record |
+|---|---|
+| [Architecture proposal](design/SPU_V03_ARCHITECTURE_PROPOSAL.md) | Early provisional design brief |
+| [ISA draft](design/SPU_V03_ISA_DRAFT.md) | Draft instruction forms and two representative programs, before the freeze |
+| [SIM-0 discrepancy report](design/SPU_V03_SIM0_DISCREPANCY_REPORT.md) | Three-way audit (draft, C++ simulator, oracle) |
+| [External pre-freeze review](design/SPU_V03_EXTERNAL_PREFREEZE_REVIEW.md) | Review record with owner dispositions; not a contract |
+| [RTL-0A plan](design/SPU_V03_RTL0A_PLAN.md) | Plan for the execution core in simulation |
+| [RTL-0B plan](design/SPU_V03_RTL0B_PLAN.md) | Runtime loading and observation over UART, with its qualification record |
+| [RTL-0C plan](design/SPU_V03_RTL0C_PLAN.md) | Physical bring-up on the Wukong Artix-7 |
+
 ## Proposed Research Contracts
 
 | Review | Status |

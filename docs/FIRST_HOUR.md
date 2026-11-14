@@ -43,11 +43,13 @@ python3 run_all_tests.py
 ```
 
 The suite compiles and runs Verilog, C++, and Python checks. The final summary
-at this revision is:
+ends with these lines. The pass count depends on the revision and on which
+optional tools are installed, so judge the run by `Total FAIL:  0`, not by a
+fixed total:
 
 ```text
 ...
-Total PASS:  238
+Total PASS:  <count for this revision>
 Total FAIL:  0
 ```
 
