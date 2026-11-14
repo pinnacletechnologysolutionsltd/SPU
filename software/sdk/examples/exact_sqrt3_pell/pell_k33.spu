@@ -1,0 +1,25 @@
+; pell_k33.spu - exact (2 + sqrt3)^33 by repeated SMUL (ISA draft 7.2, Program B, K = 33)
+; x0 = 1; x(k+1) = x(k) * (2 + sqrt3). Every x(k) is exact in Q(sqrt3); no rounding occurs.
+; Result: S0 = x33 = (3743165875258953026, 2161117825702177665, 1), S7 = 0 (completed all 33 iterations).
+; Source reconstructed from the frozen image hardware/tests/psurd_rtl0c/session_v1/B_K33.spui; it assembles byte for byte to that image
+; (sha256 ee09955ad3668b4be39cf0268588fdecde3a697920b600d0a0248aa954f749f6) with --profile programmable-surd.
+.profile programmable-surd
+
+        LOADT S1, 2, 1, 1       ; 2 + sqrt3
+        SLIK  S0, 1             ; x = 1
+        SLIK  S3, 1             ; one
+        SLIK  S4, 33            ; remaining count K
+        STST  S4
+        BR    LT, invalid       ; K < 0
+        BR    EQ, done          ; K = 0: no iterations
+loop:   SMUL  S0, S0, S1
+        BR    RF, overflow      ; refused: S0 still holds the last good x
+        SSUB  S4, S4, S3
+        STST  S4
+        BR    GT, loop
+done:   SLIK  S7, 0             ; completed
+        HALT
+overflow: SLIK S7, 1            ; stopped by overflow refusal
+        HALT
+invalid: SLIK S7, -1            ; negative count
+        HALT
