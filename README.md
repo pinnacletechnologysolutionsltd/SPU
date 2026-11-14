@@ -29,11 +29,11 @@ claims about the processor.
 | Not established | General CPU qualification, flash boot, I/O and reset timing, metastability, multiple units |
 | Release status | SPU v0.2.0, experimental Gen-1 Surd CPU; see the [v0.2.0 release](https://github.com/pinnacletechnologysolutionsltd/SPU/releases/tag/v0.2.0) and the [readiness record](docs/V02_RELEASE_READINESS.md#12-publication-record-2026-11-11) |
 
-## SPU v0.3: programmable-surd CPU (in preparation)
+## SPU v0.3: programmable-surd CPU
 
-This branch adds the v0.3 `programmable-surd` machine beside the v0.2 Gen-1 CPU above. v0.3 is a
-programmable exact-arithmetic processor with a verified toolchain. It is experimental, it makes no
-performance claim, and this branch has not been published as a release.
+SPU v0.3 adds the `programmable-surd` machine beside the v0.2 Gen-1 CPU above. It is an experimental
+programmable exact-arithmetic processor and makes no performance claim. See the
+[v0.3 release](https://github.com/pinnacletechnologysolutionsltd/SPU/releases/tag/v0.3).
 
 | Property | SPU v0.3 (`programmable-surd`) |
 |---|---|
