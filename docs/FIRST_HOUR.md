@@ -3,6 +3,12 @@
 This path starts from an anonymous clone and stays hardware-free until the
 last, optional section. It uses only checked-in data and deterministic tests.
 
+This hour exercises the SPU-13 software stack (its Python VM, robotics chain and GPU model). To try the v0.3
+`programmable-surd` CPU instead, with its assembler, simulator and three canonical examples, start at the
+[SDK README](../software/sdk/README.md). v0.3 has no data memory and no general runtime operand input, so a
+program's input values are written into its image, and a refused arithmetic operation leaves its destination
+unchanged, so programs must check the refusal flags.
+
 ## Before you clone
 
 Install Git and Python 3.10 or newer for the VM, exact robotics and offline GPU
