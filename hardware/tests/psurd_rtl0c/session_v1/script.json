@@ -1,0 +1,837 @@
+{
+ "package": "SPU v0.3 RTL-0C physical session, version 1",
+ "protocol": "H0-UART-1B v2",
+ "timing": {
+  "startup_delay_s": 0.5,
+  "response_timeout_s": 1.0,
+  "poll_interval_s": 0.02,
+  "max_polls": 3000
+ },
+ "steps": [
+  {
+   "phase": "P2",
+   "name": "first STATUS",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0000ff00000000"
+   }
+  },
+  {
+   "phase": "P2",
+   "name": "RESULT before any run",
+   "op": "result",
+   "expect": {
+    "status": 32,
+    "payload_hex": "0a"
+   }
+  },
+  {
+   "phase": "P2",
+   "name": "START with no image",
+   "op": "start",
+   "budget": 5,
+   "expect": {
+    "status": 32,
+    "payload_hex": "08"
+   }
+  },
+  {
+   "phase": "P3",
+   "name": "load program 1",
+   "op": "load",
+   "image": "prog1.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P3",
+   "name": "STATUS after load",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0100ff00000000"
+   }
+  },
+  {
+   "phase": "P4",
+   "name": "START program 1",
+   "op": "start",
+   "budget": 1000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P4",
+   "name": "wait program 1",
+   "op": "wait"
+  },
+  {
+   "phase": "P4",
+   "name": "RESULT program 1",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_00_b4c72302a881.rec"
+   }
+  },
+  {
+   "phase": "P4",
+   "name": "STATUS after run",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "05030001000000"
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "load A-A",
+   "op": "load",
+   "image": "A-A.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "START A-A",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "wait A-A",
+   "op": "wait"
+  },
+  {
+   "phase": "P5",
+   "name": "RESULT A-A",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_01_4150ac7bbcbc.rec"
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "load A-B",
+   "op": "load",
+   "image": "A-B.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "START A-B",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "wait A-B",
+   "op": "wait"
+  },
+  {
+   "phase": "P5",
+   "name": "RESULT A-B",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_02_b8fb66523373.rec"
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "load A-C",
+   "op": "load",
+   "image": "A-C.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "START A-C",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "wait A-C",
+   "op": "wait"
+  },
+  {
+   "phase": "P5",
+   "name": "RESULT A-C",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_03_8973b1add388.rec"
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "load A-D",
+   "op": "load",
+   "image": "A-D.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "START A-D",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "wait A-D",
+   "op": "wait"
+  },
+  {
+   "phase": "P5",
+   "name": "RESULT A-D",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_04_e64deab3235a.rec"
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "load A-E",
+   "op": "load",
+   "image": "A-E.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "START A-E",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "wait A-E",
+   "op": "wait"
+  },
+  {
+   "phase": "P5",
+   "name": "RESULT A-E",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_05_a880d79f354e.rec"
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "load A-F",
+   "op": "load",
+   "image": "A-F.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "START A-F",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "wait A-F",
+   "op": "wait"
+  },
+  {
+   "phase": "P5",
+   "name": "RESULT A-F",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_06_10d92651dd59.rec"
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "load B_K33",
+   "op": "load",
+   "image": "B_K33.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "START B_K33",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "wait B_K33",
+   "op": "wait"
+  },
+  {
+   "phase": "P5",
+   "name": "RESULT B_K33",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_07_56c4de4af123.rec"
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "load B_K34",
+   "op": "load",
+   "image": "B_K34.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "START B_K34",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P5",
+   "name": "wait B_K34",
+   "op": "wait"
+  },
+  {
+   "phase": "P5",
+   "name": "RESULT B_K34",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_08_856aa241facc.rec"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "load A-A for repetition",
+   "op": "load",
+   "image": "A-A.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 1: START",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 1: wait",
+   "op": "wait"
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 1: RESULT",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_01_4150ac7bbcbc.rec"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 1: STATUS",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0503000a000000"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 2: START",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 2: wait",
+   "op": "wait"
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 2: RESULT",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_01_4150ac7bbcbc.rec"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 2: STATUS",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0503000b000000"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 3: START",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 3: wait",
+   "op": "wait"
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 3: RESULT",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_01_4150ac7bbcbc.rec"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 3: STATUS",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0503000c000000"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 4: START",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 4: wait",
+   "op": "wait"
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 4: RESULT",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_01_4150ac7bbcbc.rec"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 4: STATUS",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0503000d000000"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 5: START",
+   "op": "start",
+   "budget": 10000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 5: wait",
+   "op": "wait"
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 5: RESULT",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_01_4150ac7bbcbc.rec"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "repeat 5: STATUS",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0503000e000000"
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "load prog1_again",
+   "op": "load",
+   "image": "prog1_again.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "START prog1_again",
+   "op": "start",
+   "budget": 1000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P6",
+   "name": "wait prog1_again",
+   "op": "wait"
+  },
+  {
+   "phase": "P6",
+   "name": "RESULT prog1_again",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_00_b4c72302a881.rec"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "image with a wrong CRC",
+   "op": "load",
+   "image": "bad_crc.spui",
+   "expect": {
+    "status": 32,
+    "payload_hex": "04"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "STATUS: image invalid, record kept",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0403000f000000"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "START refused: no image",
+   "op": "start",
+   "budget": 5,
+   "expect": {
+    "status": 32,
+    "payload_hex": "08"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "earlier record still readable",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_00_b4c72302a881.rec"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "header with revision 0x02",
+   "op": "load_begin",
+   "header_hex": "5350554901020200bcf12853",
+   "expect": {
+    "status": 32,
+    "payload_hex": "02"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "reload program 1",
+   "op": "load",
+   "image": "prog1.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "START with B = 0",
+   "op": "start",
+   "budget": 0,
+   "expect": {
+    "status": 32,
+    "payload_hex": "09"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "record unchanged after refused START",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_00_b4c72302a881.rec"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "load the long-running loop",
+   "op": "load",
+   "image": "loop.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "START long run",
+   "op": "start",
+   "budget": 17000000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "STATUS during the run: RUNNING",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0101ff10000000"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "START during the run: BUSY",
+   "op": "start",
+   "budget": 5,
+   "expect": {
+    "status": 34,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "LOAD_BEGIN during the run: BUSY",
+   "op": "load_begin",
+   "header_hex": "5350554901030200bcf12853",
+   "expect": {
+    "status": 34,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "RESULT during the run: BUSY",
+   "op": "result",
+   "expect": {
+    "status": 34,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "STATUS still RUNNING (the run outlasted the commands)",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0101ff10000000"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "wait long run",
+   "op": "wait"
+  },
+  {
+   "phase": "P7",
+   "name": "RESULT long run: BUDGET record",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_09_98300288fee7.rec"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "frame with a bad checksum: BAD_FRAME",
+   "op": "raw",
+   "hex": "a502050000b2",
+   "expect": {
+    "status": 1,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "STATUS after BAD_FRAME",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "05030610000000"
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "truncated frame: TIMEOUT",
+   "op": "raw",
+   "hex": "a5020404000000",
+   "expect": {
+    "status": 4,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P7",
+   "name": "STATUS after TIMEOUT",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "05030610000000"
+   }
+  },
+  {
+   "phase": "P8",
+   "name": "operator: press KEY0 once",
+   "op": "pause",
+   "prompt": "Press KEY0 (reset) once, release it, then press Enter."
+  },
+  {
+   "phase": "P8",
+   "name": "STATUS after reset",
+   "op": "status",
+   "expect": {
+    "status": 0,
+    "payload_hex": "0000ff00000000"
+   }
+  },
+  {
+   "phase": "P8",
+   "name": "RESULT after reset",
+   "op": "result",
+   "expect": {
+    "status": 32,
+    "payload_hex": "0a"
+   }
+  },
+  {
+   "phase": "P8",
+   "name": "START after reset",
+   "op": "start",
+   "budget": 5,
+   "expect": {
+    "status": 32,
+    "payload_hex": "08"
+   }
+  },
+  {
+   "phase": "P8",
+   "name": "reload program 1 after reset",
+   "op": "load",
+   "image": "prog1.spui",
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P8",
+   "name": "START program 1 after reset",
+   "op": "start",
+   "budget": 1000,
+   "expect": {
+    "status": 0,
+    "payload_hex": ""
+   }
+  },
+  {
+   "phase": "P8",
+   "name": "wait after reset",
+   "op": "wait"
+  },
+  {
+   "phase": "P8",
+   "name": "RESULT equals the P4 record",
+   "op": "result",
+   "expect": {
+    "status": 0,
+    "payload_file": "record_00_b4c72302a881.rec"
+   }
+  }
+ ]
+}

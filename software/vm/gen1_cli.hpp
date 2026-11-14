@@ -131,7 +131,7 @@ inline int dispatch(int& argc, char**& argv, std::vector<char*>& keep) {
     if (found == 0) return -1;
     if (found > 1) return fail("--profile given more than once");
     if (profile == "gen1-surd") return cli(rest);
-    if (profile != "legacy") return fail("unknown profile '" + profile + "' (known: legacy, gen1-surd)");
+    if (profile != "legacy") return fail("unknown profile '" + profile + "' (known: legacy, gen1-surd, programmable-surd)");
     keep.assign(1, argv[0]);
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];

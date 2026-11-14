@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import subprocess
@@ -124,6 +125,104 @@ def run_gen1_sim_conformance(root_dir):
         print(f"Gen-1 simulator conformance FAILED:\n{(result.stdout + result.stderr)[-2000:]}")
         return 0, 1
     print("Gen-1 simulator conformance PASSED")
+    return 1, 0
+
+
+def run_psurd_sim0(root_dir):
+    """Required: EXPERIMENTAL programmable-surd profile vs independent oracle (SPU-V03-SIM-0).
+    Mandatory for regression; does not make the profile a frozen reference. Gen-1 is run separately above."""
+    script = root_dir / "software/tests/test_psurd_sim0.py"
+    if not script.is_file():
+        print(f"Programmable-surd SIM-0 MISSING: {script}")
+        return 0, 1
+    try:
+        (root_dir / "build").mkdir(parents=True, exist_ok=True)
+        evidence = Path(tempfile.mkdtemp(prefix="psurd_sim0_", dir=root_dir / "build")) / "results"
+        result = subprocess.run([sys.executable, str(script), str(evidence), "--skip-gen1"],
+                                cwd=root_dir, capture_output=True, text=True, timeout=300)
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        print(f"Programmable-surd SIM-0 ERROR: {exc!r}")
+        return 0, 1
+    print(f"Programmable-surd SIM-0 evidence: {evidence}")
+    if result.returncode:
+        print(f"Programmable-surd SIM-0 FAILED:\n{(result.stdout + result.stderr)[-2000:]}")
+        return 0, 1
+    print(f"Programmable-surd SIM-0 PASSED ({result.stdout.strip()})")
+    return 1, 0
+
+
+def run_psurd_rtl0a(root_dir):
+    """Required: v0.3 RTL-0A simulation gates G1 (shared arith vs frozen contract) and G2-G6 with planted
+    mutants. Simulation evidence only; no synthesis, timing or FPGA claim."""
+    tests = root_dir / "hardware/tests/psurd_rtl0a"
+    steps = [("g1_arith.py", []), ("run_rtl0a.py", ["--mutants"])]
+    if not all((tests / s).is_file() for s, _ in steps):
+        print(f"Programmable-surd RTL-0A MISSING: {tests}")
+        return 0, 1
+    (root_dir / "build").mkdir(parents=True, exist_ok=True)
+    evidence = Path(tempfile.mkdtemp(prefix="psurd_rtl0a_", dir=root_dir / "build"))
+    for script, extra in steps:
+        try:
+            result = subprocess.run([sys.executable, str(tests / script), str(evidence / script[:-3]), *extra],
+                                    cwd=root_dir, capture_output=True, text=True, timeout=900)
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            print(f"Programmable-surd RTL-0A {script} ERROR: {exc!r}")
+            return 0, 1
+        if result.returncode:
+            print(f"Programmable-surd RTL-0A {script} FAILED:\n{(result.stdout + result.stderr)[-2000:]}")
+            return 0, 1
+        print(f"Programmable-surd RTL-0A {script}: {result.stdout.strip()[:300]}")
+    print(f"Programmable-surd RTL-0A PASSED (evidence {evidence})")
+    return 1, 0
+
+
+def run_psurd_rtl0b(root_dir):
+    """Required: v0.3 RTL-0B compact simulation profile (one counted entry): B1 UART primitives, B2 link at
+    16 cycles/bit, B3 loader, B4 quick end-to-end set with two planted-mutant negative controls. The full
+    B2-B4 qualification campaigns (all mutants, full program set, 217 cycles/bit) are separate evidence under
+    build/psurd-rtl0b/. Simulation evidence only; no synthesis, timing or FPGA claim."""
+    tests = root_dir / "hardware/tests/psurd_rtl0b"
+    steps = [("b1_uart.py", []), ("b2_link.py", ["--bit", "16"]), ("b3_loader.py", []),
+             ("b4_system.py", ["--quick", "--control"])]
+    if not all((tests / s).is_file() for s, _ in steps):
+        print(f"Programmable-surd RTL-0B MISSING: {tests}")
+        return 0, 1
+    (root_dir / "build").mkdir(parents=True, exist_ok=True)
+    evidence = Path(tempfile.mkdtemp(prefix="psurd_rtl0b_", dir=root_dir / "build"))
+    for script, extra in steps:
+        gate = script[:2].upper()
+        try:
+            result = subprocess.run([sys.executable, str(tests / script), str(evidence / script[:-3]), *extra],
+                                    cwd=root_dir, capture_output=True, text=True, timeout=900)
+            verdict = json.loads((evidence / script[:-3] / "results.json").read_text()).get("status")
+        except (subprocess.TimeoutExpired, OSError, ValueError) as exc:
+            print(f"Programmable-surd RTL-0B {script} ERROR: {exc!r}")
+            return 0, 1
+        if result.returncode or verdict != "PASS" or f"{gate} PASS" not in result.stdout:
+            print(f"Programmable-surd RTL-0B {script} FAILED (exit {result.returncode}, results.json {verdict}):\n"
+                  f"{(result.stdout + result.stderr)[-2000:]}")
+            return 0, 1
+        print(f"Programmable-surd RTL-0B {script}: {gate} PASS")
+    print(f"Programmable-surd RTL-0B PASSED (evidence {evidence})")
+    return 1, 0
+
+
+def run_psurd_uart_host(root_dir):
+    """Required: v0.3 UART host client (tools/psurd_uart_host.py) against the RTL-0B reference model over a
+    pseudo-terminal (RTL-0C gate C1). Software only; one counted entry."""
+    script = root_dir / "software/tests/test_psurd_uart_host.py"
+    if not script.is_file():
+        print(f"Programmable-surd UART host test MISSING: {script}")
+        return 0, 1
+    try:
+        result = subprocess.run([sys.executable, str(script)], cwd=root_dir, capture_output=True, text=True, timeout=300)
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        print(f"Programmable-surd UART host test ERROR: {exc!r}")
+        return 0, 1
+    if result.returncode or "psurd_uart_host: PASS" not in result.stdout:
+        print(f"Programmable-surd UART host test FAILED:\n{(result.stdout + result.stderr)[-2000:]}")
+        return 0, 1
+    print("Programmable-surd UART host test PASSED")
     return 1, 0
 
 
@@ -1342,6 +1441,10 @@ def main():
 
     cpu_frontend_pass, cpu_frontend_fail = run_cpu_frontend_test(root_dir)
     gen1_sim_pass, gen1_sim_fail = run_gen1_sim_conformance(root_dir)
+    psurd_pass, psurd_fail = run_psurd_sim0(root_dir)
+    rtl0a_pass, rtl0a_fail = run_psurd_rtl0a(root_dir)
+    rtl0b_pass, rtl0b_fail = run_psurd_rtl0b(root_dir)
+    uhost_pass, uhost_fail = run_psurd_uart_host(root_dir)
 
     # SPU-4 SOM edge probe UART line parser (no hardware required) -- shared
     # grammar between the fixed self-test probe and the interactive probe.
@@ -1573,11 +1676,23 @@ def main():
     print(f"\nGen-1 Simulator Conformance Tests: {gen1_sim_pass + gen1_sim_fail}")
     print(f"Passed: {gen1_sim_pass}")
     print(f"Failed: {gen1_sim_fail}")
+    print(f"\nProgrammable-Surd SIM-0 Tests (experimental): {psurd_pass + psurd_fail}")
+    print(f"Passed: {psurd_pass}")
+    print(f"Failed: {psurd_fail}")
+    print(f"\nProgrammable-Surd RTL-0A Tests (simulation): {rtl0a_pass + rtl0a_fail}")
+    print(f"Passed: {rtl0a_pass}")
+    print(f"Failed: {rtl0a_fail}")
+    print(f"\nProgrammable-Surd RTL-0B Tests (simulation, compact profile): {rtl0b_pass + rtl0b_fail}")
+    print(f"Passed: {rtl0b_pass}")
+    print(f"Failed: {rtl0b_fail}")
+    print(f"\nProgrammable-Surd UART Host Client Tests: {uhost_pass + uhost_fail}")
+    print(f"Passed: {uhost_pass}")
+    print(f"Failed: {uhost_fail}")
 
     total_pass = (
         passed + cpp_p + py_pass + cv_pass + lucas_pass + bq_pass + icos_pass + lucas_harness_pass
         + icosa_pass + su3_pass + pade_batch_pass + hc_pass + digon_pass
-        + audio_pass + host_pass + cpu_frontend_pass + gen1_sim_pass + spu4_probe_parser_pass + spu4_probe_client_pass
+        + audio_pass + host_pass + cpu_frontend_pass + gen1_sim_pass + psurd_pass + rtl0a_pass + rtl0b_pass + uhost_pass + spu4_probe_parser_pass + spu4_probe_client_pass
         + som_product_pass + robotics_demo_pass
         + bridge_pass + rotc_fix_pass + rotc_bad_angle_pass + exit_verdict_pass + rotc_trace_pass
         + regen_pass + cpu_profile_pass + gram_pass + isa_compat_pass
@@ -1592,7 +1707,7 @@ def main():
     )
     total_fail = (
         failed + cpp_f + timeouts + compile_errors + cpp_e + py_fail + cv_fail
-        + audio_fail + host_fail + cpu_frontend_fail + gen1_sim_fail + spu4_probe_parser_fail + spu4_probe_client_fail
+        + audio_fail + host_fail + cpu_frontend_fail + gen1_sim_fail + psurd_fail + rtl0a_fail + rtl0b_fail + uhost_fail + spu4_probe_parser_fail + spu4_probe_client_fail
         + som_product_fail + robotics_demo_fail
         + bridge_fail + rotc_fix_fail + rotc_bad_angle_fail + exit_verdict_fail + rotc_trace_fail
         + regen_fail + cpu_profile_fail + gram_fail + isa_compat_fail

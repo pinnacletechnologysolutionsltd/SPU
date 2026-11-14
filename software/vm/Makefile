@@ -5,7 +5,8 @@ CXXFLAGS = -std=c++17 -O2 -Wall
 BIN ?= spu_vm
 
 # gen1-surd build identity (SPU-GEN1-SIM-IMPL-0): reported by `spu_vm --profile gen1-surd --capabilities`.
-GEN1_INPUTS = Makefile spu_vm.cpp checked_math.h assembly_operands.h gen1_wide.hpp gen1_surd.hpp gen1_cli.hpp
+GEN1_INPUTS = Makefile spu_vm.cpp checked_math.h assembly_operands.h gen1_wide.hpp gen1_surd.hpp gen1_cli.hpp \
+              psurd_arith.hpp psurd_machine.hpp psurd_cli.hpp
 GEN1_SOURCE_SHA256 := $(or $(shell cat $(GEN1_INPUTS) 2>/dev/null | sha256sum 2>/dev/null | cut -c1-64),unknown)
 GEN1_REVISION := $(or $(shell r=$$(git rev-parse HEAD 2>/dev/null) && { if [ -n "$$(git status --porcelain -- . 2>/dev/null)" ]; then echo "$$r-dirty"; else echo "$$r"; fi; }),unversioned)
 GEN1_BUILD_ID := $(or $(shell printf '%s|%s|%s' '$(GEN1_SOURCE_SHA256)' "$$($(CXX) --version 2>/dev/null | head -n1)" '$(CXXFLAGS)' | sha256sum 2>/dev/null | cut -c1-64),unknown)
@@ -13,7 +14,8 @@ GEN1_DEFS = -DGEN1_SOURCE_REVISION='"$(GEN1_REVISION)"' -DGEN1_SOURCE_SHA256='"$
 
 all: spu_vm
 
-spu_vm: spu_vm.cpp checked_math.h assembly_operands.h gen1_wide.hpp gen1_surd.hpp gen1_cli.hpp
+spu_vm: spu_vm.cpp checked_math.h assembly_operands.h gen1_wide.hpp gen1_surd.hpp gen1_cli.hpp \
+        psurd_arith.hpp psurd_machine.hpp psurd_cli.hpp
 	$(CXX) $(CXXFLAGS) $(GEN1_DEFS) -o $(BIN) spu_vm.cpp
 
 avx2: spu_vm.cpp

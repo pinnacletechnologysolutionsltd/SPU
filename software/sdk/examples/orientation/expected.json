@@ -1,0 +1,9 @@
+{
+  "description": "Program A case A: orientation of (0,0), (2,sqrt3), (1,2sqrt3); det = 3 sqrt3, CCW",
+  "image_sha256": "6a14c6ef9365931b98c62f86abb35615ceaed9f8cc1c02c1a1c3c09de855b93a",
+  "budget": 10000,
+  "cause": "HALT",
+  "registers": {"S0": [0, 3, 1], "S7": [1, 0, 1]},
+  "record_sha256": "4150ac7bbcbc84132a8b5cc804e0735b6a155f27b40de3c91d58992f462107be",
+  "record_provenance": "hardware/tests/psurd_rtl0c/session_v1/record_01_4150ac7bbcbc.rec: the record expected for step 12 (RESULT A-A, budget 10,000) of the frozen RTL-0C session package; docs/hardware_evidence.md §3.53 reports every session response equal to its expectation"
+}

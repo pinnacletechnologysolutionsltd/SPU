@@ -37,6 +37,7 @@
 #include <numeric>
 #include <tuple>
 #include "gen1_cli.hpp"   // explicit gen1-surd profile (SPU-GEN1-SIM-IMPL-0)
+#include "psurd_cli.hpp"  // EXPERIMENTAL programmable-surd profile (SPU-V03-SIM-0)
 #include <stdexcept>
 #include "checked_math.h"
 #include "../common/include/spu_gram_spread.h"
@@ -1093,7 +1094,9 @@ public:
 int main(int argc, char** argv) {
     // Profile selection: absent = unchanged legacy behaviour; never ignored when present.
     std::vector<char*> profile_argv;
-    int profile_status = gen1::dispatch(argc, argv, profile_argv);
+    int profile_status = psurd::dispatch(argc, argv);   // claims only --profile programmable-surd
+    if (profile_status >= 0) return profile_status;
+    profile_status = gen1::dispatch(argc, argv, profile_argv);
     if (profile_status >= 0) return profile_status;
 
     std::string source_file;

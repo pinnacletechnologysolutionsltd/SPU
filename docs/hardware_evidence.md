@@ -8681,3 +8681,132 @@ The single-pulse readings in step 4 are the first that show D0 is attached, beca
 - FPGA input-threshold crossing times. cpu_clk frequency. Electrical levels on KEY0 under drive (no meter reading on the Wukong).
 - Repeatability beyond 5 trials per case. Other units, temperatures, rails.
 - Flash boot of Gen-1. The flash design that ran before the load is unidentified, as in 3.50.
+
+### 3.53 — RTL-0C: first host-programmed run of the v0.3 programmable-surd CPU on Wukong (2026-11-12 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS — single session, one bitstream, one Wukong unit.** One SRAM load
+of the v0.3 board image (`psurd_board_top` around the unchanged `psurd_sys_top`) accepted SPUI programs over the
+onboard CH340 at 115,200 baud, ran them and returned 213-byte result records equal byte for byte to the
+independent oracle and the C++ simulator. All 95 steps of the frozen session package passed, including refused
+loads, BUSY during a run, transport errors and one KEY0 reset. This is **not** a qualification of the UART
+interface, timing margin, reset robustness, the device grade, or behaviour across reloads, supply or
+temperature.
+
+Entry scope approved for the ledger by the owner (2026-11-12). Before integration every identity field
+below was re-checked against the preserved C4, preflight and session evidence, and `EVIDENCE.sha256`
+verified (6/6 files OK).
+
+```text
+Claim: bitstream psurd_board.bit (sha256 5e31e97b...c2bf03), loaded once into SRAM, executed the frozen
+  RTL-0C session package v1 (95 steps) over F3/E3 at 115200 8N1 with every response equal to its frozen
+  expectation: 19 CRC-valid 213-byte records equal to the expected records (10 distinct; each expected
+  record byte-identical between psurd_oracle and spu_vm when generated); refusals 0a/08/04/02/09 as
+  registered; BUSY for START, LOAD_BEGIN and RESULT bracketed by two STATUS answers reporting RUNNING
+  (run id 16); BAD_FRAME and TIMEOUT for malformed and truncated frames with the link usable afterwards;
+  after one owner KEY0 press, STATUS 00 / IDLE / cause FF / run id 0, RESULT and START refused, and a
+  reloaded program 1 returned the same record as before the reset.
+Evidence dimension: silicon (single-session observation, one unit); interface (UART RX/TX and KEY0 as
+  observed)
+Source revision / dirty-tree identity: v0.3 RTL as 98c85afd (psurd with ASYNC_REG; hardware/rtl unchanged
+  since), board top and constraints 84b09473, flow 31fd5e82/17f13cf7; synthesis job at 17f13cf7, route
+  and bitstream jobs at 052874e0 (later commit touching spu_strategy/ only; uncommitted research/
+  edits in the tree; RTL, constraints and flow unchanged); C2 bench 5da36f40; session package 96609a68
+  (hardware/tests/psurd_rtl0c/session_v1/, MANIFEST.sha256 OK at preflight); host client
+  tools/psurd_uart_host.py 334d2321...; repository HEAD at session time 63a18d1d (later commits touch
+  research/ and spu_strategy/ only)
+Build/test command and configuration: Vivado 2026.1 non-project synthesis (build/psurd-rtl0c/c3-synth-02),
+  route attempt 1 of 2 (c3-route-01: WNS +6.787 ns, WHS +0.054 ns, recovery +14.903 ns, removal
+  +0.643 ns, 0 route errors, 18,185 endpoints constrained; tool reports, not measurements),
+  write_bitstream (c4-bitstream-01; pins M21/H7/F3/E3 LVCMOS33, UNUSEDPIN PULLNONE); one
+  openFPGALoader -c dirtyJtag --freq 1000000 <bit> (SRAM, no flash options); session
+  python3 tools/psurd_uart_host.py /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0 session
+  hardware/tests/psurd_rtl0c/session_v1/script.json build/psurd-rtl0c/p1-session-01
+Device and toolchain: QMTECH Wukong, owner-identified V3 (V03 schematic sha256 bec53e62...7331aee);
+  XC7A100T-1FGG676C per seller listing, NOT physically verified; JTAG idcode 0x3631093 at preflight;
+  DirtyJTAG CB81353DCE678119; CH340 1a86:7523; openFPGALoader v1.2.0; host Linux 7.0.0-43, Python 3.14
+Artifact identity: psurd_board.bit 5e31e97bd8cc131533df5df1690b0b83ac3c6a916fb2e974b84ac23422c2bf03
+  (3,825,995 bytes); routed.dcp a03f0460...6b0feb
+Oracle and checked scope: expected records from software/tests/psurd_oracle.py, cross-checked against
+  spu_vm at package generation; expected statuses from the RTL-0B reference model; checked scope: the
+  95 frozen steps (P2-P8 of the RTL-0C plan), one session, one reset
+Result and evidence artifact path: PASS; build/psurd-rtl0c/ (p0-preflight-03, p1-load-01,
+  p1-session-01; EVIDENCE.sha256 in p1-session-01)
+Adjacent evidence dimensions not established: see below
+```
+
+**Procedure and result.**
+- **Preflight** (2026-11-12 06:27 UTC, `p0-preflight-03/preflight.txt`): bitstream hash equal to the approved
+  C4 hash; session package unchanged since `96609a68` and every file matching its manifest; JTAG detect
+  idcode 0x3631093 (artix a7 100t); CH340 and DirtyJTAG enumerated; no process holding the serial ports.
+  Two earlier preflight attempts (`p0-preflight-01`, `-02`) found the probe and bridge disconnected and
+  performed no load.
+- **SRAM load 1 of 3** (`p1-load-01/load.txt`): exit 0, `isc_done 1 init 1 done 1`.
+- **Session** (`p1-session-01`): `session PASS: 95 of 95 steps`; no stale input at start; 9,263 bytes sent,
+  9,697 received; session span 7.6 s including a 3.6 s operator pause at the KEY0 step. An independent
+  re-check of every recorded response against the frozen expectations found 0 mismatches, and all 19
+  records carry a valid CRC.
+
+| Phase | Content | Observed |
+|---|---|---|
+| P2 | STATUS, RESULT, START before any load | `0000ff00000000`; REFUSED 0a; REFUSED 08 |
+| P3–P4 | program 1 (`SLIK 0,7; HALT`) | load OK; record = `record_00`; STATUS `05030001000000` |
+| P5 | Program A cases A–F; Program B K = 33, 34 | eight records equal to `record_01`…`record_08` |
+| P6 | five STARTs on one image; a different program | five identical records; run ids 10–14; `record_00` again |
+| P7 | wrong CRC; revision 0x02 header; B = 0 | REFUSED 04 (image invalid, record kept); REFUSED 02; REFUSED 09 |
+| P7 | long run (budget 17,000,000) | STATUS RUNNING at +4.5 ms; BUSY to START, LOAD_BEGIN, RESULT; STATUS RUNNING at +13.8 ms; first READY STATUS at +2.053 s (derived run time 2.04 s); BUDGET record = `record_09` |
+| P7 | bad-checksum frame; truncated frame | BAD_FRAME; TIMEOUT; STATUS answered after each |
+| P8 | one owner KEY0 press | STATUS `0000ff00000000`; RESULT REFUSED 0a; START REFUSED 08; reload and run → `record_00` |
+
+**Relation to other evidence (reported separately).** Simulation: RTL-0A G1–G7, RTL-0B B1–B6 (`docs/design/
+SPU_V03_RTL0B_PLAN.md` §8) and RTL-0C C2 (`c2-02`: 283 frames at 217 cycles per bit, six reset releases,
+six board-top mutants detected) — RTL only. Implementation: the C3/C4 figures above are tool reports.
+
+**Adjacent evidence dimensions not established:**
+- One session, one load, one reset; no repeat sessions, reloads or power cycles.
+- No baud-error, clock-frequency, rail or temperature measurement; no signal-integrity or margin testing.
+- Hold slack +0.054 ns and the LUTAR-1 methodology warning (a LUT drives the reset synchronizer's
+  asynchronous clear) are tool findings; the latter is an owner-accepted residual risk, not tested.
+- The KEY0 press and LED states are owner-reported; the reset is inferred from the post-reset STATUS.
+- Arithmetic is checked only on the registered programs (10 distinct programs: program 1, Program A cases A–F, Program B K = 33 and 34, and the long-running loop); no broader conformance.
+- Device grade not physically verified; volatile SRAM only, no configuration-flash image.
+- XOR frame check without sequence numbers; lost-response ambiguity remains (none occurred).
+
+### 3.54 — SDK-HW-0: one v0.3 program assembled and run through the SDK-0 fpga backend on Wukong (2026-11-12 UTC)
+
+**Classification:** **SILICON OBSERVATION PASS — single SDK-to-FPGA execution, one unit, one program.** The SDK-0
+assembler (commit `9a9a13c1`) turned `software/sdk/examples/orientation/orientation.spu` into an image
+byte-identical to `hardware/tests/psurd_rtl0c/session_v1/A-A.spui`. One run through the SDK's own `fpga`
+backend returned a 213-byte result record byte-identical to the frozen expected record
+`record_01_4150ac7bbcbc.rec`. That record was generated from `psurd_oracle` and is identical to the C++
+simulator's record. The board was **not reloaded**: it kept the SRAM configuration from the §3.53 session. The
+identity of that configuration is **inferred** from the preflight observations below and was not newly
+established by a bitstream load. This entry does not verify the bitstream contents and does not qualify the
+SDK host path, the UART interface, timing or reset behaviour.
+
+```text
+Claim: SDK-0 at 9a9a13c1 (software/sdk clean) assembled orientation.spu to orientation.spui (61 words, sha256
+  6a14c6ef...855b93a, byte-identical to session_v1/A-A.spui) and executed it once with
+  python3 software/sdk/spu.py run orientation.spui --backend fpga
+  --port /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0 --budget 10000 --record-out record_fpga.bin;
+  record_fpga.bin (sha256 4150ac7b...462107be) is byte-identical to session_v1/record_01_4150ac7bbcbc.rec;
+  decoded HALT, retired 54, S0 = 3*sqrt3 (0,3,1), S7 = +1 (CCW). No retries.
+Evidence dimension: silicon (single execution, one unit); software-to-hardware integration (SDK backend)
+Source revision / dirty-tree identity: repository HEAD 9a9a13c1 at the run; software/sdk, the SDK test and
+  tools/psurd_uart_host.py clean (host client sha256 334d2321..., the same as §3.53); spu.py 30573494...,
+  spu_asm.py 81f9a88b..., spu_record.py 5a3353e9...
+Device and toolchain: the §3.53 Wukong; JTAG idcode 0x3631093 (openFPGALoader v1.2.0 --detect, read-only);
+  DirtyJTAG CB81353DCE678119 (1209:c0ca); CH340 1a86:7523; no process holding the ports; the USB devices had
+  not re-enumerated since 19:26 local, before the §3.53 session's load
+Artifact identity: approved bitstream file psurd_board.bit sha256 5e31e97b...c2bf03 (file checked, NOT loaded)
+Board state: STATUS before the run 05030001000000 (image valid, record valid, idle, run id 1, consistent with
+  the end of §3.53); STATUS after the run 05030002000000 (run id 2: exactly one run)
+Oracle and checked scope: the frozen expected record of §3.53 step 12; one program, one execution
+Result and evidence artifact path: PASS; build/sdk-hw-0/run-01/ (EVIDENCE.sha256 verified, 7/7 files OK)
+Adjacent evidence dimensions not established: see below
+```
+
+**Adjacent evidence dimensions not established:**
+- No bitstream load: the configuration's identity is inferred from the retained board state, not verified.
+- One execution of one program. No other programs, repetitions, reloads, power cycles or resets.
+- No timing, baud-error, signal-integrity or environmental measurement. No qualification of the SDK host path or
+  UART protocol beyond this exchange.
