@@ -1,16 +1,40 @@
 #!/usr/bin/env python3
 """SPU-ECO-5: geometry layer (spu_geom.py) over the IR and the v0.3 backend. Software verification only.
 Generated images go through the existing assembler, oracle and C++ simulator; successful results are compared with the
-independent exact reference software/math/tests/reference_qsqrt3.py (Python fractions); refusals are never counted as values.
+a self-contained exact reference defined in this file (Python fractions, written from the definitions); refusals are never counted as values.
 Run: python3 software/tests/test_spu_sdk_geom.py"""
 import hashlib, json, random, subprocess, sys, tempfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / 'software/sdk'), str(ROOT / 'software/tests'), str(ROOT / 'software/math/tests')]
+sys.path[:0] = [str(ROOT / 'software/sdk'), str(ROOT / 'software/tests')]
 import spu as CLI, spu_asm as A, spu_record as REC
-import reference_qsqrt3 as R
+from fractions import Fraction as F
+from math import gcd, lcm
 import spu_geom as G
 from spu_ir import IRError
+
+
+class R:
+    """Self-contained exact reference over Q(sqrt3): a value is a pair (p, q) of Fractions meaning p + q*sqrt3. Written from the definitions; it shares
+    no code with spu_geom, spu_ir or spu_v03_backend, and no MATHLIB-0 file is used."""
+    val = staticmethod(lambda t: (F(t[0], t[2]), F(t[1], t[2])))
+    add = staticmethod(lambda x, y: (x[0] + y[0], x[1] + y[1]))
+    sub = staticmethod(lambda x, y: (x[0] - y[0], x[1] - y[1]))
+    mul = staticmethod(lambda x, y: (x[0] * y[0] + 3 * x[1] * y[1], x[0] * y[1] + x[1] * y[0]))
+    @staticmethod
+    def tup(v):                                                  # canonical (a, b, d): gcd(|a|, |b|, d) = 1, d > 0, zero is (0, 0, 1)
+        d = lcm(v[0].denominator, v[1].denominator); a, b = int(v[0] * d), int(v[1] * d)
+        if a == 0 and b == 0: return (0, 0, 1)
+        g = gcd(gcd(a, b), d); return (a // g, b // g, d // g)
+    @staticmethod
+    def quadrance(p, q):
+        dx, dy = R.sub(q[0], p[0]), R.sub(q[1], p[1]); return R.add(R.mul(dx, dx), R.mul(dy, dy))
+    @staticmethod
+    def orientation(a, b, c):
+        ux, uy, vx, vy = R.sub(b[0], a[0]), R.sub(b[1], a[1]), R.sub(c[0], a[0]), R.sub(c[1], a[1]); return R.sub(R.mul(ux, vy), R.mul(uy, vx))
+    @staticmethod
+    def triple_quad(q1, q2, q3):
+        s = R.add(R.add(q1, q2), q3); t = R.add(R.add(R.mul(q1, q1), R.mul(q2, q2)), R.mul(q3, q3)); return R.sub(R.mul(s, s), R.mul((F(2), F(0)), t))
 
 fails = []
 def check(name, cond):
