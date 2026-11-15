@@ -16,5 +16,5 @@
     ]
   },
   "record_sha256": "adc63ef3fbd9e88ca6f7df6fbf185646e532f84090b8fcffbd57536bcbcc8035",
-  "record_provenance": "software only: the oracle and the C++ simulator return this byte-identical record. No hardware run; independent checks: reference_qsqrt3.py (fractions) and MATHLIB-0 ExactQuadratic/SurdFixed64 (host-side, dev/next)"
+  "record_provenance": "software only: the Python oracle and the C++ simulator return this byte-identical record, and the image assembles from this source to the stated hash. No hardware run is claimed. Exact checks are in the tests: software/tests/test_spu_sdk_quadrance.py computes the expected result independently with Python fractions (20 - 8*sqrt3 for the normal case; for the refusal case, that dx^2 = 1.6e19 does not fit 64-bit fields), and test_spu_sdk_geom.py repeats the quadrance with its own exact reference. The oracle and the backend's refusal replay share the arithmetic of software/tests/psurd_oracle.py; the C++ simulator is a separate implementation."
 }

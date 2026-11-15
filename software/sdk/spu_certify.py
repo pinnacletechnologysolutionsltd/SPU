@@ -3,12 +3,14 @@
 certify() takes alternatives (spu_geom.Geometry programs) that the USER claims compute the same value. It does not rewrite, reorder or
 merge anything. It (1) evaluates each exact value (unbounded); if they differ, it reports an equivalence error and executes nothing;
 (2) compiles each with the existing backend; (3) replays the generated instructions (prediction); (4) runs the image on the oracle and the
-C++ simulator; (5) classifies. Four sources are kept apart: exact reference, predicted bounded execution, oracle run, simulator run.
+C++ simulator; (5) classifies. Four sources are kept apart, but they are not four independent implementations: the exact value is the unbounded evaluation of the supplied
+IR expression; the prediction replay (spu_v03_backend.predict) and the Python oracle run both use the arithmetic of software/tests/psurd_oracle.py; the C++ simulator is a
+separate implementation and is the independent check on that arithmetic.
 COMMITTED     no arithmetic refusal, both runs agree with the prediction, and S0 equals the exact value.
 REFUSED       an arithmetic refusal occurred and the whole run was predicted. Never certified, whatever S0 holds (S0 may equal the exact value by coincidence).
 DISAGREEMENT  prediction, oracle, simulator or a required invariant disagree, OR no complete prediction could be formed. The second case is an incomplete
               verification, not evidence of a numerical disagreement: the observed refusal or fault is still reported.
-A certificate is about THESE inputs and THESE generated images. It is not a proof that two expressions are equivalent in general."""
+A certificate is about THESE inputs and THESE generated images. Agreement for bound inputs does not establish general symbolic equivalence."""
 from collections import namedtuple
 from fractions import Fraction as F
 import spu as CLI, spu_record as REC

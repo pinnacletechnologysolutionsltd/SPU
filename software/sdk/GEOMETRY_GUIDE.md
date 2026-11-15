@@ -91,9 +91,13 @@ print(C.format_report(C.certify(alts, 'build/sdk/spu_vm')))
 oracle and the simulator, but it follows your IR expression. So a certificate shows that the alternatives have the same value **for these inputs**; it does not establish that two expressions are equal as formulas, it is not a
 symbolic proof, and if a program does not express the mathematics you meant, the certificate is about the program and not about your intention.
 
+**Independence.** The four sources are not four independent implementations. The exact value is the evaluation of your expression. The backend's prediction replay and the Python oracle run share the arithmetic of
+`software/tests/psurd_oracle.py`. The C++ simulator is a separate implementation and is the independent check on that arithmetic. The exact-reference checks in the tests cover their specified mathematical examples
+(for instance the quadrance 20 - 8 sqrt3 and the triple-quad witness), not every program.
+
 If the exact values differ, you get an equivalence error and nothing is executed. The report gives the first refusal, how many arithmetic operations ran after it, the sticky `RS`,
 the final `R` and the final `S0` separately: a later successful operation clears `R` but not `RS`. A certificate concerns these inputs and these images only; it is not a proof that two
-expressions are equivalent in general, and it is software evidence (exact reference, replay, oracle, simulator), not a hardware observation.
+expressions are equivalent in general (agreement for bound inputs does not establish general symbolic equivalence), and it is software evidence, not a hardware observation.
 
 ## Check a result
 ```sh
