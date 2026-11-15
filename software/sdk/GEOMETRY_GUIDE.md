@@ -60,6 +60,27 @@ The layer does not choose between them for you.
 - The stale value left after a refusal is not guaranteed to match between allocation strategies. Do not rely on it.
 - Only Q(sqrt3). No division, conjugation or comparison of two values.
 
+## Certify alternatives for fixed inputs
+`spu_certify.certify()` takes alternatives that **you** claim compute the same value and reports what each does on the v0.3 machine for these inputs. It never rewrites
+or reorders anything.
+
+```python
+import spu_certify as C
+alts = {}
+for name, fn in (('triple-quad expansion', G.triple_quad_points), ('4 * orientation^2', lambda a, b, c: 4 * G.orientation(a, b, c) ** 2)):
+    g = G.Geometry(); g.result(fn(g.point(39798, 37420), g.point(-89693, 36555), g.point(30454, 25765))); alts[name] = g
+print(C.format_report(C.certify(alts, 'build/sdk/spu_vm')))     # needs the built C++ simulator
+```
+| Outcome | Meaning |
+|---|---|
+| `COMMITTED` | No arithmetic refusal; the oracle and the simulator agree with the prediction and S0 equals the exact value |
+| `REFUSED` | An arithmetic refusal occurred. It is never certified, even if S0 happens to equal the exact value |
+| `DISAGREEMENT` | The prediction, the oracle, the simulator or an invariant disagree, **or** no complete prediction could be formed (for example a refused operation left a register unwritten and a later instruction reads it, so the run faults `INVALID`). The second case is an incomplete verification, not a numerical disagreement: the observed refusal and fault are still reported |
+
+If the exact values differ, you get an equivalence error and nothing is executed. The report gives the first refusal, how many arithmetic operations ran after it, the sticky `RS`,
+the final `R` and the final `S0` separately: a later successful operation clears `R` but not `RS`. A certificate concerns these inputs and these images only; it is not a proof that two
+expressions are equivalent in general, and it is software evidence (exact reference, replay, oracle, simulator), not a hardware observation.
+
 ## Check a result
 ```sh
 python3 software/tests/test_spu_sdk_geom.py        # this layer, against the oracle, the simulator and an exact reference
