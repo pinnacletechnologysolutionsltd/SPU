@@ -18,9 +18,15 @@ COMMITTED, REFUSED, DISAGREEMENT = 'COMMITTED', 'REFUSED', 'DISAGREEMENT'
 Certificate = namedtuple('Certificate', 'name outcome words asm predicted oracle simulator exact notes')
 Report = namedtuple('Report', 'equivalent error exact certificates')
 
+def status_label(raw, initialized):
+    """Meaning of S7 under the programs' own convention. The raw register value is always kept next to it; an uninitialized S7 is never a status."""
+    if not initialized: return 'uninitialized'
+    return {(0, 0, 1): 'ok (0)', (2, 0, 1): 'refused (2)'}.get(raw, f'invalid {raw}')
+
 def _obs(rec):
-    s0, s7, f = rec['registers'][0], rec['registers'][7], rec['flags']
-    return dict(cause=rec['cause'], retired=rec['retired'], rs=bool(f['RS']), r=bool(f['R']), s7=(s7['a'], s7['b'], s7['d']), s0=(s0['a'], s0['b'], s0['d']), s0_initialized=bool(s0['initialized']))
+    s0, s7, f = rec['registers'][0], rec['registers'][7], rec['flags']; raw7 = (s7['a'], s7['b'], s7['d'])
+    return dict(cause=rec['cause'], retired=rec['retired'], rs=bool(f['RS']), r=bool(f['R']), s7=raw7, s7_initialized=bool(s7['initialized']),
+                s7_status=status_label(raw7, bool(s7['initialized'])), s0=(s0['a'], s0['b'], s0['d']), s0_initialized=bool(s0['initialized']))
 def _eq(t, exact): return t[2] > 0 and F(t[0], t[2]) == exact[0] and F(t[1], t[2]) == exact[1]
 
 def _predicted(pr):
@@ -34,11 +40,12 @@ def classify(pred, ora, sim, exact, same_record):
     """Pure classification (also used directly by the tests). pred may be None; ora and sim are _obs dictionaries."""
     if not same_record: return DISAGREEMENT, ['oracle and simulator records are not byte-identical']
     if pred is None:                                           # incomplete verification: never COMMITTED, and not claimed as a numerical disagreement
-        obs = f"observed on oracle and simulator: cause {ora['cause']}, sticky RS = {int(ora['rs'])}, final R = {int(ora['r'])}, S7 = {ora['s7'][0]}, S0 = {ora['s0']}, retired {ora['retired']}"
+        obs = f"observed on oracle and simulator: cause {ora['cause']}, sticky RS = {int(ora['rs'])}, final R = {int(ora['r'])}, S7 {ora['s7_status']} (raw {ora['s7']}), S0 {'uninitialized' if not ora['s0_initialized'] else ora['s0']}, retired {ora['retired']}"
         return DISAGREEMENT, ['incomplete verification: the backend replay could not model this run, so there is no complete prediction to compare; this is not evidence of a numerical disagreement', obs]
     bad = [f'{k}: predicted {pred[a]} observed {ora[k]}' for k, a in (('rs', 'rs'), ('r', 'final_r'), ('s7', 's7'), ('s0', 's0')) if ora[k] != pred[a]]
     if ora['cause'] != 'HALT': bad.append(f"cause {ora['cause']} (expected HALT)")
-    if (ora['s7'][0] == 2) != ora['rs'] or ora['s7'][0] not in (0, 2): bad.append('S7 is not the status convention (0, or 2 exactly when RS = 1)')
+    if not ora['s7_initialized']: bad.append(f"S7 is uninitialized (raw {ora['s7']}); it is not a status")
+    elif ora['s7'] not in ((0, 0, 1), (2, 0, 1)) or (ora['s7'][0] == 2) != ora['rs']: bad.append(f"S7 {ora['s7_status']} is not the status convention (ok, or refused exactly when RS = 1)")
     if bad: return DISAGREEMENT, bad
     if ora['rs']:
         n = [f"first refusal: instruction {pred['first_refusal'][0]} ({pred['first_refusal'][1]}); {pred['refusals']} refused; {pred['arithmetic_after_first_refusal']} arithmetic operation(s) ran after it",
@@ -66,7 +73,7 @@ def certify(alternatives, spu_vm, budget=10000):
 
 def format_report(rep):
     if not rep.equivalent: return f'{rep.error}\n' + '\n'.join(f'  {n}: {v}' for n, v in rep.exact.items())
-    ex = next(iter(rep.exact.values())); out = [f'exact value (all alternatives, for these inputs): {ex[0]} + {ex[1]}*sqrt3', f'{"alternative":28s} {"outcome":13s} {"words":>5s}  S7  S0 (oracle)']
-    for c in rep.certificates: out.append(f'{c.name:28s} {c.outcome:13s} {c.words:5d}  {c.oracle["s7"][0]}   {c.oracle["s0"]}')
+    ex = next(iter(rep.exact.values())); out = [f'exact value (all alternatives, for these inputs): {ex[0]} + {ex[1]}*sqrt3', f'{"alternative":28s} {"outcome":13s} {"words":>5s}  {"S7 status":14s} S0 (oracle)']
+    for c in rep.certificates: out.append(f'{c.name:28s} {c.outcome:13s} {c.words:5d}  {c.oracle["s7_status"]:14s} {c.oracle["s0"] if c.oracle["s0_initialized"] else "uninitialized"}')
     for c in rep.certificates: out += [f'  [{c.name}] {n}' for n in c.notes]
     return '\n'.join(out + ['A certificate concerns these inputs and these images only; it is not a proof of general equivalence.'])
