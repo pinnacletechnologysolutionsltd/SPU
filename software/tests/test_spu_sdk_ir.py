@@ -68,10 +68,10 @@ many.result(acc)
 try: B.lower(many); msg = ''
 except B.CompileError as e: msg = str(e)
 check('256-word image limit is enforced before assembly', 'words' in msg and '256' in msg)
-live = Program(); cs = [live.const(i) for i in range(8)]; acc = cs[0]
-for c in cs[1:]: acc = live.add(acc, c)                       # all 8 constants are live at the same time
+live = Program(); vs = [live.add(live.const(i), live.const(i)) for i in range(8)]; acc = vs[0]    # 8 COMPUTED values, all live
+for c in vs[1:]: acc = live.add(acc, c)
 live.result(acc)
-check('more than 7 live values is a compile error (no data memory)', raises(B.CompileError, lambda: B.lower(live)))
+check('more than 7 live computed values is a compile error (no data memory; only constants can be rematerialized)', raises(B.CompileError, lambda: B.lower(live)))
 busy = Program(); a0 = busy.const(1); b0 = busy.const(2); r0 = busy.add(b0, b0); busy.add(a0, a0); busy.result(r0)
 check('result needing S0 while S0 is busy is a compile error (no move instruction)', raises(B.CompileError, lambda: B.lower(busy)))
 dead = Program(); dead.const(9); dead.result(dead.const(1))

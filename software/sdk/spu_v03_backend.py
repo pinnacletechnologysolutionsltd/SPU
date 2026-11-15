@@ -5,6 +5,10 @@ lower():  keeps the IR operation order exactly (one SSUB/SADD/SMUL per IR operat
           Registers: S0-S6 for values (S7 is the status register). A value's register is reused when its last use is the
           instruction that overwrites it (operands are read before the write). The result must land in S0: v0.3 has no
           move instruction, so that is a compile error if S0 is busy at the result's definition.
+          Rematerialization (ECO-4): only when no register is free, the live CONSTANT whose next use is farthest is
+          evicted and reloaded (SLIK/LOADT) just before that use. Arithmetic operations are never reordered, added or
+          removed, and loads never refuse, so the refusal sequence is unchanged; only register contents (hence the stale
+          value left by a refused operation) may differ. Computed values are never evicted: no data memory.
           Epilogue (as in the hand-written examples): BR RS, refused; SLIK S7,0; HALT; refused: SLIK S7,2; HALT.
 predict(): replays the LOWERED instruction sequence, register by register, with the machine arithmetic of
           software/tests/psurd_oracle.py (the SurdFixed64 / psurd_arith semantics). A refused SMUL/SADD/SSUB leaves its
@@ -22,28 +26,38 @@ MNEMONIC = {'add': 'SADD', 'sub': 'SSUB', 'mul': 'SMUL'}
 def lower(prog):
     st = prog.stmts
     if prog.out is None: raise CompileError('no result selected')
-    last = {i: i for i in range(len(st))}
+    opsof = lambda s: list(dict.fromkeys(s[1:])) if s[0] != 'const' else []
+    uses = {i: [] for i in range(len(st))}
     for i, s in enumerate(st):
-        for j in s[1:] if s[0] != 'const' else ():
-            last[j] = i
+        for j in opsof(s): uses[j].append(i)
+    last = {i: (uses[i][-1] if uses[i] else i) for i in range(len(st))}
     last[prog.out] = len(st)                                  # the result stays live to the end
     free, reg, ins = list(range(VALUE_REGS)), {}, []
+    def load(j, d):
+        a, b, den = st[j][1]
+        if not (-2**63 <= a < 2**63 and -2**63 <= b < 2**63 and 0 < den < 2**64): raise CompileError(f'statement {j}: constant {st[j][1]} does not fit 64-bit fields')
+        ins.append(('SLIK', d, a) if b == 0 and den == 1 and -2**31 <= a < 2**31 else ('LOADT', d, (a, b, den)))
+    def take(i, protect):                                     # a free register; else evict the live constant used farthest away
+        if free: return free.pop(0)
+        cand = [v for v in reg if st[v][0] == 'const' and v not in protect and v != prog.out and last[v] > i]
+        if not cand: raise CompileError(f'statement {i}: more than {VALUE_REGS} live values (no data memory)')
+        return reg.pop(max(cand, key=lambda v: min(u for u in uses[v] if u > i)))   # reloaded at its next use
     for i, s in enumerate(st):
-        dying = [j for j in dict.fromkeys(s[1:] if s[0] != 'const' else ()) if last[j] == i]
-        avail = sorted(set(free) | {reg[j] for j in dying})
+        ops = opsof(s)
+        for j in ops:
+            if j not in reg: reg[j] = take(i, set(ops)); load(j, reg[j])          # rematerialize an evicted constant
+        dying = [j for j in ops if last[j] == i]
+        free = sorted(set(free) | {reg[j] for j in dying})
         if i == prog.out:
-            if 0 not in avail: raise CompileError(f'statement {i}: the result needs S0 but S0 is busy (no move instruction)')
-            d = 0
+            if 0 not in free: raise CompileError(f'statement {i}: the result needs S0 but S0 is busy (no move instruction)')
+            free.remove(0); d = 0
         else:
-            pref = [reg[j] for j in s[1:3] if s[0] != 'const' and j in dying]
-            d = pref[0] if pref else (avail[0] if avail else None)
-            if d is None: raise CompileError(f'statement {i}: more than {VALUE_REGS} live values (no data memory)')
-        free = [r for r in avail if r != d]; reg[i] = d
+            pref = [reg[j] for j in ops[:2] if j in dying]
+            d = pref[0] if pref else take(i, set(ops))
+            if d in free: free.remove(d)
+        reg[i] = d
         if last[i] == i: free = sorted(free + [d])            # a value that is never used does not hold its register
-        if s[0] == 'const':
-            a, b, den = s[1]
-            if not (-2**63 <= a < 2**63 and -2**63 <= b < 2**63 and 0 < den < 2**64): raise CompileError(f'statement {i}: constant {s[1]} does not fit 64-bit fields')
-            ins.append(('SLIK', d, a) if b == 0 and den == 1 and -2**31 <= a < 2**31 else ('LOADT', d, (a, b, den)))
+        if s[0] == 'const': load(i, d)
         else: ins.append((MNEMONIC[s[0]], d, reg[s[1]], reg[s[2]]))
     words = sum(7 if x[0] == 'LOADT' else 1 for x in ins) + EPILOGUE_WORDS
     if words > MAXWORDS: raise CompileError(f'image would be {words} words; the limit is {MAXWORDS}')
