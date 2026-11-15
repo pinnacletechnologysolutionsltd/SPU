@@ -2,7 +2,9 @@
 
 `spu_geom.py` lets you write exact geometry in Python and compile it to a native v0.3 `programmable-surd` image. It sits on the
 mathematical IR (`spu_ir.py`) and the v0.3 backend (`spu_v03_backend.py`). There is no parser and no new language.
-Software verification only: the generated programs have run on the oracle and the C++ simulator, **not on hardware**.
+Verification is mainly software: the generated programs are checked against the Python oracle and the C++ simulator. Two of them, the quadrance and the quadrance-with-refusal examples, were also executed twice
+each on one Artix-7 FPGA and returned records byte-identical to the software references (SDK-HW-1, ledger section 3.55 in `docs/hardware_evidence.md`). That is an observation of those two images on one unit in one session. It is not a
+hardware qualification, and it says nothing about other programs.
 
 ## Setup (once, from the repository root)
 ```sh
@@ -97,7 +99,7 @@ symbolic proof, and if a program does not express the mathematics you meant, the
 
 If the exact values differ, you get an equivalence error and nothing is executed. The report gives the first refusal, how many arithmetic operations ran after it, the sticky `RS`,
 the final `R` and the final `S0` separately: a later successful operation clears `R` but not `RS`. A certificate concerns these inputs and these images only; it is not a proof that two
-expressions are equivalent in general (agreement for bound inputs does not establish general symbolic equivalence), and it is software evidence, not a hardware observation.
+expressions are equivalent in general (agreement for bound inputs does not establish general symbolic equivalence), and it is software evidence. The only hardware observation of SDK-generated images is the two quadrance images of ledger section 3.55; a certificate for any other program is not a hardware observation.
 
 ## Check a result
 ```sh
