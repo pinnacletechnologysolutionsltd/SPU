@@ -1,0 +1,20 @@
+; quadrance_refusal.spu - the quadrance program with an operand too large for 64-bit fields.
+; A = (0, 0), B = (4000000000, 0): dx^2 = 1.6e19 exceeds 2^63 - 1, so the first SMUL refuses.
+; The refused SMUL leaves S2 = dx unchanged; the program goes on, and S0 ends as a stale intermediate, NOT a quadrance.
+; Only the final BR RS reports it: RS = 1, S7 = 2. The run still ends with cause HALT.
+.profile programmable-surd
+
+        SLIK  S0, 0             ; ax = 0
+        SLIK  S1, 0             ; ay = 0
+        LOADT S2, 4000000000, 0, 1  ; bx (does not fit SLIK's int32)
+        SLIK  S3, 0             ; by = 0
+        SSUB  S2, S2, S0        ; dx
+        SSUB  S3, S3, S1        ; dy
+        SMUL  S2, S2, S2        ; dx^2 refuses: S2 keeps dx
+        SMUL  S3, S3, S3        ; dy^2 = 0
+        SADD  S0, S2, S3        ; stale: dx + 0
+        BR    RS, refused
+        SLIK  S7, 0
+        HALT
+refused: SLIK S7, 2
+        HALT

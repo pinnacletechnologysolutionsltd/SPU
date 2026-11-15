@@ -1,0 +1,20 @@
+; quadrance.spu - exact quadrance of two points in Q(sqrt3): Q(A, B) = (bx - ax)^2 + (by - ay)^2
+; A = (sqrt3, 1), B = (2, 2 sqrt3): dx = 2 - sqrt3, dy = 2 sqrt3 - 1, Q = (7 - 4 sqrt3) + (13 - 4 sqrt3) = 20 - 8 sqrt3.
+; Result: S0 = Q, S7 = 0 completed, S7 = 2 if any arithmetic instruction refused (S0 is then not the quadrance).
+; Integer coordinates use SLIK (1 word); LOADT (7 words) is needed only for coordinates containing sqrt3.
+.profile programmable-surd
+
+        LOADT S0, 0, 1, 1       ; ax = sqrt3
+        SLIK  S1, 1             ; ay = 1
+        SLIK  S2, 2             ; bx = 2
+        LOADT S3, 0, 2, 1       ; by = 2 sqrt3
+        SSUB  S2, S2, S0        ; dx = bx - ax
+        SSUB  S3, S3, S1        ; dy = by - ay
+        SMUL  S2, S2, S2        ; dx^2
+        SMUL  S3, S3, S3        ; dy^2
+        SADD  S0, S2, S3        ; Q
+        BR    RS, refused       ; never report a value whose computation may have refused
+        SLIK  S7, 0
+        HALT
+refused: SLIK S7, 2
+        HALT

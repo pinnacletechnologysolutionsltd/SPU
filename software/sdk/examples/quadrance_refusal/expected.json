@@ -1,0 +1,20 @@
+{
+  "description": "Quadrance with dx = 4e9: dx^2 = 1.6e19 does not fit 64-bit fields, so SMUL refuses; run ends HALT with RS=1, S7=2, S0 a stale intermediate (not a quadrance)",
+  "image_sha256": "fd32e132796af8727466d82089519ae3772b2f41baf2e8753e7618db51e8a445",
+  "budget": 10000,
+  "cause": "HALT",
+  "registers": {
+    "S0": [
+      4000000000,
+      0,
+      1
+    ],
+    "S7": [
+      2,
+      0,
+      1
+    ]
+  },
+  "record_sha256": "488f7274672a0923d6491c5a0651652427870acbac24994d2ff60bbe68d4c12e",
+  "record_provenance": "software only: the oracle and the C++ simulator return this byte-identical record. No hardware run; independent checks: reference_qsqrt3.py (fractions) and MATHLIB-0 ExactQuadratic/SurdFixed64 (host-side, dev/next)"
+}

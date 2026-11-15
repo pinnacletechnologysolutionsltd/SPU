@@ -1,0 +1,20 @@
+{
+  "description": "Quadrance of A=(sqrt3,1), B=(2,2sqrt3): Q = 20 - 8 sqrt3; completes with S7=0",
+  "image_sha256": "6ad2bf5f62eb789d7862f9869b2472a353aa95582cd1c4c7ad8d3c68506d7aae",
+  "budget": 10000,
+  "cause": "HALT",
+  "registers": {
+    "S0": [
+      20,
+      -8,
+      1
+    ],
+    "S7": [
+      0,
+      0,
+      1
+    ]
+  },
+  "record_sha256": "adc63ef3fbd9e88ca6f7df6fbf185646e532f84090b8fcffbd57536bcbcc8035",
+  "record_provenance": "software only: the oracle and the C++ simulator return this byte-identical record. No hardware run; independent checks: reference_qsqrt3.py (fractions) and MATHLIB-0 ExactQuadratic/SurdFixed64 (host-side, dev/next)"
+}
