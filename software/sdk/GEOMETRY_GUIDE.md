@@ -4,10 +4,17 @@
 mathematical IR (`spu_ir.py`) and the v0.3 backend (`spu_v03_backend.py`). There is no parser and no new language.
 Software verification only: the generated programs have run on the oracle and the C++ simulator, **not on hardware**.
 
+## Setup (once, from the repository root)
+```sh
+mkdir -p build/sdk
+make -C software/vm BIN=$PWD/build/sdk/spu_vm      # builds the C++ simulator; needs g++ (C++17) and GNU make
+```
+Every command and example below is run from the repository root with Python 3 (tested with 3.14.4; 3.10+ is not yet verified).
+
 ## Example
 
 ```python
-import sys; sys.path[:0] = ['software/sdk', 'software/tests']
+import os, sys; sys.path[:0] = ['software/sdk', 'software/tests']
 import spu_geom as G
 
 g = G.Geometry()
@@ -16,7 +23,9 @@ B = g.point(2, (0, 2, 1))            # (2, 2*sqrt3)
 g.result(G.quadrance(A, B))          # exactly one result
 c = g.compile()
 print(c.words, c.exact, c.prediction.rs, c.prediction.result)   # 26, 20 - 8*sqrt3, False, (20, -8, 1)
-open('build/quadrance.spui', 'wb').write(c.image)               # then: python3 software/sdk/spu.py run ... --backend sim
+os.makedirs('build', exist_ok=True)
+open('build/quadrance.spui', 'wb').write(c.image)
+# then: python3 software/sdk/spu.py run build/quadrance.spui --backend sim --spu-vm build/sdk/spu_vm
 ```
 
 `compile()` returns `asm` (source text), `image` (an SPUI image), `words`, `instructions`, `prediction` and `exact`.
@@ -65,17 +74,22 @@ The layer does not choose between them for you.
 or reorders anything.
 
 ```python
-import spu_certify as C
+import sys; sys.path[:0] = ['software/sdk', 'software/tests']
+import spu_geom as G, spu_certify as C       # needs the simulator built as in Setup
 alts = {}
 for name, fn in (('triple-quad expansion', G.triple_quad_points), ('4 * orientation^2', lambda a, b, c: 4 * G.orientation(a, b, c) ** 2)):
     g = G.Geometry(); g.result(fn(g.point(39798, 37420), g.point(-89693, 36555), g.point(30454, 25765))); alts[name] = g
-print(C.format_report(C.certify(alts, 'build/sdk/spu_vm')))     # needs the built C++ simulator
+print(C.format_report(C.certify(alts, 'build/sdk/spu_vm')))
 ```
 | Outcome | Meaning |
 |---|---|
 | `COMMITTED` | No arithmetic refusal; the oracle and the simulator agree with the prediction and S0 equals the exact value |
 | `REFUSED` | An arithmetic refusal occurred. It is never certified, even if S0 happens to equal the exact value |
 | `DISAGREEMENT` | The prediction, the oracle, the simulator or an invariant disagree, **or** no complete prediction could be formed (for example a refused operation left a register unwritten and a later instruction reads it, so the run faults `INVALID`). The second case is an incomplete verification, not a numerical disagreement: the observed refusal and fault are still reported |
+
+**What the exact value is.** `certify()` evaluates, with unbounded rationals, the program exactly as you wrote it: the operations you built, on the constants you gave. It is independent of the backend, the
+oracle and the simulator, but it follows your IR expression. So a certificate shows that the alternatives have the same value **for these inputs**; it does not establish that two expressions are equal as formulas, it is not a
+symbolic proof, and if a program does not express the mathematics you meant, the certificate is about the program and not about your intention.
 
 If the exact values differ, you get an equivalence error and nothing is executed. The report gives the first refusal, how many arithmetic operations ran after it, the sticky `RS`,
 the final `R` and the final `S0` separately: a later successful operation clears `R` but not `RS`. A certificate concerns these inputs and these images only; it is not a proof that two

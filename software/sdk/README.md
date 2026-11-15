@@ -115,7 +115,7 @@ for t in test_spu_sdk test_spu_sdk_quadrance test_spu_sdk_ir test_spu_sdk_remat 
 done          # each ends with "PASS: 0 failure(s)"
 ```
 
-**Requirements and skips.** Python 3.10 or newer (the suites have been run on 3.14.4 only), and `g++` with C++17 and GNU make, because each suite builds the C++ simulator
+**Requirements and skips.** Tested with Python 3.14.4. Python 3.10+ compatibility has not yet been verified. You also need `g++` with C++17 and GNU make, because each suite builds the C++ simulator
 into a temporary directory. No other package is needed. `test_spu_sdk_ir.py` has an optional cross-check against MATHLIB-0's C++ adapter; it prints
 `SKIP SurdFixed64 cross-check` when that library is not present, as in this checkout, and is otherwise unaffected.
 
